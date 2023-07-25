@@ -8,8 +8,9 @@ set(NO_TESTS ON)
 add_subdirectory(deps/libdatachannel)
 add_subdirectory(deps/libdatachannel/deps/json)
 
-add_executable(tgcalls src/ntgcalls.cpp src/ntgcalls.h)
+add_executable(tgcalls src/tgcalls.cpp src/tgcalls.hpp)
+
+target_link_libraries(tgcalls PRIVATE LibDataChannel::LibDataChannel nlohmann_json::nlohmann_json)
 
 set_property(TARGET tgcalls PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(tgcalls PRIVATE LibDataChannel::LibDataChannel nlohmann_json::nlohmann_json)

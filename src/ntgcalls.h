@@ -1,9 +1,0 @@
-//
-// Created by iraci on 25/07/2023.
-//
-
-#ifndef NATIVETGCALLS_NTGCALLS_H
-#define NATIVETGCALLS_NTGCALLS_H
-
-
-#endif //NATIVETGCALLS_NTGCALLS_H
