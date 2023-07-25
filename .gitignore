@@ -1,0 +1,10 @@
+.idea
+tt
+deps
+cmake-build-debug
+build
+buildnew
+venv
+.env
+env
+.DS_Store
