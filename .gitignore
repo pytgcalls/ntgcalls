@@ -1,6 +1,5 @@
 .idea
 tt
-deps
 cmake-build-debug
 build
 buildnew
@@ -9,3 +8,9 @@ venv
 env
 .DS_Store
 .vscode
+old
+output
+*.session
+node_modules/
+dist/
+package-lock.json
