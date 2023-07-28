@@ -1,7 +1,11 @@
+//
+// Created by Laky64 on 28/07/23.
+//
+
 #include "tgcalls.hpp"
 
-std::optional<JoinVoiceCallParams> TgCalls::init(const std::optional<rtc::Description::Audio> &audio_track,
-                    const std::optional<rtc::Description::Video> &video_track) {
+std::optional<JoinVoiceCallParams> TgCalls::init(const std::optional<Stream> &audioStream,
+                    const std::optional<Stream> &videoStream) {
     if (connection != nullptr) {
         throw std::runtime_error("Connection already started");
     }
@@ -14,12 +18,13 @@ std::optional<JoinVoiceCallParams> TgCalls::init(const std::optional<rtc::Descri
         }
     });
 
-    if (audio_track.has_value()) {
-        audioTrack = connection->addTrack(audio_track.value());
+    if (audioStream.has_value()) {
+        audioTrack = audioStream->addTrack(connection);
+
     }
 
-    if (video_track.has_value()) {
-        videoTrack = connection->addTrack(video_track.value());
+    if (videoStream.has_value()) {
+        audioTrack = videoStream->addTrack(connection);
     }
     connection->setLocalDescription();
 
@@ -47,15 +52,8 @@ std::optional<JoinVoiceCallParams> TgCalls::init(const std::optional<rtc::Descri
 }
 
 json TgCalls::createCall() {
-    auto audio = rtc::Description::Audio("audio", rtc::Description::Direction::SendRecv);
-    audio.addOpusCodec(103);
-    audio.addOpusCodec(111);
-    audio.addSSRC(generateSSRC(), "audio");
-
-    auto video = rtc::Description::Video("video", rtc::Description::Direction::SendRecv);
-    video.addH264Codec(96);
-    video.addSSRC(generateSSRC(), "video");
-
+    auto audio = Stream::Audio();
+    auto video = Stream::Video();
     auto sdp = init(audio, video);
 
     if (!sdp.has_value()) {
@@ -126,7 +124,7 @@ void TgCalls::setRemoteCallParams(const json& jsonData) {
                 item.value()["network"].get<std::int64_t>()
             });
         }
-    } catch (const std::exception &e) {
+    } catch (...) {
         throw std::runtime_error("Invalid transport");
     }
     rtc::Description answer(SdpBuilder::fromConference(conference), "answer");

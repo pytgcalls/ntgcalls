@@ -1,13 +1,18 @@
 #include "rtc/rtc.hpp"
-#include "utils.hpp"
+#include "MediaDescription.hpp"
 
 class Stream{
 private:
-    rtc::Description::Audio audioSource;
+    Stream() = default;
+    std::shared_ptr<MediaHandler> source;
 
-    rtc::Description::Audio initAudio();
-    void addAudio();
+    static std::shared_ptr<MediaHandler> initAudio();
+    static std::shared_ptr<MediaHandler> initVideo();
+    void startStreaming() const;
+
 public:
 
-    Stream();
+    static Stream Audio();
+    static Stream Video();
+    std::shared_ptr<rtc::Track> addTrack(const std::shared_ptr<rtc::PeerConnection>& pc) const;
 };

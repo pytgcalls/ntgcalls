@@ -14,9 +14,9 @@ endif()
 
 file(GLOB SOURCES "src/*.cpp")
 file(GLOB HEADERS "src/*.hpp")
-list(REMOVE_ITEM SOURCES "src/pythonapi.cpp")
+list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/pythonapi.cpp")
 
-add_library(tgcalls SHARED ${SOURCES} ${HEADERS} src/SdpBuilder.cpp src/SdpBuilder.hpp src/stream.cpp src/stream.hpp)
+add_library(tgcalls SHARED ${SOURCES} ${HEADERS})
 
 target_link_libraries(tgcalls PRIVATE LibDataChannel::LibDataChannelStatic nlohmann_json::nlohmann_json)
 

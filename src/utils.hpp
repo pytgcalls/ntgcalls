@@ -1,8 +1,7 @@
 //
-// Created by iraci on 26/07/2023.
+// Created by Laky64 on 26/07/2023.
 //
-
-
+#pragma once
 #include <string>
 #include <vector>
 #include <optional>
@@ -10,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <random>
+#include <chrono>
 
 struct Sdp {
     std::optional<std::string> fingerprint;
@@ -63,6 +63,13 @@ struct Conference {
     int64_t session_id;
     Transport transport;
     std::vector<Ssrc> ssrcs;
+};
+
+struct MediaHandler {
+    rtc::Description::Media mediaDescription;
+    std::shared_ptr<rtc::MediaHandler> handler;
+    std::shared_ptr<rtc::RtcpSrReporter> srReporter;
+    std::shared_ptr<rtc::Track> track;
 };
 
 Sdp parseSdp(const std::string& sdp);

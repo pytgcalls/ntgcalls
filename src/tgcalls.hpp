@@ -2,6 +2,7 @@
 #include "rtc/rtc.hpp"
 #include <nlohmann/json.hpp>
 #include "SdpBuilder.hpp"
+#include "stream.hpp"
 
 using nlohmann::json;
 
@@ -14,8 +15,8 @@ private:
     uint32_t audioSource;
     std::vector<uint32_t> sourceGroups;
 
-    std::optional<JoinVoiceCallParams> init(const std::optional<rtc::Description::Audio>& audio_track,
-               const std::optional<rtc::Description::Video>& video_track);
+    std::optional<JoinVoiceCallParams> init(const std::optional<Stream>& audioStream,
+               const std::optional<Stream>& videoStream);
 
 public:
     json createCall();

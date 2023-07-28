@@ -1,8 +1,0 @@
-README.md
-setup.py
-tgcalls.egg-info/PKG-INFO
-tgcalls.egg-info/SOURCES.txt
-tgcalls.egg-info/dependency_links.txt
-tgcalls.egg-info/not-zip-safe
-tgcalls.egg-info/requires.txt
-tgcalls.egg-info/top_level.txt

@@ -1,5 +1,5 @@
 //
-// Created by iraci on 26/07/2023.
+// Created by Laky64 on 26/07/2023.
 //
 
 #include "utils.hpp"
@@ -34,7 +34,7 @@ Sdp parseSdp(const std::string& sdp) {
             lookup("a=ice-pwd:"),
             lookup("a=ice-ufrag:"),
             static_cast<uint32_t>(rawAudioSource.empty() ? 0 : std::stoi(rawAudioSource.substr(0, rawAudioSource.find(' ')))),
-            rawVideoSource.empty() ? std::vector<u_int32_t>() : std::vector<u_int32_t>{static_cast<uint32_t>(std::stoi(rawVideoSource.substr(0, rawVideoSource.find(' '))))}
+            rawVideoSource.empty() ? std::vector<uint32_t>() : std::vector<uint32_t>{static_cast<uint32_t>(std::stoi(rawVideoSource.substr(0, rawVideoSource.find(' '))))}
     };
 }
 
@@ -46,9 +46,9 @@ uint32_t generateSSRC() {
 }
 
 int64_t getMilliseconds() {
-    struct timespec ts = {0, 0};
-    clock_gettime(CLOCK_REALTIME, &ts);
-    int64_t milliseconds = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
+    auto now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    int64_t milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     return milliseconds;
 }
 
