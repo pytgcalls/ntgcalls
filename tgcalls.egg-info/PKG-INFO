@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: tgcalls
+Version: 1.0.0
+Summary: tgcalls for Python
+Author: tgcalls-team
+Author-email: tgcalls@example.com
+Requires-Python: >=3.7
+Provides-Extra: test

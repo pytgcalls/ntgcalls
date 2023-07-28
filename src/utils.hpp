@@ -17,8 +17,8 @@ struct Sdp {
     std::optional<std::string> setup;
     std::optional<std::string> pwd;
     std::optional<std::string> ufrag;
-    int audioSource;
-    std::vector<int> source_groups;
+    uint32_t audioSource;
+    std::vector<uint32_t> source_groups;
 };
 
 struct JoinVoiceCallParams {
@@ -27,8 +27,6 @@ struct JoinVoiceCallParams {
     std::string hash;
     std::string setup;
     std::string fingerprint;
-    int source;
-    std::vector<int> source_groups;
 };
 
 struct Fingerprint {
@@ -46,7 +44,7 @@ struct Candidate {
     std::string id;
     std::string priority;
     std::string type;
-    std::string network;
+    std::int64_t network;
 };
 
 struct Transport {
@@ -56,11 +54,21 @@ struct Transport {
     std::vector<Candidate> candidates;
 };
 
-struct JoinVoiceCallResult {
-    std::optional<std::vector<Transport>> transport;
-    std::string error;
+struct Ssrc {
+    uint32_t ssrc;
+    std::vector<uint32_t> ssrc_group;
+};
+
+struct Conference {
+    int64_t session_id;
+    Transport transport;
+    std::vector<Ssrc> ssrcs;
 };
 
 Sdp parseSdp(const std::string& sdp);
 
-int generateSSRC();
+uint32_t generateSSRC();
+
+int64_t getMilliseconds();
+
+std::string generateUniqueId(int length);
