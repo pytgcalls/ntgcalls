@@ -2,9 +2,9 @@
 // Created by Laky64 on 28/07/23.
 //
 
-#include "tgcalls.hpp"
+#include "ntgcalls.hpp"
 
-std::optional<JoinVoiceCallParams> TgCalls::init(const std::optional<Stream> &audioStream,
+std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &audioStream,
                     const std::optional<Stream> &videoStream) {
     if (connection != nullptr) {
         throw std::runtime_error("Connection already started");
@@ -51,7 +51,7 @@ std::optional<JoinVoiceCallParams> TgCalls::init(const std::optional<Stream> &au
     };
 }
 
-json TgCalls::createCall() {
+json NTgCalls::createCall() {
     auto audio = Stream::Audio();
     auto video = Stream::Video();
     auto sdp = init(audio, video);
@@ -82,7 +82,7 @@ json TgCalls::createCall() {
 
 }
 
-void TgCalls::setRemoteCallParams(const json& jsonData) {
+void NTgCalls::setRemoteCallParams(const json& jsonData) {
     if (!jsonData["rtmp"].is_null()) {
         throw std::runtime_error("Needed rtmp connection");
     }

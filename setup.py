@@ -14,6 +14,7 @@ PLAT_TO_CMAKE = {
     "win-arm32": "ARM",
     "win-arm64": "ARM64",
 }
+base_path = os.path.abspath(os.path.dirname(__file__))
 
 
 # A CMakeExtension needs a sourcedir instead of a file list.
@@ -123,16 +124,33 @@ class CMakeBuild(build_ext):
         )
 
 
+with open(os.path.join(base_path, 'README.md'), encoding='utf-8') as f:
+    readme = f.read()
+
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
-    name="tgcalls",
-    version="1.0.0",
-    author="tgcalls-team",
-    author_email="tgcalls@example.com",
-    description="tgcalls for Python",
-    long_description="",
-    ext_modules=[CMakeExtension("tgcalls-python")],
+    name='ntgcalls',
+    version='1.0.0',
+    long_description=readme,
+    long_description_content_type='text/markdown',
+    url='https://github.com/pytgcalls/ntgcalls',
+    author='Laky-64',
+    author_email='iraci.matteo@gmail.com',
+    classifiers=[
+        'License :: OSI Approved :: '
+        'GNU Lesser General Public License v3 (LGPLv3)',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+    ],
+    ext_modules=[CMakeExtension("ntgcalls-python")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},

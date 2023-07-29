@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
 
-project(tgcalls VERSION 1.0 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.0 LANGUAGES C CXX)
 
 set(NO_EXAMPLES ON)
 set(NO_TESTS ON)
@@ -16,23 +16,14 @@ file(GLOB SOURCES "src/*.cpp")
 file(GLOB HEADERS "src/*.hpp")
 list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/pythonapi.cpp")
 
-add_library(tgcalls SHARED ${SOURCES} ${HEADERS})
+add_library(ntgcalls SHARED ${SOURCES} ${HEADERS})
 
-target_link_libraries(tgcalls PRIVATE LibDataChannel::LibDataChannelStatic nlohmann_json::nlohmann_json)
+target_link_libraries(ntgcalls PRIVATE LibDataChannel::LibDataChannelStatic nlohmann_json::nlohmann_json)
 
-set_property(TARGET tgcalls PROPERTY CXX_STANDARD 17)
+set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 17)
 
 if(PYTHON_API)
     add_subdirectory(deps/pybind11)
-    pybind11_add_module(tgcalls-python src/pythonapi.cpp)
-    set_property(TARGET tgcalls-python PROPERTY CXX_STANDARD 17)
+    pybind11_add_module(ntgcalls-python src/pythonapi.cpp)
+    set_property(TARGET ntgcalls-python PROPERTY CXX_STANDARD 17)
 endif()
-
-
-#if(MSVC OR MINGW)
-#    add_custom_command(TARGET tgcalls POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#            "$<TARGET_FILE_DIR:datachannel>/libdatachannel.dll"
-#            $<TARGET_FILE_DIR:tgcalls>
-#            )
-#endif()

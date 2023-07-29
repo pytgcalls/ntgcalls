@@ -6,7 +6,7 @@
 
 using nlohmann::json;
 
-class TgCalls
+class NTgCalls
 {
 private:
     std::shared_ptr<rtc::PeerConnection> connection;

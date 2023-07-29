@@ -14,4 +14,4 @@ output
 node_modules/
 dist/
 package-lock.json
-tgcalls.egg-info
+*.egg-info
