@@ -43,7 +43,7 @@ class CMakeBuild(build_ext):
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
 
         # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
-        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
+        # PY_VERSION_INFO shows you how to pass a value into the C++ code
         # from Python.
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
@@ -56,8 +56,7 @@ class CMakeBuild(build_ext):
         if "CMAKE_ARGS" in os.environ:
             cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
 
-        # In this example, we pass in the version to C++. You might not need to.
-        cmake_args += [f"-DEXAMPLE_VERSION_INFO={self.distribution.get_version()}"]
+        cmake_args += [f"-DPY_VERSION_INFO={self.distribution.get_version()}"]
 
         if self.compiler.compiler_type != "msvc":
             # Using Ninja-build since it a) is available as a wheel and b)
@@ -150,7 +149,7 @@ setup(
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
-    ext_modules=[CMakeExtension("ntgcalls-python")],
+    ext_modules=[CMakeExtension("ntgcalls")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
