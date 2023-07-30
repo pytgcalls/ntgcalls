@@ -123,6 +123,14 @@ class CMakeBuild(build_ext):
         )
 
 
+with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
+    regex = re.compile(r'VERSION ([A-Za-z0-9.]+)', re.MULTILINE)
+    version = re.findall(regex, f.read())[1]
+
+    if version.count('.') == 3:
+        major, minor, path_, tweak = version.split('.')
+        version = f'{major}.{minor}.{path_}.dev{tweak}'
+
 with open(os.path.join(base_path, 'README.md'), encoding='utf-8') as f:
     readme = f.read()
 
@@ -130,7 +138,7 @@ with open(os.path.join(base_path, 'README.md'), encoding='utf-8') as f:
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name='ntgcalls',
-    version='1.0.0',
+    version=version,
     long_description=readme,
     long_description_content_type='text/markdown',
     url='https://github.com/pytgcalls/ntgcalls',

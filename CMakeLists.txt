@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
 
-project(ntgcalls VERSION 1.0 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.0.0 LANGUAGES C CXX)
 
 set(NO_EXAMPLES ON)
 set(NO_TESTS ON)
