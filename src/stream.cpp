@@ -1,7 +1,3 @@
-//
-// Created by Laky64 on 28/07/23.
-//
-
 #include "stream.hpp"
 
 Stream Stream::Audio() {

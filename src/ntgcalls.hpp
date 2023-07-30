@@ -1,3 +1,10 @@
+//
+// Created by Laky64 on 29/07/2023.
+//
+
+#ifndef NTGCALLS_NTGCALLS_H
+#define NTGCALLS_NTGCALLS_H
+
 #include <iostream>
 #include "rtc/rtc.hpp"
 #include <nlohmann/json.hpp>
@@ -22,3 +29,5 @@ public:
     json createCall();
     void setRemoteCallParams(const json& jsonData);
 };
+
+#endif

@@ -1,3 +1,10 @@
+//
+// Created by Laky64 on 28/07/23.
+//
+
+#ifndef NTGCALLS_STREAM_H
+#define NTGCALLS_STREAM_H
+
 #include "rtc/rtc.hpp"
 #include "MediaDescription.hpp"
 
@@ -16,3 +23,5 @@ public:
     static Stream Video();
     std::shared_ptr<rtc::Track> addTrack(const std::shared_ptr<rtc::PeerConnection>& pc) const;
 };
+
+#endif

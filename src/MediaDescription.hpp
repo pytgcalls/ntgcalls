@@ -1,3 +1,10 @@
+//
+// Created by Laky64 on 29/07/2023.
+//
+
+#ifndef NTGCALLS_MEDIA_DESCRIPTION_H
+#define NTGCALLS_MEDIA_DESCRIPTION_H
+
 #include <string>
 #include "utils.hpp"
 
@@ -11,3 +18,5 @@ public:
 
     explicit MediaDescription(uint8_t mid);
 };
+
+#endif

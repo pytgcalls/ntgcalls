@@ -1,7 +1,10 @@
 //
-// Created by Laky64 on 26/07/2023.
+// Created by Laky64 on 26/07/23.
 //
-#pragma once
+
+#ifndef NTGCALLS_UTILS_H
+#define NTGCALLS_UTILS_H
+
 #include <string>
 #include <vector>
 #include <optional>
@@ -79,3 +82,5 @@ uint32_t generateSSRC();
 int64_t getMilliseconds();
 
 std::string generateUniqueId(int length);
+
+#endif

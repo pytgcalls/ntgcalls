@@ -1,3 +1,10 @@
+//
+// Created by Laky64 on 28/07/23.
+//
+
+#ifndef NTGCALLS_SDP_BUILDER_H
+#define NTGCALLS_SDP_BUILDER_H
+
 #include <vector>
 #include <string>
 #include "utils.hpp"
@@ -21,3 +28,5 @@ private:
 public:
     static std::string fromConference(const Conference& conference);
 };
+
+#endif
