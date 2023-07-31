@@ -1,5 +1,4 @@
 import asyncio
-import json
 
 from ntgcalls import NTgCalls
 from pyrogram import Client, idle

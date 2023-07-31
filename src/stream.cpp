@@ -14,8 +14,9 @@ Stream Stream::Video() {
 
 std::shared_ptr<MediaHandler> Stream::initAudio() {
     auto desc = MediaDescription(0);
-    auto audio = rtc::Description::Audio(desc.mid);
+    auto audio = rtc::Description::Audio(desc.mid, rtc::Description::Direction::SendOnly);
     audio.addOpusCodec(111);
+    audio.addOpusCodec(126);
     audio.addSSRC(desc.ssrc, desc.cname, desc.msid, desc.trackId);
     auto rtpConfig = std::make_shared<rtc::RtpPacketizationConfig>(desc.ssrc, desc.cname, 111, rtc::OpusRtpPacketizer::defaultClockRate);
     auto packetizer = std::make_shared<rtc::OpusRtpPacketizer>(rtpConfig);
@@ -33,7 +34,7 @@ std::shared_ptr<MediaHandler> Stream::initAudio() {
 
 std::shared_ptr<MediaHandler> Stream::initVideo() {
     auto desc = MediaDescription(1);
-    auto video = rtc::Description::Video(desc.mid);
+    auto video = rtc::Description::Video(desc.mid, rtc::Description::Direction::SendOnly);
     video.addH264Codec(102);
     video.addSSRC(desc.ssrc, desc.cname, desc.msid, desc.trackId);
     auto rtpConfig = std::make_shared<rtc::RtpPacketizationConfig>(desc.ssrc, desc.cname, 102, rtc::H264RtpPacketizer::defaultClockRate);

@@ -47,7 +47,7 @@ struct Candidate {
     std::string id;
     std::string priority;
     std::string type;
-    std::int64_t network;
+    std::string network;
 };
 
 struct Transport {

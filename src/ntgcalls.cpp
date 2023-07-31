@@ -14,6 +14,15 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
         }
     });
 
+    connection->onStateChange([this](rtc::PeerConnection::State state) {
+        std::cout << "State: " << state << std::endl;
+        if (state == rtc::PeerConnection::State::Disconnected ||
+            state == rtc::PeerConnection::State::Failed ||
+            state == rtc::PeerConnection::State::Closed) {
+            connection->close();
+        }
+    });
+
     if (audioStream.has_value()) {
         audioTrack = audioStream->addTrack(connection);
 
@@ -85,13 +94,14 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
     if (data["transport"].is_null()) {
         throw std::runtime_error("Transport not found");
     }
+    data = data["transport"];
     Conference conference;
     try {
         conference = {
                 getMilliseconds(),
                 {
-                        data["transport"]["ufrag"].get<std::string>(),
-                        data["transport"]["pwd"].get<std::string>()
+                        data["ufrag"].get<std::string>(),
+                        data["pwd"].get<std::string>()
                 },
                 {
                         {
@@ -100,13 +110,13 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
                         }
                 }
         };
-        for (const auto& item : data["transport"]["fingerprints"].items()) {
+        for (const auto& item : data["fingerprints"].items()) {
             conference.transport.fingerprints.push_back({
                 item.value()["hash"],
                 item.value()["fingerprint"],
             });
         }
-        for (const auto& item : data["transport"]["candidates"].items()) {
+        for (const auto& item : data["candidates"].items()) {
             conference.transport.candidates.push_back({
                 item.value()["generation"].get<std::string>(),
                 item.value()["component"].get<std::string>(),
@@ -117,7 +127,7 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
                 item.value()["id"].get<std::string>(),
                 item.value()["priority"].get<std::string>(),
                 item.value()["type"].get<std::string>(),
-                item.value()["network"].get<std::int64_t>()
+                item.value()["network"].get<std::string>()
             });
         }
     } catch (...) {
