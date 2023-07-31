@@ -1,14 +1,17 @@
 import asyncio
 import json
 
+from ntgcalls import NTgCalls
 from pyrogram import Client, idle
 from pyrogram.raw.functions.channels import GetFullChannel
-from pyrogram.raw.functions.messages import GetFullChat
 from pyrogram.raw.functions.phone import JoinGroupCall
 from pyrogram.raw.types import UpdateGroupCallConnection, Updates, DataJSON, InputChannel
 
 api_id = 2799555
 api_hash = '47d66bbf0939d0ddf32caf8bad590ed7'
+
+clientNtgcalls = NTgCalls()
+
 
 async def main():
     client = Client('test', api_id, api_hash)
@@ -26,29 +29,20 @@ async def main():
                 ),
             )
         ).full_chat.call
-        params = json.loads(input("Enter the LocalDescription: "))
-        request_call = {
-            'ufrag': params['ufrag'],
-            'pwd': params['pwd'],
-            'fingerprints': [{
-                'hash': params['hash'],
-                'setup': params['setup'],
-                'fingerprint': params['fingerprint'],
-            }],
-            'ssrc': params['source'],
-        }
+        params = clientNtgcalls.createCall()
+        print(params)
         result: Updates = await client.invoke(
             JoinGroupCall(
                 call=input_call,
-                params=DataJSON(data=json.dumps(request_call)),
+                params=DataJSON(data=params),
                 muted=False,
                 join_as=local_peer,
             ),
         )
         for update in result.updates:
             if isinstance(update, UpdateGroupCallConnection):
-                print(f"\nCopy this remote description:\n{update.params.data}")
-                # NEEDED A WAY TO INTERCOMMUNICATE WITH C++
+                print(update.params.data)
+                clientNtgcalls.setRemoteCallParams(update.params.data)
 
         await idle()
 

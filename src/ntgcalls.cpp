@@ -35,7 +35,6 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
         return std::nullopt;
     }
 
-    std::cout << std::string(localDescription.value());
     audioSource = sdp.audioSource;
     sourceGroups = sdp.source_groups;
     return JoinVoiceCallParams {
@@ -47,7 +46,7 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
     };
 }
 
-json NTgCalls::createCall() {
+std::string NTgCalls::createCall() {
     auto audio = Stream::Audio();
     auto video = Stream::Video();
     auto sdp = init(audio, video);
@@ -74,15 +73,16 @@ json NTgCalls::createCall() {
                 {"sources", sourceGroups}
         };
     }
-    return jsonRes;
+    return to_string(jsonRes);
 
 }
 
-void NTgCalls::setRemoteCallParams(const json& jsonData) {
-    if (!jsonData["rtmp"].is_null()) {
+void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
+    auto data = json::parse(jsonData);
+    if (!data["rtmp"].is_null()) {
         throw std::runtime_error("Needed rtmp connection");
     }
-    if (jsonData["transport"].is_null()) {
+    if (data["transport"].is_null()) {
         throw std::runtime_error("Transport not found");
     }
     Conference conference;
@@ -90,8 +90,8 @@ void NTgCalls::setRemoteCallParams(const json& jsonData) {
         conference = {
                 getMilliseconds(),
                 {
-                        jsonData["transport"]["ufrag"].get<std::string>(),
-                        jsonData["transport"]["pwd"].get<std::string>()
+                        data["transport"]["ufrag"].get<std::string>(),
+                        data["transport"]["pwd"].get<std::string>()
                 },
                 {
                         {
@@ -100,13 +100,13 @@ void NTgCalls::setRemoteCallParams(const json& jsonData) {
                         }
                 }
         };
-        for (const auto& item : jsonData["transport"]["fingerprints"].items()) {
+        for (const auto& item : data["transport"]["fingerprints"].items()) {
             conference.transport.fingerprints.push_back({
                 item.value()["hash"],
                 item.value()["fingerprint"],
             });
         }
-        for (const auto& item : jsonData["transport"]["candidates"].items()) {
+        for (const auto& item : data["transport"]["candidates"].items()) {
             conference.transport.candidates.push_back({
                 item.value()["generation"].get<std::string>(),
                 item.value()["component"].get<std::string>(),

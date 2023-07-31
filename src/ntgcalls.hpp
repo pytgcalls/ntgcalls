@@ -26,8 +26,8 @@ private:
                const std::optional<Stream>& videoStream);
 
 public:
-    json createCall();
-    void setRemoteCallParams(const json& jsonData);
+    std::string createCall();
+    void setRemoteCallParams(const std::string& jsonData);
 };
 
 #endif
