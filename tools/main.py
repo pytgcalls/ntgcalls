@@ -9,7 +9,7 @@ from pyrogram.raw.types import UpdateGroupCallConnection, Updates, DataJSON, Inp
 api_id = 2799555
 api_hash = '47d66bbf0939d0ddf32caf8bad590ed7'
 
-clientNtgcalls = NTgCalls()
+wrtc = NTgCalls()
 
 
 async def main():
@@ -28,20 +28,17 @@ async def main():
                 ),
             )
         ).full_chat.call
-        params = clientNtgcalls.createCall()
-        print(params)
         result: Updates = await client.invoke(
             JoinGroupCall(
                 call=input_call,
-                params=DataJSON(data=params),
+                params=DataJSON(data=wrtc.createCall()),
                 muted=False,
                 join_as=local_peer,
             ),
         )
         for update in result.updates:
             if isinstance(update, UpdateGroupCallConnection):
-                print(update.params.data)
-                clientNtgcalls.setRemoteCallParams(update.params.data)
+                wrtc.setRemoteCallParams(update.params.data)
 
         await idle()
 
