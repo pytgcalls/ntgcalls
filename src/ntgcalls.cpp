@@ -31,7 +31,7 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
     if (videoStream.has_value()) {
         audioTrack = videoStream->addTrack(connection);
     }
-    connection->setLocalDescription();
+    connection->setLocalDescription(rtc::Description::Type::Offer);
 
     std::future<std::optional<rtc::Description>> descriptionFuture = descriptionPromise.get_future();
     const std::optional<rtc::Description> localDescription = descriptionFuture.get();
@@ -133,6 +133,6 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
     } catch (...) {
         throw std::runtime_error("Invalid transport");
     }
-    rtc::Description answer(SdpBuilder::fromConference(conference), "answer");
+    rtc::Description answer(SdpBuilder::fromConference(conference), rtc::Description::Type::Answer);
     connection->setRemoteDescription(answer);
 }
