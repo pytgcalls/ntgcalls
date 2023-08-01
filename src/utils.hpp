@@ -2,8 +2,8 @@
 // Created by Laky64 on 26/07/23.
 //
 
-#ifndef NTGCALLS_UTILS_H
-#define NTGCALLS_UTILS_H
+#ifndef NTGCALLS_UTILS_HPP
+#define NTGCALLS_UTILS_HPP
 
 #include <string>
 #include <vector>

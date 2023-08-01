@@ -2,8 +2,8 @@
 // Created by Laky64 on 28/07/23.
 //
 
-#ifndef NTGCALLS_STREAM_H
-#define NTGCALLS_STREAM_H
+#ifndef NTGCALLS_STREAM_HPP
+#define NTGCALLS_STREAM_HPP
 
 #include "rtc/rtc.hpp"
 #include "MediaDescription.hpp"

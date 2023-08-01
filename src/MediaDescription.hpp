@@ -2,8 +2,8 @@
 // Created by Laky64 on 29/07/2023.
 //
 
-#ifndef NTGCALLS_MEDIA_DESCRIPTION_H
-#define NTGCALLS_MEDIA_DESCRIPTION_H
+#ifndef NTGCALLS_MEDIA_DESCRIPTION_HPP
+#define NTGCALLS_MEDIA_DESCRIPTION_HPP
 
 #include <string>
 #include "utils.hpp"

@@ -2,8 +2,8 @@
 // Created by Laky64 on 28/07/23.
 //
 
-#ifndef NTGCALLS_SDP_BUILDER_H
-#define NTGCALLS_SDP_BUILDER_H
+#ifndef NTGCALLS_SDP_BUILDER_HPP
+#define NTGCALLS_SDP_BUILDER_HPP
 
 #include <vector>
 #include <string>

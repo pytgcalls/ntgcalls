@@ -2,8 +2,8 @@
 // Created by Laky64 on 29/07/2023.
 //
 
-#ifndef NTGCALLS_NTGCALLS_H
-#define NTGCALLS_NTGCALLS_H
+#ifndef NTGCALLS_NTGCALLS_HPP
+#define NTGCALLS_NTGCALLS_HPP
 
 #include <iostream>
 #include "rtc/rtc.hpp"
