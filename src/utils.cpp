@@ -24,8 +24,8 @@ Sdp parseSdp(const std::string& sdp) {
     std::string rawAudioSource = lookup("a=ssrc:");
     std::string rawVideoSource = lookup("a=ssrc-group:FID ");
     return {
-            lookup("a=fingerprint:").substr(0, lookup("a=fingerprint:").find(' ')),
             lookup("a=fingerprint:").substr(lookup("a=fingerprint:").find(' ') + 1),
+            lookup("a=fingerprint:").substr(0, lookup("a=fingerprint:").find(' ')),
             lookup("a=setup:"),
             lookup("a=ice-pwd:"),
             lookup("a=ice-ufrag:"),
