@@ -14,18 +14,8 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
         }
     });
 
-    connection->onStateChange([this](rtc::PeerConnection::State state) {
-        std::cout << "State: " << state << std::endl;
-        if (state == rtc::PeerConnection::State::Disconnected ||
-            state == rtc::PeerConnection::State::Failed ||
-            state == rtc::PeerConnection::State::Closed) {
-            connection->close();
-        }
-    });
-
     if (audioStream.has_value()) {
         audioTrack = audioStream->addTrack(connection);
-
     }
 
     if (videoStream.has_value()) {
@@ -38,6 +28,7 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
     if (!localDescription.has_value()) {
         throw std::runtime_error("LocalDescription not found");
     }
+    connection->resetCallbacks();
 
     const auto sdp = parseSdp(localDescription.value());
     if (!sdp.ufrag || !sdp.pwd || !sdp.hash || !sdp.fingerprint) {
@@ -83,7 +74,6 @@ std::string NTgCalls::createCall() {
         };
     }
     return to_string(jsonRes);
-
 }
 
 void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
@@ -133,6 +123,19 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
     } catch (...) {
         throw std::runtime_error("Invalid transport");
     }
+    std::promise<bool> waitConnection;
+    connection->onStateChange([this, &waitConnection](rtc::PeerConnection::State state) {
+        if (state == rtc::PeerConnection::State::Failed) {
+            connection->close();
+            waitConnection.set_value(false);
+        } else if (state == rtc::PeerConnection::State::Connected) {
+            waitConnection.set_value(true);
+        }
+    });
     rtc::Description answer(SdpBuilder::fromConference(conference), rtc::Description::Type::Answer);
     connection->setRemoteDescription(answer);
+    if (!waitConnection.get_future().get()) {
+        throw std::runtime_error("WebRTC connection failed");
+    }
+    connection->resetCallbacks();
 }
