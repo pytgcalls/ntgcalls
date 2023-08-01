@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 project(ntgcalls VERSION 1.0.0 LANGUAGES C CXX)
 
@@ -25,4 +25,4 @@ endif()
 
 target_link_libraries(ntgcalls PRIVATE LibDataChannel::LibDataChannelStatic nlohmann_json::nlohmann_json)
 
-set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 17)
+set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20)
