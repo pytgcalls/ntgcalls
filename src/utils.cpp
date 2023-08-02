@@ -48,6 +48,13 @@ int64_t getMilliseconds() {
     return milliseconds;
 }
 
+uint64_t getMicroseconds() {
+    auto now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    int64_t microseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+    return microseconds;
+}
+
 std::string generateUniqueId(int length) {
     static std::random_device rd;
     static std::mt19937 gen(rd());

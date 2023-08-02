@@ -11,6 +11,7 @@ env
 old
 output
 *.session
+*.session-journal
 node_modules/
 dist/
 package-lock.json

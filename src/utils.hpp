@@ -13,6 +13,24 @@
 #include <sstream>
 #include <random>
 #include <chrono>
+#include <cstdint>
+#include <stdexcept>
+#include <type_traits>
+
+#ifdef _WIN32
+#include <windows.h>
+inline void usleep(__int64 uSec) {
+    HANDLE timer;
+    LARGE_INTEGER ft;
+    ft.QuadPart = -(10 * uSec);
+    timer = CreateWaitableTimer(nullptr, TRUE, nullptr);
+    SetWaitableTimer(timer, &ft, 0, nullptr, nullptr, 0);
+    WaitForSingleObject(timer, INFINITE);
+    CloseHandle(timer);
+}
+#else
+#include <unistd.h>
+#endif
 
 struct Sdp {
     std::optional<std::string> fingerprint;
@@ -68,19 +86,21 @@ struct Conference {
     std::vector<Ssrc> ssrcs;
 };
 
-struct MediaHandler {
-    rtc::Description::Media mediaDescription;
-    std::shared_ptr<rtc::MediaHandler> handler;
-    std::shared_ptr<rtc::RtcpSrReporter> srReporter;
-    std::shared_ptr<rtc::Track> track;
-};
-
 Sdp parseSdp(const std::string& sdp);
 
 uint32_t generateSSRC();
 
 int64_t getMilliseconds();
 
+uint64_t getMicroseconds();
+
 std::string generateUniqueId(int length);
+
+inline uint32_t ntohl(uint32_t networkInt) {
+    return ((networkInt & 0xFF000000u) >> 24) |
+           ((networkInt & 0x00FF0000u) >> 8)  |
+           ((networkInt & 0x0000FF00u) << 8)  |
+           ((networkInt & 0x000000FFu) << 24);
+}
 
 #endif

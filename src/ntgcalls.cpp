@@ -1,10 +1,10 @@
 #include "ntgcalls.hpp"
 
-std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &audioStream,
-                    const std::optional<Stream> &videoStream) {
+std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> &mediaStream) {
     if (connection != nullptr) {
         throw std::runtime_error("Connection already started");
     }
+    rtc::InitLogger(rtc::LogLevel::Debug);
     std::promise<std::optional<rtc::Description>> descriptionPromise;
 
     connection = std::make_shared<rtc::PeerConnection>();
@@ -14,13 +14,8 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
         }
     });
 
-    if (audioStream.has_value()) {
-        audioTrack = audioStream->addTrack(connection);
-    }
+    mediaStream->addTracks(connection);
 
-    if (videoStream.has_value()) {
-        audioTrack = videoStream->addTrack(connection);
-    }
     connection->setLocalDescription(rtc::Description::Type::Offer);
 
     std::future<std::optional<rtc::Description>> descriptionFuture = descriptionPromise.get_future();
@@ -28,7 +23,7 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
     if (!localDescription.has_value()) {
         throw std::runtime_error("LocalDescription not found");
     }
-    connection->resetCallbacks();
+    //connection->resetCallbacks();
 
     const auto sdp = parseSdp(localDescription.value());
     if (!sdp.ufrag || !sdp.pwd || !sdp.hash || !sdp.fingerprint) {
@@ -47,9 +42,10 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::optional<Stream> &a
 }
 
 std::string NTgCalls::createCall() {
-    auto audio = Stream::Audio();
-    auto video = Stream::Video();
-    auto sdp = init(audio, video);
+    std::string defaultDir = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/samples/";
+    auto opusFiles = std::make_shared<OpusReader>(defaultDir + "opus");
+    auto stream = std::make_shared<Stream>(opusFiles, nullptr);
+    auto sdp = init(stream);
 
     if (!sdp.has_value()) {
         throw std::runtime_error("Sdp has no value");
@@ -125,11 +121,10 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
     }
     std::promise<bool> waitConnection;
     connection->onStateChange([this, &waitConnection](rtc::PeerConnection::State state) {
-        if (state == rtc::PeerConnection::State::Failed) {
-            connection->close();
+        if (state == rtc::PeerConnection::State::Failed || state == rtc::PeerConnection::State::Closed) {
             waitConnection.set_value(false);
         } else if (state == rtc::PeerConnection::State::Connected) {
-            waitConnection.set_value(true);
+            //waitConnection.set_value(true);
         }
     });
     rtc::Description answer(SdpBuilder::fromConference(conference), rtc::Description::Type::Answer);
@@ -137,5 +132,5 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
     if (!waitConnection.get_future().get()) {
         throw std::runtime_error("WebRTC connection failed");
     }
-    connection->resetCallbacks();
+    //connection->resetCallbacks();
 }

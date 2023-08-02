@@ -39,6 +39,8 @@ async def main():
         for update in result.updates:
             if isinstance(update, UpdateGroupCallConnection):
                 wrtc.setRemoteCallParams(update.params.data)
+        print("Connected!")
         await idle()
+        print("Closed")
 
 asyncio.new_event_loop().run_until_complete(main())
