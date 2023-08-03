@@ -8,7 +8,7 @@
 #include <iostream>
 #include "rtc/rtc.hpp"
 #include <nlohmann/json.hpp>
-#include "utils/SdpBuilder.hpp"
+#include "webrtc/SdpBuilder.hpp"
 #include "Stream.hpp"
 
 using nlohmann::json;
