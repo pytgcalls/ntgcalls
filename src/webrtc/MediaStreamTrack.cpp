@@ -13,11 +13,11 @@ MediaStreamTrack::MediaStreamTrack(Type codec, const std::shared_ptr<rtc::PeerCo
 
     std::optional<rtc::Description::Media> desc;
     if (codec == Audio) {
-        auto audio = rtc::Description::Audio(mid, rtc::Description::Direction::SendRecv);
+        auto audio = rtc::Description::Audio(mid, rtc::Description::Direction::SendOnly);
         audio.addOpusCodec(codec);
         desc = audio;
     } else {
-        auto video = rtc::Description::Video(mid, rtc::Description::Direction::SendRecv);
+        auto video = rtc::Description::Video(mid, rtc::Description::Direction::SendOnly);
         video.addH264Codec(codec);
         desc = video;
     }
@@ -92,7 +92,7 @@ void MediaStreamTrack::sendData(rtc::binary samples, uint64_t sampleTime) {
         srReporter->setNeedsToReport();
     }
     if (!samples.empty()) {
-        std::cout << "Sending sample with size: " << std::to_string(samples.size()) << " to " << std::endl;
+        std::cout << "Sending sample with size: " << std::to_string(samples.size()) << " to " << std::to_string(ssrc) << std::endl;
     }
     try {
         track->send(samples);

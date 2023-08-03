@@ -118,6 +118,7 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
     }
     std::promise<bool> waitConnection;
     connection->onStateChange([&waitConnection](rtc::PeerConnection::State state) {
+        std::cout << "[STATE: " << state << "]";
         if (state == rtc::PeerConnection::State::Failed || state == rtc::PeerConnection::State::Closed) {
             waitConnection.set_value(false);
         } else if (state == rtc::PeerConnection::State::Connected) {

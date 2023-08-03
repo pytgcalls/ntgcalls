@@ -10,7 +10,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-void usleep(__int64 uSec) {
+inline void usleep(__int64 uSec) {
     HANDLE timer;
     LARGE_INTEGER ft;
     ft.QuadPart = -(10 * uSec);
