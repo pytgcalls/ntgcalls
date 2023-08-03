@@ -8,11 +8,18 @@
 #include <iostream>
 #include "rtc/rtc.hpp"
 #include <nlohmann/json.hpp>
-#include "SdpBuilder.hpp"
-#include "stream/stream.hpp"
-#include "stream/codecs/OpusReader.hpp"
+#include "utils/SdpBuilder.hpp"
+#include "Stream.hpp"
 
 using nlohmann::json;
+
+struct JoinVoiceCallParams {
+    std::string ufrag;
+    std::string pwd;
+    std::string hash;
+    std::string setup;
+    std::string fingerprint;
+};
 
 class NTgCalls
 {
@@ -20,6 +27,7 @@ private:
     std::shared_ptr<rtc::PeerConnection> connection;
     uint32_t audioSource;
     std::vector<uint32_t> sourceGroups;
+    std::shared_ptr<Stream> stream;
 
     std::optional<JoinVoiceCallParams> init(const std::shared_ptr<Stream> &mediaStream);
 

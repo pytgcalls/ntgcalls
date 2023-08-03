@@ -122,3 +122,36 @@ std::string SdpBuilder::fromConference(const Conference& conference) {
     sdp.addConference(conference);
     return sdp.finalize();
 }
+
+Sdp SdpBuilder::parseSdp(const std::string& sdp) {
+    std::vector<std::string> lines;
+    std::string line;
+    std::istringstream stream(sdp);
+    while (std::getline(stream, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        lines.push_back(line);
+    }
+
+    auto lookup = [&lines](const std::string& prefix) -> std::string {
+        for (const auto& line : lines) {
+            if (line.compare(0, prefix.size(), prefix) == 0) {
+                return line.substr(prefix.size());
+            }
+        }
+        return "";
+    };
+
+    std::string rawAudioSource = lookup("a=ssrc:");
+    std::string rawVideoSource = lookup("a=ssrc-group:FID ");
+    return {
+            lookup("a=fingerprint:").substr(lookup("a=fingerprint:").find(' ') + 1),
+            lookup("a=fingerprint:").substr(0, lookup("a=fingerprint:").find(' ')),
+            lookup("a=setup:"),
+            lookup("a=ice-pwd:"),
+            lookup("a=ice-ufrag:"),
+            static_cast<uint32_t>(rawAudioSource.empty() ? 0 : std::stoi(rawAudioSource.substr(0, rawAudioSource.find(' ')))),
+            rawVideoSource.empty() ? std::vector<uint32_t>() : std::vector<uint32_t>{static_cast<uint32_t>(std::stoi(rawVideoSource.substr(0, rawVideoSource.find(' '))))}
+    };
+}

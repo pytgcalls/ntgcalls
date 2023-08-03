@@ -23,9 +23,8 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> 
     if (!localDescription.has_value()) {
         throw std::runtime_error("LocalDescription not found");
     }
-    //connection->resetCallbacks();
 
-    const auto sdp = parseSdp(localDescription.value());
+    const auto sdp = SdpBuilder::parseSdp(localDescription.value());
     if (!sdp.ufrag || !sdp.pwd || !sdp.hash || !sdp.fingerprint) {
         return std::nullopt;
     }
@@ -42,9 +41,7 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> 
 }
 
 std::string NTgCalls::createCall() {
-    std::string defaultDir = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/samples/";
-    auto opusFiles = std::make_shared<OpusReader>(defaultDir + "opus");
-    auto stream = std::make_shared<Stream>(opusFiles, nullptr);
+    stream = std::make_shared<Stream>();
     auto sdp = init(stream);
 
     if (!sdp.has_value()) {
@@ -120,11 +117,11 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
         throw std::runtime_error("Invalid transport");
     }
     std::promise<bool> waitConnection;
-    connection->onStateChange([this, &waitConnection](rtc::PeerConnection::State state) {
+    connection->onStateChange([&waitConnection](rtc::PeerConnection::State state) {
         if (state == rtc::PeerConnection::State::Failed || state == rtc::PeerConnection::State::Closed) {
             waitConnection.set_value(false);
         } else if (state == rtc::PeerConnection::State::Connected) {
-            //waitConnection.set_value(true);
+            waitConnection.set_value(true);
         }
     });
     rtc::Description answer(SdpBuilder::fromConference(conference), rtc::Description::Type::Answer);
@@ -132,5 +129,4 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
     if (!waitConnection.get_future().get()) {
         throw std::runtime_error("WebRTC connection failed");
     }
-    //connection->resetCallbacks();
 }
