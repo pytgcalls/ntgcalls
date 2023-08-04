@@ -4,7 +4,7 @@ project(ntgcalls VERSION 1.0.0 LANGUAGES C CXX)
 
 set(NO_EXAMPLES ON)
 set(NO_TESTS ON)
-set(SOURCES_ROOT "src")
+set(SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 add_subdirectory(deps/libdatachannel)
 if (NOT TARGET nlohmann_json)
@@ -14,7 +14,7 @@ endif()
 
 file(GLOB_RECURSE SOURCES "${SOURCES_ROOT}/*.cpp")
 file(GLOB_RECURSE HEADERS "${SOURCES_ROOT}/*.hpp")
-list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCES_ROOT}/pythonapi.cpp")
+list(REMOVE_ITEM SOURCES "${SOURCES_ROOT}/pythonapi.cpp")
 
 if(DEFINED PY_VERSION_INFO)
     add_subdirectory(deps/pybind11)
