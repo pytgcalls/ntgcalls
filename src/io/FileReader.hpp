@@ -9,22 +9,19 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "rtc/rtc.hpp"
+#include "BaseReader.hpp"
 
-class FileReader {
+class FileReader: public BaseReader {
 private:
     std::ifstream source;
-    int64_t chunkSize, readChunks;
     std::string filePath;
 
 public:
     explicit FileReader(const std::string& path, std::int64_t size = 65536);
 
-    ~FileReader();
+    rtc::binary read() final;
 
-    rtc::binary read();
-
-    void close();
+    void close() final;
 };
 
 

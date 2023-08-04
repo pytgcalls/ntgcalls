@@ -14,10 +14,6 @@ FileReader::FileReader(const std::string& path, std::int64_t size) {
     filePath = path;
 }
 
-FileReader::~FileReader() {
-    close();
-}
-
 rtc::binary FileReader::read() {
     if (source.eof()) {
         return {};
