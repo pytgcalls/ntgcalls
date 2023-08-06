@@ -10,14 +10,27 @@ async function main() {
         }
     };
 
-    rtc.addTrack(new nonstandard.RTCAudioSource().createTrack())
+    const audioSource = new nonstandard.RTCAudioSource();
+    rtc.addTrack(audioSource.createTrack())
 
     const offer = await rtc.createOffer({
         offerToReceiveVideo: true,
         offerToReceiveAudio: true,
     });
 
-    //await rtc.setLocalDescription(offer);
+    const sampleRate = 48000, bitsPerSample = 16, channelCount = 1;
+
+    const bufSize = ((sampleRate * bitsPerSample) / 8 / 100) * channelCount;
+    let buffer = new Uint8Array(48000);
+
+    const samples = new Int16Array(new Uint8Array(buffer).buffer);
+    audioSource.onData({
+        bitsPerSample: bitsPerSample,
+        sampleRate: sampleRate,
+        channelCount: channelCount,
+        numberOfFrames: samples.length,
+        buffer,
+    });
 
     if (offer.sdp) {
         console.log(JSON.stringify(parseSdp(offer.sdp)));
