@@ -17,6 +17,7 @@ private:
     std::string cname, trackId, msid, mid;
     uint32_t ssrc;
     std::shared_ptr<rtc::Track> track;
+    std::shared_ptr<rtc::RtcpSrReporter> srReporter;
 
     static std::string generateUniqueId(
             int length,
@@ -39,7 +40,7 @@ public:
 
     void onOpen(const std::function<void()> &callback);
 
-    void sendData(const rtc::binary& samples);
+    void sendData(const rtc::binary& samples, uint64_t sampleTime);
 };
 
 
