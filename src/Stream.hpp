@@ -20,6 +20,9 @@ private:
     std::shared_ptr<RTCAudioSource> audioSrc;
     std::shared_ptr<BaseReader> audioReader;
 
+    // TEMPORARY VARIABLES
+    uint64_t sampleDuration_us, sampleTime_us, startTime = 0;
+
     void start();
 
     void processData();

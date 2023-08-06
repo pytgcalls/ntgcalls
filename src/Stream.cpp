@@ -7,18 +7,31 @@
 Stream::Stream(std::shared_ptr<BaseReader> audio) {
     audioSrc = std::make_shared<RTCAudioSource>();
     audioReader = std::move(audio);
+    sampleDuration_us = 1000 * 1000 / 50;
+    sampleTime_us = UINT64_MAX - sampleDuration_us + 1;
 }
 
 void Stream::start() {
+    startTime = getMicroseconds();
     dispatchQueue.dispatch([this]() {
         processData();
     });
 }
 
 void Stream::processData() {
-    audioSrc->sendData(audioReader->read());
+    auto currentTime = getMicroseconds();
+    std::cout << "currentTime: " << std::to_string(currentTime) << std::endl;
+    auto elapsed = currentTime - startTime;
+    if (sampleTime_us > elapsed) {
+        auto waitTime = sampleTime_us - elapsed;
+        std::this_thread::sleep_for(std::chrono::microseconds(waitTime));
+    }
+
+    sampleTime_us += sampleDuration_us;
+    std::cout << "sampleTime_us: " << std::to_string(sampleTime_us) << std::endl;
+    audioSrc->sendData(audioReader->read(), sampleTime_us);
+
     dispatchQueue.dispatch([this]() {
-        usleep(10 * 1000);
         processData();
     });
 }
