@@ -10,7 +10,8 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> 
     // https://github.com/morethanwords/tweb/blob/master/src/lib/calls/groupCallConnectionInstance.ts#L52-L62
     rtc::Configuration config;
     config.iceTransportPolicy = rtc::TransportPolicy::All;
-    config.enableIceTcp = true;
+    config.enableIceUdpMux = true;
+    config.disableAutoNegotiation = true;
 
     connection = std::make_shared<rtc::PeerConnection>(config);
     connection -> onGatheringStateChange([this, &descriptionPromise](rtc::PeerConnection::GatheringState state) {
