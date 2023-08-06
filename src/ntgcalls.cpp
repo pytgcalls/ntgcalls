@@ -7,7 +7,12 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> 
     rtc::InitLogger(rtc::LogLevel::Debug);
     std::promise<std::optional<rtc::Description>> descriptionPromise;
 
-    connection = std::make_shared<rtc::PeerConnection>();
+    // https://github.com/morethanwords/tweb/blob/master/src/lib/calls/groupCallConnectionInstance.ts#L52-L62
+    rtc::Configuration config;
+    config.iceTransportPolicy = rtc::TransportPolicy::All;
+    config.enableIceTcp = true;
+
+    connection = std::make_shared<rtc::PeerConnection>(config);
     connection -> onGatheringStateChange([this, &descriptionPromise](rtc::PeerConnection::GatheringState state) {
         if (state == rtc::PeerConnection::GatheringState::Complete) {
             descriptionPromise.set_value(connection->localDescription());
@@ -40,8 +45,12 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> 
     };
 }
 
-std::string NTgCalls::createCall() {
-    stream = std::make_shared<Stream>();
+std::string NTgCalls::createCall(const std::string& audioPath) {
+    auto sampleRate = 8000;
+    auto bitsPerSample = 16;
+    auto channelCount = 1;
+    auto byteLength = ((sampleRate * bitsPerSample) / 8 / 100) * channelCount;
+    stream = std::make_shared<Stream>(std::make_shared<FileReader>(audioPath, byteLength));
     auto sdp = init(stream);
 
     if (!sdp.has_value()) {

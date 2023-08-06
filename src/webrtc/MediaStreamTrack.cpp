@@ -38,18 +38,13 @@ MediaStreamTrack::MediaStreamTrack(Type codec, const std::shared_ptr<rtc::PeerCo
         auto packetizer = std::make_shared<rtc::H264RtpPacketizer>(rtc::H264RtpPacketizer::Separator::Length, rtpConfig);
         mediaHandler = std::make_shared<rtc::H264PacketizationHandler>(packetizer);
     }
-
-    srReporter = std::make_shared<rtc::RtcpSrReporter>(rtpConfig);
-    mediaHandler->addToChain(srReporter);
     auto nackResponder = std::make_shared<rtc::RtcpNackResponder>();
     mediaHandler->addToChain(nackResponder);
-
     track->setMediaHandler(mediaHandler);
 }
 
 MediaStreamTrack::~MediaStreamTrack() {
     track = nullptr;
-    srReporter = nullptr;
 }
 
 std::string MediaStreamTrack::generateTrackId() {
@@ -82,15 +77,7 @@ void MediaStreamTrack::onOpen(const std::function<void()>& callback) {
     track->onOpen(callback);
 }
 
-void MediaStreamTrack::sendData(rtc::binary samples, uint64_t sampleTime) {
-    auto rtpConfig = srReporter->rtpConfig;
-    auto elapsedSeconds = double(sampleTime) / (1000 * 1000);
-    uint32_t elapsedTimestamp = rtpConfig->secondsToTimestamp(elapsedSeconds);
-    rtpConfig->timestamp = rtpConfig->startTimestamp + elapsedTimestamp;
-    auto reportElapsedTimestamp = rtpConfig->timestamp - srReporter->lastReportedTimestamp();
-    if (rtpConfig->timestampToSeconds(reportElapsedTimestamp) > 1) {
-        srReporter->setNeedsToReport();
-    }
+void MediaStreamTrack::sendData(const rtc::binary& samples) {
     if (!samples.empty()) {
         std::cout << "Sending sample with size: " << std::to_string(samples.size()) << " to " << std::to_string(ssrc) << std::endl;
     }

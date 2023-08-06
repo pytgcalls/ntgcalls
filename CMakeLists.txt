@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 project(ntgcalls VERSION 1.0.0 LANGUAGES C CXX)
 
 set(NO_EXAMPLES ON)
 set(NO_TESTS ON)
+set(USE_NICE ON)
 set(SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 add_subdirectory(deps/libdatachannel)

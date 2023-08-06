@@ -8,34 +8,24 @@
 
 #include <fstream>
 #include <memory>
+#include <utility>
 #include "webrtc/RTCAudioSource.hpp"
 #include "utils/DispatchQueue.hpp"
 #include "utils/time.hpp"
+#include "io/FileReader.hpp"
 
 class Stream {
 private:
-    std::shared_ptr<RTCAudioSource> audioSrc;
-
-    // TEMPORARY VARIABLES
     DispatchQueue dispatchQueue = DispatchQueue("StreamQueue");
-    uint64_t sampleDuration_us;
-    uint64_t sampleTime_us = 0;
-    uint32_t counter = -1;
-    rtc::binary sample = {};
-    bool isRunning = false;
-    uint64_t startTime = 0;
-    std::mutex mutex;
+    std::shared_ptr<RTCAudioSource> audioSrc;
+    std::shared_ptr<BaseReader> audioReader;
 
     void start();
 
+    void processData();
+
 public:
-    Stream();
-
-    void loadNextSample();
-
-    void unsafePrepareForSample();
-
-    void sendSample();
+    explicit Stream(std::shared_ptr<BaseReader> audio);
 
     void addTracks(const std::shared_ptr<rtc::PeerConnection> &pc);
 };

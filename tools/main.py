@@ -14,8 +14,10 @@ wrtc = NTgCalls()
 
 async def main():
     client = Client('test', api_id, api_hash)
+    file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/test.opus"
 
     async with client:
+        call_params = wrtc.createCall(file_audio)
         chat = await client.resolve_peer(-1001919448795)
         local_peer = await client.resolve_peer((await client.get_me()).id)
         input_call = (
@@ -31,7 +33,7 @@ async def main():
         result: Updates = await client.invoke(
             JoinGroupCall(
                 call=input_call,
-                params=DataJSON(data=wrtc.createCall()),
+                params=DataJSON(data=call_params),
                 muted=False,
                 join_as=local_peer,
             ),

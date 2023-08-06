@@ -32,7 +32,7 @@ private:
     std::optional<JoinVoiceCallParams> init(const std::shared_ptr<Stream> &mediaStream);
 
 public:
-    std::string createCall();
+    std::string createCall(const std::string& audioPath);
     void setRemoteCallParams(const std::string& jsonData);
 };
 
