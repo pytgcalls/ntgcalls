@@ -13,6 +13,7 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> 
     config.iceTransportPolicy = rtc::TransportPolicy::All;
     config.enableIceUdpMux = true;
     config.disableAutoNegotiation = true;
+    config.bindAddress = "0.0.0.0";
 
     connection = std::make_shared<rtc::PeerConnection>(config);
     connection -> onGatheringStateChange([this, &descriptionPromise](rtc::PeerConnection::GatheringState state) {
@@ -111,6 +112,7 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
                         {
                             audioSource,
                             sourceGroups,
+                            true,
                         }
                 }
         };
@@ -146,6 +148,7 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
             waitConnection.set_value(true);
         }
     });
+    std::cout << SdpBuilder::fromConference(conference);
     rtc::Description answer(SdpBuilder::fromConference(conference), rtc::Description::Type::Answer);
     connection->setRemoteDescription(answer);
     if (!waitConnection.get_future().get()) {

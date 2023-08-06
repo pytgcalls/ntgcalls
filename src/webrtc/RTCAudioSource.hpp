@@ -12,7 +12,7 @@
 
 class RTCAudioSource: public RTCMediaSource {
 public:
-    RTCAudioSource();
+    RTCAudioSource(rtc::Description::Direction dir);
 };
 
 

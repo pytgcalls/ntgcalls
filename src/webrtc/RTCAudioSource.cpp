@@ -4,4 +4,4 @@
 
 #include "RTCAudioSource.hpp"
 
-RTCAudioSource::RTCAudioSource(): RTCMediaSource(MediaStreamTrack::Type::Audio) {}
+RTCAudioSource::RTCAudioSource(rtc::Description::Direction dir): RTCMediaSource(MediaStreamTrack::Type::Audio, dir) {}

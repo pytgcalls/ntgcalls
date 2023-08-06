@@ -18,6 +18,7 @@ private:
     uint32_t ssrc;
     std::shared_ptr<rtc::Track> track;
     std::shared_ptr<rtc::RtcpSrReporter> srReporter;
+    rtc::Description::Direction dir;
 
     static std::string generateUniqueId(
             int length,
@@ -34,7 +35,9 @@ public:
         Video = 102
     };
 
-    explicit MediaStreamTrack(Type codec, const std::shared_ptr<rtc::PeerConnection>& pc);
+    explicit MediaStreamTrack(Type codec,
+            const std::shared_ptr<rtc::PeerConnection>& pc,
+            rtc::Description::Direction direction);
 
     ~MediaStreamTrack();
 

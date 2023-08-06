@@ -6,12 +6,13 @@
 
 #include <utility>
 
-RTCMediaSource::RTCMediaSource(MediaStreamTrack::Type type) {
+RTCMediaSource::RTCMediaSource(MediaStreamTrack::Type type, rtc::Description::Direction direction) {
     codec = type;
+    dir = direction;
 }
 
 void RTCMediaSource::addTrack(const std::shared_ptr<rtc::PeerConnection> &pc) {
-    track = std::make_shared<MediaStreamTrack>(codec, pc);
+    track = std::make_shared<MediaStreamTrack>(codec, pc, dir);
 }
 
 void RTCMediaSource::onOpen(const std::function<void()> &callback) {

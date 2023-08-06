@@ -4,29 +4,29 @@
 
 #include "MediaStreamTrack.hpp"
 
-MediaStreamTrack::MediaStreamTrack(Type codec, const std::shared_ptr<rtc::PeerConnection>& pc) {
-    cname = mid = trackId = "audio-stream";
-    msid = "stream1";
-    ssrc = 2;
-    /* Disabled due to a strange bug with libdatachannel
-    cname = generateUniqueId(16);
-    msid = "-";
-    trackId = generateTrackId();
-    mid = std::to_string(codec == Audio ? 0:1);
-    ssrc = generateSSRC();*/
+MediaStreamTrack::MediaStreamTrack(Type codec,
+        const std::shared_ptr<rtc::PeerConnection>& pc,
+        rtc::Description::Direction direction) {
+    dir = direction;
+
+    ssrc = generateSSRC();
+    mid = trackId = cname = "audio" + std::to_string(ssrc);
+    msid = "stream" + std::to_string(ssrc);
 
     std::optional<rtc::Description::Media> desc;
     if (codec == Audio) {
-        auto audio = rtc::Description::Audio(mid, rtc::Description::Direction::SendOnly);
+        auto audio = rtc::Description::Audio(mid, dir);
         audio.addOpusCodec(codec);
         desc = audio;
     } else {
-        auto video = rtc::Description::Video(mid, rtc::Description::Direction::SendOnly);
+        auto video = rtc::Description::Video(mid, dir);
         video.addH264Codec(codec);
         desc = video;
     }
     desc -> addSSRC(ssrc, cname, msid, trackId);
+
     track = pc->addTrack(desc.value());
+
     auto rtpConfig = std::make_shared<rtc::RtpPacketizationConfig>(
             ssrc,
             cname,
@@ -35,6 +35,7 @@ MediaStreamTrack::MediaStreamTrack(Type codec, const std::shared_ptr<rtc::PeerCo
     );
 
     std::shared_ptr<rtc::MediaChainableHandler> mediaHandler;
+
     if (codec == Audio) {
         auto packetizer = std::make_shared<rtc::OpusRtpPacketizer>(rtpConfig);
         mediaHandler = std::make_shared<rtc::OpusPacketizationHandler>(packetizer);
@@ -95,7 +96,7 @@ void MediaStreamTrack::sendData(const rtc::binary& samples, uint64_t sampleTime)
     }
 
     if (!samples.empty()) {
-        std::cout << "Sending sample with size: " << std::to_string(samples.size()) << " to " << std::to_string(ssrc) << std::endl;
+        std::cout << "Sending sample with size: " << std::to_string(samples.size()) << " to " << cname << std::endl;
         try {
             track->send(samples);
         } catch (const std::exception &e) {

@@ -5,7 +5,7 @@
 #include "Stream.hpp"
 
 Stream::Stream(std::shared_ptr<BaseReader> audio) {
-    audioSrc = std::make_shared<RTCAudioSource>();
+    audioSrc = std::make_shared<RTCAudioSource>(rtc::Description::Direction::SendOnly);
     audioReader = std::move(audio);
     sampleDuration_us = 1000 * 1000 / 50;
     sampleTime_us = UINT64_MAX - sampleDuration_us + 1;
@@ -20,7 +20,6 @@ void Stream::start() {
 
 void Stream::processData() {
     auto currentTime = getMicroseconds();
-    std::cout << "currentTime: " << std::to_string(currentTime) << std::endl;
     auto elapsed = currentTime - startTime;
     if (sampleTime_us > elapsed) {
         auto waitTime = sampleTime_us - elapsed;
@@ -28,7 +27,6 @@ void Stream::processData() {
     }
 
     sampleTime_us += sampleDuration_us;
-    std::cout << "sampleTime_us: " << std::to_string(sampleTime_us) << std::endl;
     audioSrc->sendData(audioReader->read(), sampleTime_us);
 
     dispatchQueue.dispatch([this]() {

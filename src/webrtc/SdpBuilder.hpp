@@ -39,6 +39,7 @@ struct Transport {
 struct Ssrc {
     rtc::SSRC ssrc;
     std::vector<rtc::SSRC> ssrc_group;
+    bool isMain;
 };
 
 struct Conference {
@@ -66,9 +67,10 @@ private:
     void push(const std::string& word);
     void addJoined(const std::string& separator = "");
     void addCandidate(const Candidate& c);
-    void addHeader(int64_t session_id);
+    void addHeader(int64_t session_id, const std::vector<Ssrc>& ssrcs);
     void addTransport(const Transport& transport);
-    void addSsrcEntry(const Transport& transport);
+    void addSsrcEntry(const Ssrc& ssrc, const Transport& transport);
+    std::string toAudioSsrc(const Ssrc& ssrc);
     std::string join();
     std::string finalize();
     void addConference(const Conference& conference);

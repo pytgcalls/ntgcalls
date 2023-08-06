@@ -12,11 +12,12 @@
 class RTCMediaSource {
 protected:
     std::shared_ptr<MediaStreamTrack> track;
+    rtc::Description::Direction dir;
     MediaStreamTrack::Type codec;
 
 
 public:
-    explicit RTCMediaSource(MediaStreamTrack::Type type);
+    explicit RTCMediaSource(MediaStreamTrack::Type type, rtc::Description::Direction direction);
 
     void addTrack(const std::shared_ptr<rtc::PeerConnection>& pc);
 

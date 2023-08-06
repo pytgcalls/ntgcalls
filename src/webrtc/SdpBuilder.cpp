@@ -41,12 +41,16 @@ void SdpBuilder::addCandidate(const Candidate& c) {
     addJoined();
 }
 
-void SdpBuilder::addHeader(int64_t session_id) {
+void SdpBuilder::addHeader(int64_t session_id, const std::vector<Ssrc>& ssrcs) {
     add("v=0");
     add("o=- " + std::to_string(session_id) + " 2 IN IP4 0.0.0.0");
     add("s=-");
     add("t=0 0");
-    add("a=group:BUNDLE 0 1");
+    std::ostringstream bundleList;
+    for (const auto& ssrc : ssrcs) {
+        bundleList << " " << toAudioSsrc(ssrc);
+    }
+    add("a=group:BUNDLE" + bundleList.str());
     add("a=ice-lite");
 }
 
@@ -64,12 +68,21 @@ void SdpBuilder::addTransport(const Transport& transport) {
     }
 }
 
-void SdpBuilder::addSsrcEntry(const Transport& transport) {
-    //AUDIO CODECS
-    add("m=audio 1 RTP/SAVPF 111 126");
-    add("c=IN IP4 0.0.0.0");
-    add("a=mid:0");
-    addTransport(transport);
+void SdpBuilder::addSsrcEntry(const Ssrc& entry, const Transport& transport) {
+    auto ssrc = std::to_string(entry.ssrc);
+
+    add("m=audio " + std::to_string(entry.isMain ? 1:0) + " RTP/SAVPF 111 126");
+
+    if (entry.isMain) {
+        add("c=IN IP4 0.0.0.0");
+    }
+
+    add("a=mid:" + toAudioSsrc(entry));
+
+    if (entry.isMain) {
+        addTransport(transport);
+    }
+
     add("a=rtpmap:111 opus/48000/2");
     add("a=rtpmap:126 telephone-event/8000");
     add("a=fmtp:111 minptime=10; useinbandfec=1; usedtx=1");
@@ -78,44 +91,28 @@ void SdpBuilder::addSsrcEntry(const Transport& transport) {
     add("a=rtcp-fb:111 transport-cc");
     add("a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level");
     add("a=recvonly");
-    //END AUDIO CODECS
 
-    //VIDEO CODECS
-    add("m=video 1 RTP/SAVPF 100 101 102 103");
-    add("c=IN IP4 0.0.0.0");
-    add("a=mid:1");
-    addTransport(transport);
+    add("a=ssrc-group:FID " + ssrc);
+    add("a=ssrc:" + ssrc + " cname:stream" + ssrc);
+    add("a=ssrc:" + ssrc + " msid:stream" + ssrc + " audio" + ssrc);
+    add("a=ssrc:" + ssrc + " mslabel:audio" + ssrc);
+    add("a=ssrc:" + ssrc + " label:audio" + ssrc);
+}
 
-    //VP8 CODEC
-    add("a=rtpmap:100 VP8/90000/1");
-    add("a=fmtp:100 x-google-start-bitrate=800");
-    add("a=rtcp-fb:100 goog-remb");
-    add("a=rtcp-fb:100 transport-cc");
-    add("a=rtcp-fb:100 ccm fir");
-    add("a=rtcp-fb:100 nack");
-    add("a=rtcp-fb:100 nack pli");
-    add("a=rtpmap:101 rtx/90000");
-    add("a=fmtp:101 apt=100");
+std::string SdpBuilder::toAudioSsrc(const Ssrc& ssrc) {
+    if (ssrc.isMain) {
+        return "0";
+    }
 
-    //VP9 CODEC
-    add("a=rtpmap:102 VP9/90000/1");
-    add("a=rtcp-fb:102 goog-remb");
-    add("a=rtcp-fb:102 transport-cc");
-    add("a=rtcp-fb:102 ccm fir");
-    add("a=rtcp-fb:102 nack");
-    add("a=rtcp-fb:102 nack pli");
-    add("a=rtpmap:103 rtx/90000");
-    add("a=fmtp:103 apt=102");
-
-    add("a=recvonly");
-    add("a=rtcp:1 IN IP4 0.0.0.0");
-    add("a=rtcp-mux");
-    //END VIDEO CODECS
+    return "audio" + std::to_string(ssrc.ssrc);
 }
 
 void SdpBuilder::addConference(const Conference& conference) {
-    addHeader(conference.session_id);
-    addSsrcEntry(conference.transport);
+    addHeader(conference.session_id, conference.ssrcs);
+
+    for (const auto& ssrc : conference.ssrcs) {
+        addSsrcEntry(ssrc, conference.transport);
+    }
 }
 
 std::string SdpBuilder::fromConference(const Conference& conference) {
