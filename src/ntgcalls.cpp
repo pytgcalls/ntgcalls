@@ -1,4 +1,5 @@
 #include "ntgcalls.hpp"
+#include "io/SamplesReader.hpp"
 
 std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> &mediaStream) {
     if (connection != nullptr) {
@@ -29,6 +30,10 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> 
     if (!localDescription.has_value()) {
         throw std::runtime_error("LocalDescription not found");
     }
+    /* TESTING ON browser.html
+    json message = {{"type", localDescription->typeString()},
+                    {"sdp", std::string(localDescription.value())}};
+    std::cout << message << std::endl;*/
 
     const auto sdp = SdpBuilder::parseSdp(localDescription.value());
     if (!sdp.ufrag || !sdp.pwd || !sdp.hash || !sdp.fingerprint) {
@@ -47,11 +52,7 @@ std::optional<JoinVoiceCallParams> NTgCalls::init(const std::shared_ptr<Stream> 
 }
 
 std::string NTgCalls::createCall(const std::string& audioPath) {
-    auto sampleRate = 8000;
-    auto bitsPerSample = 16;
-    auto channelCount = 1;
-    auto byteLength = ((sampleRate * bitsPerSample) / 8 / 100) * channelCount;
-    stream = std::make_shared<Stream>(std::make_shared<FileReader>(audioPath, byteLength));
+    stream = std::make_shared<Stream>(std::make_shared<SamplesReader>(audioPath, ".opus"));
     auto sdp = init(stream);
 
     if (!sdp.has_value()) {
@@ -86,6 +87,16 @@ void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
     }
     if (data["transport"].is_null()) {
         throw std::runtime_error("Transport not found");
+        /* TESTING ON browser.html
+        std::cout << "RTP video stream expected on localhost:6000" << std::endl;
+        std::cout << "Please copy/paste the answer provided by the browser: " << std::endl;
+        std::string sdp;
+        std::getline(std::cin, sdp);
+
+        json j = json::parse(sdp);
+        rtc::Description answer(j["sdp"].get<std::string>(), j["type"].get<std::string>());
+        connection->setRemoteDescription(answer);
+        return;*/
     }
     data = data["transport"];
     Conference conference;

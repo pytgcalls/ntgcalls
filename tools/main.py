@@ -14,10 +14,17 @@ wrtc = NTgCalls()
 
 async def main():
     client = Client('test', api_id, api_hash)
-    file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/test.opus"
 
+    file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/opus"
+    """ TESTING with browser.html
+    call_params = wrtc.createCall(file_audio)
+    wrtc.setRemoteCallParams("{}")
+    await idle()
+    """
+    
     async with client:
         call_params = wrtc.createCall(file_audio)
+        print(call_params)
         chat = await client.resolve_peer(-1001919448795)
         local_peer = await client.resolve_peer((await client.get_me()).id)
         input_call = (

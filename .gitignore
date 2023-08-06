@@ -14,5 +14,7 @@ output
 *.session-journal
 node_modules/
 dist/
+tools/opus/
 package-lock.json
 *.egg-info
+*.ogg
