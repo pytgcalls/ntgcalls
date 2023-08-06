@@ -5,11 +5,15 @@
 #include "MediaStreamTrack.hpp"
 
 MediaStreamTrack::MediaStreamTrack(Type codec, const std::shared_ptr<rtc::PeerConnection>& pc) {
+    cname = mid = trackId = "audio-stream";
+    msid = "stream1";
+    ssrc = 2;
+    /* Disabled due to a strange bug with libdatachannel
     cname = generateUniqueId(16);
     msid = "-";
     trackId = generateTrackId();
     mid = std::to_string(codec == Audio ? 0:1);
-    ssrc = generateSSRC();
+    ssrc = generateSSRC();*/
 
     std::optional<rtc::Description::Media> desc;
     if (codec == Audio) {
@@ -92,10 +96,10 @@ void MediaStreamTrack::sendData(const rtc::binary& samples, uint64_t sampleTime)
 
     if (!samples.empty()) {
         std::cout << "Sending sample with size: " << std::to_string(samples.size()) << " to " << std::to_string(ssrc) << std::endl;
-    }
-    try {
-        track->send(samples);
-    } catch (const std::exception &e) {
-        std::cerr << "Unable to send packet: " << e.what() << std::endl;
+        try {
+            track->send(samples);
+        } catch (const std::exception &e) {
+            std::cerr << "Unable to send packet: " << e.what() << std::endl;
+        }
     }
 }

@@ -22,7 +22,7 @@ public:
 
     void onOpen(const std::function<void()> &callback);
 
-    void sendData(const rtc::binary& samples);
+    void sendData(const rtc::binary& samples, uint64_t sampleTime);
 };
 
 

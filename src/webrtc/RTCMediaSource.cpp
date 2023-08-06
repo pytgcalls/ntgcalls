@@ -22,9 +22,9 @@ void RTCMediaSource::onOpen(const std::function<void()> &callback) {
     }
 }
 
-void RTCMediaSource::sendData(const rtc::binary& samples) {
+void RTCMediaSource::sendData(const rtc::binary& samples, uint64_t sampleTime) {
     if (track != nullptr) {
-        track -> sendData(samples);
+        track -> sendData(samples, sampleTime);
     } else {
         throw std::runtime_error("No tracks found");
     }
