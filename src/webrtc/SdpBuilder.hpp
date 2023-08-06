@@ -9,6 +9,7 @@
 #include <string>
 #include <optional>
 #include <sstream>
+#include "rtc/rtp.hpp"
 
 struct Fingerprint {
     std::string hash;
@@ -36,8 +37,8 @@ struct Transport {
 };
 
 struct Ssrc {
-    uint32_t ssrc;
-    std::vector<uint32_t> ssrc_group;
+    rtc::SSRC ssrc;
+    std::vector<rtc::SSRC> ssrc_group;
 };
 
 struct Conference {
@@ -52,8 +53,8 @@ struct Sdp {
     std::optional<std::string> setup;
     std::optional<std::string> pwd;
     std::optional<std::string> ufrag;
-    uint32_t audioSource;
-    std::vector<uint32_t> source_groups;
+    rtc::SSRC audioSource;
+    std::vector<rtc::SSRC> source_groups;
 };
 
 class SdpBuilder{

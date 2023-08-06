@@ -1,3 +1,4 @@
+#include <iostream>
 #include "SdpBuilder.hpp"
 
 std::string SdpBuilder::join() {
@@ -151,7 +152,7 @@ Sdp SdpBuilder::parseSdp(const std::string& sdp) {
             lookup("a=setup:"),
             lookup("a=ice-pwd:"),
             lookup("a=ice-ufrag:"),
-            static_cast<uint32_t>(rawAudioSource.empty() ? 0 : std::stoi(rawAudioSource.substr(0, rawAudioSource.find(' ')))),
-            rawVideoSource.empty() ? std::vector<uint32_t>() : std::vector<uint32_t>{static_cast<uint32_t>(std::stoi(rawVideoSource.substr(0, rawVideoSource.find(' '))))}
+            static_cast<rtc::SSRC>(rawAudioSource.empty() ? 0 : std::stoul(rawAudioSource.substr(0, rawAudioSource.find(' ')))),
+            rawVideoSource.empty() ? std::vector<rtc::SSRC>() : std::vector<rtc::SSRC>{static_cast<rtc::SSRC>(std::stoul(rawVideoSource.substr(0, rawVideoSource.find(' '))))}
     };
 }
