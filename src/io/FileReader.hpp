@@ -11,7 +11,7 @@
 #include <vector>
 #include "BaseReader.hpp"
 
-class FileReader: public BaseReader {
+class FileReader final: public BaseReader {
 private:
     std::ifstream source;
     std::string filePath;
