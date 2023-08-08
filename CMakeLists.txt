@@ -47,8 +47,8 @@ set(depot_tools_install_dir ${SOURCE_DIR})
 
 
 # libc++
-set(libwebrtc_binary_dir ${third_party_loc}/libwebrtc/build/${CMAKE_BUILD_TYPE})
-set(libwebrtc_src_dir ${third_party_loc}/libwebrtc/download/src)
+set(libwebrtc_binary_dir ${deps_loc}/libwebrtc/build/${CMAKE_BUILD_TYPE})
+set(libwebrtc_src_dir ${deps_loc}/libwebrtc/download/src)
 
 add_library(libc++ OBJECT IMPORTED)
 add_dependencies(libc++ libwebrtc)
@@ -208,12 +208,12 @@ endif()
 ExternalProject_Add(
         project_libwebrtc
 
-        PREFIX            ${third_party_loc}/libwebrtc/prefix
-        TMP_DIR           ${third_party_loc}/libwebrtc/tmp
-        STAMP_DIR         ${third_party_loc}/libwebrtc/stamp
-        DOWNLOAD_DIR      ${third_party_loc}/libwebrtc/download
-        SOURCE_DIR        ${third_party_loc}/libwebrtc/download/src
-        BINARY_DIR        ${third_party_loc}/libwebrtc/build/${CMAKE_BUILD_TYPE}
+        PREFIX            ${deps_loc}/libwebrtc/prefix
+        TMP_DIR           ${deps_loc}/libwebrtc/tmp
+        STAMP_DIR         ${deps_loc}/libwebrtc/stamp
+        DOWNLOAD_DIR      ${deps_loc}/libwebrtc/download
+        SOURCE_DIR        ${deps_loc}/libwebrtc/download/src
+        BINARY_DIR        ${deps_loc}/libwebrtc/build/${CMAKE_BUILD_TYPE}
 
         BUILD_BYPRODUCTS  ${byproducts}
 
