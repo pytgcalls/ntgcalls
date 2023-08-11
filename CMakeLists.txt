@@ -252,3 +252,5 @@ set(libc++_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc+
 set(libc++abi_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++abi/trunk/include")
 
 set(MODULE wrtc)
+
+add_subdirectory(wrtc)
