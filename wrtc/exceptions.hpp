@@ -5,7 +5,8 @@
 #pragma once
 
 #include <exception>
-#include "api/rtc_error.h"
+#include <api/rtc_error.h>
+#include "api/jsep.h"
 
 namespace wrtc {
 
@@ -22,5 +23,11 @@ namespace wrtc {
         using BaseRTCException::BaseRTCException;
     };
 
+    class SdpParseException : public BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     RTCException wrapRTCError(const webrtc::RTCError &error);
+
+    SdpParseException wrapSdpParseError(const webrtc::SdpParseError &error);
 } // wrtc

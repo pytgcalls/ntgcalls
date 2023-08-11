@@ -76,25 +76,6 @@ namespace wrtc {
         return false;
     }
 
-    MediaStreamTrack *MediaStreamTrack::Clone() {
-        auto label = rtc::CreateRandomUuid();
-        rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> clonedTrack = nullptr;
-
-        if (_track->kind() == _track->kAudioKind) {
-            auto audioTrack = dynamic_cast<webrtc::AudioTrackInterface *>(_track.get());
-            clonedTrack = _factory->factory()->CreateAudioTrack(label, audioTrack->GetSource());
-        } else {
-            auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface *>(_track.get());
-            clonedTrack = _factory->factory()->CreateVideoTrack(label, videoTrack->GetSource());
-        }
-
-        auto clonedMediaStreamTrack = holder()->GetOrCreate(_factory, clonedTrack);
-        if (_ended) {
-            clonedMediaStreamTrack->Stop();
-        }
-        return clonedMediaStreamTrack;
-    }
-
     MediaStreamTrack::operator rtc::scoped_refptr<webrtc::AudioTrackInterface>() {
         return {dynamic_cast<webrtc::AudioTrackInterface *>(_track.get())};
     }

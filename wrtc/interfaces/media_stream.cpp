@@ -162,26 +162,6 @@ namespace wrtc {
         }
     }
 
-    MediaStream *MediaStream::Clone() {
-        auto clonedStream = _impl._factory->factory()->CreateLocalMediaStream(rtc::CreateRandomUuid());
-
-        for (auto const &track: this->tracks()) {
-            if (track->kind() == track->kAudioKind) {
-                auto audioTrack = dynamic_cast<webrtc::AudioTrackInterface *>(track.get());
-                auto source = audioTrack->GetSource();
-                auto clonedTrack = _impl._factory->factory()->CreateAudioTrack(rtc::CreateRandomUuid(), source);
-                clonedStream->AddTrack(clonedTrack);
-            } else {
-                auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface *>(track.get());
-                auto source = videoTrack->GetSource();
-                auto clonedTrack = _impl._factory->factory()->CreateVideoTrack(rtc::CreateRandomUuid(), source);
-                clonedStream->AddTrack(clonedTrack);
-            }
-        }
-
-        return MediaStream::holder()->GetOrCreate(_impl._factory, clonedStream);
-    }
-
     InstanceHolder<MediaStream *, rtc::scoped_refptr<webrtc::MediaStreamInterface>, PeerConnectionFactory *> *
     MediaStream::holder() {
         // call holder().Release(this) in a destructor?

@@ -9,7 +9,7 @@ namespace wrtc {
         webrtc::SdpParseError error;
         auto description = webrtc::CreateSessionDescription(init.type, init.sdp, &error);
         if (!description) {
-            throw std::runtime_error(error.description);
+            throw wrapSdpParseError(error);
         }
 
         _description = std::move(description);

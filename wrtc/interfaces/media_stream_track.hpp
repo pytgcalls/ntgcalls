@@ -50,9 +50,6 @@ namespace wrtc {
 
         bool GetMuted();
 
-        // should be returned to python as reference! because we holding it in our holder
-        MediaStreamTrack *Clone();
-
         bool active() { return !_ended && _track->state() == webrtc::MediaStreamTrackInterface::TrackState::kLive; }
 
         PeerConnectionFactory *factory() { return _factory; }

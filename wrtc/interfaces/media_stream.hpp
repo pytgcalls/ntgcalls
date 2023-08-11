@@ -43,8 +43,6 @@ namespace wrtc {
 
         void RemoveTrack(MediaStreamTrack &);
 
-        MediaStream *Clone();
-
     private:
         class Impl {
         public:
@@ -63,9 +61,9 @@ namespace wrtc {
 
             explicit Impl(PeerConnectionFactory *factory = nullptr);
 
-            Impl(std::vector<MediaStreamTrack *> &&tracks, PeerConnectionFactory *factory = nullptr);
+            explicit Impl(std::vector<MediaStreamTrack *> &&tracks, PeerConnectionFactory *factory = nullptr);
 
-            Impl(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream, PeerConnectionFactory *factory = nullptr);
+            explicit Impl(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream, PeerConnectionFactory *factory = nullptr);
 
 //      TODO
 //      Impl(const RTCMediaStreamInit& init, PeerConnectionFactory* factory = nullptr);
