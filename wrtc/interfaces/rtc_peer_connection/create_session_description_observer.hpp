@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../rtc_peer_connection.hpp"
+#include "../peer_connection.hpp"
 
 namespace webrtc { class RTCError; }
 

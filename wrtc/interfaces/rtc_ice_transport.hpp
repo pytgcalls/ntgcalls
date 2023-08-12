@@ -10,7 +10,7 @@
 
 #include "rtc_peer_connection/peer_connection_factory.hpp"
 #include "../utils/instance_holder.hpp"
-#include "../enums/rtc_ice_component.hpp"
+#include "../enums.hpp"
 
 
 namespace wrtc {

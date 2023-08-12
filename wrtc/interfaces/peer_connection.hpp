@@ -12,12 +12,13 @@
 #include "../exceptions.hpp"
 #include "../models/rtc_session_description.hpp"
 #include "../utils/sync.hpp"
+#include "../utils/syncronized_callback.hpp"
+#include "../enums.hpp"
 #include "rtc_peer_connection/peer_connection_factory.hpp"
 #include "rtc_peer_connection/create_session_description_observer.hpp"
 #include "rtc_peer_connection/set_session_description_observer.hpp"
 #include "rtc_rtc_sender.hpp"
 #include "media_stream.hpp"
-
 
 namespace webrtc {
     struct PeerConnectionDependencies;
@@ -26,30 +27,16 @@ namespace webrtc {
 namespace wrtc {
     class PeerConnectionFactory;
 
-    class RTCPeerConnection : public webrtc::PeerConnectionObserver {
+    class PeerConnection : public webrtc::PeerConnectionObserver {
     private:
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> _jinglePeerConnection;
         PeerConnectionFactory *_factory;
         bool _shouldReleaseFactory;
 
-    public:
-        explicit RTCPeerConnection();
+        synchronized_callback<State> stateChangeCallback;
+        synchronized_callback<GatheringState> gatheringStateChangeCallback;
+        synchronized_callback<SignalingState> signalingStateChangeCallback;
 
-        ~RTCPeerConnection() override;
-
-        Description CreateOffer(bool offerToReceiveAudio = false, bool offerToReceiveVideo = false);
-
-        void SetLocalDescription(Description &description);
-
-        void SetRemoteDescription(Description &description);
-
-        RTCRtpSender *AddTrack(MediaStreamTrack &mediaStreamTrack, const std::vector<MediaStream *> &mediaStreams);
-
-        RTCRtpSender *AddTrack(MediaStreamTrack &mediaStreamTrack, std::optional<std::reference_wrapper<MediaStream>> mediaStream);
-
-        void RestartIce();
-
-        void Close();
 
         // PeerConnectionObserver implementation.
         void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override;
@@ -75,5 +62,30 @@ namespace wrtc {
                         const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams) override;
 
         void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
+
+    public:
+        explicit PeerConnection();
+
+        ~PeerConnection() override;
+
+        Description createOffer(bool offerToReceiveAudio = false, bool offerToReceiveVideo = false);
+
+        void setLocalDescription(Description &description);
+
+        void setRemoteDescription(Description &description);
+
+        RTCRtpSender *addTrack(MediaStreamTrack &mediaStreamTrack, const std::vector<MediaStream *> &mediaStreams);
+
+        RTCRtpSender *addTrack(MediaStreamTrack &mediaStreamTrack, std::optional<std::reference_wrapper<MediaStream>> mediaStream);
+
+        void restartIce();
+
+        void close();
+
+        void onStateChange(const std::function<void(State state)> &callback);
+
+        void onGatheringStateChange(const std::function<void(GatheringState state)> &callback);
+
+        void onSignalingStateChange(const std::function<void(SignalingState state)> &callback);
     };
 }
