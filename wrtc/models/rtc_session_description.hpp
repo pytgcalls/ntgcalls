@@ -13,6 +13,10 @@ namespace wrtc {
 
     class Description {
     public:
+        enum class Type {Offer, Answer, Pranswer, Rollback };
+
+        Description(Type type, const std::string &sdp);
+
         explicit Description(const RTCSessionDescriptionInit &rtcSessionDescriptionInit);
 
         static Description Wrap(webrtc::SessionDescriptionInterface *);

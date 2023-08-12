@@ -5,6 +5,25 @@
 #include "rtc_session_description.hpp"
 
 namespace wrtc {
+    Description::Description(Type type, const std::string &sdp) {
+        webrtc::SdpType newType;
+        switch (type) {
+            case Type::Offer:
+                newType = webrtc::SdpType::kOffer;
+                break;
+            case Type::Answer:
+                newType = webrtc::SdpType::kAnswer;
+                break;
+            case Type::Pranswer:
+                newType = webrtc::SdpType::kPrAnswer;
+                break;
+            case Type::Rollback:
+                newType = webrtc::SdpType::kRollback;
+                break;
+        }
+        *this = Description(RTCSessionDescriptionInit(newType, sdp));
+    }
+
     Description::Description(const RTCSessionDescriptionInit &init) {
         webrtc::SdpParseError error;
         auto description = webrtc::CreateSessionDescription(init.type, init.sdp, &error);
