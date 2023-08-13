@@ -12,3 +12,5 @@ tools/opus/
 *.ogg
 deps/depot_tools/
 deps/libwebrtc/
+build/
+dist/

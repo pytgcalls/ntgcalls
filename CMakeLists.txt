@@ -251,6 +251,12 @@ endif()
 set(libc++_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++/trunk/include")
 set(libc++abi_include_dir "${libwebrtc_source_dir}/src/buildtools/third_party/libc++abi/trunk/include")
 
-set(MODULE wrtc)
+# pybind11
+add_subdirectory(deps/pybind11)
+
+# nlohmann/json
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory(deps/json EXCLUDE_FROM_ALL)
 
 add_subdirectory(wrtc)
+add_subdirectory(ntgcalls)
