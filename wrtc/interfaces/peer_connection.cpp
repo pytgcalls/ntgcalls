@@ -88,43 +88,14 @@ namespace wrtc {
         future.wait();
     }
 
-    RTCRtpSender *PeerConnection::addTrack(
-            MediaStreamTrack &mediaStreamTrack, const std::vector<MediaStream *> &mediaStreams) {
+    RTCRtpSender *PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack) {
         if (!_jinglePeerConnection) {
             throw RTCException("Cannot add track; PeerConnection is closed");
         }
-
-        std::vector<std::string> streamIds;
-        streamIds.reserve(mediaStreams.size());
-        for (auto const &stream: mediaStreams) {
-            streamIds.emplace_back(stream->stream()->id());
-        }
-
-        auto result = _jinglePeerConnection->AddTrack(mediaStreamTrack.track(), streamIds);
+        auto result = _jinglePeerConnection->AddTrack(mediaStreamTrack->track(), {});
         if (!result.ok()) {
             throw wrapRTCError(result.error());
         }
-
-        auto rtpSender = result.value();
-        return RTCRtpSender::holder()->GetOrCreate(_factory, rtpSender);
-    }
-
-    RTCRtpSender *PeerConnection::addTrack(
-            MediaStreamTrack &mediaStreamTrack, std::optional<std::reference_wrapper<MediaStream>> mediaStream) {
-        if (!_jinglePeerConnection) {
-            throw RTCException("Cannot add track; PeerConnection is closed");
-        }
-
-        std::vector<std::string> streamIds;
-        if (mediaStream != std::nullopt) {
-            streamIds.emplace_back(mediaStream->get().stream()->id());
-        }
-
-        auto result = _jinglePeerConnection->AddTrack(mediaStreamTrack.track(), streamIds);
-        if (!result.ok()) {
-            throw wrapRTCError(result.error());
-        }
-
         auto rtpSender = result.value();
         return RTCRtpSender::holder()->GetOrCreate(_factory, rtpSender);
     }

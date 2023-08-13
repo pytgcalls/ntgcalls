@@ -5,8 +5,8 @@
 #pragma once
 
 #include <webrtc/media/base/adapted_video_track_source.h>
-#include <wrtc/interfaces/rtc_peer_connection/peer_connection_factory.hpp>
 
+#include "../rtc_peer_connection/peer_connection_factory.hpp"
 
 namespace wrtc {
     class RTCVideoTrackSource : public rtc::AdaptedVideoTrackSource {

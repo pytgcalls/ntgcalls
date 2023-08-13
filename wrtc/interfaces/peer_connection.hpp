@@ -74,9 +74,7 @@ namespace wrtc {
 
         void setRemoteDescription(Description &description);
 
-        RTCRtpSender *addTrack(MediaStreamTrack &mediaStreamTrack, const std::vector<MediaStream *> &mediaStreams);
-
-        RTCRtpSender *addTrack(MediaStreamTrack &mediaStreamTrack, std::optional<std::reference_wrapper<MediaStream>> mediaStream);
+        RTCRtpSender *addTrack(MediaStreamTrack *mediaStreamTrack);
 
         void restartIce();
 

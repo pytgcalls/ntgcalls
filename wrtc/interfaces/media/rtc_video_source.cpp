@@ -21,7 +21,7 @@ namespace wrtc {
         return MediaStreamTrack::holder()->GetOrCreate(factory, track);
     }
 
-    void RTCVideoSource::OnFrame(I420ImageData data) {
+    void RTCVideoSource::OnFrame(i420ImageData data) {
         auto now = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
         int64_t nowInUs = now.time_since_epoch().count();
 
