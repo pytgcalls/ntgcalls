@@ -6,12 +6,15 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace wrtc {
 
+  typedef uint8_t *binary;
+
   class RTCOnDataEvent {
   public:
-    RTCOnDataEvent(std::string &, uint16_t);
+    RTCOnDataEvent(binary &, uint16_t);
 
     uint8_t *audioData;
     uint16_t numberOfFrames;

@@ -6,8 +6,8 @@
 
 namespace wrtc {
 
-  RTCOnDataEvent::RTCOnDataEvent(std::string &data, uint16_t length) {
-    audioData = reinterpret_cast<uint8_t *>(data.data());
+  RTCOnDataEvent::RTCOnDataEvent(binary &data, uint16_t length) {
+    audioData = data;
     numberOfFrames = length;
   }
 

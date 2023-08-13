@@ -33,7 +33,7 @@ namespace wrtc {
         PeerConnectionFactory *_factory;
         bool _shouldReleaseFactory;
 
-        synchronized_callback<State> stateChangeCallback;
+        synchronized_callback<IceState> stateChangeCallback;
         synchronized_callback<GatheringState> gatheringStateChangeCallback;
         synchronized_callback<SignalingState> signalingStateChangeCallback;
 
@@ -82,7 +82,7 @@ namespace wrtc {
 
         void close();
 
-        void onStateChange(const std::function<void(State state)> &callback);
+        void onIceStateChange(const std::function<void(IceState state)> &callback);
 
         void onGatheringStateChange(const std::function<void(GatheringState state)> &callback);
 

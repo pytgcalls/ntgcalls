@@ -20,7 +20,9 @@ namespace wrtc {
         webrtc::PeerConnectionDependencies dependencies(this);
         dependencies.allocator = std::move(portAllocator);
         auto result = _factory->factory()->CreatePeerConnectionOrError(
-                configuration, std::move(dependencies));
+            configuration,
+            std::move(dependencies)
+        );
         if (!result.ok()) {
             throw wrapRTCError(result.error());
         }
@@ -43,7 +45,7 @@ namespace wrtc {
             throw BaseRTCException("Failed to execute 'createOffer' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
         }
 
-        Sync<Description> description;
+        Sync<std::optional<Description>> description;
         auto observer = new rtc::RefCountedObject<CreateSessionDescriptionObserver>(description.onSuccess, description.onFailed);
 
         auto options = webrtc::PeerConnectionInterface::RTCOfferAnswerOptions();
@@ -155,7 +157,7 @@ namespace wrtc {
         }
     }
 
-    void PeerConnection::onStateChange(const std::function<void(State)> &callback) {
+    void PeerConnection::onIceStateChange(const std::function<void(IceState)> &callback) {
         stateChangeCallback = callback;
     }
 
@@ -192,27 +194,29 @@ namespace wrtc {
     }
 
     void PeerConnection::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state) {
-        State newValue;
+        IceState newValue;
         switch (new_state) {
             case webrtc::PeerConnectionInterface::IceConnectionState::kIceConnectionNew:
-                newValue = State::New;
+                newValue = IceState::New;
                 break;
             case webrtc::PeerConnectionInterface::kIceConnectionChecking:
-                newValue = State::Connecting;
+                newValue = IceState::Checking;
                 break;
             case webrtc::PeerConnectionInterface::kIceConnectionConnected:
+                newValue = IceState::Connected;
+                break;
             case webrtc::PeerConnectionInterface::kIceConnectionCompleted:
-                newValue = State::Connected;
+                newValue = IceState::Completed;
                 break;
             case webrtc::PeerConnectionInterface::kIceConnectionFailed:
             case webrtc::PeerConnectionInterface::kIceConnectionMax:
-                newValue = State::Failed;
+                newValue = IceState::Failed;
                 break;
             case webrtc::PeerConnectionInterface::kIceConnectionDisconnected:
-                newValue = State::Disconnected;
+                newValue = IceState::Disconnected;
                 break;
             case webrtc::PeerConnectionInterface::kIceConnectionClosed:
-                newValue = State::Closed;
+                newValue = IceState::Closed;
                 break;
         }
         stateChangeCallback(newValue);

@@ -12,12 +12,13 @@ namespace wrtc {
         kRtcp
     };
 
-    enum class State: int {
+    enum class IceState: int {
         New,
-        Connecting,
+        Checking,
         Connected,
-        Disconnected,
+        Completed,
         Failed,
+        Disconnected,
         Closed
     };
 

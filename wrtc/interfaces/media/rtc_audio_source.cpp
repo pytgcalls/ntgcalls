@@ -6,19 +6,19 @@
 
 namespace wrtc {
 
-  RTCAudioSource::RTCAudioSource() {
-    _source = new rtc::RefCountedObject<RTCAudioTrackSource>();
-  }
+    RTCAudioSource::RTCAudioSource() {
+        _source = new rtc::RefCountedObject<RTCAudioTrackSource>();
+    }
 
-  MediaStreamTrack *RTCAudioSource::CreateTrack() {
-    // TODO(mroberts): Again, we have some implicit factory we are threading around. How to handle?
-    auto factory = PeerConnectionFactory::GetOrCreateDefault();
-    auto track = factory->factory()->CreateAudioTrack(rtc::CreateRandomUuid(), _source.get());
-    return MediaStreamTrack::holder()->GetOrCreate(factory, track);
-  }
+    MediaStreamTrack *RTCAudioSource::createTrack() {
+        // TODO(mroberts): Again, we have some implicit factory we are threading around. How to handle?
+        auto factory = PeerConnectionFactory::GetOrCreateDefault();
+        auto track = factory->factory()->CreateAudioTrack(rtc::CreateRandomUuid(), _source.get());
+        return MediaStreamTrack::holder()->GetOrCreate(factory, track);
+    }
 
-  void RTCAudioSource::OnData(RTCOnDataEvent &data) {
-    _source->PushData(data);
-  }
+    void RTCAudioSource::OnData(RTCOnDataEvent &data) {
+        _source->PushData(data);
+    }
 
 } // namespace wrtc

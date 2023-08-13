@@ -27,6 +27,25 @@ namespace wrtc {
         }
     };
 
+    template <class T>
+    class Sync<std::optional<T>> {
+    private:
+        std::promise<std::optional<T>> promise{};
+
+    public:
+        const std::function<void(T)> onSuccess = [this](T value) {
+            promise.set_value(std::move(value));
+        };
+
+        const std::function<void(std::exception)> onFailed = [this](const std::exception& value) {
+            promise.set_exception(std::make_exception_ptr(value));
+        };
+
+        T get() {
+            return promise.get_future().get().value();
+        }
+    };
+
     template<> class
     Sync<void> {
     private:

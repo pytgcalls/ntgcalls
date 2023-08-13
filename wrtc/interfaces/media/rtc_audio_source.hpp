@@ -18,7 +18,7 @@ namespace wrtc {
   public:
     RTCAudioSource();
 
-    MediaStreamTrack *CreateTrack();
+    MediaStreamTrack *createTrack();
 
     void OnData(RTCOnDataEvent &);
 
