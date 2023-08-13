@@ -4,7 +4,7 @@ if(UNIX AND NOT APPLE)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 endif()
 
-add_library(wrtc SHARED ${MODULE_SRC})
+add_library(wrtc STATIC ${MODULE_SRC})
 
 set_property(TARGET wrtc PROPERTY CXX_STANDARD 17)
 

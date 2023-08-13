@@ -15,4 +15,14 @@ namespace wrtc {
         std::string msg;
         return RTCException{msg + "[" + ToString(error.type()) + "] " + error.message()};
     }
+
+    SdpParseException wrapSdpParseError(const webrtc::SdpParseError &error) {
+        std::string msg;
+
+        if (error.line.empty()) {
+            return SdpParseException(msg + error.description);
+        } else {
+            return SdpParseException(msg + "Line: " + error.line + ".  " + error.description);
+        }
+    }
 }
