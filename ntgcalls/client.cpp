@@ -2,15 +2,16 @@
 // Created by Laky64 on 12/08/2023.
 //
 
-#include "ntgcalls.hpp"
-#include "io/file_reader.hpp"
+#include <iostream>
+#include "client.hpp"
 
 namespace ntgcalls {
-    std::optional<JoinVoiceCallParams> NTgCalls::init() {
-        if (connection != nullptr) {
+    std::optional<JoinVoiceCallParams> Client::init() {
+        if (connection) {
             throw ConnectionError("Connection already started");
         }
 
+        std::cout << "TESTA1";
         connection = std::make_shared<wrtc::PeerConnection>();
 
         stream->addTracks(connection);
@@ -36,11 +37,11 @@ namespace ntgcalls {
         };
     }
 
-    std::string NTgCalls::createCall() {
+    std::string Client::createCall(std::string audioPath) {
         stream = std::make_shared<Stream>();
-        auto test = std::make_shared<FileReader>("");
+        auto test = std::make_shared<FileReader>(audioPath);
         stream->setAVStream(StreamConfig{
-            AudioConfig(test, 1, 2, 3),
+            AudioConfig(test, 48000, 16, 2),
         });
 
         auto sdp = init();
@@ -71,7 +72,7 @@ namespace ntgcalls {
         return to_string(jsonRes);
     }
 
-    void NTgCalls::setRemoteCallParams(const std::string& jsonData) {
+    void Client::setRemoteCallParams(const std::string& jsonData) {
         auto data = json::parse(jsonData);
         if (!data["rtmp"].is_null()) {
             throw RTMPNeeded("Needed rtmp connection");

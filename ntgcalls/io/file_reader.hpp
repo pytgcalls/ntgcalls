@@ -23,5 +23,7 @@ namespace ntgcalls {
         wrtc::binary read(std::int64_t size) final;
 
         void close() final;
+
+        bool eof() override;
     };
 }

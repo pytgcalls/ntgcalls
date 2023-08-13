@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include <wrtc/wrtc.hpp>
 #include <cstdint>
+#include <wrtc/wrtc.hpp>
 
 #include "../utils/time.hpp"
 #include "../exceptions.hpp"
-
 
 namespace ntgcalls {
     class BaseStreamer {

@@ -6,9 +6,10 @@
 
 #include <string>
 #include <optional>
-#include <wrtc/wrtc.hpp>
 #include <nlohmann/json.hpp>
+#include <wrtc/wrtc.hpp>
 
+#include "io/file_reader.hpp"
 #include "utils/time.hpp"
 #include "exceptions.hpp"
 #include "stream.hpp"
@@ -24,7 +25,7 @@ namespace ntgcalls {
         std::string fingerprint;
     };
 
-    class NTgCalls {
+    class Client {
     private:
         std::shared_ptr<wrtc::PeerConnection> connection;
         wrtc::SSRC audioSource = 0;
@@ -34,7 +35,8 @@ namespace ntgcalls {
         std::optional<JoinVoiceCallParams> init();
 
     public:
-        std::string createCall();
+        std::string createCall(std::string audioPath);
+
         void setRemoteCallParams(const std::string& jsonData);
     };
 }

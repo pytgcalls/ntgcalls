@@ -2,8 +2,7 @@
 // Created by Laky64 on 12/08/2023.
 //
 #include <pybind11/pybind11.h>
-#include <wrtc/wrtc.hpp>
-#include "ntgcalls.hpp"
+#include "client.hpp"
 
 namespace py = pybind11;
 
@@ -12,14 +11,18 @@ namespace py = pybind11;
 
 namespace py = pybind11;
 
-using ntgcalls::NTgCalls;
-
 PYBIND11_MODULE(ntgcalls, m) {
-    py::class_<NTgCalls> wrapper(m, "NTgCalls");
+    py::class_<ntgcalls::Client> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
-    wrapper.def("createCall",  &NTgCalls::createCall); // Needed python return annotation
-    wrapper.def("setRemoteCallParams", &NTgCalls::setRemoteCallParams); // Needed python return annotation
+    wrapper.def("createCall",  &ntgcalls::Client::createCall); // Needed python return annotation
+    wrapper.def("setRemoteCallParams", &ntgcalls::Client::setRemoteCallParams); // Needed python return annotation
 
+    // Exceptions
+    pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
+    pybind11::register_exception<ntgcalls::ConnectionError>(m, "RTCException", baseExc);
+    pybind11::register_exception<ntgcalls::InvalidParams>(m, "InvalidParams", baseExc);
+    pybind11::register_exception<ntgcalls::RTMPNeeded>(m, "RTMPNeeded", baseExc);
+    pybind11::register_exception<ntgcalls::FileError>(m, "FileError", baseExc);
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else

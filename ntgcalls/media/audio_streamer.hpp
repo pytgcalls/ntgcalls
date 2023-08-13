@@ -11,8 +11,6 @@
 // Max Channels: 2
 // FrameSize: ((48000 * 16) / 8 / 100)) * 2
 
-#include <wrtc/wrtc.hpp>
-
 #include "base_streamer.hpp"
 
 namespace ntgcalls {

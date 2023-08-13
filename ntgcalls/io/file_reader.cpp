@@ -8,7 +8,7 @@ namespace ntgcalls {
     FileReader::FileReader(const std::string& path) {
         source = std::ifstream(path, std::ios::binary);
         if (!source) {
-            throw OSError("Unable to open the file located at \"" + path + "\"");
+            throw FileError("Unable to open the file located at \"" + path + "\"");
         }
         filePath = path;
     }
@@ -22,7 +22,7 @@ namespace ntgcalls {
         source.read(reinterpret_cast<char*>(file_data), size);
         readChunks += size;
         if (source.fail()) {
-            throw OSError("Error while reading the file \"" + filePath + "\"");
+            throw FileError("Error while reading the file \"" + filePath + "\"");
         }
         return file_data;
     }
@@ -31,5 +31,9 @@ namespace ntgcalls {
         source.close();
         readChunks = 0;
         filePath = "";
+    }
+
+    bool FileReader::eof() {
+        return source.eof();
     }
 }
