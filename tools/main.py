@@ -1,7 +1,8 @@
 import asyncio
 
-from ntgcalls import NTgCalls
+# from ntgcalls import NTgCalls
 from pyrogram import Client, idle
+import webrtc
 from pyrogram.raw.functions.channels import GetFullChannel
 from pyrogram.raw.functions.phone import JoinGroupCall
 from pyrogram.raw.types import UpdateGroupCallConnection, Updates, DataJSON, InputChannel
@@ -9,21 +10,24 @@ from pyrogram.raw.types import UpdateGroupCallConnection, Updates, DataJSON, Inp
 api_id = 2799555
 api_hash = '47d66bbf0939d0ddf32caf8bad590ed7'
 
-wrtc = NTgCalls()
+#wrtc = NTgCalls()
 
 
 async def main():
     client = Client('test', api_id, api_hash)
 
-    # file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/opus"
     file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/output.pcm"
+    pc = webrtc.RTCPeerConnection()
+    print("TEST")
+    # print(wrtc.createCall(file_audio))
+    # file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/opus"
     """ TESTING with browser.html
     call_params = wrtc.createCall(file_audio)
     wrtc.setRemoteCallParams("{}")
     await idle()
     """
-    
-    async with client:
+
+    """async with client:
         call_params = wrtc.createCall(file_audio)
         print(call_params)
         chat = await client.resolve_peer(-1001398466177)
@@ -51,6 +55,6 @@ async def main():
                 wrtc.setRemoteCallParams(update.params.data)
         print("Connected!")
         await idle()
-        print("Closed")
+        print("Closed")"""
 
 asyncio.new_event_loop().run_until_complete(main())

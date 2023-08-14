@@ -126,8 +126,8 @@ set_property(TARGET libc++abi APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
 set_target_properties(libc++abi PROPERTIES IMPORTED_OBJECTS_DEBUG "${libc++abi_objects}" IMPORTED_OBJECTS "${libc++abi_objects}")
 
 
-# libwebrtc
-set(WEBRTC_REVISION branch-heads/4515) # m92
+# libwebrtc (https://chromiumdash.appspot.com/branches)
+set(WEBRTC_REVISION branch-heads/5845) # m114
 
 list(APPEND GN_GEN_ARGS
     use_rtti=true
@@ -259,4 +259,4 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(deps/json EXCLUDE_FROM_ALL)
 
 add_subdirectory(wrtc)
-add_subdirectory(ntgcalls)
+# add_subdirectory(ntgcalls)
