@@ -1,12 +1,12 @@
 //
-// Created by Laky64 on 12/08/2023.
+// Created by Laky64 on 15/08/2023.
 //
 
 #pragma once
 
-#include <api/peer_connection_interface.h>
-
 namespace wrtc {
+    typedef uint8_t *binary;
+
     enum RTCIceComponent {
         kRtp,
         kRtcp

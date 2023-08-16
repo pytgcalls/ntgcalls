@@ -1,129 +1,33 @@
 //
-// Created by Laky64 on 08/08/2023.
+// Created by Laky64 on 16/08/2023.
 //
 
 #include "peer_connection.hpp"
 
 namespace wrtc {
+
     PeerConnection::PeerConnection() {
         _factory = PeerConnectionFactory::GetOrCreateDefault();
-        _shouldReleaseFactory = true;
-        auto configuration = webrtc::PeerConnectionInterface::RTCConfiguration();
-        configuration.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
 
-        auto portAllocator = std::unique_ptr<cricket::PortAllocator>(new cricket::BasicPortAllocator(
-                _factory->getNetworkManager(),
-                _factory->getSocketFactory())
-        );
+        webrtc::PeerConnectionInterface::RTCConfiguration config;
+        config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
 
-        portAllocator->SetPortRange(0, 65535);
         webrtc::PeerConnectionDependencies dependencies(this);
-        dependencies.allocator = std::move(portAllocator);
+
         auto result = _factory->factory()->CreatePeerConnectionOrError(
-            configuration,
-            std::move(dependencies)
-        );
+                config, std::move(dependencies));
+
         if (!result.ok()) {
             throw wrapRTCError(result.error());
         }
+
         _jinglePeerConnection = result.MoveValue();
     }
 
     PeerConnection::~PeerConnection() {
         _jinglePeerConnection = nullptr;
         if (_factory) {
-            if (_shouldReleaseFactory) {
-                PeerConnectionFactory::Release();
-            }
-            _factory = nullptr;
-        }
-    }
-
-    Description PeerConnection::createOffer(bool offerToReceiveAudio, bool offerToReceiveVideo) {
-        if (!_jinglePeerConnection ||
-            _jinglePeerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
-            throw BaseRTCException("Failed to execute 'createOffer' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
-        }
-
-        Sync<std::optional<Description>> description;
-        auto observer = new rtc::RefCountedObject<CreateSessionDescriptionObserver>(description.onSuccess, description.onFailed);
-
-        auto options = webrtc::PeerConnectionInterface::RTCOfferAnswerOptions();
-        options.offer_to_receive_audio = offerToReceiveAudio;
-        options.offer_to_receive_video = offerToReceiveVideo;
-        _jinglePeerConnection->CreateOffer(observer, options);
-
-        return description.get();
-    }
-
-    void PeerConnection::setLocalDescription(Description &description) {
-        auto *raw_description = static_cast<webrtc::SessionDescriptionInterface *>(description);
-        std::unique_ptr<webrtc::SessionDescriptionInterface> raw_description_ptr(raw_description);
-
-        if (!_jinglePeerConnection ||
-            _jinglePeerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
-            throw RTCException("Failed to execute 'setLocalDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
-        }
-
-        Sync<void> future;
-        auto observer = new rtc::RefCountedObject<SetSessionDescriptionObserver>(future.onSuccess, future.onFailed);
-        _jinglePeerConnection->SetLocalDescription(observer, raw_description_ptr.release());
-
-        future.wait();
-    }
-
-    void PeerConnection::setRemoteDescription(Description &description) {
-        auto *raw_description = static_cast<webrtc::SessionDescriptionInterface *>(description);
-        std::unique_ptr<webrtc::SessionDescriptionInterface> raw_description_ptr(raw_description);
-
-        if (!_jinglePeerConnection ||
-            _jinglePeerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
-            throw RTCException("Failed to execute 'setRemoteDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
-        }
-
-        Sync<void> future;
-        auto observer = new rtc::RefCountedObject<SetSessionDescriptionObserver>(future.onSuccess, future.onFailed);
-        _jinglePeerConnection->SetRemoteDescription(observer, raw_description_ptr.release());
-
-        future.wait();
-    }
-
-    RTCRtpSender *PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack) {
-        if (!_jinglePeerConnection) {
-            throw RTCException("Cannot add track; PeerConnection is closed");
-        }
-        auto result = _jinglePeerConnection->AddTrack(mediaStreamTrack->track(), {});
-        if (!result.ok()) {
-            throw wrapRTCError(result.error());
-        }
-        auto rtpSender = result.value();
-        return RTCRtpSender::holder()->GetOrCreate(_factory, rtpSender);
-    }
-
-    void PeerConnection::restartIce() {
-        if (_jinglePeerConnection) {
-            _jinglePeerConnection->RestartIce();
-        }
-    }
-
-    void PeerConnection::close() {
-        if (_jinglePeerConnection) {
-            _jinglePeerConnection->Close();
-
-            if (_jinglePeerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
-                for (const auto &transceiver: _jinglePeerConnection->GetTransceivers()) {
-                    auto track = MediaStreamTrack::holder()->GetOrCreate(_factory, transceiver->receiver()->track());
-                    track->OnPeerConnectionClosed();
-                }
-            }
-        }
-
-        _jinglePeerConnection = nullptr;
-
-        if (_factory) {
-            if (_shouldReleaseFactory) {
-                PeerConnectionFactory::Release();
-            }
+            PeerConnectionFactory::UnRef();
             _factory = nullptr;
         }
     }
@@ -213,11 +117,6 @@ namespace wrtc {
 
     }
 
-    void PeerConnection::OnIceCandidateError(const std::string &host_candidate, const std::string &url, int error_code,
-                                                const std::string &error_text) {
-
-    }
-
     void PeerConnection::OnRenegotiationNeeded() {
 
     }
@@ -235,11 +134,11 @@ namespace wrtc {
     }
 
     void PeerConnection::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
-                                       const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams) {
+                                    const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams) {
 
     }
 
     void PeerConnection::OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
 
     }
-}
+} // wrtc

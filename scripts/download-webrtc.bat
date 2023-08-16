@@ -18,15 +18,15 @@ CALL gclient sync --shallow --no-history --nohooks --with_branch_heads -r %WEBRT
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 ECHO lastchange
-CALL python src\build\util\lastchange.py -o src\build\util\LASTCHANGE
+CALL python3 src\build\util\lastchange.py -o src\build\util\LASTCHANGE
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 ECHO update toolchain
-CALL python src\build\vs_toolchain.py update --force
+CALL python3 src\build\vs_toolchain.py update --force
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 ECHO download clang
-CALL python src\tools\clang\scripts\update.py
+CALL python3 src\tools\clang\scripts\update.py
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 ECHO rmdir webrtc

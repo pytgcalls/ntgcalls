@@ -4,13 +4,15 @@ if(UNIX AND NOT APPLE)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 endif()
 
-add_library(wrtc STATIC ${MODULE_SRC})
+# add_library(wrtc STATIC ${MODULE_SRC})
+add_executable(wrtc ${MODULE_SRC})
 
-set_property(TARGET wrtc PROPERTY CXX_STANDARD 17)
+set_property(TARGET wrtc PROPERTY CXX_STANDARD 20)
 
 target_include_directories(wrtc PUBLIC
     ${libwebrtc_source_dir}
     ${libwebrtc_source_dir}/webrtc
+    ${libwebrtc_source_dir}/webrtc/api
     ${libwebrtc_source_dir}/webrtc/third_party/abseil-cpp
     ${libwebrtc_source_dir}/webrtc/third_party/libyuv/include
 )
@@ -21,7 +23,6 @@ target_include_directories(wrtc PUBLIC
 
 target_link_libraries(wrtc PUBLIC
     ${CMAKE_THREAD_LIBS_INIT}
-    libpeerconnection
     libwebrtc
 )
 

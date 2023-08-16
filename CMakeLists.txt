@@ -12,23 +12,11 @@ find_package(Threads REQUIRED)
 
 get_filename_component(deps_loc "deps" REALPATH)
 
-# depot tools
-# ref about fix on M1 macs with git commits: https://bugs.chromium.org/p/chromium/issues/detail?id=1102967
-if (APPLE)
-  set(DEPOT_GIT_TAG cb340f5b7bbdcaba0fad346b08db91538619a531)
-else()
-  set(DEPOT_GIT_TAG 9b5dd7ab8a98140a1b73b9dea29245605137cd09) # glibc 2.18, supports python 3 < 3.8
-endif()
-
-if (WIN32)
-  set(DEPOT_GIT_TAG 2fddb95698211db1373ebe2b16091a54eac51c9c)
-endif()
-
 ExternalProject_Add(
     project_depot_tools
 
     GIT_REPOSITORY    https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    GIT_TAG           ${DEPOT_GIT_TAG}
+    GIT_TAG           main
 
     PREFIX            ${deps_loc}/depot_tools/prefix
     TMP_DIR           ${deps_loc}/depot_tools/tmp
@@ -127,7 +115,7 @@ set_target_properties(libc++abi PROPERTIES IMPORTED_OBJECTS_DEBUG "${libc++abi_o
 
 
 # libwebrtc (https://chromiumdash.appspot.com/branches)
-set(WEBRTC_REVISION branch-heads/5845) # m114
+set(WEBRTC_REVISION branch-heads/5735) # m114
 
 list(APPEND GN_GEN_ARGS
     use_rtti=true
@@ -165,7 +153,7 @@ else()
 endif()
 
 if (WIN32)
-  list(APPEND GN_GEN_ARGS is_clang=false)
+  list(APPEND GN_GEN_ARGS is_clang=true)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -191,7 +179,7 @@ endif()
 if (WIN32)
   set(byproducts
       ${libwebrtc_binary_dir}/obj/webrtc.lib
-      ${libwebrtc_binary_dir}/obj/pc/peerconnection.lib
+      ${libwebrtc_binary_dir}/obj/pc/peer_connection.lib
   )
 else()
   set(byproducts
@@ -243,7 +231,7 @@ add_library(libpeerconnection STATIC IMPORTED)
 add_dependencies(libpeerconnection project_libwebrtc)
 
 if(WIN32)
-  set_property(TARGET libpeerconnection PROPERTY IMPORTED_LOCATION "${libwebrtc_binary_dir}/obj/pc/peerconnection.lib")
+  set_property(TARGET libpeerconnection PROPERTY IMPORTED_LOCATION "${libwebrtc_binary_dir}/obj/pc/peer_connection.lib")
 else()
   set_property(TARGET libpeerconnection PROPERTY IMPORTED_LOCATION "${libwebrtc_binary_dir}/obj/pc/libpeerconnection.a")
 endif()

@@ -10,7 +10,7 @@ gclient config --unmanaged --spec 'solutions=[{"name":"src","url":"https://webrt
 
 gclient sync --shallow --no-history --nohooks --with_branch_heads -r ${WEBRTC_REVISION} -R
 
-python src/tools/clang/scripts/update.py
+python3 src/tools/clang/scripts/update.py
 
 rm -f webrtc
 

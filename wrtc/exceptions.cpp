@@ -13,7 +13,7 @@ namespace wrtc {
 
     RTCException wrapRTCError(const webrtc::RTCError &error) {
         std::string msg;
-        return RTCException{msg + "[" + ToString(error.type()) + "] " + error.message()};
+        return RTCException(msg + "[" + std::string(ToString(error.type())) + "] " + error.message());
     }
 
     SdpParseException wrapSdpParseError(const webrtc::SdpParseError &error) {
