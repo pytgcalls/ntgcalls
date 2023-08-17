@@ -12,9 +12,10 @@ set_property(TARGET wrtc PROPERTY CXX_STANDARD 20)
 target_include_directories(wrtc PUBLIC
     ${libwebrtc_source_dir}
     ${libwebrtc_source_dir}/webrtc
-    ${libwebrtc_source_dir}/webrtc/api
+    ${libwebrtc_source_dir}/webrtc/third_party/zlib
     ${libwebrtc_source_dir}/webrtc/third_party/abseil-cpp
     ${libwebrtc_source_dir}/webrtc/third_party/libyuv/include
+    ${libwebrtc_source_dir}/webrtc/third_party/boringssl/src/include
 )
 
 target_include_directories(wrtc PUBLIC
@@ -26,27 +27,24 @@ target_link_libraries(wrtc PUBLIC
     libwebrtc
 )
 
-target_compile_definitions(wrtc PUBLIC
-    -DUSE_BUILTIN_SW_CODECS
-)
-
 if(WIN32)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT /GR-")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd /GR- -D_HAS_ITERATOR_DEBUGGING=0")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /FORCE:UNRESOLVED")
 
   target_link_libraries(wrtc PUBLIC
-      dmoguids.lib
-      msdmo.lib
-      secur32.lib
       winmm.lib
-      wmcodecdspuuid.lib
       ws2_32.lib
+      Strmiids.lib
+      dmoguids.lib
+      iphlpapi.lib
+      msdmo.lib
+      Secur32.lib
+      wmcodecdspuuid.lib
   )
 
   target_compile_definitions(wrtc PUBLIC
-      -D_WINSOCKAPI_
-      -DNOGDI
+      -DWIN32_LEAN_AND_MEAN
       -DNOMINMAX
       -DWEBRTC_WIN
   )
