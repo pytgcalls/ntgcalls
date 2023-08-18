@@ -9,13 +9,19 @@
 #include "video_decoder_config.hpp"
 #include "video_encoder_factory.hpp"
 #include "video_decoder_factory.hpp"
+#include "software/google/google.hpp"
+#include "software/vlc/vlc.hpp"
 
 namespace wrtc {
+    class VideoEncoderFactory;
+    class VideoDecoderFactory;
 
     class VideoFactoryConfig {
     public:
         std::vector<VideoEncoderConfig> encoders;
         std::vector<VideoDecoderConfig> decoders;
+
+        VideoFactoryConfig();
 
         std::unique_ptr<VideoEncoderFactory> CreateVideoEncoderFactory();
 

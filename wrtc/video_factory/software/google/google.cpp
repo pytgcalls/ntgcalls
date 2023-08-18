@@ -6,8 +6,8 @@
 
 namespace google {
 
-    void addEncoders(std::shared_ptr<wrtc::VideoFactoryConfig> config) {
-        config->encoders.push_back(
+    void addEncoders(std::vector<wrtc::VideoEncoderConfig> &encoders) {
+        encoders.push_back(
                 wrtc::VideoEncoderConfig(
                         webrtc::kVideoCodecVP8,
                         [](auto format) {
@@ -15,7 +15,7 @@ namespace google {
                         }
                 )
         );
-        config->encoders.push_back(
+        encoders.push_back(
                 wrtc::VideoEncoderConfig(
                         webrtc::kVideoCodecVP9,
                         [](auto format) {
@@ -25,8 +25,8 @@ namespace google {
         );
     }
 
-    void addDecoders(std::shared_ptr<wrtc::VideoFactoryConfig> config) {
-        config->decoders.push_back(
+    void addEncoders(std::vector<wrtc::VideoDecoderConfig> &decoders) {
+        decoders.push_back(
                 wrtc::VideoDecoderConfig(
                         webrtc::kVideoCodecVP8,
                         [](auto format) {
@@ -34,7 +34,7 @@ namespace google {
                         }
                 )
         );
-        config->decoders.push_back(
+        decoders.push_back(
                 wrtc::VideoDecoderConfig(
                         webrtc::kVideoCodecVP9,
                         [](auto format) {
@@ -44,4 +44,4 @@ namespace google {
         );
     }
 
-} // libwebrtc
+} // google

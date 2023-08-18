@@ -8,12 +8,13 @@
 #include <modules/video_coding/codecs/vp9/include/vp9.h>
 #include <modules/video_coding/codecs/h264/include/h264.h>
 
-#include "../../types.hpp"
+#include "../../video_encoder_config.hpp"
+#include "../../video_decoder_config.hpp"
 
 namespace google {
 
-    void addEncoders(std::shared_ptr<wrtc::VideoFactoryConfig> config);
+    void addEncoders(std::vector<wrtc::VideoEncoderConfig> &encoders);
 
-    void addDecoders(std::shared_ptr<wrtc::VideoFactoryConfig> config);
+    void addDecoders(std::vector<wrtc::VideoDecoderConfig> &decoders);
 
-} // libwebrtc
+} // google

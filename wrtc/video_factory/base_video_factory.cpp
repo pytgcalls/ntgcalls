@@ -7,9 +7,9 @@
 
 namespace wrtc {
 
-    template <typename T>
-    std::vector<webrtc::SdpVideoFormat> BaseVideoFactory::internalFormats(std::vector<T> codecs) const {
-        static_assert(std::is_same_v<T, VideoEncoderConfig> || std::is_same_v<T, VideoDecoderConfig>, "Unsupported type for GetSupportedFormats");
+    template <typename Y>
+    std::vector<webrtc::SdpVideoFormat> BaseVideoFactory::internalFormats(std::vector<Y> codecs) const {
+        static_assert(std::is_same_v<Y, VideoEncoderConfig> || std::is_same_v<Y, VideoDecoderConfig>, "Unsupported type for GetSupportedFormats");
 
         formats_.clear();
         std::vector<webrtc::SdpVideoFormat> r;
@@ -21,12 +21,12 @@ namespace wrtc {
         return r;
     }
 
-    template <typename X, typename T>
-    std::unique_ptr<X> BaseVideoFactory::internalVideo(std::vector<T> input, const webrtc::SdpVideoFormat& format) {
-        static_assert(std::is_same_v<T, VideoEncoderConfig> || std::is_same_v<T, VideoDecoderConfig>, "Unsupported type for CreateVideoCodec");
+    template <class X, class Y>
+    std::unique_ptr<X> BaseVideoFactory::internalVideo(std::vector<Y> input, const webrtc::SdpVideoFormat& format) {
+        static_assert(std::is_same_v<Y, VideoEncoderConfig> || std::is_same_v<Y, VideoDecoderConfig>, "Unsupported type for CreateVideoCodec");
         static_assert(std::is_same_v<X, webrtc::VideoEncoder> || std::is_same_v<X, webrtc::VideoDecoder>, "Unsupported return type for CreateVideoCodec");
-        static_assert((std::is_same_v<T, VideoEncoderConfig> && std::is_same_v<X, webrtc::VideoEncoder>) ||
-              (std::is_same_v<T, VideoDecoderConfig> && std::is_same_v<X, webrtc::VideoDecoder>), "Mismatch return type and type for CreateVideoCodec");
+        static_assert((std::is_same_v<Y, VideoEncoderConfig> && std::is_same_v<X, webrtc::VideoEncoder>) ||
+              (std::is_same_v<Y, VideoDecoderConfig> && std::is_same_v<X, webrtc::VideoDecoder>), "Mismatch return type and type for CreateVideoCodec");
 
         int n = 0;
         for (auto& enc : input) {

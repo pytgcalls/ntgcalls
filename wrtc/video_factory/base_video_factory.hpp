@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <vector>
+#include <api/video_codecs/sdp_video_format.h>
+
 #include "video_encoder_config.hpp"
 #include "video_decoder_config.hpp"
-#include "software/vlc/vlc.hpp"
-#include "software/google/google.hpp"
-#include "video_factory_config.hpp"
 
 namespace wrtc {
 
@@ -17,11 +17,11 @@ namespace wrtc {
         mutable std::vector<std::vector<webrtc::SdpVideoFormat>> formats_;
 
     protected:
-        template <typename T>
-        std::vector<webrtc::SdpVideoFormat> internalFormats(std::vector<T> configs) const;
+        template <typename Y>
+        std::vector<webrtc::SdpVideoFormat> internalFormats(std::vector<Y> configs) const;
 
-        template <typename X, typename T>
-        std::unique_ptr<X> internalVideo(std::vector<T> input, const webrtc::SdpVideoFormat& format);
+        template <typename X, typename Y>
+        std::unique_ptr<X> internalVideo(std::vector<Y> input, const webrtc::SdpVideoFormat& format);
     };
 
 } // wrtc
