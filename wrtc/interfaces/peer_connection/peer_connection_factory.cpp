@@ -26,15 +26,16 @@ namespace wrtc {
             _workerThread->BlockingCall([=] { CreateAudioDeviceModule_w(); });
         }
 
-        // TODO: @dadadani Add intel video encoder-decoder when available
+        auto config = VideoFactoryConfig();
+
         if (!_factory) {
             _factory = webrtc::CreatePeerConnectionFactory(
                     _networkThread.get(), _workerThread.get(), _signalingThread.get(),
                     _audioDeviceModule,
                     webrtc::CreateBuiltinAudioEncoderFactory(),
                     webrtc::CreateBuiltinAudioDecoderFactory(),
-                    webrtc::CreateBuiltinVideoEncoderFactory(),
-                    webrtc::CreateBuiltinVideoDecoderFactory(),
+                    config.CreateVideoEncoderFactory(),
+                    config.CreateVideoDecoderFactory(),
                     nullptr, nullptr);
         }
     }
