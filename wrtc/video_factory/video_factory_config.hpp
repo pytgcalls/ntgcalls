@@ -7,17 +7,19 @@
 #include <vector>
 #include "video_encoder_config.hpp"
 #include "video_decoder_config.hpp"
+#include "video_encoder_factory.hpp"
+#include "video_decoder_factory.hpp"
 
 namespace wrtc {
 
-    struct VideoFactoryConfig {
+    class VideoFactoryConfig {
+    public:
         std::vector<VideoEncoderConfig> encoders;
         std::vector<VideoDecoderConfig> decoders;
-    };
 
-    struct VideoCoding {
-        std::unique_ptr<webrtc::VideoEncoder> encoder;
-        std::unique_ptr<webrtc::VideoDecoder> decoder;
+        std::unique_ptr<VideoEncoderFactory> CreateVideoEncoderFactory();
+
+        std::unique_ptr<VideoDecoderFactory> CreateVideoDecoderFactory();
     };
 
 } // wrtc
