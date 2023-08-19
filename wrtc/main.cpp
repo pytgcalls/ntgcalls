@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "wrtc/wrtc.hpp"
+#include "wrtc.hpp"
 
 int main() {
     std::cout << "TEST" << std::endl;
