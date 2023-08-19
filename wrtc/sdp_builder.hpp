@@ -74,6 +74,7 @@ namespace wrtc {
 
     public:
         static std::string fromConference(const Conference& conference);
+
         static Sdp parseSdp(const std::string& sdp);
     };
 }

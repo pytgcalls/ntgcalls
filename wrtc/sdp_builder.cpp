@@ -73,6 +73,7 @@ namespace wrtc {
         add("m=audio 1 RTP/SAVPF 111 126");
         add("c=IN IP4 0.0.0.0");
         add("a=mid:0");
+
         addTransport(transport);
 
         // OPUS CODEC
@@ -152,14 +153,29 @@ namespace wrtc {
 
         std::string rawAudioSource = lookup("a=ssrc:");
         std::string rawVideoSource = lookup("a=ssrc-group:FID ");
+        SSRC audioSource = 0;
+        std::vector<SSRC> sourceGroups;
+
+        if (!rawAudioSource.empty()) {
+            audioSource = static_cast<SSRC>(std::stoul(rawAudioSource.substr(0, rawAudioSource.find(' '))));
+        }
+
+        size_t pos;
+        while ((pos = rawVideoSource.find(' ')) != std::string::npos) {
+            sourceGroups.push_back(static_cast<SSRC>(std::stoul(rawVideoSource.substr(0, pos))));
+            rawVideoSource.erase(0, pos + 1);
+        }
+        sourceGroups.push_back(static_cast<SSRC>(std::stoul(rawVideoSource)));
+
+        std::cout << rawVideoSource;
         return {
                 lookup("a=fingerprint:").substr(lookup("a=fingerprint:").find(' ') + 1),
                 lookup("a=fingerprint:").substr(0, lookup("a=fingerprint:").find(' ')),
                 lookup("a=setup:"),
                 lookup("a=ice-pwd:"),
                 lookup("a=ice-ufrag:"),
-                static_cast<SSRC>(rawAudioSource.empty() ? 0 : std::stoul(rawAudioSource.substr(0, rawAudioSource.find(' ')))),
-                rawVideoSource.empty() ? std::vector<SSRC>() : std::vector<SSRC>{static_cast<SSRC>(std::stoul(rawVideoSource.substr(0, rawVideoSource.find(' '))))}
+                audioSource,
+                sourceGroups
         };
     }
 }
