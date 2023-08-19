@@ -38,6 +38,10 @@ namespace wrtc {
                     config.CreateVideoDecoderFactory(),
                     nullptr, nullptr);
         }
+
+        webrtc::PeerConnectionFactoryInterface::Options options;
+        options.network_ignore_mask = 0;
+        _factory->SetOptions(options);
     }
 
     PeerConnectionFactory::~PeerConnectionFactory() {
