@@ -11,9 +11,7 @@ namespace ntgcalls {
             throw ConnectionError("Connection already started");
         }
 
-        std::cout << "TESTA1" << std::endl;
         connection = std::make_shared<wrtc::PeerConnection>();
-        std::cout << "TESTA2" << std::endl;
         stream->addTracks(connection);
 
         auto offer = connection->createOffer(true, true);
