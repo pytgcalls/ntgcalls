@@ -1,180 +1,52 @@
 file(GLOB_RECURSE MODULE_SRC *.cpp *.hpp)
 
-if(UNIX AND NOT APPLE)
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
-endif()
-
 # add_library(wrtc STATIC ${MODULE_SRC})
 add_executable(wrtc ${MODULE_SRC})
 
 set_property(TARGET wrtc PROPERTY CXX_STANDARD 20)
 
-target_include_directories(wrtc PUBLIC
-    ${libwebrtc_source_dir}
-    ${libwebrtc_source_dir}/webrtc
-    ${libwebrtc_source_dir}/webrtc/third_party/zlib
-    ${libwebrtc_source_dir}/webrtc/third_party/abseil-cpp
-    ${libwebrtc_source_dir}/webrtc/third_party/libyuv/include
-    ${libwebrtc_source_dir}/webrtc/third_party/boringssl/src/include
-)
+target_link_libraries(wrtc PUBLIC WebRTC::webrtc)
 
-target_include_directories(wrtc PUBLIC
-    ${CMAKE_SOURCE_DIR}
-)
-
-target_link_libraries(wrtc PUBLIC
-    ${CMAKE_THREAD_LIBS_INIT}
-    libwebrtc
-)
-
-if(WIN32)
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT /GR-")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd /GR- -D_HAS_ITERATOR_DEBUGGING=0")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /FORCE:UNRESOLVED")
-
+if (WIN32)
+  target_compile_options(wrtc PRIVATE /utf-8 /bigobj)
+  set_target_properties(wrtc PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   target_link_libraries(wrtc PUBLIC
-      winmm.lib
-      ws2_32.lib
-      Strmiids.lib
-      dmoguids.lib
-      iphlpapi.lib
-      msdmo.lib
-      Secur32.lib
-      wmcodecdspuuid.lib
+#    dbghelp.lib
+#    delayimp.lib
+#    dnsapi.lib
+#    msimg32.lib
+#    oleaut32.lib
+#    psapi.lib
+#    shell32.lib
+#    shlwapi.lib
+#    usp10.lib
+#    version.lib
+#    wininet.lib
+    winmm.lib
+    ws2_32.lib
+#    amstrmid.lib
+    Strmiids.lib
+#    crypt32.lib
+    dmoguids.lib
+    iphlpapi.lib
+    msdmo.lib
+    Secur32.lib
+    wmcodecdspuuid.lib
+  )
+
+  target_compile_definitions(wrtc PRIVATE
+    _CONSOLE
+    _WIN32_WINNT=0x0A00
+    WEBRTC_WIN
+    NOMINMAX
+    WIN32_LEAN_AND_MEAN
+    UNICODE
+    _UNICODE
   )
 
   target_compile_definitions(wrtc PUBLIC
-      -DWIN32_LEAN_AND_MEAN
-      -DNOMINMAX
-      -DWEBRTC_WIN
-  )
-else()
-  target_include_directories(wrtc PUBLIC
-      ${libc++_include_dir}
-      ${libc++abi_include_dir}
+    WEBRTC_WIN
+    _ITERATOR_DEBUG_LEVEL=0
   )
 
-  # NOTE(mroberts): On Linux and macOS, we statically link the same libc++ and
-  # libc++abi libraries that libwebrtc builds against.
-  target_link_libraries(wrtc PUBLIC
-      -lc
-      -lm
-      libc++
-  )
-
-  if(NOT APPLE)
-    target_link_libraries(wrtc PUBLIC
-        libc++abi
-    )
-  endif()
-
-  target_compile_options(wrtc PUBLIC
-      -fvisibility=hidden
-      -nostdinc++
-      -nodefaultlibs
-      -Wall
-      -Wextra
-      -Wno-missing-field-initializers
-      -Wno-uninitialized
-      -Wno-unused-local-typedefs
-      -Wno-unused-variable
-      -Wpedantic
-  )
-
-  target_compile_definitions(wrtc PUBLIC
-      -D_LIBCPP_ABI_UNSTABLE
-      -DWEBRTC_POSIX=1
-  )
-
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(wrtc PUBLIC
-        -g
-#        -fsanitize=address
-#        -fno-omit-frame-pointer
-    )
-
-    target_compile_definitions(wrtc PUBLIC
-        -DDEBUG
-    )
-  endif()
-
-  if(APPLE)
-    target_link_libraries(wrtc PUBLIC
-        "-framework AppKit"
-        "-framework AVFoundation"
-    )
-
-    if ("$ENV{TARGET_ARCH}" STREQUAL "arm64")
-      target_compile_options(wrtc PUBLIC
-          -arch arm64
-      )
-      target_link_options(wrtc PUBLIC
-          -arch arm64
-      )
-    endif()
-
-    target_compile_options(wrtc PUBLIC
-        -Weverything
-        -Wno-c++98-compat
-        -Wno-c++98-compat-pedantic
-        -Wno-documentation
-        -Wno-exit-time-destructors
-        -Wno-float-conversion
-        -Wno-global-constructors
-        -Wno-padded
-        -Wno-shadow
-        -Wno-shadow-field-in-constructor
-        -Wno-shorten-64-to-32
-        -Wno-sign-conversion
-        -Wno-thread-safety-negative
-        -Wno-unused-template
-        -Wno-weak-vtables
-    )
-
-    target_compile_definitions(wrtc PUBLIC
-        -D_LIBCPP_ABI_UNSTABLE
-        -DWEBRTC_MAC
-        -DWEBRTC_IOS
-    )
-  else()
-    target_compile_definitions(wrtc PUBLIC
-        -DWEBRTC_LINUX
-    )
-
-    target_compile_options(wrtc PUBLIC
-        -fpermissive
-    )
-
-    if ("$ENV{TARGET_ARCH}" STREQUAL "arm" OR "$ENV{TARGET_ARCH}" STREQUAL "arm64")
-      set(CMAKE_SYSTEM_NAME Linux)
-      set(CMAKE_SYSTEM_PROCESSOR "$ENV{TARGET_ARCH}")
-      set(tools $ENV{ARM_TOOLS_PATH})
-
-      set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-      set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-      set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-      set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
-
-      if ("$ENV{TARGET_ARCH}" STREQUAL "arm")
-        set(CMAKE_SYSROOT ${libwebrtc_source_dir}/src/build/linux/debian_sid_arm-sysroot)
-        target_compile_options(wrtc PUBLIC
-            -march=armv7-a
-            -mfloat-abi=hard
-            -mtune=generic-armv7-a
-            -mfpu=neon
-        )
-        set(CMAKE_C_COMPILER ${tools}/bin/arm-linux-gnueabihf-gcc)
-        set(CMAKE_CXX_COMPILER ${tools}/bin/arm-linux-gnueabihf-g++)
-      else()
-        set(CMAKE_SYSROOT ${libwebrtc_source_dir}/src/build/linux/debian_sid_arm64-sysroot)
-        set(CMAKE_C_COMPILER ${tools}/bin/aarch64-linux-gnu-gcc)
-        set(CMAKE_CXX_COMPILER ${tools}/bin/aarch64-linux-gnu-g++)
-      endif()
-    else()
-      target_compile_options(wrtc PUBLIC
-          -B${libwebrtc_source_dir}/src/third_party/binutils/Linux_x64/Release/bin
-          --sysroot=${libwebrtc_source_dir}/src/build/linux/debian_sid_amd64-sysroot
-      )
-    endif()
-  endif()
 endif()

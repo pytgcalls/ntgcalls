@@ -4,16 +4,17 @@
 
 #pragma once
 
-#include "base_video_factory.hpp"
+#include "video_decoder_config.hpp"
 
 namespace wrtc {
 
-    class VideoDecoderFactory: public webrtc::VideoDecoderFactory, BaseVideoFactory {
+    class VideoDecoderFactory: public webrtc::VideoDecoderFactory {
     public:
         VideoDecoderFactory(std::vector<VideoDecoderConfig> decoders): decoders(decoders){};
 
     private:
         std::vector<VideoDecoderConfig> decoders;
+        mutable std::vector<std::vector<webrtc::SdpVideoFormat>> formats_;
 
         std::unique_ptr<webrtc::VideoDecoder> CreateVideoDecoder(const webrtc::SdpVideoFormat &format) override;
 

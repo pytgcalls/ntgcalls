@@ -5,6 +5,7 @@
 #include "video_factory_config.hpp"
 
 namespace wrtc {
+
     VideoFactoryConfig::VideoFactoryConfig() {
         // Google (Software, VP9, VP8)
         google::addEncoders(encoders);
