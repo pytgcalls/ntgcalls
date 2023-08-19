@@ -7,9 +7,11 @@ endif()
 
 project(ntgcalls VERSION 1.0.0 LANGUAGES C CXX)
 
+find_package(Threads REQUIRED)
+
 get_filename_component(deps_loc "deps" REALPATH)
-set(WEBRTC_LIBRARY_DIR "${deps_loc}/libwebrtc/" PATH "WebRTC library directory")
-set(WEBRTC_INCLUDE_DIR "${WEBRTC_LIBRARY_DIR}include/" PATH "WebRTC include directory")
+set(WEBRTC_LIBRARY_DIR "${deps_loc}/libwebrtc/")
+set(WEBRTC_INCLUDE_DIR "${WEBRTC_LIBRARY_DIR}include/")
 
 # Install WebRTC
 include(cmake/FindWebRTC.cmake)
