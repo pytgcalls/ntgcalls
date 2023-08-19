@@ -25,7 +25,7 @@ namespace google {
         );
     }
 
-    void addEncoders(std::vector<wrtc::VideoDecoderConfig> &decoders) {
+    void addDecoders(std::vector<wrtc::VideoDecoderConfig> &decoders) {
         decoders.push_back(
                 wrtc::VideoDecoderConfig(
                         webrtc::kVideoCodecVP8,
