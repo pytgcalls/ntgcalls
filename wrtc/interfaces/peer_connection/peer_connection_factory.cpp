@@ -41,11 +41,6 @@ namespace wrtc {
     }
 
     PeerConnectionFactory::~PeerConnectionFactory() {
-        // TODO: @Laky-64 Add microphone/screen capture
-        /*_workerThread->BlockingCall([&] {
-            audio_device_impl_ = nullptr;
-            video_device_impl_ = nullptr;
-        });*/
         _factory = nullptr;
 
         if (_audioDeviceModule) {

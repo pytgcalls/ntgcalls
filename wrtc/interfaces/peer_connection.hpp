@@ -4,12 +4,18 @@
 
 #pragma once
 
+#include <optional>
 #include <api/peer_connection_interface.h>
 
 #include "../enums.hpp"
-#include "../utils/syncronized_callback.hpp"
 #include "../exceptions.hpp"
+#include "../utils/sync.hpp"
+#include "../utils/syncronized_callback.hpp"
+#include "../models/rtc_session_description.hpp"
+#include "media/tracks/media_stream_track.hpp"
 #include "peer_connection/peer_connection_factory.hpp"
+#include "peer_connection/create_session_description_observer.hpp"
+#include "peer_connection/set_session_description_observer.hpp"
 
 namespace wrtc {
 
@@ -19,6 +25,18 @@ namespace wrtc {
 
         ~PeerConnection() override;
 
+        Description createOffer(bool offerToReceiveAudio = true, bool offerToReceiveVideo = false);
+
+        void setLocalDescription(Description &description);
+
+        void setRemoteDescription(Description &description);
+
+        void addTrack(MediaStreamTrack *mediaStreamTrack, std::vector<std::string> streamIds = {});
+
+        void restartIce();
+
+        void close();
+
         void onIceStateChange(const std::function<void(IceState state)> &callback);
 
         void onGatheringStateChange(const std::function<void(GatheringState state)> &callback);
@@ -26,8 +44,8 @@ namespace wrtc {
         void onSignalingStateChange(const std::function<void(SignalingState state)> &callback);
 
     private:
-        rtc::scoped_refptr<PeerConnectionFactory> _factory;
-        rtc::scoped_refptr<webrtc::PeerConnectionInterface> _jinglePeerConnection;
+        rtc::scoped_refptr<PeerConnectionFactory> factory;
+        rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection;
 
         synchronized_callback<IceState> stateChangeCallback;
         synchronized_callback<GatheringState> gatheringStateChangeCallback;

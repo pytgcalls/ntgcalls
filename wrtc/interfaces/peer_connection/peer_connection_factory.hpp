@@ -28,6 +28,7 @@ namespace wrtc {
 
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory();
 
+        std::unique_ptr<rtc::Thread> _workerThread;
     private:
         void CreateAudioDeviceModule_w();
 
@@ -38,7 +39,6 @@ namespace wrtc {
         static rtc::scoped_refptr<PeerConnectionFactory> _default;
 
         std::unique_ptr<rtc::Thread> _signalingThread;
-        std::unique_ptr<rtc::Thread> _workerThread;
         std::unique_ptr<rtc::Thread> _networkThread;
 
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> _factory;
