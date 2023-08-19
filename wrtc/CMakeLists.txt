@@ -1,7 +1,6 @@
 file(GLOB_RECURSE MODULE_SRC *.cpp *.hpp)
 
-# add_library(wrtc STATIC ${MODULE_SRC})
-add_executable(wrtc ${MODULE_SRC})
+add_library(wrtc STATIC ${MODULE_SRC})
 
 set_property(TARGET wrtc PROPERTY CXX_STANDARD 20)
 
