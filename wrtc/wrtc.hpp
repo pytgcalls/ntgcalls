@@ -7,3 +7,6 @@
 #include "exceptions.hpp"
 #include "enums.hpp"
 #include "interfaces/peer_connection.hpp"
+#include "sdp_builder.hpp"
+#include "wrtc/interfaces/media/rtc_audio_source.hpp"
+#include "wrtc/interfaces/media/rtc_video_source.hpp"
