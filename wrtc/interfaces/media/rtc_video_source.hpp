@@ -13,11 +13,11 @@
 
 namespace wrtc {
 
-    class RTCVideoSource: public rtc::RefCountInterface {
+    class RTCVideoSource {
     public:
         RTCVideoSource();
 
-        ~RTCVideoSource() override;
+        ~RTCVideoSource();
 
         MediaStreamTrack *createTrack();
 

@@ -15,11 +15,11 @@
 
 namespace wrtc {
 
-    class RTCAudioSource: public rtc::RefCountInterface {
+    class RTCAudioSource {
     public:
         RTCAudioSource();
 
-        ~RTCAudioSource() override;
+        ~RTCAudioSource();
 
         MediaStreamTrack *createTrack();
 
