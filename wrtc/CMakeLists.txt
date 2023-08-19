@@ -6,8 +6,8 @@ set_property(TARGET wrtc PROPERTY CXX_STANDARD 20)
 
 target_link_libraries(wrtc PUBLIC WebRTC::webrtc)
 
-if (WIN32)
-  include(cmake/Windows.cmake)
-elseif(LINUX)
-  include(cmake/Linux.cmake)
-endif()
+target_include_directories(wrtc PUBLIC
+  ${CMAKE_SOURCE_DIR}
+)
+
+setup_platform_libs(wrtc)
