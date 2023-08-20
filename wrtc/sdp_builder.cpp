@@ -179,4 +179,16 @@ namespace wrtc {
                 sourceGroups
         };
     }
+
+    TgSSRC SdpBuilder::toTelegramSSRC(SSRC ssrc) {
+        return static_cast<TgSSRC>(ssrc);
+    }
+
+    std::vector<TgSSRC> SdpBuilder::toTelegramSSRC(std::vector<SSRC> ssrcs) {
+        std::vector<TgSSRC> converted;
+        for (auto ssrc: ssrcs) {
+            converted.push_back(toTelegramSSRC(ssrc));
+        }
+        return converted;
+    }
 }

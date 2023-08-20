@@ -11,6 +11,7 @@
 
 namespace wrtc {
     typedef uint32_t SSRC;
+    typedef int32_t TgSSRC;
     typedef int64_t SessionID;
 
     struct Fingerprint {
@@ -76,5 +77,9 @@ namespace wrtc {
         static std::string fromConference(const Conference& conference);
 
         static Sdp parseSdp(const std::string& sdp);
+
+        static TgSSRC toTelegramSSRC(SSRC source);
+
+        static std::vector<TgSSRC> toTelegramSSRC(std::vector<SSRC> source);
     };
 }
