@@ -1,29 +1,31 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.23)
+
+# Check platform
+if(UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+endif()
+
+if(DEFINED PY_VERSION_INFO)
+    set(IS_PYTHON TRUE)
+endif()
 
 project(ntgcalls VERSION 1.0.0 LANGUAGES C CXX)
 
-set(NO_EXAMPLES ON)
-set(NO_TESTS ON)
-set(SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src")
+find_package(Threads REQUIRED)
 
-add_subdirectory(deps/libdatachannel)
-if (NOT TARGET nlohmann_json)
-    add_subdirectory(deps/libdatachannel/deps/json ${CMAKE_BINARY_DIR}/deps/json)
-endif()
+get_filename_component(deps_loc "deps" REALPATH)
+set(WEBRTC_LIBRARY_DIR "${deps_loc}/libwebrtc/")
+set(WEBRTC_INCLUDE_DIR "${WEBRTC_LIBRARY_DIR}include/")
 
+include(cmake/FindWebRTC.cmake)
+include(cmake/SetupPlatformLibs.cmake)
 
-file(GLOB_RECURSE SOURCES "${SOURCES_ROOT}/*.cpp")
-file(GLOB_RECURSE HEADERS "${SOURCES_ROOT}/*.hpp")
-list(REMOVE_ITEM SOURCES "${SOURCES_ROOT}/pythonapi.cpp")
+# pybind11
+add_subdirectory(deps/pybind11)
 
-if(DEFINED PY_VERSION_INFO)
-    add_subdirectory(deps/pybind11)
-    pybind11_add_module(ntgcalls src/pythonapi.cpp ${SOURCES} ${HEADERS})
-    target_compile_definitions(ntgcalls PRIVATE VERSION_INFO=${PY_VERSION_INFO})
-else()
-    add_library(ntgcalls SHARED ${SOURCES} ${HEADERS})
-endif()
+# nlohmann/json
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory(deps/json EXCLUDE_FROM_ALL)
 
-target_link_libraries(ntgcalls PRIVATE LibDataChannel::LibDataChannelStatic nlohmann_json::nlohmann_json)
-
-set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20)
+add_subdirectory(wrtc)
+add_subdirectory(ntgcalls)
