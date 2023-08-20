@@ -12,6 +12,7 @@ namespace ntgcalls {
         }
 
         connection = std::make_shared<wrtc::PeerConnection>();
+
         stream->addTracks(connection);
 
         auto offer = connection->createOffer(true, true);
@@ -61,7 +62,7 @@ namespace ntgcalls {
         };
 
         if (!sourceGroups.empty()){
-            jsonRes["ssrc-groups"] = {
+            jsonRes["sources"] = {
                     {"semantics", "FID"},
                     {"sources", sourceGroups}
             };
