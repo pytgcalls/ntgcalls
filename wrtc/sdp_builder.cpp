@@ -160,12 +160,14 @@ namespace wrtc {
             audioSource = static_cast<SSRC>(std::stoul(rawAudioSource.substr(0, rawAudioSource.find(' '))));
         }
 
-        size_t pos;
-        while ((pos = rawVideoSource.find(' ')) != std::string::npos) {
-            sourceGroups.push_back(static_cast<SSRC>(std::stoul(rawVideoSource.substr(0, pos))));
-            rawVideoSource.erase(0, pos + 1);
+        if (!rawVideoSource.empty()) {
+            size_t pos;
+            while ((pos = rawVideoSource.find(' ')) != std::string::npos) {
+                sourceGroups.push_back(static_cast<SSRC>(std::stoul(rawVideoSource.substr(0, pos))));
+                rawVideoSource.erase(0, pos + 1);
+            }
+            sourceGroups.push_back(static_cast<SSRC>(std::stoul(rawVideoSource)));
         }
-        sourceGroups.push_back(static_cast<SSRC>(std::stoul(rawVideoSource)));
 
         return {
                 lookup("a=fingerprint:").substr(lookup("a=fingerprint:").find(' ') + 1),
