@@ -167,7 +167,6 @@ namespace wrtc {
         }
         sourceGroups.push_back(static_cast<SSRC>(std::stoul(rawVideoSource)));
 
-        std::cout << rawVideoSource;
         return {
                 lookup("a=fingerprint:").substr(lookup("a=fingerprint:").find(' ') + 1),
                 lookup("a=fingerprint:").substr(0, lookup("a=fingerprint:").find(' ')),

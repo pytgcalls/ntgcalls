@@ -26,6 +26,13 @@ namespace ntgcalls {
     };
 
     class Client {
+    public:
+        Client() = default;
+
+        std::string createCall(std::string audioPath);
+
+        void setRemoteCallParams(const std::string& jsonData);
+
     private:
         std::shared_ptr<wrtc::PeerConnection> connection;
         wrtc::SSRC audioSource = 0;
@@ -33,10 +40,5 @@ namespace ntgcalls {
         std::shared_ptr<Stream> stream;
 
         std::optional<JoinVoiceCallParams> init();
-
-    public:
-        std::string createCall(std::string audioPath);
-
-        void setRemoteCallParams(const std::string& jsonData);
     };
 }
