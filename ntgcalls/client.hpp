@@ -6,24 +6,16 @@
 
 #include <string>
 #include <optional>
-#include <nlohmann/json.hpp>
 #include <wrtc/wrtc.hpp>
 
-#include "io/file_reader.hpp"
-#include "utils/time.hpp"
-#include "exceptions.hpp"
 #include "stream.hpp"
+#include "exceptions.hpp"
+#include "utils/time.hpp"
+#include "io/file_reader.hpp"
+#include "join_voice_call_params.hpp"
 
 namespace ntgcalls {
     using nlohmann::json;
-
-    struct JoinVoiceCallParams {
-        std::string ufrag;
-        std::string pwd;
-        std::string hash;
-        std::string setup;
-        std::string fingerprint;
-    };
 
     class Client {
     public:
@@ -39,6 +31,6 @@ namespace ntgcalls {
         std::vector<wrtc::SSRC> sourceGroups = {};
         std::shared_ptr<Stream> stream;
 
-        std::optional<JoinVoiceCallParams> init();
+        JoinVoiceCallParams init();
     };
 }

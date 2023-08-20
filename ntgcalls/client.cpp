@@ -6,18 +6,19 @@
 #include "client.hpp"
 
 namespace ntgcalls {
-    std::optional<JoinVoiceCallParams> Client::init() {
+    JoinVoiceCallParams Client::init() {
         connection = std::make_shared<wrtc::PeerConnection>();
 
         stream->addTracks(connection);
 
         auto offer = connection->createOffer(true, true);
+        std::cout << offer.getSdp();
         connection->setLocalDescription(offer);
 
         const auto sdp = wrtc::SdpBuilder::parseSdp(offer.getSdp());
 
         if (!sdp.ufrag || !sdp.pwd || !sdp.hash || !sdp.fingerprint) {
-            return std::nullopt;
+            throw InvalidParams("Sdp has no value");
         }
 
         audioSource = sdp.audioSource;
@@ -28,7 +29,9 @@ namespace ntgcalls {
                 sdp.pwd.value(),
                 sdp.hash.value(),
                 "active",
-                sdp.fingerprint.value()
+                sdp.fingerprint.value(),
+                sdp.audioSource,
+                sdp.source_groups
         };
     }
 
@@ -43,32 +46,7 @@ namespace ntgcalls {
             AudioConfig(test, 48000, 16, 2),
         });
 
-        auto sdp = init();
-        if (!sdp.has_value()) {
-            throw InvalidParams("Sdp has no value");
-        }
-        auto params = sdp.value();
-        json jsonRes = {
-                {"ufrag", params.ufrag},
-                {"pwd", params.pwd},
-                {"fingerprints", {
-                    {
-                        {"hash", params.hash},
-                        {"setup", params.setup},
-                        {"fingerprint", params.fingerprint}
-                    }
-                }},
-                {"ssrc", audioSource},
-        };
-
-        if (!sourceGroups.empty()){
-            jsonRes["ssrc-groups"] = {
-                    {"semantics", "FID"},
-                    {"sources", sourceGroups}
-            };
-        }
-
-        return to_string(jsonRes);
+        return init();
     }
 
     void Client::setRemoteCallParams(const std::string& jsonData) {
