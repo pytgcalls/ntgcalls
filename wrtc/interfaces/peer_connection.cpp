@@ -10,12 +10,13 @@ namespace wrtc {
         factory = PeerConnectionFactory::GetOrCreateDefault();
 
         webrtc::PeerConnectionInterface::RTCConfiguration config;
-        config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
+        config.bundle_policy = webrtc::PeerConnectionInterface::BundlePolicy::kBundlePolicyMaxBundle;
 
         webrtc::PeerConnectionDependencies dependencies(this);
 
         auto result = factory->factory()->CreatePeerConnectionOrError(
                 config, std::move(dependencies));
+
 
         if (!result.ok()) {
             throw wrapRTCError(result.error());
