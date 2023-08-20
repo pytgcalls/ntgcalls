@@ -7,10 +7,6 @@
 
 namespace ntgcalls {
     std::optional<JoinVoiceCallParams> Client::init() {
-        if (connection) {
-            throw ConnectionError("Connection already started");
-        }
-
         connection = std::make_shared<wrtc::PeerConnection>();
 
         stream->addTracks(connection);
@@ -37,6 +33,10 @@ namespace ntgcalls {
     }
 
     std::string Client::createCall(std::string audioPath) {
+        if (connection) {
+            throw ConnectionError("Connection already made");
+        }
+
         stream = std::make_shared<Stream>();
         auto test = std::make_shared<FileReader>(audioPath);
         stream->setAVStream(StreamConfig{
@@ -62,7 +62,7 @@ namespace ntgcalls {
         };
 
         if (!sourceGroups.empty()){
-            jsonRes["sources"] = {
+            jsonRes["ssrc-groups"] = {
                     {"semantics", "FID"},
                     {"sources", sourceGroups}
             };
