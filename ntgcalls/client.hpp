@@ -12,7 +12,7 @@
 #include "exceptions.hpp"
 #include "utils/time.hpp"
 #include "io/file_reader.hpp"
-#include "join_voice_call_params.hpp"
+#include "group_call_payload.hpp"
 
 namespace ntgcalls {
     using nlohmann::json;
@@ -31,6 +31,6 @@ namespace ntgcalls {
         std::vector<wrtc::SSRC> sourceGroups = {};
         std::shared_ptr<Stream> stream;
 
-        JoinVoiceCallParams init();
+        GroupCallPayload init();
     };
 }

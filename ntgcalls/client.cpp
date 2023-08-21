@@ -6,33 +6,14 @@
 #include "client.hpp"
 
 namespace ntgcalls {
-    JoinVoiceCallParams Client::init() {
+    GroupCallPayload Client::init() {
         connection = std::make_shared<wrtc::PeerConnection>();
 
         stream->addTracks(connection);
 
         auto offer = connection->createOffer(true, true);
-        std::cout << offer.getSdp();
         connection->setLocalDescription(offer);
-
-        const auto sdp = wrtc::SdpBuilder::parseSdp(offer.getSdp());
-
-        if (!sdp.ufrag || !sdp.pwd || !sdp.hash || !sdp.fingerprint) {
-            throw InvalidParams("Sdp has no value");
-        }
-
-        audioSource = sdp.audioSource;
-        sourceGroups = sdp.source_groups;
-
-        return JoinVoiceCallParams {
-                sdp.ufrag.value(),
-                sdp.pwd.value(),
-                sdp.hash.value(),
-                "active",
-                sdp.fingerprint.value(),
-                sdp.audioSource,
-                sdp.source_groups
-        };
+        return offer;
     }
 
     std::string Client::createCall(std::string audioPath) {
@@ -45,8 +26,12 @@ namespace ntgcalls {
         stream->setAVStream(StreamConfig{
             AudioConfig(test, 48000, 16, 2),
         });
-
-        return init();
+        auto res = init();
+        audioSource = res.audioSource;
+        for (auto &ssrc : res.sourceGroups) {
+            sourceGroups.push_back(ssrc);
+        }
+        return res;
     }
 
     void Client::setRemoteCallParams(const std::string& jsonData) {
@@ -61,7 +46,6 @@ namespace ntgcalls {
         wrtc::Conference conference;
         try {
             conference = {
-                    getMilliseconds(),
                     {
                             data["ufrag"].get<std::string>(),
                             data["pwd"].get<std::string>()
@@ -103,6 +87,7 @@ namespace ntgcalls {
         connection->onIceStateChange([&waitConnection](wrtc::IceState state) {
             switch (state) {
                 case wrtc::IceState::Completed:
+                case wrtc::IceState::Connected:
                     waitConnection.onSuccess();
                     break;
                 case wrtc::IceState::Disconnected:
