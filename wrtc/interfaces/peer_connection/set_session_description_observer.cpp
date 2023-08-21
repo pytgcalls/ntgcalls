@@ -6,12 +6,12 @@
 
 namespace wrtc {
 
-  void SetSessionDescriptionObserver::OnSuccess() {
-    _onSuccess();
-  }
+    void SetSessionDescriptionObserver::OnSuccess() {
+        _onSuccess();
+    }
 
-  void SetSessionDescriptionObserver::OnFailure(webrtc::RTCError error) {
-    _onFailure(wrapRTCError(error));
-  }
+    void SetSessionDescriptionObserver::OnFailure(webrtc::RTCError error) {
+        _onFailure(wrapRTCError(error));
+    }
 
 } // namespace wrtc

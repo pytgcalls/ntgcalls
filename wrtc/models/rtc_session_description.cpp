@@ -34,8 +34,17 @@ namespace wrtc {
         _description = std::move(description);
     }
 
-    webrtc::SdpType Description::getType() {
-        return _description->GetType();
+    Description::Type Description::getType() {
+        switch (_description->GetType()) {
+            case webrtc::SdpType::kOffer:
+                return Description::Type::Offer;
+            case webrtc::SdpType::kPrAnswer:
+                return Description::Type::Pranswer;
+            case webrtc::SdpType::kAnswer:
+                return Description::Type::Answer;
+            case webrtc::SdpType::kRollback:
+                return Description::Type::Rollback;
+        }
     }
 
     std::string Description::getSdp() {
@@ -45,7 +54,7 @@ namespace wrtc {
     }
 
     Description::operator webrtc::SessionDescriptionInterface *() {
-        return webrtc::CreateSessionDescription(this->getType(), this->getSdp()).release();
+        return webrtc::CreateSessionDescription(_description->GetType(), this->getSdp()).release();
     }
 
     Description Description::Wrap(webrtc::SessionDescriptionInterface *description) {

@@ -23,7 +23,7 @@ namespace wrtc {
 
         explicit operator webrtc::SessionDescriptionInterface *();
 
-        webrtc::SdpType getType();
+        Type getType();
 
         std::string getSdp();
 
