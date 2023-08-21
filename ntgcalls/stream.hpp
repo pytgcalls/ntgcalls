@@ -17,7 +17,7 @@ namespace ntgcalls {
         std::shared_ptr<AudioStreamer> audio;
         std::shared_ptr<VideoStreamer> video;
         std::shared_ptr<BaseReader> is_audio, is_video;
-        bool running, idling, lipSync;
+        bool running = false, idling = false, lipSync = false;
         DispatchQueue dispatchQueue = DispatchQueue("StreamQueue");
 
         void sendSample();
