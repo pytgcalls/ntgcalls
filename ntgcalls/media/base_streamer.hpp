@@ -13,7 +13,7 @@
 namespace ntgcalls {
     class BaseStreamer {
     private:
-        uint64_t sentBytes, lastSentTime = 0;
+        uint64_t sentBytes, lastTime = 0;
 
     protected:
         ~BaseStreamer();
