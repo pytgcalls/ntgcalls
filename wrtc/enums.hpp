@@ -4,8 +4,12 @@
 
 #pragma once
 
+#include <stdint.h>
+
 namespace wrtc {
     typedef uint8_t *binary;
+    typedef uint32_t SSRC;
+    typedef int32_t TgSSRC;
 
     enum RTCIceComponent {
         kRtp,

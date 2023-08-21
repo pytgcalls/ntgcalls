@@ -8,11 +8,11 @@
 #include <string>
 #include <optional>
 #include <sstream>
+#include <rtc_base/helpers.h>
+
+#include "enums.hpp"
 
 namespace wrtc {
-    typedef uint32_t SSRC;
-    typedef int32_t TgSSRC;
-    typedef int64_t SessionID;
 
     struct Fingerprint {
         std::string hash;
@@ -40,18 +40,17 @@ namespace wrtc {
     };
 
     struct Conference {
-        SessionID session_id;
         Transport transport;
         SSRC ssrc;
         std::vector<SSRC> source_groups;
     };
 
     struct Sdp {
-        std::optional<std::string> fingerprint;
-        std::optional<std::string> hash;
-        std::optional<std::string> setup;
-        std::optional<std::string> pwd;
-        std::optional<std::string> ufrag;
+        std::string fingerprint;
+        std::string hash;
+        std::string setup;
+        std::string pwd;
+        std::string ufrag;
         SSRC audioSource;
         std::vector<SSRC> source_groups;
     };
@@ -65,7 +64,7 @@ namespace wrtc {
         void push(const std::string& word);
         void addJoined(const std::string& separator = "");
         void addCandidate(const Candidate& c);
-        void addHeader(SessionID session_id);
+        void addHeader();
         void addTransport(const Transport& transport);
         void addSsrcEntry(const Transport& transport);
 
@@ -77,9 +76,5 @@ namespace wrtc {
         static std::string fromConference(const Conference& conference);
 
         static Sdp parseSdp(const std::string& sdp);
-
-        static TgSSRC toTelegramSSRC(SSRC source);
-
-        static std::vector<TgSSRC> toTelegramSSRC(std::vector<SSRC> source);
     };
 }

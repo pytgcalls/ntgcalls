@@ -8,13 +8,13 @@ namespace wrtc {
     std::string SdpBuilder::join() {
         std::string joinedSdp;
         for (const auto& line : lines) {
-            joinedSdp += line + "\n";
+            joinedSdp += line + "\r\n";
         }
         return joinedSdp;
     }
 
     std::string SdpBuilder::finalize() {
-        return join() + "\n";
+        return join();
     }
 
     void SdpBuilder::add(const std::string& line) {
@@ -45,9 +45,9 @@ namespace wrtc {
         addJoined();
     }
 
-    void SdpBuilder::addHeader(SessionID session_id) {
+    void SdpBuilder::addHeader() {
         add("v=0");
-        add("o=- " + std::to_string(session_id) + " 2 IN IP4 0.0.0.0");
+        add("o=- " + std::to_string(rtc::CreateRandomId64()) + " 2 IN IP4 0.0.0.0");
         add("s=-");
         add("t=0 0");
         add("a=group:BUNDLE 0 1");
@@ -121,7 +121,7 @@ namespace wrtc {
     }
 
     void SdpBuilder::addConference(const Conference& conference) {
-        addHeader(conference.session_id);
+        addHeader();
         addSsrcEntry(conference.transport);
     }
 
@@ -178,17 +178,5 @@ namespace wrtc {
                 audioSource,
                 sourceGroups
         };
-    }
-
-    TgSSRC SdpBuilder::toTelegramSSRC(SSRC ssrc) {
-        return static_cast<TgSSRC>(ssrc);
-    }
-
-    std::vector<TgSSRC> SdpBuilder::toTelegramSSRC(std::vector<SSRC> ssrcs) {
-        std::vector<TgSSRC> converted;
-        for (auto ssrc: ssrcs) {
-            converted.push_back(toTelegramSSRC(ssrc));
-        }
-        return converted;
     }
 }
