@@ -13,19 +13,12 @@
 
 namespace ntgcalls {
     class Stream {
-    private:
-        std::shared_ptr<AudioStreamer> audio;
-        std::shared_ptr<VideoStreamer> video;
-        wrtc::MediaStreamTrack *audioTrack, *videoTrack;
-        std::shared_ptr<BaseReader> is_audio, is_video;
-        bool running = false, idling = false, lipSync = false;
-        DispatchQueue dispatchQueue = DispatchQueue("StreamQueue");
-
-        void sendSample();
-
-        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample();
-
     public:
+        enum Type {
+            Audio,
+            Video,
+        };
+
         Stream();
 
         ~Stream();
@@ -45,5 +38,24 @@ namespace ntgcalls {
         void stop();
 
         void addTracks(const std::shared_ptr<wrtc::PeerConnection> &pc);
+
+        void onStreamEnd(std::function<void(Stream::Type)> &callback);
+
+    private:
+        std::shared_ptr<AudioStreamer> audio;
+        std::shared_ptr<VideoStreamer> video;
+        wrtc::MediaStreamTrack *audioTrack, *videoTrack;
+        std::shared_ptr<BaseReader> rAudio, rVideo;
+        bool running = false, idling = false, lipSync = false;
+
+        wrtc::synchronized_callback<Type> onEOF;
+
+        DispatchQueue dispatchQueue = DispatchQueue("StreamQueue");
+
+        void sendSample();
+
+        void checkStream();
+
+        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample();
     };
 }
