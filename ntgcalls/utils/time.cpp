@@ -7,13 +7,11 @@
 int64_t getMilliseconds() {
     auto now = std::chrono::system_clock::now();
     auto duration = now.time_since_epoch();
-    int64_t milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    return milliseconds;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 }
 
 uint64_t getMicroseconds() {
     auto now = std::chrono::system_clock::now();
     auto duration = now.time_since_epoch();
-    int64_t microseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
-    return microseconds;
+    return std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
 }
