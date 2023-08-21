@@ -86,7 +86,6 @@ namespace ntgcalls {
         wrtc::Sync<void> waitConnection;
         connection->onIceStateChange([&waitConnection](wrtc::IceState state) {
             switch (state) {
-                case wrtc::IceState::Completed:
                 case wrtc::IceState::Connected:
                     waitConnection.onSuccess();
                     break;
