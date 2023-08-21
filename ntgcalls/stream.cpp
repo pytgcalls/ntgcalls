@@ -14,14 +14,18 @@ namespace ntgcalls {
     Stream::~Stream() {
         audio = nullptr;
         video = nullptr;
+        audioTrack = nullptr;
+        videoTrack = nullptr;
         is_audio = nullptr;
         is_video = nullptr;
         running = false;
     }
 
     void Stream::addTracks(const std::shared_ptr<wrtc::PeerConnection>& pc) {
-        pc->addTrack(audio->createTrack());
-        pc->addTrack(video->createTrack());
+        audioTrack = audio->createTrack();
+        videoTrack = video->createTrack();
+        pc->addTrack(audioTrack);
+        pc->addTrack(videoTrack);
     }
 
     std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample() {
@@ -79,9 +83,9 @@ namespace ntgcalls {
 
         if (audioConfig) {
             audio->setConfig(
-                    audioConfig->sampleRate,
-                    audioConfig->bitsPerSample,
-                    audioConfig->channelCount
+                audioConfig->sampleRate,
+                audioConfig->bitsPerSample,
+                audioConfig->channelCount
             );
             is_audio = audioConfig->reader;
         } else {
@@ -89,9 +93,9 @@ namespace ntgcalls {
         }
         if (videoConfig) {
             video->setConfig(
-                    videoConfig->width,
-                    videoConfig->height,
-                    videoConfig->fps
+                videoConfig->width,
+                videoConfig->height,
+                videoConfig->fps
             );
             is_video = videoConfig->reader;
         } else {
@@ -114,6 +118,16 @@ namespace ntgcalls {
 
     void Stream::resume() {
         idling = false;
+    }
+
+    void Stream::mute() {
+        audioTrack->Mute(true);
+        videoTrack->Mute(true);
+    }
+
+    void Stream::unmute() {
+        audioTrack->Mute(false);
+        videoTrack->Mute(false);
     }
 
     void Stream::stop() {
