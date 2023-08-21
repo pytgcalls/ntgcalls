@@ -14,7 +14,7 @@ namespace ntgcalls {
     }
 
     wrtc::binary FileReader::read(std::int64_t size) {
-        if (source.eof()) {
+        if (source.eof() || source.fail()) {
             return {};
         }
         source.seekg(readChunks, std::ios::beg);
@@ -22,7 +22,7 @@ namespace ntgcalls {
         source.read(reinterpret_cast<char*>(file_data), size);
         readChunks += size;
         if (source.fail()) {
-            throw FileError("Error while reading the file \"" + filePath + "\"");
+            return {};
         }
         return file_data;
     }
@@ -34,6 +34,6 @@ namespace ntgcalls {
     }
 
     bool FileReader::eof() {
-        return source.eof();
+        return source.eof() || source.fail();
     }
 }
