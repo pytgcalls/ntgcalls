@@ -75,7 +75,7 @@ namespace ntgcalls {
         auto audioConfig = streamConfig.audioConfig;
         auto videoConfig = streamConfig.videoConfig;
 
-        lipSync = streamConfig.lipSync;
+        lipSync = streamConfig.lipSync && audioConfig && videoConfig;
 
         if (audioConfig) {
             audio->setConfig(
