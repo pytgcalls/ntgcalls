@@ -18,13 +18,6 @@ namespace ntgcalls {
     using nlohmann::json;
 
     class Client {
-    public:
-        Client() = default;
-
-        std::string createCall(std::string audioPath);
-
-        void setRemoteCallParams(const std::string& jsonData);
-
     private:
         std::shared_ptr<wrtc::PeerConnection> connection;
         wrtc::SSRC audioSource = 0;
@@ -32,5 +25,24 @@ namespace ntgcalls {
         std::shared_ptr<Stream> stream;
 
         GroupCallPayload init();
+
+    public:
+        Client() = default;
+
+        std::string connect(StreamConfig config);
+
+        void setRemoteParams(const std::string& jsonData);
+
+        void changeStream(StreamConfig config);
+
+        void pause();
+
+        void resume();
+
+        void mute();
+
+        void unmute();
+
+        void stop();
     };
 }

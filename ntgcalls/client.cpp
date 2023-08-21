@@ -16,16 +16,13 @@ namespace ntgcalls {
         return offer;
     }
 
-    std::string Client::createCall(std::string audioPath) {
+    std::string Client::connect(StreamConfig config) {
         if (connection) {
             throw ConnectionError("Connection already made");
         }
 
         stream = std::make_shared<Stream>();
-        auto test = std::make_shared<FileReader>(audioPath);
-        stream->setAVStream(StreamConfig{
-            AudioConfig(test, 48000, 16, 2),
-        });
+        stream->setAVStream(config);
         auto res = init();
         audioSource = res.audioSource;
         for (auto &ssrc : res.sourceGroups) {
@@ -34,7 +31,11 @@ namespace ntgcalls {
         return res;
     }
 
-    void Client::setRemoteCallParams(const std::string& jsonData) {
+    void Client::changeStream(StreamConfig config) {
+        stream->setAVStream(config);
+    }
+
+    void Client::setRemoteParams(const std::string& jsonData) {
         auto data = json::parse(jsonData);
         if (!data["rtmp"].is_null()) {
             throw RTMPNeeded("Needed rtmp connection");
@@ -100,5 +101,26 @@ namespace ntgcalls {
         });
         waitConnection.wait();
         stream->start();
+    }
+
+    void Client::pause() {
+        stream->pause();
+    }
+
+    void Client::resume() {
+        stream->resume();
+    }
+
+    void Client::mute() {
+        stream->mute();
+    }
+
+    void Client::unmute() {
+        stream->unmute();
+    }
+
+    void Client::stop() {
+        stream->stop();
+        connection->close();
     }
 }
