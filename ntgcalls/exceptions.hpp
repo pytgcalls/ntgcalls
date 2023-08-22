@@ -24,4 +24,8 @@ namespace ntgcalls {
     class FileError: public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
+
+    class FFmpegError: public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
 }
