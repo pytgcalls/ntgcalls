@@ -1,9 +1,7 @@
 enable_language(OBJCXX)
 
 target_sources(${target_name} PRIVATE
-    src/mac/mac_capturer.mm
-    src/mac/mac_version.mm
-    src/mac/mac_video_factory.mm
+    # ${CMAKE_SOURCE_DIR}/wrtc/mac/mac_video_factory.mm
 )
 
 target_compile_options(${target_name} PRIVATE -fconstant-string-class=NSConstantString)

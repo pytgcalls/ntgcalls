@@ -13,11 +13,11 @@ if(WebRTC_FOUND)
         add_library(WebRTC::webrtc UNKNOWN IMPORTED)
 
         set(_DIRS
-           ${WebRTC_INCLUDE_DIR}
-           ${WebRTC_INCLUDE_DIR}/third_party/abseil-cpp
-           ${WebRTC_INCLUDE_DIR}/third_party/boringssl/src/include
-           ${WebRTC_INCLUDE_DIR}/third_party/libyuv/include
-           ${WebRTC_INCLUDE_DIR}/third_party/zlib
+            ${WebRTC_INCLUDE_DIR}
+            ${WebRTC_INCLUDE_DIR}/third_party/abseil-cpp
+            ${WebRTC_INCLUDE_DIR}/third_party/boringssl/src/include
+            ${WebRTC_INCLUDE_DIR}/third_party/libyuv/include
+            ${WebRTC_INCLUDE_DIR}/third_party/zlib
         )
 
         if (APPLE)
