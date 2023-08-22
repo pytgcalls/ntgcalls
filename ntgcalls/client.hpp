@@ -12,7 +12,7 @@
 #include "exceptions.hpp"
 #include "utils/time.hpp"
 #include "io/file_reader.hpp"
-#include "group_call_payload.hpp"
+#include "models/group_call_payload.hpp"
 
 namespace ntgcalls {
     using nlohmann::json;
