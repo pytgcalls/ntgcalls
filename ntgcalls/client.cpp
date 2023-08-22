@@ -16,7 +16,7 @@ namespace ntgcalls {
         return offer;
     }
 
-    std::string Client::connect(StreamConfig config) {
+    std::string Client::init(StreamConfig config) {
         if (connection) {
             throw ConnectionError("Connection already made");
         }
@@ -35,7 +35,7 @@ namespace ntgcalls {
         stream->setAVStream(config);
     }
 
-    void Client::setRemoteParams(const std::string& jsonData) {
+    void Client::connect(const std::string& jsonData) {
         auto data = json::parse(jsonData);
         if (!data["rtmp"].is_null()) {
             throw RTMPNeeded("Needed rtmp connection");

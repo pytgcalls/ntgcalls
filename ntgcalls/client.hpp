@@ -29,9 +29,9 @@ namespace ntgcalls {
     public:
         Client() = default;
 
-        std::string connect(StreamConfig config);
+        std::string init(StreamConfig config);
 
-        void setRemoteParams(const std::string& jsonData);
+        void connect(const std::string& jsonData);
 
         void changeStream(StreamConfig config);
 
