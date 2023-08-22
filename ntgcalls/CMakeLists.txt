@@ -5,11 +5,11 @@ if(IS_PYTHON)
     target_compile_definitions(ntgcalls PRIVATE VERSION_INFO=${PY_VERSION_INFO})
 else()
     list(REMOVE_ITEM MODULE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/pythonapi.cpp")
-    add_executable(ntgcalls ${MODULE_SRC})
+    add_library(ntgcalls ${MODULE_SRC})
 endif()
 
 set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20)
-set_target_properties(ntgcalls PROPERTIES EXPORT_NAME ntgcalls)
 
 target_link_libraries(ntgcalls PRIVATE wrtc nlohmann_json::nlohmann_json)
+
 setup_platform_libs(ntgcalls)
