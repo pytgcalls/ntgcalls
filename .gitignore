@@ -14,4 +14,3 @@ deps/depot_tools/
 deps/libwebrtc/
 build/
 dist/
-wrtc_old/
