@@ -18,6 +18,7 @@ set(WEBRTC_LIBRARY_DIR "${deps_loc}/libwebrtc/")
 set(WEBRTC_INCLUDE_DIR "${WEBRTC_LIBRARY_DIR}include/")
 
 include(cmake/FindWebRTC.cmake)
+include(cmake/FindFFmpeg.cmake)
 include(cmake/SetupPlatformLibs.cmake)
 
 # pybind11

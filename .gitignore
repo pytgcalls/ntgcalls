@@ -12,5 +12,6 @@ tools/opus/
 *.ogg
 deps/depot_tools/
 deps/libwebrtc/
+deps/ffmpeg/
 build/
 dist/
