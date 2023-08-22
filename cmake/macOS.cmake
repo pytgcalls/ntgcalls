@@ -1,0 +1,30 @@
+enable_language(OBJCXX)
+
+target_sources(${target_name} PRIVATE
+    src/mac/mac_capturer.mm
+    src/mac/mac_version.mm
+    src/mac/mac_video_factory.mm
+)
+
+target_compile_options(${target_name} PRIVATE -fconstant-string-class=NSConstantString)
+target_link_options(${target_name} PUBLIC -ObjC)
+set_target_properties(${target_name} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+
+target_compile_definitions(${target_name} PUBLIC
+    WEBRTC_POSIX
+    WEBRTC_MAC
+)
+
+target_link_libraries(${target_name} PUBLIC
+    "-framework AVFoundation"
+    "-framework AudioToolbox"
+    "-framework CoreAudio"
+    "-framework QuartzCore"
+    "-framework CoreMedia"
+    "-framework VideoToolbox"
+    "-framework AppKit"
+    "-framework Metal"
+    "-framework MetalKit"
+    "-framework OpenGL"
+    "-framework IOSurface"
+)
