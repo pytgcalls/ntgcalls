@@ -1,7 +1,6 @@
 import asyncio
-import logging
 
-from ntgcalls import NTgCalls
+from ntgcalls import NTgCalls, MediaDescription, AudioDescription, FFmpegOptions
 from pyrogram import Client, idle
 from pyrogram.raw.functions.channels import GetFullChannel
 from pyrogram.raw.functions.phone import JoinGroupCall
@@ -12,16 +11,25 @@ api_hash = '47d66bbf0939d0ddf32caf8bad590ed7'
 
 wrtc = NTgCalls()
 
+chat_id = -1001919448795
+
 
 async def main():
     client = Client('test', api_id, api_hash, sleep_threshold=1)
 
-    file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/output.pcm"
-
-
+    file_audio = "output.pcm"
     async with client:
-        call_params = wrtc.createCall(file_audio)
-        chat = await client.resolve_peer(-1001398466177)
+        call_params = wrtc.createCall(chat_id, MediaDescription(
+            encoder="raw",
+            audio=AudioDescription(
+                sampleRate=48000,
+                bitsPerSample=16,
+                channelCount=2,
+                path=file_audio,
+                options=FFmpegOptions()
+            ),
+        ))
+        chat = await client.resolve_peer(chat_id)
         local_peer = await client.resolve_peer((await client.get_me()).id)
         input_call = (
             await client.invoke(
@@ -44,7 +52,7 @@ async def main():
         )
         for update in result.updates:
             if isinstance(update, UpdateGroupCallConnection):
-                wrtc.setRemoteCallParams(update.params.data)
+                wrtc.connect(chat_id, update.params.data)
         print("Connected!")
         await idle()
         print("Closed")

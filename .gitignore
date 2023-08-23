@@ -14,3 +14,7 @@ deps/depot_tools/
 deps/libwebrtc/
 build/
 dist/
+*.i420
+*.pcm
+*.mp4
+*.mp3
