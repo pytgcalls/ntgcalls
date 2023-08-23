@@ -8,6 +8,7 @@ target_link_libraries(wrtc PUBLIC WebRTC::webrtc)
 
 target_include_directories(wrtc PUBLIC
     ${CMAKE_SOURCE_DIR}
+    ${WEBRTC_INCLUDE}
 )
 
 setup_platform_libs(wrtc)

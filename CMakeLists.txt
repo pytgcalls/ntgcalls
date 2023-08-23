@@ -1,9 +1,16 @@
 cmake_minimum_required(VERSION 3.23)
 
+include(ExternalProject)
+
+set(WEBRTC_REVISION m114.5735.2.1-hololens2.1)
+
 # Check platform
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 endif()
+if (UNIX AND APPLE)
+    set(MACOS TRUE)
+endif ()
 
 if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
@@ -14,8 +21,6 @@ project(ntgcalls VERSION 1.0.0 LANGUAGES C CXX)
 find_package(Threads REQUIRED)
 
 get_filename_component(deps_loc "deps" REALPATH)
-set(WEBRTC_LIBRARY_DIR "${deps_loc}/libwebrtc/")
-set(WEBRTC_INCLUDE_DIR "${WEBRTC_LIBRARY_DIR}include/")
 
 include(cmake/FindWebRTC.cmake)
 include(cmake/SetupPlatformLibs.cmake)

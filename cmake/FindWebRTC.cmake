@@ -1,35 +1,83 @@
-find_path(WebRTC_INCLUDE_DIR NAMES api/peer_connection_interface.h PATHS ${WEBRTC_INCLUDE_DIR})
-find_library(WebRTC_LIBRARY
-        NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}webrtc${CMAKE_STATIC_LIBRARY_SUFFIX}
-        PATHS ${WEBRTC_LIBRARY_DIR})
+set(WEBRTC_DIR ${deps_loc}/libwebrtc)
+set(WEBRTC_SRC ${WEBRTC_DIR}/src)
+set(WEBRTC_INCLUDE ${WEBRTC_SRC}/include)
+set(WEBRTC_LIB ${WEBRTC_SRC}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}webrtc${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(WebRTC DEFAULT_MSG WebRTC_LIBRARY WebRTC_INCLUDE_DIR)
+if(NOT TARGET WebRTC::webrtc)
+    if (WIN32)
+        set(PLATFORM windows)
+        set(ARCHIVE_FORMAT .zip)
+        if (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "ARM64")
+            set(ARCH arm64)
+        elseif (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "AMD64")
+            set(ARCH x86_64)
+        else ()
+            set(FAILED_ARCH TRUE)
+        endif ()
+    elseif (MACOS)
+        set(PLATFORM macos)
+        set(ARCHIVE_FORMAT .tar.gz)
+        if (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+            set(ARCH arm64)
+        else ()
+            set(FAILED_ARCH TRUE)
+        endif ()
+    elseif (LINUX)
+        set(PLATFORM ubuntu-20.04)
+        set(ARCHIVE_FORMAT .tar.gz)
+        if (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
+            set(ARCH x86_64)
+        else ()
+            set(FAILED_ARCH TRUE)
+        endif ()
+    else ()
+        set(FAILED_OS TRUE)
+    endif ()
 
-mark_as_advanced(WebRTC_INCLUDE_DIR WebRTC_LIBRARY)
+    if (FAILED_ARCH)
+        message(FATAL_ERROR "${CMAKE_HOST_SYSTEM_PROCESSOR} on ${CMAKE_SYSTEM_NAME} is not supported yet")
+    elseif (FAILED_OS)
+        message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} is not supported yet")
+    endif ()
 
-if(WebRTC_FOUND)
-    if(NOT TARGET WebRTC::webrtc)
-        add_library(WebRTC::webrtc UNKNOWN IMPORTED)
+    set(GIT_PROJECT https://github.com/shiguredo-webrtc-build/webrtc-build)
+    set(FILE_NAME webrtc.${PLATFORM}_${ARCH}${ARCHIVE_FORMAT})
 
-        set(_DIRS
-            ${WebRTC_INCLUDE_DIR}
-            ${WebRTC_INCLUDE_DIR}/third_party/abseil-cpp
-            ${WebRTC_INCLUDE_DIR}/third_party/boringssl/src/include
-            ${WebRTC_INCLUDE_DIR}/third_party/libyuv/include
-            ${WebRTC_INCLUDE_DIR}/third_party/zlib
-        )
+    set(CMAKE_EXTERNAL_PROJECT_IGNORE_CMAKE_FILES TRUE)
 
-        if (APPLE)
-            list(APPEND _DIRS
-                ${WebRTC_INCLUDE_DIR}/sdk/objc
-                ${WebRTC_INCLUDE_DIR}/sdk/objc/base
-            )
-        endif()
+    ExternalProject_Add(
+        project_libwebrtc
 
-        set_target_properties(WebRTC::webrtc PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${_DIRS}"
-            IMPORTED_LOCATION "${WebRTC_LIBRARY}"
+        URL ${GIT_PROJECT}/releases/download/${WEBRTC_REVISION}/${FILE_NAME}
+
+        PREFIX ${WEBRTC_DIR}/prefix
+        DOWNLOAD_DIR ${WEBRTC_DIR}/download
+        SOURCE_DIR ${WEBRTC_SRC}
+        TMP_DIR ${WEBRTC_DIR}/tmp
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+        UPDATE_COMMAND ""
+    )
+
+    ExternalProject_Add_StepTargets(project_libwebrtc install)
+
+    add_library(WebRTC::webrtc UNKNOWN IMPORTED)
+    add_dependencies(WebRTC::webrtc project_libwebrtc)
+
+    set(WEBRTC_INCLUDE
+        ${WEBRTC_INCLUDE}
+        ${WEBRTC_INCLUDE}/third_party/abseil-cpp
+        ${WEBRTC_INCLUDE}/third_party/boringssl/src/include
+        ${WEBRTC_INCLUDE}/third_party/libyuv/include
+        ${WEBRTC_INCLUDE}/third_party/zlib
+    )
+    if (MACOS)
+        list(APPEND WEBRTC_INCLUDE
+            ${WebRTC_INCLUDE_DIR}/sdk/objc
+            ${WebRTC_INCLUDE_DIR}/sdk/objc/base
         )
     endif()
-endif()
+
+    set_target_properties(WebRTC::webrtc PROPERTIES IMPORTED_LOCATION "${WEBRTC_LIB}")
+endif ()
