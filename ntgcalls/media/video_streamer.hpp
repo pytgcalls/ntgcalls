@@ -21,7 +21,7 @@ namespace ntgcalls {
         uint16_t w = 0, h = 0;
         uint8_t fps = 0;
 
-        uint64_t frameTime() override;
+        double_t frameTime() override;
 
     public:
         VideoStreamer();

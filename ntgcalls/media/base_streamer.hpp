@@ -18,7 +18,7 @@ namespace ntgcalls {
     protected:
         ~BaseStreamer();
 
-        virtual uint64_t frameTime() = 0;
+        virtual double_t frameTime() = 0;
 
         void clear();
 

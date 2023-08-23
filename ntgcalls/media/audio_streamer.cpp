@@ -21,7 +21,7 @@ namespace ntgcalls {
     }
 
 
-    uint64_t AudioStreamer::frameTime() {
+    double_t AudioStreamer::frameTime() {
         return 10; // 10ms
     }
 

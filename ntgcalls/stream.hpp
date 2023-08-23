@@ -47,7 +47,7 @@ namespace ntgcalls {
         std::shared_ptr<VideoStreamer> video;
         wrtc::MediaStreamTrack *audioTrack, *videoTrack;
         std::shared_ptr<MediaReaderFactory> reader;
-        bool running = false, idling = false, lipSync = false;
+        bool running = false, idling = false;
 
         wrtc::synchronized_callback<Type> onEOF;
 

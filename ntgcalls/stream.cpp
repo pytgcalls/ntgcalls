@@ -30,16 +30,12 @@ namespace ntgcalls {
         std::shared_ptr<BaseStreamer> bs;
         std::shared_ptr<BaseReader> br;
         if (reader->audio && reader->video) {
-            if (lipSync) {
-                if (audio->time() < video->time()) {
-                    bs = audio;
-                    br = reader->audio;
-                } else {
-                    bs = video;
-                    br = reader->video;
-                }
+            if (audio->waitTime() < video->waitTime()) {
+                bs = audio;
+                br = reader->audio;
             } else {
-                // TODO: LipSyncless Implementation
+                bs = video;
+                br = reader->video;
             }
         } else if (reader->audio) {
             bs = audio;
@@ -90,7 +86,6 @@ namespace ntgcalls {
         auto audioConfig = streamConfig.audio;
         auto videoConfig = streamConfig.video;
         reader = std::make_shared<MediaReaderFactory>(streamConfig);
-        lipSync = audioConfig && videoConfig && audioConfig->path == videoConfig->path;
 
         if (audioConfig) {
             audio->setConfig(
