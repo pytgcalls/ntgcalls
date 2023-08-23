@@ -15,7 +15,8 @@ namespace ntgcalls {
         return offer;
     }
 
-    std::string Client::init(StreamConfig config) {
+    std::string Client::init(MediaDescription config) {
+
         if (connection) {
             throw ConnectionError("Connection already made");
         }
@@ -30,7 +31,7 @@ namespace ntgcalls {
         return res;
     }
 
-    void Client::changeStream(StreamConfig config) {
+    void Client::changeStream(MediaDescription config) {
         stream->setAVStream(config);
     }
 

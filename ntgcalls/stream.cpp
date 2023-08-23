@@ -3,7 +3,6 @@
 //
 
 #include "stream.hpp"
-#include "utils/time.hpp"
 
 namespace ntgcalls {
     Stream::Stream() {
@@ -16,8 +15,7 @@ namespace ntgcalls {
         video = nullptr;
         audioTrack = nullptr;
         videoTrack = nullptr;
-        rAudio = nullptr;
-        rVideo = nullptr;
+        reader = nullptr;
         running = false;
     }
 
@@ -31,24 +29,24 @@ namespace ntgcalls {
     std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample() {
         std::shared_ptr<BaseStreamer> bs;
         std::shared_ptr<BaseReader> br;
-        if (rAudio && rVideo) {
+        if (reader->audio && reader->video) {
             if (lipSync) {
                 if (audio->time() < video->time()) {
                     bs = audio;
-                    br = rAudio;
+                    br = reader->audio;
                 } else {
                     bs = video;
-                    br = rVideo;
+                    br = reader->video;
                 }
             } else {
                 // TODO: LipSyncless Implementation
             }
-        } else if (rAudio && !rVideo) {
+        } else if (reader->audio) {
             bs = audio;
-            br = rAudio;
+            br = reader->audio;
         } else {
             bs = video;
-            br = rVideo;
+            br = reader->video;
         }
 
         auto waitTime = bs->waitTime();
@@ -59,18 +57,18 @@ namespace ntgcalls {
     }
 
     void Stream::checkStream() {
-        if (rAudio && rAudio->eof()) {
-            rAudio = nullptr;
+        if (reader->audio && reader->audio->eof()) {
+            reader->audio = nullptr;
             onEOF(Audio);
         }
-        if (rVideo && rVideo->eof()) {
-            rVideo = nullptr;
+        if (reader->video && reader->video->eof()) {
+            reader->video = nullptr;
             onEOF(Video);
         }
     }
 
     void Stream::sendSample() {
-        if (idling || !(rAudio || rVideo)) {
+        if (idling || !(reader->audio || reader->video)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else {
             auto bsBR = unsafePrepareForSample();
@@ -88,11 +86,11 @@ namespace ntgcalls {
         }
     }
 
-    void Stream::setAVStream(StreamConfig streamConfig) {
-        auto audioConfig = streamConfig.audioConfig;
-        auto videoConfig = streamConfig.videoConfig;
-
-        lipSync = streamConfig.lipSync && audioConfig && videoConfig;
+    void Stream::setAVStream(MediaDescription streamConfig) {
+        auto audioConfig = streamConfig.audio;
+        auto videoConfig = streamConfig.video;
+        reader = std::make_shared<MediaReaderFactory>(streamConfig);
+        lipSync = audioConfig && videoConfig && audioConfig->path == videoConfig->path;
 
         if (audioConfig) {
             audio->setConfig(
@@ -100,9 +98,6 @@ namespace ntgcalls {
                 audioConfig->bitsPerSample,
                 audioConfig->channelCount
             );
-            rAudio = audioConfig->reader;
-        } else {
-            rAudio = nullptr;
         }
         if (videoConfig) {
             video->setConfig(
@@ -110,9 +105,6 @@ namespace ntgcalls {
                 videoConfig->height,
                 videoConfig->fps
             );
-            rVideo = videoConfig->reader;
-        } else {
-            rVideo = nullptr;
         }
     }
 

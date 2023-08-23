@@ -12,6 +12,7 @@
 #include "exceptions.hpp"
 #include "utils/time.hpp"
 #include "io/file_reader.hpp"
+#include "models/media_description.hpp"
 #include "models/group_call_payload.hpp"
 
 namespace ntgcalls {
@@ -29,11 +30,11 @@ namespace ntgcalls {
     public:
         Client() = default;
 
-        std::string init(StreamConfig config);
+        std::string init(MediaDescription config);
 
         void connect(const std::string& jsonData);
 
-        void changeStream(StreamConfig config);
+        void changeStream(MediaDescription config);
 
         void pause();
 
