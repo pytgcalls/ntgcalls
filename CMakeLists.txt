@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.23)
 
 include(ExternalProject)
 
-set(WEBRTC_REVISION m114.5735.2.1-hololens2.1)
+set(WEBRTC_REVISION m116.5845.6.1)
 
 # Check platform
 if(UNIX AND NOT APPLE)
