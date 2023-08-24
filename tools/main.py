@@ -1,6 +1,6 @@
 import asyncio
 
-from ntgcalls import NTgCalls, MediaDescription, AudioDescription, FFmpegOptions
+from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, FFmpegOptions
 from pyrogram import Client, idle
 from pyrogram.raw.functions.channels import GetFullChannel
 from pyrogram.raw.functions.phone import JoinGroupCall
@@ -17,7 +17,8 @@ chat_id = -1001919448795
 async def main():
     client = Client('test', api_id, api_hash, sleep_threshold=1)
 
-    file_audio = "output.pcm"
+    file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/output.pcm"
+    file_video = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/output.i420"
     async with client:
         call_params = wrtc.createCall(chat_id, MediaDescription(
             encoder="raw",
@@ -26,6 +27,13 @@ async def main():
                 bitsPerSample=16,
                 channelCount=2,
                 path=file_audio,
+                options=FFmpegOptions()
+            ),
+            video=VideoDescription(
+                width=1920,
+                height=1080,
+                fps=30,
+                path=file_video,
                 options=FFmpegOptions()
             ),
         ))
