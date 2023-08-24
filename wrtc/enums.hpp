@@ -11,11 +11,6 @@ namespace wrtc {
     typedef uint32_t SSRC;
     typedef int32_t TgSSRC;
 
-    enum RTCIceComponent {
-        kRtp,
-        kRtcp
-    };
-
     enum class IceState: int {
         New,
         Checking,
