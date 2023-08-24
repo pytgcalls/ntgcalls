@@ -11,6 +11,7 @@ namespace ntgcalls {
     }
 
     Stream::~Stream() {
+        stop();
         audio = nullptr;
         video = nullptr;
         audioTrack = nullptr;
@@ -46,8 +47,8 @@ namespace ntgcalls {
         }
 
         auto waitTime = bs->waitTime();
-        if (waitTime > 0) {
-            std::this_thread::sleep_for(std::chrono::microseconds(waitTime));
+        if (waitTime.count() > 0) {
+            std::this_thread::sleep_for(waitTime);
         }
         return {bs, br};
     }
@@ -132,6 +133,13 @@ namespace ntgcalls {
 
     void Stream::stop() {
         running = false;
+        if (reader->audio) {
+            reader->audio->close();
+        }
+        if (reader->video) {
+            reader->video->close();
+        }
+        dispatchQueue.removePending();
     }
 
     void Stream::onStreamEnd(std::function<void(Stream::Type)> &callback) {

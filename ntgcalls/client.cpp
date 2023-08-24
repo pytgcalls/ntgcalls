@@ -47,12 +47,12 @@ namespace ntgcalls {
         wrtc::Conference conference;
         try {
             conference = {
-                    {
-                            data["ufrag"].get<std::string>(),
-                            data["pwd"].get<std::string>()
-                    },
-                    audioSource,
-                    sourceGroups
+                {
+                    data["ufrag"].get<std::string>(),
+                    data["pwd"].get<std::string>()
+                },
+                audioSource,
+                sourceGroups
             };
             for (const auto& item : data["fingerprints"].items()) {
                 conference.transport.fingerprints.push_back({
@@ -79,8 +79,8 @@ namespace ntgcalls {
         }
 
         auto remoteDescription = wrtc::Description(
-                wrtc::Description::Type::Answer,
-                wrtc::SdpBuilder::fromConference(conference)
+            wrtc::Description::Type::Answer,
+            wrtc::SdpBuilder::fromConference(conference)
         );
         connection->setRemoteDescription(remoteDescription);
 

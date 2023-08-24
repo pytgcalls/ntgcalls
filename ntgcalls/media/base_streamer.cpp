@@ -10,7 +10,7 @@ namespace ntgcalls {
     }
 
     void BaseStreamer::sendData(wrtc::binary sample) {
-        lastTime = getMicroseconds();
+        lastTime = std::chrono::high_resolution_clock::now();
         sentBytes += frameSize();
     }
 
@@ -18,14 +18,13 @@ namespace ntgcalls {
         return (sentBytes / frameSize()) / frameTime();
     }
 
-    uint64_t BaseStreamer::waitTime() {
-        int64_t currTime = getMicroseconds();
-        int64_t nextTime = frameTime() * 1000.0;
-        return std::max<int64_t>(lastTime - currTime + nextTime, 0);
+    std::chrono::nanoseconds BaseStreamer::waitTime() {
+        auto diffTime = std::chrono::duration_cast<std::chrono::nanoseconds>(lastTime - std::chrono::high_resolution_clock::now());
+        auto nextTime = std::chrono::nanoseconds(int64_t(frameTime() * 1000.0 * 1000.0));
+        return diffTime + nextTime;
     }
 
     void BaseStreamer::clear() {
         sentBytes = 0;
-        lastTime = 0;
     }
 }

@@ -15,15 +15,16 @@ namespace ntgcalls {
     class FileReader final: public BaseReader {
     private:
         std::ifstream source;
-        std::string filePath;
+
+        wrtc::binary readInternal(size_t size) final;
+
+        bool eofInternal() final;
 
     public:
-        explicit FileReader(const std::string& path);
+        FileReader(const std::string& path);
 
-        wrtc::binary read(std::int64_t size) final;
+        ~FileReader();
 
         void close() final;
-
-        bool eof() override;
     };
 }

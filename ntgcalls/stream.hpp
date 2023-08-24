@@ -48,9 +48,7 @@ namespace ntgcalls {
         wrtc::MediaStreamTrack *audioTrack, *videoTrack;
         std::shared_ptr<MediaReaderFactory> reader;
         bool running = false, idling = false;
-
         wrtc::synchronized_callback<Type> onEOF;
-
         DispatchQueue dispatchQueue = DispatchQueue("StreamQueue");
 
         void sendSample();

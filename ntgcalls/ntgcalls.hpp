@@ -17,6 +17,8 @@ namespace ntgcalls {
         Client safeConnection(int64_t chatId);
 
     public:
+        NTgCalls();
+
         std::string createCall(int64_t chatId, MediaDescription media);
 
         void connect(int64_t chatId, std::string params);

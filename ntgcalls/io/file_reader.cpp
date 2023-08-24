@@ -10,10 +10,13 @@ namespace ntgcalls {
         if (!source) {
             throw FileError("Unable to open the file located at \"" + path + "\"");
         }
-        filePath = path;
     }
 
-    wrtc::binary FileReader::read(std::int64_t size) {
+    FileReader::~FileReader() {
+        close();
+    }
+
+    wrtc::binary FileReader::readInternal(size_t size) {
         if (source.eof() || source.fail()) {
             return {};
         }
@@ -28,12 +31,12 @@ namespace ntgcalls {
     }
 
     void FileReader::close() {
+        BaseReader::close();
         source.close();
         readChunks = 0;
-        filePath = "";
     }
 
-    bool FileReader::eof() {
+    bool FileReader::eofInternal() {
         return source.eof() || source.fail();
     }
 }

@@ -7,21 +7,32 @@
 
 #include <cstdint>
 #include <vector>
+#include <mutex>
 
 #include <wrtc/wrtc.hpp>
+#include "../utils/dispatch_queue.hpp"
 
 namespace ntgcalls {
     class BaseReader {
+    private:
+        std::vector<wrtc::binary> nextBuffer;
+        bool _eof = false;
+        std::promise<void> promise{};
+        std::mutex mtx;
+        DispatchQueue dispatchQueue = DispatchQueue("Reader_" + rtc::CreateRandomUuid());
+
     protected:
-        int64_t readChunks = 0;
+        size_t readChunks = 0;
+
+        virtual wrtc::binary readInternal(size_t size) = 0;
+
+        virtual bool eofInternal() = 0;
 
     public:
-        virtual wrtc::binary read(std::int64_t size) = 0;
+        wrtc::binary read(size_t size);
 
-        virtual ~BaseReader();
+        bool eof();
 
         virtual void close();
-
-        virtual bool eof() = 0;
     };
 }

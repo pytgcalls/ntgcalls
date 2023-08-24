@@ -6,6 +6,8 @@
 
 namespace ntgcalls {
 
+    NTgCalls::NTgCalls() {}
+
     std::string NTgCalls::createCall(int64_t chatId, MediaDescription media) {
         if (exists(chatId)) {
             throw ConnectionError("Connection cannot be initialized more than once.");

@@ -7,13 +7,13 @@
 #include <cstdint>
 #include <wrtc/wrtc.hpp>
 
-#include "../utils/time.hpp"
 #include "../exceptions.hpp"
 
 namespace ntgcalls {
     class BaseStreamer {
     private:
-        uint64_t sentBytes, lastTime = 0;
+        uint64_t sentBytes = 0;
+        std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
 
     protected:
         ~BaseStreamer();
@@ -25,7 +25,7 @@ namespace ntgcalls {
     public:
         uint64_t time();
 
-        uint64_t waitTime();
+        std::chrono::nanoseconds waitTime();
 
         virtual wrtc::MediaStreamTrack *createTrack() = 0;
 
