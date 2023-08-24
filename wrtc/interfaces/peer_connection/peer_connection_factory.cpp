@@ -23,7 +23,7 @@ namespace wrtc {
         RTC_CHECK(_networkThread->Start()) << "Failed to start thread";
         if (!_audioDeviceModule) {
             _taskQueueFactory = webrtc::CreateDefaultTaskQueueFactory();
-            _workerThread->BlockingCall([=] { CreateAudioDeviceModule_w(); });
+            _workerThread->BlockingCall([this] { CreateAudioDeviceModule_w(); });
         }
 
         auto config = VideoFactoryConfig();
@@ -58,9 +58,7 @@ namespace wrtc {
 
     void PeerConnectionFactory::CreateAudioDeviceModule_w() {
         if (!_audioDeviceModule)
-            _audioDeviceModule = webrtc::AudioDeviceModule::Create(
-                    webrtc::AudioDeviceModule::kPlatformDefaultAudio,
-                    _taskQueueFactory.get());
+            _audioDeviceModule = webrtc::NoMicrophone::Create(_taskQueueFactory.get());
     }
 
     void PeerConnectionFactory::DestroyAudioDeviceModule_w() {

@@ -11,6 +11,7 @@
 #include <api/task_queue/default_task_queue_factory.h>
 #include <api/audio_codecs/builtin_audio_encoder_factory.h>
 #include <api/audio_codecs/builtin_audio_decoder_factory.h>
+#include "../media/fake_device/no_microphone.hpp"
 
 #include "../../video_factory/video_factory_config.hpp"
 
