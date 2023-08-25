@@ -48,6 +48,8 @@ if(NOT TARGET WebRTC::webrtc)
 
     set(FILE_NAME webrtc.${PLATFORM}_${ARCH}${ARCHIVE_FORMAT})
 
+    include(${CMAKE_SOURCE_DIR}/cmake/PatchWebRTC.cmake)
+
     ExternalProject_Add(
         project_libwebrtc
 
@@ -56,7 +58,7 @@ if(NOT TARGET WebRTC::webrtc)
         DOWNLOAD_DIR ${WEBRTC_DIR}/download
         SOURCE_DIR ${WEBRTC_SRC}
         TMP_DIR ${WEBRTC_DIR}/tmp
-        CONFIGURE_COMMAND curl -s ${WEBRTC_PATCH_URL} | python3 -m base64 -d >> ${WEBRTC_INCLUDE}/${WEBRTC_PATCH_FILE}
+        CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
         INSTALL_COMMAND ""
         UPDATE_COMMAND ""
