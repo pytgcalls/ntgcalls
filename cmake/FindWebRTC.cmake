@@ -67,7 +67,7 @@ if(NOT TARGET WebRTC::webrtc)
     add_library(WebRTC::webrtc UNKNOWN IMPORTED)
     add_dependencies(WebRTC::webrtc project_libwebrtc)
 
-    target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_INCLUDE}/${WEBRTC_PATCH_FILE})
+    target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_PATCH_LOCATION})
 
     set(WEBRTC_INCLUDE
         ${WEBRTC_INCLUDE}
