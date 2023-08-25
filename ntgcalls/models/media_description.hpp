@@ -21,7 +21,7 @@ namespace ntgcalls {
         uint16_t sampleRate;
         uint8_t bitsPerSample, channelCount;
         std::string path;
-        FFmpegOptions options;
+        std::optional<FFmpegOptions> options;
 
         AudioDescription(uint16_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount, std::string path, FFmpegOptions options):
             sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount), path(path), options(options) {};
@@ -32,7 +32,7 @@ namespace ntgcalls {
         uint16_t width, height;
         uint8_t fps;
         std::string path;
-        FFmpegOptions options;
+        std::optional<FFmpegOptions> options;
 
         VideoDescription(uint16_t width, uint16_t height, uint8_t fps, std::string path, FFmpegOptions options):
             width(width), height(height), fps(fps), path(path), options(options) {};
