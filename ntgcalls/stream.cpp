@@ -84,10 +84,11 @@ namespace ntgcalls {
     }
 
     void Stream::setAVStream(MediaDescription streamConfig) {
+        if (!running) return;
         auto audioConfig = streamConfig.audio;
         auto videoConfig = streamConfig.video;
         reader = std::make_shared<MediaReaderFactory>(streamConfig);
-
+        idling = false;
         if (audioConfig) {
             audio->setConfig(
                 audioConfig->sampleRate,
@@ -104,6 +105,17 @@ namespace ntgcalls {
         }
     }
 
+    uint64_t Stream::time() {
+        if (reader->audio && reader->video) {
+            return (audio->time() + video->time()) / 2;
+        } else if (reader->audio) {
+            return audio->time();
+        } else if (reader->video) {
+            return video->time();
+        }
+        return 0;
+    }
+
     void Stream::start() {
         if (!running) {
             running = true;
@@ -113,22 +125,32 @@ namespace ntgcalls {
         }
     }
 
-    void Stream::pause() {
-        idling = true;
+    bool Stream::pause() {
+        return !std::exchange(idling, true);
     }
 
-    void Stream::resume() {
-        idling = false;
+    bool Stream::resume() {
+        return std::exchange(idling, false);
     }
 
-    void Stream::mute() {
-        audioTrack->Mute(true);
-        videoTrack->Mute(true);
+    bool Stream::mute() {
+        if (!audioTrack->isMuted() || !videoTrack->isMuted()) {
+            audioTrack->Mute(true);
+            videoTrack->Mute(true);
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    void Stream::unmute() {
-        audioTrack->Mute(false);
-        videoTrack->Mute(false);
+    bool Stream::unmute() {
+        if (audioTrack->isMuted() || videoTrack->isMuted()) {
+            audioTrack->Mute(false);
+            videoTrack->Mute(false);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     void Stream::stop() {

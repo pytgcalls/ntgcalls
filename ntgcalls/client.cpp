@@ -103,24 +103,28 @@ namespace ntgcalls {
         stream->start();
     }
 
-    void Client::pause() {
-        stream->pause();
+    bool Client::pause() {
+        return stream->pause();
     }
 
-    void Client::resume() {
-        stream->resume();
+    bool Client::resume() {
+        return stream->resume();
     }
 
-    void Client::mute() {
-        stream->mute();
+    bool Client::mute() {
+        return stream->mute();
     }
 
-    void Client::unmute() {
-        stream->unmute();
+    bool Client::unmute() {
+        return stream->unmute();
     }
 
     void Client::stop() {
         stream->stop();
         connection->close();
+    }
+
+    uint64_t Client::time() {
+        return stream->time();
     }
 }

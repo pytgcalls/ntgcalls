@@ -24,24 +24,28 @@ namespace ntgcalls {
         safeConnection(chatId).changeStream(media);
     }
 
-    void NTgCalls::pause(int64_t chatId) {
-        safeConnection(chatId).pause();
+    bool NTgCalls::pause(int64_t chatId) {
+        return safeConnection(chatId).pause();
     }
 
-    void NTgCalls::resume(int64_t chatId) {
-        safeConnection(chatId).resume();
+    bool NTgCalls::resume(int64_t chatId) {
+        return safeConnection(chatId).resume();
     }
 
-    void NTgCalls::mute(int64_t chatId) {
-        safeConnection(chatId).mute();
+    bool NTgCalls::mute(int64_t chatId) {
+        return safeConnection(chatId).mute();
     }
 
-    void NTgCalls::unmute(int64_t chatId) {
-        safeConnection(chatId).unmute();
+    bool NTgCalls::unmute(int64_t chatId) {
+        return safeConnection(chatId).unmute();
     }
 
     void NTgCalls::stop(int64_t chatId) {
         safeConnection(chatId).stop();
+    }
+
+    uint64_t NTgCalls::time(int64_t chatId) {
+        return safeConnection(chatId).time();
     }
 
     bool NTgCalls::exists(int64_t chatId) {

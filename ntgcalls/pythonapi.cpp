@@ -22,6 +22,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("mute",  &ntgcalls::NTgCalls::mute, py::arg("chat_id"));
     wrapper.def("unmute",  &ntgcalls::NTgCalls::unmute, py::arg("chat_id"));
     wrapper.def("stop",  &ntgcalls::NTgCalls::stop, py::arg("chat_id"));
+    wrapper.def("time",  &ntgcalls::NTgCalls::time, py::arg("chat_id"));
 
     py::class_<ntgcalls::FFmpegOptions> ffmpegWrapper(m, "FFmpegOptions");
     ffmpegWrapper.def(

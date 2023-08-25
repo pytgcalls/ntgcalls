@@ -28,15 +28,17 @@ namespace ntgcalls {
 
         void start();
 
-        void pause();
+        bool pause();
 
-        void resume();
+        bool resume();
 
-        void mute();
+        bool mute();
 
-        void unmute();
+        bool unmute();
 
         void stop();
+
+        uint64_t time();
 
         void addTracks(const std::shared_ptr<wrtc::PeerConnection> &pc);
 

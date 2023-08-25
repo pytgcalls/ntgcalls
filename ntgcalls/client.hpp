@@ -34,14 +34,16 @@ namespace ntgcalls {
 
         void changeStream(MediaDescription config);
 
-        void pause();
+        bool pause();
 
-        void resume();
+        bool resume();
 
-        void mute();
+        bool mute();
 
-        void unmute();
+        bool unmute();
 
         void stop();
+
+        uint64_t time();
     };
 }

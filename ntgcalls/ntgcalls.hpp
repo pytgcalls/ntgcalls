@@ -25,15 +25,17 @@ namespace ntgcalls {
 
         void changeStream(int64_t chatId, MediaDescription media);
 
-        void pause(int64_t chatId);
+        bool pause(int64_t chatId);
 
-        void resume(int64_t chatId);
+        bool resume(int64_t chatId);
 
-        void mute(int64_t chatId);
+        bool mute(int64_t chatId);
 
-        void unmute(int64_t chatId);
+        bool unmute(int64_t chatId);
 
         void stop(int64_t chatId);
+
+        uint64_t time(int64_t chatId);
     };
 
 } // ntgcalls
