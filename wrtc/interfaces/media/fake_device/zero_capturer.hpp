@@ -25,7 +25,7 @@ namespace webrtc {
         }
 
         int NumChannels() const override {
-            return 1;
+            return 2;
         }
 
         static std::unique_ptr<ZeroCapturer> Create(int sampling_frequency_in_hz) {

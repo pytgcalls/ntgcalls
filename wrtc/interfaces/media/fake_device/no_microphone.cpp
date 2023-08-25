@@ -9,7 +9,7 @@ namespace webrtc {
         return TestAudioDeviceModule::Create(
                 task_queue_factory,
                 std::move(ZeroCapturer::Create(48000)),
-                std::move(TestAudioDeviceModule::CreateDiscardRenderer(48000))
+                std::move(TestAudioDeviceModule::CreateDiscardRenderer(48000, 2))
         );
     }
 } // wrtc
