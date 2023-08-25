@@ -6,7 +6,7 @@ if(NOT DEFINED LAST_REVISION OR NOT ${LAST_REVISION} STREQUAL ${WEBRTC_REVISION}
         RESULT_VARIABLE PATCH_RESULT_CODE
         OUTPUT_VARIABLE PATCH_CONTENT_BASE64
     )
-    if(CURL_RESULT NOT EQUAL 0)
+    if(PATCH_RESULT_CODE NOT EQUAL 0)
         message(FATAL_ERROR "Error while downloading patch file")
     endif ()
     execute_process(
