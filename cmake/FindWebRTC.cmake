@@ -1,9 +1,15 @@
+string(REGEX MATCH "m[0-9]+\\.([0-9]+)" WEBRTC_BRANCH "${WEBRTC_REVISION}")
+set(WEBRTC_BRANCH branch-heads/${CMAKE_MATCH_1})
+set(WEBRTC_GIT https://github.com/shiguredo-webrtc-build/webrtc-build)
 set(WEBRTC_DIR ${deps_loc}/libwebrtc)
 set(WEBRTC_SRC ${WEBRTC_DIR}/src)
 set(WEBRTC_INCLUDE ${WEBRTC_SRC}/include)
 set(WEBRTC_LIB ${WEBRTC_SRC}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}webrtc${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(WEBRTC_PATCH_FILE modules/audio_device/include/test_audio_device.cc)
+set(WEBRTC_PATCH_URL https://webrtc.googlesource.com/src.git/+/refs/${WEBRTC_BRANCH}/${WEBRTC_PATCH_FILE}?format=text)
 
 if(NOT TARGET WebRTC::webrtc)
+    message(STATUS "libwebrtc ${WEBRTC_REVISION}")
     if (WIN32)
         set(PLATFORM windows)
         set(ARCHIVE_FORMAT .zip)
@@ -40,30 +46,26 @@ if(NOT TARGET WebRTC::webrtc)
         message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} is not supported yet")
     endif ()
 
-    set(GIT_PROJECT https://github.com/shiguredo-webrtc-build/webrtc-build)
     set(FILE_NAME webrtc.${PLATFORM}_${ARCH}${ARCHIVE_FORMAT})
-
-    set(CMAKE_EXTERNAL_PROJECT_IGNORE_CMAKE_FILES TRUE)
 
     ExternalProject_Add(
         project_libwebrtc
 
-        URL ${GIT_PROJECT}/releases/download/${WEBRTC_REVISION}/${FILE_NAME}
-
+        URL ${WEBRTC_GIT}/releases/download/${WEBRTC_REVISION}/${FILE_NAME}
         PREFIX ${WEBRTC_DIR}/prefix
         DOWNLOAD_DIR ${WEBRTC_DIR}/download
         SOURCE_DIR ${WEBRTC_SRC}
         TMP_DIR ${WEBRTC_DIR}/tmp
-        CONFIGURE_COMMAND ""
+        CONFIGURE_COMMAND curl -s ${WEBRTC_PATCH_URL} | python3 -m base64 -d >> ${WEBRTC_INCLUDE}/${WEBRTC_PATCH_FILE}
         BUILD_COMMAND ""
         INSTALL_COMMAND ""
         UPDATE_COMMAND ""
     )
 
-    ExternalProject_Add_StepTargets(project_libwebrtc install)
-
     add_library(WebRTC::webrtc UNKNOWN IMPORTED)
     add_dependencies(WebRTC::webrtc project_libwebrtc)
+
+    target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_INCLUDE}/${WEBRTC_PATCH_FILE})
 
     set(WEBRTC_INCLUDE
         ${WEBRTC_INCLUDE}
