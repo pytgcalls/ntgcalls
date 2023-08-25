@@ -76,8 +76,8 @@ if(NOT TARGET WebRTC::webrtc)
     )
     if (MACOS)
         list(APPEND WEBRTC_INCLUDE
-            ${WebRTC_INCLUDE_DIR}/sdk/objc
-            ${WebRTC_INCLUDE_DIR}/sdk/objc/base
+            ${WEBRTC_INCLUDE}/sdk/objc
+            ${WEBRTC_INCLUDE}/sdk/objc/base
         )
     endif()
 
