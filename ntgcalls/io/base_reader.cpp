@@ -7,34 +7,32 @@
 namespace ntgcalls {
 
     wrtc::binary BaseReader::read(size_t size) {
-        /*wrtc::binary res;
-        promise = {};
+        wrtc::binary res;
+        auto promise = std::make_shared<std::promise<void>>();
         if (!_eof) {
-            dispatchQueue.dispatch([this, size] {
+            dispatchQueue.dispatch([this, promise, size] {
                 wrtc::binary tmpBuff = readInternal(size);
                 mtx.lock();
                 nextBuffer.push_back(tmpBuff);
                 mtx.unlock();
                 if (!eofInternal()) {
                     tmpBuff = readInternal(size);
+                    mtx.lock();
+                    nextBuffer.push_back(tmpBuff);
+                    mtx.unlock();
                 }
-                mtx.lock();
-                nextBuffer.push_back(tmpBuff);
-                mtx.unlock();
                 _eof = eofInternal();
-                promise.set_value();
-                delete[] tmpBuff;
+                promise->set_value();
             });
         }
         if (nextBuffer.empty() && !_eof) {
-            promise.get_future().wait();
+            promise->get_future().wait();
         }
         res = nextBuffer[0];
         mtx.lock();
         nextBuffer.erase(nextBuffer.begin(), nextBuffer.begin() + 1);
         mtx.unlock();
-        return res;*/
-        return readInternal(size);
+        return res;
     }
 
     void BaseReader::close() {

@@ -72,7 +72,6 @@ namespace ntgcalls {
             auto bs = bsBR.first;
             auto br = bsBR.second;
             bs->sendData(br->read(bs->frameSize()));
-
             checkStream();
         }
 
@@ -84,7 +83,6 @@ namespace ntgcalls {
     }
 
     void Stream::setAVStream(MediaDescription streamConfig) {
-        if (!running) return;
         auto audioConfig = streamConfig.audio;
         auto videoConfig = streamConfig.video;
         reader = std::make_shared<MediaReaderFactory>(streamConfig);
@@ -155,6 +153,7 @@ namespace ntgcalls {
 
     void Stream::stop() {
         running = false;
+        idling = false;
         if (reader->audio) {
             reader->audio->close();
         }

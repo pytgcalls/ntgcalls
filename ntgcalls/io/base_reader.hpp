@@ -17,7 +17,6 @@ namespace ntgcalls {
     private:
         std::vector<wrtc::binary> nextBuffer;
         bool _eof = false;
-        std::promise<void> promise{};
         std::mutex mtx;
         DispatchQueue dispatchQueue = DispatchQueue("Reader_" + rtc::CreateRandomUuid());
 
