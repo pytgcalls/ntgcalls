@@ -31,7 +31,7 @@ namespace ntgcalls {
         std::shared_ptr<BaseStreamer> bs;
         std::shared_ptr<BaseReader> br;
         if (reader->audio && reader->video) {
-            if (audio->waitTime() < video->waitTime()) {
+            if (audio->nanoTime() <= video->nanoTime()) {
                 bs = audio;
                 br = reader->audio;
             } else {
@@ -69,16 +69,12 @@ namespace ntgcalls {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else {
             auto bsBR = unsafePrepareForSample();
-            auto bs = bsBR.first;
-            auto br = bsBR.second;
-            bs->sendData(br->read(bs->frameSize()));
+            bsBR.first->sendData(bsBR.second->read(bsBR.first->frameSize()));
             checkStream();
         }
 
         if (running) {
-            dispatchQueue.dispatch([this]() {
-                this->sendSample();
-            });
+            this->sendSample();
         }
     }
 

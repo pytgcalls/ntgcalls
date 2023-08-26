@@ -12,18 +12,20 @@
 namespace ntgcalls {
     class BaseStreamer {
     private:
-        uint64_t sentBytes = 0;
+        uint64_t sentFrames = 0;
         std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
 
     protected:
         ~BaseStreamer();
 
-        virtual double_t frameTime() = 0;
+        virtual std::chrono::nanoseconds frameTime() = 0;
 
         void clear();
 
     public:
         uint64_t time();
+
+        std::chrono::nanoseconds nanoTime();
 
         std::chrono::nanoseconds waitTime();
 

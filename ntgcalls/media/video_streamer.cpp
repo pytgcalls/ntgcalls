@@ -16,8 +16,8 @@ namespace ntgcalls {
         video = nullptr;
     }
 
-    double_t ntgcalls::VideoStreamer::frameTime() {
-        return 1000.0 / fps; // ms
+    std::chrono::nanoseconds ntgcalls::VideoStreamer::frameTime() {
+        return std::chrono::microseconds(u_int64((1000.0 * 1000.0) / double_t(fps))); // ms
     }
 
     wrtc::MediaStreamTrack *VideoStreamer::createTrack() {
@@ -33,6 +33,7 @@ namespace ntgcalls {
                 sample
             )
         );
+        delete[] sample;
     }
 
     uint64_t VideoStreamer::frameSize() {

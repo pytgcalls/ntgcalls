@@ -21,7 +21,7 @@ namespace ntgcalls {
         uint16_t w = 0, h = 0;
         uint8_t fps = 0;
 
-        double_t frameTime() override;
+        std::chrono::nanoseconds frameTime() override;
 
     public:
         VideoStreamer();

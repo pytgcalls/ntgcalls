@@ -20,7 +20,7 @@ namespace ntgcalls {
         uint8_t bps = 0, channels = 0;
         uint16_t rate = 0;
 
-        double_t frameTime() override;
+        std::chrono::nanoseconds frameTime() override;
 
     public:
         AudioStreamer();

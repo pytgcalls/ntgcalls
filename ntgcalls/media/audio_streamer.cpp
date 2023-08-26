@@ -21,8 +21,8 @@ namespace ntgcalls {
     }
 
 
-    double_t AudioStreamer::frameTime() {
-        return 10; // 10ms
+    std::chrono::nanoseconds AudioStreamer::frameTime() {
+        return std::chrono::milliseconds(10); // ms
     }
 
     void AudioStreamer::sendData(wrtc::binary sample) {

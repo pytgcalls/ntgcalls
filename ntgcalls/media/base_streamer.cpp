@@ -11,20 +11,23 @@ namespace ntgcalls {
 
     void BaseStreamer::sendData(wrtc::binary sample) {
         lastTime = std::chrono::high_resolution_clock::now();
-        sentBytes += frameSize();
+        sentFrames++;
     }
 
     uint64_t BaseStreamer::time() {
-        return (sentBytes / frameSize()) / frameTime();
+        return std::chrono::duration_cast<std::chrono::seconds>(nanoTime()).count();
+    }
+
+    std::chrono::nanoseconds BaseStreamer::nanoTime() {
+        return sentFrames * frameTime();
     }
 
     std::chrono::nanoseconds BaseStreamer::waitTime() {
-        auto diffTime = std::chrono::duration_cast<std::chrono::nanoseconds>(lastTime - std::chrono::high_resolution_clock::now());
-        auto nextTime = std::chrono::nanoseconds(int64_t(frameTime() * 1000.0 * 1000.0));
-        return diffTime + nextTime;
+        // Make the acquisition 1ms before the fake microphone
+        return lastTime - std::chrono::high_resolution_clock::now() + frameTime() - std::chrono::milliseconds(1);
     }
 
     void BaseStreamer::clear() {
-        sentBytes = 0;
+        sentFrames = 0;
     }
 }
