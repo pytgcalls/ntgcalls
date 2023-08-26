@@ -16,7 +16,6 @@ namespace ntgcalls {
     }
 
     std::string Client::init(MediaDescription config) {
-
         if (connection) {
             throw ConnectionError("Connection already made");
         }
