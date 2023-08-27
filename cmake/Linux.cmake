@@ -7,12 +7,8 @@ target_compile_definitions(${target_name} PUBLIC
 )
 
 set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_compile_options(${target_name}
-    PRIVATE
-    "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
-    "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:LIBCXX_INCLUDE_DIR>>:-isystem${LIBCXX_INCLUDE_DIR}>"
-)
 target_link_libraries(${target_name} PRIVATE
+    X11
     dl
     rt
     Threads::Threads
