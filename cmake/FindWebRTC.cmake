@@ -6,7 +6,7 @@ set(WEBRTC_SRC ${WEBRTC_DIR}/src)
 set(WEBRTC_INCLUDE ${WEBRTC_SRC}/include)
 set(WEBRTC_LIB ${WEBRTC_SRC}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}webrtc${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(WEBRTC_PATCH_FILE modules/audio_device/include/test_audio_device.cc)
-set(WEBRTC_PATCH_URL https://webrtc.googlesource.com/src.git/+/refs/${WEBRTC_BRANCH}/${WEBRTC_PATCH_FILE}?format=text)
+set(WEBRTC_PATCH_URL https://webrtc.googlesource.com/src.git/+/refs/${WEBRTC_BRANCH}/${WEBRTC_PATCH_FILE})
 
 if(NOT TARGET WebRTC::webrtc)
     message(STATUS "libwebrtc ${WEBRTC_REVISION}")

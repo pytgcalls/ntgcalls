@@ -60,3 +60,30 @@ function(GitClone)
         set(${GIT_CACHE} ${ARG_COMMIT}${ARG_DIRECTORY} CACHE STRING "Git cache installation for ${ARG_URL}" FORCE)
     endif ()
 endfunction()
+
+function(GitFile)
+    cmake_parse_arguments(ARG "" "" "URL;DIRECTORY" ${ARGN})
+    if ("${ARG_URL}" MATCHES "googlesource.com")
+        set(BASE64 TRUE)
+        set(ARG_URL ${ARG_URL}?format=text)
+    endif ()
+    execute_process(
+        COMMAND curl -s ${ARG_URL}
+        RESULT_VARIABLE GIT_RESULT_CODE
+        OUTPUT_VARIABLE FILE_CONTENT
+    )
+    if(NOT GIT_RESULT_CODE EQUAL 0)
+        message(FATAL_ERROR "Failed to fetch from remote origin.")
+    endif ()
+    if (BASE64)
+        execute_process(
+            COMMAND ${PYTHON_EXECUTABLE} -c "import base64; import sys; sys.stdout.buffer.write(base64.b64decode('${FILE_CONTENT}'))"
+            RESULT_VARIABLE GIT_RESULT_CODE
+            OUTPUT_VARIABLE FILE_CONTENT
+        )
+        if(NOT GIT_RESULT_CODE EQUAL 0)
+            message(FATAL_ERROR "Failed to decrypt git file")
+        endif ()
+    endif ()
+    file(WRITE ${ARG_DIRECTORY} "${FILE_CONTENT}")
+endfunction()
