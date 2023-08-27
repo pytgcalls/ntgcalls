@@ -10,7 +10,7 @@ function(GitClone)
     string(REPLACE "-" "_" GIT_CACHE ${GIT_CACHE})
     string(TOUPPER ${GIT_CACHE} GIT_CACHE)
 
-    if (NOT "${${GIT_CACHE}}" STREQUAL "${ARG_COMMIT}${ARG_DIRECTORY}")
+    if (NOT "${${GIT_CACHE}}" STREQUAL "${ARG_COMMIT}${ARG_DIRECTORY}" AND EXISTS ${ARG_DIRECTORY})
         message(STATUS "Cleaning repo ${ARG_DIRECTORY}")
         file(REMOVE_RECURSE ${ARG_DIRECTORY})
     endif ()
