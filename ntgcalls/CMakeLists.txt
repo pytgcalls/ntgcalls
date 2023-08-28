@@ -5,7 +5,7 @@ if(IS_PYTHON)
     target_compile_definitions(ntgcalls PRIVATE VERSION_INFO=${PY_VERSION_INFO})
 else()
     list(REMOVE_ITEM MODULE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/pythonapi.cpp")
-    add_library(ntgcalls ${MODULE_SRC})
+    add_library(ntgcalls SHARED ${MODULE_SRC})
 endif()
 
 set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20)
