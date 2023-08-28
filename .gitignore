@@ -12,6 +12,7 @@ tools/opus/
 *.ogg
 deps/libcxx/
 deps/libwebrtc/
+deps/libcxxabi/
 build/
 dist/
 *.i420
