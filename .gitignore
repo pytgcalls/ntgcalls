@@ -15,6 +15,7 @@ deps/libwebrtc/
 deps/libcxxabi/
 build/
 dist/
+clang/
 *.i420
 *.pcm
 *.mp4
