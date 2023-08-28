@@ -30,7 +30,7 @@ namespace ntgcalls {
 
         wrtc::MediaStreamTrack *createTrack() override;
 
-        void sendData(wrtc::binary sample) override;
+        void sendData(wrtc::binary &sample) override;
 
         uint64_t frameSize() override;
 

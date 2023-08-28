@@ -69,7 +69,9 @@ namespace ntgcalls {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else {
             auto bsBR = unsafePrepareForSample();
-            bsBR.first->sendData(bsBR.second->read(bsBR.first->frameSize()));
+            auto sample = bsBR.second->read(bsBR.first->frameSize());
+            bsBR.first->sendData(sample);
+            delete[] sample;
             checkStream();
         }
 
