@@ -152,11 +152,13 @@ namespace ntgcalls {
     void Stream::stop() {
         running = false;
         idling = false;
-        if (reader->audio) {
-            reader->audio->close();
-        }
-        if (reader->video) {
-            reader->video->close();
+        if (reader) {
+            if (reader->audio) {
+                reader->audio->close();
+            }
+            if (reader->video) {
+                reader->video->close();
+            }
         }
         dispatchQueue.removePending();
     }
