@@ -10,7 +10,7 @@ output
 tools/opus/
 *.egg-info
 *.ogg
-deps/depot_tools/
+deps/libcxx/
 deps/libwebrtc/
 build/
 dist/
