@@ -5,6 +5,13 @@
 #include "client.hpp"
 
 namespace ntgcalls {
+    Client::~Client() {
+        stop();
+        connection = nullptr;
+        stream = nullptr;
+        sourceGroups = {};
+    }
+
     GroupCallPayload Client::init() {
         connection = std::make_shared<wrtc::PeerConnection>();
 

@@ -16,6 +16,13 @@ namespace ntgcalls {
         return connections[chatId].init(media);
     }
 
+    NTgCalls::~NTgCalls() {
+        for (auto conn : connections) {
+            conn.second.stop();
+        }
+        connections = {};
+    }
+
     void NTgCalls::connect(int64_t chatId, std::string params) {
         safeConnection(chatId).connect(params);
     }
@@ -59,5 +66,4 @@ namespace ntgcalls {
         }
         return connections[chatId];
     }
-
 } // ntgcalls

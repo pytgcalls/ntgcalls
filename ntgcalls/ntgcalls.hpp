@@ -19,6 +19,8 @@ namespace ntgcalls {
     public:
         NTgCalls();
 
+        ~NTgCalls();
+
         std::string createCall(int64_t chatId, MediaDescription media);
 
         void connect(int64_t chatId, std::string params);
