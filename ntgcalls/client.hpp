@@ -10,7 +10,6 @@
 
 #include "stream.hpp"
 #include "exceptions.hpp"
-#include "utils/time.hpp"
 #include "io/file_reader.hpp"
 #include "models/media_description.hpp"
 #include "models/group_call_payload.hpp"
