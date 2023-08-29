@@ -10,13 +10,18 @@ namespace ntgcalls {
 
     class NTgCalls {
     private:
+        std::shared_ptr<DispatchQueue> dispatchUpdates;
         std::map<int64_t, std::shared_ptr<Client>> connections;
+        wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
+        wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
 
         bool exists(int64_t chatId);
 
         std::shared_ptr<Client> safeConnection(int64_t chatId);
 
     public:
+        NTgCalls();
+
         ~NTgCalls();
 
         std::string createCall(int64_t chatId, MediaDescription media);
@@ -39,9 +44,9 @@ namespace ntgcalls {
 
         static std::string ping();
 
-        void onUpgrade(int64_t chatId, std::function<void(int64_t, MediaState)> &callback);
+        void onUpgrade(std::function<void(int64_t, MediaState)> &callback);
 
-        void onStreamEnd(int64_t chatId, std::function<void(int64_t, Stream::Type)> &callback);
+        void onStreamEnd(std::function<void(int64_t, Stream::Type)> &callback);
     };
 
 } // ntgcalls

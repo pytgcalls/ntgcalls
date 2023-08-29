@@ -5,15 +5,30 @@
 #include "ntgcalls.hpp"
 
 namespace ntgcalls {
+    NTgCalls::NTgCalls() {
+        dispatchUpdates = std::make_shared<DispatchQueue>("Updates_" + rtc::CreateRandomUuid());
+    }
+
     std::string NTgCalls::createCall(int64_t chatId, MediaDescription media) {
         if (exists(chatId)) {
             throw ConnectionError("Connection cannot be initialized more than once.");
         }
         connections[chatId] = std::make_shared<Client>();
+        connections[chatId]->onStreamEnd([this, chatId](Stream::Type type) {
+            dispatchUpdates->dispatch([this, chatId, type] {
+                onEof(chatId, type);
+            });
+        });
+        connections[chatId]->onUpgrade([this, chatId](MediaState state) {
+            dispatchUpdates->dispatch([this, chatId, state] {
+                onChangeStatus(chatId, state);
+            });
+        });
         return connections[chatId]->init(media);
     }
 
     NTgCalls::~NTgCalls() {
+        dispatchUpdates = nullptr;
         for (auto conn : connections) {
             conn.second->stop();
         }
@@ -49,16 +64,12 @@ namespace ntgcalls {
         connections.erase(connections.find(chatId));
     }
 
-    void NTgCalls::onStreamEnd(int64_t chatId, std::function<void(int64_t, Stream::Type)> &callback) {
-        safeConnection(chatId)->onStreamEnd([chatId, &callback](Stream::Type type) {
-            callback(chatId, type);
-        });
+    void NTgCalls::onStreamEnd(std::function<void(int64_t, Stream::Type)> &callback) {
+        onEof = callback;
     }
 
-    void NTgCalls::onUpgrade(int64_t chatId, std::function<void(int64_t, MediaState)> &callback) {
-        safeConnection(chatId)->onUpgrade([chatId, &callback](MediaState state) {
-            callback(chatId, state);
-        });
+    void NTgCalls::onUpgrade(std::function<void(int64_t, MediaState)> &callback) {
+        onChangeStatus = callback;
     }
 
     uint64_t NTgCalls::time(int64_t chatId) {
