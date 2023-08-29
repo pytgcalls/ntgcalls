@@ -1,6 +1,9 @@
 import asyncio
+from asyncio import AbstractEventLoop
+from typing import Any
 
-from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, FFmpegOptions
+from ntgcalls import NTgCalls, StreamType, MediaState, MediaDescription, AudioDescription, VideoDescription, \
+    FFmpegOptions
 from pyrogram import Client, idle
 from pyrogram.raw.functions.channels import GetFullChannel
 from pyrogram.raw.functions.phone import JoinGroupCall
@@ -14,13 +17,42 @@ wrtc = NTgCalls()
 chat_id = -1001919448795
 
 
+class ToAsync:
+    def __init__(self, function: callable, *args):
+        self._loop: AbstractEventLoop = asyncio.get_running_loop()
+        self._function: callable = function
+        self._function_args: tuple = args
+
+    async def _run(self):
+        result: Any = await self._loop.run_in_executor(
+            None,
+            self._function,
+            *self._function_args
+        )
+
+        return result
+
+    def __await__(self):
+        return self._run().__await__()
+
+
 async def main():
     client = Client('test', api_id, api_hash, sleep_threshold=1)
 
-    file_audio = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/output.pcm"
-    file_video = "C:/Users/iraci/PycharmProjects/NativeTgCalls/tools/output.i420"
+    def stream_end(test: StreamType):
+        print("Python Callback:", test.name)
+
+    wrtc.onStreamEnd(stream_end)
+
+    def stream_upgrade(test: MediaState):
+        print("Python Callback:", test)
+
+    wrtc.onUpgrade(stream_upgrade)
+
+    file_audio = "output.pcm"
+    file_video = "output.i420"
     async with client:
-        call_params = wrtc.createCall(chat_id, MediaDescription(
+        call_params = await ToAsync(wrtc.createCall, chat_id, MediaDescription(
             encoder="raw",
             audio=AudioDescription(
                 sampleRate=48000,
@@ -60,9 +92,10 @@ async def main():
         )
         for update in result.updates:
             if isinstance(update, UpdateGroupCallConnection):
-                wrtc.connect(chat_id, update.params.data)
+                await ToAsync(wrtc.connect, chat_id, update.params.data)
         print("Connected!")
         await idle()
-        print("Closed")
+        print("Closed!")
+
 
 asyncio.new_event_loop().run_until_complete(main())
