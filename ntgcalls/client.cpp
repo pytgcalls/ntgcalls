@@ -6,7 +6,6 @@
 
 namespace ntgcalls {
     Client::~Client() {
-        stop();
         connection = nullptr;
         stream = nullptr;
         sourceGroups = {};

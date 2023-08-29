@@ -96,22 +96,11 @@ namespace wrtc {
     }
 
     void PeerConnection::close() {
-        if (peerConnection) {
-            peerConnection->Close();
-
-            if (peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
-                for (const auto &transceiver: peerConnection->GetTransceivers()) {
-                    auto track = MediaStreamTrack::holder()->GetOrCreate(transceiver->receiver()->track());
-                    track->OnPeerConnectionClosed();
-                }
+        if (peerConnection.get() && peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
+            for (const auto &transceiver: peerConnection->GetTransceivers()) {
+                auto track = MediaStreamTrack::holder()->GetOrCreate(transceiver->receiver()->track());
+                track->OnPeerConnectionClosed();
             }
-        }
-
-        peerConnection = nullptr;
-
-        if (factory) {
-            PeerConnectionFactory::UnRef();
-            factory = nullptr;
         }
     }
 

@@ -10,15 +10,13 @@ namespace ntgcalls {
 
     class NTgCalls {
     private:
-        std::map<int64_t, Client> connections;
+        std::map<int64_t, std::shared_ptr<Client>> connections;
 
         bool exists(int64_t chatId);
 
-        Client safeConnection(int64_t chatId);
+        std::shared_ptr<Client> safeConnection(int64_t chatId);
 
     public:
-        NTgCalls();
-
         ~NTgCalls();
 
         std::string createCall(int64_t chatId, MediaDescription media);

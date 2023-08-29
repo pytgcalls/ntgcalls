@@ -37,6 +37,5 @@ namespace wrtc {
                     data.numberOfFrames
             );
         }
-        delete[] data.audioData;
     }
 } // wrtc

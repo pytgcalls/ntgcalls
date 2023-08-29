@@ -20,7 +20,6 @@ namespace ntgcalls {
         return audio->createTrack();
     }
 
-
     std::chrono::nanoseconds AudioStreamer::frameTime() {
         return std::chrono::milliseconds(10); // ms
     }
