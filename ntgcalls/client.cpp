@@ -130,6 +130,10 @@ namespace ntgcalls {
         connection->close();
     }
 
+    void Client::onStreamEnd(std::function<void(Stream::Type)> callback) {
+        stream->onStreamEnd(callback);
+    }
+
     uint64_t Client::time() {
         return stream->time();
     }

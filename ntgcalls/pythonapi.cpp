@@ -3,6 +3,7 @@
 //
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 
 #include "ntgcalls.hpp"
 
@@ -23,7 +24,13 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("unmute",  &ntgcalls::NTgCalls::unmute, py::arg("chat_id"));
     wrapper.def("stop",  &ntgcalls::NTgCalls::stop, py::arg("chat_id"));
     wrapper.def("time",  &ntgcalls::NTgCalls::time, py::arg("chat_id"));
+    wrapper.def("onStreamEnd", &ntgcalls::NTgCalls::onStreamEnd);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
+
+    py::enum_<ntgcalls::Stream::Type>(m, "StreamType")
+            .value("Audio", ntgcalls::Stream::Type::Audio)
+            .value("Video", ntgcalls::Stream::Type::Video)
+            .export_values();
 
     py::class_<ntgcalls::FFmpegOptions> ffmpegWrapper(m, "FFmpegOptions");
     ffmpegWrapper.def(

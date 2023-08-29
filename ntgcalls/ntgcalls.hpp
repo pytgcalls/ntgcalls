@@ -35,6 +35,8 @@ namespace ntgcalls {
 
         void stop(int64_t chatId);
 
+        void onStreamEnd(int64_t chatId, std::function<void(int64_t, Stream::Type)> &callback);
+
         uint64_t time(int64_t chatId);
 
         static std::string ping();

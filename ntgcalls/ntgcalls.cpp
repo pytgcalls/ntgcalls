@@ -49,6 +49,12 @@ namespace ntgcalls {
         connections.erase(connections.find(chatId));
     }
 
+    void NTgCalls::onStreamEnd(int64_t chatId, std::function<void(int64_t, Stream::Type)> &callback) {
+        safeConnection(chatId)->onStreamEnd([chatId, &callback](Stream::Type type) {
+            callback(chatId, type);
+        });
+    }
+
     uint64_t NTgCalls::time(int64_t chatId) {
         return safeConnection(chatId)->time();
     }

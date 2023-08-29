@@ -45,6 +45,8 @@ namespace ntgcalls {
 
         void stop();
 
+        void onStreamEnd(std::function<void(Stream::Type)> callback);
+
         uint64_t time();
     };
 }
