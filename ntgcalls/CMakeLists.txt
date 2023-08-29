@@ -1,10 +1,12 @@
 file(GLOB_RECURSE MODULE_SRC *.cpp *.hpp)
 
+set(BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
+
 if(IS_PYTHON)
     pybind11_add_module(ntgcalls ${MODULE_SRC})
     target_compile_definitions(ntgcalls PRIVATE VERSION_INFO=${PY_VERSION_INFO})
 else()
-    list(REMOVE_ITEM MODULE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/pythonapi.cpp")
+    list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/pythonapi.cpp")
     add_library(ntgcalls SHARED ${MODULE_SRC})
 endif()
 
