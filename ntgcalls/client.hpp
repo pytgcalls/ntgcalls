@@ -27,6 +27,8 @@ namespace ntgcalls {
         GroupCallPayload init();
 
     public:
+        Client();
+
         ~Client();
 
         std::string init(MediaDescription config);

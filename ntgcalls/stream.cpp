@@ -81,7 +81,7 @@ namespace ntgcalls {
         }
     }
 
-    void Stream::setAVStream(MediaDescription streamConfig) {
+    void Stream::setAVStream(MediaDescription streamConfig, bool noUpgrade) {
         auto audioConfig = streamConfig.audio;
         auto videoConfig = streamConfig.video;
         reader = std::make_shared<MediaReaderFactory>(streamConfig);
@@ -104,15 +104,14 @@ namespace ntgcalls {
         } else {
             hasVideo = false;
         }
-        if (wasVideo != hasVideo) {
+        if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }
     }
 
     void Stream::checkUpgrade() {
-        bool muted = false;
         onChangeStatus(MediaState{
-            muted,
+            audioTrack->isMuted() && videoTrack->isMuted(),
             hasVideo,
             idling
         });

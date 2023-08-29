@@ -5,6 +5,10 @@
 #include "client.hpp"
 
 namespace ntgcalls {
+    Client::Client() {
+        stream = std::make_shared<Stream>();
+    }
+
     Client::~Client() {
         stop();
         connection = nullptr;
@@ -27,9 +31,8 @@ namespace ntgcalls {
             throw ConnectionError("Connection already made");
         }
 
-        stream = std::make_shared<Stream>();
-        stream->setAVStream(config);
         auto res = init();
+        stream->setAVStream(config, true);
         audioSource = res.audioSource;
         for (auto &ssrc : res.sourceGroups) {
             sourceGroups.push_back(ssrc);

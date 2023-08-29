@@ -39,13 +39,13 @@ class ToAsync:
 async def main():
     client = Client('test', api_id, api_hash, sleep_threshold=1)
 
-    def stream_end(test: StreamType):
-        print("Python Callback:", test.name)
+    def stream_end(chat: int, test: StreamType):
+        print("Python Callback:", chat, test.name)
 
     wrtc.onStreamEnd(stream_end)
 
-    def stream_upgrade(test: MediaState):
-        print("Python Callback:", test)
+    def stream_upgrade(chat: int, test: MediaState):
+        print("Python Callback:", chat, test.muted)
 
     wrtc.onUpgrade(stream_upgrade)
 
@@ -62,8 +62,8 @@ async def main():
                 options=FFmpegOptions()
             ),
             video=VideoDescription(
-                width=1920,
-                height=1080,
+                width=1280,
+                height=720,
                 fps=30,
                 path=file_video,
                 options=FFmpegOptions()

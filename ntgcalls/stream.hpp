@@ -25,7 +25,7 @@ namespace ntgcalls {
 
         ~Stream();
 
-        void setAVStream(MediaDescription streamConfig);
+        void setAVStream(MediaDescription streamConfig, bool noUpgrade = false);
 
         void start();
 
