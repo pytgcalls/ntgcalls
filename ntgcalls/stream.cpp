@@ -93,13 +93,29 @@ namespace ntgcalls {
                 audioConfig->channelCount
             );
         }
+        bool wasVideo = hasVideo;
         if (videoConfig) {
+            hasVideo = true;
             video->setConfig(
                 videoConfig->width,
                 videoConfig->height,
                 videoConfig->fps
             );
+        } else {
+            hasVideo = false;
         }
+        if (wasVideo != hasVideo) {
+            checkUpgrade();
+        }
+    }
+
+    void Stream::checkUpgrade() {
+        bool muted = false;
+        onChangeStatus(MediaState{
+            muted,
+            hasVideo,
+            idling
+        });
     }
 
     uint64_t Stream::time() {
@@ -123,19 +139,25 @@ namespace ntgcalls {
     }
 
     bool Stream::pause() {
-        return !std::exchange(idling, true);
+        auto res = std::exchange(idling, true);
+        checkUpgrade();
+        return !res;
     }
 
     bool Stream::resume() {
-        return std::exchange(idling, false);
+        auto res = std::exchange(idling, false);
+        checkUpgrade();
+        return res;
     }
 
     bool Stream::mute() {
         if (!audioTrack->isMuted() || !videoTrack->isMuted()) {
             audioTrack->Mute(true);
             videoTrack->Mute(true);
+            checkUpgrade();
             return true;
         } else {
+            checkUpgrade();
             return false;
         }
     }
@@ -144,8 +166,10 @@ namespace ntgcalls {
         if (audioTrack->isMuted() || videoTrack->isMuted()) {
             audioTrack->Mute(false);
             videoTrack->Mute(false);
+            checkUpgrade();
             return true;
         } else {
+            checkUpgrade();
             return false;
         }
     }
@@ -166,5 +190,9 @@ namespace ntgcalls {
 
     void Stream::onStreamEnd(std::function<void(Stream::Type)> &callback) {
         onEOF = callback;
+    }
+
+    void Stream::onUpgrade(std::function<void(MediaState)> &callback) {
+        onChangeStatus = callback;
     }
 }

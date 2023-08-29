@@ -134,6 +134,10 @@ namespace ntgcalls {
         stream->onStreamEnd(callback);
     }
 
+    void Client::onUpgrade(std::function<void(MediaState)> callback) {
+        stream->onUpgrade(callback);
+    }
+
     uint64_t Client::time() {
         return stream->time();
     }

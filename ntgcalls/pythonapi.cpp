@@ -24,6 +24,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("unmute",  &ntgcalls::NTgCalls::unmute, py::arg("chat_id"));
     wrapper.def("stop",  &ntgcalls::NTgCalls::stop, py::arg("chat_id"));
     wrapper.def("time",  &ntgcalls::NTgCalls::time, py::arg("chat_id"));
+    wrapper.def("onUpgrade", &ntgcalls::NTgCalls::onUpgrade);
     wrapper.def("onStreamEnd", &ntgcalls::NTgCalls::onStreamEnd);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
 
@@ -38,6 +39,11 @@ PYBIND11_MODULE(ntgcalls, m) {
             py::arg("streamId") = 0
     );
     ffmpegWrapper.def_readwrite("streamId", &ntgcalls::FFmpegOptions::streamId);
+
+    py::class_<ntgcalls::MediaState>(m, "MediaState")
+            .def_readonly("muted", &ntgcalls::MediaState::muted)
+            .def_readonly("video_stopped", &ntgcalls::MediaState::videoStopped)
+            .def_readonly("video_paused", &ntgcalls::MediaState::videoPaused);
 
     py::class_<ntgcalls::AudioDescription> audioWrapper(m, "AudioDescription");
     audioWrapper.def(

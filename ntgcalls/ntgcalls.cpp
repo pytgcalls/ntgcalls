@@ -55,6 +55,12 @@ namespace ntgcalls {
         });
     }
 
+    void NTgCalls::onUpgrade(int64_t chatId, std::function<void(int64_t, MediaState)> &callback) {
+        safeConnection(chatId)->onUpgrade([chatId, &callback](MediaState state) {
+            callback(chatId, state);
+        });
+    }
+
     uint64_t NTgCalls::time(int64_t chatId) {
         return safeConnection(chatId)->time();
     }
