@@ -36,6 +36,8 @@ namespace ntgcalls {
         void stop(int64_t chatId);
 
         uint64_t time(int64_t chatId);
+
+        static std::string ping();
     };
 
 } // ntgcalls

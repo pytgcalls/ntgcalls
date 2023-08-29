@@ -63,4 +63,8 @@ namespace ntgcalls {
         }
         return connections[chatId];
     }
+
+    std::string NTgCalls::ping() {
+        return "pong";
+    }
 } // ntgcalls
