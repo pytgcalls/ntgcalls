@@ -5,7 +5,7 @@
 #include "file_reader.hpp"
 
 namespace ntgcalls {
-    FileReader::FileReader(const std::string& path) {
+    FileReader::FileReader(const std::string& path): BaseReader() {
         source = std::ifstream(path, std::ios::binary);
         if (!source) {
             throw FileError("Unable to open the file located at \"" + path + "\"");
@@ -17,7 +17,7 @@ namespace ntgcalls {
     }
 
     wrtc::binary FileReader::readInternal(size_t size) {
-        if (source.eof() || source.fail()) {
+        if (eofInternal()) {
             return {};
         }
         source.seekg(readChunks, std::ios::beg);
@@ -32,11 +32,12 @@ namespace ntgcalls {
 
     void FileReader::close() {
         BaseReader::close();
-        source.close();
-        readChunks = 0;
+        if (source.is_open()) {
+            source.close();
+        }
     }
 
     bool FileReader::eofInternal() {
-        return source.eof() || source.fail();
+        return source.eof() || source.fail() || !source.is_open();
     }
 }

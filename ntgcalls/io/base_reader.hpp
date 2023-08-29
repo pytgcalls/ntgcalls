@@ -17,11 +17,14 @@ namespace ntgcalls {
     private:
         std::vector<wrtc::binary> nextBuffer;
         bool _eof = false;
-        std::mutex mtx;
-        DispatchQueue dispatchQueue = DispatchQueue("Reader_" + rtc::CreateRandomUuid());
+        std::shared_ptr<DispatchQueue> dispatchQueue;
 
     protected:
         size_t readChunks = 0;
+
+        BaseReader();
+
+        virtual ~BaseReader();
 
         virtual wrtc::binary readInternal(size_t size) = 0;
 

@@ -8,6 +8,7 @@ namespace ntgcalls {
     Stream::Stream() {
         audio = std::make_shared<AudioStreamer>();
         video = std::make_shared<VideoStreamer>();
+        dispatchQueue = std::make_shared<DispatchQueue>("StreamQueue_" + rtc::CreateRandomUuid());
     }
 
     Stream::~Stream() {
@@ -115,7 +116,7 @@ namespace ntgcalls {
     void Stream::start() {
         if (!running) {
             running = true;
-            dispatchQueue.dispatch([this]() {
+            dispatchQueue->dispatch([this]() {
                 sendSample();
             });
         }
@@ -152,6 +153,7 @@ namespace ntgcalls {
     void Stream::stop() {
         running = false;
         idling = false;
+        dispatchQueue = nullptr;
         if (reader) {
             if (reader->audio) {
                 reader->audio->close();
@@ -160,7 +162,6 @@ namespace ntgcalls {
                 reader->video->close();
             }
         }
-        dispatchQueue.removePending();
     }
 
     void Stream::onStreamEnd(std::function<void(Stream::Type)> &callback) {

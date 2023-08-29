@@ -51,7 +51,7 @@ namespace ntgcalls {
         std::shared_ptr<MediaReaderFactory> reader;
         bool running = false, idling = false;
         wrtc::synchronized_callback<Type> onEOF;
-        DispatchQueue dispatchQueue = DispatchQueue("StreamQueue_" + rtc::CreateRandomUuid());
+        std::shared_ptr<DispatchQueue> dispatchQueue;
 
         void sendSample();
 

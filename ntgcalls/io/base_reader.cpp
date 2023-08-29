@@ -5,21 +5,23 @@
 #include "base_reader.hpp"
 
 namespace ntgcalls {
+    BaseReader::BaseReader() {
+        dispatchQueue = std::make_shared<DispatchQueue>("Reader_" + rtc::CreateRandomUuid());
+    }
+
+    BaseReader::~BaseReader() {
+        close();
+        readChunks = 0;
+    }
 
     wrtc::binary BaseReader::read(size_t size) {
         wrtc::binary res;
         auto promise = std::make_shared<std::promise<void>>();
         if (!_eof && nextBuffer.size() <= 10) {
-            dispatchQueue.dispatch([this, promise, size] {
-                wrtc::binary tmpBuff = readInternal(size);
-                mtx.lock();
-                nextBuffer.push_back(tmpBuff);
-                mtx.unlock();
+            dispatchQueue->dispatch([this, promise, size] {
+                nextBuffer.push_back(readInternal(size));
                 if (!eofInternal()) {
-                    tmpBuff = readInternal(size);
-                    mtx.lock();
-                    nextBuffer.push_back(tmpBuff);
-                    mtx.unlock();
+                    nextBuffer.push_back(readInternal(size));
                 }
                 _eof = eofInternal();
                 promise->set_value();
@@ -28,15 +30,13 @@ namespace ntgcalls {
         if (nextBuffer.empty() && !_eof) {
             promise->get_future().wait();
         }
-        mtx.lock();
         res = nextBuffer[0];
         nextBuffer.erase(nextBuffer.begin(), nextBuffer.begin() + 1);
-        mtx.unlock();
         return res;
     }
 
     void BaseReader::close() {
-        readChunks = 0;
+        dispatchQueue = nullptr;
     }
 
     bool BaseReader::eof() {

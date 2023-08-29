@@ -23,7 +23,7 @@ namespace ntgcalls {
     public:
         FileReader(const std::string& path);
 
-        ~FileReader();
+        ~FileReader() override;
 
         void close() final;
     };

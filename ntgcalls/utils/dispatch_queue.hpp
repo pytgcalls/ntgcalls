@@ -21,14 +21,8 @@ public:
     ~DispatchQueue();
 
     void dispatch(const fp_t& op);
+
     void dispatch(fp_t&& op);
-
-    void removePending();
-
-    DispatchQueue(const DispatchQueue& rhs) = delete;
-    DispatchQueue& operator=(const DispatchQueue& rhs) = delete;
-    DispatchQueue(DispatchQueue&& rhs) = delete;
-    DispatchQueue& operator=(DispatchQueue&& rhs) = delete;
 
 private:
     std::string name;
