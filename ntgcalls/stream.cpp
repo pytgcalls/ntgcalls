@@ -118,12 +118,14 @@ namespace ntgcalls {
     }
 
     uint64_t Stream::time() {
-        if (reader->audio && reader->video) {
-            return (audio->time() + video->time()) / 2;
-        } else if (reader->audio) {
-            return audio->time();
-        } else if (reader->video) {
-            return video->time();
+        if (reader) {
+            if (reader->audio && reader->video) {
+                return (audio->time() + video->time()) / 2;
+            } else if (reader->audio) {
+                return audio->time();
+            } else if (reader->video) {
+                return video->time();
+            }
         }
         return 0;
     }

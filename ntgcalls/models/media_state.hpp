@@ -8,8 +8,8 @@ namespace ntgcalls {
 
     struct MediaState {
         bool muted;
-        bool videoStopped;
         bool videoPaused;
+        bool videoStopped;
     };
 
 } // ntgcalls
