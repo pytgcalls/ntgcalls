@@ -8,6 +8,8 @@ if(IS_PYTHON)
 else()
     list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/pythonapi.cpp")
     add_library(ntgcalls SHARED ${MODULE_SRC})
+    target_include_directories(ntgcalls PRIVATE ../include)
+    target_compile_definitions(ntgcalls PRIVATE NTG_EXPORTS)
 endif()
 
 set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20)

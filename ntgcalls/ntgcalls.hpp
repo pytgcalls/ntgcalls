@@ -44,9 +44,9 @@ namespace ntgcalls {
 
         static std::string ping();
 
-        void onUpgrade(std::function<void(int64_t, MediaState)> &callback);
+        void onUpgrade(std::function<void(int64_t, MediaState)> callback);
 
-        void onStreamEnd(std::function<void(int64_t, Stream::Type)> &callback);
+        void onStreamEnd(std::function<void(int64_t, Stream::Type)> callback);
     };
 
 } // ntgcalls

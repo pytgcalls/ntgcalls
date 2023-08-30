@@ -32,4 +32,8 @@ namespace ntgcalls {
     class FFmpegError: public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
+
+    class InvalidUUID: public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
 }

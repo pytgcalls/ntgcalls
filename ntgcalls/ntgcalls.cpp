@@ -64,11 +64,11 @@ namespace ntgcalls {
         connections.erase(connections.find(chatId));
     }
 
-    void NTgCalls::onStreamEnd(std::function<void(int64_t, Stream::Type)> &callback) {
+    void NTgCalls::onStreamEnd(std::function<void(int64_t, Stream::Type)> callback) {
         onEof = callback;
     }
 
-    void NTgCalls::onUpgrade(std::function<void(int64_t, MediaState)> &callback) {
+    void NTgCalls::onUpgrade(std::function<void(int64_t, MediaState)> callback) {
         onChangeStatus = callback;
     }
 
@@ -82,7 +82,7 @@ namespace ntgcalls {
 
     std::shared_ptr<Client> NTgCalls::safeConnection(int64_t chatId) {
         if (!exists(chatId)) {
-            throw ConnectionError("Connection with chat id \"" + std::to_string(chatId) + "\" not found");
+            throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chatId) + "\" not found");
         }
         return connections[chatId];
     }
