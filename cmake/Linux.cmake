@@ -11,5 +11,6 @@ target_link_libraries(${target_name} PRIVATE
     X11
     dl
     rt
+    m
     Threads::Threads
 )

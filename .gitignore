@@ -4,7 +4,8 @@ venv
 env
 .DS_Store
 .vscode
-output
+output/
+linux_output/
 *.session
 *.session-journal
 tools/opus/
