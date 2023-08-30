@@ -1,16 +1,11 @@
 package main
 
-//#cgo LDFLAGS: -L/ -lntgcalls
+//#cgo LDFLAGS: -L . -lntgcalls
 import "C"
 import (
 	"fmt"
 	"gotgcalls/ntgcalls"
 )
-
-func myGoFunction(a C.int, b C.int) C.int {
-	sum := int(a) + int(b)
-	return C.int(sum)
-}
 
 func main() {
 	client := ntgcalls.NTgCalls()
