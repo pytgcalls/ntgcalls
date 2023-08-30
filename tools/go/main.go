@@ -1,12 +1,31 @@
 package main
 
-//#cgo CFLAGS: -I/../../ntgcalls/bindings
 //#cgo LDFLAGS: -L/ -lntgcalls
-//#include "capi.h"
 import "C"
-import "fmt"
+import (
+	"fmt"
+	"gotgcalls/ntgcalls"
+)
+
+func myGoFunction(a C.int, b C.int) C.int {
+	sum := int(a) + int(b)
+	return C.int(sum)
+}
 
 func main() {
-	C.test()
-	fmt.Println("WORKS")
+	client := ntgcalls.NTgCalls()
+	defer client.Free()
+	res, err := client.CreateCall(12345, ntgcalls.MediaDescription{
+		Encoder: "raw",
+		Audio: &ntgcalls.AudioDescription{
+			SampleRate:    48000,
+			BitsPerSample: 16,
+			ChannelCount:  2,
+			Path:          "../output.pcm",
+		},
+	})
+	fmt.Println(res, err)
+	client.OnStreamEnd(func(chatId int64, streamType ntgcalls.StreamType) {
+		fmt.Println(chatId)
+	})
 }
