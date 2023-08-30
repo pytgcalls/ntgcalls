@@ -13,6 +13,10 @@ namespace ntgcalls {
         using BaseRTCException::BaseRTCException;
     };
 
+    class ConnectionNotFound: public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     class InvalidParams: public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
