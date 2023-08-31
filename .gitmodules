@@ -5,3 +5,6 @@
 	path = deps/json
 	url = https://github.com/nlohmann/json
 	branch = stable
+[submodule "deps/boost_process"]
+	path = deps/boost_process
+	url = https://github.com/boostorg/process

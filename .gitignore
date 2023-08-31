@@ -14,6 +14,7 @@ tools/opus/
 deps/libcxx/
 deps/libwebrtc/
 deps/libcxxabi/
+deps/boost/
 build/
 dist/
 clang/
