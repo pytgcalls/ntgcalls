@@ -3,13 +3,6 @@ cmake_minimum_required(VERSION 3.23)
 include(ExternalProject)
 
 set(WEBRTC_REVISION m116.5845.6.1)
-# Check platform
-if(UNIX AND NOT APPLE)
-    set(LINUX TRUE)
-endif()
-if (UNIX AND APPLE)
-    set(MACOS TRUE)
-endif ()
 
 if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
@@ -21,6 +14,7 @@ find_package(Threads REQUIRED)
 
 get_filename_component(deps_loc "deps" REALPATH)
 
+include(cmake/PlatformUtil.cmake)
 include(cmake/GitUtils.cmake)
 include(cmake/FindCURL.cmake)
 include(cmake/FindLibCXX.cmake)
