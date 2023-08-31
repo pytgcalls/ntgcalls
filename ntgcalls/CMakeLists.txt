@@ -3,6 +3,7 @@ file(GLOB_RECURSE MODULE_SRC *.cpp *.hpp)
 set(BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
 
 if(IS_PYTHON)
+    list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/ntgcalls.cpp")
     pybind11_add_module(ntgcalls ${MODULE_SRC})
     target_compile_definitions(ntgcalls PRIVATE VERSION_INFO=${PY_VERSION_INFO})
 else()
