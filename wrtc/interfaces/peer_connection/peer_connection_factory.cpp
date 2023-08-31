@@ -21,17 +21,13 @@ namespace wrtc {
         _networkThread = rtc::Thread::CreateWithSocketServer();
         _networkThread->SetName("network_thread", nullptr);
         RTC_CHECK(_networkThread->Start()) << "Failed to start thread";
-        if (!_audioDeviceModule) {
-            _taskQueueFactory = webrtc::CreateDefaultTaskQueueFactory();
-            _workerThread->BlockingCall([this] { CreateAudioDeviceModule_w(); });
-        }
 
         auto config = VideoFactoryConfig();
 
         if (!_factory) {
             _factory = webrtc::CreatePeerConnectionFactory(
                     _networkThread.get(), _workerThread.get(), _signalingThread.get(),
-                    _audioDeviceModule,
+                    nullptr,
                     webrtc::CreateBuiltinAudioEncoderFactory(),
                     webrtc::CreateBuiltinAudioDecoderFactory(),
                     config.CreateVideoEncoderFactory(),
@@ -47,23 +43,9 @@ namespace wrtc {
     PeerConnectionFactory::~PeerConnectionFactory() {
         _factory = nullptr;
 
-        if (_audioDeviceModule) {
-            _workerThread->BlockingCall([this] { DestroyAudioDeviceModule_w(); });
-        }
-
         _workerThread->Stop();
         _signalingThread->Stop();
         _networkThread->Stop();
-    }
-
-    void PeerConnectionFactory::CreateAudioDeviceModule_w() {
-        if (!_audioDeviceModule)
-            _audioDeviceModule = webrtc::NoMicrophone::Create(_taskQueueFactory.get());
-    }
-
-    void PeerConnectionFactory::DestroyAudioDeviceModule_w() {
-        if (_audioDeviceModule)
-            _audioDeviceModule = nullptr;
     }
 
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> PeerConnectionFactory::factory() {
