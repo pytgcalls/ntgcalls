@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.23)
 
+cmake_policy(SET CMP0054 NEW)
+cmake_policy(SET CMP0091 NEW)
+
 include(ExternalProject)
 
 set(WEBRTC_REVISION m116.5845.6.1)
@@ -30,9 +33,6 @@ add_subdirectory(deps/pybind11)
 # nlohmann/json
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(deps/json EXCLUDE_FROM_ALL)
-
-# boost/process
-add_subdirectory(deps/boost_process)
 
 add_subdirectory(wrtc)
 add_subdirectory(ntgcalls)

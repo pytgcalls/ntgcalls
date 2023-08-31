@@ -137,14 +137,15 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
         file(REMOVE_RECURSE ${BOOST_ROOT})
     endif ()
 
-    string(REPLACE " " " --with-" BOOST_WITH ${BOOST_LIBS})
-    set(BOOST_WITH --with-${BOOST_WITH})
+    foreach(lib ${BOOST_LIBS})
+        list(APPEND BOOST_LIBS_OPTIONS --with-${lib})
+    endforeach()
     set(BUILD_COMMAND
             ${B2_EXECUTABLE}
             install
             -d+0
             --prefix=${BOOST_ROOT}
-            ${BOOST_WITH}
+            ${BOOST_LIBS_OPTIONS}
             --layout=system
             --ignore-site-config
             variant=release
@@ -154,7 +155,8 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
             visibility=${BOOST_VISIBILITY}
             target-os=${BOOST_TARGET}
             address-model=64
-            link=${BOOST_LINK}
+            link=static
+            runtime-link=${BOOST_LINK}
             threading=multi
             architecture=${BOOST_ARCH}
     )
@@ -173,6 +175,11 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
     message(STATUS "[BOOST] Build done")
 endif ()
 message(STATUS "boost v${BOOST_REVISION}")
+
+set(Boost_USE_STATIC_LIBS ON)
+if (WIN32)
+    set(Boost_USE_STATIC_RUNTIME ON)
+endif()
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
