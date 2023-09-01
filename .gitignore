@@ -18,6 +18,7 @@ deps/boost/
 build/
 dist/
 clang/
+__pycache__
 *.i420
 *.pcm
 *.mp4
