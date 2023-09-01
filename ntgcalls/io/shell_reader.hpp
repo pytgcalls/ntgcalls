@@ -4,6 +4,7 @@
 
 #pragma once
 
+#ifdef BOOST_ENABLED
 #include <boost/process.hpp>
 #include <boost/asio.hpp>
 
@@ -33,3 +34,4 @@ namespace ntgcalls {
     };
 
 } // ntgcalls
+#endif

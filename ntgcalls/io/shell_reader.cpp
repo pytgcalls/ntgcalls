@@ -5,6 +5,7 @@
 #include <iostream>
 #include "shell_reader.hpp"
 
+#ifdef BOOST_ENABLED
 namespace ntgcalls {
     ntgcalls::ShellReader::ShellReader(const std::string &command) {
         try {
@@ -43,4 +44,4 @@ namespace ntgcalls {
         return stdOut.eof();
     }
 } // ntgcalls
-
+#endif
