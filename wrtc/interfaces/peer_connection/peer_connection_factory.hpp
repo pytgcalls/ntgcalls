@@ -30,8 +30,11 @@ namespace wrtc {
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory();
 
         std::unique_ptr<rtc::Thread> _workerThread;
-
     private:
+        void CreateAudioDeviceModule_w();
+
+        void DestroyAudioDeviceModule_w();
+
         static std::mutex _mutex;
         static int _references;
         static rtc::scoped_refptr<PeerConnectionFactory> _default;
@@ -40,6 +43,9 @@ namespace wrtc {
         std::unique_ptr<rtc::Thread> _networkThread;
 
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> _factory;
+        rtc::scoped_refptr<webrtc::AudioDeviceModule> _audioDeviceModule;
+
+        std::unique_ptr<webrtc::TaskQueueFactory> _taskQueueFactory;
     };
 
 } // wrtc
