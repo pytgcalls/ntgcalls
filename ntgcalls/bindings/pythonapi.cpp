@@ -33,58 +33,64 @@ PYBIND11_MODULE(ntgcalls, m) {
             .value("Video", ntgcalls::Stream::Type::Video)
             .export_values();
 
-    py::class_<ntgcalls::FFmpegOptions> ffmpegWrapper(m, "FFmpegOptions");
-    ffmpegWrapper.def(
-            py::init<uint8_t>(),
-            py::arg("streamId") = 0
-    );
-    ffmpegWrapper.def_readwrite("streamId", &ntgcalls::FFmpegOptions::streamId);
-
     py::class_<ntgcalls::MediaState>(m, "MediaState")
             .def_readonly("muted", &ntgcalls::MediaState::muted)
             .def_readonly("video_stopped", &ntgcalls::MediaState::videoStopped)
             .def_readonly("video_paused", &ntgcalls::MediaState::videoPaused);
 
-    py::class_<ntgcalls::AudioDescription> audioWrapper(m, "AudioDescription");
+    py::class_<ntgcalls::BaseMediaDescription> mediaWrapper(m, "BaseMediaDescription");
+    mediaWrapper.def_readwrite("input", &ntgcalls::BaseMediaDescription::input);
+
+    py::class_<ntgcalls::RawAudioDescription> audioWrapper(m, "RawAudioDescription", mediaWrapper);
     audioWrapper.def(
-            py::init<uint16_t, uint8_t, uint8_t, std::string, ntgcalls::FFmpegOptions>(),
+            py::init<uint16_t, uint8_t, uint8_t, std::string>(),
             py::arg("sampleRate"),
             py::arg("bitsPerSample"),
             py::arg("channelCount"),
-            py::arg("path"),
-            py::arg_v("options", std::nullopt, "None")
+            py::arg("path")
     );
-    audioWrapper.def_readwrite("sampleRate", &ntgcalls::AudioDescription::sampleRate);
-    audioWrapper.def_readwrite("bitsPerSample", &ntgcalls::AudioDescription::bitsPerSample);
-    audioWrapper.def_readwrite("channelCount", &ntgcalls::AudioDescription::channelCount);
-    audioWrapper.def_readwrite("path", &ntgcalls::AudioDescription::path);
-    audioWrapper.def_readwrite("options", &ntgcalls::AudioDescription::options);
+    audioWrapper.def_readwrite("sampleRate", &ntgcalls::RawAudioDescription::sampleRate);
+    audioWrapper.def_readwrite("bitsPerSample", &ntgcalls::RawAudioDescription::bitsPerSample);
+    audioWrapper.def_readwrite("channelCount", &ntgcalls::RawAudioDescription::channelCount);
 
-    py::class_<ntgcalls::VideoDescription> videoWrapper(m, "VideoDescription");
+    py::class_<ntgcalls::ShellAudioDescription> audioShellWrapper(m, "ShellAudioDescription", audioWrapper);
+    audioShellWrapper.def(
+            py::init<uint16_t, uint8_t, uint8_t, std::string>(),
+            py::arg("sampleRate"),
+            py::arg("bitsPerSample"),
+            py::arg("channelCount"),
+            py::arg("command")
+    );
+
+    py::class_<ntgcalls::RawVideoDescription> videoWrapper(m, "RawVideoDescription", mediaWrapper);
     videoWrapper.def(
-            py::init<uint16_t, uint16_t, uint8_t, std::string, ntgcalls::FFmpegOptions>(),
+            py::init<uint16_t, uint16_t, uint8_t, std::string>(),
             py::arg("width"),
             py::arg("height"),
             py::arg("fps"),
-            py::arg("path"),
-            py::arg_v("options", std::nullopt, "None")
+            py::arg("path")
     );
-    videoWrapper.def_readwrite("width", &ntgcalls::VideoDescription::width);
-    videoWrapper.def_readwrite("height", &ntgcalls::VideoDescription::height);
-    videoWrapper.def_readwrite("fps", &ntgcalls::VideoDescription::fps);
-    videoWrapper.def_readwrite("path", &ntgcalls::VideoDescription::path);
-    videoWrapper.def_readwrite("options", &ntgcalls::VideoDescription::options);
+    videoWrapper.def_readwrite("width", &ntgcalls::RawVideoDescription::width);
+    videoWrapper.def_readwrite("height", &ntgcalls::RawVideoDescription::height);
+    videoWrapper.def_readwrite("fps", &ntgcalls::RawVideoDescription::fps);
 
-    py::class_<ntgcalls::MediaDescription> mediaWrapper(m, "MediaDescription");
-    mediaWrapper.def(
-            py::init<std::string, std::optional<ntgcalls::AudioDescription>, std::optional<ntgcalls::VideoDescription>>(),
-            py::arg("encoder"),
+    py::class_<ntgcalls::ShellVideoDescription> videoShellWrapper(m, "ShellVideoDescription", videoWrapper);
+    videoShellWrapper.def(
+            py::init<uint16_t, uint16_t, uint8_t, std::string>(),
+            py::arg("width"),
+            py::arg("height"),
+            py::arg("fps"),
+            py::arg("command")
+    );
+
+    py::class_<ntgcalls::MediaDescription> mediaDescWrapper(m, "MediaDescription");
+    mediaDescWrapper.def(
+            py::init<std::optional<ntgcalls::RawAudioDescription>, std::optional<ntgcalls::RawVideoDescription>>(),
             py::arg_v("audio", std::nullopt, "None"),
             py::arg_v("video", std::nullopt, "None")
     );
-    mediaWrapper.def_readwrite("encoder", &ntgcalls::MediaDescription::encoder);
-    mediaWrapper.def_readwrite("audio", &ntgcalls::MediaDescription::audio);
-    mediaWrapper.def_readwrite("video", &ntgcalls::MediaDescription::video);
+    mediaDescWrapper.def_readwrite("audio", &ntgcalls::MediaDescription::audio);
+    mediaDescWrapper.def_readwrite("video", &ntgcalls::MediaDescription::video);
 
     // Exceptions
     pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
@@ -95,6 +101,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     pybind11::register_exception<ntgcalls::InvalidParams>(m, "InvalidParams", baseExc);
     pybind11::register_exception<ntgcalls::RTMPNeeded>(m, "RTMPNeeded", baseExc);
     pybind11::register_exception<ntgcalls::FileError>(m, "FileError", baseExc);
+    pybind11::register_exception<ntgcalls::ShellError>(m, "ShellError", baseExc);
 
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 }

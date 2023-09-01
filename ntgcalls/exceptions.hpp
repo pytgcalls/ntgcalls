@@ -33,6 +33,10 @@ namespace ntgcalls {
         using BaseRTCException::BaseRTCException;
     };
 
+    class ShellError: public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     class InvalidUUID: public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
