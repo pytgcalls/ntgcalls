@@ -1,6 +1,6 @@
 package main
 
-//#cgo LDFLAGS: -L . -lntgcalls
+//#cgo LDFLAGS: -L . -lntgcalls -Wl,-rpath=./
 import "C"
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func main() {
 			Input:         "../output.pcm",
 		},
 	})
-	fmt.Println(res, err)
+	fmt.Println("WORKS", res, err)
 	client.OnStreamEnd(func(chatId int64, streamType ntgcalls.StreamType) {
 		fmt.Println(chatId)
 	})
