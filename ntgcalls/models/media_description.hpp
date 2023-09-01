@@ -10,62 +10,42 @@
 namespace ntgcalls {
     class BaseMediaDescription {
     public:
-        enum class Encoder {
-            Raw,
+        enum class InputMode {
+            File,
             Shell,
             FFmpeg
         };
 
         std::string input;
-        Encoder encoder;
+        InputMode inputMode;
 
-        BaseMediaDescription(std::string input, Encoder encoder): input(input), encoder(encoder) {}
+        BaseMediaDescription(std::string input, InputMode inputMode): input(input), inputMode(inputMode) {}
     };
 
-    class RawAudioDescription: public BaseMediaDescription {
-    protected:
-        RawAudioDescription(uint16_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount, std::string input, Encoder encoder):
-                sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount), BaseMediaDescription(input, encoder) {};
-
+    class AudioDescription: public BaseMediaDescription {
     public:
         uint16_t sampleRate;
         uint8_t bitsPerSample, channelCount;
 
-        RawAudioDescription(uint16_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount, std::string input):
-                RawAudioDescription(sampleRate, bitsPerSample, channelCount, input, Encoder::Raw) {};
+        AudioDescription(InputMode inputMode, uint16_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount, std::string input):
+                sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount), BaseMediaDescription(input, inputMode) {};
     };
 
-    class ShellAudioDescription: public RawAudioDescription {
-    public:
-        ShellAudioDescription(uint16_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount, std::string command):
-                RawAudioDescription(sampleRate, bitsPerSample, channelCount, command, Encoder::Shell) {};
-    };
-
-    class RawVideoDescription: public BaseMediaDescription {
-    protected:
-        RawVideoDescription(uint16_t width, uint16_t height, uint8_t fps, std::string input, Encoder encoder):
-                width(width), height(height), fps(fps), BaseMediaDescription(input, encoder) {};
-
+    class VideoDescription: public BaseMediaDescription {
     public:
         uint16_t width, height;
         uint8_t fps;
 
-        RawVideoDescription(uint16_t width, uint16_t height, uint8_t fps, std::string input):
-                RawVideoDescription(width, height, fps, input, Encoder::Raw){};
-    };
-
-    class ShellVideoDescription: public RawVideoDescription {
-    public:
-        ShellVideoDescription(uint16_t width, uint16_t height, uint8_t channelCount, std::string command):
-                RawVideoDescription(width, height, channelCount, command, Encoder::Shell) {};
+        VideoDescription(InputMode inputMode, uint16_t width, uint16_t height, uint8_t fps, std::string input):
+                width(width), height(height), fps(fps), BaseMediaDescription(input, inputMode) {};
     };
 
     class MediaDescription {
     public:
-        std::optional<RawAudioDescription> audio;
-        std::optional<RawVideoDescription> video;
+        std::optional<AudioDescription> audio;
+        std::optional<VideoDescription> video;
 
-        MediaDescription(std::optional<RawAudioDescription> audio, std::optional<RawVideoDescription> video) {
+        MediaDescription(std::optional<AudioDescription> audio, std::optional<VideoDescription> video) {
             this->audio = audio;
             this->video = video;
         }

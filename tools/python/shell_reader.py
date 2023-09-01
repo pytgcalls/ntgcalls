@@ -1,6 +1,6 @@
 import asyncio
 
-from ntgcalls import NTgCalls, MediaDescription, ShellAudioDescription, ShellVideoDescription
+from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, InputMode
 from pyrogram import Client, idle
 
 from utils import connect_call, ToAsync
@@ -16,17 +16,19 @@ async def main():
 
     async with client:
         call_params = await ToAsync(wrtc.createCall, chat_id, MediaDescription(
-            audio=ShellAudioDescription(
-                sampleRate=48000,
-                bitsPerSample=16,
-                channelCount=2,
-                command="ffmpeg -i tools/test.mp4 -f s16le -ac 2 -ar 48k pipe:1",
+            audio=AudioDescription(
+                input_mode=InputMode.Shell,
+                input="ffmpeg -i tools/test.mp4 -f s16le -ac 2 -ar 48k pipe:1",
+                sample_rate=48000,
+                bits_per_sample=16,
+                channel_count=2,
             ),
-            video=ShellVideoDescription(
+            video=VideoDescription(
+                input_mode=InputMode.Shell,
+                input="ffmpeg -i tools/test.mp4 -f rawvideo -r 30 -pix_fmt yuv420p -vf scale=1280:720 pipe:1",
                 width=1280,
                 height=720,
                 fps=30,
-                command="ffmpeg -i tools/test.mp4 -f rawvideo -r 30 -pix_fmt yuv420p -vf scale=1280:720 pipe:1",
             ),
         ))
         result = await connect_call(client, chat_id, call_params)

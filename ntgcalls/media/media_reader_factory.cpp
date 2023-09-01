@@ -16,16 +16,16 @@ namespace ntgcalls {
 
     std::shared_ptr<BaseReader> MediaReaderFactory::fromInput(BaseMediaDescription desc) {
         // SUPPORTED ENCODERS
-        switch (desc.encoder) {
-            case BaseMediaDescription::Encoder::Raw:
+        switch (desc.inputMode) {
+            case BaseMediaDescription::InputMode::File:
                 return std::make_shared<FileReader>(desc.input);
-            case BaseMediaDescription::Encoder::Shell:
+            case BaseMediaDescription::InputMode::Shell:
 #ifdef BOOST_ENABLED
                 return std::make_shared<ShellReader>(desc.input);
 #else
                 throw ShellError("Shell execution is not yet supported on your OS/Architecture");
 #endif
-            case BaseMediaDescription::Encoder::FFmpeg:
+            case BaseMediaDescription::InputMode::FFmpeg:
                 throw FFmpegError("FFmpeg encoder is not yet supported");
         }
         throw InvalidParams("Encoder not found");

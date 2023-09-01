@@ -5,6 +5,7 @@ env
 .DS_Store
 .vscode
 output/
+output_cgo/
 linux_output/
 *.session
 *.session-journal
