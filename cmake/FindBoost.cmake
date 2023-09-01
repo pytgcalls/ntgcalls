@@ -139,6 +139,7 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
     foreach(lib ${BOOST_LIBS})
         list(APPEND BOOST_LIBS_OPTIONS --with-${lib})
     endforeach()
+    string (REPLACE ";" " " BOOST_CXX_FLAGS "${BOOST_CXX_FLAGS}")
     set(BUILD_COMMAND
             ${B2_EXECUTABLE}
             install
