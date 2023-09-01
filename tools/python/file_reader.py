@@ -9,6 +9,8 @@ api_id = 2799555
 api_hash = '47d66bbf0939d0ddf32caf8bad590ed7'
 wrtc = NTgCalls()
 chat_id = -1001919448795
+
+
 async def main():
     client = Client('test', api_id, api_hash, sleep_threshold=1)
 
