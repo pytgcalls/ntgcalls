@@ -177,7 +177,7 @@ endif ()
 message(STATUS "boost v${BOOST_REVISION}")
 
 set(Boost_USE_STATIC_LIBS ON)
-if (WIN32)
+if (WINDOWS)
     set(Boost_USE_STATIC_RUNTIME ON)
 endif()
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)

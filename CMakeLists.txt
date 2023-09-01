@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.23)
 
-add_compile_options(/wd4068)
+if (WIN32)
+    add_compile_options(/wd4068)
+endif ()
 
 include(ExternalProject)
 
@@ -24,7 +26,6 @@ include(cmake/FindCURL.cmake)
 include(cmake/FindLibCXX.cmake)
 include(cmake/FindWebRTC.cmake)
 include(cmake/FindBoost.cmake)
-include(cmake/SetupPlatformLibs.cmake)
 
 # pybind11
 add_subdirectory(deps/pybind11)
