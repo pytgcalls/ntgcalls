@@ -7,76 +7,78 @@
 #include "ntgcalls.h"
 
 std::map<uint32_t, std::shared_ptr<ntgcalls::NTgCalls>> clients;
-std::unordered_set<uint32_t> generatedNumbers;
-
-int CreateUniqueRandomId() {
-    auto uid = rtc::CreateRandomId();
-    if (generatedNumbers.find(uid) == generatedNumbers.end()) {
-        generatedNumbers.insert(uid);
-        return uid;
-    }
-    return CreateUniqueRandomId();
-}
+uint64_t uidGenerator;
 
 std::shared_ptr<ntgcalls::NTgCalls> safeUID(uint32_t uid) {
-    if (generatedNumbers.find(uid) == generatedNumbers.end()) {
+    if (clients.find(uid) == clients.end()) {
         throw ntgcalls::InvalidUUID("UUID" + std::to_string(uid) + " not found");
     }
     return clients[uid];
+}
+
+ntgcalls::BaseMediaDescription::InputMode parseInputMode(InputMode mode) {
+    switch (mode) {
+        case InputMode::File:
+            return ntgcalls::BaseMediaDescription::InputMode::File;
+        case InputMode::Shell:
+            return ntgcalls::BaseMediaDescription::InputMode::Shell;
+        case InputMode::FFmpeg:
+            return ntgcalls::BaseMediaDescription::InputMode::FFmpeg;
+    }
 }
 
 ntgcalls::MediaDescription parseMediaDescription(MediaDescription& desc) {
     std::optional<ntgcalls::AudioDescription> audio;
     std::optional<ntgcalls::VideoDescription> video;
     if (desc.audio) {
-        std::optional<ntgcalls::FFmpegOptions> options;
-        if (desc.audio->options) {
-            options = ntgcalls::FFmpegOptions(
-                desc.audio->options->streamId
-            );
+        switch (desc.audio->inputMode) {
+            case InputMode::File:
+            case InputMode::Shell:
+                audio = ntgcalls::AudioDescription(
+                    parseInputMode(desc.audio->inputMode),
+                    desc.audio->sampleRate,
+                    desc.audio->bitsPerSample,
+                    desc.audio->channelCount,
+                    std::string(desc.audio->input)
+                );
+                break;
+            case InputMode::FFmpeg:
+                throw ntgcalls::FFmpegError("Not supported");
         }
-        audio = ntgcalls::AudioDescription(
-            desc.audio->sampleRate,
-            desc.audio->bitsPerSample,
-            desc.audio->channelCount,
-            std::string(desc.audio->path),
-            options
-        );
     }
     if (desc.video) {
-        std::optional<ntgcalls::FFmpegOptions> options = std::nullopt;
-        if (desc.video->options) {
-            options = ntgcalls::FFmpegOptions(
-                desc.video->options->streamId
-            );
+        switch (desc.audio->inputMode) {
+            case InputMode::File:
+            case InputMode::Shell:
+                video = ntgcalls::VideoDescription(
+                    parseInputMode(desc.audio->inputMode),
+                    desc.video->width,
+                    desc.video->height,
+                    desc.video->fps,
+                    std::string(desc.video->input)
+                );
+                break;
+            case InputMode::FFmpeg:
+                throw ntgcalls::FFmpegError("Not supported");
         }
-        video = ntgcalls::VideoDescription(
-            desc.video->width,
-            desc.video->height,
-            desc.video->fps,
-            std::string(desc.video->path),
-            options
-        );
     }
     return ntgcalls::MediaDescription(
-        std::string(desc.encoder),
         audio,
         video
     );
 }
 
 uint32_t CreateNTgCalls() {
-    int uid = CreateUniqueRandomId();
+    int uid = uidGenerator++;
     clients[uid] = std::make_shared<ntgcalls::NTgCalls>();
     return uid;
 }
 
 void DestroyNTgCalls(uint32_t uid, int8_t *errorCode) {
-    if (generatedNumbers.find(uid) == generatedNumbers.end()) {
+    if (clients.find(uid) == clients.end()) {
         *errorCode = INVALID_UID;
         return;
     }
-    generatedNumbers.erase(generatedNumbers.find(uid));
     clients.erase(clients.find(uid));
 }
 

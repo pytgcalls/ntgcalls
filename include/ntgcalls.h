@@ -33,26 +33,32 @@
 extern "C" {
 #endif
 
-typedef struct {
-    uint8_t streamId;
-} FFmpegOptions;
+enum InputMode {
+    File,
+    Shell,
+    FFmpeg
+};
+
+enum StreamType {
+    Audio,
+    Video,
+};
 
 typedef struct {
+    enum InputMode inputMode;
+    char* input;
     uint16_t sampleRate;
     uint8_t bitsPerSample, channelCount;
-    char* path;
-    FFmpegOptions* options;
 } AudioDescription;
 
 typedef struct {
+    enum InputMode inputMode;
+    char* input;
     uint16_t width, height;
     uint8_t fps;
-    char* path;
-    FFmpegOptions* options;
 } VideoDescription;
 
 typedef struct {
-    char* encoder;
     AudioDescription* audio;
     VideoDescription* video;
 } MediaDescription;
@@ -62,11 +68,6 @@ typedef struct {
     bool videoPaused;
     bool videoStopped;
 } MediaState;
-
-enum StreamType {
-    Audio,
-    Video,
-};
 
 typedef void (*StreamEndCallback)(uint32_t, int64_t, enum StreamType);
 
