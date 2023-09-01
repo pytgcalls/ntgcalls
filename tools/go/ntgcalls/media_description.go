@@ -1,14 +1,11 @@
 package ntgcalls
 
 //#include "ntgcalls.h"
-//#include <stdlib.h>
 import "C"
-import "unsafe"
 
 type MediaDescription struct {
-	Encoder string
-	Audio   *AudioDescription
-	Video   *VideoDescription
+	Audio *AudioDescription
+	Video *VideoDescription
 }
 
 func (ctx *MediaDescription) ParseToC() C.MediaDescription {
@@ -21,7 +18,5 @@ func (ctx *MediaDescription) ParseToC() C.MediaDescription {
 		video := ctx.Video.ParseToC()
 		x.video = &video
 	}
-	x.encoder = C.CString(ctx.Encoder)
-	defer C.free(unsafe.Pointer(x.encoder))
 	return x
 }

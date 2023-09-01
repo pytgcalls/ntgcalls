@@ -6,22 +6,19 @@ import "C"
 import "unsafe"
 
 type VideoDescription struct {
+	InputMode     InputMode
+	Input         string
 	Width, Height uint16
 	Fps           uint8
-	Path          string
-	Options       *FFmpegOptions
 }
 
 func (ctx *VideoDescription) ParseToC() C.VideoDescription {
 	var x C.VideoDescription
+	x.inputMode = ctx.InputMode.ParseToC()
+	x.input = C.CString(ctx.Input)
 	x.width = C.uint16_t(ctx.Width)
 	x.height = C.uint16_t(ctx.Height)
 	x.fps = C.uint8_t(ctx.Fps)
-	x.path = C.CString(ctx.Path)
-	if ctx.Options != nil {
-		options := ctx.Options.ParseToC()
-		x.options = &options
-	}
-	defer C.free(unsafe.Pointer(x.path))
+	defer C.free(unsafe.Pointer(x.input))
 	return x
 }

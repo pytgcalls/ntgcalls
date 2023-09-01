@@ -11,12 +11,12 @@ func main() {
 	client := ntgcalls.NTgCalls()
 	defer client.Free()
 	res, err := client.CreateCall(12345, ntgcalls.MediaDescription{
-		Encoder: "raw",
 		Audio: &ntgcalls.AudioDescription{
+			InputMode:     ntgcalls.InputModeFile,
 			SampleRate:    48000,
 			BitsPerSample: 16,
 			ChannelCount:  2,
-			Path:          "../output.pcm",
+			Input:         "../output.pcm",
 		},
 	})
 	fmt.Println(res, err)
