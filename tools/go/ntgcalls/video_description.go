@@ -3,7 +3,6 @@ package ntgcalls
 //#include "ntgcalls.h"
 //#include <stdlib.h>
 import "C"
-import "unsafe"
 
 type VideoDescription struct {
 	InputMode     InputMode
@@ -19,6 +18,5 @@ func (ctx *VideoDescription) ParseToC() C.VideoDescription {
 	x.width = C.uint16_t(ctx.Width)
 	x.height = C.uint16_t(ctx.Height)
 	x.fps = C.uint8_t(ctx.Fps)
-	defer C.free(unsafe.Pointer(x.input))
 	return x
 }

@@ -3,7 +3,6 @@ package ntgcalls
 //#include "ntgcalls.h"
 //#include <stdlib.h>
 import "C"
-import "unsafe"
 
 type AudioDescription struct {
 	InputMode                   InputMode
@@ -19,6 +18,5 @@ func (ctx *AudioDescription) ParseToC() C.AudioDescription {
 	x.sampleRate = C.uint16_t(ctx.SampleRate)
 	x.bitsPerSample = C.uint8_t(ctx.BitsPerSample)
 	x.channelCount = C.uint8_t(ctx.ChannelCount)
-	defer C.free(unsafe.Pointer(x.input))
 	return x
 }

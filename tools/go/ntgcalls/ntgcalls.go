@@ -83,6 +83,8 @@ func parseErrorCode(errorCode int8) error {
 		return fmt.Errorf("connection failed")
 	case -10:
 		return fmt.Errorf("connection not found")
+	case -11:
+		return fmt.Errorf("error while executing shell command")
 	default:
 		return fmt.Errorf("unknown error")
 	}
