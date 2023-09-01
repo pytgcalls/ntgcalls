@@ -28,6 +28,7 @@
 #define INVALID_TRANSPORT -8;
 #define CONNECTION_FAILED -9;
 #define CONNECTION_NOT_FOUND -10;
+#define SHELL_ERROR -11;
 
 #ifdef __cplusplus
 extern "C" {

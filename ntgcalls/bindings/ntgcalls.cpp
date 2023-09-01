@@ -9,6 +9,12 @@
 std::map<uint32_t, std::shared_ptr<ntgcalls::NTgCalls>> clients;
 uint64_t uidGenerator;
 
+#ifdef _WIN32
+#define os_strcpy(dest, destSize, src) strcpy_s(dest, destSize, src)
+#else
+#define os_strcpy(dest, destSize, src) strcpy(dest, src)
+#endif
+
 std::shared_ptr<ntgcalls::NTgCalls> safeUID(uint32_t uid) {
     if (clients.find(uid) == clients.end()) {
         throw ntgcalls::InvalidUUID("UUID" + std::to_string(uid) + " not found");
@@ -84,8 +90,10 @@ void DestroyNTgCalls(uint32_t uid, int8_t *errorCode) {
 
 const char* CreateCall(uint32_t uid, int64_t chatID, MediaDescription desc, int8_t *errorCode) {
     try {
-        const char *res;
-        res = safeUID(uid)->createCall(chatID, parseMediaDescription(desc)).c_str();
+        auto result = safeUID(uid)->createCall(chatID, parseMediaDescription(desc));
+        size_t length = result.length() + 1;
+        char *res = new char[length];
+        os_strcpy(res, length, result.c_str());
         return res;
     } catch (ntgcalls::InvalidUUID) {
         *errorCode = INVALID_UID;
@@ -97,6 +105,8 @@ const char* CreateCall(uint32_t uid, int64_t chatID, MediaDescription desc, int8
         *errorCode = ENCODER_NOT_FOUND;
     } catch (ntgcalls::FFmpegError) {
         *errorCode = FFMPEG_NOT_FOUND;
+    } catch (ntgcalls::ShellError) {
+        *errorCode = SHELL_ERROR;
     } catch (...) {
         *errorCode = UNKNOWN_EXCEPTION;
     }
@@ -130,6 +140,8 @@ void ChangeStream(uint32_t uid, int64_t chatID, MediaDescription desc, int8_t *e
         *errorCode = ENCODER_NOT_FOUND;
     } catch (ntgcalls::FFmpegError) {
         *errorCode = FFMPEG_NOT_FOUND;
+    } catch (ntgcalls::ShellError) {
+        *errorCode = SHELL_ERROR;
     } catch (ntgcalls::ConnectionNotFound) {
         *errorCode = CONNECTION_NOT_FOUND;
     } catch (...) {
