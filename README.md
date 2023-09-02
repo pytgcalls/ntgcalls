@@ -3,7 +3,8 @@ Welcome to NativeTgCalls, an innovative open-source project. NativeTgCalls repre
 
 |                                                           Powerful                                                            |                                                   Simple                                                   |                                                                     Light                                                                      |
 |:-----------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------:|
-| <img src=".github/images/fast.gif" width=250 alt="Fast Logo"/><br>Built from scratch in C++ using Boost, libwebrtc and FFmpeg | <img src=".github/images/simple.gif" width=250 alt="Simple Logo"/><br>Simple Python, GO and C Bindings<br> | <img src=".github/images/light.gif" width=250 alt="Light logo"/><br>We removed anything that could burden the library, including <b>NodeJS</b> |
+| <img src=".github/images/fast.gif" width=150 alt="Fast Logo"/><br>Built from scratch in C++ using Boost, libwebrtc and FFmpeg | <img src=".github/images/simple.gif" width=150 alt="Simple Logo"/><br>Simple Python, GO and C Bindings<br> | <img src=".github/images/light.gif" width=150 alt="Light logo"/><br>We removed anything that could burden the library, including <b>NodeJS</b> |
+
 ...and more, **without even rewriting your code that uses PyTgCalls!**
 
 ## Overview
