@@ -25,13 +25,13 @@ elseif (LINUX_x86_64)
             -isystem${LIBCXX_INCLUDE}/include
             -fPIC
     )
-elseif (MACOS_ARM64)
+elseif (MACOS)
     set(BOOST_TARGET darwin)
     execute_process(COMMAND xcrun --sdk macosx --show-sdk-path
-        RESULT_VARIABLE MAC_SYS_ROOT
-        OUTPUT_QUIET
+        OUTPUT_VARIABLE MAC_SYS_ROOT
         ERROR_QUIET
     )
+    string(STRIP "${MAC_SYS_ROOT}" MAC_SYS_ROOT)
     set(BOOST_C_FLAGS
             --sysroot=${MAC_SYS_ROOT}
             -target aarch64-apple-darwin
@@ -139,6 +139,7 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
     foreach(lib ${BOOST_LIBS})
         list(APPEND BOOST_LIBS_OPTIONS --with-${lib})
     endforeach()
+    string (REPLACE ";" " " BOOST_C_FLAGS "${BOOST_C_FLAGS}")
     string (REPLACE ";" " " BOOST_CXX_FLAGS "${BOOST_CXX_FLAGS}")
     set(BUILD_COMMAND
             ${B2_EXECUTABLE}
@@ -169,7 +170,8 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
     )
     if(NOT rv EQUAL 0)
         file(REMOVE_RECURSE ${BOOST_ROOT})
-        message(FATAL_ERROR "[BOOST] Error while executing b2, cleaning up")
+        string (REPLACE ";" " " BUILD_COMMAND "${BUILD_COMMAND}")
+        message(FATAL_ERROR "[BOOST] Error while executing ${BUILD_COMMAND}, cleaning up")
     endif ()
     set(LAST_BOOST_LIBS ${BOOST_LIBS} CACHE STRING "Last boost libs" FORCE)
     message(STATUS "[BOOST] Build done")
