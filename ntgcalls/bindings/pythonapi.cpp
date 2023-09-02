@@ -91,6 +91,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     pybind11::register_exception<ntgcalls::InvalidParams>(m, "InvalidParams", baseExc);
     pybind11::register_exception<ntgcalls::RTMPNeeded>(m, "RTMPNeeded", baseExc);
     pybind11::register_exception<ntgcalls::FileError>(m, "FileError", baseExc);
+    pybind11::register_exception<ntgcalls::FFmpegError>(m, "FFmpegError", baseExc);
     pybind11::register_exception<ntgcalls::ShellError>(m, "ShellError", baseExc);
 
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
