@@ -18,14 +18,14 @@ async def main():
         call_params = await ToAsync(wrtc.createCall, chat_id, MediaDescription(
             audio=AudioDescription(
                 input_mode=InputMode.Shell,
-                input="ffmpeg -i tools/test.mp4 -f s16le -ac 2 -ar 48k pipe:1",
+                input="ffmpeg -i http://docs.evostream.com/sample_content/assets/sintel1m720p.mp4 -f s16le -ac 2 -ar 48k pipe:1",
                 sample_rate=48000,
                 bits_per_sample=16,
                 channel_count=2,
             ),
             video=VideoDescription(
                 input_mode=InputMode.Shell,
-                input="ffmpeg -i tools/test.mp4 -f rawvideo -r 30 -pix_fmt yuv420p -vf scale=1280:720 pipe:1",
+                input="ffmpeg -i http://docs.evostream.com/sample_content/assets/sintel1m720p.mp4 -f rawvideo -r 30 -pix_fmt yuv420p -vf scale=1280:720 pipe:1",
                 width=1280,
                 height=720,
                 fps=30,
