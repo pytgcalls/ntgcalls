@@ -25,7 +25,7 @@ elseif (LINUX_x86_64)
             -isystem${LIBCXX_INCLUDE}/include
             -fPIC
     )
-elseif (MACOS)
+elseif (MACOS_ARM64)
     set(BOOST_TARGET darwin)
     execute_process(COMMAND xcrun --sdk macosx --show-sdk-path
         OUTPUT_VARIABLE MAC_SYS_ROOT
