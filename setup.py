@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -30,6 +31,9 @@ def install_clang(path: Path):
         check=True
     )
 
+def get_os():
+    return subprocess.run(["uname", "-o"], stdout=subprocess.PIPE, text=True).stdout.strip()
+
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
@@ -41,24 +45,33 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",
             f"-DPY_VERSION_INFO={self.distribution.get_version()}",
-            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}",
         ]
         build_args = [
             "--config", cfg,
-            f"-j{multiprocessing.cpu_count()}"
+            f"-j{multiprocessing.cpu_count()}",
         ]
-        if sys.platform.startswith("darwin"):
+
+        if get_os() == "Android":
+            raise NotImplementedError("Android is not supported yet")
+        elif sys.platform.startswith("darwin"):
             cmake_args += [
+                "-DCMAKE_OSX_ARCHITECTURES=arm64",
                 "-G",
-                "Xcode"
+                "Xcode",
             ]
-        if sys.platform.startswith("linux"):
-            clang_path = Path(Path.cwd(), 'clang')
-            if not Path(clang_path, "bin").exists():
-                install_clang(clang_path)
+        elif sys.platform.startswith("linux"):
+            clang_c = 'clang'
+            clang_cxx = 'clang++'
+            if platform.processor() is not 'arm64':
+                clang_path = Path(Path.cwd(), 'clang')
+                if not Path(clang_path, 'bin').exists():
+                    install_clang(clang_path)
+                clang_c = Path(clang_path, 'bin', clang_c)
+                clang_cxx = Path(clang_path, 'bin', clang_cxx)
             cmake_args += [
-                f"-DCMAKE_C_COMPILER={Path(clang_path, 'bin', 'clang')}",
-                f"-DCMAKE_CXX_COMPILER={Path(clang_path, 'bin', 'clang++')}"
+                f"-DCMAKE_C_COMPILER={clang_c}",
+                f"-DCMAKE_CXX_COMPILER={clang_cxx}",
             ]
         build_temp = Path(self.build_temp) / ext.name
         if not build_temp.exists():
