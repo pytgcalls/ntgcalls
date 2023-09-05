@@ -84,6 +84,11 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
             endif ()
         endif ()
 
+        if (EXISTS ${BOOST_ROOT})
+            message(STATUS "[BOOST] Cleaning up old Boost build...")
+            file(REMOVE_RECURSE ${BOOST_WORKDIR})
+        endif ()
+
         if(NOT EXISTS ${BOOST_WORKDIR})
             message(STATUS "[BOOST] Extracting...
             src='${BOOST_TAR}'
@@ -129,11 +134,6 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
 
     if (NOT WINDOWS)
         file(WRITE ${BOOST_WORKDIR}/project-config.jam "using ${BOOST_TOOLSET} : : ${CMAKE_CXX_COMPILER} : ;")
-    endif ()
-
-    if (EXISTS ${BOOST_ROOT})
-        message(STATUS "[BOOST] Cleaning up old Boost build...")
-        file(REMOVE_RECURSE ${BOOST_ROOT})
     endif ()
 
     foreach(lib ${BOOST_LIBS})
