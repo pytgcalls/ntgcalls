@@ -8,7 +8,6 @@ import subprocess
 import sys
 from pathlib import Path
 from urllib.request import urlopen
-
 from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 

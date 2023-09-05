@@ -55,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ntgcalls-${{ matrix.shared_name }}-libs
-          path: ./shared-build-output/*
+          path: ./shared-output/*
           if-no-files-found: error
 
       - name: Build wheels
