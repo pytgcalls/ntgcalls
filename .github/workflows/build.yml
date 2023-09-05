@@ -3,11 +3,11 @@ on:
   push:
     branches: [ master ]
     paths:
-      - 'cmake'
-      - 'deps'
-      - 'include'
-      - 'ntgcalls'
-      - 'wrtc'
+      - 'cmake/*'
+      - 'deps/*'
+      - 'include/*'
+      - 'ntgcalls/*'
+      - 'wrtc/*'
       - 'CMakeLists.txt'
       - 'setup.py'
 
