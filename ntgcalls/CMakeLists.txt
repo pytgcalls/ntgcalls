@@ -15,6 +15,10 @@ endif()
 
 set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(ntgcalls PRIVATE wrtc nlohmann_json::nlohmann_json Boost::filesystem)
+target_link_libraries(ntgcalls PRIVATE wrtc nlohmann_json::nlohmann_json)
+
+if(BOOST_ENABLED)
+    target_link_libraries(ntgcalls PRIVATE Boost::filesystem)
+endif ()
 
 setup_platform_libs(ntgcalls)
