@@ -67,9 +67,6 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 * <b><a href="https://github.com/vrumger">@vrumger</a> (Mid-level NodeJS Developer):</b>
     * Avrumy has made important fixes and enhancements to the WebRTC component of the library, 
       improving its stability and performance.
-* <b><a href="https://github.com/shiguredo">@shiguredo</a> (Mid-level NodeJS Developer):</b>
-    * Avrumy has made important fixes and enhancements to the WebRTC component of the library,
-      improving its stability and performance.
 
 ## Junior Developers
 * <b><a href="https://github.com/TuriOG">@TuriOG</a> (Junior Python Developer):</b>
