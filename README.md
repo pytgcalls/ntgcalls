@@ -42,28 +42,11 @@ NativeTgCalls offers Py Bindings, enabling seamless integration with Python. Fol
 ### C Bindings
 For developers looking to use NativeTgCalls with C and C++, we provide C Bindings. Follow these steps to compile NativeTgCalls with C Bindings:
 1. Ensure you are in the root directory of the NativeTgCalls project.
-2. Create a directory named "output" (or any name of your choice) and navigate to it:
+2. Run the following command to generate the shared libs:
    ```shell
-   mkdir output
-   cd output
+   python3 setup.py build_shared
    ```
-3. Depending on your operating system, execute one of the following sets of commands:
-    - #### Windows
-       ```shell
-       cmake .. -DCMAKE_BUILD_TYPE=Release
-       cmake --build . --config Release
-        ```
-    - #### Linux (with clang-12)
-       ```shell
-       cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12
-       cmake --build . --config Release
-       ```
-   - #### macOS
-       ```shell
-       cmake .. -G Xcode -DCMAKE_BUILD_TYPE=Release
-       cmake --build . --config Release
-       ```
-4. Upon successful execution of one of the above steps, a shared library will be generated in the "output" directory. 
+3. Upon successful execution, a shared library will be generated in the "shared-output" directory. 
    You can now use this library to develop applications with NativeTgCalls.
-5. To include the necessary headers in your C/C++ projects, you will find the "include" folder in the root of the project. 
+4. To include the necessary headers in your C/C++ projects, you will find the "include" folder in the root of the project. 
    Utilize this folder for including the required header files.
