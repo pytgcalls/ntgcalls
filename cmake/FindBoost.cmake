@@ -28,10 +28,10 @@ elseif (LINUX_x86_64)
 elseif (MACOS_ARM64)
     set(BOOST_TARGET darwin)
     execute_process(COMMAND xcrun --sdk macosx --show-sdk-path
-        RESULT_VARIABLE MAC_SYS_ROOT
-        OUTPUT_QUIET
+        OUTPUT_VARIABLE MAC_SYS_ROOT
         ERROR_QUIET
     )
+    string(STRIP "${MAC_SYS_ROOT}" MAC_SYS_ROOT)
     set(BOOST_C_FLAGS
             --sysroot=${MAC_SYS_ROOT}
             -target aarch64-apple-darwin
@@ -54,6 +54,7 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
         NOT EXISTS ${BOOST_DIR} OR
         NOT EXISTS ${BOOST_WORKDIR} OR
         NOT EXISTS ${BOOST_ROOT})
+
     if (NOT EXISTS ${BOOST_WORKDIR})
         set(BOOST_DOWNLOAD_DIR ${BOOST_DIR}/download)
         set(BOOST_TAR ${BOOST_DOWNLOAD_DIR}/boost_${BOOST_REVISION_UNDERSCORE}.tar.gz)
@@ -74,61 +75,55 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
                 file(REMOVE_RECURSE ${BOOST_WORKDIR})
                 file(REMOVE ${BOOST_TAR})
                 message(FATAL_ERROR "[BOOST] Error: downloading '${url}' failed
-                status_code: ${status_code}
-                status_string: ${status_string}
-                log:
-                --- LOG BEGIN ---
-                ${log}
-                --- LOG END ---"
+            status_code: ${status_code}
+            status_string: ${status_string}
+            log:
+            --- LOG BEGIN ---
+            ${log}
+            --- LOG END ---"
                 )
             endif ()
         endif ()
 
-        if(NOT EXISTS ${BOOST_WORKDIR})
-            message(STATUS "[BOOST] Extracting...
-            src='${BOOST_TAR}'
-            dst='${BOOST_WORKDIR}'"
-            )
+        message(STATUS "[BOOST] Extracting...
+        src='${BOOST_TAR}'
+        dst='${BOOST_WORKDIR}'"
+        )
 
-            if(NOT EXISTS "${BOOST_TAR}")
-                message(FATAL_ERROR "[BOOST] File to extract does not exist: '${BOOST_TAR}'")
-            endif()
-            execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${BOOST_TAR}
-                WORKING_DIRECTORY ${BOOST_DIR}
-                RESULT_VARIABLE rv
-                OUTPUT_QUIET
-                ERROR_QUIET
-            )
-            if(NOT rv EQUAL 0)
-                message(STATUS "[BOOST] Extracting... [error clean up]")
-                file(REMOVE_RECURSE "${BOOST_WORKDIR}")
-                file(REMOVE ${BOOST_TAR})
-                message(FATAL_ERROR "[BOOST] Extract of '${BOOST_TAR}' failed")
-            endif()
+        if(NOT EXISTS "${BOOST_TAR}")
+            message(FATAL_ERROR "[BOOST] File to extract does not exist: '${BOOST_TAR}'")
+        endif()
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${BOOST_TAR}
+            WORKING_DIRECTORY ${BOOST_DIR}
+            RESULT_VARIABLE rv
+            OUTPUT_QUIET
+            ERROR_QUIET
+        )
+        if(NOT rv EQUAL 0)
+            message(STATUS "[BOOST] Extracting... [error clean up]")
+            file(REMOVE_RECURSE "${BOOST_WORKDIR}")
+            file(REMOVE ${BOOST_TAR})
+            message(FATAL_ERROR "[BOOST] Extract of '${BOOST_TAR}' failed")
+        endif()
 
-            if (WINDOWS)
-                set(BOOTSTRAP_EXECUTABLE .\\bootstrap.bat)
-            else ()
-                set(BOOTSTRAP_EXECUTABLE ./bootstrap.sh)
-            endif ()
-
-            message(STATUS "[BOOST] Executing bootstrap...")
-            execute_process(COMMAND ${BOOTSTRAP_EXECUTABLE}
-                WORKING_DIRECTORY ${BOOST_WORKDIR}
-                RESULT_VARIABLE rv
-                OUTPUT_QUIET
-                ERROR_QUIET
-            )
-
-            if(NOT rv EQUAL 0)
-                file(REMOVE_RECURSE ${BOOST_WORKDIR})
-                message(FATAL_ERROR "[BOOST] Error while executing bootstrap, cleaning up")
-            endif ()
+        if (WINDOWS)
+            set(BOOTSTRAP_EXECUTABLE .\\bootstrap.bat)
+        else ()
+            set(BOOTSTRAP_EXECUTABLE ./bootstrap.sh)
         endif ()
-    endif ()
 
-    if (NOT WINDOWS)
-        file(WRITE ${BOOST_WORKDIR}/project-config.jam "using ${BOOST_TOOLSET} : : ${CMAKE_CXX_COMPILER} : ;")
+        message(STATUS "[BOOST] Executing bootstrap...")
+        execute_process(COMMAND ${BOOTSTRAP_EXECUTABLE}
+            WORKING_DIRECTORY ${BOOST_WORKDIR}
+            RESULT_VARIABLE rv
+            OUTPUT_QUIET
+            ERROR_QUIET
+        )
+
+        if(NOT rv EQUAL 0)
+            file(REMOVE_RECURSE ${BOOST_WORKDIR})
+            message(FATAL_ERROR "[BOOST] Error while executing bootstrap, cleaning up")
+        endif ()
     endif ()
 
     if (EXISTS ${BOOST_ROOT})
@@ -136,29 +131,34 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
         file(REMOVE_RECURSE ${BOOST_ROOT})
     endif ()
 
+    if (NOT WINDOWS)
+        file(WRITE ${BOOST_WORKDIR}/project-config.jam "using ${BOOST_TOOLSET} : : ${CMAKE_CXX_COMPILER} : ;")
+    endif ()
+
     foreach(lib ${BOOST_LIBS})
         list(APPEND BOOST_LIBS_OPTIONS --with-${lib})
     endforeach()
+    string (REPLACE ";" " " BOOST_C_FLAGS "${BOOST_C_FLAGS}")
     string (REPLACE ";" " " BOOST_CXX_FLAGS "${BOOST_CXX_FLAGS}")
     set(BUILD_COMMAND
-            ${B2_EXECUTABLE}
-            install
-            -d+0
-            --prefix=${BOOST_ROOT}
-            ${BOOST_LIBS_OPTIONS}
-            --layout=system
-            --ignore-site-config
-            variant=release
-            cflags=${BOOST_C_FLAGS}
-            cxxflags=${BOOST_CXX_FLAGS}
-            toolset=${BOOST_TOOLSET}
-            visibility=${BOOST_VISIBILITY}
-            target-os=${BOOST_TARGET}
-            address-model=64
-            link=static
-            runtime-link=${BOOST_LINK}
-            threading=multi
-            architecture=${BOOST_ARCH}
+        ${B2_EXECUTABLE}
+        install
+        -d+0
+        --prefix=${BOOST_ROOT}
+        ${BOOST_LIBS_OPTIONS}
+        --layout=system
+        --ignore-site-config
+        variant=release
+        cflags=${BOOST_C_FLAGS}
+        cxxflags=${BOOST_CXX_FLAGS}
+        toolset=${BOOST_TOOLSET}
+        visibility=${BOOST_VISIBILITY}
+        target-os=${BOOST_TARGET}
+        address-model=64
+        link=static
+        runtime-link=${BOOST_LINK}
+        threading=multi
+        architecture=${BOOST_ARCH}
     )
     message(STATUS "[BOOST] Executing build process...")
     execute_process(COMMAND ${BUILD_COMMAND}
@@ -169,7 +169,8 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
     )
     if(NOT rv EQUAL 0)
         file(REMOVE_RECURSE ${BOOST_ROOT})
-        message(FATAL_ERROR "[BOOST] Error while executing b2, cleaning up")
+        string (REPLACE ";" " " BUILD_COMMAND "${BUILD_COMMAND}")
+        message(FATAL_ERROR "[BOOST] Error while executing ${BUILD_COMMAND}, cleaning up")
     endif ()
     set(LAST_BOOST_LIBS ${BOOST_LIBS} CACHE STRING "Last boost libs" FORCE)
     message(STATUS "[BOOST] Build done")
@@ -191,3 +192,4 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 add_compile_definitions(BOOST_ENABLED)
+set(BOOST_ENABLED TRUE)
