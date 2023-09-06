@@ -13,10 +13,12 @@ from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
 
+
 class CMakeExtension(Extension):
     def __init__(self, name: str, sourcedir: str = "") -> None:
         super().__init__(name, sources=[])
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
+
 
 def install_clang(path: Path):
     url = 'https://chromium.googlesource.com/chromium/src/tools/+/refs/heads/main/clang/scripts/update.py?format=text'
@@ -31,8 +33,10 @@ def install_clang(path: Path):
         check=True
     )
 
+
 def get_os():
     return subprocess.run(["uname", "-o"], stdout=subprocess.PIPE, text=True).stdout.strip()
+
 
 def get_os_cmake_args():
     if sys.platform.startswith("win32"):
@@ -58,6 +62,7 @@ def get_os_cmake_args():
             f"-DCMAKE_CXX_COMPILER={clang_cxx}",
         ]
     return []
+
 
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
@@ -87,6 +92,7 @@ class CMakeBuild(build_ext):
         subprocess.run(
             ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
         )
+
 
 class SharedCommand(Command):
     description = 'Generate shared-libs files'
