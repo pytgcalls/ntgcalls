@@ -90,18 +90,19 @@ class CMakeBuild(build_ext):
 
 class SharedCommand(Command):
     description = 'Generate shared-libs files'
-    user_options = []
+    user_options = [
+        ('no-preserve-cache', None, "Do not preserve cache"),
+    ]
 
+    # noinspection PyAttributeOutsideInit
     def initialize_options(self):
-        pass
+        self.no_preserve_cache = False
 
     def finalize_options(self):
         pass
 
+    # noinspection PyMethodMayBeStatic
     def run(self):
-        build_output = Path("shared-output")
-        if not build_output.exists():
-            build_output.mkdir(parents=True)
         cmake_args = [
             '-DCMAKE_BUILD_TYPE=Release',
         ]
@@ -122,19 +123,28 @@ class SharedCommand(Command):
         )
         release_path = Path(build_temp, 'ntgcalls')
         tmp_release_path = Path(release_path, 'Release')
+
+        build_output = Path("shared-output")
+        if build_output.exists():
+            shutil.rmtree(build_output)
+        build_output.mkdir(parents=True)
+        include_output = Path(build_output, 'include')
+        include_output.mkdir(parents=True)
         if tmp_release_path.exists():
             release_path = tmp_release_path
         for file in os.listdir(release_path):
             if file.endswith('.dll') or file.endswith('.so') or file.endswith('.dylib'):
                 lib_output = Path(build_output, file)
-                if lib_output.exists():
-                    os.remove(Path(build_output, file))
-                include_output = Path(build_output, 'include')
-                if include_output.exists():
-                    os.removedirs(include_output)
-                include_output.mkdir(parents=True)
                 shutil.move(Path(release_path, file), lib_output)
                 shutil.copy(Path(source_dir, 'include', 'ntgcalls.h'), include_output)
+
+                if self.no_preserve_cache:
+                    shutil.rmtree(build_temp)
+                    boost_dir = Path(source_dir, 'deps', 'boost')
+                    for boost_build in os.listdir(boost_dir):
+                        if boost_build.startswith('boost_'):
+                            shutil.rmtree(Path(boost_dir, boost_build))
+                    print("Cleanup successfully")
                 return
         raise FileNotFoundError("No library files found")
 
