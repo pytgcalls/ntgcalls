@@ -17,6 +17,8 @@ deps/libwebrtc/
 deps/libcxxabi/
 deps/boost/
 build/
+shared-build/
+shared-output/
 dist/
 clang/
 __pycache__

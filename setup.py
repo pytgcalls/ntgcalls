@@ -1,17 +1,17 @@
+import base64
+import platform
+import shutil
 import multiprocessing
 import os
-import platform
 import re
 import subprocess
 import sys
-import base64
 from pathlib import Path
 from urllib.request import urlopen
-from setuptools import Extension, setup
+from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
-
 
 class CMakeExtension(Extension):
     def __init__(self, name: str, sourcedir: str = "") -> None:
@@ -34,6 +34,31 @@ def install_clang(path: Path):
 def get_os():
     return subprocess.run(["uname", "-o"], stdout=subprocess.PIPE, text=True).stdout.strip()
 
+def get_os_cmake_args():
+    if sys.platform.startswith("win32"):
+        pass
+    elif sys.platform.startswith("darwin"):
+        return [
+            "-DCMAKE_OSX_ARCHITECTURES=arm64",
+            "-G",
+            "Xcode",
+        ]
+    elif get_os() == "Android":
+        raise NotImplementedError("Android is not supported yet")
+    elif sys.platform.startswith("linux"):
+        clang_c, clang_cxx = "clang-17", "clang++-17"
+        if platform.processor() != 'aarch64':
+            clang_path = Path(Path.cwd(), 'clang')
+            if not Path(clang_path, 'bin').exists():
+                install_clang(clang_path)
+            clang_c = Path(clang_path, 'bin', 'clang')
+            clang_cxx = Path(clang_path, 'bin', 'clang++')
+        return [
+            f"-DCMAKE_C_COMPILER={clang_c}",
+            f"-DCMAKE_CXX_COMPILER={clang_cxx}",
+        ]
+    return []
+
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
@@ -51,28 +76,8 @@ class CMakeBuild(build_ext):
             "--config", cfg,
             f"-j{multiprocessing.cpu_count()}",
         ]
+        cmake_args += get_os_cmake_args()
 
-        if get_os() == "Android":
-            raise NotImplementedError("Android is not supported yet")
-        elif sys.platform.startswith("darwin"):
-            cmake_args += [
-                "-DCMAKE_OSX_ARCHITECTURES=arm64",
-                "-G",
-                "Xcode",
-            ]
-        elif sys.platform.startswith("linux"):
-            clang_c = 'clang'
-            clang_cxx = 'clang++'
-            if platform.processor() is not 'arm64':
-                clang_path = Path(Path.cwd(), 'clang')
-                if not Path(clang_path, 'bin').exists():
-                    install_clang(clang_path)
-                clang_c = Path(clang_path, 'bin', clang_c)
-                clang_cxx = Path(clang_path, 'bin', clang_cxx)
-            cmake_args += [
-                f"-DCMAKE_C_COMPILER={clang_c}",
-                f"-DCMAKE_CXX_COMPILER={clang_cxx}",
-            ]
         build_temp = Path(self.build_temp) / ext.name
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
@@ -82,6 +87,56 @@ class CMakeBuild(build_ext):
         subprocess.run(
             ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
         )
+
+class SharedCommand(Command):
+    description = 'Generate shared-libs files'
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        build_output = Path("shared-output")
+        if not build_output.exists():
+            build_output.mkdir(parents=True)
+        cmake_args = [
+            '-DCMAKE_BUILD_TYPE=Release',
+        ]
+        cmake_args += get_os_cmake_args()
+        build_args = [
+            '--config', 'Release',
+            f'-j{multiprocessing.cpu_count()}',
+        ]
+        build_temp = Path('shared-build')
+        if not build_temp.exists():
+            build_temp.mkdir(parents=True)
+        source_dir = os.path.dirname(os.path.abspath(__file__))
+        subprocess.run(
+            ['cmake', source_dir, *cmake_args], cwd=build_temp, check=True
+        )
+        subprocess.run(
+            ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
+        )
+        release_path = Path(build_temp, 'ntgcalls')
+        tmp_release_path = Path(release_path, 'Release')
+        if tmp_release_path.exists():
+            release_path = tmp_release_path
+        for file in os.listdir(release_path):
+            if file.endswith('.dll') or file.endswith('.so') or file.endswith('.dylib'):
+                lib_output = Path(build_output, file)
+                if lib_output.exists():
+                    os.remove(Path(build_output, file))
+                include_output = Path(build_output, 'include')
+                if include_output.exists():
+                    os.removedirs(include_output)
+                include_output.mkdir(parents=True)
+                shutil.move(Path(release_path, file), lib_output)
+                shutil.copy(Path(source_dir, 'include', 'ntgcalls.h'), include_output)
+                return
+        raise FileNotFoundError("No library files found")
 
 
 with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
@@ -117,7 +172,10 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
     ext_modules=[CMakeExtension("ntgcalls")],
-    cmdclass={"build_ext": CMakeBuild},
+    cmdclass={
+        'build_ext': CMakeBuild,
+        'build_shared': SharedCommand
+    },
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
     python_requires=">=3.7",
