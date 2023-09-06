@@ -54,7 +54,7 @@ jobs:
       - name: Upload shared libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v3
         with:
-          name: ntgcalls-${{ matrix.shared_name }}-libs
+          name: ntgcalls-${{ matrix.shared_name }}-lib
           path: ./shared-output/*
           if-no-files-found: error
 
