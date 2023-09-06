@@ -1,16 +1,19 @@
 import asyncio
+
 from asyncio import AbstractEventLoop
 from typing import Any
+from typing import Callable
 
 from pyrogram import Client
 from pyrogram.raw.functions.channels import GetFullChannel
 from pyrogram.raw.functions.phone import JoinGroupCall
 from pyrogram.raw.types import UpdateGroupCallConnection, Updates, DataJSON, InputChannel
 
+
 class ToAsync:
-    def __init__(self, function: callable, *args):
+    def __init__(self, function: Callable, *args):
         self._loop: AbstractEventLoop = asyncio.get_running_loop()
-        self._function: callable = function
+        self._function: Callable = function
         self._function_args: tuple = args
 
     async def _run(self):
@@ -24,6 +27,7 @@ class ToAsync:
 
     def __await__(self):
         return self._run().__await__()
+
 
 async def connect_call(client: Client, chat_id: int, call_params: str) -> str:
     chat = await client.resolve_peer(chat_id)
