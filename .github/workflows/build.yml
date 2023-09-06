@@ -49,7 +49,7 @@ jobs:
           platforms: arm64
 
       - name: Build Shared Libs
-        run: python3 setup.py build_shared
+        run: python3 setup.py build_shared --no-preserve-cache
 
       - name: Upload shared libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v3
