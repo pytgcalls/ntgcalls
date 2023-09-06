@@ -82,7 +82,7 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
       versatility and accessibility.
 
 ## Special Thanks
-* <b><a href="https://github.com/shiguredou">@shiguredou</a>:</b>
+* <b><a href="https://github.com/shiguredo">@shiguredo</a>:</b>
   We extend our special thanks to 時雨堂 (shiguredo) for their invaluable assistance in integrating the WebRTC component. Their contributions,
   utilizing the Sora C++ SDK, have been instrumental in enhancing the functionality of our library.
 * <b><a href="https://github.com/evgeny-nadymov">@evgeny-nadymov</a>:</b>
