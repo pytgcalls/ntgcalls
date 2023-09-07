@@ -4,6 +4,7 @@ package ntgcalls
 import "C"
 
 type StreamType int
+type StreamStatus int
 type InputMode int
 
 type StreamEndCallback func(chatId int64, streamType StreamType)
@@ -18,6 +19,12 @@ const (
 	InputModeFile InputMode = iota
 	InputModeShell
 	InputModeFFmpeg
+)
+
+const (
+	PlayingStream StreamStatus = iota
+	PausedStream
+	IdlingStream
 )
 
 func (ctx InputMode) ParseToC() C.enum_InputMode {

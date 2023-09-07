@@ -29,6 +29,7 @@
 #define CONNECTION_FAILED -9;
 #define CONNECTION_NOT_FOUND -10;
 #define SHELL_ERROR -11;
+#define ERR_TOO_SMALL -12;
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +44,12 @@ enum InputMode {
 enum StreamType {
     Audio,
     Video,
+};
+
+enum StreamStatus {
+    Playing,
+    Paused,
+    Idling
 };
 
 typedef struct {
@@ -65,6 +72,11 @@ typedef struct {
 } MediaDescription;
 
 typedef struct {
+    int64_t chatId;
+    enum StreamStatus status;
+} GroupCall;
+
+typedef struct {
     bool muted;
     bool videoPaused;
     bool videoStopped;
@@ -76,29 +88,33 @@ typedef void (*UpgradeCallback)(uint32_t, int64_t, MediaState);
 
 NTG_C_EXPORT uint32_t CreateNTgCalls();
 
-NTG_C_EXPORT void DestroyNTgCalls(uint32_t uid, int8_t *errorCode);
+NTG_C_EXPORT int DestroyNTgCalls(uint32_t uid);
 
-NTG_C_EXPORT const char* CreateCall(uint32_t uid, int64_t chatID, MediaDescription rep, int8_t *errorCode);
+NTG_C_EXPORT int CreateCall(uint32_t uid, int64_t chatID, MediaDescription rep, char* buffer, int size);
 
-NTG_C_EXPORT void ConnectCall(uint32_t uid, int64_t chatID, char* params, int8_t *errorCode);
+NTG_C_EXPORT int ConnectCall(uint32_t uid, int64_t chatID, char* params);
 
-NTG_C_EXPORT void ChangeStream(uint32_t uid, int64_t chatID, MediaDescription desc, int8_t *errorCode);
+NTG_C_EXPORT int ChangeStream(uint32_t uid, int64_t chatID, MediaDescription desc);
 
-NTG_C_EXPORT bool Pause(uint32_t uid, int64_t chatID, int8_t *errorCode);
+NTG_C_EXPORT bool Pause(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT bool Resume(uint32_t uid, int64_t chatID, int8_t *errorCode);
+NTG_C_EXPORT bool Resume(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT bool Mute(uint32_t uid, int64_t chatID, int8_t *errorCode);
+NTG_C_EXPORT bool Mute(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT bool UnMute(uint32_t uid, int64_t chatID, int8_t *errorCode);
+NTG_C_EXPORT bool UnMute(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT void Stop(uint32_t uid, int64_t chatID, int8_t *errorCode);
+NTG_C_EXPORT int Stop(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT uint64_t Time(uint32_t uid, int64_t chatID, int8_t *errorCode);
+NTG_C_EXPORT uint64_t Time(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT void OnStreamEnd(uint32_t uid, StreamEndCallback callback, int8_t *errorCode);
+NTG_C_EXPORT int Calls(uint32_t uid, GroupCall *buffer, int size);
 
-NTG_C_EXPORT void OnUpgrade(uint32_t uid, UpgradeCallback callback, int8_t *errorCode);
+NTG_C_EXPORT int CallsCount(uint32_t uid);
+
+NTG_C_EXPORT int OnStreamEnd(uint32_t uid, StreamEndCallback callback);
+
+NTG_C_EXPORT int OnUpgrade(uint32_t uid, UpgradeCallback callback);
 
 #ifdef __cplusplus
 }

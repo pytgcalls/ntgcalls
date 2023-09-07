@@ -19,7 +19,7 @@ namespace ntgcalls {
     class ShellReader final: public BaseReader {
     private:
         bp::ipstream stdOut;
-        std::shared_ptr<bp::child> process;
+        bp::child shellProcess;
 
         wrtc::binary readInternal(size_t size) override;
 
