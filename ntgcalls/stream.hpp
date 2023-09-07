@@ -20,6 +20,11 @@ namespace ntgcalls {
             Audio,
             Video,
         };
+        enum Status {
+            Playing,
+            Paused,
+            Idling,
+        };
 
         Stream();
 
@@ -40,6 +45,8 @@ namespace ntgcalls {
         void stop();
 
         uint64_t time();
+
+        Status status();
 
         void addTracks(const std::shared_ptr<wrtc::PeerConnection> &pc);
 

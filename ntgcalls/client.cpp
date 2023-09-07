@@ -144,4 +144,8 @@ namespace ntgcalls {
     uint64_t Client::time() {
         return stream->time();
     }
+
+    Stream::Status Client::status() {
+        return stream->status();
+    }
 }

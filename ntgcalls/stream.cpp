@@ -130,6 +130,13 @@ namespace ntgcalls {
         return 0;
     }
 
+    Stream::Status Stream::status() {
+        if (reader->audio || reader->video) {
+            return idling ? Status::Paused : Status::Playing;
+        }
+        return Status::Idling;
+    }
+
     void Stream::start() {
         if (!running) {
             running = true;

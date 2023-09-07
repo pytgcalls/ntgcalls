@@ -87,6 +87,14 @@ namespace ntgcalls {
         return connections[chatId];
     }
 
+    std::map<int64_t, Stream::Status> NTgCalls::calls() {
+        std::map<int64_t, Stream::Status> statusList;
+        for (auto conn : connections) {
+            statusList[conn.first] = conn.second->status();
+        }
+        return statusList;
+    }
+
     std::string NTgCalls::ping() {
         return "pong";
     }
