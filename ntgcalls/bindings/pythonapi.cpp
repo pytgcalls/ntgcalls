@@ -26,11 +26,18 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("time",  &ntgcalls::NTgCalls::time, py::arg("chat_id"));
     wrapper.def("onUpgrade", &ntgcalls::NTgCalls::onUpgrade);
     wrapper.def("onStreamEnd", &ntgcalls::NTgCalls::onStreamEnd);
+    wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
 
     py::enum_<ntgcalls::Stream::Type>(m, "StreamType")
             .value("Audio", ntgcalls::Stream::Type::Audio)
             .value("Video", ntgcalls::Stream::Type::Video)
+            .export_values();
+
+    py::enum_<ntgcalls::Stream::Status>(m, "StreamStatus")
+            .value("Playing", ntgcalls::Stream::Status::Playing)
+            .value("Paused", ntgcalls::Stream::Status::Paused)
+            .value("Idling", ntgcalls::Stream::Status::Idling)
             .export_values();
 
     py::enum_<ntgcalls::BaseMediaDescription::InputMode>(m, "InputMode")
