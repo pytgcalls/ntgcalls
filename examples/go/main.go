@@ -20,6 +20,7 @@ func main() {
 		},
 	})
 	fmt.Println("WORKS", res, err)
+	fmt.Println(client.Calls())
 	client.OnStreamEnd(func(chatId int64, streamType ntgcalls.StreamType) {
 		fmt.Println(chatId)
 	})

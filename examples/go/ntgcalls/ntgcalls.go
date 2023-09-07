@@ -17,8 +17,8 @@ func NTgCalls() *Instance {
 		uid:    uint32(C.CreateNTgCalls()),
 		exists: true,
 	}
-	C.OnStreamEnd(C.uint32_t(instance.uid), (C.StreamEndCallback)(unsafe.Pointer(C.handleStream)), nil)
-	C.OnUpgrade(C.uint32_t(instance.uid), (C.UpgradeCallback)(unsafe.Pointer(C.handleUpgrade)), nil)
+	C.OnStreamEnd(C.uint32_t(instance.uid), (C.StreamEndCallback)(unsafe.Pointer(C.handleStream)))
+	C.OnUpgrade(C.uint32_t(instance.uid), (C.UpgradeCallback)(unsafe.Pointer(C.handleUpgrade)))
 	return instance
 }
 
@@ -63,10 +63,9 @@ func (ctx *Instance) OnUpgrade(callback UpgradeCallback) {
 	handlerUpgrade[ctx.uid] = append(handlerUpgrade[ctx.uid], callback)
 }
 
-func parseErrorCode(errorCode int8) error {
-	switch errorCode {
-	case 0:
-		return nil
+func parseErrorCode(errorCode C.int) error {
+	pErrorCode := int8(errorCode)
+	switch pErrorCode {
 	case -3:
 		return fmt.Errorf("connection already made")
 	case -4:
@@ -85,57 +84,77 @@ func parseErrorCode(errorCode int8) error {
 		return fmt.Errorf("connection not found")
 	case -11:
 		return fmt.Errorf("error while executing shell command")
-	default:
+	}
+	if pErrorCode >= 0 {
+		return nil
+	} else {
 		return fmt.Errorf("unknown error")
 	}
 }
 
 func (ctx *Instance) CreateCall(chatId int64, desc MediaDescription) (string, error) {
-	var errorCode C.int8_t
-	res := C.GoString(C.CreateCall(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC(), &errorCode))
-	return res, parseErrorCode(int8(errorCode))
+	var buffer [1024]C.char
+	size := C.int(len(buffer))
+	res := C.CreateCall(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC(), &buffer[0], size)
+	return C.GoString(&buffer[0]), parseErrorCode(res)
 }
 
 func (ctx *Instance) Connect(chatId int64, params string) error {
-	var errorCode C.int8_t
-	C.ConnectCall(C.uint32_t(ctx.uid), C.int64_t(chatId), C.CString(params), &errorCode)
-	return parseErrorCode(int8(errorCode))
+	return parseErrorCode(C.ConnectCall(C.uint32_t(ctx.uid), C.int64_t(chatId), C.CString(params)))
 }
 
 func (ctx *Instance) ChangeStream(chatId int64, desc MediaDescription) error {
-	var errorCode C.int8_t
-	C.ChangeStream(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC(), &errorCode)
-	return parseErrorCode(int8(errorCode))
+	return parseErrorCode(C.ChangeStream(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC()))
 }
 
 func (ctx *Instance) Pause(chatId int64) bool {
-	return bool(C.Pause(C.uint32_t(ctx.uid), C.int64_t(chatId), nil))
+	return bool(C.Pause(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Resume(chatId int64) bool {
-	return bool(C.Resume(C.uint32_t(ctx.uid), C.int64_t(chatId), nil))
+	return bool(C.Resume(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Mute(chatId int64) bool {
-	return bool(C.Mute(C.uint32_t(ctx.uid), C.int64_t(chatId), nil))
+	return bool(C.Mute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) UnMute(chatId int64) bool {
-	return bool(C.UnMute(C.uint32_t(ctx.uid), C.int64_t(chatId), nil))
+	return bool(C.UnMute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Stop(chatId int64) error {
-	var errorCode C.int8_t
-	C.UnMute(C.uint32_t(ctx.uid), C.int64_t(chatId), &errorCode)
-	return parseErrorCode(int8(errorCode))
+	return parseErrorCode(C.Stop(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Time(chatId int64) uint64 {
-	return uint64(C.Time(C.uint32_t(ctx.uid), C.int64_t(chatId), nil))
+	return uint64(C.Time(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+}
+
+func (ctx *Instance) Calls() map[int64]StreamStatus {
+	mapReturn := make(map[int64]StreamStatus)
+
+	callSize := C.CallsCount(C.uint32_t(ctx.uid))
+	buffer := make([]C.GroupCall, callSize)
+	C.Calls(C.uint32_t(ctx.uid), &buffer[0], callSize)
+
+	for _, call := range buffer {
+		var goStreamType StreamStatus
+		switch call.status {
+		case C.Playing:
+			goStreamType = PlayingStream
+		case C.Paused:
+			goStreamType = PausedStream
+		case C.Idling:
+			goStreamType = IdlingStream
+		}
+		mapReturn[int64(call.chatId)] = goStreamType
+	}
+	return mapReturn
 }
 
 func (ctx *Instance) Free() {
-	C.DestroyNTgCalls(C.uint32_t(ctx.uid), nil)
+	C.DestroyNTgCalls(C.uint32_t(ctx.uid))
 	delete(handlerEnd, ctx.uid)
 	ctx.exists = false
 }
