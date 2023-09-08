@@ -23,6 +23,7 @@ namespace ntgcalls {
         stdOut.close();
         stdOut.pipe().close();
         shellProcess.wait();
+        shellProcess.detach();
     }
 
     wrtc::binary ShellReader::readInternal(size_t size) {
