@@ -6,7 +6,8 @@ endif ()
 
 include(ExternalProject)
 
-set(WEBRTC_REVISION m116.5845.6.1)
+# https://chromiumdash.appspot.com/branches
+set(WEBRTC_REVISION m117.5938.2.0)
 set(BOOST_REVISION 1.83.0)
 set(BOOST_LIBS filesystem)
 
