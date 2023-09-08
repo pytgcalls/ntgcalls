@@ -44,8 +44,6 @@ if(NOT TARGET WebRTC::webrtc)
 
     set(FILE_NAME webrtc.${PLATFORM}_${ARCH}${ARCHIVE_FORMAT})
 
-    include(${CMAKE_SOURCE_DIR}/cmake/PatchWebRTC.cmake)
-
     ExternalProject_Add(
         project_libwebrtc
 
