@@ -18,11 +18,13 @@ namespace ntgcalls {
     wrtc::binary BaseReader::read(size_t size) {
         wrtc::binary res;
         auto promise = std::make_shared<std::promise<void>>();
-        if (!_eof && nextBuffer.size() <= 10) {
+        if (!_eof && nextBuffer.size() <= 4) {
             dispatchQueue->dispatch([this, promise, size] {
                 try {
-                    nextBuffer.push_back(readInternal(size));
-                    nextBuffer.push_back(readInternal(size));
+                    auto availableSpace = 10 - nextBuffer.size();
+                    for (int i = 0; i < availableSpace; i++) {
+                        nextBuffer.push_back(readInternal(size));
+                    }
                 } catch (...) {
                     _eof = true;
                 }
