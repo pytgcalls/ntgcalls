@@ -40,4 +40,8 @@ namespace ntgcalls {
     class InvalidUUID: public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
+
+    class EOFError: public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
 }

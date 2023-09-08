@@ -17,15 +17,15 @@ namespace ntgcalls {
     }
 
     wrtc::binary FileReader::readInternal(size_t size) {
-        if (eofInternal()) {
-            return {};
+        if ( source.eof() || source.fail() || !source.is_open()) {
+            throw EOFError("Reached end of the file");
         }
         source.seekg(readChunks, std::ios::beg);
         auto *file_data = new uint8_t[size];
         source.read(reinterpret_cast<char*>(file_data), size);
         readChunks += size;
         if (source.fail()) {
-            return {};
+            throw FileError("Error while reading the file");
         }
         return file_data;
     }
@@ -35,9 +35,5 @@ namespace ntgcalls {
         if (source.is_open()) {
             source.close();
         }
-    }
-
-    bool FileReader::eofInternal() {
-        return source.eof() || source.fail() || !source.is_open();
     }
 }

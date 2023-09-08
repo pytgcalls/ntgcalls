@@ -23,20 +23,17 @@ namespace ntgcalls {
         stdOut.close();
         stdOut.pipe().close();
         shellProcess.wait();
+        shellProcess.detach();
     }
 
     wrtc::binary ShellReader::readInternal(size_t size) {
-        if (eofInternal()) {
-            return {};
+        if (stdOut.eof()) {
+            throw EOFError("Reached end of the stream");
         }
         auto *file_data = new uint8_t[size];
         stdOut.read(reinterpret_cast<char*>(file_data), size);
         readChunks += size;
         return file_data;
-    }
-
-    bool ShellReader::eofInternal() {
-        return stdOut.eof();
     }
 } // ntgcalls
 #endif

@@ -28,8 +28,6 @@ namespace ntgcalls {
 
         virtual wrtc::binary readInternal(size_t size) = 0;
 
-        virtual bool eofInternal() = 0;
-
     public:
         wrtc::binary read(size_t size);
 

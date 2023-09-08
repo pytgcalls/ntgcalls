@@ -54,3 +54,18 @@ async def connect_call(client: Client, chat_id: int, call_params: str) -> str:
     for update in result.updates:
         if isinstance(update, UpdateGroupCallConnection):
             return update.params.data
+
+
+async def get_youtube_stream(link: str):
+    proc = await asyncio.create_subprocess_exec(
+        'yt-dlp',
+        '-g',
+        '-f',
+        # CHANGE THIS BASED ON WHAT YOU WANT
+        'best[height<=?720][width<=?1280]',
+        link,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await proc.communicate()
+    return stdout.decode().split('\n')[0]
