@@ -72,12 +72,14 @@ namespace ntgcalls {
             auto bsBR = unsafePrepareForSample();
             auto sample = bsBR.second->read(bsBR.first->frameSize());
             bsBR.first->sendData(sample);
-            delete[] sample;
+            if (sample != nullptr) delete[] sample;
             checkStream();
         }
 
         if (running) {
-            this->sendSample();
+            dispatchQueue->dispatch([this]() {
+                sendSample();
+            });
         }
     }
 
