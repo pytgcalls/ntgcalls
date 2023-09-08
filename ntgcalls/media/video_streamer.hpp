@@ -9,7 +9,8 @@
 // Max FPS: 60
 // Max Height: 1280
 // Max Width: 1280
-// FrameSize: 1280 * 720 * 1.5f
+// FrameSize: A YUV frame size for a Width * Height resolution image,
+// where Y (luminance) and UV (chrominance) components are combined with a 3:2 pixel ratio.
 
 
 #include "base_streamer.hpp"
