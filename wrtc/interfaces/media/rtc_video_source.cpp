@@ -23,14 +23,9 @@ namespace wrtc {
     }
 
     void RTCVideoSource::OnFrame(i420ImageData data) {
-        auto now = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
-        int64_t nowInUs = now.time_since_epoch().count();
-
         webrtc::VideoFrame::Builder builder;
-        auto frame = builder
-                .set_timestamp_us(nowInUs)
-                .set_video_frame_buffer(data.buffer())
-                .build();
-        source->PushFrame(frame);
+        builder.set_timestamp_us(rtc::TimeMicros());
+        builder.set_video_frame_buffer(data.buffer());
+        source->PushFrame(builder.build());
     }
 } // wrtc
