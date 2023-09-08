@@ -23,8 +23,6 @@ namespace ntgcalls {
 
         wrtc::binary readInternal(size_t size) override;
 
-        bool eofInternal() override;
-
     public:
         ShellReader(const std::string& command);
 

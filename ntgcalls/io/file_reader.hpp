@@ -18,8 +18,6 @@ namespace ntgcalls {
 
         wrtc::binary readInternal(size_t size) final;
 
-        bool eofInternal() final;
-
     public:
         FileReader(const std::string& path);
 

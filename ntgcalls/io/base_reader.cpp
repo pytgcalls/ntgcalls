@@ -3,6 +3,7 @@
 //
 
 #include "base_reader.hpp"
+#include "ntgcalls/exceptions.hpp"
 
 namespace ntgcalls {
     BaseReader::BaseReader() {
@@ -19,11 +20,12 @@ namespace ntgcalls {
         auto promise = std::make_shared<std::promise<void>>();
         if (!_eof && nextBuffer.size() <= 10) {
             dispatchQueue->dispatch([this, promise, size] {
-                nextBuffer.push_back(readInternal(size));
-                if (!eofInternal()) {
+                try {
                     nextBuffer.push_back(readInternal(size));
+                    nextBuffer.push_back(readInternal(size));
+                } catch (...) {
+                    _eof = true;
                 }
-                _eof = eofInternal();
                 promise->set_value();
             });
         }

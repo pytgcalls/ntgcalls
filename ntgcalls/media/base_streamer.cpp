@@ -23,8 +23,7 @@ namespace ntgcalls {
     }
 
     std::chrono::nanoseconds BaseStreamer::waitTime() {
-        // Make the acquisition 1ms before the fake microphone
-        return lastTime - std::chrono::high_resolution_clock::now() + frameTime() - std::chrono::milliseconds(1);
+        return lastTime - std::chrono::high_resolution_clock::now() + frameTime();
     }
 
     void BaseStreamer::clear() {
