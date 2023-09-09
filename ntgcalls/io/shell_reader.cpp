@@ -18,22 +18,25 @@ namespace ntgcalls {
         close();
     }
 
+    wrtc::binary ShellReader::readInternal(size_t size) {
+        if (stdOut.eof() || stdOut.fail() || !stdOut.is_open()) {
+            throw EOFError("Reached end of the stream");
+        }
+        auto *file_data = new uint8_t[size];
+        stdOut.read(reinterpret_cast<char*>(file_data), size);
+        readChunks += size;
+        if (stdOut.fail()) {
+            throw FileError("Error while reading the file");
+        }
+        return file_data;
+    }
+
     void ShellReader::close() {
         BaseReader::close();
         stdOut.close();
         stdOut.pipe().close();
         shellProcess.wait();
         shellProcess.detach();
-    }
-
-    wrtc::binary ShellReader::readInternal(size_t size) {
-        if (stdOut.eof()) {
-            throw EOFError("Reached end of the stream");
-        }
-        auto *file_data = new uint8_t[size];
-        stdOut.read(reinterpret_cast<char*>(file_data), size);
-        readChunks += size;
-        return file_data;
     }
 } // ntgcalls
 #endif
