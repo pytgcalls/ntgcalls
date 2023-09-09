@@ -44,22 +44,13 @@ if(NOT TARGET WebRTC::webrtc)
 
     set(FILE_NAME webrtc.${PLATFORM}_${ARCH}${ARCHIVE_FORMAT})
 
-    ExternalProject_Add(
-        project_libwebrtc
-
+    DownloadProject(
         URL ${WEBRTC_GIT}/releases/download/${WEBRTC_REVISION}/${FILE_NAME}
-        PREFIX ${WEBRTC_DIR}/prefix
         DOWNLOAD_DIR ${WEBRTC_DIR}/download
         SOURCE_DIR ${WEBRTC_SRC}
-        TMP_DIR ${WEBRTC_DIR}/tmp
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-        UPDATE_COMMAND ""
     )
 
     add_library(WebRTC::webrtc UNKNOWN IMPORTED)
-    add_dependencies(WebRTC::webrtc project_libwebrtc)
 
     target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_PATCH_LOCATION})
 
