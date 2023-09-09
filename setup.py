@@ -13,6 +13,14 @@ from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
 
+with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
+    regex = re.compile(r'VERSION ([A-Za-z0-9.]+)', re.MULTILINE)
+    version = re.findall(regex, f.read())[1]
+
+    if version.count('.') == 3:
+        major, minor, path_, tweak = version.split('.')
+        version = f'{major}.{minor}.{path_}.dev{tweak}'
+
 
 class CMakeExtension(Extension):
     def __init__(self, name: str, sourcedir: str = "") -> None:
@@ -68,13 +76,12 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
-        dist_version = self.distribution.get_version()
-        cfg = "Debug" if "dev" in dist_version else "Release"
+        cfg = "RelWithDebInfo" if "dev" in version else "Release"
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",
-            f"-DPY_VERSION_INFO={dist_version}",
+            f"-DPY_VERSION_INFO={version}",
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}",
         ]
         build_args = [
@@ -109,12 +116,13 @@ class SharedCommand(Command):
 
     # noinspection PyMethodMayBeStatic
     def run(self):
+        cfg = "RelWithDebInfo" if "dev" in version else "Release"
         cmake_args = [
-            '-DCMAKE_BUILD_TYPE=Release',
+            f'-DCMAKE_BUILD_TYPE={cfg}',
         ]
         cmake_args += get_os_cmake_args()
         build_args = [
-            '--config', 'Release',
+            '--config', cfg,
             f'-j{multiprocessing.cpu_count()}',
         ]
         build_temp = Path('shared-build')
@@ -154,14 +162,6 @@ class SharedCommand(Command):
                 return
         raise FileNotFoundError("No library files found")
 
-
-with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
-    regex = re.compile(r'VERSION ([A-Za-z0-9.]+)', re.MULTILINE)
-    version = re.findall(regex, f.read())[1]
-
-    if version.count('.') == 3:
-        major, minor, path_, tweak = version.split('.')
-        version = f'{major}.{minor}.{path_}.dev{tweak}'
 
 with open(os.path.join(base_path, 'README.md'), encoding='utf-8') as f:
     readme = f.read()
