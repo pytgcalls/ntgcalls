@@ -23,6 +23,8 @@ elseif (OS_ARCH STREQUAL "aarch64" OR OS_ARCH STREQUAL "arm64")
     set(${OS_NAME}_ARM64 TRUE)
 endif ()
 
+set(OS_FULL_NAME ${CMAKE_SYSTEM_NAME};${OS_ARCH})
+
 function(setup_platform_libs target_name)
     if (WINDOWS)
         include(${cmake_dir}/Windows.cmake)
