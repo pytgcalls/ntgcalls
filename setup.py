@@ -136,7 +136,7 @@ class SharedCommand(Command):
             ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
         )
         release_path = Path(build_temp, 'ntgcalls')
-        tmp_release_path = Path(release_path, 'Release')
+        tmp_release_path = Path(release_path, cfg)
 
         build_output = Path("shared-output")
         if build_output.exists():
