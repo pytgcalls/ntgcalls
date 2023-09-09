@@ -24,7 +24,6 @@ namespace ntgcalls {
         }
         auto *file_data = new uint8_t[size];
         stdOut.read(reinterpret_cast<char*>(file_data), size);
-        readChunks += size;
         if (stdOut.fail()) {
             throw FileError("Error while reading the file");
         }
