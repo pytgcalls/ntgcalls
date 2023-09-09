@@ -7,7 +7,7 @@ endif ()
 include(ExternalProject)
 
 # https://chromiumdash.appspot.com/branches
-set(WEBRTC_REVISION m117.5938.2.0)
+set(WEBRTC_REVISION m116.5845.6.1)
 set(BOOST_REVISION 1.83.0)
 set(BOOST_LIBS filesystem)
 
@@ -15,7 +15,7 @@ if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
 endif()
 
-project(ntgcalls VERSION 1.0.0.3 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.0.0.4 LANGUAGES C CXX)
 
 find_package(Threads REQUIRED)
 

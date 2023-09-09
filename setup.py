@@ -68,13 +68,13 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
-        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
-        cfg = "Debug" if debug else "Release"
+        dist_version = self.distribution.get_version()
+        cfg = "Debug" if "dev" in dist_version else "Release"
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",
-            f"-DPY_VERSION_INFO={self.distribution.get_version()}",
+            f"-DPY_VERSION_INFO={dist_version}",
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}",
         ]
         build_args = [

@@ -23,16 +23,17 @@ namespace ntgcalls {
                 try {
                     auto availableSpace = 10 - nextBuffer.size();
                     for (int i = 0; i < availableSpace; i++) {
-                        nextBuffer.push_back(readInternal(size));
+                        auto tmpRead = readInternal(size);
+                        if (tmpRead != nullptr) nextBuffer.push_back(tmpRead);
                     }
                 } catch (...) {
                     _eof = true;
                 }
-                promise->set_value();
+                if (promise!= nullptr) promise->set_value();
             });
         }
         if (nextBuffer.empty() && !_eof) {
-            promise->get_future().wait();
+            if (promise != nullptr) promise->get_future().wait();
         }
         res = nextBuffer[0];
         nextBuffer.erase(nextBuffer.begin(), nextBuffer.begin() + 1);

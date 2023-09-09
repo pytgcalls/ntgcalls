@@ -1,4 +1,4 @@
-# NativeTgCalls: <br/>  An experimental successor to PyTgCalls
+# NativeTgCalls: <br/>  An experimental implementation of Telegram Group Calls
 Welcome to NativeTgCalls, an innovative open-source project. NativeTgCalls represents the next evolution in Telegram calling, building on the foundation laid by PyTgCalls.
 
 |                                                                                         Powerful                                                                                          |                                                                                 Simple                                                                                 |                                                                                                   Light                                                                                                    |

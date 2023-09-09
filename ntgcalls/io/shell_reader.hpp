@@ -6,13 +6,11 @@
 
 #ifdef BOOST_ENABLED
 #include <boost/process.hpp>
-#include <boost/asio.hpp>
 
 #include "base_reader.hpp"
 #include "../exceptions.hpp"
 
 namespace bp = boost::process;
-namespace asio = boost::asio;
 
 namespace ntgcalls {
 

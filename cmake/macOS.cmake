@@ -11,6 +11,7 @@ set_target_properties(${target_name} PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(${target_name} PUBLIC
     WEBRTC_POSIX
     WEBRTC_MAC
+    NDEBUG
 )
 
 target_link_libraries(${target_name} PUBLIC
