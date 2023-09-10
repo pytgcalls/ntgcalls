@@ -1,6 +1,6 @@
 string(REPLACE "." "_" BOOST_REVISION_UNDERSCORE ${BOOST_REVISION})
 set(BOOST_DIR ${deps_loc}/boost)
-set(BOOST_WORKDIR ${BOOST_DIR}/boost_${BOOST_REVISION_UNDERSCORE})
+set(BOOST_WORKDIR ${BOOST_DIR}/src)
 set(BOOST_ROOT ${BOOST_WORKDIR}/install)
 
 # BUILD CONFIGS
@@ -55,57 +55,13 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
         NOT EXISTS ${BOOST_WORKDIR} OR
         NOT EXISTS ${BOOST_ROOT})
 
-    if (NOT EXISTS ${BOOST_WORKDIR})
-        set(BOOST_DOWNLOAD_DIR ${BOOST_DIR}/download)
-        set(BOOST_TAR ${BOOST_DOWNLOAD_DIR}/boost_${BOOST_REVISION_UNDERSCORE}.tar.gz)
-        if (NOT EXISTS ${BOOST_TAR})
-            message(STATUS "[BOOST] Downloading for ${BOOST_REVISION} revision")
-            file(MAKE_DIRECTORY ${BOOST_DOWNLOAD_DIR})
-            file(DOWNLOAD
-                https://boostorg.jfrog.io/artifactory/main/release/${BOOST_REVISION}/source/boost_${BOOST_REVISION_UNDERSCORE}.tar.gz
-                ${BOOST_TAR}
-                SHOW_PROGRESS
-                STATUS status
-                LOG log
-            )
-            list(GET status 0 status_code)
-            if(status_code EQUAL 0)
-                message(STATUS "[BOOST] Downloading... done")
-            else ()
-                file(REMOVE_RECURSE ${BOOST_WORKDIR})
-                file(REMOVE ${BOOST_TAR})
-                message(FATAL_ERROR "[BOOST] Error: downloading '${url}' failed
-            status_code: ${status_code}
-            status_string: ${status_string}
-            log:
-            --- LOG BEGIN ---
-            ${log}
-            --- LOG END ---"
-                )
-            endif ()
-        endif ()
-
-        message(STATUS "[BOOST] Extracting...
-        src='${BOOST_TAR}'
-        dst='${BOOST_WORKDIR}'"
-        )
-
-        if(NOT EXISTS "${BOOST_TAR}")
-            message(FATAL_ERROR "[BOOST] File to extract does not exist: '${BOOST_TAR}'")
-        endif()
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${BOOST_TAR}
-            WORKING_DIRECTORY ${BOOST_DIR}
-            RESULT_VARIABLE rv
-            OUTPUT_QUIET
-            ERROR_QUIET
-        )
-        if(NOT rv EQUAL 0)
-            message(STATUS "[BOOST] Extracting... [error clean up]")
-            file(REMOVE_RECURSE "${BOOST_WORKDIR}")
-            file(REMOVE ${BOOST_TAR})
-            message(FATAL_ERROR "[BOOST] Extract of '${BOOST_TAR}' failed")
-        endif()
-
+    set(BOOST_DOWNLOAD_DIR ${BOOST_DIR}/download)
+    DownloadProject(
+        URL https://boostorg.jfrog.io/artifactory/main/release/${BOOST_REVISION}/source/boost_${BOOST_REVISION_UNDERSCORE}.tar.gz
+        DOWNLOAD_DIR ${BOOST_DOWNLOAD_DIR}
+        SOURCE_DIR ${BOOST_WORKDIR}
+    )
+    if (NOT EXISTS ${BOOST_WORKDIR}/b2.exe OR NOT EXISTS ${BOOST_WORKDIR}/b2)
         if (WINDOWS)
             set(BOOTSTRAP_EXECUTABLE .\\bootstrap.bat)
         else ()

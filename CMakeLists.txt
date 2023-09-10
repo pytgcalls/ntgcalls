@@ -22,10 +22,11 @@ find_package(Threads REQUIRED)
 get_filename_component(deps_loc "deps" REALPATH)
 
 include(cmake/PlatformUtil.cmake)
+include(cmake/DownloadProject.cmake)
 include(cmake/GitUtils.cmake)
 include(cmake/FindCURL.cmake)
-include(cmake/FindLibCXX.cmake)
 include(cmake/FindWebRTC.cmake)
+include(cmake/FindLibCXX.cmake)
 include(cmake/FindBoost.cmake)
 
 # pybind11

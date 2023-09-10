@@ -44,22 +44,13 @@ if(NOT TARGET WebRTC::webrtc)
 
     set(FILE_NAME webrtc.${PLATFORM}_${ARCH}${ARCHIVE_FORMAT})
 
-    ExternalProject_Add(
-        project_libwebrtc
-
+    DownloadProject(
         URL ${WEBRTC_GIT}/releases/download/${WEBRTC_REVISION}/${FILE_NAME}
-        PREFIX ${WEBRTC_DIR}/prefix
         DOWNLOAD_DIR ${WEBRTC_DIR}/download
         SOURCE_DIR ${WEBRTC_SRC}
-        TMP_DIR ${WEBRTC_DIR}/tmp
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-        UPDATE_COMMAND ""
     )
 
     add_library(WebRTC::webrtc UNKNOWN IMPORTED)
-    add_dependencies(WebRTC::webrtc project_libwebrtc)
 
     target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_PATCH_LOCATION})
 
@@ -78,4 +69,10 @@ if(NOT TARGET WebRTC::webrtc)
     endif()
 
     set_target_properties(WebRTC::webrtc PROPERTIES IMPORTED_LOCATION "${WEBRTC_LIB}")
+
+    file(READ ${WEBRTC_SRC}/VERSIONS WEBRTC_DATA)
+    string(REGEX MATCH "WEBRTC_SRC_BUILDTOOLS_THIRD_PARTY_LIBCXX_TRUNK_COMMIT=([^ \n]+)" matched "${WEBRTC_DATA}")
+    set(LIBCXX_COMMIT ${CMAKE_MATCH_1})
+    string(REGEX MATCH "WEBRTC_SRC_BUILDTOOLS_THIRD_PARTY_LIBCXXABI_TRUNK_COMMIT=([^ \n]+)" matched "${WEBRTC_DATA}")
+    set(LIBCXX_ABI_COMMIT ${CMAKE_MATCH_1})
 endif ()
