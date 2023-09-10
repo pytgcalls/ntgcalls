@@ -14,7 +14,7 @@ int copyAndReturn(std::string s, char *buffer, int size) {
         return int(s.size() + 1);
 
     if (size < int(s.size() + 1))
-        return ERR_TOO_SMALL;
+        return NTG_ERR_TOO_SMALL;
 
     std::copy(s.begin(), s.end(), buffer);
     buffer[s.size()] = '\0';
@@ -26,7 +26,7 @@ template <typename T> int copyAndReturn(std::vector<T> b, T *buffer, int size) {
         return int(b.size());
 
     if (size < int(b.size()))
-        return ERR_TOO_SMALL;
+        return NTG_ERR_TOO_SMALL;
     std::copy(b.begin(), b.end(), buffer);
     return int(b.size());
 }
@@ -38,35 +38,35 @@ std::shared_ptr<ntgcalls::NTgCalls> safeUID(uint32_t uid) {
     return clients[uid];
 }
 
-ntgcalls::BaseMediaDescription::InputMode parseInputMode(InputMode mode) {
+ntgcalls::BaseMediaDescription::InputMode parseInputMode(ntgInputMode mode) {
     switch (mode) {
-        case InputMode::File:
+        case ntgInputMode::NTG_FILE:
             return ntgcalls::BaseMediaDescription::InputMode::File;
-        case InputMode::Shell:
+        case ntgInputMode::NTG_SHELL:
             return ntgcalls::BaseMediaDescription::InputMode::Shell;
-        case InputMode::FFmpeg:
+        case ntgInputMode::NTG_FFMPEG:
             return ntgcalls::BaseMediaDescription::InputMode::FFmpeg;
     }
 }
 
-StreamStatus parseStatus(ntgcalls::Stream::Status status) {
+ntgStreamStatus parseStatus(ntgcalls::Stream::Status status) {
     switch (status) {
         case ntgcalls::Stream::Playing:
-            return StreamStatus::Playing;
+            return ntgStreamStatus::NTG_PLAYING;
         case ntgcalls::Stream::Paused:
-            return StreamStatus::Paused;
+            return ntgStreamStatus::NTG_PAUSED;
         case ntgcalls::Stream::Idling:
-            return StreamStatus::Idling;
+            return ntgStreamStatus::NTG_IDLING;
     }
 }
 
-ntgcalls::MediaDescription parseMediaDescription(MediaDescription& desc) {
+ntgcalls::MediaDescription parseMediaDescription(ntgMediaDescription& desc) {
     std::optional<ntgcalls::AudioDescription> audio;
     std::optional<ntgcalls::VideoDescription> video;
     if (desc.audio) {
         switch (desc.audio->inputMode) {
-            case InputMode::File:
-            case InputMode::Shell:
+            case ntgInputMode::NTG_FILE:
+            case ntgInputMode::NTG_SHELL:
                 audio = ntgcalls::AudioDescription(
                     parseInputMode(desc.audio->inputMode),
                     desc.audio->sampleRate,
@@ -75,14 +75,14 @@ ntgcalls::MediaDescription parseMediaDescription(MediaDescription& desc) {
                     std::string(desc.audio->input)
                 );
                 break;
-            case InputMode::FFmpeg:
+            case ntgInputMode::NTG_FFMPEG:
                 throw ntgcalls::FFmpegError("Not supported");
         }
     }
     if (desc.video) {
         switch (desc.audio->inputMode) {
-            case InputMode::File:
-            case InputMode::Shell:
+            case ntgInputMode::NTG_FILE:
+            case ntgInputMode::NTG_SHELL:
                 video = ntgcalls::VideoDescription(
                     parseInputMode(desc.audio->inputMode),
                     desc.video->width,
@@ -91,7 +91,7 @@ ntgcalls::MediaDescription parseMediaDescription(MediaDescription& desc) {
                     std::string(desc.video->input)
                 );
                 break;
-            case InputMode::FFmpeg:
+            case ntgInputMode::NTG_FFMPEG:
                 throw ntgcalls::FFmpegError("Not supported");
         }
     }
@@ -101,118 +101,118 @@ ntgcalls::MediaDescription parseMediaDescription(MediaDescription& desc) {
     );
 }
 
-uint32_t CreateNTgCalls() {
+uint32_t ntg_init() {
     int uid = uidGenerator++;
     clients[uid] = std::make_shared<ntgcalls::NTgCalls>();
     return uid;
 }
 
-int DestroyNTgCalls(uint32_t uid) {
+int ntg_destroy(uint32_t uid) {
     if (clients.find(uid) == clients.end()) {
-        return INVALID_UID;
+        return NTG_INVALID_UID;
     }
     clients.erase(clients.find(uid));
     return 0;
 }
 
-int CreateCall(uint32_t uid, int64_t chatID, MediaDescription desc, char* buffer, int size) {
+int ntg_get_params(uint32_t uid, int64_t chatID, ntgMediaDescription desc, char* buffer, int size) {
     try {
         return copyAndReturn(safeUID(uid)->createCall(chatID, parseMediaDescription(desc)), buffer, size);
     } catch (ntgcalls::InvalidUUID) {
-        return INVALID_UID;
+        return NTG_INVALID_UID;
     } catch (ntgcalls::ConnectionError) {
-        return CONNECTION_ALREADY_EXISTS;
+        return NTG_CONNECTION_ALREADY_EXISTS;
     } catch (ntgcalls::FileError) {
-        return FILE_NOT_FOUND;
+        return NTG_FILE_NOT_FOUND;
     } catch (ntgcalls::InvalidParams) {
-        return ENCODER_NOT_FOUND;
+        return NTG_ENCODER_NOT_FOUND;
     } catch (ntgcalls::FFmpegError) {
-        return FFMPEG_NOT_FOUND;
+        return NTG_FFMPEG_NOT_FOUND;
     } catch (ntgcalls::ShellError) {
-        return SHELL_ERROR;
+        return NTG_SHELL_ERROR;
     } catch (...) {
-        return UNKNOWN_EXCEPTION;
+        return NTG_UNKNOWN_EXCEPTION;
     }
 }
 
-int ConnectCall(uint32_t uid, int64_t chatID, char* params) {
+int ntg_connect(uint32_t uid, int64_t chatID, char* params) {
     try {
         safeUID(uid)->connect(chatID, std::string(params));
     } catch (ntgcalls::RTMPNeeded) {
-        return RTMP_NEEDED;
+        return NTG_RTMP_NEEDED;
     } catch (ntgcalls::InvalidParams) {
-        return INVALID_TRANSPORT;
+        return NTG_INVALID_TRANSPORT;
     } catch (ntgcalls::ConnectionError) {
-        return CONNECTION_FAILED;
+        return NTG_CONNECTION_FAILED;
     } catch (ntgcalls::ConnectionNotFound) {
-        return CONNECTION_NOT_FOUND;
+        return NTG_CONNECTION_NOT_FOUND;
     } catch (...) {
-        return UNKNOWN_EXCEPTION;
+        return NTG_UNKNOWN_EXCEPTION;
     }
     return 0;
 }
 
-int ChangeStream(uint32_t uid, int64_t chatID, MediaDescription desc) {
+int ntg_change_stream(uint32_t uid, int64_t chatID, ntgMediaDescription desc) {
     try {
         safeUID(uid)->changeStream(chatID, parseMediaDescription(desc));
     } catch (ntgcalls::InvalidUUID) {
-        return INVALID_UID;
+        return NTG_INVALID_UID;
     } catch (ntgcalls::FileError) {
-        return FILE_NOT_FOUND;
+        return NTG_FILE_NOT_FOUND;
     } catch (ntgcalls::InvalidParams) {
-        return ENCODER_NOT_FOUND;
+        return NTG_ENCODER_NOT_FOUND;
     } catch (ntgcalls::FFmpegError) {
-        return FFMPEG_NOT_FOUND;
+        return NTG_FFMPEG_NOT_FOUND;
     } catch (ntgcalls::ShellError) {
-        return SHELL_ERROR;
+        return NTG_SHELL_ERROR;
     } catch (ntgcalls::ConnectionNotFound) {
-        return CONNECTION_NOT_FOUND;
+        return NTG_CONNECTION_NOT_FOUND;
     } catch (...) {
-        return UNKNOWN_EXCEPTION;
+        return NTG_UNKNOWN_EXCEPTION;
     }
     return 0;
 }
 
-bool Pause(uint32_t uid, int64_t chatID) {
+bool ntg_pause(uint32_t uid, int64_t chatID) {
     try {
         return safeUID(uid)->pause(chatID);
     } catch (...) {}
     return false;
 }
 
-bool Resume(uint32_t uid, int64_t chatID) {
+bool ntg_resume(uint32_t uid, int64_t chatID) {
     try {
         return safeUID(uid)->resume(chatID);
     } catch (...) {}
     return false;
 }
 
-bool Mute(uint32_t uid, int64_t chatID) {
+bool ntg_mute(uint32_t uid, int64_t chatID) {
     try {
         return safeUID(uid)->mute(chatID);
     } catch (...) {}
     return false;
 }
 
-bool UnMute(uint32_t uid, int64_t chatID) {
+bool ntg_unmute(uint32_t uid, int64_t chatID) {
     try {
         return safeUID(uid)->unmute(chatID);
     } catch (...) {}
     return false;
 }
 
-int Stop(uint32_t uid, int64_t chatID) {
+int ntg_stop(uint32_t uid, int64_t chatID) {
     try {
         safeUID(uid)->stop(chatID);
     } catch (ntgcalls::InvalidUUID) {
-        return INVALID_UID;
+        return NTG_INVALID_UID;
     } catch (ntgcalls::ConnectionNotFound) {
-        return CONNECTION_NOT_FOUND;
+        return NTG_CONNECTION_NOT_FOUND;
     }
     return 0;
 }
 
-uint64_t Time(uint32_t uid, int64_t chatID) {
+uint64_t ntg_time(uint32_t uid, int64_t chatID) {
     try {
         return safeUID(uid)->time(chatID);
     } catch (...) {
@@ -220,54 +220,54 @@ uint64_t Time(uint32_t uid, int64_t chatID) {
     }
 }
 
-int Calls(uint32_t uid, GroupCall *buffer, int size) {
+int ntg_calls(uint32_t uid, ntgGroupCall *buffer, int size) {
     try {
         auto callsCpp = safeUID(uid)->calls();
-        std::vector<GroupCall> groupCalls;
+        std::vector<ntgGroupCall> groupCalls;
         for (auto call : callsCpp) {
-            groupCalls.push_back(GroupCall{
+            groupCalls.push_back(ntgGroupCall{
                 call.first,
                 parseStatus(call.second),
             });
         }
         return copyAndReturn(groupCalls, buffer, size);
     } catch (ntgcalls::InvalidUUID) {
-        return INVALID_UID;
+        return NTG_INVALID_UID;
     }
 }
 
-int CallsCount(uint32_t uid) {
+int ntg_calls_count(uint32_t uid) {
     try {
         return safeUID(uid)->calls().size();
     } catch (ntgcalls::InvalidUUID) {
-        return INVALID_UID;
+        return NTG_INVALID_UID;
     }
 }
 
-int OnStreamEnd(uint32_t uid, StreamEndCallback callback) {
+int ntg_on_stream_end(uint32_t uid, ntgStreamEndCallback callback) {
     try {
         safeUID(uid)->onStreamEnd([uid, callback](int64_t chatId, ntgcalls::Stream::Type type) {
-            callback(uid, chatId, type == ntgcalls::Stream::Type::Audio ? StreamType::Audio:StreamType::Video);
+            callback(uid, chatId, type == ntgcalls::Stream::Type::Audio ? ntgStreamType::NTG_STREAM_AUDIO:ntgStreamType::NTG_STREAM_VIDEO);
         });
     } catch (ntgcalls::InvalidUUID) {
-        return INVALID_UID;
+        return NTG_INVALID_UID;
     } catch (...) {
-        return UNKNOWN_EXCEPTION;
+        return NTG_UNKNOWN_EXCEPTION;
     }
     return 0;
 }
 
-int OnUpgrade(uint32_t uid, UpgradeCallback callback) {
+int ntg_on_upgrade(uint32_t uid, ntgUpgradeCallback callback) {
     try {
         safeUID(uid)->onUpgrade([uid, callback](int64_t chatId, ntgcalls::MediaState state) {
-            callback(uid, chatId, MediaState{
+            callback(uid, chatId, ntgMediaState{
                 state.muted,
                 state.videoPaused,
                 state.videoStopped,
             });
         });
     } catch (ntgcalls::InvalidUUID) {
-        return INVALID_UID;
+        return NTG_INVALID_UID;
     }
     return 0;
 }
