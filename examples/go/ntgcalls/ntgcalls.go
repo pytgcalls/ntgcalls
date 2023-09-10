@@ -1,8 +1,8 @@
 package ntgcalls
 
 //#include "ntgcalls.h"
-//extern void handleStream(uint32_t uid, int64_t chatID, enum StreamType streamType);
-//extern void handleUpgrade(uint32_t uid, int64_t chatID, MediaState state);
+//extern void handleStream(uint32_t uid, int64_t chatID, ntgStreamType streamType);
+//extern void handleUpgrade(uint32_t uid, int64_t chatID, ntgMediaState state);
 import "C"
 import (
 	"fmt"
@@ -14,20 +14,20 @@ var handlerUpgrade = make(map[uint32][]UpgradeCallback)
 
 func NTgCalls() *Instance {
 	instance := &Instance{
-		uid:    uint32(C.CreateNTgCalls()),
+		uid:    uint32(C.ntg_init()),
 		exists: true,
 	}
-	C.OnStreamEnd(C.uint32_t(instance.uid), (C.StreamEndCallback)(unsafe.Pointer(C.handleStream)))
-	C.OnUpgrade(C.uint32_t(instance.uid), (C.UpgradeCallback)(unsafe.Pointer(C.handleUpgrade)))
+	C.ntg_on_stream_end(C.uint32_t(instance.uid), (C.ntgStreamEndCallback)(unsafe.Pointer(C.handleStream)))
+	C.ntg_on_upgrade(C.uint32_t(instance.uid), (C.ntgUpgradeCallback)(unsafe.Pointer(C.handleUpgrade)))
 	return instance
 }
 
 //export handleStream
-func handleStream(uid C.uint32_t, chatID C.int64_t, streamType C.enum_StreamType) {
+func handleStream(uid C.uint32_t, chatID C.int64_t, streamType C.ntgStreamType) {
 	goChatID := int64(chatID)
 	goUID := uint32(uid)
 	var goStreamType StreamType
-	if streamType == C.Audio {
+	if streamType == C.NTG_STREAM_AUDIO {
 		goStreamType = AudioStream
 	} else {
 		goStreamType = VideoStream
@@ -40,7 +40,7 @@ func handleStream(uid C.uint32_t, chatID C.int64_t, streamType C.enum_StreamType
 }
 
 //export handleUpgrade
-func handleUpgrade(uid C.uint32_t, chatID C.int64_t, state C.MediaState) {
+func handleUpgrade(uid C.uint32_t, chatID C.int64_t, state C.ntgMediaState) {
 	goChatID := int64(chatID)
 	goUID := uint32(uid)
 	goState := MediaState{
@@ -95,57 +95,57 @@ func parseErrorCode(errorCode C.int) error {
 func (ctx *Instance) CreateCall(chatId int64, desc MediaDescription) (string, error) {
 	var buffer [1024]C.char
 	size := C.int(len(buffer))
-	res := C.CreateCall(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC(), &buffer[0], size)
+	res := C.ntg_get_params(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC(), &buffer[0], size)
 	return C.GoString(&buffer[0]), parseErrorCode(res)
 }
 
 func (ctx *Instance) Connect(chatId int64, params string) error {
-	return parseErrorCode(C.ConnectCall(C.uint32_t(ctx.uid), C.int64_t(chatId), C.CString(params)))
+	return parseErrorCode(C.ntg_connect(C.uint32_t(ctx.uid), C.int64_t(chatId), C.CString(params)))
 }
 
 func (ctx *Instance) ChangeStream(chatId int64, desc MediaDescription) error {
-	return parseErrorCode(C.ChangeStream(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC()))
+	return parseErrorCode(C.ntg_change_stream(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC()))
 }
 
 func (ctx *Instance) Pause(chatId int64) bool {
-	return bool(C.Pause(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+	return bool(C.ntg_pause(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Resume(chatId int64) bool {
-	return bool(C.Resume(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+	return bool(C.ntg_resume(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Mute(chatId int64) bool {
-	return bool(C.Mute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+	return bool(C.ntg_mute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) UnMute(chatId int64) bool {
-	return bool(C.UnMute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+	return bool(C.ntg_unmute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Stop(chatId int64) error {
-	return parseErrorCode(C.Stop(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+	return parseErrorCode(C.ntg_stop(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Time(chatId int64) uint64 {
-	return uint64(C.Time(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+	return uint64(C.ntg_time(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Calls() map[int64]StreamStatus {
 	mapReturn := make(map[int64]StreamStatus)
 
-	callSize := C.CallsCount(C.uint32_t(ctx.uid))
-	buffer := make([]C.GroupCall, callSize)
-	C.Calls(C.uint32_t(ctx.uid), &buffer[0], callSize)
+	callSize := C.ntg_calls_count(C.uint32_t(ctx.uid))
+	buffer := make([]C.ntgGroupCall, callSize)
+	C.ntg_calls(C.uint32_t(ctx.uid), &buffer[0], callSize)
 
 	for _, call := range buffer {
 		var goStreamType StreamStatus
 		switch call.status {
-		case C.Playing:
+		case C.NTG_PLAYING:
 			goStreamType = PlayingStream
-		case C.Paused:
+		case C.NTG_PAUSED:
 			goStreamType = PausedStream
-		case C.Idling:
+		case C.NTG_IDLING:
 			goStreamType = IdlingStream
 		}
 		mapReturn[int64(call.chatId)] = goStreamType
@@ -154,7 +154,7 @@ func (ctx *Instance) Calls() map[int64]StreamStatus {
 }
 
 func (ctx *Instance) Free() {
-	C.DestroyNTgCalls(C.uint32_t(ctx.uid))
+	C.ntg_destroy(C.uint32_t(ctx.uid))
 	delete(handlerEnd, ctx.uid)
 	ctx.exists = false
 }
