@@ -26,8 +26,8 @@ include(cmake/DownloadProject.cmake)
 include(cmake/GitUtils.cmake)
 include(cmake/FindCURL.cmake)
 include(cmake/FindWebRTC.cmake)
-include(cmake/FindBoost.cmake)
 include(cmake/FindLibCXX.cmake)
+include(cmake/FindBoost.cmake)
 
 # pybind11
 add_subdirectory(deps/pybind11)
