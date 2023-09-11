@@ -7,7 +7,7 @@
 
 namespace ntgcalls {
     BaseReader::BaseReader() {
-        dispatchQueue = std::make_shared<DispatchQueue>("Reader_" + rtc::CreateRandomUuid());
+        dispatchQueue = std::make_shared<DispatchQueue>();
     }
 
     BaseReader::~BaseReader() {

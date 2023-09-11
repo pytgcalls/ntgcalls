@@ -4,8 +4,7 @@
 
 #include "dispatch_queue.hpp"
 
-DispatchQueue::DispatchQueue(std::string name, size_t threadCount) :
-        name{std::move(name)}, threads(threadCount) {
+DispatchQueue::DispatchQueue(size_t threadCount) : threads(threadCount) {
     for(auto & i : threads) {
         i = std::thread(&DispatchQueue::dispatchThreadHandler, this);
     }

@@ -8,7 +8,7 @@ namespace ntgcalls {
     Stream::Stream() {
         audio = std::make_shared<AudioStreamer>();
         video = std::make_shared<VideoStreamer>();
-        dispatchQueue = std::make_shared<DispatchQueue>("StreamQueue_" + rtc::CreateRandomUuid());
+        dispatchQueue = std::make_shared<DispatchQueue>();
     }
 
     Stream::~Stream() {

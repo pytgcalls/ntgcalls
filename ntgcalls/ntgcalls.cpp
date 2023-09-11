@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
-        dispatchUpdates = std::make_shared<DispatchQueue>("Updates_" + rtc::CreateRandomUuid());
+        dispatchUpdates = std::make_shared<DispatchQueue>();
     }
 
     std::string NTgCalls::createCall(int64_t chatId, MediaDescription media) {
