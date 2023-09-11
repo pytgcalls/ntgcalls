@@ -66,20 +66,19 @@ namespace ntgcalls {
     }
 
     void Stream::sendSample() {
-        if (idling || !(reader->audio || reader->video)) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        } else {
-            auto bsBR = unsafePrepareForSample();
-            auto sample = bsBR.second->read(bsBR.first->frameSize());
-            bsBR.first->sendData(sample);
-            if (sample != nullptr) delete[] sample;
-            checkStream();
-        }
-
         if (running) {
-            dispatchQueue->dispatch([this]() {
-                sendSample();
-            });
+            if (idling || !reader || !(reader->audio || reader->video)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            } else {
+                auto bsBR = unsafePrepareForSample();
+                if (bsBR.first != nullptr && bsBR.second != nullptr) {
+                    auto sample = bsBR.second->read(bsBR.first->frameSize());
+                    bsBR.first->sendData(sample);
+                    if (sample != nullptr) delete[] sample;
+                }
+                checkStream();
+            }
+            sendSample();
         }
     }
 
