@@ -37,11 +37,11 @@ namespace wrtc {
         return _ended ? _enabled : _track->enabled();
     }
 
-    void MediaStreamTrack::Mute(bool enabled) {
+    void MediaStreamTrack::Mute(bool muted) {
         if (_ended) {
-            _enabled = enabled;
+            _enabled = !muted;
         } else {
-            _track->set_enabled(enabled);
+            _track->set_enabled(!muted);
         }
     }
 
