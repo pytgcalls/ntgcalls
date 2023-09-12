@@ -79,11 +79,65 @@ jobs:
     needs: [build]
     permissions:
       id-token: write
+      contents: write
     steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Get library Version
+        id: get-library-version
+        run: |
+          VERSION=$(grep -oP -m 1 'ntgcalls VERSION \K[A-Za-z0-9.]+' CMakeLists.txt)
+          echo "Library Version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Patch version number
+        id: patch-version
+        run: |
+          version="${{ steps.get-library-version.outputs.version }}"
+          if [[ "$version" == *.*.* ]]; then
+            echo "Version contains three dots"
+            major=$(echo "$version" | cut -d. -f1)
+            minor=$(echo "$version" | cut -d. -f2)
+            patch=$(echo "$version" | cut -d. -f3)
+            tweak=$(echo "$version" | cut -d. -f4)
+            new_version="${major}.${minor}.${patch}.dev${tweak}"
+            echo $new_version
+            echo "new_version=$new_version" >> $GITHUB_OUTPUT
+            echo "is_dev=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version does not contain three dots"
+            echo "new_version=${{ steps.get-library-version.outputs.version }}" >> $GITHUB_OUTPUT
+            echo "is_dev=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
           path: tmp/
+
+      - name: Zip releases
+        run: |
+          mkdir releases
+          for dir in tmp/*.zip; do
+            if [ -d "$dir" ]; then
+              folder_name=$(basename "$dir" .zip)
+              zip -r "releases/${folder_name}.zip" "$dir"
+            fi
+          done
+          ls releases
+
+      - name: Create Release
+        id: create-new-release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./releases/*
+          tag_name: "v${{ steps.patch-version.outputs.new_version }}"
+          name: "NTgCalls auto build v${{ steps.patch-version.outputs.new_version }}"
+          body: "These are the build files for the commit [${{ github.sha }}](https://github.com/${{ github.repository }}/${{ github.sha }}).\nThese files were built during [this workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+          prerelease: ${{ steps.patch-version.outputs.is_dev }}
+
       - name: Extract artifacts
         run: |
           mkdir dist
