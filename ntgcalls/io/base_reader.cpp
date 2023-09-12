@@ -29,7 +29,7 @@ namespace ntgcalls {
                 } catch (...) {
                     _eof = true;
                 }
-                if (promise!= nullptr) promise->set_value();
+                if (promise != nullptr) promise->set_value();
             });
         }
         if (nextBuffer.empty() && !_eof) {
