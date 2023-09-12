@@ -36,7 +36,7 @@ namespace ntgcalls {
             if (promise != nullptr) promise->get_future().wait();
         }
         res = nextBuffer[0];
-        nextBuffer.erase(nextBuffer.begin(), nextBuffer.begin() + 1);
+        nextBuffer.erase(nextBuffer.begin() + 1);
         return res;
     }
 
