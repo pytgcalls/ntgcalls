@@ -1,4 +1,4 @@
-# NativeTgCalls: <br/>  An experimental implementation of Telegram Group Calls
+# NativeTgCalls: <br/> An experimental implementation of Telegram Group Calls
 Welcome to NativeTgCalls, an innovative open-source project. NativeTgCalls represents the next evolution in Telegram calling, building on the foundation laid by PyTgCalls.
 
 |                                                                                         Powerful                                                                                          |                                                                                 Simple                                                                                 |                                                                                                   Light                                                                                                    |
@@ -62,7 +62,7 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 * <b><a href="https://github.com/kuogi">@kuogi</a> (Senior UI/UX designer, Documenter):</b>
     * As a Senior UI/UX Designer, Kuogi has significantly improved the user interface of our documentation, 
       making it more visually appealing and user-friendly.
-    * Has also played a key role in writing and structuring our documentation, ensuring that it is clear,
+    * It Has also played a key role in writing and structuring our documentation, ensuring that it is clear,
       informative, and accessible to all users.
 * <b><a href="https://github.com/vrumger">@vrumger</a> (Mid-level NodeJS Developer):</b>
     * Avrumy has made important fixes and enhancements to the WebRTC component of the library, 
@@ -74,17 +74,18 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
       in expanding the functionality and usability of the library.
 * <b><a href="https://github.com/null-nick">@null-nick</a> (Junior Go Developer, Tester):</b>
     * Performs testing of NTgCalls on macOS to ensure its reliability and compatibility.
-    * Is in the process of integrating NTgCalls into a Go wrapper, further enhancing the library's
+    * It Is in the process of integrating NTgCalls into a Go wrapper, further enhancing the library's
       versatility and accessibility.
 * <b><a href="https://github.com/tappo03">@tappo03</a> (Junior Go Developer, Tester):</b>
     * Performs testing of NTgCalls on Windows to ensure its reliability and compatibility.
-    * Is in the process of integrating NTgCalls into a Go wrapper, further enhancing the library's
+    * It Is in the process of integrating NTgCalls into a Go wrapper, further enhancing the library's
       versatility and accessibility.
 
 ## Special Thanks
 * <b><a href="https://github.com/shiguredo">@shiguredo</a>:</b>
   We extend our special thanks to 時雨堂 (shiguredo) for their invaluable assistance in integrating the WebRTC component. Their contributions,
   utilizing the Sora C++ SDK, have been instrumental in enhancing the functionality of our library.
+
 * <b><a href="https://github.com/evgeny-nadymov">@evgeny-nadymov</a>:</b>
   A heartfelt thank you to Evgeny Nadymov for graciously allowing us to use their code from telegram-react.
   His contribution has been pivotal to the success of this project.
@@ -92,3 +93,10 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 * <b><a href="https://github.com/morethanwords">@morethanwords</a>:</b>
   We extend our special thanks to morethanwords for their invaluable help in integrating the connection to WebRTC with Telegram Web K. 
   Their assistance has been instrumental in enhancing the functionality of our library.
+
+
+_We would like to extend a special thanks to <b><a href='https://github.com/doggyhaha'>@doggyhaha</a></b>
+and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library.
+Their dedication to testing and optimizing the library has been instrumental in its success._
+
+_Additionally, we extend our gratitude to all contributors for their exceptional work in making this project a reality._
