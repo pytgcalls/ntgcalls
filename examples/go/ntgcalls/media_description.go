@@ -8,8 +8,8 @@ type MediaDescription struct {
 	Video *VideoDescription
 }
 
-func (ctx *MediaDescription) ParseToC() C.ntgMediaDescription {
-	var x C.ntgMediaDescription
+func (ctx *MediaDescription) ParseToC() C.ntg_media_description_struct {
+	var x C.ntg_media_description_struct
 	if ctx.Audio != nil {
 		audio := ctx.Audio.ParseToC()
 		x.audio = &audio

@@ -1,8 +1,8 @@
 package ntgcalls
 
 //#include "ntgcalls.h"
-//extern void handleStream(uint32_t uid, int64_t chatID, ntgStreamType streamType);
-//extern void handleUpgrade(uint32_t uid, int64_t chatID, ntgMediaState state);
+//extern void handleStream(uint32_t uid, int64_t chatID, ntg_stream_type_enum streamType);
+//extern void handleUpgrade(uint32_t uid, int64_t chatID, ntg_media_state_struct state);
 import "C"
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func NTgCalls() *Instance {
 }
 
 //export handleStream
-func handleStream(uid C.uint32_t, chatID C.int64_t, streamType C.ntgStreamType) {
+func handleStream(uid C.uint32_t, chatID C.int64_t, streamType C.ntg_stream_type_enum) {
 	goChatID := int64(chatID)
 	goUID := uint32(uid)
 	var goStreamType StreamType
@@ -40,7 +40,7 @@ func handleStream(uid C.uint32_t, chatID C.int64_t, streamType C.ntgStreamType) 
 }
 
 //export handleUpgrade
-func handleUpgrade(uid C.uint32_t, chatID C.int64_t, state C.ntgMediaState) {
+func handleUpgrade(uid C.uint32_t, chatID C.int64_t, state C.ntg_media_state_struct) {
 	goChatID := int64(chatID)
 	goUID := uint32(uid)
 	goState := MediaState{
@@ -135,7 +135,7 @@ func (ctx *Instance) Calls() map[int64]StreamStatus {
 	mapReturn := make(map[int64]StreamStatus)
 
 	callSize := C.ntg_calls_count(C.uint32_t(ctx.uid))
-	buffer := make([]C.ntgGroupCall, callSize)
+	buffer := make([]C.ntg_group_call_struct, callSize)
 	C.ntg_calls(C.uint32_t(ctx.uid), &buffer[0], callSize)
 
 	for _, call := range buffer {
