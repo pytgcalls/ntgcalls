@@ -71,10 +71,10 @@ namespace ntgcalls {
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
             } else {
                 auto bsBR = unsafePrepareForSample();
-                if (bsBR.first != nullptr && bsBR.second != nullptr) {
+                if (bsBR.first && bsBR.second) {
                     auto sample = bsBR.second->read(bsBR.first->frameSize());
                     bsBR.first->sendData(sample);
-                    if (sample != nullptr) delete[] sample;
+                    if (sample) delete[] sample;
                 }
                 checkStream();
             }
