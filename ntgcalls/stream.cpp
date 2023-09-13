@@ -8,7 +8,7 @@ namespace ntgcalls {
     Stream::Stream() {
         audio = std::make_shared<AudioStreamer>();
         video = std::make_shared<VideoStreamer>();
-        dispatchQueue = std::make_shared<DispatchQueue>("StreamQueue_" + rtc::CreateRandomUuid());
+        dispatchQueue = std::make_shared<DispatchQueue>();
     }
 
     Stream::~Stream() {
@@ -66,20 +66,19 @@ namespace ntgcalls {
     }
 
     void Stream::sendSample() {
-        if (idling || !(reader->audio || reader->video)) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        } else {
-            auto bsBR = unsafePrepareForSample();
-            auto sample = bsBR.second->read(bsBR.first->frameSize());
-            bsBR.first->sendData(sample);
-            if (sample != nullptr) delete[] sample;
-            checkStream();
-        }
-
         if (running) {
-            dispatchQueue->dispatch([this]() {
-                sendSample();
-            });
+            if (idling || !reader || !(reader->audio || reader->video)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            } else {
+                auto bsBR = unsafePrepareForSample();
+                if (bsBR.first && bsBR.second) {
+                    auto sample = bsBR.second->read(bsBR.first->frameSize());
+                    bsBR.first->sendData(sample);
+                    if (sample) delete[] sample;
+                }
+                checkStream();
+            }
+            sendSample();
         }
     }
 

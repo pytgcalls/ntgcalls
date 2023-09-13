@@ -39,62 +39,62 @@ typedef enum {
     NTG_FILE,
     NTG_SHELL,
     NTG_FFMPEG
-} ntgInputMode;
+} ntg_input_mode_enum;
 
 typedef enum {
-    NTG_STREAM_AUDIO = 0,
-    NTG_STREAM_VIDEO = 1
-} ntgStreamType;
+    NTG_STREAM_AUDIO,
+    NTG_STREAM_VIDEO
+} ntg_stream_type_enum;
 
 typedef enum {
     NTG_PLAYING,
     NTG_PAUSED,
     NTG_IDLING
-} ntgStreamStatus;
+} ntg_stream_status_enum;
 
 typedef struct {
-    ntgInputMode inputMode;
+    ntg_input_mode_enum inputMode;
     char* input;
     uint16_t sampleRate;
     uint8_t bitsPerSample, channelCount;
-} ntgAudioDescription;
+} ntg_audio_description_struct;
 
 typedef struct {
-    ntgInputMode inputMode;
+    ntg_input_mode_enum inputMode;
     char* input;
     uint16_t width, height;
     uint8_t fps;
-} ntgVideoDescription;
+} ntg_video_description_struct;
 
 typedef struct {
-    ntgAudioDescription* audio;
-    ntgVideoDescription* video;
-} ntgMediaDescription;
+    ntg_audio_description_struct* audio;
+    ntg_video_description_struct* video;
+} ntg_media_description_struct;
 
 typedef struct {
     int64_t chatId;
-    ntgStreamStatus status;
-} ntgGroupCall;
+    ntg_stream_status_enum status;
+} ntg_group_call_struct;
 
 typedef struct {
     bool muted;
     bool videoPaused;
     bool videoStopped;
-} ntgMediaState;
+} ntg_media_state_struct;
 
-typedef void (*ntgStreamEndCallback)(uint32_t, int64_t, ntgStreamType);
+typedef void (*ntg_stream_callback)(uint32_t, int64_t, ntg_stream_type_enum);
 
-typedef void (*ntgUpgradeCallback)(uint32_t, int64_t, ntgMediaState);
+typedef void (*ntg_upgrade_callback)(uint32_t, int64_t, ntg_media_state_struct);
 
 NTG_C_EXPORT uint32_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
-NTG_C_EXPORT int ntg_get_params(uint32_t uid, int64_t chatID, ntgMediaDescription rep, char* buffer, int size);
+NTG_C_EXPORT int ntg_get_params(uint32_t uid, int64_t chatID, ntg_media_description_struct rep, char* buffer, int size);
 
 NTG_C_EXPORT int ntg_connect(uint32_t uid, int64_t chatID, char* params);
 
-NTG_C_EXPORT int ntg_change_stream(uint32_t uid, int64_t chatID, ntgMediaDescription desc);
+NTG_C_EXPORT int ntg_change_stream(uint32_t uid, int64_t chatID, ntg_media_description_struct desc);
 
 NTG_C_EXPORT bool ntg_pause(uint32_t uid, int64_t chatID);
 
@@ -108,13 +108,13 @@ NTG_C_EXPORT int ntg_stop(uint32_t uid, int64_t chatID);
 
 NTG_C_EXPORT uint64_t ntg_time(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT int ntg_calls(uint32_t uid, ntgGroupCall *buffer, int size);
+NTG_C_EXPORT int ntg_calls(uint32_t uid, ntg_group_call_struct *buffer, int size);
 
 NTG_C_EXPORT int ntg_calls_count(uint32_t uid);
 
-NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntgStreamEndCallback callback);
+NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback);
 
-NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntgUpgradeCallback callback);
+NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback);
 
 #ifdef __cplusplus
 }

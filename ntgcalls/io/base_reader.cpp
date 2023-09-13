@@ -7,7 +7,7 @@
 
 namespace ntgcalls {
     BaseReader::BaseReader() {
-        dispatchQueue = std::make_shared<DispatchQueue>("Reader_" + rtc::CreateRandomUuid());
+        dispatchQueue = std::make_shared<DispatchQueue>();
     }
 
     BaseReader::~BaseReader() {
@@ -29,14 +29,14 @@ namespace ntgcalls {
                 } catch (...) {
                     _eof = true;
                 }
-                if (promise!= nullptr) promise->set_value();
+                if (promise != nullptr) promise->set_value();
             });
         }
         if (nextBuffer.empty() && !_eof) {
             if (promise != nullptr) promise->get_future().wait();
         }
         res = nextBuffer[0];
-        nextBuffer.erase(nextBuffer.begin(), nextBuffer.begin() + 1);
+        nextBuffer.erase(nextBuffer.begin());
         return res;
     }
 

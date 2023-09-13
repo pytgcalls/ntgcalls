@@ -109,6 +109,7 @@ namespace ntgcalls {
             }
         });
         waitConnection.wait();
+        connection->onIceStateChange(nullptr);
         stream->start();
     }
 

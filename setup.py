@@ -105,18 +105,20 @@ class SharedCommand(Command):
     description = 'Generate shared-libs files'
     user_options = [
         ('no-preserve-cache', None, "Do not preserve cache"),
+        ('debug', None, "Debug build"),
     ]
 
     # noinspection PyAttributeOutsideInit
     def initialize_options(self):
         self.no_preserve_cache = False
+        self.debug = False
 
     def finalize_options(self):
         pass
 
     # noinspection PyMethodMayBeStatic
     def run(self):
-        cfg = "RelWithDebInfo" if "dev" in version else "Release"
+        cfg = "RelWithDebInfo" if self.debug else "Release"
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={cfg}',
         ]
@@ -138,7 +140,7 @@ class SharedCommand(Command):
         release_path = Path(build_temp, 'ntgcalls')
         tmp_release_path = Path(release_path, cfg)
 
-        build_output = Path("shared-output")
+        build_output = Path("shared-output-debug" if self.debug else "shared-output")
         if build_output.exists():
             shutil.rmtree(build_output)
         build_output.mkdir(parents=True)

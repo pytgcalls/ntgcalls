@@ -27,7 +27,7 @@ const (
 	IdlingStream
 )
 
-func (ctx InputMode) ParseToC() C.ntgInputMode {
+func (ctx InputMode) ParseToC() C.ntg_input_mode_enum {
 	switch ctx {
 	case InputModeFile:
 		return C.NTG_FILE

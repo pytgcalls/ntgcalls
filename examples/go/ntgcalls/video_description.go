@@ -11,8 +11,8 @@ type VideoDescription struct {
 	Fps           uint8
 }
 
-func (ctx *VideoDescription) ParseToC() C.ntgVideoDescription {
-	var x C.ntgVideoDescription
+func (ctx *VideoDescription) ParseToC() C.ntg_video_description_struct {
+	var x C.ntg_video_description_struct
 	x.inputMode = ctx.InputMode.ParseToC()
 	x.input = C.CString(ctx.Input)
 	x.width = C.uint16_t(ctx.Width)

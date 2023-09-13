@@ -11,8 +11,8 @@ type AudioDescription struct {
 	BitsPerSample, ChannelCount uint8
 }
 
-func (ctx *AudioDescription) ParseToC() C.ntgAudioDescription {
-	var x C.ntgAudioDescription
+func (ctx *AudioDescription) ParseToC() C.ntg_audio_description_struct {
+	var x C.ntg_audio_description_struct
 	x.inputMode = ctx.InputMode.ParseToC()
 	x.input = C.CString(ctx.Input)
 	x.sampleRate = C.uint16_t(ctx.SampleRate)
