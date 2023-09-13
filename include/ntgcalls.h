@@ -116,6 +116,8 @@ NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback);
 
 NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback);
 
+NTG_C_EXPORT int ntg_get_version(char* buffer, int size);
+
 #ifdef __cplusplus
 }
 #endif

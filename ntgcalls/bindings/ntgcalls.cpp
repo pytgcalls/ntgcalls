@@ -295,3 +295,7 @@ int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback) {
     }
     return 0;
 }
+
+int ntg_get_version(char* buffer, int size) {
+    return copyAndReturn(NTG_VERSION, buffer, size);
+}
