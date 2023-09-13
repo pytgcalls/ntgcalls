@@ -164,6 +164,13 @@ func (ctx *Instance) Calls() map[int64]StreamStatus {
 	return mapReturn
 }
 
+func Version() string {
+	var buffer [8]C.char
+	size := C.int(len(buffer))
+	C.ntg_get_version(&buffer[0], size)
+	return C.GoString(&buffer[0])
+}
+
 func (ctx *Instance) Free() {
 	C.ntg_destroy(C.uint32_t(ctx.uid))
 	delete(handlerEnd, ctx.uid)
