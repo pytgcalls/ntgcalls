@@ -1,7 +1,7 @@
 # NativeTgCalls: <br/> An experimental implementation of Telegram Group Calls
 [![Build And Publish](https://github.com/pytgcalls/ntgcalls/actions/workflows/build.yml/badge.svg)](https://github.com/pytgcalls/ntgcalls/actions/workflows/build.yml)
 [![CodeQL](https://github.com/pytgcalls/ntgcalls/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/pytgcalls/ntgcalls/actions/workflows/github-code-scanning/codeql)
-![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)
+[![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ntgcalls?logo=python&logoColor=%23959DA5&labelColor=%23282f37)](https://www.python.org/)
 [![GitHub](https://img.shields.io/github/license/pytgcalls/ntgcalls?logo=unlicense&logoColor=%23959DA5&labelColor=%23282f37)](https://github.com/pytgcalls/ntgcalls/blob/master/LICENSE)
 [![Downloads](https://pepy.tech/badge/ntgcalls)](https://pepy.tech/project/ntgcalls)
