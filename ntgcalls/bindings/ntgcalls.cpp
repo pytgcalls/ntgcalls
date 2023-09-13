@@ -173,32 +173,52 @@ int ntg_change_stream(uint32_t uid, int64_t chatID, ntg_media_description_struct
     return 0;
 }
 
-bool ntg_pause(uint32_t uid, int64_t chatID) {
+int ntg_pause(uint32_t uid, int64_t chatID) {
     try {
-        return safeUID(uid)->pause(chatID);
-    } catch (...) {}
-    return false;
+        return !safeUID(uid)->pause(chatID);
+    } catch (ntgcalls::InvalidUUID) {
+        return NTG_INVALID_UID;
+    } catch (ntgcalls::ConnectionNotFound) {
+        return NTG_CONNECTION_NOT_FOUND;
+    } catch (...) {
+        return NTG_UNKNOWN_EXCEPTION;
+    }
 }
 
-bool ntg_resume(uint32_t uid, int64_t chatID) {
+int ntg_resume(uint32_t uid, int64_t chatID) {
     try {
-        return safeUID(uid)->resume(chatID);
-    } catch (...) {}
-    return false;
+        return !safeUID(uid)->resume(chatID);
+    } catch (ntgcalls::InvalidUUID) {
+        return NTG_INVALID_UID;
+    } catch (ntgcalls::ConnectionNotFound) {
+        return NTG_CONNECTION_NOT_FOUND;
+    } catch (...) {
+        return NTG_UNKNOWN_EXCEPTION;
+    }
 }
 
-bool ntg_mute(uint32_t uid, int64_t chatID) {
+int ntg_mute(uint32_t uid, int64_t chatID) {
     try {
-        return safeUID(uid)->mute(chatID);
-    } catch (...) {}
-    return false;
+        return !safeUID(uid)->mute(chatID);
+    } catch (ntgcalls::InvalidUUID) {
+        return NTG_INVALID_UID;
+    } catch (ntgcalls::ConnectionNotFound) {
+        return NTG_CONNECTION_NOT_FOUND;
+    } catch (...) {
+        return NTG_UNKNOWN_EXCEPTION;
+    }
 }
 
-bool ntg_unmute(uint32_t uid, int64_t chatID) {
+int ntg_unmute(uint32_t uid, int64_t chatID) {
     try {
-        return safeUID(uid)->unmute(chatID);
-    } catch (...) {}
-    return false;
+        return !safeUID(uid)->unmute(chatID);
+    } catch (ntgcalls::InvalidUUID) {
+        return NTG_INVALID_UID;
+    } catch (ntgcalls::ConnectionNotFound) {
+        return NTG_CONNECTION_NOT_FOUND;
+    } catch (...) {
+        return NTG_UNKNOWN_EXCEPTION;
+    }
 }
 
 int ntg_stop(uint32_t uid, int64_t chatID) {
@@ -212,11 +232,15 @@ int ntg_stop(uint32_t uid, int64_t chatID) {
     return 0;
 }
 
-uint64_t ntg_time(uint32_t uid, int64_t chatID) {
+int64_t ntg_time(uint32_t uid, int64_t chatID) {
     try {
         return safeUID(uid)->time(chatID);
+    } catch (ntgcalls::InvalidUUID) {
+        return NTG_INVALID_UID;
+    } catch (ntgcalls::ConnectionNotFound) {
+        return NTG_CONNECTION_NOT_FOUND;
     } catch (...) {
-        return 0;
+        return NTG_UNKNOWN_EXCEPTION;
     }
 }
 
