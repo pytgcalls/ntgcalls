@@ -17,8 +17,8 @@ func NTgCalls() *Instance {
 		uid:    uint32(C.ntg_init()),
 		exists: true,
 	}
-	C.ntg_on_stream_end(C.uint32_t(instance.uid), (C.ntgStreamEndCallback)(unsafe.Pointer(C.handleStream)))
-	C.ntg_on_upgrade(C.uint32_t(instance.uid), (C.ntgUpgradeCallback)(unsafe.Pointer(C.handleUpgrade)))
+	C.ntg_on_stream_end(C.uint32_t(instance.uid), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStream)))
+	C.ntg_on_upgrade(C.uint32_t(instance.uid), (C.ntg_upgrade_callback)(unsafe.Pointer(C.handleUpgrade)))
 	return instance
 }
 
