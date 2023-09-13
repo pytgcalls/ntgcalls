@@ -15,7 +15,7 @@ if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
 endif()
 
-project(ntgcalls VERSION 1.0.0.5 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.0.0.6 LANGUAGES C CXX)
 
 find_package(Threads REQUIRED)
 
