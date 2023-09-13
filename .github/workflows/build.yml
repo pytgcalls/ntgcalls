@@ -47,13 +47,23 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Build Shared Libs
+      - name: Build Debug Shared lib
+        run: python3 setup.py build_shared --no-preserve-cache --debug
+
+      - name: Build Release Shared lib
         run: python3 setup.py build_shared --no-preserve-cache
 
-      - name: Upload shared libs for ${{ matrix.shared_name }}
+      - name: Upload Debug Shared lib for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v3
         with:
-          name: ntgcalls-${{ matrix.shared_name }}-lib.zip
+          name: ntgcalls.${{ matrix.shared_name }}-debug-shared_libs
+          path: ./shared-output-debug/*
+          if-no-files-found: error
+
+      - name: Upload Release Shared lib for ${{ matrix.shared_name }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ntgcalls.${{ matrix.shared_name }}-shared_libs
           path: ./shared-output/*
           if-no-files-found: error
 
@@ -70,7 +80,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ntgcalls-${{ matrix.shared_name }}-wheels.zip
+          name: ntgcalls-${{ matrix.shared_name }}-wheels
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
@@ -119,13 +129,13 @@ jobs:
       - name: Zip releases
         run: |
           mkdir releases
-          for dir in tmp/*.zip; do
+          for dir in tmp/*shared_libs; do
             if [ -d "$dir" ]; then
+              echo "$dir"
               folder_name=$(basename "$dir" .zip)
-              zip -r "releases/${folder_name}.zip" "$dir"
+              (cd $dir && zip -r "../../releases/${folder_name}.zip" *)
             fi
           done
-          ls releases
 
       - name: Create Release
         id: create-new-release
