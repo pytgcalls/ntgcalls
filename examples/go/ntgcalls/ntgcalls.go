@@ -63,6 +63,17 @@ func (ctx *Instance) OnUpgrade(callback UpgradeCallback) {
 	handlerUpgrade[ctx.uid] = append(handlerUpgrade[ctx.uid], callback)
 }
 
+func parseBool(res C.int) (bool, error) {
+	return res == 0, parseErrorCode(res)
+}
+
+func parseTime(res C.int64_t) (uint64, error) {
+	if res < 0 {
+		return 0, parseErrorCode(C.int(res))
+	}
+	return uint64(res), nil
+}
+
 func parseErrorCode(errorCode C.int) error {
 	pErrorCode := int8(errorCode)
 	switch pErrorCode {
@@ -107,28 +118,28 @@ func (ctx *Instance) ChangeStream(chatId int64, desc MediaDescription) error {
 	return parseErrorCode(C.ntg_change_stream(C.uint32_t(ctx.uid), C.int64_t(chatId), desc.ParseToC()))
 }
 
-func (ctx *Instance) Pause(chatId int64) bool {
-	return bool(C.ntg_pause(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+func (ctx *Instance) Pause(chatId int64) (bool, error) {
+	return parseBool(C.ntg_pause(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
-func (ctx *Instance) Resume(chatId int64) bool {
-	return bool(C.ntg_resume(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+func (ctx *Instance) Resume(chatId int64) (bool, error) {
+	return parseBool(C.ntg_resume(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
-func (ctx *Instance) Mute(chatId int64) bool {
-	return bool(C.ntg_mute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+func (ctx *Instance) Mute(chatId int64) (bool, error) {
+	return parseBool(C.ntg_mute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
-func (ctx *Instance) UnMute(chatId int64) bool {
-	return bool(C.ntg_unmute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+func (ctx *Instance) UnMute(chatId int64) (bool, error) {
+	return parseBool(C.ntg_unmute(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Stop(chatId int64) error {
 	return parseErrorCode(C.ntg_stop(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
-func (ctx *Instance) Time(chatId int64) uint64 {
-	return uint64(C.ntg_time(C.uint32_t(ctx.uid), C.int64_t(chatId)))
+func (ctx *Instance) Time(chatId int64) (uint64, error) {
+	return parseTime(C.ntg_time(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
 func (ctx *Instance) Calls() map[int64]StreamStatus {
