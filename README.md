@@ -19,10 +19,10 @@ NativeTgCalls, often referred to as NTgCalls, is an exciting open-source venture
 Telegram calling experience and introduces innovative features while preserving the legacy of PyTgCalls.
 
 ## Build Status
-| Architecture |                                Windows                                 |                              Linux                              |                                 MacOS                                  |
-|:------------:|:----------------------------------------------------------------------:|:---------------------------------------------------------------:|:----------------------------------------------------------------------:|
-|    x86_64    |    ![BUILD](https://img.shields.io/badge/build-passing-dark_green)     | ![BUILD](https://img.shields.io/badge/build-passing-dark_green) | ![BUILD](https://img.shields.io/badge/build-not%20supported-lightgrey) |
-|    ARM64     | ![BUILD](https://img.shields.io/badge/build-not%20supported-lightgrey) |    ![BUILD](https://img.shields.io/badge/build-failing-red)     |    ![BUILD](https://img.shields.io/badge/build-passing-dark_green)     |
+| Architecture |                                                                   Windows                                                                   |                                                                Linux                                                                |                                                                  MacOS                                                                  |
+|:------------:|:-------------------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------------:|
+|    x86_64    |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   | ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745) | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) |
+|    ARM64     | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) | ![BUILD](https://img.shields.io/badge/build-failing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%23d12f3d) |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   |
 
 ## Key Features
 

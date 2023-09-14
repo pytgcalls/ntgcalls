@@ -74,11 +74,16 @@ namespace ntgcalls {
                 if (bsBR.first && bsBR.second) {
                     auto sample = bsBR.second->read(bsBR.first->frameSize());
                     bsBR.first->sendData(sample);
-                    if (sample) delete[] sample;
+                    if (sample) {
+                        delete[] sample;
+                        sample = nullptr;
+                    }
                 }
                 checkStream();
             }
-            sendSample();
+            dispatchQueue->dispatch([this]() {
+                sendSample();
+            });
         }
     }
 
