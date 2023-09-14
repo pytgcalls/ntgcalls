@@ -23,12 +23,13 @@ namespace wrtc {
     }
 
     void RTCVideoSource::OnFrame(i420ImageData data) {
-        webrtc::VideoFrame::Builder builder;
-        builder.set_timestamp_rtp(0);
-        builder.set_timestamp_us(rtc::TimeMillis());
-        builder.set_timestamp_us(rtc::TimeMicros());
-        builder.set_rotation(webrtc::kVideoRotation_0);
-        builder.set_video_frame_buffer(data.buffer());
-        source->PushFrame(builder.build());
+        source->PushFrame(webrtc::VideoFrame::Builder()
+            .set_video_frame_buffer(data.buffer())
+            .set_timestamp_rtp(0)
+            .set_timestamp_ms(rtc::TimeMillis())
+            .set_timestamp_us(rtc::TimeMicros())
+            .set_rotation(webrtc::kVideoRotation_0)
+            .build()
+        );
     }
 } // wrtc
