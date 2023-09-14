@@ -96,17 +96,17 @@ NTG_C_EXPORT int ntg_connect(uint32_t uid, int64_t chatID, char* params);
 
 NTG_C_EXPORT int ntg_change_stream(uint32_t uid, int64_t chatID, ntg_media_description_struct desc);
 
-NTG_C_EXPORT bool ntg_pause(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int ntg_pause(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT bool ntg_resume(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int ntg_resume(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT bool ntg_mute(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int ntg_mute(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT bool ntg_unmute(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int ntg_unmute(uint32_t uid, int64_t chatID);
 
 NTG_C_EXPORT int ntg_stop(uint32_t uid, int64_t chatID);
 
-NTG_C_EXPORT uint64_t ntg_time(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int64_t ntg_time(uint32_t uid, int64_t chatID);
 
 NTG_C_EXPORT int ntg_calls(uint32_t uid, ntg_group_call_struct *buffer, int size);
 
@@ -115,6 +115,8 @@ NTG_C_EXPORT int ntg_calls_count(uint32_t uid);
 NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback);
 
 NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback);
+
+NTG_C_EXPORT int ntg_get_version(char* buffer, int size);
 
 #ifdef __cplusplus
 }
