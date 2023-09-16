@@ -16,9 +16,9 @@ namespace ntgcalls {
     }
 
     wrtc::binary BaseReader::read(size_t size) {
-        wrtc::binary res;
-        auto promise = std::make_shared<std::promise<void>>();
         if (dispatchQueue != nullptr) {
+            wrtc::binary res;
+            auto promise = std::make_shared<std::promise<void>>();
             if (!_eof && nextBuffer.size() <= 4) {
                 dispatchQueue->dispatch([this, promise, size] {
                     try {
@@ -36,10 +36,13 @@ namespace ntgcalls {
             if (nextBuffer.empty() && !_eof) {
                 if (promise != nullptr) promise->get_future().wait();
             }
-            res = nextBuffer[0];
-            nextBuffer.erase(nextBuffer.begin());
+            if (!nextBuffer.empty()) {
+                res = nextBuffer[0];
+                nextBuffer.erase(nextBuffer.begin());
+                return res;
+            }
         }
-        return res;
+        return nullptr;
     }
 
     void BaseReader::close() {

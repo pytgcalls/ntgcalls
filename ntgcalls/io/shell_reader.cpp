@@ -19,7 +19,7 @@ namespace ntgcalls {
     }
 
     wrtc::binary ShellReader::readInternal(size_t size) {
-        if (stdOut.eof() || stdOut.fail() || !stdOut.is_open()) {
+        if (stdOut.eof() || stdOut.fail() || !stdOut.is_open() || !shellProcess || !shellProcess.running()) {
             throw EOFError("Reached end of the stream");
         }
         auto *file_data = new uint8_t[size];
@@ -32,13 +32,19 @@ namespace ntgcalls {
 
     void ShellReader::close() {
         BaseReader::close();
-        stdOut.close();
-        stdIn.close();
-        stdOut.pipe().close();
-        stdIn.pipe().close();
-        shellProcess.terminate();
-        shellProcess.wait();
-        shellProcess.detach();
+        if (stdOut) {
+            stdOut.close();
+            stdOut.pipe().close();
+        }
+        if (stdIn) {
+            stdIn.close();
+            stdIn.pipe().close();
+        }
+        if (shellProcess) {
+            shellProcess.terminate();
+            shellProcess.wait();
+            shellProcess.detach();
+        }
     }
 } // ntgcalls
 #endif
