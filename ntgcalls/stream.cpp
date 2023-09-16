@@ -81,9 +81,11 @@ namespace ntgcalls {
                 }
                 checkStream();
             }
-            dispatchQueue->dispatch([this]() {
-                sendSample();
-            });
+            if (dispatchQueue) {
+                dispatchQueue->dispatch([this]() {
+                    sendSample();
+                });
+            }
         }
     }
 

@@ -8,7 +8,7 @@
 namespace ntgcalls {
     ntgcalls::ShellReader::ShellReader(const std::string &command) {
         try {
-            shellProcess = bp::child(command, bp::std_out > stdOut);
+            shellProcess = bp::child(command, bp::std_out > stdOut, bp::std_in < stdIn);
         } catch (std::runtime_error &e) {
             throw ShellError(e.what());
         }
@@ -33,7 +33,10 @@ namespace ntgcalls {
     void ShellReader::close() {
         BaseReader::close();
         stdOut.close();
+        stdIn.close();
         stdOut.pipe().close();
+        stdIn.pipe().close();
+        shellProcess.terminate();
         shellProcess.wait();
         shellProcess.detach();
     }
