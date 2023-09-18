@@ -44,6 +44,8 @@ namespace ntgcalls {
 
         void stop();
 
+        MediaState getState();
+
         uint64_t time();
 
         Status status();

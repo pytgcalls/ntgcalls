@@ -49,6 +49,8 @@ namespace ntgcalls {
 
         uint64_t time();
 
+        MediaState getState();
+
         Stream::Status status();
 
         void onUpgrade(std::function<void(MediaState)> callback);

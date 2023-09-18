@@ -39,6 +39,8 @@ namespace ntgcalls {
 
         uint64_t time(int64_t chatId);
 
+        MediaState getState(int64_t chatId);
+
         static std::string ping();
 
         void onUpgrade(std::function<void(int64_t, MediaState)> callback);

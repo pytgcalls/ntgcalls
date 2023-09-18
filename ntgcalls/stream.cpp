@@ -127,12 +127,16 @@ namespace ntgcalls {
 
     void Stream::checkUpgrade() {
         updateQueue->dispatch([&]() {
-            onChangeStatus(MediaState{
-                    audioTrack->isMuted() && videoTrack->isMuted(),
-                    idling || videoTrack->isMuted(),
-                    !hasVideo
-            });
+            onChangeStatus(getState());
         });
+    }
+
+    MediaState Stream::getState() {
+        return MediaState{
+                audioTrack->isMuted() && videoTrack->isMuted(),
+                idling || videoTrack->isMuted(),
+                !hasVideo
+        };
     }
 
     uint64_t Stream::time() {

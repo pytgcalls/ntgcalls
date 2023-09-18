@@ -146,6 +146,10 @@ namespace ntgcalls {
         return stream->time();
     }
 
+    MediaState Client::getState() {
+        return stream->getState();
+    }
+
     Stream::Status Client::status() {
         return stream->status();
     }
