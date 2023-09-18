@@ -62,7 +62,8 @@ namespace ntgcalls {
         bool running = false, idling = false, hasVideo = false;
         wrtc::synchronized_callback<Type> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
-        std::shared_ptr<DispatchQueue> dispatchQueue;
+        std::shared_ptr<DispatchQueue> streamQueue;
+        std::shared_ptr<DispatchQueue> updateQueue;
 
         void sendSample();
 

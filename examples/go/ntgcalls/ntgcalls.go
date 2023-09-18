@@ -75,26 +75,26 @@ func parseTime(res C.int64_t) (uint64, error) {
 }
 
 func parseErrorCode(errorCode C.int) error {
-	pErrorCode := int8(errorCode)
+	pErrorCode := int16(errorCode)
 	switch pErrorCode {
-	case -3:
+	case -100:
 		return fmt.Errorf("connection already made")
-	case -4:
-		return fmt.Errorf("file not found")
-	case -5:
-		return fmt.Errorf("encoder not found")
-	case -6:
-		return fmt.Errorf("ffmpeg not found")
-	case -7:
-		return fmt.Errorf("rtmp needed")
-	case -8:
-		return fmt.Errorf("invalid transport")
-	case -9:
-		return fmt.Errorf("connection failed")
-	case -10:
+	case -101:
 		return fmt.Errorf("connection not found")
-	case -11:
+	case -200:
+		return fmt.Errorf("file not found")
+	case -201:
+		return fmt.Errorf("encoder not found")
+	case -202:
+		return fmt.Errorf("ffmpeg not found")
+	case -203:
 		return fmt.Errorf("error while executing shell command")
+	case -300:
+		return fmt.Errorf("rtmp needed")
+	case -301:
+		return fmt.Errorf("invalid transport")
+	case -302:
+		return fmt.Errorf("connection failed")
 	}
 	if pErrorCode >= 0 {
 		return nil
