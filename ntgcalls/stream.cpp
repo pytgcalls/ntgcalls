@@ -129,8 +129,8 @@ namespace ntgcalls {
         updateQueue->dispatch([&]() {
             onChangeStatus(MediaState{
                     audioTrack->isMuted() && videoTrack->isMuted(),
-                    hasVideo,
-                    idling
+                    idling || videoTrack->isMuted(),
+                    !hasVideo
             });
         });
     }
