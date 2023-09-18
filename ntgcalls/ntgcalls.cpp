@@ -67,6 +67,10 @@ namespace ntgcalls {
         return safeConnection(chatId)->time();
     }
 
+    MediaState NTgCalls::getState(int64_t chatId) {
+        return safeConnection(chatId)->getState();
+    }
+
     bool NTgCalls::exists(int64_t chatId) {
         return connections.find(chatId) != connections.end();
     }

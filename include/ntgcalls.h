@@ -116,6 +116,8 @@ NTG_C_EXPORT int ntg_stop(uint32_t uid, int64_t chatID);
 
 NTG_C_EXPORT int64_t ntg_time(uint32_t uid, int64_t chatID);
 
+NTG_C_EXPORT int ntg_get_state(uint32_t uid, int64_t chatID, ntg_media_state_struct *mediaState);
+
 NTG_C_EXPORT int ntg_calls(uint32_t uid, ntg_group_call_struct *buffer, int size);
 
 NTG_C_EXPORT int ntg_calls_count(uint32_t uid);

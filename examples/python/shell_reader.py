@@ -17,7 +17,7 @@ async def main():
     link = 'https://docs.evostream.com/sample_content/assets/sintel1m720p.mp4'
 
     async with client:
-        call_params = await ToAsync(wrtc.createCall, chat_id, MediaDescription(
+        call_params = await ToAsync(wrtc.create_call, chat_id, MediaDescription(
             audio=AudioDescription(
                 input_mode=InputMode.Shell,
                 input=f"ffmpeg -i {link} -f s16le -ac 2 -ar 48k pipe:1",

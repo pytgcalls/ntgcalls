@@ -15,7 +15,7 @@ async def main():
     client = Client('test', api_id, api_hash, sleep_threshold=1)
 
     async with client:
-        call_params = await ToAsync(wrtc.createCall, chat_id, MediaDescription(
+        call_params = await ToAsync(wrtc.create_call, chat_id, MediaDescription(
             audio=AudioDescription(
                 input_mode=InputMode.File,
                 input="output.pcm",
