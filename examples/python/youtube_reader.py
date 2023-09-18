@@ -17,7 +17,7 @@ async def main():
     link = await get_youtube_stream("https://www.youtube.com/watch?v=u__gKd2mCVA")
 
     async with client:
-        call_params = await ToAsync(wrtc.createCall, chat_id, MediaDescription(
+        call_params = await ToAsync(wrtc.create_call, chat_id, MediaDescription(
             audio=AudioDescription(
                 input_mode=InputMode.Shell,
                 input=f"ffmpeg -i {link} -loglevel panic -f s16le -ac 2 -ar 48k pipe:1",
