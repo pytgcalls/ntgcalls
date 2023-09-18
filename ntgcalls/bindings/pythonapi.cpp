@@ -15,9 +15,9 @@ namespace py = pybind11;
 PYBIND11_MODULE(ntgcalls, m) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
-    wrapper.def("createCall", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
+    wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"));
-    wrapper.def("changeStream", &ntgcalls::NTgCalls::changeStream, py::arg("chat_id"), py::arg("media"));
+    wrapper.def("change_stream", &ntgcalls::NTgCalls::changeStream, py::arg("chat_id"), py::arg("media"));
     wrapper.def("pause", &ntgcalls::NTgCalls::pause, py::arg("chat_id"));
     wrapper.def("resume", &ntgcalls::NTgCalls::resume, py::arg("chat_id"));
     wrapper.def("mute", &ntgcalls::NTgCalls::mute, py::arg("chat_id"));
@@ -25,7 +25,8 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("stop", &ntgcalls::NTgCalls::stop, py::arg("chat_id"));
     wrapper.def("time", &ntgcalls::NTgCalls::time, py::arg("chat_id"));
     wrapper.def("get_state", &ntgcalls::NTgCalls::getState, py::arg("chat_id"));
-    wrapper.def("onStreamEnd", &ntgcalls::NTgCalls::onStreamEnd);
+    wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade);
+    wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd);
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
 
