@@ -49,6 +49,14 @@ ntgcalls::BaseMediaDescription::InputMode parseInputMode(ntg_input_mode_enum mod
     }
 }
 
+ntg_media_state_struct parseMediaState(ntgcalls::MediaState state) {
+    return ntg_media_state_struct{
+            state.muted,
+            state.videoPaused,
+            state.videoStopped,
+    }
+}
+
 ntg_stream_status_enum parseStatus(ntgcalls::Stream::Status status) {
     switch (status) {
         case ntgcalls::Stream::Playing:
@@ -248,6 +256,19 @@ int64_t ntg_time(uint32_t uid, int64_t chatID) {
     }
 }
 
+int ntg_get_state(uint32_t uid, int64_t chatID, ntg_media_state_struct *mediaState) {
+    try {
+        *mediaState = parseMediaState(safeUID(uid)->getState(chatID));
+    } catch (ntgcalls::InvalidUUID) {
+        return NTG_INVALID_UID;
+    } catch (ntgcalls::ConnectionNotFound) {
+        return NTG_CONNECTION_NOT_FOUND;
+    } catch (...) {
+        return NTG_UNKNOWN_EXCEPTION;
+    }
+    return 0;
+}
+
 int ntg_calls(uint32_t uid, ntg_group_call_struct *buffer, int size) {
     try {
         auto callsCpp = safeUID(uid)->calls();
@@ -288,11 +309,7 @@ int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback) {
 int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback) {
     try {
         safeUID(uid)->onUpgrade([uid, callback](int64_t chatId, ntgcalls::MediaState state) {
-            callback(uid, chatId, ntg_media_state_struct{
-                state.muted,
-                state.videoPaused,
-                state.videoStopped,
-            });
+            callback(uid, chatId, parseMediaState(state));
         });
     } catch (ntgcalls::InvalidUUID) {
         return NTG_INVALID_UID;
