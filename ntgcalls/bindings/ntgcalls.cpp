@@ -138,6 +138,8 @@ int ntg_get_params(uint32_t uid, int64_t chatID, ntg_media_description_struct de
 int ntg_connect(uint32_t uid, int64_t chatID, char* params) {
     try {
         safeUID(uid)->connect(chatID, std::string(params));
+    } catch (ntgcalls::InvalidUUID) {
+        return NTG_INVALID_UID;
     } catch (ntgcalls::RTMPNeeded) {
         return NTG_RTMP_NEEDED;
     } catch (ntgcalls::InvalidParams) {
@@ -228,6 +230,8 @@ int ntg_stop(uint32_t uid, int64_t chatID) {
         return NTG_INVALID_UID;
     } catch (ntgcalls::ConnectionNotFound) {
         return NTG_CONNECTION_NOT_FOUND;
+    } catch (...) {
+        return NTG_UNKNOWN_EXCEPTION;
     }
     return 0;
 }
