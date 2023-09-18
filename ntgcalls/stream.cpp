@@ -8,7 +8,8 @@ namespace ntgcalls {
     Stream::Stream() {
         audio = std::make_shared<AudioStreamer>();
         video = std::make_shared<VideoStreamer>();
-        dispatchQueue = std::make_shared<DispatchQueue>();
+        streamQueue = std::make_shared<DispatchQueue>();
+        updateQueue = std::make_shared<DispatchQueue>();
     }
 
     Stream::~Stream() {
@@ -19,6 +20,7 @@ namespace ntgcalls {
         videoTrack = nullptr;
         reader = nullptr;
         running = false;
+        updateQueue = nullptr;
     }
 
     void Stream::addTracks(const std::shared_ptr<wrtc::PeerConnection>& pc) {
@@ -57,11 +59,15 @@ namespace ntgcalls {
     void Stream::checkStream() {
         if (reader->audio && reader->audio->eof()) {
             reader->audio = nullptr;
-            onEOF(Audio);
+            updateQueue->dispatch([&]() {
+                onEOF(Audio);
+            });
         }
         if (reader->video && reader->video->eof()) {
             reader->video = nullptr;
-            onEOF(Video);
+            updateQueue->dispatch([&]() {
+                onEOF(Video);
+            });
         }
     }
 
@@ -83,8 +89,8 @@ namespace ntgcalls {
                 }
                 checkStream();
             }
-            if (dispatchQueue) {
-                dispatchQueue->dispatch([this]() {
+            if (streamQueue) {
+                streamQueue->dispatch([this]() {
                     sendSample();
                 });
             }
@@ -120,10 +126,12 @@ namespace ntgcalls {
     }
 
     void Stream::checkUpgrade() {
-        onChangeStatus(MediaState{
-            audioTrack->isMuted() && videoTrack->isMuted(),
-            hasVideo,
-            idling
+        updateQueue->dispatch([&]() {
+            onChangeStatus(MediaState{
+                    audioTrack->isMuted() && videoTrack->isMuted(),
+                    hasVideo,
+                    idling
+            });
         });
     }
 
@@ -150,7 +158,7 @@ namespace ntgcalls {
     void Stream::start() {
         if (!running) {
             running = true;
-            dispatchQueue->dispatch([this]() {
+            streamQueue->dispatch([this]() {
                 sendSample();
             });
         }
@@ -195,7 +203,7 @@ namespace ntgcalls {
     void Stream::stop() {
         running = false;
         idling = false;
-        dispatchQueue = nullptr;
+        streamQueue = nullptr;
         if (reader) {
             if (reader->audio) {
                 reader->audio->close();

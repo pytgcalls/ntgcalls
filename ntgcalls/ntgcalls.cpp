@@ -5,30 +5,21 @@
 #include "ntgcalls.hpp"
 
 namespace ntgcalls {
-    NTgCalls::NTgCalls() {
-        dispatchUpdates = std::make_shared<DispatchQueue>();
-    }
-
     std::string NTgCalls::createCall(int64_t chatId, MediaDescription media) {
         if (exists(chatId)) {
             throw ConnectionError("Connection cannot be initialized more than once.");
         }
         connections[chatId] = std::make_shared<Client>();
         connections[chatId]->onStreamEnd([this, chatId](Stream::Type type) {
-            dispatchUpdates->dispatch([this, chatId, type] {
-                onEof(chatId, type);
-            });
+            onEof(chatId, type);
         });
         connections[chatId]->onUpgrade([this, chatId](MediaState state) {
-            dispatchUpdates->dispatch([this, chatId, state] {
-                onChangeStatus(chatId, state);
-            });
+            onChangeStatus(chatId, state);
         });
         return connections[chatId]->init(media);
     }
 
     NTgCalls::~NTgCalls() {
-        dispatchUpdates = nullptr;
         for (auto conn : connections) {
             conn.second->stop();
         }
