@@ -93,6 +93,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - name: Get library Version
         id: get-library-version
@@ -151,7 +153,7 @@ jobs:
             ./releases/*
           tag_name: "v${{ steps.patch-version.outputs.new_version }}"
           name: "NTgCalls auto build v${{ steps.patch-version.outputs.new_version }}"
-          body: "These are the build files for the commit [${{ github.sha }}](https://github.com/${{ github.repository }}/${{ github.sha }}).\nThese files were built during [this workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+          body: "These are the build files for the commit [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}).\nThese files were built during [this workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           prerelease: ${{ steps.patch-version.outputs.is_dev }}
 
       - name: Extract artifacts

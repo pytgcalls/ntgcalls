@@ -1,0 +1,6 @@
+recursive-include cmake *.cmake
+recursive-include wrtc *
+recursive-include deps *
+recursive-include include *
+recursive-include ntgcalls *
+include CMakeLists.txt
