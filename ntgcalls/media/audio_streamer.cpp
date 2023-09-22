@@ -37,7 +37,7 @@ namespace ntgcalls {
         return ((rate * bps) / 8 / 100) * channels;
     }
 
-    void AudioStreamer::setConfig(uint16_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount) {
+    void AudioStreamer::setConfig(uint32_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount) {
         clear();
         bps = bitsPerSample;
         rate = sampleRate;

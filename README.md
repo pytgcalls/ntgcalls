@@ -79,10 +79,9 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 * <b><a href="https://github.com/TuriOG">@TuriOG</a> (Junior Python Developer):</b>
     * Currently working on integrating NTgCalls into <a href="//github.com/pytgcalls/pytgcalls">PyTgCalls</a>, an important step
       in expanding the functionality and usability of the library.
-* <b><a href="https://github.com/null-nick">@null-nick</a> (Junior Go Developer, Tester):</b>
-    * Performs testing of NTgCalls on macOS to ensure its reliability and compatibility.
-    * It Is in the process of integrating NTgCalls into a Go wrapper, further enhancing the library's
-      versatility and accessibility.
+* <b><a href="https://github.com/doggyhaha">@doggyhaha</a> (Junior DevOps, Tester):</b>
+    * Performs testing of NTgCalls on Linux to ensure its reliability and compatibility.
+    * Specializes in creating and maintaining GitHub Actions, focusing on automation tasks.
 * <b><a href="https://github.com/tappo03">@tappo03</a> (Junior Go Developer, Tester):</b>
     * Performs testing of NTgCalls on Windows to ensure its reliability and compatibility.
     * It Is in the process of integrating NTgCalls into a Go wrapper, further enhancing the library's
@@ -102,7 +101,7 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
   Their assistance has been instrumental in enhancing the functionality of our library.
 
 
-_We would like to extend a special thanks to <b><a href='https://github.com/doggyhaha'>@doggyhaha</a></b>
+_We would like to extend a special thanks to <b><a href='https://github.com/null-nick'>@null-nick</a></b>
 and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library.
 Their dedication to testing and optimizing the library has been instrumental in its success._
 

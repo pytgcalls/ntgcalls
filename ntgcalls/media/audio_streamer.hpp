@@ -18,7 +18,7 @@ namespace ntgcalls {
     private:
         std::shared_ptr<wrtc::RTCAudioSource> audio;
         uint8_t bps = 0, channels = 0;
-        uint16_t rate = 0;
+        uint32_t rate = 0;
 
         std::chrono::nanoseconds frameTime() override;
 
@@ -33,6 +33,6 @@ namespace ntgcalls {
 
         uint64_t frameSize() override;
 
-        void setConfig(uint16_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount);
+        void setConfig(uint32_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount);
     };
 }

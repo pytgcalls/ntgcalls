@@ -54,7 +54,7 @@ ntg_media_state_struct parseMediaState(ntgcalls::MediaState state) {
             state.muted,
             state.videoPaused,
             state.videoStopped,
-    }
+    };
 }
 
 ntg_stream_status_enum parseStatus(ntgcalls::Stream::Status status) {

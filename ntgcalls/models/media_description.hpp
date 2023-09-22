@@ -24,10 +24,10 @@ namespace ntgcalls {
 
     class AudioDescription: public BaseMediaDescription {
     public:
-        uint16_t sampleRate;
+        uint32_t sampleRate;
         uint8_t bitsPerSample, channelCount;
 
-        AudioDescription(InputMode inputMode, uint16_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount, std::string input):
+        AudioDescription(InputMode inputMode, uint32_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount, std::string input):
                 sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount), BaseMediaDescription(input, inputMode) {};
     };
 
