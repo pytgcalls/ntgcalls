@@ -126,6 +126,12 @@ jobs:
         with:
           path: tmp/
 
+      - name: Prepare source distribution
+        run: |
+          python3 -m pip install --upgrade setuptools
+          python3 setup.py sdist
+  
+
       - name: Zip releases
         run: |
           mkdir releases
@@ -149,9 +155,7 @@ jobs:
           prerelease: ${{ steps.patch-version.outputs.is_dev }}
 
       - name: Extract artifacts
-        run: |
-          mkdir dist
-          find tmp -type f -name "*.whl" | xargs -I {} mv {} dist
+        run: find tmp -type f -name "*.whl" | xargs -I {} mv {} dist
 
       - name: Publish a Python distribution to PyPI.
         if: github.ref == 'refs/heads/master' && github.repository == 'pytgcalls/ntgcalls'
