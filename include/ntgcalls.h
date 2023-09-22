@@ -63,7 +63,7 @@ typedef enum {
 typedef struct {
     ntg_input_mode_enum inputMode;
     char* input;
-    uint16_t sampleRate;
+    uint32_t sampleRate;
     uint8_t bitsPerSample, channelCount;
 } ntg_audio_description_struct;
 
