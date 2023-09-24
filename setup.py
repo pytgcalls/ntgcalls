@@ -181,7 +181,6 @@ setup(
         'GNU Lesser General Public License v3 (LGPLv3)',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
@@ -196,5 +195,5 @@ setup(
     },
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
-    python_requires=">=3.7",
+    python_requires=">=3.8",
 )

@@ -17,7 +17,7 @@ namespace wrtc {
 
     uint8_t *audioData;
     uint16_t numberOfFrames;
-    uint16_t sampleRate = 48000;
+    uint32_t sampleRate = 48000;
     uint8_t bitsPerSample = 16;
     uint8_t channelCount = 1;
   };
