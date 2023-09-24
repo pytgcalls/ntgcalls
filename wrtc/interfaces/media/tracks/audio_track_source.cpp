@@ -34,7 +34,8 @@ namespace wrtc {
                     data.bitsPerSample,
                     data.sampleRate,
                     data.channelCount,
-                    data.numberOfFrames
+                    data.numberOfFrames,
+                    rtc::TimeMillis()
             );
         }
     }
