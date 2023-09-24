@@ -81,8 +81,6 @@ namespace ntgcalls {
                     auto sample = bsBR.second->read(bsBR.first->frameSize());
                     if (sample) {
                         bsBR.first->sendData(sample);
-                    }
-                    if (sample) {
                         delete[] sample;
                         sample = nullptr;
                     }
