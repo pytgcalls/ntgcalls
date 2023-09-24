@@ -20,8 +20,8 @@ async def main():
         call_params = await ToAsync(wrtc.create_call, chat_id, MediaDescription(
             audio=AudioDescription(
                 input_mode=InputMode.Shell,
-                input=f"ffmpeg -i {link} -f s16le -ac 2 -ar 48k pipe:1",
-                sample_rate=48000,
+                input=f"ffmpeg -i {link} -f s16le -ac 2 -ar 96k pipe:1",
+                sample_rate=96000,
                 bits_per_sample=16,
                 channel_count=2,
             ),
