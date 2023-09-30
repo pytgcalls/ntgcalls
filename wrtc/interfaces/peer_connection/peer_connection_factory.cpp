@@ -10,37 +10,44 @@ namespace wrtc {
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::_default = nullptr;
 
     PeerConnectionFactory::PeerConnectionFactory() {
-        _workerThread = rtc::Thread::Create();
-        _workerThread->SetName("worker_thread", nullptr);
-        RTC_CHECK(_workerThread->Start()) << "Failed to start thread";
+        network_thread_ = rtc::Thread::CreateWithSocketServer();
+        network_thread_->Start();
+        worker_thread_ = rtc::Thread::Create();
+        worker_thread_->Start();
+        signaling_thread_ = rtc::Thread::Create();
+        signaling_thread_->Start();
 
-        _signalingThread = rtc::Thread::Create();
-        _signalingThread->SetName("signaling_thread", nullptr);
-        RTC_CHECK(_signalingThread->Start()) << "Failed to start thread";
-
-        _networkThread = rtc::Thread::CreateWithSocketServer();
-        _networkThread->SetName("network_thread", nullptr);
-        RTC_CHECK(_networkThread->Start()) << "Failed to start thread";
-        if (!_audioDeviceModule) {
-            _taskQueueFactory = webrtc::CreateDefaultTaskQueueFactory();
-            _workerThread->BlockingCall([this] { CreateAudioDeviceModule_w(); });
-        }
-
+        webrtc::PeerConnectionFactoryDependencies dependencies;
+        dependencies.network_thread = network_thread_.get();
+        dependencies.worker_thread = worker_thread_.get();
+        dependencies.signaling_thread = signaling_thread_.get();
+        dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
+        dependencies.call_factory = webrtc::CreateCallFactory();
+        dependencies.event_log_factory =
+                absl::make_unique<webrtc::RtcEventLogFactory>(
+                        dependencies.task_queue_factory.get());
+        cricket::MediaEngineDependencies media_dependencies;
+        media_dependencies.task_queue_factory = dependencies.task_queue_factory.get();
+        media_dependencies.adm = worker_thread_->BlockingCall([&] {
+            if (!_audioDeviceModule)
+                _audioDeviceModule = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kDummyAudio, dependencies.task_queue_factory.get());
+            return _audioDeviceModule;
+        });
         auto config = VideoFactoryConfig();
-
+        media_dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
+        media_dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
+        media_dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
+        media_dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
+        media_dependencies.audio_mixer = nullptr;
+        media_dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
+        dependencies.media_engine = cricket::CreateMediaEngine(std::move(media_dependencies));
         if (!_factory) {
-            _factory = webrtc::CreatePeerConnectionFactory(
-                    _networkThread.get(), _workerThread.get(), _signalingThread.get(),
-                    _audioDeviceModule,
-                    webrtc::CreateBuiltinAudioEncoderFactory(),
-                    webrtc::CreateBuiltinAudioDecoderFactory(),
-                    config.CreateVideoEncoderFactory(),
-                    config.CreateVideoDecoderFactory(),
-                    nullptr, nullptr);
+            _factory = wrtc::PeerConnectionFactoryWithContext::Create(std::move(dependencies), connection_context_);
         }
-
         webrtc::PeerConnectionFactoryInterface::Options options;
-        options.network_ignore_mask = 0;
+        options.disable_encryption = false;
+        options.ssl_max_version = rtc::SSL_PROTOCOL_DTLS_12;
+        options.crypto_options.srtp.enable_gcm_crypto_suites = true;
         _factory->SetOptions(options);
     }
 
@@ -48,17 +55,12 @@ namespace wrtc {
         _factory = nullptr;
 
         if (_audioDeviceModule) {
-            _workerThread->BlockingCall([this] { DestroyAudioDeviceModule_w(); });
+            worker_thread_->BlockingCall([this] { DestroyAudioDeviceModule_w(); });
         }
 
-        _workerThread->Stop();
-        _signalingThread->Stop();
-        _networkThread->Stop();
-    }
-
-    void PeerConnectionFactory::CreateAudioDeviceModule_w() {
-        if (!_audioDeviceModule)
-            _audioDeviceModule = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kDummyAudio, _taskQueueFactory.get());
+        worker_thread_->Stop();
+        signaling_thread_->Stop();
+        network_thread_->Stop();
     }
 
     void PeerConnectionFactory::DestroyAudioDeviceModule_w() {
