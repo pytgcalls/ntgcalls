@@ -31,7 +31,7 @@ namespace ntgcalls {
 
         virtual wrtc::MediaStreamTrack *createTrack() = 0;
 
-        virtual void sendData(wrtc::binary &sample);
+        virtual void sendData(wrtc::binary sample);
 
         virtual uint64_t frameSize() = 0;
     };

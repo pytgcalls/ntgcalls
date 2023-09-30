@@ -24,7 +24,7 @@ namespace ntgcalls {
         return video->createTrack();
     }
 
-    void VideoStreamer::sendData(wrtc::binary &sample) {
+    void VideoStreamer::sendData(wrtc::binary sample) {
         BaseStreamer::sendData(sample);
         video->OnFrame(
             wrtc::i420ImageData(

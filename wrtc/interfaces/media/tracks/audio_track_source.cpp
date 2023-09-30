@@ -30,7 +30,7 @@ namespace wrtc {
         webrtc::AudioTrackSinkInterface *sink = _sink;
         if (sink) {
             sink->OnData(
-                    data.audioData,
+                    data.audioData.get(),
                     data.bitsPerSample,
                     data.sampleRate,
                     data.channelCount,
