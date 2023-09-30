@@ -22,8 +22,8 @@ namespace ntgcalls {
         if (stdOut.eof() || stdOut.fail() || !stdOut.is_open() || !shellProcess || !shellProcess.running()) {
             throw EOFError("Reached end of the stream");
         }
-        auto *file_data = new uint8_t[size];
-        stdOut.read(reinterpret_cast<char*>(file_data), size);
+        auto file_data = std::make_shared<uint8_t[]>(size);
+        stdOut.read(reinterpret_cast<char*>(file_data.get()), size);
         if (stdOut.fail()) {
             throw FileError("Error while reading the file");
         }

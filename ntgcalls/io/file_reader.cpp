@@ -21,8 +21,8 @@ namespace ntgcalls {
             throw EOFError("Reached end of the file");
         }
         source.seekg(readChunks, std::ios::beg);
-        auto *file_data = new uint8_t[size];
-        source.read(reinterpret_cast<char*>(file_data), size);
+        auto file_data = std::make_shared<uint8_t[]>(size);
+        source.read(reinterpret_cast<char*>(file_data.get()), size);
         readChunks += size;
         if (source.fail()) {
             throw FileError("Error while reading the file");

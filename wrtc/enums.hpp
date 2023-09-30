@@ -5,9 +5,10 @@
 #pragma once
 
 #include <stdint.h>
+#include <memory>
 
 namespace wrtc {
-    typedef uint8_t *binary;
+    typedef std::shared_ptr<uint8_t[]> binary;
     typedef uint32_t SSRC;
     typedef int32_t TgSSRC;
 

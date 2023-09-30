@@ -13,15 +13,15 @@ namespace wrtc {
         return sizeOfLuminancePlane() / 4;
     }
 
-    binary i420ImageData::dataY() {
-        return contents;
+    uint8_t* i420ImageData::dataY() {
+        return contents.get();
     }
 
-    binary i420ImageData::dataU() {
+    uint8_t* i420ImageData::dataU() {
         return dataY() + sizeOfLuminancePlane();
     }
 
-    binary i420ImageData::dataV() {
+    uint8_t* i420ImageData::dataV() {
         return dataU() + sizeOfChromaPlane();
     }
 

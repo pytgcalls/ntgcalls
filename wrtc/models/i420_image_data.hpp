@@ -20,7 +20,7 @@ namespace wrtc {
 
         size_t sizeOfChromaPlane() const;
 
-        binary dataY();
+        uint8_t* dataY();
 
         uint8_t* dataU();
 
