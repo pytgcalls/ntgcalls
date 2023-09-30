@@ -14,23 +14,22 @@ chat_id = -1001919448795
 async def main():
     client = Client('test', api_id, api_hash, sleep_threshold=1)
 
-    link = await get_youtube_stream("https://www.youtube.com/watch?v=u__gKd2mCVA")
-
+    audio, video = await get_youtube_stream("https://www.youtube.com/watch?v=u__gKd2mCVA")
     async with client:
         call_params = await ToAsync(wrtc.create_call, chat_id, MediaDescription(
             audio=AudioDescription(
                 input_mode=InputMode.Shell,
-                input=f"ffmpeg -i {link} -loglevel panic -f s16le -ac 2 -ar 48k pipe:1",
-                sample_rate=48000,
+                input=f"ffmpeg -i {audio} -loglevel panic -f s16le -ac 2 -ar 96k pipe:1",
+                sample_rate=96000,
                 bits_per_sample=16,
                 channel_count=2,
             ),
             video=VideoDescription(
                 input_mode=InputMode.Shell,
-                input=f"ffmpeg -i {link} -loglevel panic -f rawvideo -r 30 -pix_fmt yuv420p -vf scale=1280:720 pipe:1",
-                width=1280,
-                height=720,
-                fps=30,
+                input=f"ffmpeg -i {video} -loglevel panic -f rawvideo -r 60 -pix_fmt yuv420p -vf scale=1920:1080 pipe:1",
+                width=1920,
+                height=1080,
+                fps=60,
             ),
         ))
         result = await connect_call(client, chat_id, call_params)
