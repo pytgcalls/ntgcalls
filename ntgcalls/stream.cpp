@@ -19,7 +19,6 @@ namespace ntgcalls {
         audioTrack = nullptr;
         videoTrack = nullptr;
         reader = nullptr;
-        running = false;
         updateQueue = nullptr;
     }
 
@@ -57,17 +56,19 @@ namespace ntgcalls {
     }
 
     void Stream::checkStream() {
-        if (reader->audio && reader->audio->eof()) {
-            reader->audio = nullptr;
-            updateQueue->dispatch([&]() {
-                onEOF(Audio);
-            });
-        }
-        if (reader->video && reader->video->eof()) {
-            reader->video = nullptr;
-            updateQueue->dispatch([&]() {
-                onEOF(Video);
-            });
+        if (running) {
+            if (reader->audio && reader->audio->eof()) {
+                reader->audio = nullptr;
+                updateQueue->dispatch([&]() {
+                    onEOF(Audio);
+                });
+            }
+            if (reader->video && reader->video->eof()) {
+                reader->video = nullptr;
+                updateQueue->dispatch([&]() {
+                    onEOF(Video);
+                });
+            }
         }
     }
 
