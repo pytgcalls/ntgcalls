@@ -56,7 +56,7 @@ namespace ntgcalls {
     }
 
     void Stream::checkStream() {
-        if (running) {
+        if (running && !changing) {
             if (reader->audio && reader->audio->eof()) {
                 reader->audio = nullptr;
                 updateQueue->dispatch([&]() {
@@ -74,7 +74,7 @@ namespace ntgcalls {
 
     void Stream::sendSample() {
         if (running) {
-            if (idling || !reader || !(reader->audio || reader->video)) {
+            if (idling || changing || !reader || !(reader->audio || reader->video)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
             } else {
                 auto bsBR = unsafePrepareForSample();
@@ -95,6 +95,7 @@ namespace ntgcalls {
     }
 
     void Stream::setAVStream(MediaDescription streamConfig, bool noUpgrade) {
+        changing = true;
         auto audioConfig = streamConfig.audio;
         auto videoConfig = streamConfig.video;
         reader = std::make_shared<MediaReaderFactory>(streamConfig);
@@ -117,6 +118,7 @@ namespace ntgcalls {
         } else {
             hasVideo = false;
         }
+        changing = false;
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }
@@ -150,7 +152,7 @@ namespace ntgcalls {
     }
 
     Stream::Status Stream::status() {
-        if ((reader->audio || reader->video) && running) {
+        if ((reader->audio || reader->video) && running && !changing) {
             return idling ? Status::Paused : Status::Playing;
         }
         return Status::Idling;
@@ -204,6 +206,7 @@ namespace ntgcalls {
     void Stream::stop() {
         running = false;
         idling = false;
+        changing = false;
         streamQueue = nullptr;
         if (reader) {
             if (reader->audio) {
