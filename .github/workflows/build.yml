@@ -47,6 +47,11 @@ jobs:
         with:
           platforms: arm64
 
+      - name: Install SetupTools
+        if: matrix.cibw_os_build == 'macosx_arm64'
+        run: |
+          pip install setuptools
+
       - name: Build Debug Shared lib
         run: python3 setup.py build_shared --no-preserve-cache --debug
 
