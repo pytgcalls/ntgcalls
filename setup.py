@@ -58,13 +58,7 @@ def get_os_cmake_args():
     elif get_os() == "Android":
         raise NotImplementedError("Android is not supported yet")
     elif sys.platform.startswith("linux"):
-        clang_c, clang_cxx = "clang-17", "clang++-17"
-        if platform.processor() != 'aarch64':
-            clang_path = Path(Path.cwd(), 'clang')
-            if not Path(clang_path, 'bin').exists():
-                install_clang(clang_path)
-            clang_c = Path(clang_path, 'bin', 'clang')
-            clang_cxx = Path(clang_path, 'bin', 'clang++')
+        clang_c, clang_cxx = "clang-15", "clang++-15"
         return [
             f"-DCMAKE_C_COMPILER={clang_c}",
             f"-DCMAKE_CXX_COMPILER={clang_cxx}",

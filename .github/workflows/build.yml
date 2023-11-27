@@ -55,6 +55,13 @@ jobs:
       - name: Build Debug Shared lib
         run: python3 setup.py build_shared --no-preserve-cache --debug
 
+      - name: Install CLang-15
+        if: matrix.cibw_os_build == 'linux-x86_64'
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 15
+
       - name: Build Release Shared lib
         run: python3 setup.py build_shared --no-preserve-cache
 
