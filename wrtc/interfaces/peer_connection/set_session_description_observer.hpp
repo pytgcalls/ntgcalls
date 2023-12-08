@@ -14,7 +14,7 @@ namespace wrtc {
   public:
     SetSessionDescriptionObserver(
       const std::function<void()>& onSuccess,
-      const std::function<void(RTCException)>& onFailure) :
+      const std::function<void(std::exception&)>& onFailure) :
         _onSuccess(onSuccess), _onFailure(onFailure) {}
 
     void OnSuccess() override;
@@ -23,7 +23,7 @@ namespace wrtc {
 
   private:
     std::function<void()> _onSuccess = nullptr;
-    std::function<void(RTCException)> _onFailure = nullptr;
+    std::function<void(std::exception&)> _onFailure = nullptr;
   };
 
 } // namespace wrtc
