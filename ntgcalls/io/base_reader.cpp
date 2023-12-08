@@ -15,7 +15,7 @@ namespace ntgcalls {
         readChunks = 0;
     }
 
-    wrtc::binary BaseReader::read(size_t size) {
+    wrtc::binary BaseReader::read(int64_t size) {
         if (dispatchQueue != nullptr) {
             auto promise = std::make_shared<std::promise<void>>();
             if (!_eof && nextBuffer.size() <= 4) {

@@ -18,12 +18,12 @@ namespace ntgcalls {
         close();
     }
 
-    wrtc::binary ShellReader::readInternal(const size_t size) {
+    wrtc::binary ShellReader::readInternal(const int64_t size) {
         if (stdOut.eof() || stdOut.fail() || !stdOut.is_open() || !shellProcess || !shellProcess.running()) {
             throw EOFError("Reached end of the stream");
         }
         auto file_data = std::make_shared<uint8_t[]>(size);
-        stdOut.read(reinterpret_cast<char*>(file_data.get()), static_cast<std::streamsize>(size));
+        stdOut.read(reinterpret_cast<char*>(file_data.get()), size);
         if (stdOut.fail()) {
             throw FileError("Error while reading the file");
         }

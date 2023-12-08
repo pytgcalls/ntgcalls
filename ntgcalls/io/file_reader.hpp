@@ -14,7 +14,7 @@ namespace ntgcalls {
     class FileReader final: public BaseReader {
         std::ifstream source;
 
-        wrtc::binary readInternal(size_t size) override;
+        wrtc::binary readInternal(int64_t size) override;
 
     public:
         explicit FileReader(const std::string& path);
