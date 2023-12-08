@@ -6,15 +6,15 @@
 
 namespace ntgcalls {
     GroupCallPayload::GroupCallPayload(wrtc::Description &desc) {
-        const auto sdp = wrtc::SdpBuilder::parseSdp(desc.getSdp());
-        ufrag = sdp.ufrag;
-        pwd = sdp.pwd;
-        fingerprint = sdp.fingerprint;
-        hash = sdp.hash;
-        setup = sdp.setup;
-        audioSource = sdp.audioSource;
-        for (auto &ssrc : sdp.source_groups) {
-            sourceGroups.push_back(ssrc);
+        const auto [fingerprint, hash, setup, pwd, ufrag, audioSource, source_groups] = wrtc::SdpBuilder::parseSdp(desc.getSdp());
+        this->ufrag = ufrag;
+        this->pwd = pwd;
+        this->fingerprint = fingerprint;
+        this->hash = hash;
+        this->setup = setup;
+        this->audioSource = static_cast<wrtc::TgSSRC>(audioSource);
+        for (auto &ssrc : source_groups) {
+            this->sourceGroups.push_back(static_cast<wrtc::TgSSRC>(ssrc));
         }
     }
 

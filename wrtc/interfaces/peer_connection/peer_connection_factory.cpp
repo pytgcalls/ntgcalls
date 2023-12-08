@@ -3,6 +3,14 @@
 //
 
 #include "peer_connection_factory.hpp"
+#include <rtc_base/ssl_adapter.h>
+#include <api/create_peerconnection_factory.h>
+#include <api/rtc_event_log/rtc_event_log_factory.h>
+#include <api/task_queue/default_task_queue_factory.h>
+#include <api/audio_codecs/builtin_audio_encoder_factory.h>
+#include <api/audio_codecs/builtin_audio_decoder_factory.h>
+#include "peer_connection_factory_with_context.hpp"
+#include "../../video_factory/video_factory_config.hpp"
 
 namespace wrtc {
     std::mutex PeerConnectionFactory::_mutex{};
@@ -55,17 +63,16 @@ namespace wrtc {
         _factory = nullptr;
 
         if (_audioDeviceModule) {
-            worker_thread_->BlockingCall([this] { DestroyAudioDeviceModule_w(); });
+            worker_thread_->BlockingCall([this]
+            {
+                if (_audioDeviceModule)
+                    _audioDeviceModule = nullptr;
+            });
         }
 
         worker_thread_->Stop();
         signaling_thread_->Stop();
         network_thread_->Stop();
-    }
-
-    void PeerConnectionFactory::DestroyAudioDeviceModule_w() {
-        if (_audioDeviceModule)
-            _audioDeviceModule = nullptr;
     }
 
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> PeerConnectionFactory::factory() {

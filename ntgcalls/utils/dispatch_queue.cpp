@@ -4,14 +4,14 @@
 
 #include "dispatch_queue.hpp"
 
-DispatchQueue::DispatchQueue(size_t threadCount) : threads(threadCount) {
+DispatchQueue::DispatchQueue(const size_t threadCount) : threads(threadCount) {
     for(auto & i : threads) {
         i = std::thread(&DispatchQueue::dispatchThreadHandler, this);
     }
 }
 
 DispatchQueue::~DispatchQueue() {
-    std::unique_lock<std::mutex> lock(lockMutex);
+    std::unique_lock lock(lockMutex);
     quit = true;
     lock.unlock();
     condition.notify_all();
@@ -24,24 +24,24 @@ DispatchQueue::~DispatchQueue() {
 }
 
 void DispatchQueue::dispatch(const fp_t& op) {
-    std::unique_lock<std::mutex> lock(lockMutex);
+    std::unique_lock lock(lockMutex);
     queue.push(op);
     lock.unlock();
     condition.notify_one();
 }
 
 void DispatchQueue::dispatch(fp_t&& op) {
-    std::unique_lock<std::mutex> lock(lockMutex);
+    std::unique_lock lock(lockMutex);
     queue.push(std::move(op));
     lock.unlock();
     condition.notify_one();
 }
 
 void DispatchQueue::dispatchThreadHandler() {
-    std::unique_lock<std::mutex> lock(lockMutex);
+    std::unique_lock lock(lockMutex);
     do {
         condition.wait(lock, [this]{
-            return (!queue.empty() || quit);
+            return !queue.empty() || quit;
         });
         if(!quit && !queue.empty()) {
             auto op = std::move(queue.front());

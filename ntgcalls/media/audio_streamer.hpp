@@ -14,8 +14,7 @@
 #include "base_streamer.hpp"
 
 namespace ntgcalls {
-    class AudioStreamer: public BaseStreamer {
-    private:
+    class AudioStreamer final : public BaseStreamer {
         std::shared_ptr<wrtc::RTCAudioSource> audio;
         uint8_t bps = 0, channels = 0;
         uint32_t rate = 0;
@@ -25,11 +24,13 @@ namespace ntgcalls {
     public:
         AudioStreamer();
 
+    protected:
         ~AudioStreamer();
 
+    public:
         wrtc::MediaStreamTrack *createTrack() override;
 
-        void sendData(wrtc::binary sample) override;
+        void sendData(const wrtc::binary& sample) override;
 
         uint64_t frameSize() override;
 

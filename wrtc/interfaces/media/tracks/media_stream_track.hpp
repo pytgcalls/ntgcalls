@@ -9,9 +9,9 @@
 
 namespace wrtc {
 
-    class MediaStreamTrack: public webrtc::ObserverInterface {
+    class MediaStreamTrack final : public webrtc::ObserverInterface {
     public:
-        MediaStreamTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track);
+        explicit MediaStreamTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track);
 
         ~MediaStreamTrack() override;
 
@@ -21,7 +21,7 @@ namespace wrtc {
 
         void OnPeerConnectionClosed();
 
-        bool isMuted();
+        [[nodiscard]] bool isMuted() const;
 
         void Mute(bool);
 

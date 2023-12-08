@@ -19,13 +19,13 @@ namespace wrtc {
 
         explicit Description(const RTCSessionDescriptionInit &rtcSessionDescriptionInit);
 
-        static Description Wrap(webrtc::SessionDescriptionInterface *);
+        static Description Wrap(const webrtc::SessionDescriptionInterface *);
 
-        explicit operator webrtc::SessionDescriptionInterface *();
+        explicit operator webrtc::SessionDescriptionInterface *() const;
 
-        Type getType();
+        [[nodiscard]] Type getType() const;
 
-        std::string getSdp();
+        [[nodiscard]] std::string getSdp() const;
 
     private:
         std::unique_ptr<webrtc::SessionDescriptionInterface> _description;

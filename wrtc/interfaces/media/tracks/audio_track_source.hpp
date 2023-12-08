@@ -23,7 +23,7 @@ namespace wrtc {
 
         void RemoveSink(webrtc::AudioTrackSinkInterface *sink) override;
 
-        void PushData(RTCOnDataEvent &);
+        void PushData(const RTCOnDataEvent &) const;
 
     private:
         std::atomic<webrtc::AudioTrackSinkInterface *> _sink = {nullptr};

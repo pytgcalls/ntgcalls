@@ -12,24 +12,23 @@
 
 namespace wrtc {
     class i420ImageData {
-    private:
         uint16_t width, height;
         binary contents;
 
-        size_t sizeOfLuminancePlane() const;
+        [[nodiscard]] size_t sizeOfLuminancePlane() const;
 
-        size_t sizeOfChromaPlane() const;
+        [[nodiscard]] size_t sizeOfChromaPlane() const;
 
-        uint8_t* dataY();
+        [[nodiscard]] uint8_t* dataY() const;
 
-        uint8_t* dataU();
+        [[nodiscard]] uint8_t* dataU() const;
 
-        uint8_t* dataV();
+        [[nodiscard]] uint8_t* dataV() const;
 
 
     public:
-        i420ImageData(uint16_t width, uint16_t height, binary contents);
+        i420ImageData(uint16_t width, uint16_t height, const binary& contents);
 
-        rtc::scoped_refptr<webrtc::I420Buffer> buffer();
+        [[nodiscard]] rtc::scoped_refptr<webrtc::I420Buffer> buffer() const;
     };
 }

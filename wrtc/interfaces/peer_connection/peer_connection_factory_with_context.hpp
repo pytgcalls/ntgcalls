@@ -11,22 +11,22 @@ namespace wrtc {
 
     class PeerConnectionFactoryWithContext : public webrtc::PeerConnectionFactory {
     public:
-        static rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> Create(
+        static rtc::scoped_refptr<PeerConnectionFactoryInterface> Create(
                 webrtc::PeerConnectionFactoryDependencies dependencies,
                 rtc::scoped_refptr<webrtc::ConnectionContext>& context);
 
-        PeerConnectionFactoryWithContext(
+        explicit PeerConnectionFactoryWithContext(
                 webrtc::PeerConnectionFactoryDependencies dependencies);
 
         PeerConnectionFactoryWithContext(
-                rtc::scoped_refptr<webrtc::ConnectionContext> context,
+            const rtc::scoped_refptr<webrtc::ConnectionContext>& context,
                 webrtc::PeerConnectionFactoryDependencies* dependencies);
 
     private:
         static rtc::scoped_refptr<PeerConnectionFactoryWithContext> Create(
                 webrtc::PeerConnectionFactoryDependencies dependencies);
 
-        rtc::scoped_refptr<webrtc::ConnectionContext> GetContext() const;
+        [[nodiscard]] rtc::scoped_refptr<webrtc::ConnectionContext> GetContext() const;
 
         rtc::scoped_refptr<webrtc::ConnectionContext> conn_context_;
     };

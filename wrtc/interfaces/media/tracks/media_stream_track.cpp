@@ -6,7 +6,7 @@
 
 namespace wrtc {
 
-    MediaStreamTrack::MediaStreamTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track) {
+    MediaStreamTrack::MediaStreamTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
         _track = track;
         _track->RegisterObserver(this);
     }
@@ -33,11 +33,12 @@ namespace wrtc {
         Stop();
     }
 
-    bool MediaStreamTrack::isMuted() {
+    bool MediaStreamTrack::isMuted() const
+    {
         return _ended ? !_enabled : !_track->enabled();
     }
 
-    void MediaStreamTrack::Mute(bool muted) {
+    void MediaStreamTrack::Mute(const bool muted) {
         if (_ended) {
             _enabled = !muted;
         } else {
@@ -51,9 +52,9 @@ namespace wrtc {
 
     InstanceHolder<MediaStreamTrack *, rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>> *
     MediaStreamTrack::holder() {
-        return new wrtc::InstanceHolder<
-                MediaStreamTrack *, rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>
-        >(MediaStreamTrack::Create);
+        return new InstanceHolder<
+            MediaStreamTrack*, rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>
+        >(Create);
     }
 
     MediaStreamTrack *MediaStreamTrack::Create(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track) {

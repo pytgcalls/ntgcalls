@@ -21,9 +21,9 @@ namespace ntgcalls {
         wrtc::TgSSRC audioSource;
         std::vector<wrtc::TgSSRC> sourceGroups;
 
-        GroupCallPayload(wrtc::Description &desc);
+        explicit GroupCallPayload(wrtc::Description &desc);
 
-        operator std::string() const;
+        explicit operator std::string() const;
     };
 
 } // ntgcalls

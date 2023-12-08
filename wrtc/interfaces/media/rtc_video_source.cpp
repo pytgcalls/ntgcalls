@@ -16,13 +16,15 @@ namespace wrtc {
         PeerConnectionFactory::UnRef();
     }
 
-    MediaStreamTrack *RTCVideoSource::createTrack() {
+    MediaStreamTrack *RTCVideoSource::createTrack() const
+    {
         return MediaStreamTrack::holder()->GetOrCreate(
             factory->factory()->CreateVideoTrack(source, rtc::CreateRandomUuid())
         );
     }
 
-    void RTCVideoSource::OnFrame(i420ImageData data) {
+    void RTCVideoSource::OnFrame(const i420ImageData& data) const
+    {
         source->PushFrame(webrtc::VideoFrame::Builder()
             .set_video_frame_buffer(data.buffer())
             .set_timestamp_rtp(0)

@@ -30,7 +30,7 @@ namespace ntgcalls {
 
         ~Stream();
 
-        void setAVStream(MediaDescription streamConfig, bool noUpgrade = false);
+        void setAVStream(const MediaDescription& streamConfig, bool noUpgrade = false);
 
         void start();
 
@@ -38,28 +38,28 @@ namespace ntgcalls {
 
         bool resume();
 
-        bool mute();
+        bool mute() const;
 
-        bool unmute();
+        bool unmute() const;
 
         void stop();
 
-        MediaState getState();
+        MediaState getState() const;
 
-        uint64_t time();
+        uint64_t time() const;
 
-        Status status();
+        Status status() const;
 
         void addTracks(const std::shared_ptr<wrtc::PeerConnection> &pc);
 
-        void onStreamEnd(std::function<void(Stream::Type)> &callback);
+        void onStreamEnd(const std::function<void(Type)> &callback);
 
-        void onUpgrade(std::function<void(MediaState)> &callback);
+        void onUpgrade(const std::function<void(MediaState)> &callback);
 
     private:
         std::shared_ptr<AudioStreamer> audio;
         std::shared_ptr<VideoStreamer> video;
-        wrtc::MediaStreamTrack *audioTrack, *videoTrack;
+        wrtc::MediaStreamTrack *audioTrack{}, *videoTrack{};
         std::shared_ptr<MediaReaderFactory> reader;
         bool running = false, idling = false, changing = false, hasVideo = false;
         wrtc::synchronized_callback<Type> onEOF;
@@ -69,10 +69,10 @@ namespace ntgcalls {
 
         void sendSample();
 
-        void checkStream();
+        void checkStream() const;
 
-        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample();
+        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample() const;
 
-        void checkUpgrade();
+        void checkUpgrade() const;
     };
 }

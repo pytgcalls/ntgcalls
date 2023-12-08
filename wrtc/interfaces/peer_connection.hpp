@@ -4,38 +4,33 @@
 
 #pragma once
 
-#include <optional>
 #include <api/peer_connection_interface.h>
-
 #include "../enums.hpp"
 #include "../exceptions.hpp"
-#include "../utils/sync.hpp"
 #include "../utils/syncronized_callback.hpp"
 #include "../models/rtc_session_description.hpp"
 #include "media/tracks/media_stream_track.hpp"
 #include "peer_connection/peer_connection_factory.hpp"
-#include "peer_connection/create_session_description_observer.hpp"
-#include "peer_connection/set_session_description_observer.hpp"
 
 namespace wrtc {
 
-    class PeerConnection: public webrtc::PeerConnectionObserver {
+    class PeerConnection final : public webrtc::PeerConnectionObserver {
     public:
         PeerConnection();
 
         ~PeerConnection() override;
 
-        Description createOffer(bool offerToReceiveAudio = true, bool offerToReceiveVideo = false);
+        Description createOffer(bool offerToReceiveAudio = true, bool offerToReceiveVideo = false) const;
 
-        void setLocalDescription(Description &description);
+        void setLocalDescription(const Description &description) const;
 
-        void setRemoteDescription(Description &description);
+        void setRemoteDescription(const Description &description) const;
 
-        void addTrack(MediaStreamTrack *mediaStreamTrack, std::vector<std::string> streamIds = {});
+        void addTrack(MediaStreamTrack *mediaStreamTrack, const std::vector<std::string>& streamIds = {}) const;
 
-        void restartIce();
+        void restartIce() const;
 
-        void close();
+        void close() const;
 
         void onIceStateChange(const std::function<void(IceState state)> &callback);
 

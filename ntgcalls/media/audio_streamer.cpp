@@ -24,7 +24,7 @@ namespace ntgcalls {
         return std::chrono::milliseconds(10); // ms
     }
 
-    void AudioStreamer::sendData(wrtc::binary sample) {
+    void AudioStreamer::sendData(const wrtc::binary& sample) {
         BaseStreamer::sendData(sample);
         auto event = wrtc::RTCOnDataEvent(sample, frameSize() / (2 * channels));
         event.channelCount = channels;
@@ -34,10 +34,10 @@ namespace ntgcalls {
     }
 
     uint64_t AudioStreamer::frameSize() {
-        return ((rate * bps) / 8 / 100) * channels;
+        return rate * bps / 8 / 100 * channels;
     }
 
-    void AudioStreamer::setConfig(uint32_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount) {
+    void AudioStreamer::setConfig(const uint32_t sampleRate, const uint8_t bitsPerSample, const uint8_t channelCount) {
         clear();
         bps = bitsPerSample;
         rate = sampleRate;

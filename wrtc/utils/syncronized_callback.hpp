@@ -9,11 +9,12 @@
 
 namespace wrtc {
 
-    template <typename... Args> class synchronized_callback {
+    template <typename... Args> class synchronized_callback final
+    {
     public:
         synchronized_callback() = default;
 
-        virtual ~synchronized_callback() { *this = nullptr; }
+        ~synchronized_callback() { *this = nullptr; }
 
         synchronized_callback &operator=(std::function<void(Args...)> func) {
             std::lock_guard lock(mutex);
@@ -27,8 +28,9 @@ namespace wrtc {
         }
 
     protected:
-        virtual void set(std::function<void(Args...)> func) { callback = std::move(func); }
-        virtual bool call(Args... args) const {
+        void set(std::function<void(Args...)> func) { callback = std::move(func); }
+
+        bool call(Args... args) const {
             if (!callback)
                 return false;
 

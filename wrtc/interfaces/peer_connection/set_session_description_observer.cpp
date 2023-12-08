@@ -10,7 +10,7 @@ namespace wrtc {
         _onSuccess();
     }
 
-    void SetSessionDescriptionObserver::OnFailure(webrtc::RTCError error) {
+    void SetSessionDescriptionObserver::OnFailure(const webrtc::RTCError error) {
         _onFailure(wrapRTCError(error));
     }
 

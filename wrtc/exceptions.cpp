@@ -12,17 +12,17 @@ namespace wrtc {
     BaseRTCException::BaseRTCException(std::string msg) : _msg(std::move(msg)) {}
 
     RTCException wrapRTCError(const webrtc::RTCError &error) {
-        std::string msg;
-        return RTCException(msg + "[" + std::string(ToString(error.type())) + "] " + error.message());
+        const std::string msg;
+        return RTCException{msg + "[" + std::string(ToString(error.type())) + "] " + error.message()};
     }
 
     SdpParseException wrapSdpParseError(const webrtc::SdpParseError &error) {
-        std::string msg;
+        const std::string msg;
 
         if (error.line.empty()) {
-            return SdpParseException(msg + error.description);
+            return SdpParseException{msg + error.description};
         } else {
-            return SdpParseException(msg + "Line: " + error.line + ".  " + error.description);
+            return SdpParseException{msg + "Line: " + error.line + ".  " + error.description};
         }
     }
 }

@@ -5,8 +5,8 @@
 #include "rtc_session_description.hpp"
 
 namespace wrtc {
-    Description::Description(Type type, const std::string &sdp) {
-        webrtc::SdpType newType;
+    Description::Description(const Type type, const std::string &sdp) {
+        webrtc::SdpType newType = {};
         switch (type) {
             case Type::Offer:
                 newType = webrtc::SdpType::kOffer;
@@ -24,9 +24,9 @@ namespace wrtc {
         *this = Description(RTCSessionDescriptionInit(newType, sdp));
     }
 
-    Description::Description(const RTCSessionDescriptionInit &init) {
+    Description::Description(const RTCSessionDescriptionInit &rtcSessionDescriptionInit) {
         webrtc::SdpParseError error;
-        auto description = webrtc::CreateSessionDescription(init.type, init.sdp, &error);
+        auto description = webrtc::CreateSessionDescription(rtcSessionDescriptionInit.type, rtcSessionDescriptionInit.sdp, &error);
         if (!description) {
             throw wrapSdpParseError(error);
         }
@@ -34,30 +34,34 @@ namespace wrtc {
         _description = std::move(description);
     }
 
-    Description::Type Description::getType() {
+    Description::Type Description::getType() const
+    {
         switch (_description->GetType()) {
             case webrtc::SdpType::kOffer:
-                return Description::Type::Offer;
+                return Type::Offer;
             case webrtc::SdpType::kPrAnswer:
-                return Description::Type::Pranswer;
+                return Type::Pranswer;
             case webrtc::SdpType::kAnswer:
-                return Description::Type::Answer;
+                return Type::Answer;
             case webrtc::SdpType::kRollback:
-                return Description::Type::Rollback;
+                return Type::Rollback;
         }
+        return {};
     }
 
-    std::string Description::getSdp() {
+    std::string Description::getSdp() const
+    {
         std::string sdp;
         _description->ToString(&sdp);
         return sdp;
     }
 
-    Description::operator webrtc::SessionDescriptionInterface *() {
-        return webrtc::CreateSessionDescription(_description->GetType(), this->getSdp()).release();
+    Description::operator webrtc::SessionDescriptionInterface *() const
+    {
+        return CreateSessionDescription(_description->GetType(), this->getSdp()).release();
     }
 
-    Description Description::Wrap(webrtc::SessionDescriptionInterface *description) {
+    Description Description::Wrap(const webrtc::SessionDescriptionInterface *description) {
         return Description(RTCSessionDescriptionInit::Wrap(description));
     }
 } // wrtc

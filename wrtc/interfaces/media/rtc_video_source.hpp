@@ -19,9 +19,9 @@ namespace wrtc {
 
         ~RTCVideoSource();
 
-        MediaStreamTrack *createTrack();
+        [[nodiscard]] MediaStreamTrack *createTrack() const;
 
-        void OnFrame(i420ImageData data);
+        void OnFrame(const i420ImageData& data) const;
 
     private:
         rtc::scoped_refptr<VideoTrackSource> source;

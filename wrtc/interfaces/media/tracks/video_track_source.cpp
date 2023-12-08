@@ -6,13 +6,13 @@
 
 namespace wrtc {
 
-    VideoTrackSource::VideoTrackSource(bool is_screencast, absl::optional<bool> needs_denoising) {
+    VideoTrackSource::VideoTrackSource(const bool is_screencast, const absl::optional<bool> needs_denoising) {
         _is_screencast = is_screencast;
         _needs_denoising = needs_denoising;
     }
 
     webrtc::MediaSourceInterface::SourceState VideoTrackSource::state() const {
-        return webrtc::MediaSourceInterface::SourceState::kLive;
+        return kLive;
     }
 
     bool VideoTrackSource::remote() const {

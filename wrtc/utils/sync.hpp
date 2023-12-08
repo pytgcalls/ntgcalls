@@ -11,7 +11,6 @@ namespace wrtc {
 
     template <class T>
     class Sync {
-    private:
         std::promise<T> promise{};
 
     public:
@@ -19,7 +18,7 @@ namespace wrtc {
             promise.set_value(value);
         };
 
-        const std::function<void(std::exception)> onFailed = [this](const std::exception& value) {
+        const std::function<void(std::exception&)> onFailed = [this](const std::exception& value) {
             promise.set_exception(std::make_exception_ptr(value));
         };
 
@@ -30,7 +29,6 @@ namespace wrtc {
 
     template <class T>
     class Sync<std::optional<T>> {
-    private:
         std::promise<std::optional<T>> promise{};
 
     public:
@@ -38,7 +36,7 @@ namespace wrtc {
             promise.set_value(std::move(value));
         };
 
-        const std::function<void(std::exception)> onFailed = [this](const std::exception& value) {
+        const std::function<void(std::exception&)> onFailed = [this](const std::exception& value) {
             promise.set_exception(std::make_exception_ptr(value));
         };
 
@@ -49,15 +47,14 @@ namespace wrtc {
 
     template<> class
     Sync<void> {
-    private:
-        std::promise<void> promise{};
+    std::promise<void> promise{};
 
     public:
         const std::function<void()> onSuccess = [this]() {
             promise.set_value();
         };
 
-        const std::function<void(std::exception)> onFailed = [this](const std::exception& value) {
+        const std::function<void(std::exception&)> onFailed = [this](const std::exception& value) {
             promise.set_exception(std::make_exception_ptr(value));
         };
 

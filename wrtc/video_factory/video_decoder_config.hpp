@@ -10,19 +10,19 @@
 
 namespace wrtc {
 
-    class VideoDecoderConfig: public VideoBaseConfig {
+    class VideoDecoderConfig final : public VideoBaseConfig {
     public:
         VideoDecoderConfig() = default;
 
-        ~VideoDecoderConfig();
+        ~VideoDecoderConfig() override;
 
         VideoDecoderConfig(webrtc::VideoCodecType codec, DecoderCallback createVideoDecoder);
 
         VideoDecoderConfig(FormatsRetriever getSupportedFormats, DecoderCallback createVideoDecoder);
 
-        VideoDecoderConfig(std::unique_ptr<webrtc::VideoDecoderFactory> factory): factory(std::move(factory)) {}
+        explicit VideoDecoderConfig(std::unique_ptr<webrtc::VideoDecoderFactory> factory): factory(std::move(factory)) {}
 
-        std::unique_ptr<webrtc::VideoDecoder> CreateVideoCodec(const webrtc::SdpVideoFormat& format);
+        [[nodiscard]] std::unique_ptr<webrtc::VideoDecoder> CreateVideoCodec(const webrtc::SdpVideoFormat& format) const;
 
     private:
         DecoderCallback decoder;

@@ -11,11 +11,9 @@ namespace wrtc {
 
   class RTCSessionDescriptionInit {
   public:
-    RTCSessionDescriptionInit();
-
     RTCSessionDescriptionInit(webrtc::SdpType type, std::string sdp);
 
-    static RTCSessionDescriptionInit Wrap(webrtc::SessionDescriptionInterface *);
+    static RTCSessionDescriptionInit Wrap(const webrtc::SessionDescriptionInterface *);
 
     webrtc::SdpType type;
     std::string sdp;

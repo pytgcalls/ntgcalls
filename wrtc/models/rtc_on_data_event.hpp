@@ -5,15 +5,13 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
-#include <vector>
 #include "../enums.hpp"
 
 namespace wrtc {
 
   class RTCOnDataEvent {
   public:
-    RTCOnDataEvent(binary, uint16_t);
+    RTCOnDataEvent(const binary&, uint16_t);
 
     binary audioData;
     uint16_t numberOfFrames;

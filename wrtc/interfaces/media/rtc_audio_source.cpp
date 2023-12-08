@@ -17,13 +17,15 @@ namespace wrtc {
         PeerConnectionFactory::UnRef();
     }
 
-    MediaStreamTrack *RTCAudioSource::createTrack() {
+    MediaStreamTrack *RTCAudioSource::createTrack() const
+    {
         return MediaStreamTrack::holder()->GetOrCreate(
             factory->factory()->CreateAudioTrack(rtc::CreateRandomUuid(), source.get())
         );
     }
 
-    void RTCAudioSource::OnData(RTCOnDataEvent &data) {
+    void RTCAudioSource::OnData(const RTCOnDataEvent &data) const
+    {
         source->PushData(data);
     }
 } // wrtc

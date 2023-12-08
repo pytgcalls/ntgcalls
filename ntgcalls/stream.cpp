@@ -2,6 +2,7 @@
 // Created by Laky64 on 12/08/2023.
 //
 
+// ReSharper disable CppDFAUnreachableFunctionCall
 #include "stream.hpp"
 
 namespace ntgcalls {
@@ -29,7 +30,8 @@ namespace ntgcalls {
         pc->addTrack(videoTrack);
     }
 
-    std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample() {
+    std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample() const
+    {
         std::shared_ptr<BaseStreamer> bs;
         std::shared_ptr<BaseReader> br;
         if (reader->audio && reader->video) {
@@ -48,25 +50,27 @@ namespace ntgcalls {
             br = reader->video;
         }
 
-        auto waitTime = bs->waitTime();
-        if (waitTime.count() > 0) {
+        if (const auto waitTime = bs->waitTime(); waitTime.count() > 0) {
             std::this_thread::sleep_for(waitTime);
         }
         return {bs, br};
     }
 
-    void Stream::checkStream() {
+    void Stream::checkStream() const
+    {
         if (running && !changing) {
             if (reader->audio && reader->audio->eof()) {
                 reader->audio = nullptr;
-                updateQueue->dispatch([&]() {
-                    onEOF(Audio);
+                updateQueue->dispatch([&]
+                {
+                    (void) onEOF(Audio);
                 });
             }
             if (reader->video && reader->video->eof()) {
                 reader->video = nullptr;
-                updateQueue->dispatch([&]() {
-                    onEOF(Video);
+                updateQueue->dispatch([&]
+                {
+                    (void) onEOF(Video);
                 });
             }
         }
@@ -77,11 +81,9 @@ namespace ntgcalls {
             if (idling || changing || !reader || !(reader->audio || reader->video)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
             } else {
-                auto bsBR = unsafePrepareForSample();
-                if (bsBR.first && bsBR.second) {
-                    auto sample = bsBR.second->read(bsBR.first->frameSize());
-                    if (sample) {
-                        bsBR.first->sendData(sample);
+                if (auto [fst, snd] = unsafePrepareForSample(); fst && snd) {
+                    if (const auto sample = snd->read(fst->frameSize())) {
+                        fst->sendData(sample);
                     }
                 }
                 checkStream();
@@ -94,10 +96,10 @@ namespace ntgcalls {
         }
     }
 
-    void Stream::setAVStream(MediaDescription streamConfig, bool noUpgrade) {
+    void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
         changing = true;
-        auto audioConfig = streamConfig.audio;
-        auto videoConfig = streamConfig.video;
+        const auto audioConfig = streamConfig.audio;
+        const auto videoConfig = streamConfig.video;
         reader = std::make_shared<MediaReaderFactory>(streamConfig);
         idling = false;
         if (audioConfig) {
@@ -107,7 +109,7 @@ namespace ntgcalls {
                 audioConfig->channelCount
             );
         }
-        bool wasVideo = hasVideo;
+        const bool wasVideo = hasVideo;
         if (videoConfig) {
             hasVideo = true;
             video->setConfig(
@@ -124,13 +126,16 @@ namespace ntgcalls {
         }
     }
 
-    void Stream::checkUpgrade() {
-        updateQueue->dispatch([&]() {
-            onChangeStatus(getState());
+    void Stream::checkUpgrade() const
+    {
+        updateQueue->dispatch([&]
+        {
+            (void) onChangeStatus(getState());
         });
     }
 
-    MediaState Stream::getState() {
+    MediaState Stream::getState() const
+    {
         return MediaState{
                 audioTrack->isMuted() && videoTrack->isMuted(),
                 idling || videoTrack->isMuted(),
@@ -138,24 +143,28 @@ namespace ntgcalls {
         };
     }
 
-    uint64_t Stream::time() {
+    uint64_t Stream::time() const
+    {
         if (reader) {
             if (reader->audio && reader->video) {
                 return (audio->time() + video->time()) / 2;
-            } else if (reader->audio) {
+            }
+            if (reader->audio) {
                 return audio->time();
-            } else if (reader->video) {
+            }
+            if (reader->video) {
                 return video->time();
             }
         }
         return 0;
     }
 
-    Stream::Status Stream::status() {
+    Stream::Status Stream::status() const
+    {
         if ((reader->audio || reader->video) && running && !changing) {
-            return idling ? Status::Paused : Status::Playing;
+            return idling ? Paused : Playing;
         }
-        return Status::Idling;
+        return Idling;
     }
 
     void Stream::start() {
@@ -168,18 +177,19 @@ namespace ntgcalls {
     }
 
     bool Stream::pause() {
-        auto res = std::exchange(idling, true);
+        const auto res = std::exchange(idling, true);
         checkUpgrade();
         return !res;
     }
 
     bool Stream::resume() {
-        auto res = std::exchange(idling, false);
+        const auto res = std::exchange(idling, false);
         checkUpgrade();
         return res;
     }
 
-    bool Stream::mute() {
+    bool Stream::mute() const
+    {
         if (!audioTrack->isMuted() || !videoTrack->isMuted()) {
             audioTrack->Mute(true);
             videoTrack->Mute(true);
@@ -191,7 +201,8 @@ namespace ntgcalls {
         }
     }
 
-    bool Stream::unmute() {
+    bool Stream::unmute() const
+    {
         if (audioTrack->isMuted() || videoTrack->isMuted()) {
             audioTrack->Mute(false);
             videoTrack->Mute(false);
@@ -218,11 +229,11 @@ namespace ntgcalls {
         }
     }
 
-    void Stream::onStreamEnd(std::function<void(Stream::Type)> &callback) {
+    void Stream::onStreamEnd(const std::function<void(Type)> &callback) {
         onEOF = callback;
     }
 
-    void Stream::onUpgrade(std::function<void(MediaState)> &callback) {
+    void Stream::onUpgrade(const std::function<void(MediaState)> &callback) {
         onChangeStatus = callback;
     }
 }

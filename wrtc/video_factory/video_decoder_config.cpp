@@ -5,14 +5,14 @@
 #include "video_decoder_config.hpp"
 
 namespace wrtc {
-    VideoDecoderConfig::VideoDecoderConfig(webrtc::VideoCodecType codec, DecoderCallback decoder) {
+    VideoDecoderConfig::VideoDecoderConfig(const webrtc::VideoCodecType codec, DecoderCallback createVideoDecoder) {
         this->codec = codec;
-        this->decoder = std::move(decoder);
+        this->decoder = std::move(createVideoDecoder);
     }
 
-    VideoDecoderConfig::VideoDecoderConfig(FormatsRetriever formatsRetriever, DecoderCallback decoder) {
-        this->formatsRetriever = std::move(formatsRetriever);
-        this->decoder = std::move(decoder);
+    VideoDecoderConfig::VideoDecoderConfig(FormatsRetriever getSupportedFormats, DecoderCallback createVideoDecoder) {
+        this->formatsRetriever = std::move(getSupportedFormats);
+        this->decoder = std::move(createVideoDecoder);
     }
 
     bool VideoDecoderConfig::isInternal() {
@@ -29,7 +29,8 @@ namespace wrtc {
         decoder = nullptr;
     }
 
-    std::unique_ptr<webrtc::VideoDecoder> VideoDecoderConfig::CreateVideoCodec(const webrtc::SdpVideoFormat& format) {
+    std::unique_ptr<webrtc::VideoDecoder> VideoDecoderConfig::CreateVideoCodec(const webrtc::SdpVideoFormat& format) const
+    {
        if (factory) {
            return factory->CreateVideoDecoder(format);
        } else {

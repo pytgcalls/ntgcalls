@@ -4,8 +4,12 @@
 
 #include "sdp_builder.hpp"
 
+#include <format>
+#include <sstream>
+
 namespace wrtc {
-    std::string SdpBuilder::join() {
+    std::string SdpBuilder::join() const
+    {
         std::string joinedSdp;
         for (const auto& line : lines) {
             joinedSdp += line + "\r\n";
@@ -13,7 +17,8 @@ namespace wrtc {
         return joinedSdp;
     }
 
-    std::string SdpBuilder::finalize() {
+    std::string SdpBuilder::finalize() const
+    {
         return join();
     }
 
@@ -39,15 +44,14 @@ namespace wrtc {
 
     void SdpBuilder::addCandidate(const Candidate& c) {
         push("a=candidate:");
-        push(c.foundation + " " + c.component + " " + c.protocol + " " + c.priority + " " +
-             c.ip + " " + c.port + " typ " + c.type);
-        push(" generation " + c.generation);
+        push(std::format("{} {} {} {} {} {} typ {}", c.foundation, c.component, c.protocol, c.priority, c.ip, c.port, c.type));
+        push(std::format(" generation {}", c.generation));
         addJoined();
     }
 
     void SdpBuilder::addHeader() {
         add("v=0");
-        add("o=- " + std::to_string(rtc::CreateRandomId64()) + " 2 IN IP4 0.0.0.0");
+        add(std::format("o=- {} 2 IN IP4 0.0.0.0", rtc::CreateRandomId64()));
         add("s=-");
         add("t=0 0");
         add("a=group:BUNDLE 0 1");
@@ -55,11 +59,11 @@ namespace wrtc {
     }
 
     void SdpBuilder::addTransport(const Transport& transport) {
-        add("a=ice-ufrag:" + transport.ufrag);
-        add("a=ice-pwd:" + transport.pwd);
+        add(std::format("a=ice-ufrag:{}", transport.ufrag));
+        add(std::format("a=ice-pwd:{}", transport.pwd));
 
-        for (const auto& fingerprint : transport.fingerprints) {
-            add("a=fingerprint:" + fingerprint.hash + " " + fingerprint.fingerprint);
+        for (const auto& [hash, fingerprint] : transport.fingerprints) {
+            add(std::format("a=fingerprint:{} {}", hash, fingerprint));
             add("a=setup:passive");
         }
 

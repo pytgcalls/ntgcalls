@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 namespace wrtc {
@@ -13,6 +13,7 @@ namespace wrtc {
     typedef int32_t TgSSRC;
 
     enum class IceState: int {
+        Unknown,
         New,
         Checking,
         Connected,
@@ -23,12 +24,14 @@ namespace wrtc {
     };
 
     enum class GatheringState: int {
+        Unknown,
         New,
         InProgress,
         Complete
     };
 
     enum class SignalingState: int {
+        Unknown,
         Stable,
         HaveLocalOffer,
         HaveRemoteOffer,

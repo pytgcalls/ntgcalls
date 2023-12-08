@@ -11,10 +11,9 @@
 #include <condition_variable>
 #include <queue>
 #include <functional>
-#include <string>
 
 class DispatchQueue {
-    typedef std::function<void(void)> fp_t;
+    typedef std::function<void()> fp_t;
 
 public:
     explicit DispatchQueue(size_t threadCount = 1);

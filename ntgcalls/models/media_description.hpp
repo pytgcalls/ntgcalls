@@ -4,8 +4,9 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
-#include <map>
+#include <utility>
 
 namespace ntgcalls {
     class BaseMediaDescription {
@@ -19,7 +20,7 @@ namespace ntgcalls {
         std::string input;
         InputMode inputMode;
 
-        BaseMediaDescription(std::string input, InputMode inputMode): input(input), inputMode(inputMode) {}
+        BaseMediaDescription(std::string  input, const InputMode inputMode): input(std::move(input)), inputMode(inputMode) {}
     };
 
     class AudioDescription: public BaseMediaDescription {
@@ -27,8 +28,8 @@ namespace ntgcalls {
         uint32_t sampleRate;
         uint8_t bitsPerSample, channelCount;
 
-        AudioDescription(InputMode inputMode, uint32_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount, std::string input):
-                sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount), BaseMediaDescription(input, inputMode) {};
+        AudioDescription(const InputMode inputMode, const uint32_t sampleRate, const uint8_t bitsPerSample, const uint8_t channelCount, const std::string& input):
+                BaseMediaDescription(input, inputMode), sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount) {};
     };
 
     class VideoDescription: public BaseMediaDescription {
@@ -36,8 +37,8 @@ namespace ntgcalls {
         uint16_t width, height;
         uint8_t fps;
 
-        VideoDescription(InputMode inputMode, uint16_t width, uint16_t height, uint8_t fps, std::string input):
-                width(width), height(height), fps(fps), BaseMediaDescription(input, inputMode) {};
+        VideoDescription(const InputMode inputMode, const uint16_t width, const uint16_t height, const uint8_t fps, const std::string& input):
+                BaseMediaDescription(input, inputMode), width(width), height(height), fps(fps) {}
     };
 
     class MediaDescription {
@@ -45,7 +46,7 @@ namespace ntgcalls {
         std::optional<AudioDescription> audio;
         std::optional<VideoDescription> video;
 
-        MediaDescription(std::optional<AudioDescription> audio, std::optional<VideoDescription> video) {
+        MediaDescription(const std::optional<AudioDescription>& audio, const std::optional<VideoDescription>& video) {
             this->audio = audio;
             this->video = video;
         }

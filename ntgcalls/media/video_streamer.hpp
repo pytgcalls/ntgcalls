@@ -16,8 +16,7 @@
 #include "base_streamer.hpp"
 
 namespace ntgcalls {
-    class VideoStreamer: public BaseStreamer {
-    private:
+    class VideoStreamer final : public BaseStreamer {
         std::shared_ptr<wrtc::RTCVideoSource> video;
         uint16_t w = 0, h = 0;
         uint8_t fps = 0;
@@ -27,11 +26,13 @@ namespace ntgcalls {
     public:
         VideoStreamer();
 
+    protected:
         ~VideoStreamer();
 
+    public:
         wrtc::MediaStreamTrack *createTrack() override;
 
-        void sendData(wrtc::binary sample) override;
+        void sendData(const wrtc::binary& sample) override;
 
         uint64_t frameSize() override;
 

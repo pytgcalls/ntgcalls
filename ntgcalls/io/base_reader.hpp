@@ -5,9 +5,7 @@
 #pragma once
 
 
-#include <cstdint>
 #include <vector>
-#include <mutex>
 
 #include <wrtc/wrtc.hpp>
 #include "../utils/dispatch_queue.hpp"
@@ -31,7 +29,7 @@ namespace ntgcalls {
     public:
         wrtc::binary read(size_t size);
 
-        bool eof();
+        [[nodiscard]] bool eof() const;
 
         virtual void close();
     };

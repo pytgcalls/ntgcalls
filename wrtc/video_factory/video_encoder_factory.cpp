@@ -11,9 +11,8 @@ namespace wrtc {
     std::unique_ptr<webrtc::VideoEncoder>
     VideoEncoderFactory::CreateVideoEncoder(const webrtc::SdpVideoFormat &format) {
         int n = 0;
-        for (auto& enc : encoders) {
-            auto supported_formats = formats_[n++];
-            for (const auto& f : supported_formats) {
+        for (const auto& enc : encoders) {
+            for (auto supported_formats = formats_[n++]; const auto& f : supported_formats) {
                 if (f.IsSameCodec(format)) {
                     return enc.CreateVideoCodec(format);
                 }

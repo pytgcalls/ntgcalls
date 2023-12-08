@@ -7,11 +7,8 @@
 #include <cstdint>
 #include <wrtc/wrtc.hpp>
 
-#include "../exceptions.hpp"
-
 namespace ntgcalls {
     class BaseStreamer {
-    private:
         uint64_t sentFrames = 0;
         std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
 
@@ -31,7 +28,7 @@ namespace ntgcalls {
 
         virtual wrtc::MediaStreamTrack *createTrack() = 0;
 
-        virtual void sendData(wrtc::binary sample);
+        virtual void sendData(const wrtc::binary& sample);
 
         virtual uint64_t frameSize() = 0;
     };

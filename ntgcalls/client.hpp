@@ -5,12 +5,9 @@
 #pragma once
 
 #include <string>
-#include <optional>
 #include <wrtc/wrtc.hpp>
 
 #include "stream.hpp"
-#include "exceptions.hpp"
-#include "io/file_reader.hpp"
 #include "models/media_description.hpp"
 #include "models/group_call_payload.hpp"
 
@@ -18,7 +15,6 @@ namespace ntgcalls {
     using nlohmann::json;
 
     class Client {
-    private:
         std::shared_ptr<wrtc::PeerConnection> connection;
         wrtc::SSRC audioSource = 0;
         std::vector<wrtc::SSRC> sourceGroups = {};
@@ -31,30 +27,30 @@ namespace ntgcalls {
 
         ~Client();
 
-        std::string init(MediaDescription config);
+        std::string init(const MediaDescription& config);
 
-        void connect(const std::string& jsonData);
+        void connect(const std::string& jsonData) const;
 
-        void changeStream(MediaDescription config);
+        void changeStream(const MediaDescription& config) const;
 
-        bool pause();
+        [[nodiscard]] bool pause() const;
 
-        bool resume();
+        [[nodiscard]] bool resume() const;
 
-        bool mute();
+        [[nodiscard]] bool mute() const;
 
-        bool unmute();
+        [[nodiscard]] bool unmute() const;
 
-        void stop();
+        void stop() const;
 
-        uint64_t time();
+        [[nodiscard]] uint64_t time() const;
 
-        MediaState getState();
+        [[nodiscard]] MediaState getState() const;
 
-        Stream::Status status();
+        [[nodiscard]] Stream::Status status() const;
 
-        void onUpgrade(std::function<void(MediaState)> callback);
+        void onUpgrade(const std::function<void(MediaState)>& callback) const;
 
-        void onStreamEnd(std::function<void(Stream::Type)> callback);
+        void onStreamEnd(const std::function<void(Stream::Type)>& callback) const;
     };
 }

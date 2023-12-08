@@ -1,11 +1,12 @@
 //
 // Created by Laky64 on 12/08/2023.
 //
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <pybind11/functional.h>
 
 #include "../ntgcalls.hpp"
+#include "ntgcalls/exceptions.hpp"
 
 namespace py = pybind11;
 
@@ -91,7 +92,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     mediaDescWrapper.def_readwrite("video", &ntgcalls::MediaDescription::video);
 
     // Exceptions
-    pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
+    const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
     pybind11::register_exception<wrtc::SdpParseException>(m, "SdpParseException", baseExc);
     pybind11::register_exception<wrtc::RTCException>(m, "RTCException", baseExc);
     pybind11::register_exception<ntgcalls::ConnectionError>(m, "ConnectionError", baseExc);

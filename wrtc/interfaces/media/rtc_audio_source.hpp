@@ -5,8 +5,6 @@
 #pragma once
 
 #include <api/scoped_refptr.h>
-#include <rtc_base/helpers.h>
-#include <rtc_base/ref_count.h>
 
 #include "tracks/audio_track_source.hpp"
 #include "tracks/media_stream_track.hpp"
@@ -21,9 +19,9 @@ namespace wrtc {
 
         ~RTCAudioSource();
 
-        MediaStreamTrack *createTrack();
+        [[nodiscard]] MediaStreamTrack *createTrack() const;
 
-        void OnData(RTCOnDataEvent &);
+        void OnData(const RTCOnDataEvent &) const;
 
     private:
         rtc::scoped_refptr<AudioTrackSource> source;

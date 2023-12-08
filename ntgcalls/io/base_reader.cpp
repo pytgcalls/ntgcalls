@@ -11,21 +11,19 @@ namespace ntgcalls {
     }
 
     BaseReader::~BaseReader() {
-        close();
+        BaseReader::close();
         readChunks = 0;
     }
 
     wrtc::binary BaseReader::read(size_t size) {
         if (dispatchQueue != nullptr) {
-            wrtc::binary res;
             auto promise = std::make_shared<std::promise<void>>();
             if (!_eof && nextBuffer.size() <= 4) {
                 dispatchQueue->dispatch([this, promise, size] {
                     try {
-                        auto availableSpace = 10 - nextBuffer.size();
+                        const auto availableSpace = 10 - nextBuffer.size();
                         for (int i = 0; i < availableSpace; i++) {
-                            auto tmpRead = readInternal(size);
-                            if (tmpRead != nullptr) nextBuffer.push_back(tmpRead);
+                            if (auto tmpRead = readInternal(size); tmpRead != nullptr) nextBuffer.push_back(tmpRead);
                         }
                     } catch (...) {
                         _eof = true;
@@ -37,7 +35,7 @@ namespace ntgcalls {
                 if (promise != nullptr) promise->get_future().wait();
             }
             if (!nextBuffer.empty()) {
-                res = nextBuffer[0];
+                wrtc::binary res = nextBuffer[0];
                 nextBuffer.erase(nextBuffer.begin());
                 return res;
             }
@@ -49,7 +47,8 @@ namespace ntgcalls {
         dispatchQueue = nullptr;
     }
 
-    bool BaseReader::eof() {
+    bool BaseReader::eof() const
+    {
         return _eof && nextBuffer.empty();
     }
 }

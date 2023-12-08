@@ -4,6 +4,9 @@
 
 #include "client.hpp"
 
+#include "exceptions.hpp"
+#include "wrtc/utils/sync.hpp"
+
 namespace ntgcalls {
     Client::Client() {
         stream = std::make_shared<Stream>();
@@ -23,28 +26,30 @@ namespace ntgcalls {
 
         auto offer = connection->createOffer(true, true);
         connection->setLocalDescription(offer);
-        return offer;
+        return GroupCallPayload(offer);
     }
 
-    std::string Client::init(MediaDescription config) {
+    std::string Client::init(const MediaDescription& config) {
         if (connection) {
             throw ConnectionError("Connection already made");
         }
 
-        auto res = init();
+        const auto res = init();
         stream->setAVStream(config, true);
         audioSource = res.audioSource;
-        for (auto &ssrc : res.sourceGroups) {
+        for (const auto &ssrc : res.sourceGroups) {
             sourceGroups.push_back(ssrc);
         }
-        return res;
+        return std::string(res);
     }
 
-    void Client::changeStream(MediaDescription config) {
+    auto Client::changeStream(const MediaDescription& config) const -> void
+    {
         stream->setAVStream(config);
     }
 
-    void Client::connect(const std::string& jsonData) {
+    void Client::connect(const std::string& jsonData) const
+    {
         auto data = json::parse(jsonData);
         if (!data["rtmp"].is_null()) {
             throw RTMPNeeded("Needed rtmp connection");
@@ -87,14 +92,14 @@ namespace ntgcalls {
             throw InvalidParams("Invalid transport");
         }
 
-        auto remoteDescription = wrtc::Description(
+        const auto remoteDescription = wrtc::Description(
             wrtc::Description::Type::Answer,
             wrtc::SdpBuilder::fromConference(conference)
         );
         connection->setRemoteDescription(remoteDescription);
 
         wrtc::Sync<void> waitConnection;
-        connection->onIceStateChange([&waitConnection](wrtc::IceState state) {
+        connection->onIceStateChange([&waitConnection](const wrtc::IceState state) {
             switch (state) {
                 case wrtc::IceState::Connected:
                     waitConnection.onSuccess();
@@ -102,7 +107,8 @@ namespace ntgcalls {
                 case wrtc::IceState::Disconnected:
                 case wrtc::IceState::Failed:
                 case wrtc::IceState::Closed:
-                    waitConnection.onFailed(ConnectionError("Connection failed to Telegram WebRTC"));
+                    ConnectionError connectionError("Connection failed to Telegram WebRTC");
+                    waitConnection.onFailed(connectionError);
                     break;
                 default:
                     break;
@@ -113,44 +119,54 @@ namespace ntgcalls {
         stream->start();
     }
 
-    bool Client::pause() {
+    bool Client::pause() const
+    {
         return stream->pause();
     }
 
-    bool Client::resume() {
+    bool Client::resume() const
+    {
         return stream->resume();
     }
 
-    bool Client::mute() {
+    bool Client::mute() const
+    {
         return stream->mute();
     }
 
-    bool Client::unmute() {
+    bool Client::unmute() const
+    {
         return stream->unmute();
     }
 
-    void Client::stop() {
+    void Client::stop() const
+    {
         stream->stop();
         connection->close();
     }
 
-    void Client::onStreamEnd(std::function<void(Stream::Type)> callback) {
+    void Client::onStreamEnd(const std::function<void(Stream::Type)>& callback) const
+    {
         stream->onStreamEnd(callback);
     }
 
-    void Client::onUpgrade(std::function<void(MediaState)> callback) {
+    void Client::onUpgrade(const std::function<void(MediaState)>& callback) const
+    {
         stream->onUpgrade(callback);
     }
 
-    uint64_t Client::time() {
+    uint64_t Client::time() const
+    {
         return stream->time();
     }
 
-    MediaState Client::getState() {
+    MediaState Client::getState() const
+    {
         return stream->getState();
     }
 
-    Stream::Status Client::status() {
+    auto Client::status() const -> Stream::Status
+    {
         return stream->status();
     }
 }

@@ -6,7 +6,7 @@
 
 #ifdef BOOST_ENABLED
 namespace ntgcalls {
-    ntgcalls::ShellReader::ShellReader(const std::string &command) {
+    ShellReader::ShellReader(const std::string &command) {
         try {
             shellProcess = bp::child(command, bp::std_out > stdOut, bp::std_in < stdIn);
         } catch (std::runtime_error &e) {
@@ -18,12 +18,12 @@ namespace ntgcalls {
         close();
     }
 
-    wrtc::binary ShellReader::readInternal(size_t size) {
+    wrtc::binary ShellReader::readInternal(const size_t size) {
         if (stdOut.eof() || stdOut.fail() || !stdOut.is_open() || !shellProcess || !shellProcess.running()) {
             throw EOFError("Reached end of the stream");
         }
         auto file_data = std::make_shared<uint8_t[]>(size);
-        stdOut.read(reinterpret_cast<char*>(file_data.get()), size);
+        stdOut.read(reinterpret_cast<char*>(file_data.get()), static_cast<std::streamsize>(size));
         if (stdOut.fail()) {
             throw FileError("Error while reading the file");
         }
