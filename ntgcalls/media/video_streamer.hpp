@@ -26,10 +26,8 @@ namespace ntgcalls {
     public:
         VideoStreamer();
 
-    protected:
         ~VideoStreamer();
 
-    public:
         wrtc::MediaStreamTrack *createTrack() override;
 
         void sendData(const wrtc::binary& sample) override;
