@@ -13,10 +13,10 @@ namespace ntgcalls {
         }
         connections[chatId] = std::make_shared<Client>();
         connections[chatId]->onStreamEnd([this, chatId](const Stream::Type type) {
-            onEof(chatId, type);
+            (void) onEof(chatId, type);
         });
         connections[chatId]->onUpgrade([this, chatId](const MediaState state) {
-            onChangeStatus(chatId, state);
+            (void) onChangeStatus(chatId, state);
         });
         return connections[chatId]->init(media);
     }
