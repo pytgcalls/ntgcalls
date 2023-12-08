@@ -32,7 +32,7 @@ namespace ntgcalls {
 
         void sendData(const wrtc::binary& sample) override;
 
-        uint64_t frameSize() override;
+        int64_t frameSize() override;
 
         void setConfig(uint16_t width, uint16_t height, uint8_t framesPerSecond);
     };

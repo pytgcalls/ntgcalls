@@ -35,7 +35,7 @@ namespace ntgcalls {
         );
     }
 
-    uint64_t VideoStreamer::frameSize() {
+    int64_t VideoStreamer::frameSize() {
         return llround(static_cast<float>(w * h) * 1.5f);
     }
 

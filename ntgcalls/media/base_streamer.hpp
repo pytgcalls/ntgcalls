@@ -30,6 +30,6 @@ namespace ntgcalls {
 
         virtual void sendData(const wrtc::binary& sample);
 
-        virtual uint64_t frameSize() = 0;
+        virtual int64_t frameSize() = 0;
     };
 }

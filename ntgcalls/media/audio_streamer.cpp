@@ -33,7 +33,7 @@ namespace ntgcalls {
         audio->OnData(event);
     }
 
-    uint64_t AudioStreamer::frameSize() {
+    int64_t AudioStreamer::frameSize() {
         return rate * bps / 8 / 100 * channels;
     }
 
