@@ -6,12 +6,33 @@ import os
 import re
 import subprocess
 import sys
+from datetime import datetime
+from urllib.parse import quote
 from pathlib import Path
+from typing import Dict
 from urllib.request import urlopen
 from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
+CLANG_VERSION = '15'
+
+
+class CLangInfo:
+    def __init__(
+        self,
+        timestamp: int,
+        revision: str,
+        sub_revision: str
+    ):
+        self.time = timestamp
+        self.revision = revision
+        self.sub_revision = sub_revision
+
+    @staticmethod
+    def to_timestamp(time: str) -> int:
+        return int(datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp())
+
 
 with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
     regex = re.compile(r'VERSION ([A-Za-z0-9.]+)', re.MULTILINE)
@@ -28,13 +49,53 @@ class CMakeExtension(Extension):
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
 
 
-def install_clang(path: Path):
+def get_versions() -> Dict[str, CLangInfo]:
+    versions: Dict[str, CLangInfo] = {}
+    url_base = 'https://commondatastorage.googleapis.com/chromium-browser-clang/?delimiter=/&prefix=Linux_x64/'
+    url_tmp = url_base
+    while True:
+        with urlopen(url_tmp) as response:
+            res = response.read().decode('utf-8').replace('><Key>', '>\n<Key>')
+            match_1 = re.findall(
+                r'<Key>Linux_x64/clang-(llvmorg-([0-9]+)-.*?)-([0-9]+)\.tgz</Key>.*?'
+                r'<LastModified>(.*?)</LastModified>',
+                res,
+            )
+            for data in match_1:
+                curr_time = CLangInfo.to_timestamp(data[3])
+                if data[1] not in versions or curr_time > versions[data[1]].time:
+                    versions[data[1]] = CLangInfo(curr_time, data[0], data[2])
+            match_2 = re.findall(f'<NextMarker>(.*?)</NextMarker>', res)
+            if len(match_2) == 0:
+                break
+            url_tmp = f"{url_base}&marker={quote(match_2[0])}"
+    return versions
+
+
+def install_clang(path: Path, clang_version: str):
     url = 'https://chromium.googlesource.com/chromium/src/tools/+/refs/heads/main/clang/scripts/update.py?format=text'
     os.mkdir(path)
+    version_info = get_versions()[clang_version]
     download_py = Path(path, 'download.py')
     with urlopen(url) as response:
         with open(download_py, 'w') as file:
-            file.write(base64.b64decode(response.read()).decode('utf-8'))
+            f_content = base64.b64decode(response.read()).decode('utf-8')
+            f_content = re.sub(
+                r"CLANG_REVISION = '(.*?)'",
+                f"CLANG_REVISION = '{version_info.revision}'",
+                f_content
+            )
+            f_content = re.sub(
+                r"CLANG_SUB_REVISION = [0-9]+",
+                f"CLANG_SUB_REVISION = {version_info.sub_revision}",
+                f_content
+            )
+            f_content = re.sub(
+                r"RELEASE_VERSION = '[0-9]+'",
+                f"RELEASE_VERSION = '{clang_version}'",
+                f_content
+            )
+            file.write(f_content)
 
     subprocess.run(
         [sys.executable, download_py, '--output-dir', path],
@@ -58,11 +119,11 @@ def get_os_cmake_args():
     elif get_os() == "Android":
         raise NotImplementedError("Android is not supported yet")
     elif sys.platform.startswith("linux"):
-        clang_c, clang_cxx = "clang-15", "clang++-15"
+        clang_c, clang_cxx = f"clang-{CLANG_VERSION}", f"clang++-{CLANG_VERSION}"
         if platform.processor() != 'aarch64':
             clang_path = Path(Path.cwd(), 'clang')
             if not Path(clang_path, 'bin').exists():
-                install_clang(clang_path)
+                install_clang(clang_path, CLANG_VERSION)
             clang_c = Path(clang_path, 'bin', 'clang')
             clang_cxx = Path(clang_path, 'bin', 'clang++')
         return [
