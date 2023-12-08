@@ -4,7 +4,6 @@
 
 #include "sdp_builder.hpp"
 
-#include <format>
 #include <sstream>
 
 namespace wrtc {
@@ -44,14 +43,14 @@ namespace wrtc {
 
     void SdpBuilder::addCandidate(const Candidate& c) {
         push("a=candidate:");
-        push(std::format("{} {} {} {} {} {} typ {}", c.foundation, c.component, c.protocol, c.priority, c.ip, c.port, c.type));
-        push(std::format(" generation {}", c.generation));
+        push(c.foundation + " " + c.component + " " + c.protocol + " " + c.priority + " " + c.ip + " " + c.port + " typ " + c.type);
+        push(" generation " + c.generation);
         addJoined();
     }
 
     void SdpBuilder::addHeader() {
         add("v=0");
-        add(std::format("o=- {} 2 IN IP4 0.0.0.0", rtc::CreateRandomId64()));
+        add("o=- " + std::to_string(rtc::CreateRandomId64()) + " 2 IN IP4 0.0.0.0");
         add("s=-");
         add("t=0 0");
         add("a=group:BUNDLE 0 1");
@@ -59,11 +58,15 @@ namespace wrtc {
     }
 
     void SdpBuilder::addTransport(const Transport& transport) {
-        add(std::format("a=ice-ufrag:{}", transport.ufrag));
-        add(std::format("a=ice-pwd:{}", transport.pwd));
+        add("a=ice-ufrag:" + transport.ufrag);
+        add("a=ice-pwd:" + transport.pwd);
 
         for (const auto& [hash, fingerprint] : transport.fingerprints) {
-            add(std::format("a=fingerprint:{} {}", hash, fingerprint));
+            push("a=fingerprint:");
+            push(hash);
+            push(" ");
+            push(fingerprint);
+            addJoined();
             add("a=setup:passive");
         }
 
@@ -147,9 +150,9 @@ namespace wrtc {
         }
 
         auto lookup = [&lines](const std::string& prefix) -> std::string {
-            for (const auto& line : lines) {
-                if (line.compare(0, prefix.size(), prefix) == 0) {
-                    return line.substr(prefix.size());
+            for (const auto& basic_string : lines) {
+                if (basic_string.compare(0, prefix.size(), prefix) == 0) {
+                    return basic_string.substr(prefix.size());
                 }
             }
             return "";
