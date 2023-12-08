@@ -32,7 +32,7 @@ namespace wrtc {
             sink->OnData(
                     data.audioData.get(),
                     data.bitsPerSample,
-                    data.sampleRate,
+                    static_cast<int>(data.sampleRate),
                     data.channelCount,
                     data.numberOfFrames,
                     rtc::TimeMillis()
