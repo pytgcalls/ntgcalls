@@ -107,8 +107,7 @@ namespace ntgcalls {
                 case wrtc::IceState::Disconnected:
                 case wrtc::IceState::Failed:
                 case wrtc::IceState::Closed:
-                    ConnectionError connectionError("Connection failed to Telegram WebRTC");
-                    waitConnection.onFailed(connectionError);
+                    waitConnection.onFailed(ConnectionError("Connection failed to Telegram WebRTC"));
                     break;
                 default:
                     break;

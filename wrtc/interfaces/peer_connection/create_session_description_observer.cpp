@@ -11,7 +11,6 @@ namespace wrtc {
     }
 
     void CreateSessionDescriptionObserver::OnFailure(const webrtc::RTCError error) {
-        RTCException rtc_exception = wrapRTCError(error);
-        _onFailure(rtc_exception);
+        _onFailure(wrapRTCError(error));
     }
 }

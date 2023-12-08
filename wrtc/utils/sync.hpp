@@ -18,7 +18,7 @@ namespace wrtc {
             promise.set_value(value);
         };
 
-        const std::function<void(std::exception&)> onFailed = [this](const std::exception& value) {
+        const std::function<void(const std::exception&)> onFailed = [this](const std::exception& value) {
             promise.set_exception(std::make_exception_ptr(value));
         };
 
@@ -36,7 +36,7 @@ namespace wrtc {
             promise.set_value(std::move(value));
         };
 
-        const std::function<void(std::exception&)> onFailed = [this](const std::exception& value) {
+        const std::function<void(const std::exception&)> onFailed = [this](const std::exception& value) {
             promise.set_exception(std::make_exception_ptr(value));
         };
 
@@ -54,7 +54,7 @@ namespace wrtc {
             promise.set_value();
         };
 
-        const std::function<void(std::exception&)> onFailed = [this](const std::exception& value) {
+        const std::function<void(const std::exception&)> onFailed = [this](const std::exception& value) {
             promise.set_exception(std::make_exception_ptr(value));
         };
 
