@@ -17,7 +17,12 @@ int copyAndReturn(std::string s, char *buffer, const int size) {
     if (size < static_cast<int>(s.size() + 1))
         return NTG_ERR_TOO_SMALL;
 
+#ifndef IS_MACOS
     std::ranges::copy(s, buffer);
+#else
+    std::copy(s.begin(), s.end(), buffer);
+#endif
+
     buffer[s.size()] = '\0';
     return static_cast<int>(s.size() + 1);
 }

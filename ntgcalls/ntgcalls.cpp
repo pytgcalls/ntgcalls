@@ -22,8 +22,10 @@ namespace ntgcalls {
     }
 
     NTgCalls::~NTgCalls() {
-        for (const auto& val : connections | std::views::values) {
-            val->stop();
+        // Temporary fix because macOs sucks and currently doesnt support Elements View
+        // ReSharper disable once CppUseElementsView
+        for (const auto& [fst, snd] : connections) {
+            snd->stop();
         }
         connections = {};
     }
