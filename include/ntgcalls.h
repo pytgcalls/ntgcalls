@@ -14,33 +14,33 @@
 #define NTG_C_EXPORT
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
-
 // EXCEPTIONS CODES
 
 // NTgCalls
-#define NTG_CONNECTION_ALREADY_EXISTS -100
-#define NTG_CONNECTION_NOT_FOUND -101
+#define NTG_CONNECTION_ALREADY_EXISTS (-100)
+#define NTG_CONNECTION_NOT_FOUND (-101)
 
 // STREAM
-#define NTG_FILE_NOT_FOUND -200
-#define NTG_ENCODER_NOT_FOUND -201
-#define NTG_FFMPEG_NOT_FOUND -202
-#define NTG_SHELL_ERROR -203
+#define NTG_FILE_NOT_FOUND (-200)
+#define NTG_ENCODER_NOT_FOUND (-201)
+#define NTG_FFMPEG_NOT_FOUND (-202)
+#define NTG_SHELL_ERROR (-203)
 
 // WebRTC
-#define NTG_RTMP_NEEDED -300
-#define NTG_INVALID_TRANSPORT -301
-#define NTG_CONNECTION_FAILED -302
+#define NTG_RTMP_NEEDED (-300)
+#define NTG_INVALID_TRANSPORT (-301)
+#define NTG_CONNECTION_FAILED (-302)
 
 // Others
-#define NTG_UNKNOWN_EXCEPTION -1
-#define NTG_INVALID_UID -2
-#define NTG_ERR_TOO_SMALL -3
+#define NTG_UNKNOWN_EXCEPTION (-1)
+#define NTG_INVALID_UID (-2)
+#define NTG_ERR_TOO_SMALL (-3)
 
 #ifdef __cplusplus
 extern "C" {
+#include <stdint.h>
+// ReSharper disable once CppUnusedIncludeDirective
+#include <stdbool.h>
 #endif
 
 typedef enum {
@@ -98,7 +98,7 @@ NTG_C_EXPORT uint32_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
-NTG_C_EXPORT int ntg_get_params(uint32_t uid, int64_t chatID, ntg_media_description_struct rep, char* buffer, int size);
+NTG_C_EXPORT int ntg_get_params(uint32_t uid, int64_t chatID, ntg_media_description_struct desc, char* buffer, int size);
 
 NTG_C_EXPORT int ntg_connect(uint32_t uid, int64_t chatID, char* params);
 
