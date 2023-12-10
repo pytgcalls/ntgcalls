@@ -21,6 +21,7 @@ shared-build/
 shared-output/
 dist/
 clang/
+tests/
 __pycache__
 *.i420
 *.pcm
