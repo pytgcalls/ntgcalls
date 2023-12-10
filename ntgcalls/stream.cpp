@@ -30,8 +30,7 @@ namespace ntgcalls {
         pc->addTrack(videoTrack);
     }
 
-    std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample() const
-    {
+    std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample() const {
         std::shared_ptr<BaseStreamer> bs;
         std::shared_ptr<BaseReader> br;
         if (reader->audio && reader->video) {
@@ -61,15 +60,13 @@ namespace ntgcalls {
         if (running && !changing) {
             if (reader->audio && reader->audio->eof()) {
                 reader->audio = nullptr;
-                updateQueue->dispatch([&]
-                {
+                updateQueue->dispatch([&] {
                     (void) onEOF(Audio);
                 });
             }
             if (reader->video && reader->video->eof()) {
                 reader->video = nullptr;
-                updateQueue->dispatch([&]
-                {
+                updateQueue->dispatch([&] {
                     (void) onEOF(Video);
                 });
             }
@@ -89,7 +86,7 @@ namespace ntgcalls {
                 checkStream();
             }
             if (streamQueue) {
-                streamQueue->dispatch([this]() {
+                streamQueue->dispatch([this] {
                     sendSample();
                 });
             }
@@ -126,25 +123,21 @@ namespace ntgcalls {
         }
     }
 
-    void Stream::checkUpgrade() const
-    {
-        updateQueue->dispatch([&]
-        {
+    void Stream::checkUpgrade() const {
+        updateQueue->dispatch([&] {
             (void) onChangeStatus(getState());
         });
     }
 
-    MediaState Stream::getState() const
-    {
+    MediaState Stream::getState() const {
         return MediaState{
-                audioTrack->isMuted() && videoTrack->isMuted(),
-                idling || videoTrack->isMuted(),
-                !hasVideo
+            audioTrack->isMuted() && videoTrack->isMuted(),
+            idling || videoTrack->isMuted(),
+            !hasVideo
         };
     }
 
-    uint64_t Stream::time() const
-    {
+    uint64_t Stream::time() const {
         if (reader) {
             if (reader->audio && reader->video) {
                 return (audio->time() + video->time()) / 2;
@@ -159,9 +152,8 @@ namespace ntgcalls {
         return 0;
     }
 
-    Stream::Status Stream::status() const
-    {
-        if ((reader->audio || reader->video) && running && !changing) {
+    Stream::Status Stream::status() const {
+        if (reader && (reader->audio || reader->video) && running && !changing) {
             return idling ? Paused : Playing;
         }
         return Idling;
@@ -170,7 +162,7 @@ namespace ntgcalls {
     void Stream::start() {
         if (!running) {
             running = true;
-            streamQueue->dispatch([this]() {
+            streamQueue->dispatch([this] {
                 sendSample();
             });
         }
@@ -195,10 +187,9 @@ namespace ntgcalls {
             videoTrack->Mute(true);
             checkUpgrade();
             return true;
-        } else {
-            checkUpgrade();
-            return false;
         }
+        checkUpgrade();
+        return false;
     }
 
     bool Stream::unmute() const
@@ -208,10 +199,9 @@ namespace ntgcalls {
             videoTrack->Mute(false);
             checkUpgrade();
             return true;
-        } else {
-            checkUpgrade();
-            return false;
         }
+        checkUpgrade();
+        return false;
     }
 
     void Stream::stop() {
