@@ -55,8 +55,7 @@ namespace ntgcalls {
         return {bs, br};
     }
 
-    void Stream::checkStream() const
-    {
+    void Stream::checkStream() const {
         if (running && !changing) {
             if (reader->audio && reader->audio->eof()) {
                 reader->audio = nullptr;
@@ -74,6 +73,7 @@ namespace ntgcalls {
     }
 
     void Stream::sendSample() {
+        std::lock_guard lock(mutex);
         if (running) {
             if (idling || changing || !reader || !(reader->audio || reader->video)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -94,6 +94,7 @@ namespace ntgcalls {
     }
 
     void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
+        std::lock_guard lock(mutex);
         changing = true;
         const auto audioConfig = streamConfig.audio;
         const auto videoConfig = streamConfig.video;
@@ -180,8 +181,7 @@ namespace ntgcalls {
         return res;
     }
 
-    bool Stream::mute() const
-    {
+    bool Stream::mute() const {
         if (!audioTrack->isMuted() || !videoTrack->isMuted()) {
             audioTrack->Mute(true);
             videoTrack->Mute(true);
@@ -192,8 +192,7 @@ namespace ntgcalls {
         return false;
     }
 
-    bool Stream::unmute() const
-    {
+    bool Stream::unmute() const {
         if (audioTrack->isMuted() || videoTrack->isMuted()) {
             audioTrack->Mute(false);
             videoTrack->Mute(false);
@@ -205,6 +204,7 @@ namespace ntgcalls {
     }
 
     void Stream::stop() {
+        std::lock_guard lock(mutex);
         running = false;
         idling = false;
         changing = false;
