@@ -66,7 +66,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::shared_ptr<DispatchQueue> streamQueue;
         std::shared_ptr<DispatchQueue> updateQueue;
-        std::mutex mutex;
+        std::recursive_mutex mutex;
 
         void sendSample();
 

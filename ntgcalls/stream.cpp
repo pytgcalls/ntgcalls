@@ -94,7 +94,6 @@ namespace ntgcalls {
     }
 
     void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
-        std::lock_guard lock(mutex);
         changing = true;
         const auto audioConfig = streamConfig.audio;
         const auto videoConfig = streamConfig.video;
@@ -204,7 +203,6 @@ namespace ntgcalls {
     }
 
     void Stream::stop() {
-        std::lock_guard lock(mutex);
         running = false;
         idling = false;
         changing = false;
