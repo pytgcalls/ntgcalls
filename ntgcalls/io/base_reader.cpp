@@ -20,6 +20,7 @@ namespace ntgcalls {
             auto promise = std::make_shared<std::promise<void>>();
             if (!_eof && nextBuffer.size() <= 4) {
                 dispatchQueue->dispatch([this, promise, size] {
+                    std::lock_guard lock(mutex);
                     try {
                         const auto availableSpace = 10 - nextBuffer.size();
                         for (int i = 0; i < availableSpace; i++) {

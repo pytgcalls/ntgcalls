@@ -15,6 +15,7 @@ namespace ntgcalls {
         std::vector<wrtc::binary> nextBuffer;
         bool _eof = false;
         std::shared_ptr<DispatchQueue> dispatchQueue;
+        std::recursive_mutex mutex;
 
     protected:
         int64_t readChunks = 0;
