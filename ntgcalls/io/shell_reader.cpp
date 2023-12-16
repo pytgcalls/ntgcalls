@@ -19,7 +19,7 @@ namespace ntgcalls {
     }
 
     wrtc::binary ShellReader::readInternal(const int64_t size) {
-        if (stdOut.eof() || stdOut.fail() || !stdOut.is_open() || !shellProcess || !shellProcess.running()) {
+        if (!stdOut || stdOut.eof() || stdOut.fail() || !stdOut.is_open() || !shellProcess || !shellProcess.running()) {
             throw EOFError("Reached end of the stream");
         }
         auto file_data = std::make_shared<uint8_t[]>(size);
