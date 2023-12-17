@@ -39,8 +39,8 @@ with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f
     version = re.findall(regex, f.read())[1]
 
     if version.count('.') == 3:
-        major, minor, path_, tweak = version.split('.')
-        version = f'{major}.{minor}.{path_}.dev{tweak}'
+        major, minor, patch, tweak = version.split('.')
+        version = f'{major}.{minor}.{patch}.b{tweak}'
 
 
 class CMakeExtension(Extension):
@@ -137,7 +137,7 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
-        cfg = "RelWithDebInfo" if "dev" in version else "Release"
+        cfg = "RelWithDebInfo" if "b" in version else "Release"
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
