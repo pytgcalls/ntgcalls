@@ -104,6 +104,7 @@ namespace wrtc {
 
     void PeerConnection::close() const
     {
+        peerConnection->Close();
         if (peerConnection.get() && peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
             for (const auto &transceiver: peerConnection->GetTransceivers()) {
                 const auto track = MediaStreamTrack::holder()->GetOrCreate(transceiver->receiver()->track());
