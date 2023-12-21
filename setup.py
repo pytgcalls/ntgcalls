@@ -40,7 +40,7 @@ with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f
 
     if version.count('.') == 3:
         major, minor, patch, tweak = version.split('.')
-        version = f'{major}.{minor}.{patch}.b{tweak}'
+        version = f'{major}.{minor}.{patch}b{tweak}'
 
 
 class CMakeExtension(Extension):
