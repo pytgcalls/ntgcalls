@@ -99,7 +99,8 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 * <b><a href="https://github.com/morethanwords">@morethanwords</a>:</b>
   We extend our special thanks to morethanwords for their invaluable help in integrating the connection to WebRTC with Telegram Web K. 
   Their assistance has been instrumental in enhancing the functionality of our library.
-
+* 
+  <b><a href="https://github.com/MarshalX">@MarshalX</a></b> for their generous assistance in answering questions and providing insights regarding WebRTC.
 
 _We would like to extend a special thanks to <b><a href='https://github.com/null-nick'>@null-nick</a></b>
 and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library.
