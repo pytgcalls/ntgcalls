@@ -26,7 +26,7 @@ namespace wrtc {
 
     Description::Description(const RTCSessionDescriptionInit &rtcSessionDescriptionInit) {
         webrtc::SdpParseError error;
-        auto description = webrtc::CreateSessionDescription(rtcSessionDescriptionInit.type, rtcSessionDescriptionInit.sdp, &error);
+        auto description = CreateSessionDescription(rtcSessionDescriptionInit.type, rtcSessionDescriptionInit.sdp, &error);
         if (!description) {
             throw wrapSdpParseError(error);
         }
