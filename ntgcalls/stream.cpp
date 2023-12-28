@@ -49,7 +49,7 @@ namespace ntgcalls {
             br = reader->video;
         }
 
-        if (const auto waitTime = bs->waitTime(); waitTime.count() > 0) {
+        if (const auto waitTime = bs->waitTime(); std::chrono::duration_cast<std::chrono::milliseconds>(waitTime).count() > 0) {
             std::this_thread::sleep_for(waitTime);
         }
         return {bs, br};
