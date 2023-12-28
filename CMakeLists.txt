@@ -7,8 +7,8 @@ endif ()
 include(ExternalProject)
 
 # https://chromiumdash.appspot.com/branches
-set(WEBRTC_REVISION m119.6045.2.2)
-set(BOOST_REVISION 1.83.0)
+set(WEBRTC_REVISION m120.6099.1.2)
+set(BOOST_REVISION 1.84.0)
 set(BOOST_LIBS filesystem)
 
 if(DEFINED PY_VERSION_INFO)
