@@ -1,10 +1,33 @@
-# NativeTgCalls: <br/> An experimental implementation of Telegram Group Calls
-[![Build And Publish](https://github.com/pytgcalls/ntgcalls/actions/workflows/build.yml/badge.svg)](https://github.com/pytgcalls/ntgcalls/actions/workflows/build.yml)
-[![CodeQL](https://github.com/pytgcalls/ntgcalls/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/pytgcalls/ntgcalls/actions/workflows/github-code-scanning/codeql)
-[![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ntgcalls?logo=python&logoColor=%23959DA5&labelColor=%23282f37)](https://www.python.org/)
-[![GitHub](https://img.shields.io/github/license/pytgcalls/ntgcalls?logo=unlicense&logoColor=%23959DA5&labelColor=%23282f37)](https://github.com/pytgcalls/ntgcalls/blob/master/LICENSE)
-[![Downloads](https://pepy.tech/badge/ntgcalls)](https://pepy.tech/project/ntgcalls)
+<img src=".github/images/banner.png" alt="pytgcalls logo" />
+<p align="center">
+    <b>A Native Implementation of Telegram Group Calls in a seamless way.</b>
+    <br>
+    <a href="https://github.com/pytgcalls/ntgcalls/tree/master/examples">
+        Examples
+    </a>
+    •
+    <a href="https://pytgcalls.github.io/">
+        Documentation
+    </a>
+    •
+    <a href="https://pypi.org/project/ntgcalls/">
+        PyPi
+    </a>
+    •
+    <a href="https://github.com/pytgcalls/ntgcalls/releases">
+        Releases
+    </a>
+    •
+    <a href="https://t.me/pytgcallsnews">
+        Channel
+    </a>
+    •
+    <a href="https://t.me/pytgcallschat">
+        Chat
+    </a>
+</p>
+
+# NativeTgCalls [![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/) [![Downloads](https://pepy.tech/badge/ntgcalls)](https://pepy.tech/project/ntgcalls)
 
 Welcome to NativeTgCalls, an innovative open-source project. NativeTgCalls represents the next evolution in Telegram calling, building on the foundation laid by PyTgCalls.
 
@@ -99,8 +122,7 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 * <b><a href="https://github.com/morethanwords">@morethanwords</a>:</b>
   We extend our special thanks to morethanwords for their invaluable help in integrating the connection to WebRTC with Telegram Web K. 
   Their assistance has been instrumental in enhancing the functionality of our library.
-* 
-  <b><a href="https://github.com/MarshalX">@MarshalX</a></b> for their generous assistance in answering questions and providing insights regarding WebRTC.
+* <b><a href="https://github.com/MarshalX">@MarshalX</a></b> for their generous assistance in answering questions and providing insights regarding WebRTC.
 
 _We would like to extend a special thanks to <b><a href='https://github.com/null-nick'>@null-nick</a></b>
 and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library.
