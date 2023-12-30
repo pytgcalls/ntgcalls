@@ -95,6 +95,7 @@ namespace wrtc {
         _references--;
         if (!_references) {
             rtc::CleanupSSL();
+            rtc::ThreadManager::Instance()->SetCurrentThread(nullptr);
             _default = nullptr;
         }
         _mutex.unlock();

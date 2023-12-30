@@ -29,11 +29,12 @@ namespace wrtc {
     }
 
     PeerConnection::~PeerConnection() {
-        peerConnection = nullptr;
         if (factory) {
             PeerConnectionFactory::UnRef();
             factory = nullptr;
         }
+        close();
+        peerConnection = nullptr;
     }
 
     Description PeerConnection::createOffer(const bool offerToReceiveAudio, const bool offerToReceiveVideo) const
@@ -102,14 +103,16 @@ namespace wrtc {
         }
     }
 
-    void PeerConnection::close() const
-    {
-        peerConnection->Close();
-        if (peerConnection.get() && peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
-            for (const auto &transceiver: peerConnection->GetTransceivers()) {
-                const auto track = MediaStreamTrack::holder()->GetOrCreate(transceiver->receiver()->track());
-                track->OnPeerConnectionClosed();
+    void PeerConnection::close() {
+        if (peerConnection && !isClosed) {
+            peerConnection->Close();
+            if (peerConnection.get() && peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
+                for (const auto &transceiver: peerConnection->GetTransceivers()) {
+                    const auto track = MediaStreamTrack::holder()->GetOrCreate(transceiver->receiver()->track());
+                    track->OnPeerConnectionClosed();
+                }
             }
+            isClosed = true;
         }
     }
 

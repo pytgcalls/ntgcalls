@@ -30,7 +30,7 @@ namespace wrtc {
 
         void restartIce() const;
 
-        void close() const;
+        void close();
 
         void onIceStateChange(const std::function<void(IceState state)> &callback);
 
@@ -41,6 +41,7 @@ namespace wrtc {
     private:
         rtc::scoped_refptr<PeerConnectionFactory> factory;
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection;
+        bool isClosed = false;
 
         synchronized_callback<IceState> stateChangeCallback;
         synchronized_callback<GatheringState> gatheringStateChangeCallback;
