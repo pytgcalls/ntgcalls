@@ -47,10 +47,10 @@ namespace wrtc {
 
     template<> class
     Sync<void> {
-    std::promise<void> promise{};
+        std::promise<void> promise{};
 
     public:
-        const std::function<void()> onSuccess = [this]() {
+        const std::function<void()> onSuccess = [this] {
             promise.set_value();
         };
 

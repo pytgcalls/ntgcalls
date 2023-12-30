@@ -48,9 +48,9 @@ namespace wrtc {
         media_dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
         media_dependencies.audio_mixer = nullptr;
         media_dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
-        dependencies.media_engine = cricket::CreateMediaEngine(std::move(media_dependencies));
+        dependencies.media_engine = CreateMediaEngine(std::move(media_dependencies));
         if (!_factory) {
-            _factory = wrtc::PeerConnectionFactoryWithContext::Create(std::move(dependencies), connection_context_);
+            _factory = PeerConnectionFactoryWithContext::Create(std::move(dependencies), connection_context_);
         }
         webrtc::PeerConnectionFactoryInterface::Options options;
         options.disable_encryption = false;
