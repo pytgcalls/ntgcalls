@@ -31,11 +31,9 @@ namespace wrtc {
         std::unique_ptr<rtc::Thread> worker_thread_;
         std::unique_ptr<rtc::Thread> signaling_thread_;
 
-        rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> _factory;
+        rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;
         rtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
         rtc::scoped_refptr<webrtc::AudioDeviceModule> _audioDeviceModule;
-
-        std::unique_ptr<webrtc::TaskQueueFactory> task_queue_factory_;
     };
 
 } // wrtc

@@ -13,6 +13,8 @@ namespace wrtc {
   public:
     RTCOnDataEvent(const binary&, uint16_t);
 
+    ~RTCOnDataEvent();
+
     binary audioData;
     uint16_t numberOfFrames;
     uint32_t sampleRate = 48000;

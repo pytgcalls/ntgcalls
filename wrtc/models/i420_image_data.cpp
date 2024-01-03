@@ -34,6 +34,10 @@ namespace wrtc {
         this->contents = contents;
     }
 
+    i420ImageData::~i420ImageData() {
+        this->contents = nullptr;
+    }
+
     rtc::scoped_refptr<webrtc::I420Buffer> i420ImageData::buffer() const
     {
         auto buffer = webrtc::I420Buffer::Create(width, height);

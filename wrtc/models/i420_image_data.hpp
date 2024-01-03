@@ -29,6 +29,8 @@ namespace wrtc {
     public:
         i420ImageData(uint16_t width, uint16_t height, const binary& contents);
 
+        ~i420ImageData();
+
         [[nodiscard]] rtc::scoped_refptr<webrtc::I420Buffer> buffer() const;
     };
 }

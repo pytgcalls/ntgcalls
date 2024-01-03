@@ -11,4 +11,8 @@ namespace wrtc {
     numberOfFrames = length;
   }
 
+  RTCOnDataEvent::~RTCOnDataEvent() {
+    audioData = nullptr;
+  }
+
 } // namespace wrtc

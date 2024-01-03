@@ -49,19 +49,17 @@ namespace wrtc {
         media_dependencies.audio_mixer = nullptr;
         media_dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
         dependencies.media_engine = CreateMediaEngine(std::move(media_dependencies));
-        if (!_factory) {
-            _factory = PeerConnectionFactoryWithContext::Create(std::move(dependencies), connection_context_);
+        if (!factory_) {
+            factory_ = PeerConnectionFactoryWithContext::Create(std::move(dependencies), connection_context_);
         }
         webrtc::PeerConnectionFactoryInterface::Options options;
         options.disable_encryption = false;
         options.ssl_max_version = rtc::SSL_PROTOCOL_DTLS_12;
         options.crypto_options.srtp.enable_gcm_crypto_suites = true;
-        _factory->SetOptions(options);
+        factory_->SetOptions(options);
     }
 
     PeerConnectionFactory::~PeerConnectionFactory() {
-        _factory = nullptr;
-
         if (_audioDeviceModule) {
             worker_thread_->BlockingCall([this]
             {
@@ -69,14 +67,15 @@ namespace wrtc {
                     _audioDeviceModule = nullptr;
             });
         }
-
+        connection_context_ = nullptr;
+        factory_ = nullptr;
         worker_thread_->Stop();
         signaling_thread_->Stop();
         network_thread_->Stop();
     }
 
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> PeerConnectionFactory::factory() {
-        return _factory;
+        return factory_;
     }
 
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {

@@ -14,6 +14,7 @@ namespace ntgcalls {
 
     FileReader::~FileReader() {
         close();
+        source.clear();
     }
 
     wrtc::binary FileReader::readInternal(const int64_t size) {

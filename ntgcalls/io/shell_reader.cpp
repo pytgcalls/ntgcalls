@@ -16,6 +16,8 @@ namespace ntgcalls {
 
     ShellReader::~ShellReader() {
         close();
+        stdOut.clear();
+        stdIn.clear();
     }
 
     wrtc::binary ShellReader::readInternal(const int64_t size) {
