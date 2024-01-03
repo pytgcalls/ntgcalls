@@ -13,9 +13,10 @@
 namespace ntgcalls {
     class BaseReader {
         std::vector<wrtc::binary> nextBuffer;
-        bool _eof = false;
+        bool _eof = false, running = false;
         std::shared_ptr<DispatchQueue> dispatchQueue;
         std::recursive_mutex mutex;
+        std::shared_ptr<std::promise<void>> promise;
 
     protected:
         int64_t readChunks = 0;
