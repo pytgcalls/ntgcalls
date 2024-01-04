@@ -112,7 +112,7 @@ jobs:
         id: patch-version
         run: |
           version="${{ steps.get-library-version.outputs.version }}"
-          if [[ "$version" == *.*.* ]]; then
+          if [[ "$version" == *.*.*.* ]]; then
             echo "Version contains three dots"
             major=$(echo "$version" | cut -d. -f1)
             minor=$(echo "$version" | cut -d. -f2)
