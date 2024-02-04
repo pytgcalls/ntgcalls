@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <api/environment/environment_factory.h>
 #include <pc/peer_connection_factory.h>
 #include <pc/peer_connection_factory_proxy.h>
 

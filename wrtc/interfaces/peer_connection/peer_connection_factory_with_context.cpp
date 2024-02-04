@@ -46,6 +46,6 @@ namespace wrtc {
     PeerConnectionFactoryWithContext::PeerConnectionFactoryWithContext(
             webrtc::PeerConnectionFactoryDependencies dependencies)
             : PeerConnectionFactoryWithContext(
-            webrtc::ConnectionContext::Create(&dependencies),
+            webrtc::ConnectionContext::Create(webrtc::CreateEnvironment(), &dependencies),
             &dependencies) {}
 } // wrtc

@@ -3,6 +3,7 @@
 //
 
 #include "peer_connection_factory.hpp"
+#include <api/enable_media.h>
 #include <rtc_base/ssl_adapter.h>
 #include <api/create_peerconnection_factory.h>
 #include <api/rtc_event_log/rtc_event_log_factory.h>
@@ -30,25 +31,23 @@ namespace wrtc {
         dependencies.worker_thread = worker_thread_.get();
         dependencies.signaling_thread = signaling_thread_.get();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
-        dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.event_log_factory =
                 absl::make_unique<webrtc::RtcEventLogFactory>(
                         dependencies.task_queue_factory.get());
-        cricket::MediaEngineDependencies media_dependencies;
-        media_dependencies.task_queue_factory = dependencies.task_queue_factory.get();
-        media_dependencies.adm = worker_thread_->BlockingCall([&] {
+        dependencies.adm = worker_thread_->BlockingCall([&] {
             if (!_audioDeviceModule)
                 _audioDeviceModule = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kDummyAudio, dependencies.task_queue_factory.get());
             return _audioDeviceModule;
         });
         auto config = VideoFactoryConfig();
-        media_dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
-        media_dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
-        media_dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
-        media_dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
-        media_dependencies.audio_mixer = nullptr;
-        media_dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
-        dependencies.media_engine = CreateMediaEngine(std::move(media_dependencies));
+        dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
+        dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
+        dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
+        dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
+        dependencies.audio_mixer = nullptr;
+        dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
+
+        EnableMedia(dependencies);
         if (!factory_) {
             factory_ = PeerConnectionFactoryWithContext::Create(std::move(dependencies), connection_context_);
         }
