@@ -48,6 +48,9 @@ namespace ntgcalls {
     }
 
     void Client::connect(const std::string& jsonData) const {
+        if (!connection) {
+            throw ConnectionError("Connection not initialized");
+        }
         try {
             auto data = json::parse(jsonData);
             if (!data["rtmp"].is_null()) {
