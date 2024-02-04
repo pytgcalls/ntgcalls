@@ -15,7 +15,9 @@ from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
-CLANG_VERSION = '15'
+CLANG_VERSION = '18'
+CMAKE_VERSION = '3.28.1'
+TOOLS_PATH = Path(Path.cwd(), 'build_tools')
 
 
 class CLangInfo:
@@ -72,11 +74,44 @@ def get_versions() -> Dict[str, CLangInfo]:
     return versions
 
 
-def install_clang(path: Path, clang_version: str):
+def cmake_path():
+    return Path(TOOLS_PATH, f'cmake_{CMAKE_VERSION.replace(".", "_")}')
+
+
+def clang_path():
+    return Path(TOOLS_PATH, f'clang_{CLANG_VERSION.replace(".", "_")}')
+
+
+def install_cmake(cmake_version: str):
+    fixed_name = cmake_path()
+    if Path(fixed_name, "bin").exists():
+        return
+    if not fixed_name.exists():
+        os.mkdir(fixed_name)
+    os_base = 'x86_64' if platform.machine() != 'aarch64' else 'aarch64'
+    url = (f'https://github.com/Kitware/CMake/releases/download/v{cmake_version}/'
+           f'cmake-{cmake_version}-linux-{os_base}.sh')
+    download_sh = Path(fixed_name, 'install_cmake.sh')
+    with urlopen(url) as response:
+        with open(download_sh, 'wb') as file:
+            file.write(response.read())
+
+    subprocess.run(
+        ['bash', download_sh, '--skip-license', f'--prefix={fixed_name}'],
+        check=True,
+    )
+
+
+def install_clang(clang_version: str):
+    fixed_name = clang_path()
+    if Path(fixed_name, 'bin').exists():
+        return
     url = 'https://chromium.googlesource.com/chromium/src/tools/+/refs/heads/main/clang/scripts/update.py?format=text'
-    os.mkdir(path)
+
+    if not fixed_name.exists():
+        os.mkdir(fixed_name)
     version_info = get_versions()[clang_version]
-    download_py = Path(path, 'download.py')
+    download_py = Path(fixed_name, 'download.py')
     with urlopen(url) as response:
         with open(download_py, 'w') as file:
             f_content = base64.b64decode(response.read()).decode('utf-8')
@@ -98,8 +133,8 @@ def install_clang(path: Path, clang_version: str):
             file.write(f_content)
 
     subprocess.run(
-        [sys.executable, download_py, '--output-dir', path],
-        check=True
+        [sys.executable, download_py, '--output-dir', fixed_name],
+        check=True,
     )
 
 
@@ -120,15 +155,19 @@ def get_os_cmake_args():
         raise NotImplementedError("Android is not supported yet")
     elif sys.platform.startswith("linux"):
         clang_c, clang_cxx = f"clang-{CLANG_VERSION}", f"clang++-{CLANG_VERSION}"
-        if platform.processor() != 'aarch64':
-            clang_path = Path(Path.cwd(), 'clang')
-            if not Path(clang_path, 'bin').exists():
-                install_clang(clang_path, CLANG_VERSION)
-            clang_c = Path(clang_path, 'bin', 'clang')
-            clang_cxx = Path(clang_path, 'bin', 'clang++')
+
+        if not TOOLS_PATH.exists():
+            os.mkdir(TOOLS_PATH)
+
+        install_cmake(CMAKE_VERSION)
+        if platform.machine() != 'aarch64':
+            install_clang(CLANG_VERSION)
+            clang_c = Path(clang_path(), 'bin', 'clang')
+            clang_cxx = Path(clang_path(), 'bin', 'clang++')
         return [
             f"-DCMAKE_C_COMPILER={clang_c}",
             f"-DCMAKE_CXX_COMPILER={clang_cxx}",
+            "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
         ]
     return []
 
@@ -138,6 +177,7 @@ class CMakeBuild(build_ext):
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
         cfg = "RelWithDebInfo" if "b" in version else "Release"
+
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
@@ -145,6 +185,11 @@ class CMakeBuild(build_ext):
             f"-DPY_VERSION_INFO={version}",
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}",
         ]
+
+        if sys.platform.startswith("linux"):
+            cxx_flags = ['-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE']
+            cmake_args.append(f"-DCMAKE_CXX_FLAGS={' '.join(cxx_flags)}")
+
         build_args = [
             "--config", cfg,
             f"-j{multiprocessing.cpu_count()}",
@@ -154,11 +199,12 @@ class CMakeBuild(build_ext):
         build_temp = Path(self.build_temp) / ext.name
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
+        cmake_bin = Path(cmake_path(), 'bin', 'cmake')
         subprocess.run(
-            ["cmake", ext.sourcedir, *cmake_args], cwd=build_temp, check=True
+            [cmake_bin, ext.sourcedir, *cmake_args], cwd=build_temp, check=True
         )
         subprocess.run(
-            ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
+            [cmake_bin, "--build", ".", *build_args], cwd=build_temp, check=True
         )
 
 
