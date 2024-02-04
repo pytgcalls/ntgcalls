@@ -75,9 +75,13 @@ def get_versions() -> Dict[str, CLangInfo]:
 
 
 def cmake_path():
-    if sys.platform.startswith("darwin"):
-        return "cmake"
     return Path(TOOLS_PATH, f'cmake_{CMAKE_VERSION.replace(".", "_")}')
+
+
+def cmake_bin():
+    if sys.platform.startswith('linux'):
+        return Path(cmake_path(), 'bin', 'cmake')
+    return 'cmake'
 
 
 def clang_path():
@@ -201,12 +205,11 @@ class CMakeBuild(build_ext):
         build_temp = Path(self.build_temp) / ext.name
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
-        cmake_bin = Path(cmake_path(), 'bin', 'cmake')
         subprocess.run(
-            [cmake_bin, ext.sourcedir, *cmake_args], cwd=build_temp, check=True
+            [cmake_bin(), ext.sourcedir, *cmake_args], cwd=build_temp, check=True
         )
         subprocess.run(
-            [cmake_bin, "--build", ".", *build_args], cwd=build_temp, check=True
+            [cmake_bin(), '--build', '.', *build_args], cwd=build_temp, check=True
         )
 
 
@@ -241,10 +244,10 @@ class SharedCommand(Command):
             build_temp.mkdir(parents=True)
         source_dir = os.path.dirname(os.path.abspath(__file__))
         subprocess.run(
-            [cmake_path(), source_dir, *cmake_args], cwd=build_temp, check=True
+            [cmake_bin(), source_dir, *cmake_args], cwd=build_temp, check=True
         )
         subprocess.run(
-            [cmake_path(), "--build", ".", *build_args], cwd=build_temp, check=True
+            [cmake_bin(), "--build", ".", *build_args], cwd=build_temp, check=True
         )
         release_path = Path(build_temp, 'ntgcalls')
         tmp_release_path = Path(release_path, cfg)
