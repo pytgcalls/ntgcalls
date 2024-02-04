@@ -1,6 +1,4 @@
 import base64
-import platform
-import shutil
 import multiprocessing
 import os
 import re
@@ -8,9 +6,8 @@ import subprocess
 import sys
 from datetime import datetime
 from urllib.parse import quote
-from pathlib import Path
-from typing import Dict
 from urllib.request import urlopen
+from pathlib import Path
 from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
@@ -21,12 +18,7 @@ TOOLS_PATH = Path(Path.cwd(), 'build_tools')
 
 
 class CLangInfo:
-    def __init__(
-        self,
-        timestamp: int,
-        revision: str,
-        sub_revision: str
-    ):
+    def __init__(self, timestamp: int, revision: str, sub_revision: str):
         self.time = timestamp
         self.revision = revision
         self.sub_revision = sub_revision
@@ -36,39 +28,24 @@ class CLangInfo:
         return int(datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp())
 
 
-with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
-    regex = re.compile(r'VERSION ([A-Za-z0-9.]+)', re.MULTILINE)
-    version = re.findall(regex, f.read())[1]
-
-    if version.count('.') == 3:
-        major, minor, patch, tweak = version.split('.')
-        version = f'{major}.{minor}.{patch}b{tweak}'
-
-
-class CMakeExtension(Extension):
-    def __init__(self, name: str, sourcedir: str = "") -> None:
-        super().__init__(name, sources=[])
-        self.sourcedir = os.fspath(Path(sourcedir).resolve())
-
-
-def get_versions() -> Dict[str, CLangInfo]:
-    versions: Dict[str, CLangInfo] = {}
+def get_versions() -> dict:
+    versions = {}
     url_base = 'https://commondatastorage.googleapis.com/chromium-browser-clang/?delimiter=/&prefix=Linux_x64/'
     url_tmp = url_base
     while True:
         with urlopen(url_tmp) as response:
             res = response.read().decode('utf-8').replace('><Key>', '>\n<Key>')
-            match_1 = re.findall(
+            matches = re.findall(
                 r'<Key>Linux_x64/clang-(llvmorg-([0-9]+)-.*?)-([0-9]+)\.tgz</Key>.*?'
                 r'<LastModified>(.*?)</LastModified>',
                 res,
             )
-            for data in match_1:
+            for data in matches:
                 curr_time = CLangInfo.to_timestamp(data[3])
                 if data[1] not in versions or curr_time > versions[data[1]].time:
                     versions[data[1]] = CLangInfo(curr_time, data[0], data[2])
             match_2 = re.findall(f'<NextMarker>(.*?)</NextMarker>', res)
-            if len(match_2) == 0:
+            if not match_2:
                 break
             url_tmp = f'{url_base}&marker={quote(match_2[0])}'
     return versions
@@ -93,7 +70,7 @@ def install_cmake(cmake_version: str):
     if Path(fixed_name, 'bin').exists():
         return
     if not fixed_name.exists():
-        os.mkdir(fixed_name)
+        os.makedirs(fixed_name)
     os_base = 'x86_64' if platform.machine() != 'aarch64' else 'aarch64'
     url = (f'https://github.com/Kitware/CMake/releases/download/v{cmake_version}/'
            f'cmake-{cmake_version}-linux-{os_base}.sh')
@@ -115,7 +92,7 @@ def install_clang(clang_version: str):
     url = 'https://chromium.googlesource.com/chromium/src/tools/+/refs/heads/main/clang/scripts/update.py?format=text'
 
     if not fixed_name.exists():
-        os.mkdir(fixed_name)
+        os.makedirs(fixed_name)
     version_info = get_versions()[clang_version]
     download_py = Path(fixed_name, 'download.py')
     with urlopen(url) as response:
@@ -163,7 +140,7 @@ def get_os_cmake_args():
         clang_c, clang_cxx = f'clang-{CLANG_VERSION}', f'clang++-{CLANG_VERSION}'
 
         if not TOOLS_PATH.exists():
-            os.mkdir(TOOLS_PATH)
+            os.makedirs(TOOLS_PATH)
 
         install_cmake(CMAKE_VERSION)
         if platform.machine() != 'aarch64':
@@ -178,11 +155,19 @@ def get_os_cmake_args():
     return []
 
 
+class CMakeExtension(Extension):
+    def __init__(self, name: str, sourcedir: str = "") -> None:
+        super().__init__(name, sources=[])
+        self.sourcedir = os.fspath(Path(sourcedir).resolve())
+
+
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
         cfg = 'RelWithDebInfo' if 'b' in version else 'Release'
+        if self.debug:
+            cfg = 'Debug'
 
         cmake_args = [
             f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}',
@@ -220,7 +205,6 @@ class SharedCommand(Command):
         ('debug', None, "Debug build"),
     ]
 
-    # noinspection PyAttributeOutsideInit
     def initialize_options(self):
         self.no_preserve_cache = False
         self.debug = False
@@ -228,9 +212,8 @@ class SharedCommand(Command):
     def finalize_options(self):
         pass
 
-    # noinspection PyMethodMayBeStatic
     def run(self):
-        cfg = 'RelWithDebInfo' if self.debug else 'Release'
+        cfg = 'RelWithDebInfo' if not self.debug else 'Debug'
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={cfg}',
         ]
@@ -266,7 +249,7 @@ class SharedCommand(Command):
                 shutil.move(Path(release_path, file), lib_output)
                 shutil.copy(Path(source_dir, 'include', 'ntgcalls.h'), include_output)
 
-                if self.no_preserve_cache:
+                if not self.no_preserve_cache:
                     shutil.rmtree(build_temp)
                     boost_dir = Path(source_dir, 'deps', 'boost')
                     for boost_build in os.listdir(boost_dir):
