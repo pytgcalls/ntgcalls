@@ -75,6 +75,8 @@ def get_versions() -> Dict[str, CLangInfo]:
 
 
 def cmake_path():
+    if sys.platform.startswith("darwin"):
+        return "cmake"
     return Path(TOOLS_PATH, f'cmake_{CMAKE_VERSION.replace(".", "_")}')
 
 
@@ -239,10 +241,10 @@ class SharedCommand(Command):
             build_temp.mkdir(parents=True)
         source_dir = os.path.dirname(os.path.abspath(__file__))
         subprocess.run(
-            ['cmake', source_dir, *cmake_args], cwd=build_temp, check=True
+            [cmake_path(), source_dir, *cmake_args], cwd=build_temp, check=True
         )
         subprocess.run(
-            ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
+            [cmake_path(), "--build", ".", *build_args], cwd=build_temp, check=True
         )
         release_path = Path(build_temp, 'ntgcalls')
         tmp_release_path = Path(release_path, cfg)
