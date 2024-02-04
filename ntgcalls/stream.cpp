@@ -1,11 +1,10 @@
-//
 // Created by Laky64 on 12/08/2023.
-//
 
 // ReSharper disable CppDFAUnreachableFunctionCall
 #include "stream.hpp"
 
 namespace ntgcalls {
+
     Stream::Stream() {
         audio = std::make_shared<AudioStreamer>();
         video = std::make_shared<VideoStreamer>();
@@ -59,14 +58,14 @@ namespace ntgcalls {
         if (running && !changing) {
             if (reader->audio && reader->audio->eof()) {
                 reader->audio = nullptr;
-                updateQueue->dispatch([&] {
-                    (void) onEOF(Audio);
+                updateQueue->dispatch([this] {
+                    onEOF(Type::Audio);
                 });
             }
             if (reader->video && reader->video->eof()) {
                 reader->video = nullptr;
-                updateQueue->dispatch([&] {
-                    (void) onEOF(Video);
+                updateQueue->dispatch([this] {
+                    onEOF(Type::Video);
                 });
             }
         }
@@ -124,8 +123,8 @@ namespace ntgcalls {
     }
 
     void Stream::checkUpgrade() const {
-        updateQueue->dispatch([&] {
-            (void) onChangeStatus(getState());
+        updateQueue->dispatch([this] {
+            onChangeStatus(getState());
         });
     }
 
@@ -154,9 +153,9 @@ namespace ntgcalls {
 
     Stream::Status Stream::status() const {
         if (reader && (reader->audio || reader->video) && running && !changing) {
-            return idling ? Paused : Playing;
+            return idling ? Status::Paused : Status::Playing;
         }
-        return Idling;
+        return Status::Idling;
     }
 
     void Stream::start() {
