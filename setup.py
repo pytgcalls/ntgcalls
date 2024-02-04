@@ -167,7 +167,7 @@ def get_os_cmake_args():
         return [
             f"-DCMAKE_C_COMPILER={clang_c}",
             f"-DCMAKE_CXX_COMPILER={clang_cxx}",
-            "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
+            "-DCMAKE_CXX_FLAGS=-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
         ]
     return []
 
