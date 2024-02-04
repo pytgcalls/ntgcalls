@@ -37,13 +37,13 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Set up QEMU
         if: matrix.cibw_archs == 'aarch64'
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
@@ -59,21 +59,21 @@ jobs:
         run: python3 setup.py build_shared --no-preserve-cache
 
       - name: Upload Debug Shared lib for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ntgcalls.${{ matrix.shared_name }}-debug-shared_libs
           path: ./shared-output-debug/*
           if-no-files-found: error
 
       - name: Upload Release Shared lib for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
           path: ./shared-output/*
           if-no-files-found: error
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
+        uses: pypa/cibuildwheel@v2.16.5
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
@@ -83,7 +83,7 @@ jobs:
           CIBW_TEST_SKIP: "*-macosx_arm64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
           path: ./wheelhouse/*.whl
@@ -97,7 +97,7 @@ jobs:
       contents: write
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -129,7 +129,7 @@ jobs:
           fi
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: tmp/
 
