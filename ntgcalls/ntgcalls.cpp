@@ -87,8 +87,7 @@ namespace ntgcalls {
         return connections[chatId];
     }
 
-    std::map<int64_t, Stream::Status> NTgCalls::calls() const
-    {
+    std::map<int64_t, Stream::Status> NTgCalls::calls() const {
         std::map<int64_t, Stream::Status> statusList;
         for (const auto& [fst, snd] : connections) {
             statusList[fst] = snd->status();

@@ -43,8 +43,7 @@ namespace ntgcalls {
         return std::string(res);
     }
 
-    auto Client::changeStream(const MediaDescription& config) const -> void
-    {
+    auto Client::changeStream(const MediaDescription& config) const -> void {
         stream->setAVStream(config);
     }
 
@@ -118,54 +117,44 @@ namespace ntgcalls {
         stream->start();
     }
 
-    bool Client::pause() const
-    {
+    bool Client::pause() const {
         return stream->pause();
     }
 
-    bool Client::resume() const
-    {
+    bool Client::resume() const {
         return stream->resume();
     }
 
-    bool Client::mute() const
-    {
+    bool Client::mute() const {
         return stream->mute();
     }
 
-    bool Client::unmute() const
-    {
+    bool Client::unmute() const {
         return stream->unmute();
     }
 
-    void Client::stop() const
-    {
+    void Client::stop() const {
         stream->stop();
         connection->close();
     }
 
-    void Client::onStreamEnd(const std::function<void(Stream::Type)>& callback) const
-    {
+    void Client::onStreamEnd(const std::function<void(Stream::Type)>& callback) const {
         stream->onStreamEnd(callback);
     }
 
-    void Client::onUpgrade(const std::function<void(MediaState)>& callback) const
-    {
+    void Client::onUpgrade(const std::function<void(MediaState)>& callback) const {
         stream->onUpgrade(callback);
     }
 
-    uint64_t Client::time() const
-    {
+    uint64_t Client::time() const {
         return stream->time();
     }
 
-    MediaState Client::getState() const
-    {
+    MediaState Client::getState() const {
         return stream->getState();
     }
 
-    auto Client::status() const -> Stream::Status
-    {
+    auto Client::status() const -> Stream::Status {
         return stream->status();
     }
 }

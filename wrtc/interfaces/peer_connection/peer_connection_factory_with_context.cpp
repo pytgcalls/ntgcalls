@@ -12,7 +12,7 @@ namespace wrtc {
         using result_type =
                 std::pair<rtc::scoped_refptr<PeerConnectionFactoryInterface>,
                         rtc::scoped_refptr<webrtc::ConnectionContext>>;
-        auto [fst, snd] = dependencies.signaling_thread->BlockingCall([&dependencies]() {
+        auto [fst, snd] = dependencies.signaling_thread->BlockingCall([&dependencies] {
             const auto factory =
                 Create(std::move(dependencies));
             if (factory == nullptr) {
