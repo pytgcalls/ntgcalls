@@ -138,7 +138,9 @@ namespace ntgcalls {
 
     void Client::stop() const {
         stream->stop();
-        connection->close();
+        if (connection) {
+            connection->close();
+        }
     }
 
     void Client::onStreamEnd(const std::function<void(Stream::Type)>& callback) const {
