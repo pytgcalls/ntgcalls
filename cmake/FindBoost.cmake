@@ -15,7 +15,7 @@ if (WINDOWS_x86_64)
     set(BOOST_TOOLSET msvc)
     set(BOOST_CXX_FLAGS -D_ITERATOR_DEBUG_LEVEL=0)
     set(BOOST_LINK static)
-elseif (LINUX_x86_64)
+elseif (LINUX_x86_64 OR LINUX_ARM64)
     set(BOOST_TARGET linux)
     set(BOOST_CXX_FLAGS
             -D_LIBCPP_ABI_NAMESPACE=Cr
@@ -26,6 +26,9 @@ elseif (LINUX_x86_64)
             -isystem${LIBCXX_INCLUDE}/include
             -fPIC
     )
+    if (LINUX_ARM64)
+        set(BOOST_ARCH arm)
+    endif ()
 elseif (MACOS_ARM64)
     set(BOOST_TARGET darwin)
     execute_process(COMMAND xcrun --sdk macosx --show-sdk-path
