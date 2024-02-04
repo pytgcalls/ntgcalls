@@ -70,7 +70,7 @@ def get_versions() -> Dict[str, CLangInfo]:
             match_2 = re.findall(f'<NextMarker>(.*?)</NextMarker>', res)
             if len(match_2) == 0:
                 break
-            url_tmp = f"{url_base}&marker={quote(match_2[0])}"
+            url_tmp = f'{url_base}&marker={quote(match_2[0])}'
     return versions
 
 
@@ -90,7 +90,7 @@ def clang_path():
 
 def install_cmake(cmake_version: str):
     fixed_name = cmake_path()
-    if Path(fixed_name, "bin").exists():
+    if Path(fixed_name, 'bin').exists():
         return
     if not fixed_name.exists():
         os.mkdir(fixed_name)
@@ -145,22 +145,22 @@ def install_clang(clang_version: str):
 
 
 def get_os():
-    return subprocess.run(["uname", "-o"], stdout=subprocess.PIPE, text=True).stdout.strip()
+    return subprocess.run(['uname', '-o'], stdout=subprocess.PIPE, text=True).stdout.strip()
 
 
 def get_os_cmake_args():
-    if sys.platform.startswith("win32"):
+    if sys.platform.startswith('win32'):
         pass
-    elif sys.platform.startswith("darwin"):
+    elif sys.platform.startswith('darwin'):
         return [
-            "-DCMAKE_OSX_ARCHITECTURES=arm64",
-            "-G",
-            "Xcode",
+            '-DCMAKE_OSX_ARCHITECTURES=arm64',
+            '-G',
+            'Xcode',
         ]
-    elif get_os() == "Android":
-        raise NotImplementedError("Android is not supported yet")
-    elif sys.platform.startswith("linux"):
-        clang_c, clang_cxx = f"clang-{CLANG_VERSION}", f"clang++-{CLANG_VERSION}"
+    elif get_os() == 'Android':
+        raise NotImplementedError('Android is not supported yet')
+    elif sys.platform.startswith('linux'):
+        clang_c, clang_cxx = f'clang-{CLANG_VERSION}', f'clang++-{CLANG_VERSION}'
 
         if not TOOLS_PATH.exists():
             os.mkdir(TOOLS_PATH)
@@ -171,9 +171,9 @@ def get_os_cmake_args():
             clang_c = Path(clang_path(), 'bin', 'clang')
             clang_cxx = Path(clang_path(), 'bin', 'clang++')
         return [
-            f"-DCMAKE_C_COMPILER={clang_c}",
-            f"-DCMAKE_CXX_COMPILER={clang_cxx}",
-            "-DCMAKE_CXX_FLAGS=-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
+            f'-DCMAKE_C_COMPILER={clang_c}',
+            f'-DCMAKE_CXX_COMPILER={clang_cxx}',
+            '-DCMAKE_CXX_FLAGS=-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE',
         ]
     return []
 
@@ -182,23 +182,23 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
-        cfg = "RelWithDebInfo" if "b" in version else "Release"
+        cfg = 'RelWithDebInfo' if 'b' in version else 'Release'
 
         cmake_args = [
-            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
-            f"-DCMAKE_BUILD_TYPE={cfg}",
-            f"-DPY_VERSION_INFO={version}",
-            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}",
+            f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}',
+            f'-DPYTHON_EXECUTABLE={sys.executable}',
+            f'-DCMAKE_BUILD_TYPE={cfg}',
+            f'-DPY_VERSION_INFO={version}',
+            f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}',
         ]
 
-        if sys.platform.startswith("linux"):
+        if sys.platform.startswith('linux'):
             cxx_flags = ['-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE']
             cmake_args.append(f"-DCMAKE_CXX_FLAGS={' '.join(cxx_flags)}")
 
         build_args = [
-            "--config", cfg,
-            f"-j{multiprocessing.cpu_count()}",
+            '--config', cfg,
+            f'-j{multiprocessing.cpu_count()}',
         ]
         cmake_args += get_os_cmake_args()
 
@@ -230,7 +230,7 @@ class SharedCommand(Command):
 
     # noinspection PyMethodMayBeStatic
     def run(self):
-        cfg = "RelWithDebInfo" if self.debug else "Release"
+        cfg = 'RelWithDebInfo' if self.debug else 'Release'
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={cfg}',
         ]
@@ -252,7 +252,7 @@ class SharedCommand(Command):
         release_path = Path(build_temp, 'ntgcalls')
         tmp_release_path = Path(release_path, cfg)
 
-        build_output = Path("shared-output-debug" if self.debug else "shared-output")
+        build_output = Path('shared-output-debug' if self.debug else 'shared-output')
         if build_output.exists():
             shutil.rmtree(build_output)
         build_output.mkdir(parents=True)
@@ -272,9 +272,9 @@ class SharedCommand(Command):
                     for boost_build in os.listdir(boost_dir):
                         if boost_build.startswith('boost_'):
                             shutil.rmtree(Path(boost_dir, boost_build))
-                    print("Cleanup successfully")
+                    print('Cleanup successfully')
                 return
-        raise FileNotFoundError("No library files found")
+        raise FileNotFoundError('No library files found')
 
 
 with open(os.path.join(base_path, 'README.md'), encoding='utf-8') as f:
