@@ -2,8 +2,7 @@
 // Created by Laky64 on 01/08/2023.
 //
 
-#ifndef NTGCALLS_DISPATCHQUEUE_HPP
-#define NTGCALLS_DISPATCHQUEUE_HPP
+#pragma once
 
 
 #include <thread>
@@ -32,6 +31,3 @@ private:
 
     void dispatchThreadHandler();
 };
-
-
-#endif
