@@ -38,17 +38,17 @@ namespace ntgcalls {
 
         bool resume();
 
-        bool mute() const;
+        bool mute();
 
-        bool unmute() const;
+        bool unmute();
 
         void stop();
 
-        MediaState getState() const;
+        MediaState getState();
 
-        uint64_t time() const;
+        uint64_t time();
 
-        Status status() const;
+        Status status();
 
         void addTracks(const std::shared_ptr<wrtc::PeerConnection> &pc);
 
@@ -70,10 +70,10 @@ namespace ntgcalls {
 
         void sendSample();
 
-        void checkStream() const;
+        void checkStream();
 
-        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample() const;
+        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample();
 
-        void checkUpgrade() const;
+        void checkUpgrade();
     };
 }

@@ -21,7 +21,9 @@ namespace ntgcalls {
     wrtc::binary BaseReader::read(int64_t size) {
         wrtc::binary res = nullptr;
         if (dispatchQueue != nullptr) {
+            mutex.lock();
             promise = std::make_shared<std::promise<void>>();
+            mutex.unlock();
             if (!_eof && nextBuffer.size() <= 4 && !running) {
                 running = true;
                 dispatchQueue->dispatch([this, size] {
@@ -38,7 +40,9 @@ namespace ntgcalls {
                         _eof = true;
                     }
                     running = false;
+                    mutex.lock();
                     if (promise != nullptr) promise->set_value();
+                    mutex.unlock();
                 });
             }
             if (nextBuffer.empty() && !_eof) {
