@@ -11,6 +11,10 @@ namespace ntgcalls {
         using BaseRTCException::BaseRTCException;
     };
 
+    class TelegramServerError final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     class ConnectionNotFound final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };

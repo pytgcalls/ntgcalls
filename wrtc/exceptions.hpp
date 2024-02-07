@@ -13,7 +13,8 @@ namespace wrtc {
     class BaseRTCException: public std::exception {
     public:
         explicit BaseRTCException(std::string msg);
-        [[nodiscard]] const char* what() const noexcept override;
+
+        const char* what() const noexcept override;
 
     private:
         std::string _msg;

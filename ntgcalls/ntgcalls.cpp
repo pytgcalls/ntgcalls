@@ -31,7 +31,12 @@ namespace ntgcalls {
     }
 
     void NTgCalls::connect(const int64_t chatId, const std::string& params) {
-        safeConnection(chatId)->connect(params);
+        try {
+            safeConnection(chatId)->connect(params);
+        } catch (TelegramServerError&) {
+            stop(chatId);
+            throw;
+        }
     }
 
     void NTgCalls::changeStream(const int64_t chatId, const MediaDescription& media) {

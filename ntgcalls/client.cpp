@@ -51,76 +51,72 @@ namespace ntgcalls {
         if (!connection) {
             throw ConnectionError("Connection not initialized");
         }
-        try {
-            auto data = json::parse(jsonData);
-            if (!data["rtmp"].is_null()) {
-                throw RTMPNeeded("Needed rtmp connection");
-            }
-            if (data["transport"].is_null()) {
-                throw InvalidParams("Transport not found");
-            }
-            data = data["transport"];
-            wrtc::Conference conference;
-            try {
-                conference = {
-                    {
-                        data["ufrag"].get<std::string>(),
-                        data["pwd"].get<std::string>()
-                    },
-                    audioSource,
-                    sourceGroups
-                };
-                for (const auto& item : data["fingerprints"].items()) {
-                    conference.transport.fingerprints.push_back({
-                        item.value()["hash"],
-                        item.value()["fingerprint"],
-                    });
-                }
-                for (const auto& item : data["candidates"].items()) {
-                    conference.transport.candidates.push_back({
-                        item.value()["generation"].get<std::string>(),
-                        item.value()["component"].get<std::string>(),
-                        item.value()["protocol"].get<std::string>(),
-                        item.value()["port"].get<std::string>(),
-                        item.value()["ip"].get<std::string>(),
-                        item.value()["foundation"].get<std::string>(),
-                        item.value()["id"].get<std::string>(),
-                        item.value()["priority"].get<std::string>(),
-                        item.value()["type"].get<std::string>(),
-                        item.value()["network"].get<std::string>()
-                    });
-                }
-            } catch (...) {
-                throw InvalidParams("Invalid transport");
-            }
-
-            const auto remoteDescription = wrtc::Description(
-                wrtc::Description::Type::Answer,
-                wrtc::SdpBuilder::fromConference(conference)
-            );
-            connection->setRemoteDescription(remoteDescription);
-
-            wrtc::Sync<void> waitConnection;
-            connection->onIceStateChange([&waitConnection](const wrtc::IceState state) {
-                switch (state) {
-                    case wrtc::IceState::Connected:
-                        waitConnection.onSuccess();
-                        break;
-                    case wrtc::IceState::Disconnected:
-                    case wrtc::IceState::Failed:
-                    case wrtc::IceState::Closed:
-                        waitConnection.onFailed(ConnectionError("Connection failed to Telegram WebRTC"));
-                        break;
-                    default:
-                        break;
-                }
-            });
-            waitConnection.wait();
-            connection->onIceStateChange(nullptr);
-            stream->start();
-        } catch (const std::exception &exc) {
-            throw wrtc::RTCException(exc.what());
+        auto data = json::parse(jsonData);
+        if (!data["rtmp"].is_null()) {
+            throw RTMPNeeded("Needed rtmp connection");
         }
+        if (data["transport"].is_null()) {
+            throw InvalidParams("Transport not found");
+        }
+        data = data["transport"];
+        wrtc::Conference conference;
+        try {
+            conference = {
+                {
+                    data["ufrag"].get<std::string>(),
+                    data["pwd"].get<std::string>()
+                },
+                audioSource,
+                sourceGroups
+            };
+            for (const auto& item : data["fingerprints"].items()) {
+                conference.transport.fingerprints.push_back({
+                    item.value()["hash"],
+                    item.value()["fingerprint"],
+                });
+            }
+            for (const auto& item : data["candidates"].items()) {
+                conference.transport.candidates.push_back({
+                    item.value()["generation"].get<std::string>(),
+                    item.value()["component"].get<std::string>(),
+                    item.value()["protocol"].get<std::string>(),
+                    item.value()["port"].get<std::string>(),
+                    item.value()["ip"].get<std::string>(),
+                    item.value()["foundation"].get<std::string>(),
+                    item.value()["id"].get<std::string>(),
+                    item.value()["priority"].get<std::string>(),
+                    item.value()["type"].get<std::string>(),
+                    item.value()["network"].get<std::string>()
+                });
+            }
+        } catch (...) {
+            throw InvalidParams("Invalid transport");
+        }
+
+        const auto remoteDescription = wrtc::Description(
+            wrtc::Description::Type::Answer,
+            wrtc::SdpBuilder::fromConference(conference)
+        );
+        connection->setRemoteDescription(remoteDescription);
+
+        wrtc::Sync<void> waitConnection;
+        connection->onIceStateChange([&waitConnection](const wrtc::IceState state) {
+            switch (state) {
+                case wrtc::IceState::Connected:
+                    waitConnection.onSuccess();
+                    break;
+                case wrtc::IceState::Disconnected:
+                case wrtc::IceState::Failed:
+                case wrtc::IceState::Closed:
+                    waitConnection.onFailed(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
+                    break;
+                default:
+                    break;
+            }
+        });
+        waitConnection.wait();
+        connection->onIceStateChange(nullptr);
+        stream->start();
     }
 
     bool Client::pause() const {

@@ -11,7 +11,7 @@ namespace wrtc {
     }
 
     void SetSessionDescriptionObserver::OnFailure(const webrtc::RTCError error) {
-        _onFailure(wrapRTCError(error));
+        _onFailure(std::make_exception_ptr(wrapRTCError(error)));
     }
 
 } // namespace wrtc

@@ -5,7 +5,7 @@
 #include "exceptions.hpp"
 
 namespace wrtc {
-    [[nodiscard]] const char *BaseRTCException::what() const noexcept {
+    const char *BaseRTCException::what() const noexcept {
         return _msg.c_str();
     }
 
@@ -21,8 +21,7 @@ namespace wrtc {
 
         if (error.line.empty()) {
             return SdpParseException{msg + error.description};
-        } else {
-            return SdpParseException{msg + "Line: " + error.line + ".  " + error.description};
         }
+        return SdpParseException{msg + "Line: " + error.line + ".  " + error.description};
     }
 }

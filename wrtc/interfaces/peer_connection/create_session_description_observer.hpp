@@ -13,7 +13,7 @@ namespace wrtc {
     class CreateSessionDescriptionObserver : public webrtc::CreateSessionDescriptionObserver {
     public:
         CreateSessionDescriptionObserver(const std::function<void(Description)>& onSuccess,
-                                         const std::function<void(const std::exception&)>& onFailure) :
+                                         const std::function<void(const std::exception_ptr&)>& onFailure) :
                                          _onSuccess(onSuccess), _onFailure(onFailure) {}
 
         void OnSuccess(webrtc::SessionDescriptionInterface *) override;
@@ -22,7 +22,7 @@ namespace wrtc {
 
     private:
         std::function<void(Description)> _onSuccess;
-        std::function<void(const std::exception&)> _onFailure;
+        std::function<void(const std::exception_ptr&)> _onFailure;
     };
 
 } // namespace wrtc
