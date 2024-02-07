@@ -162,6 +162,8 @@ int ntg_connect(const uint32_t uid, const int64_t chatID, char* params) {
         return NTG_INVALID_TRANSPORT;
     } catch (ntgcalls::ConnectionError&) {
         return NTG_CONNECTION_FAILED;
+    } catch(ntgcalls::TelegramServerError&) {
+        return NTG_CONNECTION_FAILED;
     } catch (ntgcalls::ConnectionNotFound&) {
         return NTG_CONNECTION_NOT_FOUND;
     } catch (...) {
