@@ -105,7 +105,11 @@ namespace wrtc {
 
     void PeerConnection::close() {
         if (peerConnection && !isClosed) {
-            peerConnection->Close();
+            if (peerConnection->ice_connection_state() != webrtc::PeerConnectionInterface::kIceConnectionFailed &&
+                peerConnection->ice_connection_state() != webrtc::PeerConnectionInterface::kIceConnectionMax &&
+                peerConnection->ice_connection_state() != webrtc::PeerConnectionInterface::kIceConnectionClosed) {
+                peerConnection->Close();
+            }
             if (peerConnection.get() && peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
                 for (const auto &transceiver: peerConnection->GetTransceivers()) {
                     const auto track = MediaStreamTrack::holder()->GetOrCreate(transceiver->receiver()->track());
