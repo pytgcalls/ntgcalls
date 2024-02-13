@@ -14,12 +14,16 @@ namespace ntgcalls {
         std::map<int64_t, std::shared_ptr<Client>> connections;
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
+        wrtc::synchronized_callback<int64_t> onCloseConnection;
+        std::shared_ptr<DispatchQueue> updateQueue;
 
         bool exists(int64_t chatId) const;
 
         std::shared_ptr<Client> safeConnection(int64_t chatId);
 
     public:
+        NTgCalls();
+
         ~NTgCalls();
 
         std::string createCall(int64_t chatId, const MediaDescription& media);
@@ -47,6 +51,8 @@ namespace ntgcalls {
         void onUpgrade(const std::function<void(int64_t, MediaState)>& callback);
 
         void onStreamEnd(const std::function<void(int64_t, Stream::Type)>& callback);
+
+        void onDisconnect(const std::function<void(int64_t)>& callback);
 
         std::map<int64_t, Stream::Status> calls() const;
     };

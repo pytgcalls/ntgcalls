@@ -19,6 +19,8 @@ namespace ntgcalls {
         wrtc::SSRC audioSource = 0;
         std::vector<wrtc::SSRC> sourceGroups = {};
         std::shared_ptr<Stream> stream;
+        bool connected = false;
+        wrtc::synchronized_callback<void> onCloseConnection;
 
         GroupCallPayload init();
 
@@ -29,7 +31,7 @@ namespace ntgcalls {
 
         std::string init(const MediaDescription& config);
 
-        void connect(const std::string& jsonData) const;
+        void connect(const std::string& jsonData);
 
         void changeStream(const MediaDescription& config) const;
 
@@ -52,5 +54,7 @@ namespace ntgcalls {
         void onUpgrade(const std::function<void(MediaState)>& callback) const;
 
         void onStreamEnd(const std::function<void(Stream::Type)>& callback) const;
+
+        void onDisconnect(const std::function<void()>& callback);
     };
 }

@@ -47,7 +47,7 @@ namespace ntgcalls {
         stream->setAVStream(config);
     }
 
-    void Client::connect(const std::string& jsonData) const {
+    void Client::connect(const std::string& jsonData) {
         if (!connection) {
             throw ConnectionError("Connection not initialized");
         }
@@ -100,22 +100,27 @@ namespace ntgcalls {
         connection->setRemoteDescription(remoteDescription);
 
         wrtc::Sync<void> waitConnection;
-        connection->onIceStateChange([&waitConnection](const wrtc::IceState state) {
+        connection->onIceStateChange([&](const wrtc::IceState state) {
             switch (state) {
-                case wrtc::IceState::Connected:
-                    waitConnection.onSuccess();
+            case wrtc::IceState::Connected:
+                    if (!this->connected) waitConnection.onSuccess();
                     break;
                 case wrtc::IceState::Disconnected:
                 case wrtc::IceState::Failed:
                 case wrtc::IceState::Closed:
-                    waitConnection.onFailed(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
+                    if (!this->connected) {
+                        waitConnection.onFailed(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
+                    } else {
+                        connection->onIceStateChange(nullptr);
+                        (void) this->onCloseConnection();
+                    }
                     break;
                 default:
                     break;
             }
         });
         waitConnection.wait();
-        connection->onIceStateChange(nullptr);
+        this->connected = true;
         stream->start();
     }
 
@@ -138,15 +143,20 @@ namespace ntgcalls {
     void Client::stop() const {
         stream->stop();
         if (connection) {
+            connection->onIceStateChange(nullptr);
             connection->close();
         }
     }
 
-    void Client::onStreamEnd(const std::function<void(Stream::Type)>& callback) const {
+    void Client::onStreamEnd(const std::function<void(Stream::Type)> &callback) const {
         stream->onStreamEnd(callback);
     }
 
-    void Client::onUpgrade(const std::function<void(MediaState)>& callback) const {
+    void Client::onDisconnect(const std::function<void()> &callback) {
+        this->onCloseConnection = callback;
+    }
+
+    void Client::onUpgrade(const std::function<void(MediaState)> &callback) const {
         stream->onUpgrade(callback);
     }
 

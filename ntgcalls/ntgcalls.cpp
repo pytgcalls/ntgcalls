@@ -7,6 +7,20 @@
 #include "exceptions.hpp"
 
 namespace ntgcalls {
+    NTgCalls::NTgCalls() {
+        updateQueue = std::make_shared<DispatchQueue>();
+    }
+
+    NTgCalls::~NTgCalls() {
+        // Temporary fix because macOs sucks and currently doesnt support Elements View
+        // ReSharper disable once CppUseElementsView
+        for (const auto& [fst, snd] : connections) {
+            snd->stop();
+        }
+        connections = {};
+        updateQueue = nullptr;
+    }
+
     std::string NTgCalls::createCall(int64_t chatId, const MediaDescription& media) {
         if (exists(chatId)) {
             throw ConnectionError("Connection cannot be initialized more than once.");
@@ -18,16 +32,13 @@ namespace ntgcalls {
         connections[chatId]->onUpgrade([this, chatId](const MediaState state) {
             (void) onChangeStatus(chatId, state);
         });
+        connections[chatId]->onDisconnect([this, chatId]{
+            updateQueue->dispatch([&] {
+                (void) onCloseConnection(chatId);
+                stop(chatId);
+            });
+        });
         return connections[chatId]->init(media);
-    }
-
-    NTgCalls::~NTgCalls() {
-        // Temporary fix because macOs sucks and currently doesnt support Elements View
-        // ReSharper disable once CppUseElementsView
-        for (const auto& [fst, snd] : connections) {
-            snd->stop();
-        }
-        connections = {};
     }
 
     void NTgCalls::connect(const int64_t chatId, const std::string& params) {
@@ -70,6 +81,10 @@ namespace ntgcalls {
 
     void NTgCalls::onUpgrade(const std::function<void(int64_t, MediaState)>& callback) {
         onChangeStatus = callback;
+    }
+
+    void NTgCalls::onDisconnect(const std::function<void(int64_t)>& callback) {
+        onCloseConnection = callback;
     }
 
     uint64_t NTgCalls::time(const int64_t chatId) {
