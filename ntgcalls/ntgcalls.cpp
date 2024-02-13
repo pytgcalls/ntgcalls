@@ -12,6 +12,7 @@ namespace ntgcalls {
     }
 
     NTgCalls::~NTgCalls() {
+        std::lock_guard lock(mutex);
         // Temporary fix because macOs sucks and currently doesnt support Elements View
         // ReSharper disable once CppUseElementsView
         for (const auto& [fst, snd] : connections) {
@@ -22,15 +23,20 @@ namespace ntgcalls {
     }
 
     std::string NTgCalls::createCall(int64_t chatId, const MediaDescription& media) {
+        std::lock_guard lock(mutex);
         if (exists(chatId)) {
             throw ConnectionError("Connection cannot be initialized more than once.");
         }
         connections[chatId] = std::make_shared<Client>();
         connections[chatId]->onStreamEnd([this, chatId](const Stream::Type type) {
-            (void) onEof(chatId, type);
+            updateQueue->dispatch([&] {
+                (void) onEof(chatId, type);
+            });
         });
         connections[chatId]->onUpgrade([this, chatId](const MediaState state) {
-            (void) onChangeStatus(chatId, state);
+            updateQueue->dispatch([&] {
+                (void) onChangeStatus(chatId, state);
+            });
         });
         connections[chatId]->onDisconnect([this, chatId]{
             updateQueue->dispatch([&] {
@@ -42,6 +48,7 @@ namespace ntgcalls {
     }
 
     void NTgCalls::connect(const int64_t chatId, const std::string& params) {
+        std::lock_guard lock(mutex);
         try {
             safeConnection(chatId)->connect(params);
         } catch (TelegramServerError&) {
@@ -51,26 +58,32 @@ namespace ntgcalls {
     }
 
     void NTgCalls::changeStream(const int64_t chatId, const MediaDescription& media) {
+        std::lock_guard lock(mutex);
         safeConnection(chatId)->changeStream(media);
     }
 
     bool NTgCalls::pause(const int64_t chatId) {
+        std::lock_guard lock(mutex);
         return safeConnection(chatId)->pause();
     }
 
     bool NTgCalls::resume(const int64_t chatId) {
+        std::lock_guard lock(mutex);
         return safeConnection(chatId)->resume();
     }
 
     bool NTgCalls::mute(const int64_t chatId) {
+        std::lock_guard lock(mutex);
         return safeConnection(chatId)->mute();
     }
 
     bool NTgCalls::unmute(const int64_t chatId) {
+        std::lock_guard lock(mutex);
         return safeConnection(chatId)->unmute();
     }
 
     void NTgCalls::stop(const int64_t chatId) {
+        std::lock_guard lock(mutex);
         safeConnection(chatId)->stop();
         connections.erase(connections.find(chatId));
     }
@@ -88,10 +101,12 @@ namespace ntgcalls {
     }
 
     uint64_t NTgCalls::time(const int64_t chatId) {
+        std::lock_guard lock(mutex);
         return safeConnection(chatId)->time();
     }
 
     MediaState NTgCalls::getState(const int64_t chatId) {
+        std::lock_guard lock(mutex);
         return safeConnection(chatId)->getState();
     }
 
@@ -107,7 +122,8 @@ namespace ntgcalls {
         return connections[chatId];
     }
 
-    std::map<int64_t, Stream::Status> NTgCalls::calls() const {
+    std::map<int64_t, Stream::Status> NTgCalls::calls() {
+        std::lock_guard lock(mutex);
         std::map<int64_t, Stream::Status> statusList;
         for (const auto& [fst, snd] : connections) {
             statusList[fst] = snd->status();

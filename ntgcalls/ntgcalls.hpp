@@ -11,11 +11,12 @@
 namespace ntgcalls {
 
     class NTgCalls {
-        std::map<int64_t, std::shared_ptr<Client>> connections;
+        std::unordered_map<int64_t, std::shared_ptr<Client>> connections;
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
         std::shared_ptr<DispatchQueue> updateQueue;
+        std::recursive_mutex mutex;
 
         bool exists(int64_t chatId) const;
 
@@ -54,7 +55,7 @@ namespace ntgcalls {
 
         void onDisconnect(const std::function<void(int64_t)>& callback);
 
-        std::map<int64_t, Stream::Status> calls() const;
+        std::map<int64_t, Stream::Status> calls();
     };
 
 } // ntgcalls
