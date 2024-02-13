@@ -28,6 +28,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("get_state", &ntgcalls::NTgCalls::getState, py::arg("chat_id"));
     wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade);
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd);
+    wrapper.def("on_disconnect", &ntgcalls::NTgCalls::onDisconnect);
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
 

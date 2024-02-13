@@ -94,6 +94,8 @@ typedef void (*ntg_stream_callback)(uint32_t, int64_t, ntg_stream_type_enum);
 
 typedef void (*ntg_upgrade_callback)(uint32_t, int64_t, ntg_media_state_struct);
 
+typedef void (*ntg_disconnect_callback)(uint32_t, int64_t);
+
 NTG_C_EXPORT uint32_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
@@ -125,6 +127,8 @@ NTG_C_EXPORT int ntg_calls_count(uint32_t uid);
 NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback);
 
 NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback);
+
+NTG_C_EXPORT int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callback);
 
 NTG_C_EXPORT int ntg_get_version(char* buffer, int size);
 

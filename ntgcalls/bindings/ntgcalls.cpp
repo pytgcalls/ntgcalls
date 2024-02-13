@@ -328,6 +328,17 @@ int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback) {
     return 0;
 }
 
+int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callback) {
+    try {
+        safeUID(uid)->onDisconnect([uid, callback](const int64_t chatId) {
+            callback(uid, chatId);
+        });
+    } catch (ntgcalls::InvalidUUID&) {
+        return NTG_INVALID_UID;
+    }
+    return 0;
+}
+
 int ntg_get_version(char* buffer, const int size) {
     return copyAndReturn(NTG_VERSION, buffer, size);
 }
