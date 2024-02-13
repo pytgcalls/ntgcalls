@@ -3,6 +3,7 @@ package ntgcalls
 //#include "ntgcalls.h"
 //extern void handleStream(uint32_t uid, int64_t chatID, ntg_stream_type_enum streamType);
 //extern void handleUpgrade(uint32_t uid, int64_t chatID, ntg_media_state_struct state);
+//extern void handleDisconnect(uint32_t uid, int64_t chatID);
 import "C"
 import (
 	"fmt"
@@ -11,6 +12,7 @@ import (
 
 var handlerEnd = make(map[uint32][]StreamEndCallback)
 var handlerUpgrade = make(map[uint32][]UpgradeCallback)
+var handlerDisconnect = make(map[uint32][]DisconnectCallback)
 
 func NTgCalls() *Instance {
 	instance := &Instance{
@@ -19,6 +21,7 @@ func NTgCalls() *Instance {
 	}
 	C.ntg_on_stream_end(C.uint32_t(instance.uid), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStream)))
 	C.ntg_on_upgrade(C.uint32_t(instance.uid), (C.ntg_upgrade_callback)(unsafe.Pointer(C.handleUpgrade)))
+	C.ntg_on_disconnect(C.uint32_t(instance.uid), (C.ntg_disconnect_callback)(unsafe.Pointer(C.handleDisconnect)))
 	return instance
 }
 
@@ -55,12 +58,27 @@ func handleUpgrade(uid C.uint32_t, chatID C.int64_t, state C.ntg_media_state_str
 	}
 }
 
+//export handleDisconnect
+func handleDisconnect(uid C.uint32_t, chatID C.int64_t) {
+	goChatID := int64(chatID)
+	goUID := uint32(uid)
+	if handlerDisconnect[goUID] != nil {
+		for _, x0 := range handlerDisconnect[goUID] {
+			go x0(goChatID)
+		}
+	}
+}
+
 func (ctx *Instance) OnStreamEnd(callback StreamEndCallback) {
 	handlerEnd[ctx.uid] = append(handlerEnd[ctx.uid], callback)
 }
 
 func (ctx *Instance) OnUpgrade(callback UpgradeCallback) {
 	handlerUpgrade[ctx.uid] = append(handlerUpgrade[ctx.uid], callback)
+}
+
+func (ctx *Instance) OnDisconnect(callback DisconnectCallback) {
+	handlerDisconnect[ctx.uid] = append(handlerDisconnect[ctx.uid], callback)
 }
 
 func parseBool(res C.int) (bool, error) {

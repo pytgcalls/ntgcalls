@@ -9,6 +9,7 @@ type InputMode int
 
 type StreamEndCallback func(chatId int64, streamType StreamType)
 type UpgradeCallback func(chatId int64, streamType MediaState)
+type DisconnectCallback func(chatId int64)
 
 const (
 	AudioStream StreamType = iota
