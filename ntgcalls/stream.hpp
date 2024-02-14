@@ -74,6 +74,8 @@ namespace ntgcalls {
 
         std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample();
 
-        void checkUpgrade();
+        void checkUpgrade() const;
+
+        MediaState internalState() const;
     };
 }

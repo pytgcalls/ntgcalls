@@ -90,7 +90,7 @@ namespace ntgcalls {
             }
             mutex.lock();
             if (streamQueue) {
-                streamQueue->dispatch([this] {
+                streamQueue->dispatch([&] {
                     sendSample();
                 });
             }
@@ -130,19 +130,23 @@ namespace ntgcalls {
         }
     }
 
-    void Stream::checkUpgrade() {
+    void Stream::checkUpgrade() const {
         updateQueue->dispatch([&] {
-            (void) onChangeStatus(getState());
+            (void) onChangeStatus(internalState());
         });
     }
 
-    MediaState Stream::getState() {
-        std::lock_guard lock(mutex);
+    MediaState Stream::internalState() const {
         return MediaState{
             audioTrack->isMuted() && videoTrack->isMuted(),
             idling || videoTrack->isMuted(),
             !hasVideo
         };
+    }
+
+    MediaState Stream::getState() {
+        std::lock_guard lock(mutex);
+        return internalState();
     }
 
     uint64_t Stream::time() {
@@ -173,7 +177,7 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         if (!running) {
             running = true;
-            streamQueue->dispatch([this] {
+            streamQueue->dispatch([&] {
                 sendSample();
             });
         }
