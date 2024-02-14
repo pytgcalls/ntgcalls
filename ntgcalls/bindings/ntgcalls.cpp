@@ -7,32 +7,33 @@
 
 #include "ntgcalls/exceptions.hpp"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 std::map<uint32_t, std::shared_ptr<ntgcalls::NTgCalls>> clients;
 uint32_t uidGenerator;
 
-int copyAndReturn(std::string s, char *buffer, const int size) {
+int copyAndReturn(const std::string& s, char *buffer, const int size) {
     if (!buffer)
         return static_cast<int>(s.size() + 1);
 
     if (size < static_cast<int>(s.size() + 1))
         return NTG_ERR_TOO_SMALL;
 
-#ifndef IS_MACOS
-    std::ranges::copy(s, buffer);
-#else
     std::copy(s.begin(), s.end(), buffer);
-#endif
-
     buffer[s.size()] = '\0';
     return static_cast<int>(s.size() + 1);
 }
 
-template <typename T> int copyAndReturn(std::vector<T> b, T *buffer, const int size) {
+template <typename T> int copyAndReturn(const std::vector<T>& b, T *buffer, const int size) {
     if (!buffer)
         return static_cast<int>(b.size());
 
     if (size < static_cast<int>(b.size()))
         return NTG_ERR_TOO_SMALL;
+    
     std::copy(b.begin(), b.end(), buffer);
     return static_cast<int>(b.size());
 }
@@ -127,25 +128,13 @@ int ntg_destroy(const uint32_t uid) {
     if (!clients.contains(uid)) {
         return NTG_INVALID_UID;
     }
-    clients.erase(clients.find(uid));
+    clients.erase(uid);
     return 0;
 }
 
 int ntg_get_params(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc, char* buffer, const int size) {
     try {
         return copyAndReturn(safeUID(uid)->createCall(chatID, parseMediaDescription(desc)), buffer, size);
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionError&) {
-        return NTG_CONNECTION_ALREADY_EXISTS;
-    } catch (ntgcalls::FileError&) {
-        return NTG_FILE_NOT_FOUND;
-    } catch (ntgcalls::InvalidParams&) {
-        return NTG_ENCODER_NOT_FOUND;
-    } catch (ntgcalls::FFmpegError&) {
-        return NTG_FFMPEG_NOT_FOUND;
-    } catch (ntgcalls::ShellError&) {
-        return NTG_SHELL_ERROR;
     } catch (...) {
         return NTG_UNKNOWN_EXCEPTION;
     }
