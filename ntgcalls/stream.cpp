@@ -15,14 +15,13 @@ namespace ntgcalls {
 
     Stream::~Stream() {
         stop();
-        mutex.lock();
+        std::lock_guard lock(mutex);
         audio = nullptr;
         video = nullptr;
         audioTrack = nullptr;
         videoTrack = nullptr;
         reader = nullptr;
         updateQueue = nullptr;
-        mutex.unlock();
     }
 
     void Stream::addTracks(const std::shared_ptr<wrtc::PeerConnection>& pc) {
@@ -99,7 +98,7 @@ namespace ntgcalls {
     }
 
     void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
-        mutex.lock();
+        std::lock_guard lock(mutex);
         changing = true;
         const auto audioConfig = streamConfig.audio;
         const auto videoConfig = streamConfig.video;
@@ -124,7 +123,6 @@ namespace ntgcalls {
             hasVideo = false;
         }
         changing = false;
-        mutex.unlock();
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }
