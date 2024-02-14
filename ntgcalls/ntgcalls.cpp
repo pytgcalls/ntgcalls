@@ -28,18 +28,18 @@ namespace ntgcalls {
             throw ConnectionError("Connection cannot be initialized more than once.");
         }
         connections[chatId] = std::make_shared<Client>();
-        connections[chatId]->onStreamEnd([this, chatId](const Stream::Type type) {
-            updateQueue->dispatch([&] {
+        connections[chatId]->onStreamEnd([this, chatId](const Stream::Type &type) {
+            updateQueue->dispatch([this, chatId, type] {
                 (void) onEof(chatId, type);
             });
         });
-        connections[chatId]->onUpgrade([this, chatId](const MediaState state) {
-            updateQueue->dispatch([&] {
+        connections[chatId]->onUpgrade([this, chatId](const MediaState &state) {
+            updateQueue->dispatch([this, chatId, state] {
                 (void) onChangeStatus(chatId, state);
             });
         });
         connections[chatId]->onDisconnect([this, chatId]{
-            updateQueue->dispatch([&] {
+            updateQueue->dispatch([this, chatId] {
                 (void) onCloseConnection(chatId);
                 stop(chatId);
             });
