@@ -13,7 +13,7 @@ namespace ntgcalls {
         this->hash = hash;
         this->setup = setup;
         this->audioSource = static_cast<wrtc::TgSSRC>(audioSource);
-        for (auto &ssrc : source_groups) {
+        for (auto ssrc : source_groups) { 
             this->sourceGroups.push_back(static_cast<wrtc::TgSSRC>(ssrc));
         }
     }
@@ -25,7 +25,7 @@ namespace ntgcalls {
             {"fingerprints", {
                 {
                     {"hash", hash},
-                    {"setup", "active"},
+                    {"setup", setup}, 
                     {"fingerprint", fingerprint}
                 }
             }},
@@ -39,7 +39,7 @@ namespace ntgcalls {
                 }
             };
         }
-        return to_string(jsonRes);
+        return jsonRes.dump(); 
     }
 
 } // ntgcalls
