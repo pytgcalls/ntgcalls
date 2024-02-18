@@ -53,20 +53,20 @@ jobs:
           pip install setuptools
 
       - name: Build Debug Shared lib
-        run: |
-          if [[ ${{ matrix.cibw_archs }} != 'aarch64' ]]; then
-            python3 setup.py build_shared --no-preserve-cache --debug
-          else
-            docker run -v $(pwd):/app -w /app -it ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache --debug
-          fi
+        if: matrix.cibw_archs != 'aarch64'
+        run: python3 setup.py build_shared --no-preserve-cache --debug
+
+      - name: Build Debug Shared lib (ARM64)
+        if: matrix.cibw_archs == 'aarch64'
+        run: docker run -it -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache --debug
 
       - name: Build Release Shared lib
-        run: |
-          if [[ ${{ matrix.cibw_archs }} != 'aarch64' ]]; then
-            python3 setup.py build_shared --no-preserve-cache
-          else
-            docker run -v $(pwd):/app -w /app -it ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache
-          fi
+        if: matrix.cibw_archs != 'aarch64'
+        run: python3 setup.py build_shared --no-preserve-cache
+
+      - name: Build Release Shared lib (ARM64)
+        if: matrix.cibw_archs == 'aarch64'
+        run: docker run -it -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache
 
       - name: Upload Debug Shared lib for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
