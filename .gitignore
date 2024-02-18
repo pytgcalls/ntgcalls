@@ -6,6 +6,7 @@ env
 .vscode
 output/
 output_cgo/
+build_tools/
 linux_output/
 *.session
 *.session-journal
@@ -20,7 +21,6 @@ build/
 shared-build/
 shared-output/
 dist/
-clang/
 tests/
 __pycache__
 *.i420
