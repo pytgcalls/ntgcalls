@@ -45,7 +45,7 @@ Telegram calling experience and introduces innovative features while preserving 
 | Architecture |                                                                   Windows                                                                   |                                                                Linux                                                                |                                                                  MacOS                                                                  |
 |:------------:|:-------------------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------------:|
 |    x86_64    |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   | ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745) | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) |
-|    ARM64     | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) | ![BUILD](https://img.shields.io/badge/build-failing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%23d12f3d) |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   |
+|    ARM64     | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) | ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745) |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   |
 
 ## Key Features
 
@@ -122,7 +122,10 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 * <b><a href="https://github.com/morethanwords">@morethanwords</a>:</b>
   We extend our special thanks to morethanwords for their invaluable help in integrating the connection to WebRTC with Telegram Web K. 
   Their assistance has been instrumental in enhancing the functionality of our library.
-* <b><a href="https://github.com/MarshalX">@MarshalX</a></b> for their generous assistance in answering questions and providing insights regarding WebRTC.
+
+* <b><a href="https://github.com/MarshalX">@MarshalX</a>:</b> for their generous assistance in answering questions and providing insights regarding WebRTC.
+
+* <b><a href="https://github.com/LyzCoote">@LyzCoote</a>:</b> for providing a server arm64 and allowing us to build an image with clang-18 preinstalled on manylinux2014 arm64.
 
 _We would like to extend a special thanks to <b><a href='https://github.com/null-nick'>@null-nick</a></b>
 and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library.
