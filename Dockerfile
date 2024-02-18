@@ -13,4 +13,6 @@ RUN git clone --depth=1 -b release/18.x https://github.com/llvm/llvm-project.git
     && make -j$(nproc) \
     && make install \
     && cd ../.. \
-    && rm -rf llvm-project
+    && rm -rf llvm-project \
+    && ln -s /usr/local/bin/clang++ /usr/local/bin/clang++-18 \
+    && ln -s /usr/local/bin/python3.12 /usr/local/bin/python3
