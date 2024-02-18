@@ -22,10 +22,10 @@ jobs:
             cibw_archs: "native"
             shared_name: "linux-x86_64"
             cibw_os_build: "manylinux_"
-          #- os: ubuntu-latest
-          #  cibw_archs: "aarch64"
-          #  shared_name: "linux-arm64"
-          #  cibw_os_build: "manylinux_"
+          - os: ubuntu-latest
+            cibw_archs: "aarch64"
+            shared_name: "linux-arm64"
+            cibw_os_build: "manylinux_"
           - os: windows-latest
             cibw_archs: "native"
             shared_name: "windows-x86_64"
@@ -53,10 +53,20 @@ jobs:
           pip install setuptools
 
       - name: Build Debug Shared lib
-        run: python3 setup.py build_shared --no-preserve-cache --debug
+        run: |
+          if [[ ${{ matrix.cibw_archs }} != 'aarch64' ]]; then
+            python3 setup.py build_shared --no-preserve-cache --debug
+          else
+            docker run -v $(pwd):/app -w /app -it ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache --debug
+          fi
 
       - name: Build Release Shared lib
-        run: python3 setup.py build_shared --no-preserve-cache
+        run: |
+          if [[ ${{ matrix.cibw_archs }} != 'aarch64' ]]; then
+            python3 setup.py build_shared --no-preserve-cache
+          else
+            docker run -v $(pwd):/app -w /app -it ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache
+          fi
 
       - name: Upload Debug Shared lib for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
@@ -82,6 +92,7 @@ jobs:
           CIBW_BUILD_VERBOSITY: 3
           CIBW_TEST_SKIP: "*-macosx_arm64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
+          CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
 
       - uses: actions/upload-artifact@v4
         with:
