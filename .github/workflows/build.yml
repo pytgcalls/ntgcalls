@@ -3,7 +3,7 @@ on:
   push:
     branches: [ master ]
     paths:
-      - '.github/workflows/*'
+      - '.github/workflows/build.yml'
       - 'cmake/*'
       - 'deps/*'
       - 'include/*'
