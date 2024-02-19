@@ -125,7 +125,7 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 
 * <b><a href="https://github.com/MarshalX">@MarshalX</a>:</b> for their generous assistance in answering questions and providing insights regarding WebRTC.
 
-* <b><a href="https://github.com/LyzCoote">@LyzCoote</a>:</b> for providing a server arm64 and allowing us to build an image with clang-18 preinstalled on manylinux2014 arm64.
+* <b><a href="https://github.com/LyzCoote">@LyzCoote</a>:</b> for providing an ARM64 Server and allowing us to build an image with clang-18 preinstalled on manylinux2014 arm64.
 
 _We would like to extend a special thanks to <b><a href='https://github.com/null-nick'>@null-nick</a></b>
 and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library.
