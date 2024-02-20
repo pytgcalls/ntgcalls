@@ -25,16 +25,13 @@ namespace ntgcalls {
     }
 
     void Stream::addTracks(const std::shared_ptr<wrtc::PeerConnection>& pc) {
-        audioTrack = audio->createTrack();
-        videoTrack = video->createTrack();
-        pc->addTrack(audioTrack);
-        pc->addTrack(videoTrack);
+        pc->addTrack(audioTrack = audio->createTrack());
+        pc->addTrack(videoTrack = video->createTrack());
     }
 
     std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample() {
         std::shared_ptr<BaseStreamer> bs;
         std::shared_ptr<BaseReader> br;
-        mutex.lock();
         if (reader->audio && reader->video) {
             if (audio->nanoTime() <= video->nanoTime()) {
                 bs = audio;
@@ -50,35 +47,36 @@ namespace ntgcalls {
             bs = video;
             br = reader->video;
         }
-        mutex.unlock();
         if (const auto waitTime = bs->waitTime(); std::chrono::duration_cast<std::chrono::milliseconds>(waitTime).count() > 0) {
+            mutex.unlock();
             std::this_thread::sleep_for(waitTime);
+            mutex.lock();
         }
         return {bs, br};
     }
 
-    void Stream::checkStream() {
-        std::lock_guard lock(mutex);
-        if (running && !changing) {
-            if (reader->audio && reader->audio->eof()) {
-                reader->audio = nullptr;
-                updateQueue->dispatch([&] {
-                    (void) onEOF(Audio);
-                });
-            }
-            if (reader->video && reader->video->eof()) {
-                reader->video = nullptr;
-                updateQueue->dispatch([&] {
-                    (void) onEOF(Video);
-                });
-            }
+    void Stream::checkStream() const {
+        if (reader->audio && reader->audio->eof()) {
+            reader->audio = nullptr;
+            updateQueue->dispatch([&] {
+                (void) onEOF(Audio);
+            });
+        }
+        if (reader->video && reader->video->eof()) {
+            reader->video = nullptr;
+            updateQueue->dispatch([&] {
+                (void) onEOF(Video);
+            });
         }
     }
 
     void Stream::sendSample() {
+        mutex.lock();
         if (running) {
-            if (idling || changing || !reader || !(reader->audio || reader->video)) {
+            if (idling || !reader || !(reader->audio || reader->video)) {
+                mutex.unlock();
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                mutex.lock();
             } else {
                 if (auto [fst, snd] = unsafePrepareForSample(); fst && snd) {
                     if (const auto sample = snd->read(fst->frameSize())) {
@@ -87,19 +85,17 @@ namespace ntgcalls {
                 }
                 checkStream();
             }
-            mutex.lock();
             if (streamQueue) {
                 streamQueue->dispatch([&] {
                     sendSample();
                 });
             }
-            mutex.unlock();
         }
+        mutex.unlock();
     }
 
     void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
         std::lock_guard lock(mutex);
-        changing = true;
         const auto audioConfig = streamConfig.audio;
         const auto videoConfig = streamConfig.video;
         reader = std::make_shared<MediaReaderFactory>(streamConfig);
@@ -122,29 +118,24 @@ namespace ntgcalls {
         } else {
             hasVideo = false;
         }
-        changing = false;
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }
     }
 
-    void Stream::checkUpgrade() const {
+    void Stream::checkUpgrade() {
         updateQueue->dispatch([&] {
-            (void) onChangeStatus(internalState());
+            (void) onChangeStatus(getState());
         });
-    }
-
-    MediaState Stream::internalState() const {
-        return MediaState{
-            audioTrack->isMuted() && videoTrack->isMuted(),
-            idling || videoTrack->isMuted(),
-            !hasVideo
-        };
     }
 
     MediaState Stream::getState() {
         std::lock_guard lock(mutex);
-        return internalState();
+        return MediaState{
+            (audioTrack ? audioTrack->isMuted() : false) && (videoTrack ? videoTrack->isMuted() : false),
+            idling || (videoTrack ? videoTrack->isMuted() : false),
+            !hasVideo
+        };
     }
 
     uint64_t Stream::time() {
@@ -165,7 +156,7 @@ namespace ntgcalls {
 
     Stream::Status Stream::status() {
         std::lock_guard lock(mutex);
-        if (reader && (reader->audio || reader->video) && running && !changing) {
+        if (reader && (reader->audio || reader->video) && running) {
             return idling ? Paused : Playing;
         }
         return Idling;
@@ -222,7 +213,6 @@ namespace ntgcalls {
     void Stream::stop() {
         running = false;
         idling = false;
-        changing = false;
         mutex.lock();
         if (reader) {
             if (reader->audio) {

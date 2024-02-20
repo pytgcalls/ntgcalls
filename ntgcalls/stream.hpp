@@ -61,7 +61,7 @@ namespace ntgcalls {
         std::shared_ptr<VideoStreamer> video;
         wrtc::MediaStreamTrack *audioTrack{}, *videoTrack{};
         std::shared_ptr<MediaReaderFactory> reader;
-        bool running = false, idling = false, changing = false, hasVideo = false;
+        bool running = false, idling = false, hasVideo = false;
         wrtc::synchronized_callback<Type> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::shared_ptr<DispatchQueue> streamQueue;
@@ -70,12 +70,12 @@ namespace ntgcalls {
 
         void sendSample();
 
-        void checkStream();
+        void checkStream() const;
 
         std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample();
 
-        void checkUpgrade() const;
+        void checkUpgrade();
 
-        MediaState internalState() const;
+        bool updateMute(bool isMuted);
     };
 }
