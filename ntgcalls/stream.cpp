@@ -187,27 +187,28 @@ namespace ntgcalls {
     }
 
     bool Stream::mute() {
-        std::lock_guard lock(mutex);
-        if (!audioTrack->isMuted() || !videoTrack->isMuted()) {
-            audioTrack->Mute(true);
-            videoTrack->Mute(true);
-            checkUpgrade();
-            return true;
-        }
-        checkUpgrade();
-        return false;
+        return updateMute(true);
     }
 
     bool Stream::unmute() {
+        return updateMute(false);
+    }
+
+    bool Stream::updateMute(const bool isMuted) {
         std::lock_guard lock(mutex);
-        if (audioTrack->isMuted() || videoTrack->isMuted()) {
-            audioTrack->Mute(false);
-            videoTrack->Mute(false);
-            checkUpgrade();
-            return true;
+        bool changed = false;
+        if (audioTrack && audioTrack->isMuted() != isMuted) {
+            audioTrack->Mute(isMuted);
+            changed = true;
         }
-        checkUpgrade();
-        return false;
+        if (videoTrack && videoTrack->isMuted() != isMuted) {
+            videoTrack->Mute(isMuted);
+            changed = true;
+        }
+        if (changed) {
+            checkUpgrade();
+        }
+        return changed;
     }
 
     void Stream::stop() {
