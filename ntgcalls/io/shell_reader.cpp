@@ -33,11 +33,15 @@ namespace ntgcalls {
         BaseReader::close();
         if (stdOut) {
             stdOut.close();
-            stdOut.pipe().close();
+            if (auto pipe = stdOut.pipe(); pipe.is_open()){
+                pipe.close();
+            }
         }
         if (stdIn) {
             stdIn.close();
-            stdIn.pipe().close();
+            if (auto pipe = stdIn.pipe(); pipe.is_open()){
+                pipe.close();
+            }
         }
         if (shellProcess) {
             shellProcess.terminate();
