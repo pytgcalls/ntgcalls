@@ -29,12 +29,7 @@ namespace wrtc {
     }
 
     PeerConnection::~PeerConnection() {
-        if (factory) {
-            PeerConnectionFactory::UnRef();
-            factory = nullptr;
-        }
         close();
-        peerConnection = nullptr;
     }
 
     Description PeerConnection::createOffer(const bool offerToReceiveAudio, const bool offerToReceiveVideo) const
@@ -104,19 +99,19 @@ namespace wrtc {
     }
 
     void PeerConnection::close() {
-        if (peerConnection && !isClosed) {
-            if (peerConnection->ice_connection_state() != webrtc::PeerConnectionInterface::kIceConnectionFailed &&
-                peerConnection->ice_connection_state() != webrtc::PeerConnectionInterface::kIceConnectionMax &&
-                peerConnection->ice_connection_state() != webrtc::PeerConnectionInterface::kIceConnectionClosed) {
-                peerConnection->Close();
-            }
-            if (peerConnection.get() && peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
+        if (peerConnection) {
+            peerConnection->Close();
+            if (peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
                 for (const auto &transceiver: peerConnection->GetTransceivers()) {
                     const auto track = MediaStreamTrack::holder()->GetOrCreate(transceiver->receiver()->track());
                     track->OnPeerConnectionClosed();
                 }
             }
-            isClosed = true;
+            peerConnection = nullptr;
+            if (factory) {
+                PeerConnectionFactory::UnRef();
+                factory = nullptr;
+            }
         }
     }
 
@@ -151,7 +146,8 @@ namespace wrtc {
                 newValue = SignalingState::HaveRemotePranswer;
                 break;
             case webrtc::PeerConnectionInterface::kClosed:
-                return;
+                newValue = SignalingState::Closed;
+                break;
         }
         (void) signalingStateChangeCallback(newValue);
     }

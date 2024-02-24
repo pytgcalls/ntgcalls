@@ -37,5 +37,6 @@ namespace wrtc {
         HaveRemoteOffer,
         HaveLocalPranswer,
         HaveRemotePranswer,
+        Closed,
     };
 }
