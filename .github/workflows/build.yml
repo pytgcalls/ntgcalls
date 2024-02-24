@@ -26,7 +26,7 @@ jobs:
             cibw_archs: "aarch64"
             shared_name: "linux-arm64"
             cibw_os_build: "manylinux_"
-          - os: windows-latest
+          - os: windows-2019
             cibw_archs: "native"
             shared_name: "windows-x86_64"
           - os: macos-13
