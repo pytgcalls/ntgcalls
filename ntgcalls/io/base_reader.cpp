@@ -12,20 +12,17 @@ namespace ntgcalls {
 
     BaseReader::~BaseReader() {
         BaseReader::close();
+        std::lock_guard lock(mutex);
         promise = nullptr;
-        dispatchQueue = nullptr;
         readChunks = 0;
         nextBuffer.clear();
     }
 
     wrtc::binary BaseReader::read(int64_t size) {
         wrtc::binary res = nullptr;
-
         if (!dispatchQueue) return res;
-
         mutex.lock();
         promise = std::make_shared<std::promise<void>>();
-        mutex.unlock();
         if (!_eof && nextBuffer.size() <= 4 && !running) {
             running = true;
             const auto availableSpace = 10 - nextBuffer.size();
@@ -39,18 +36,21 @@ namespace ntgcalls {
                         }
                     }
                 } catch (...) {
+                    mutex.lock();
                     _eof = true;
+                    mutex.unlock();
                 }
-                running = false;
                 mutex.lock();
+                running = false;
                 if (promise) promise->set_value();
                 mutex.unlock();
             });
         }
         if (nextBuffer.empty() && !_eof) {
+            mutex.unlock();
             if (promise) promise->get_future().wait();
+            mutex.lock();
         }
-        mutex.lock();
         if (!nextBuffer.empty()) {
             res = nextBuffer[0];
             nextBuffer.erase(nextBuffer.begin());
@@ -63,8 +63,8 @@ namespace ntgcalls {
         dispatchQueue = nullptr;
     }
 
-    bool BaseReader::eof() const
-    {
+    bool BaseReader::eof() {
+        std::lock_guard lock(mutex);
         return _eof && nextBuffer.empty();
     }
 }

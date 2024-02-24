@@ -16,6 +16,7 @@ namespace ntgcalls {
         // Temporary fix because macOs sucks and currently doesnt support Elements View
         // ReSharper disable once CppUseElementsView
         for (const auto& [fst, snd] : connections) {
+            snd->onStreamEnd(nullptr);
             snd->stop();
         }
         connections = {};

@@ -30,7 +30,7 @@ namespace ntgcalls {
     public:
         wrtc::binary read(int64_t size);
 
-        [[nodiscard]] bool eof() const;
+        [[nodiscard]] bool eof();
 
         virtual void close();
     };
