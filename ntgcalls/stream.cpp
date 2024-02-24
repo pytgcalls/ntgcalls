@@ -2,7 +2,6 @@
 // Created by Laky64 on 12/08/2023.
 //
 
-// ReSharper disable CppDFAUnreachableFunctionCall
 #include "stream.hpp"
 
 namespace ntgcalls {
