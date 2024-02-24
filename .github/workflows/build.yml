@@ -29,7 +29,7 @@ jobs:
           - os: windows-latest
             cibw_archs: "native"
             shared_name: "windows-x86_64"
-          - os: macos-14-arm64
+          - os: macos-13
             cibw_archs: "arm64"
             cibw_os_build: "macosx_arm64"
             shared_name: "macos-arm64"
@@ -90,7 +90,7 @@ jobs:
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp36-* cp37-*
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_TEST_SKIP: "*-manylinux_aarch64"
+          CIBW_TEST_SKIP: "*-macosx_arm64 *-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
 
