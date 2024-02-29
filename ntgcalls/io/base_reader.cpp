@@ -6,8 +6,8 @@
 #include "ntgcalls/exceptions.hpp"
 
 namespace ntgcalls {
-    BaseReader::BaseReader(const bool noLatency): noLatency(noLatency) {
-        dispatchQueue = std::make_shared<DispatchQueue>();
+    BaseReader::BaseReader(const int64_t bufferSize, const bool noLatency): noLatency(noLatency) {
+        size = bufferSize;
     }
 
     BaseReader::~BaseReader() {
@@ -15,10 +15,39 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         promise = nullptr;
         readChunks = 0;
-        nextBuffer.clear();
+        buffer.clear();
     }
 
-    wrtc::binary BaseReader::read(int64_t size) {
+    void BaseReader::start() {
+        if (!noLatency) thread = std::thread(&BaseReader::readAsync, this);
+    }
+
+    void BaseReader::readAsync() {
+        do {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::unique_lock lock(mutex);
+            if (buffer.size() < 10 && !_eof) {
+                const auto availableSpace = 10 - buffer.size();
+                try {
+                    for (int i = 0; i < availableSpace; i++) {
+                        if (auto tmp = this->readInternal(size); tmp) {
+                            buffer.push_back(tmp);
+                        }
+                    }
+                } catch (...) {
+                    _eof = true;
+                }
+            }
+            if (!currentBuffer) {
+                currentBuffer = buffer[0];
+                buffer.erase(buffer.begin());
+                lock.unlock();
+                bufferCondition.notify_one();
+            }
+        } while (!quit);
+    }
+
+    wrtc::binary BaseReader::read() {
         if (eof()) {
             return nullptr;
         }
@@ -30,49 +59,25 @@ namespace ntgcalls {
             }
             return nullptr;
         }
-        if (!dispatchQueue) return nullptr;
-        std::shared_lock lock(mutex);
-        if (nextBuffer.size() <= 4 && !running) {
-            running = true;
-            promise = std::make_shared<std::promise<void>>();
-            const auto availableSpace = 10 - nextBuffer.size();
-            dispatchQueue->dispatch([this, size, availableSpace]{
-                std::vector<wrtc::binary> tmpBuffer;
-                try {
-                    for (int i = 0; i < availableSpace; i++) {
-                        if (auto tmp = readInternal(size); tmp) {
-                            tmpBuffer.push_back(tmp);
-                        }
-                    }
-                } catch (...) {
-                    std::lock_guard writeLock(mutex);
-                    _eof = true;
-                }
-                std::lock_guard writeLock(mutex);
-                nextBuffer.insert(nextBuffer.end(), tmpBuffer.begin(), tmpBuffer.end());
-                running = false;
-                if (promise) promise->set_value();
-            });
-        }
-        if (nextBuffer.empty() && !_eof) {
-            lock.unlock();
-            if (promise) promise->get_future().wait();
-            lock.lock();
-        }
+        std::unique_lock lock(mutex);
         wrtc::binary res = nullptr;
-        if (!nextBuffer.empty()) {
-            res = nextBuffer[0];
-            nextBuffer.erase(nextBuffer.begin());
-        }
+        bufferCondition.wait(lock, [this]{
+            return currentBuffer || quit || _eof;
+        });
+        res = currentBuffer;
+        currentBuffer = nullptr;
         return res;
     }
 
     void BaseReader::close() {
-        dispatchQueue = nullptr;
+        quit = true;
+        if(thread.joinable()) {
+            thread.join();
+        }
     }
 
     bool BaseReader::eof() {
         std::lock_guard lock(mutex);
-        return _eof && nextBuffer.empty();
+        return _eof && buffer.empty();
     }
 }

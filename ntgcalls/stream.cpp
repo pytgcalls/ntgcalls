@@ -80,7 +80,7 @@ namespace ntgcalls {
                 lock.lock();
             } else {
                 if (auto [fst, snd] = unsafePrepareForSample(lock); fst && snd) {
-                    if (const auto sample = snd->read(fst->frameSize())) {
+                    if (const auto sample = snd->read()) {
                         fst->sendData(sample);
                     }
                 }
@@ -98,7 +98,6 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         const auto audioConfig = streamConfig.audio;
         const auto videoConfig = streamConfig.video;
-        reader = std::make_shared<MediaReaderFactory>(streamConfig);
         idling = false;
         if (audioConfig) {
             audio->setConfig(
@@ -118,6 +117,7 @@ namespace ntgcalls {
         } else {
             hasVideo = false;
         }
+        reader = std::make_shared<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }

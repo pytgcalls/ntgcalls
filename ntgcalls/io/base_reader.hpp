@@ -13,26 +13,33 @@
 
 namespace ntgcalls {
     class BaseReader {
-        std::vector<wrtc::binary> nextBuffer;
-        std::atomic_bool _eof = false, running = false, noLatency = false;
-        std::shared_ptr<DispatchQueue> dispatchQueue;
-        std::shared_mutex mutex;
+        std::vector<wrtc::binary> buffer;
+        wrtc::binary currentBuffer;
+        std::condition_variable bufferCondition;
+        std::atomic_bool _eof = false, running = false, noLatency = false, quit = false;
+        std::thread thread;
+        std::mutex mutex;
         std::shared_ptr<std::promise<void>> promise;
+        int64_t size = 0;
+
+        void readAsync();
 
     protected:
         int64_t readChunks = 0;
 
-        explicit BaseReader(bool noLatency);
+        explicit BaseReader(int64_t bufferSize, bool noLatency);
 
         virtual ~BaseReader();
 
         virtual wrtc::binary readInternal(int64_t size) = 0;
 
     public:
-        wrtc::binary read(int64_t size);
+        wrtc::binary read();
 
         [[nodiscard]] bool eof();
 
         virtual void close();
+
+        void start();
     };
 }

@@ -10,10 +10,10 @@
 namespace ntgcalls {
 
     class MediaReaderFactory {
-        static std::shared_ptr<BaseReader> fromInput(const BaseMediaDescription& desc);
+        static std::shared_ptr<BaseReader> fromInput(const BaseMediaDescription& desc, int64_t bufferSize);
 
     public:
-        explicit MediaReaderFactory(const MediaDescription& desc);
+        explicit MediaReaderFactory(const MediaDescription& desc, int64_t audioSize, int64_t videoSize);
 
         ~MediaReaderFactory();
 
