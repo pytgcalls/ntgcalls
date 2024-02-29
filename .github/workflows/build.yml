@@ -22,7 +22,7 @@ jobs:
             cibw_archs: "native"
             shared_name: "linux-x86_64"
             cibw_os_build: "manylinux_"
-          - os: ubuntu-latest
+          - os: arm64-server
             cibw_archs: "aarch64"
             shared_name: "linux-arm64"
             cibw_os_build: "manylinux_"

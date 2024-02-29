@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: arm64-manylinux
+    runs-on: arm64-server
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
