@@ -6,45 +6,38 @@
 #include "ntgcalls/exceptions.hpp"
 
 namespace ntgcalls {
-    BaseReader::BaseReader(const int64_t bufferSize, const bool noLatency): noLatency(noLatency) {
-        size = bufferSize;
-    }
+    BaseReader::BaseReader(const int64_t bufferSize, const bool noLatency): noLatency(noLatency), size(bufferSize) {}
 
     BaseReader::~BaseReader() {
         BaseReader::close();
-        std::lock_guard lock(mutex);
-        promise = nullptr;
         readChunks = 0;
-        buffer.clear();
     }
 
     void BaseReader::start() {
-        if (!noLatency) thread = std::thread(&BaseReader::readAsync, this);
-    }
-
-    void BaseReader::readAsync() {
-        do {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-            std::unique_lock lock(mutex);
-            if (buffer.size() < 10 && !_eof) {
-                const auto availableSpace = 10 - buffer.size();
-                try {
+        if (!noLatency) {
+            thread = std::thread([this] {
+                do {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    std::unique_lock lock(mutex);
+                    const auto availableSpace = 10 - buffer.size();
+                    lock.unlock();
                     for (int i = 0; i < availableSpace; i++) {
-                        if (auto tmp = this->readInternal(size); tmp) {
-                            buffer.push_back(tmp);
+                        try {
+                            if (auto tmp = this->readInternal(size); tmp) {
+                                lock.lock();
+                                buffer.push(std::move(tmp));
+                                lock.unlock();
+                            }
+                        } catch (...) {
+                            lock.lock();
+                            _eof = true;
+                            lock.unlock();
                         }
                     }
-                } catch (...) {
-                    _eof = true;
-                }
-            }
-            if (!currentBuffer) {
-                currentBuffer = buffer[0];
-                buffer.erase(buffer.begin());
-                lock.unlock();
-                bufferCondition.notify_one();
-            }
-        } while (!quit);
+                    bufferCondition.notify_one();
+                } while (!quit && !_eof);
+            });
+        }
     }
 
     wrtc::binary BaseReader::read() {
@@ -60,13 +53,15 @@ namespace ntgcalls {
             return nullptr;
         }
         std::unique_lock lock(mutex);
-        wrtc::binary res = nullptr;
-        bufferCondition.wait(lock, [this]{
-            return currentBuffer || quit || _eof;
+        bufferCondition.wait(lock, [this] {
+            return !buffer.empty() || quit || _eof;
         });
-        res = currentBuffer;
-        currentBuffer = nullptr;
-        return res;
+        if (buffer.empty()) {
+            return nullptr;
+        }
+        auto data = std::move(buffer.front());
+        buffer.pop();
+        return data;
     }
 
     void BaseReader::close() {

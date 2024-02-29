@@ -6,23 +6,18 @@
 
 
 #include <shared_mutex>
-#include <vector>
 
 #include <wrtc/wrtc.hpp>
 #include "../utils/dispatch_queue.hpp"
 
 namespace ntgcalls {
     class BaseReader {
-        std::vector<wrtc::binary> buffer;
-        wrtc::binary currentBuffer;
-        std::condition_variable bufferCondition;
-        std::atomic_bool _eof = false, running = false, noLatency = false, quit = false;
-        std::thread thread;
+        std::queue<wrtc::binary> buffer;
         std::mutex mutex;
-        std::shared_ptr<std::promise<void>> promise;
+        std::condition_variable bufferCondition;
+        std::atomic_bool _eof = false, noLatency = false, quit = false;
+        std::thread thread;
         int64_t size = 0;
-
-        void readAsync();
 
     protected:
         int64_t readChunks = 0;
