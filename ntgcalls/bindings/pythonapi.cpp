@@ -47,7 +47,21 @@ PYBIND11_MODULE(ntgcalls, m) {
             .value("File", ntgcalls::BaseMediaDescription::InputMode::File)
             .value("Shell", ntgcalls::BaseMediaDescription::InputMode::Shell)
             .value("FFmpeg", ntgcalls::BaseMediaDescription::InputMode::FFmpeg)
-            .export_values();
+            .value("NoLatency", ntgcalls::BaseMediaDescription::InputMode::NoLatency)
+            .export_values()
+            .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
+                return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
+            })
+            .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
+                return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
+            })
+            .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
+                return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
+            })
+            .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
+                return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
+            });
+
 
     py::class_<ntgcalls::MediaState>(m, "MediaState")
             .def_readonly("muted", &ntgcalls::MediaState::muted)
