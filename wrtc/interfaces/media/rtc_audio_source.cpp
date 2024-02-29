@@ -24,8 +24,8 @@ namespace wrtc {
         );
     }
 
-    void RTCAudioSource::OnData(const RTCOnDataEvent &data) const
+    void RTCAudioSource::OnData(const RTCOnDataEvent &data, const int64_t absolute_capture_timestamp_ms) const
     {
-        source->PushData(data);
+        source->PushData(data, absolute_capture_timestamp_ms);
     }
 } // wrtc

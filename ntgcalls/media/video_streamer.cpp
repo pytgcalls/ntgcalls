@@ -24,14 +24,15 @@ namespace ntgcalls {
         return video->createTrack();
     }
 
-    void VideoStreamer::sendData(const wrtc::binary& sample) {
-        BaseStreamer::sendData(sample);
+    void VideoStreamer::sendData(const wrtc::binary& sample, const int64_t absolute_capture_timestamp_ms) {
+        BaseStreamer::sendData(sample, absolute_capture_timestamp_ms);
         video->OnFrame(
             wrtc::i420ImageData(
                 w,
                 h,
                 sample
-            )
+            ),
+            absolute_capture_timestamp_ms
         );
     }
 

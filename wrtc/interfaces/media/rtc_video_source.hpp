@@ -21,7 +21,7 @@ namespace wrtc {
 
         [[nodiscard]] MediaStreamTrack *createTrack() const;
 
-        void OnFrame(const i420ImageData& data) const;
+        void OnFrame(const i420ImageData& data, int64_t absolute_capture_timestamp_ms) const;
 
     private:
         rtc::scoped_refptr<VideoTrackSource> source;

@@ -24,13 +24,13 @@ namespace ntgcalls {
         return std::chrono::milliseconds(10); // ms
     }
 
-    void AudioStreamer::sendData(const wrtc::binary& sample) {
-        BaseStreamer::sendData(sample);
+    void AudioStreamer::sendData(const wrtc::binary& sample, const int64_t absolute_capture_timestamp_ms) {
+        BaseStreamer::sendData(sample, absolute_capture_timestamp_ms);
         auto event = wrtc::RTCOnDataEvent(sample, frameSize() / (2 * channels));
         event.channelCount = channels;
         event.sampleRate = rate;
         event.bitsPerSample = bps;
-        audio->OnData(event);
+        audio->OnData(event, absolute_capture_timestamp_ms);
     }
 
     int64_t AudioStreamer::frameSize() {

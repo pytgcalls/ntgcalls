@@ -9,11 +9,13 @@ namespace ntgcalls {
         audio = std::make_shared<AudioStreamer>();
         video = std::make_shared<VideoStreamer>();
         updateQueue = std::make_shared<DispatchQueue>();
+        streamQueue = std::make_shared<DispatchQueue>();
     }
 
     Stream::~Stream() {
         stop();
         updateQueue = nullptr;
+        streamQueue = nullptr;
 
         std::lock_guard lock(mutex);
         audio = nullptr;
@@ -28,7 +30,7 @@ namespace ntgcalls {
         pc->addTrack(videoTrack = video->createTrack());
     }
 
-    std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample(std::shared_lock<std::shared_mutex>& lock) const {
+    std::pair<std::shared_ptr<BaseStreamer>, std::pair<wrtc::binary, int64_t>> Stream::unsafePrepareForSample(std::shared_lock<std::shared_mutex>& lock) const {
         std::shared_ptr<BaseStreamer> bs;
         std::shared_ptr<BaseReader> br;
         if (reader->audio && reader->video) {
@@ -46,12 +48,13 @@ namespace ntgcalls {
             bs = video;
             br = reader->video;
         }
+        auto res = br->read();
         if (const auto waitTime = bs->waitTime(); std::chrono::duration_cast<std::chrono::milliseconds>(waitTime).count() > 0) {
             lock.unlock();
             std::this_thread::sleep_for(waitTime);
             lock.lock();
         }
-        return {bs, br};
+        return {bs, res};
     }
 
     void Stream::checkStream() const {
@@ -146,10 +149,12 @@ namespace ntgcalls {
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     lock.lock();
                 } else {
-                    if (auto [fst, snd] = unsafePrepareForSample(lock); fst && snd) {
-                        if (const auto sample = snd->read()) {
-                            fst->sendData(sample);
-                        }
+                    if (auto [fst, data] = unsafePrepareForSample(lock); fst) {
+                        streamQueue->dispatch([fst, data] {
+                            if (const auto [sample, captureTime] = data; sample) {
+                                fst->sendData(sample, captureTime);
+                            }
+                        });
                     }
                     checkStream();
                 }

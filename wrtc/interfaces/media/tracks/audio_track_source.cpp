@@ -27,7 +27,7 @@ namespace wrtc {
         _sink = nullptr;
     }
 
-    void AudioTrackSource::PushData(const RTCOnDataEvent &data) const
+    void AudioTrackSource::PushData(const RTCOnDataEvent &data, const int64_t absolute_capture_timestamp_ms) const
     {
         if (webrtc::AudioTrackSinkInterface *sink = _sink) {
             sink->OnData(
@@ -36,7 +36,7 @@ namespace wrtc {
                     static_cast<int>(data.sampleRate),
                     data.channelCount,
                     data.numberOfFrames,
-                    rtc::TimeMillis()
+                    absolute_capture_timestamp_ms
             );
         }
     }

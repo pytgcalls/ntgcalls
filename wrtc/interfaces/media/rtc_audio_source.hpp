@@ -21,7 +21,7 @@ namespace wrtc {
 
         [[nodiscard]] MediaStreamTrack *createTrack() const;
 
-        void OnData(const RTCOnDataEvent &) const;
+        void OnData(const RTCOnDataEvent &, int64_t absolute_capture_timestamp_ms) const;
 
     private:
         rtc::scoped_refptr<AudioTrackSource> source;

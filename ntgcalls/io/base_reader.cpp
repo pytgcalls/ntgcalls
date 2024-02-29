@@ -40,28 +40,29 @@ namespace ntgcalls {
         }
     }
 
-    wrtc::binary BaseReader::read() {
+    std::pair<wrtc::binary, int64_t> BaseReader::read() {
+        auto timeMillis = rtc::TimeMillis();
         if (eof()) {
-            return nullptr;
+            return {nullptr, timeMillis};
         }
         if (noLatency) {
             try {
-                return readInternal(size);
+                return {readInternal(size), timeMillis};
             } catch (...) {
                 _eof = true;
             }
-            return nullptr;
+            return {nullptr, timeMillis};
         }
         std::unique_lock lock(mutex);
         bufferCondition.wait(lock, [this] {
             return !buffer.empty() || quit || _eof;
         });
         if (buffer.empty()) {
-            return nullptr;
+            return {nullptr, timeMillis};
         }
         auto data = std::move(buffer.front());
         buffer.pop();
-        return data;
+        return {data, timeMillis};
     }
 
     void BaseReader::close() {

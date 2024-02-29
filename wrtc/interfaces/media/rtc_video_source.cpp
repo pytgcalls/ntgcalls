@@ -23,13 +23,11 @@ namespace wrtc {
         );
     }
 
-    void RTCVideoSource::OnFrame(const i420ImageData& data) const
-    {
+    void RTCVideoSource::OnFrame(const i420ImageData& data, const int64_t absolute_capture_timestamp_ms) const {
         source->PushFrame(webrtc::VideoFrame::Builder()
             .set_video_frame_buffer(data.buffer())
             .set_timestamp_rtp(0)
-            .set_timestamp_ms(rtc::TimeMillis())
-            .set_timestamp_us(rtc::TimeMicros())
+            .set_timestamp_ms(absolute_capture_timestamp_ms)
             .set_rotation(webrtc::kVideoRotation_0)
             .build()
         );

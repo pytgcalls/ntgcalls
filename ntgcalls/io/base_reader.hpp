@@ -29,7 +29,7 @@ namespace ntgcalls {
         virtual wrtc::binary readInternal(int64_t size) = 0;
 
     public:
-        wrtc::binary read();
+        std::pair<wrtc::binary, int64_t> read();
 
         [[nodiscard]] bool eof();
 

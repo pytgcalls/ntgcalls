@@ -69,11 +69,12 @@ namespace ntgcalls {
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::thread thread;
         std::shared_ptr<DispatchQueue> updateQueue;
+        std::shared_ptr<DispatchQueue> streamQueue;
         std::shared_mutex mutex;
 
         void checkStream() const;
 
-        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample(std::shared_lock<std::shared_mutex>& lock) const;
+        std::pair<std::shared_ptr<BaseStreamer>, std::pair<wrtc::binary, int64_t>> unsafePrepareForSample(std::shared_lock<std::shared_mutex>& lock) const;
 
         void checkUpgrade();
 
