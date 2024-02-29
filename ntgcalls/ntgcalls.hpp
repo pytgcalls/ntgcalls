@@ -16,7 +16,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
         std::shared_ptr<DispatchQueue> updateQueue;
-        std::recursive_mutex mutex;
+        std::mutex mutex;
 
         bool exists(int64_t chatId) const;
 

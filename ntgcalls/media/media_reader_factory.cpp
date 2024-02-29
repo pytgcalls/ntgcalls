@@ -18,17 +18,20 @@ namespace ntgcalls {
     }
 
     std::shared_ptr<BaseReader> MediaReaderFactory::fromInput(const BaseMediaDescription& desc) {
+        constexpr auto allowedFlags = BaseMediaDescription::InputMode::NoLatency;
+        bool noLatency = desc.inputMode & BaseMediaDescription::InputMode::NoLatency;
         // SUPPORTED ENCODERS
-        switch (desc.inputMode) {
-        case BaseMediaDescription::InputMode::File:
-            return std::make_shared<FileReader>(desc.input);
-        case BaseMediaDescription::InputMode::Shell:
+        if ((desc.inputMode & (BaseMediaDescription::InputMode::File | allowedFlags)) == desc.inputMode) {
+            return std::make_shared<FileReader>(desc.input, noLatency);
+        }
+        if ((desc.inputMode & (BaseMediaDescription::InputMode::Shell | allowedFlags)) == desc.inputMode) {
 #ifdef BOOST_ENABLED
-            return std::make_shared<ShellReader>(desc.input);
+            return std::make_shared<ShellReader>(desc.input, noLatency);
 #else
-                throw ShellError("Shell execution is not yet supported on your OS/Architecture");
+            throw ShellError("Shell execution is not yet supported on your OS/Architecture");
 #endif
-        case BaseMediaDescription::InputMode::FFmpeg:
+        }
+        if ((desc.inputMode & (BaseMediaDescription::InputMode::FFmpeg | allowedFlags)) == desc.inputMode) {
             throw FFmpegError("FFmpeg encoder is not yet supported");
         }
         throw InvalidParams("Encoder not found");

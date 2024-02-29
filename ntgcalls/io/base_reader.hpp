@@ -5,6 +5,7 @@
 #pragma once
 
 
+#include <shared_mutex>
 #include <vector>
 
 #include <wrtc/wrtc.hpp>
@@ -13,15 +14,15 @@
 namespace ntgcalls {
     class BaseReader {
         std::vector<wrtc::binary> nextBuffer;
-        std::atomic_bool _eof = false, running = false;
+        std::atomic_bool _eof = false, running = false, noLatency = false;
         std::shared_ptr<DispatchQueue> dispatchQueue;
-        std::recursive_mutex mutex;
+        std::shared_mutex mutex;
         std::shared_ptr<std::promise<void>> promise;
 
     protected:
         int64_t readChunks = 0;
 
-        BaseReader();
+        explicit BaseReader(bool noLatency);
 
         virtual ~BaseReader();
 

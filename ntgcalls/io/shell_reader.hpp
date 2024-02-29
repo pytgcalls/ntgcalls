@@ -22,7 +22,7 @@ namespace ntgcalls {
         wrtc::binary readInternal(int64_t size) override;
 
     public:
-        explicit ShellReader(const std::string& command);
+        explicit ShellReader(const std::string& command, bool noLatency);
 
         ~ShellReader() override;
 

@@ -17,7 +17,7 @@ namespace ntgcalls {
         wrtc::binary readInternal(int64_t size) override;
 
     public:
-        explicit FileReader(const std::string& path);
+        explicit FileReader(const std::string& path, bool noLatecy);
 
         ~FileReader() override;
 

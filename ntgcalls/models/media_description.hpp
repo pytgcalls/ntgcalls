@@ -12,9 +12,10 @@ namespace ntgcalls {
     class BaseMediaDescription {
     public:
         enum class InputMode {
-            File,
-            Shell,
-            FFmpeg
+            File = 1 << 0,
+            Shell = 1 << 1,
+            FFmpeg = 1 << 2,
+            NoLatency = 1 << 3,
         };
 
         std::string input;
@@ -22,6 +23,27 @@ namespace ntgcalls {
 
         BaseMediaDescription(std::string  input, const InputMode inputMode): input(std::move(input)), inputMode(inputMode) {}
     };
+
+    inline int operator&(const BaseMediaDescription::InputMode lhs, const int rhs) {
+        return static_cast<int>(lhs) & rhs;
+    }
+
+    inline int operator|(const BaseMediaDescription::InputMode lhs, const BaseMediaDescription::InputMode rhs) {
+        return static_cast<int>(lhs) | static_cast<int>(rhs);
+    }
+
+    inline int operator|(const BaseMediaDescription::InputMode lhs, const int rhs) {
+        return static_cast<int>(lhs) | rhs;
+    }
+
+    inline int operator&(const BaseMediaDescription::InputMode& lhs, const BaseMediaDescription::InputMode rhs){
+        return static_cast<int>(lhs) & static_cast<int>(rhs);
+    }
+
+    inline int operator==(const int lhs, const BaseMediaDescription::InputMode& rhs){
+        return lhs == static_cast<int>(rhs);
+    }
+
 
     class AudioDescription: public BaseMediaDescription {
     public:
@@ -51,5 +73,4 @@ namespace ntgcalls {
             this->video = video;
         }
     };
-
 } // ntgcalls

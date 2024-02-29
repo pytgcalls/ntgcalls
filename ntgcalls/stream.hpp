@@ -5,6 +5,8 @@
 #pragma once
 
 
+#include <shared_mutex>
+
 #include "io/base_reader.hpp"
 #include "models/media_state.hpp"
 #include "media/audio_streamer.hpp"
@@ -66,13 +68,13 @@ namespace ntgcalls {
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::shared_ptr<DispatchQueue> streamQueue;
         std::shared_ptr<DispatchQueue> updateQueue;
-        std::recursive_mutex mutex;
+        std::shared_mutex mutex;
 
         void sendSample();
 
         void checkStream() const;
 
-        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample();
+        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample(std::shared_lock<std::shared_mutex>& lock) const;
 
         void checkUpgrade();
 
