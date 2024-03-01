@@ -29,11 +29,10 @@ jobs:
           - os: windows-2019
             cibw_archs: "native"
             shared_name: "windows-x86_64"
-          - os: macos-13
+          - os: macos-14
             cibw_archs: "arm64"
             cibw_os_build: "macosx_arm64"
             shared_name: "macos-arm64"
-      fail-fast: false
 
     steps:
       - name: Check out the repo
@@ -41,16 +40,30 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        if: matrix.cibw_archs != 'aarch64'
+        id: python
+        with:
+          python-version: "3.8 - 3.12"
+          update-environment: false
+
+      - name: Set up Python (ARM64)
+        if: matrix.cibw_archs == 'aarch64'
+        id: python-arm64
+        run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
+
+      - name: Install Python Requirements
+        run:  |
+          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools
+          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install pipx
+        shell: bash
+          
       - name: Set up QEMU
         if: matrix.cibw_archs == 'aarch64'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
-
-      - name: Install SetupTools
-        if: matrix.cibw_os_build == 'macosx_arm64'
-        run: |
-          pip install setuptools
 
       - name: Build Debug Shared lib
         if: matrix.cibw_archs != 'aarch64'
@@ -83,14 +96,17 @@ jobs:
           if-no-files-found: error
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: ./.github/cibuildwheel
+        with:
+          python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
+
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp36-* cp37-*
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_TEST_SKIP: "*-macosx_arm64 *-manylinux_aarch64"
+          CIBW_TEST_SKIP: "*-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
 

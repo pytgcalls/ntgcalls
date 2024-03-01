@@ -1,0 +1,30 @@
+name: cibuildwheel
+description: 'Installs and runs cibuildwheel on the current runner'
+inputs:
+  python-path:
+    description: 'Path to the Python interpreter to use'
+    required: false
+    default: ''
+
+branding:
+  icon: package
+  color: yellow
+
+runs:
+  using: composite
+  steps:
+    - run: >
+        "${{ inputs.python-path }}" -m pipx run cibuildwheel .
+        --output-dir "wheelhouse"
+        2>&1
+      shell: bash
+      if: runner.os != 'Windows'
+
+    - run: >
+        if ($PSNativeCommandArgumentPassing) {
+            $PSNativeCommandArgumentPassing = 'Legacy'
+        };
+        & "${{ inputs.python-path }}" -m pipx run cibuildwheel .
+        --output-dir '"wheelhouse"'
+      shell: pwsh
+      if: runner.os == 'Windows'
