@@ -45,15 +45,20 @@ std::shared_ptr<ntgcalls::NTgCalls> safeUID(const uint32_t uid) {
 }
 
 ntgcalls::BaseMediaDescription::InputMode parseInputMode(const ntg_input_mode_enum mode) {
-    switch (mode) {
-        case NTG_FILE:
-            return ntgcalls::BaseMediaDescription::InputMode::File;
-        case NTG_SHELL:
-            return ntgcalls::BaseMediaDescription::InputMode::Shell;
-        case NTG_FFMPEG:
-            return ntgcalls::BaseMediaDescription::InputMode::FFmpeg;
+    constexpr auto result = ntgcalls::BaseMediaDescription::InputMode::Unknown;
+    if (mode & NTG_FILE) {
+        result |= ntgcalls::BaseMediaDescription::InputMode::File;
     }
-    return {};
+    if (mode & NTG_SHELL) {
+        result |= ntgcalls::BaseMediaDescription::InputMode::Shell;
+    }
+    if (mode & NTG_FFMPEG) {
+        result |= ntgcalls::BaseMediaDescription::InputMode::FFmpeg;
+    }
+    if (mode & NTG_NO_LATENCY) {
+        result |= ntgcalls::BaseMediaDescription::InputMode::NoLatency;
+    }
+    return result;
 }
 
 ntg_media_state_struct parseMediaState(const ntgcalls::MediaState state) {
@@ -80,35 +85,29 @@ ntgcalls::MediaDescription parseMediaDescription(const ntg_media_description_str
     std::optional<ntgcalls::AudioDescription> audio;
     std::optional<ntgcalls::VideoDescription> video;
     if (desc.audio) {
-        switch (desc.audio->inputMode) {
-            case NTG_FILE:
-            case NTG_SHELL:
-                audio = ntgcalls::AudioDescription(
-                    parseInputMode(desc.audio->inputMode),
-                    desc.audio->sampleRate,
-                    desc.audio->bitsPerSample,
-                    desc.audio->channelCount,
-                    std::string(desc.audio->input)
-                );
-                break;
-            case NTG_FFMPEG:
-                throw ntgcalls::FFmpegError("Not supported");
+        if (desc.audio->inputMode & (NTG_FILE | NTG_SHELL)) {
+            audio = ntgcalls::AudioDescription(
+                parseInputMode(desc.audio->inputMode),
+                desc.audio->sampleRate,
+                desc.audio->bitsPerSample,
+                desc.audio->channelCount,
+                std::string(desc.audio->input)
+            );
+        } else {
+            throw ntgcalls::FFmpegError("Not supported");
         }
     }
     if (desc.video) {
-        switch (desc.video->inputMode) {
-            case NTG_FILE:
-            case NTG_SHELL:
-                video = ntgcalls::VideoDescription(
-                    parseInputMode(desc.video->inputMode),
-                    desc.video->width,
-                    desc.video->height,
-                    desc.video->fps,
-                    std::string(desc.video->input)
-                );
-                break;
-            case NTG_FFMPEG:
-                throw ntgcalls::FFmpegError("Not supported");
+        if (desc.video->inputMode & (NTG_FILE | NTG_SHELL)) {
+            video = ntgcalls::VideoDescription(
+                parseInputMode(desc.video->inputMode),
+                desc.video->width,
+                desc.video->height,
+                desc.video->fps,
+                std::string(desc.video->input)
+            );
+        } else {
+            throw ntgcalls::FFmpegError("Not supported");
         }
     }
     return {

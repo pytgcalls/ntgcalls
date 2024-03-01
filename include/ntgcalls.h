@@ -46,7 +46,8 @@ extern "C" {
 typedef enum {
     NTG_FILE,
     NTG_SHELL,
-    NTG_FFMPEG
+    NTG_FFMPEG,
+    NTG_NO_LATENCY,
 } ntg_input_mode_enum;
 
 typedef enum {
