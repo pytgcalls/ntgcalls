@@ -9,13 +9,11 @@ namespace ntgcalls {
         audio = std::make_shared<AudioStreamer>();
         video = std::make_shared<VideoStreamer>();
         updateQueue = std::make_shared<DispatchQueue>();
-        streamQueue = std::make_shared<DispatchQueue>();
     }
 
     Stream::~Stream() {
         stop();
         updateQueue = nullptr;
-        streamQueue = nullptr;
 
         std::lock_guard lock(mutex);
         audio = nullptr;
@@ -150,11 +148,9 @@ namespace ntgcalls {
                     lock.lock();
                 } else {
                     if (auto [fst, data] = unsafePrepareForSample(lock); fst) {
-                        streamQueue->dispatch([fst, data] {
-                            if (const auto [sample, captureTime] = data; sample) {
-                                fst->sendData(sample, captureTime);
-                            }
-                        });
+                        if (const auto [sample, captureTime] = data; sample) {
+                            fst->sendData(sample, captureTime);
+                        }
                     }
                     checkStream();
                 }

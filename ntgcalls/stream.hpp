@@ -7,7 +7,6 @@
 
 #include <shared_mutex>
 
-#include "io/base_reader.hpp"
 #include "models/media_state.hpp"
 #include "media/audio_streamer.hpp"
 #include "media/video_streamer.hpp"
@@ -69,7 +68,6 @@ namespace ntgcalls {
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::thread thread;
         std::shared_ptr<DispatchQueue> updateQueue;
-        std::shared_ptr<DispatchQueue> streamQueue;
         std::shared_mutex mutex;
 
         void checkStream() const;
