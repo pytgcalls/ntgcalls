@@ -27,6 +27,7 @@ namespace ntgcalls {
                                 lock.lock();
                                 buffer.push(std::move(tmp));
                                 lock.unlock();
+                                bufferCondition.notify_one();
                             }
                         } catch (...) {
                             lock.lock();
@@ -34,7 +35,6 @@ namespace ntgcalls {
                             lock.unlock();
                         }
                     }
-                    bufferCondition.notify_one();
                 } while (!quit && !_eof);
             });
         }
