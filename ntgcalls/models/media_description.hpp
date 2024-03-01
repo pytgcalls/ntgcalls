@@ -12,6 +12,7 @@ namespace ntgcalls {
     class BaseMediaDescription {
     public:
         enum class InputMode {
+            Unknown = 0,
             File = 1 << 0,
             Shell = 1 << 1,
             FFmpeg = 1 << 2,
@@ -34,6 +35,10 @@ namespace ntgcalls {
 
     inline int operator|(const BaseMediaDescription::InputMode lhs, const int rhs) {
         return static_cast<int>(lhs) | rhs;
+    }
+
+    inline int operator|=(const BaseMediaDescription::InputMode lhs, const BaseMediaDescription::InputMode rhs) {
+        return static_cast<int>(lhs) | static_cast<int>(rhs);
     }
 
     inline int operator&(const BaseMediaDescription::InputMode& lhs, const BaseMediaDescription::InputMode rhs){
