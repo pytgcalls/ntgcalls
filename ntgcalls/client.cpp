@@ -24,7 +24,7 @@ namespace ntgcalls {
 
         stream->addTracks(connection);
 
-        auto offer = connection->createOffer(true, true);
+        auto offer = connection->createOffer(false, false);
         connection->setLocalDescription(offer);
         return GroupCallPayload(offer);
     }
