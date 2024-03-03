@@ -30,6 +30,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd);
     wrapper.def("on_disconnect", &ntgcalls::NTgCalls::onDisconnect);
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
+    wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
 
     py::enum_<ntgcalls::Stream::Type>(m, "StreamType")
