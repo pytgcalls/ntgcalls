@@ -9,6 +9,7 @@
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
         updateQueue = std::make_shared<DispatchQueue>();
+        hardwareInfo = std::make_shared<HardwareInfo>();
     }
 
     NTgCalls::~NTgCalls() {
@@ -20,6 +21,7 @@ namespace ntgcalls {
             snd->stop();
         }
         connections = {};
+        hardwareInfo = nullptr;
         updateQueue = nullptr;
     }
 
@@ -111,8 +113,11 @@ namespace ntgcalls {
         return safeConnection(chatId)->getState();
     }
 
-    bool NTgCalls::exists(const int64_t chatId) const
-    {
+    double NTgCalls::cpuUsage() const {
+        return hardwareInfo->getCpuUsage();
+    }
+
+    bool NTgCalls::exists(const int64_t chatId) const {
         return connections.contains(chatId);
     }
 

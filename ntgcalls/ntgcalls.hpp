@@ -7,6 +7,7 @@
 #include <cstdint>
 #include "client.hpp"
 #include "models/media_description.hpp"
+#include "utils/hardware_info.hpp"
 
 namespace ntgcalls {
 
@@ -16,6 +17,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
         std::shared_ptr<DispatchQueue> updateQueue;
+        std::shared_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
 
         bool exists(int64_t chatId) const;
@@ -46,6 +48,8 @@ namespace ntgcalls {
         uint64_t time(int64_t chatId);
 
         MediaState getState(int64_t chatId);
+
+        double cpuUsage() const;
 
         static std::string ping();
 
