@@ -9,7 +9,7 @@
 #include <windows.h>
 typedef DWORD pid_t;
 #elif __APPLE__
-#include <mach/mach.h>
+#include <sys/sysctl.h>
 #else
 #include "sys/times.h"
 #include <unistd.h>
@@ -31,7 +31,7 @@ namespace ntgcalls {
 
         double getCpuUsage();
 
-        uint16_t getCoreCount() const;
+        [[nodiscard]] uint16_t getCoreCount() const;
     };
 
 } // ntgcalls

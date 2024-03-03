@@ -18,6 +18,14 @@ namespace ntgcalls {
         GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
         memcpy(&lastSysCPU, &fsys, sizeof(FILETIME));
         memcpy(&lastUserCPU, &fuser, sizeof(FILETIME));
+#elif __APPLE__
+        size_t len = sizeof(numProcessors);
+        sysctlbyname("hw.ncpu", &numProcessors, &len, NULL, 0);
+        struct rusage usage;
+        getrusage(RUSAGE_SELF, &usage);
+        lastCPU = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec + usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
+        lastSysCPU = usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
+        lastUserCPU = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec;
 #else
         numProcessors = sysconf(_SC_NPROCESSORS_ONLN);
         struct tms timeSample;
@@ -45,6 +53,22 @@ namespace ntgcalls {
         lastCPU = now;
         lastUserCPU = user;
         lastSysCPU = sys;
+#elif __APPLE__
+        struct rusage usage;
+        getrusage(RUSAGE_SELF, &usage);
+        clock_t now = (usage.ru_utime.tv_sec + usage.ru_stime.tv_sec) * 1000000 + (usage.ru_utime.tv_usec + usage.ru_stime.tv_usec);
+        if (now <= lastCPU || usage.ru_stime.tv_sec < lastSysCPU || usage.ru_utime.tv_sec < lastUserCPU) {
+            percent = -1.0;
+        } else {
+            percent = static_cast<double>(usage.ru_stime.tv_sec - lastSysCPU + usage.ru_utime.tv_sec - lastUserCPU);
+            percent /= static_cast<double>(now - lastCPU);
+            percent /= numProcessors;
+            percent *= 100;
+        }
+
+        lastCPU = now;
+        lastSysCPU = usage.ru_stime.tv_sec;
+        lastUserCPU = usage.ru_utime.tv_sec;
 #else
         struct tms timeSample;
         clock_t now;
