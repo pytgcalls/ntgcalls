@@ -7,7 +7,6 @@
 #include "dispatch_queue.hpp"
 #ifdef _WIN32
 #include <windows.h>
-typedef DWORD pid_t;
 #elif __APPLE__
 #include <sys/sysctl.h>
 #else
