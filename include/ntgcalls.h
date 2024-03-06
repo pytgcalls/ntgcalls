@@ -38,16 +38,15 @@
 
 #ifdef __cplusplus
 extern "C" {
-#include <stdint.h>
-// ReSharper disable once CppUnusedIncludeDirective
-#include <stdbool.h>
 #endif
+#include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {
-    NTG_FILE,
-    NTG_SHELL,
-    NTG_FFMPEG,
-    NTG_NO_LATENCY,
+    NTG_FILE = 1 << 0,
+    NTG_SHELL = 1 << 1,
+    NTG_FFMPEG = 1 << 2,
+    NTG_NO_LATENCY = 1 << 3,
 } ntg_input_mode_enum;
 
 typedef enum {
@@ -132,6 +131,8 @@ NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback);
 NTG_C_EXPORT int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callback);
 
 NTG_C_EXPORT int ntg_get_version(char* buffer, int size);
+
+NTG_C_EXPORT int ntg_cpu_usage(uint32_t uid, double *buffer);
 
 #ifdef __cplusplus
 }

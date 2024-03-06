@@ -303,7 +303,7 @@ int ntg_calls_count(const uint32_t uid) {
     }
 }
 
-int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback) {
+int ntg_on_stream_end(const uint32_t uid, ntg_stream_callback callback) {
     try {
         safeUID(uid)->onStreamEnd([uid, callback](const int64_t chatId, const ntgcalls::Stream::Type type) {
             callback(uid, chatId, type == ntgcalls::Stream::Type::Audio ? NTG_STREAM_AUDIO : NTG_STREAM_VIDEO);
@@ -316,7 +316,7 @@ int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback) {
     return 0;
 }
 
-int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback) {
+int ntg_on_upgrade(const uint32_t uid, ntg_upgrade_callback callback) {
     try {
         safeUID(uid)->onUpgrade([uid, callback](const int64_t chatId, const ntgcalls::MediaState state) {
             callback(uid, chatId, parseMediaState(state));
@@ -327,7 +327,18 @@ int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback) {
     return 0;
 }
 
-int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callback) {
+int ntg_cpu_usage(const uint32_t uid, double *buffer) {
+    try {
+        *buffer = safeUID(uid)->cpuUsage();
+        return 0;
+    } catch (ntgcalls::InvalidUUID&) {
+        return NTG_INVALID_UID;
+    } catch (...) {
+        return NTG_UNKNOWN_EXCEPTION;
+    }
+}
+
+int ntg_on_disconnect(const uint32_t uid, ntg_disconnect_callback callback) {
     try {
         safeUID(uid)->onDisconnect([uid, callback](const int64_t chatId) {
             callback(uid, chatId);
