@@ -15,7 +15,7 @@ if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
 endif()
 
-project(ntgcalls VERSION 1.1.3.6 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.1.3 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
