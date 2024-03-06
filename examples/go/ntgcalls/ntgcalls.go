@@ -160,6 +160,12 @@ func (ctx *Instance) Time(chatId int64) (uint64, error) {
 	return parseTime(C.ntg_time(C.uint32_t(ctx.uid), C.int64_t(chatId)))
 }
 
+func (ctx *Instance) CpuUsage() (float64, error) {
+	var buffer C.double
+	res := C.ntg_cpu_usage(C.uint32_t(ctx.uid), &buffer)
+	return float64(buffer), parseErrorCode(res)
+}
+
 func (ctx *Instance) Calls() map[int64]StreamStatus {
 	mapReturn := make(map[int64]StreamStatus)
 
