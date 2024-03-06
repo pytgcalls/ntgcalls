@@ -72,8 +72,6 @@ namespace ntgcalls {
 
         void checkStream() const;
 
-        std::pair<std::shared_ptr<BaseStreamer>, std::pair<wrtc::binary, int64_t>> unsafePrepareForSample(std::shared_lock<std::shared_mutex>& lock) const;
-
         void checkUpgrade();
 
         bool updateMute(bool isMuted);

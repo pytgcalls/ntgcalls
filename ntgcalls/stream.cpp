@@ -28,33 +28,6 @@ namespace ntgcalls {
         pc->addTrack(videoTrack = video->createTrack());
     }
 
-    std::pair<std::shared_ptr<BaseStreamer>, std::pair<wrtc::binary, int64_t>> Stream::unsafePrepareForSample(std::shared_lock<std::shared_mutex>& lock) const {
-        std::shared_ptr<BaseStreamer> bs;
-        std::shared_ptr<BaseReader> br;
-        if (reader->audio && reader->video) {
-            if (audio->nanoTime() <= video->nanoTime()) {
-                bs = audio;
-                br = reader->audio;
-            } else {
-                bs = video;
-                br = reader->video;
-            }
-        } else if (reader->audio) {
-            bs = audio;
-            br = reader->audio;
-        } else {
-            bs = video;
-            br = reader->video;
-        }
-        auto res = br->read();
-        if (const auto waitTime = bs->waitTime(); std::chrono::duration_cast<std::chrono::milliseconds>(waitTime).count() > 0) {
-            lock.unlock();
-            std::this_thread::sleep_for(waitTime);
-            lock.lock();
-        }
-        return {bs, res};
-    }
-
     void Stream::checkStream() const {
         if (reader->audio && reader->audio->eof()) {
             reader->audio = nullptr;
@@ -147,10 +120,30 @@ namespace ntgcalls {
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     lock.lock();
                 } else {
-                    if (auto [fst, data] = unsafePrepareForSample(lock); fst) {
-                        if (const auto [sample, captureTime] = data; sample) {
-                            fst->sendData(sample, captureTime);
+                    std::shared_ptr<BaseStreamer> bs;
+                    std::shared_ptr<BaseReader> br;
+                    if (reader->audio && reader->video) {
+                        if (audio->nanoTime() <= video->nanoTime()) {
+                            bs = audio;
+                            br = reader->audio;
+                        } else {
+                            bs = video;
+                            br = reader->video;
                         }
+                    } else if (reader->audio) {
+                        bs = audio;
+                        br = reader->audio;
+                    } else {
+                        bs = video;
+                        br = reader->video;
+                    }
+                    if (auto [sample, captureTime] = br->read(); sample && bs) {
+                        if (const auto waitTime = bs->waitTime(); std::chrono::duration_cast<std::chrono::milliseconds>(waitTime).count() > 0) {
+                            lock.unlock();
+                            std::this_thread::sleep_for(waitTime);
+                            lock.lock();
+                        }
+                        bs->sendData(sample, captureTime);
                     }
                     checkStream();
                 }
