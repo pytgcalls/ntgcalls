@@ -5,6 +5,7 @@
 #include "client.hpp"
 
 #include "exceptions.hpp"
+#include "utils/auth_key.hpp"
 #include "utils/mod_exp_first.hpp"
 #include "wrtc/utils/sync.hpp"
 
@@ -33,6 +34,35 @@ namespace ntgcalls {
         }
         g_a_or_b = std::move(first.modexp);
         return g_a_hash ? g_a_or_b:g_a_or_b.Sha256();
+    }
+
+    AuthParams Client::confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const uint64_t& fingerprint) const {
+        if (connection) {
+            throw ConnectionError("Connection already made");
+        }
+        if (!this->g_a_or_b) {
+            throw ConnectionError("Connection not initialized");
+        }
+        if (g_a_hash && !fingerprint) {
+            throw InvalidParams("Fingerprint not found");
+        }
+        const auto computedAuthKey = AuthKey::CreateAuthKey(
+            g_a_or_b,
+            this->randomPower,
+            p
+        );
+        if (!computedAuthKey) {
+            throw ConnectionError("Could not create auth key");
+        }
+        const auto authKey = AuthKey::FillData(computedAuthKey);
+        const auto computedFingerprint = AuthKey::GetFingerprint(authKey);
+        if (g_a_hash && computedFingerprint != fingerprint) {
+            throw InvalidParams("Fingerprint mismatch");
+        }
+        return {
+            static_cast<int64_t>(computedFingerprint),
+            this->g_a_or_b,
+        };
     }
 
     GroupCallPayload Client::init() {

@@ -8,6 +8,7 @@
 #include <wrtc/wrtc.hpp>
 
 #include "stream.hpp"
+#include "models/auth_params.hpp"
 #include "models/media_description.hpp"
 #include "models/group_call_payload.hpp"
 
@@ -39,6 +40,8 @@ namespace ntgcalls {
         ~Client();
 
         bytes::binary init(int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
+
+        AuthParams confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const uint64_t& fingerprint) const;
 
         std::string init(const MediaDescription& config);
 
