@@ -147,6 +147,16 @@ namespace ntgcalls {
         return statusList;
     }
 
+    Protocol NTgCalls::getProtocol() {
+        return {
+            99,
+            99,
+            true,
+            true,
+            {"4.0.0"},
+        };
+    }
+
     std::string NTgCalls::ping() {
         return "pong";
     }

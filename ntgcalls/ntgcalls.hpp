@@ -62,6 +62,8 @@ throw ConnectionError("Connection cannot be initialized more than once."); \
 
         static std::string ping();
 
+        static Protocol getProtocol();
+
         void onUpgrade(const std::function<void(int64_t, MediaState)>& callback);
 
         void onStreamEnd(const std::function<void(int64_t, Stream::Type)>& callback);
