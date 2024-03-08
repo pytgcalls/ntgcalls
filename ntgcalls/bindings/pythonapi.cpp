@@ -31,6 +31,9 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("create_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const int32_t g, const py::bytes& p, const py::bytes& r, const std::optional<py::bytes>& g_a_hash) {
         return toBytes(self.createP2PCall(userId, g, toBinary(p), toBinary(r), g_a_hash.has_value() ? toBinary(g_a_hash.value()):nullptr));
     }, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"));
+    wrapper.def("confirm_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const py::bytes& p, const py::bytes& g_a_or_b, const uint64_t fingerprint) {
+        return self.confirmP2PCall(userId, toBinary(p), toBinary(g_a_or_b), fingerprint);
+    }, py::arg("user_id"), py::arg("p"), py::arg("g_a_or_b"), py::arg("fingerprint"));
     wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"));
     wrapper.def("change_stream", &ntgcalls::NTgCalls::changeStream, py::arg("chat_id"), py::arg("media"));
@@ -130,6 +133,13 @@ PYBIND11_MODULE(ntgcalls, m) {
     protocolWrapper.def_readwrite("udp_p2p", &ntgcalls::Protocol::udp_p2p);
     protocolWrapper.def_readwrite("udp_reflector", &ntgcalls::Protocol::udp_reflector);
     protocolWrapper.def_readwrite("library_versions", &ntgcalls::Protocol::library_versions);
+
+    py::class_<ntgcalls::AuthParams> authParamsWrapper(m, "AuthParams");
+    authParamsWrapper.def(py::init<>());
+    authParamsWrapper.def_property_readonly("g_a_or_b", [](const ntgcalls::AuthParams& self) {
+        return toBytes(self.g_a_or_b);
+    });
+    authParamsWrapper.def_readwrite("key_fingerprint", &ntgcalls::AuthParams::key_fingerprint);
 
     // Exceptions
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
