@@ -11,3 +11,5 @@
 #include "wrtc/interfaces/media/rtc_audio_source.hpp"
 #include "wrtc/interfaces/media/rtc_video_source.hpp"
 #include "wrtc/utils/binary.hpp"
+#include "wrtc/utils/bignum.hpp"
+#include "wrtc/utils/random.hpp"
