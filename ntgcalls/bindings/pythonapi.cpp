@@ -13,9 +13,24 @@ namespace py = pybind11;
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
+bytes::binary toBinary(const py::bytes& p) {
+    const auto data = reinterpret_cast<const uint8_t*>(PYBIND11_BYTES_AS_STRING(p.ptr()));
+    const auto size = static_cast<size_t>(PYBIND11_BYTES_SIZE(p.ptr()));
+    const auto sharedPtr = bytes::binary(size);
+    std::memcpy(sharedPtr.get(), data, size);
+    return sharedPtr;
+}
+
+py::bytes toBytes(const bytes::binary& p) {
+    return {reinterpret_cast<const char*>(p.get()), p.size()};
+}
+
 PYBIND11_MODULE(ntgcalls, m) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
+    wrapper.def("create_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const int32_t g, const py::bytes& p, const py::bytes& r, const std::optional<py::bytes>& g_a_hash) {
+        return toBytes(self.createP2PCall(userId, g, toBinary(p), toBinary(r), g_a_hash.has_value() ? toBinary(g_a_hash.value()):nullptr));
+    }, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"));
     wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"));
     wrapper.def("change_stream", &ntgcalls::NTgCalls::changeStream, py::arg("chat_id"), py::arg("media"));
@@ -32,6 +47,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
+    wrapper.def_static("get_protocol", &ntgcalls::NTgCalls::getProtocol);
 
     py::enum_<ntgcalls::Stream::Type>(m, "StreamType")
             .value("Audio", ntgcalls::Stream::Type::Audio)
@@ -106,6 +122,14 @@ PYBIND11_MODULE(ntgcalls, m) {
     );
     mediaDescWrapper.def_readwrite("audio", &ntgcalls::MediaDescription::audio);
     mediaDescWrapper.def_readwrite("video", &ntgcalls::MediaDescription::video);
+
+    py::class_<ntgcalls::Protocol> protocolWrapper(m, "Protocol");
+    protocolWrapper.def(py::init<>());
+    protocolWrapper.def_readwrite("min_layer", &ntgcalls::Protocol::min_layer);
+    protocolWrapper.def_readwrite("max_layer", &ntgcalls::Protocol::max_layer);
+    protocolWrapper.def_readwrite("udp_p2p", &ntgcalls::Protocol::udp_p2p);
+    protocolWrapper.def_readwrite("udp_reflector", &ntgcalls::Protocol::udp_reflector);
+    protocolWrapper.def_readwrite("library_versions", &ntgcalls::Protocol::library_versions);
 
     // Exceptions
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
