@@ -7,6 +7,7 @@
 #include <cstdint>
 #include "client.hpp"
 #include "models/media_description.hpp"
+#include "models/protocol.hpp"
 #include "utils/hardware_info.hpp"
 
 namespace ntgcalls {
