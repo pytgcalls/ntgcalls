@@ -28,7 +28,7 @@ namespace wrtc {
         return dataU() + sizeOfChromaPlane();
     }
 
-    i420ImageData::i420ImageData(const uint16_t width, const uint16_t height, const binary& contents) {
+    i420ImageData::i420ImageData(const uint16_t width, const uint16_t height, const bytes::binary& contents) {
         this->width = width;
         this->height = height;
         this->contents = contents;

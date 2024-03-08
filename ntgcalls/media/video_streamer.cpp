@@ -24,7 +24,7 @@ namespace ntgcalls {
         return video->createTrack();
     }
 
-    void VideoStreamer::sendData(const wrtc::binary& sample, const int64_t absolute_capture_timestamp_ms) {
+    void VideoStreamer::sendData(const bytes::binary& sample, const int64_t absolute_capture_timestamp_ms) {
         BaseStreamer::sendData(sample, absolute_capture_timestamp_ms);
         video->OnFrame(
             wrtc::i420ImageData(

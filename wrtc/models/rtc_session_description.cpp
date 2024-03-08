@@ -4,6 +4,8 @@
 
 #include "rtc_session_description.hpp"
 
+#include "wrtc/exceptions.hpp"
+
 namespace wrtc {
     Description::Description(const Type type, const std::string &sdp) {
         webrtc::SdpType newType = {};

@@ -28,7 +28,7 @@ namespace ntgcalls {
 
         virtual wrtc::MediaStreamTrack *createTrack() = 0;
 
-        virtual void sendData(const wrtc::binary& sample, int64_t absolute_capture_timestamp_ms);
+        virtual void sendData(const bytes::binary& sample, int64_t absolute_capture_timestamp_ms);
 
         virtual int64_t frameSize() = 0;
     };

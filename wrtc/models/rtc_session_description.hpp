@@ -7,7 +7,6 @@
 #include <future>
 
 #include "rtc_session_description_init.hpp"
-#include "../exceptions.hpp"
 
 namespace wrtc {
 

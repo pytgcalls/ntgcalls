@@ -40,7 +40,7 @@ namespace ntgcalls {
         }
     }
 
-    std::pair<wrtc::binary, int64_t> BaseReader::read() {
+    std::pair<bytes::binary, int64_t> BaseReader::read() {
         auto timeMillis = rtc::TimeMillis();
         if (eof()) {
             return {nullptr, timeMillis};

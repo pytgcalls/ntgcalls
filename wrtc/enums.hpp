@@ -8,7 +8,6 @@
 #include <memory>
 
 namespace wrtc {
-    typedef std::shared_ptr<uint8_t[]> binary;
     typedef uint32_t SSRC;
     typedef int32_t TgSSRC;
 

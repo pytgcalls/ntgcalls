@@ -10,3 +10,4 @@
 #include "sdp_builder.hpp"
 #include "wrtc/interfaces/media/rtc_audio_source.hpp"
 #include "wrtc/interfaces/media/rtc_video_source.hpp"
+#include "wrtc/utils/binary.hpp"

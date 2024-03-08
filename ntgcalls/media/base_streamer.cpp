@@ -9,7 +9,7 @@ namespace ntgcalls {
         clear();
     }
 
-    void BaseStreamer::sendData(const wrtc::binary& sample, const int64_t absolute_capture_timestamp_ms) {
+    void BaseStreamer::sendData(const bytes::binary& sample, const int64_t absolute_capture_timestamp_ms) {
         lastTime = std::chrono::high_resolution_clock::now();
         sentFrames++;
     }

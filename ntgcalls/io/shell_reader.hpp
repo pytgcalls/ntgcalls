@@ -19,7 +19,7 @@ namespace ntgcalls {
         bp::opstream stdIn;
         bp::child shellProcess;
 
-        wrtc::binary readInternal(int64_t size) override;
+        bytes::binary readInternal(int64_t size) override;
 
     public:
         explicit ShellReader(const std::string& command, int64_t bufferSize, bool noLatency);
