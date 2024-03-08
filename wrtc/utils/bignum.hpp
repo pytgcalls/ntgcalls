@@ -73,4 +73,10 @@ namespace openssl {
         return bytes;
     }
 
+    inline bytes::binary Sha1(const bytes::binary& data) {
+        auto bytes = bytes::binary(SHA_DIGEST_LENGTH);
+        SHA1(data.get(), SHA_DIGEST_LENGTH, bytes.get());
+        return bytes;
+    }
+
 } // openssl
