@@ -5,7 +5,6 @@
 #pragma once
 
 #include <openssl/bn.h>
-#include <openssl/sha.h>
 #include "binary.hpp"
 
 namespace openssl {
@@ -66,17 +65,4 @@ namespace openssl {
 
         void setSub(const BigNum &a, const BigNum &b) const;
     };
-
-    inline bytes::binary Sha256(const bytes::binary& data) {
-        auto bytes = bytes::binary(SHA256_DIGEST_LENGTH);
-        SHA256(data.get(), SHA256_DIGEST_LENGTH, bytes.get());
-        return bytes;
-    }
-
-    inline bytes::binary Sha1(const bytes::binary& data) {
-        auto bytes = bytes::binary(SHA_DIGEST_LENGTH);
-        SHA1(data.get(), SHA_DIGEST_LENGTH, bytes.get());
-        return bytes;
-    }
-
 } // openssl

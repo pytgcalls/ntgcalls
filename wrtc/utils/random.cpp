@@ -11,7 +11,7 @@ namespace bytes {
     }
 
     void set_random(const binary& destination) {
-        if (!destination.empty()) {
+        if (!destination) {
             RandomFill(destination);
         }
     }

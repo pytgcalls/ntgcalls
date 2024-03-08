@@ -4,6 +4,8 @@
 
 #pragma once
 #include <memory>
+#include <stdexcept>
+#include <openssl/sha.h>
 
 namespace bytes {
     class binary: public std::shared_ptr<uint8_t[]> {
@@ -22,6 +24,15 @@ namespace bytes {
         [[nodiscard]] bool empty() const;
 
         [[nodiscard]] size_t size() const;
+
+        [[nodiscard]] binary subspan(size_t start, size_t count) const;
+
+        [[nodiscard]] binary Sha256() const;
+
+        [[nodiscard]] binary Sha1() const;
     };
 
+    void set_with_const(const binary& destination, uint8_t value);
+
+    void copy(const binary& destination, const binary& source);
 } // wrtc
