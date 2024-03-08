@@ -22,12 +22,17 @@ namespace ntgcalls {
         bool connected = false;
         wrtc::synchronized_callback<void> onCloseConnection;
 
+        // P2P
+        bytes::binary randomPower, prime, g_a_or_b, g_a_hash;
+
         GroupCallPayload init();
 
     public:
         Client();
 
         ~Client();
+
+        bytes::binary init(int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
 
         std::string init(const MediaDescription& config);
 

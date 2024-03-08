@@ -42,6 +42,15 @@ namespace ntgcalls {
                 stop(chatId);
             });
         });
+    };
+
+    bytes::binary NTgCalls::createP2PCall(const int64_t userId, const int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash) {
+        std::lock_guard lock(mutex);
+        CHECK_AND_THROW_IF_EXISTS(userId);
+        connections[userId] = std::make_shared<Client>();
+        setupListeners(userId);
+        return connections[userId]->init(g, p, r, g_a_hash);
+    }
 
     std::string NTgCalls::createCall(const int64_t chatId, const MediaDescription& media) {
         std::lock_guard lock(mutex);

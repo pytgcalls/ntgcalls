@@ -5,6 +5,7 @@
 #include "client.hpp"
 
 #include "exceptions.hpp"
+#include "models/mod_exp_first.hpp"
 #include "wrtc/utils/sync.hpp"
 
 namespace ntgcalls {
@@ -17,6 +18,20 @@ namespace ntgcalls {
         connection = nullptr;
         stream = nullptr;
         sourceGroups = {};
+    }
+
+    bytes::binary Client::init(const int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash) {
+        auto first = ModExpFirst(g, p, r);
+        if (first.modexp.empty()) {
+            throw InvalidParams("Invalid modexp");
+        }
+        randomPower = std::move(first.randomPower);
+        prime = p;
+        if (g_a_hash) {
+            this->g_a_hash = g_a_hash;
+        }
+        g_a_or_b = std::move(first.modexp);
+        return g_a_hash ? g_a_or_b:openssl::Sha256(g_a_or_b);
     }
 
     GroupCallPayload Client::init() {

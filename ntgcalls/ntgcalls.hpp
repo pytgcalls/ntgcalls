@@ -36,6 +36,8 @@ throw ConnectionError("Connection cannot be initialized more than once."); \
 
         ~NTgCalls();
 
+        bytes::binary createP2PCall(int64_t userId, int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
+
         std::string createCall(int64_t chatId, const MediaDescription& media);
 
         void connect(int64_t chatId, const std::string& params);
@@ -70,4 +72,3 @@ throw ConnectionError("Connection cannot be initialized more than once."); \
     };
 
 } // ntgcalls
-
