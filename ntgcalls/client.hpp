@@ -11,6 +11,12 @@
 #include "models/media_description.hpp"
 #include "models/group_call_payload.hpp"
 
+
+#define CHECK_CONNECTION_AND_THROW_ERROR() \
+if (connection || g_a_or_b) { \
+throw ConnectionError("Connection already made");\
+}
+
 namespace ntgcalls {
     using nlohmann::json;
 

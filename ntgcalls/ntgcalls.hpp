@@ -6,16 +6,15 @@
 
 #include <cstdint>
 #include "client.hpp"
-#include "models/media_description.hpp"
 #include "models/protocol.hpp"
 #include "utils/hardware_info.hpp"
-
-namespace ntgcalls {
 
 #define CHECK_AND_THROW_IF_EXISTS(userId) \
 if (exists(userId)) { \
 throw ConnectionError("Connection cannot be initialized more than once."); \
 }
+
+namespace ntgcalls {
 
     class NTgCalls {
         std::unordered_map<int64_t, std::shared_ptr<Client>> connections;

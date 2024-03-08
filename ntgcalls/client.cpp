@@ -21,8 +21,9 @@ namespace ntgcalls {
     }
 
     bytes::binary Client::init(const int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash) {
+        CHECK_CONNECTION_AND_THROW_ERROR();
         auto first = ModExpFirst(g, p, r);
-        if (first.modexp.empty()) {
+        if (!first.modexp) {
             throw InvalidParams("Invalid modexp");
         }
         randomPower = std::move(first.randomPower);
@@ -31,24 +32,19 @@ namespace ntgcalls {
             this->g_a_hash = g_a_hash;
         }
         g_a_or_b = std::move(first.modexp);
-        return g_a_hash ? g_a_or_b:openssl::Sha256(g_a_or_b);
+        return g_a_hash ? g_a_or_b:g_a_or_b.Sha256();
     }
 
     GroupCallPayload Client::init() {
         connection = std::make_shared<wrtc::PeerConnection>();
-
         stream->addTracks(connection);
-
         auto offer = connection->createOffer(false, false);
         connection->setLocalDescription(offer);
         return GroupCallPayload(offer);
     }
 
     std::string Client::init(const MediaDescription& config) {
-        if (connection) {
-            throw ConnectionError("Connection already made");
-        }
-
+        CHECK_CONNECTION_AND_THROW_ERROR();
         const auto res = init();
         stream->setAVStream(config, true);
         audioSource = res.audioSource;
@@ -65,6 +61,9 @@ namespace ntgcalls {
     void Client::connect(const std::string& jsonData) {
         if (!connection) {
             throw ConnectionError("Connection not initialized");
+        }
+        if (g_a_or_b) {
+            throw ConnectionError("Connection already made");
         }
         auto data = json::parse(jsonData);
         if (!data["rtmp"].is_null()) {

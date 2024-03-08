@@ -149,8 +149,8 @@ namespace ntgcalls {
 
     Protocol NTgCalls::getProtocol() {
         return {
-            99,
-            99,
+            92,
+            92,
             true,
             true,
             {"4.0.0"},
