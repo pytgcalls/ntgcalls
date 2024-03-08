@@ -5,7 +5,7 @@
 #include "client.hpp"
 
 #include "exceptions.hpp"
-#include "models/mod_exp_first.hpp"
+#include "utils/mod_exp_first.hpp"
 #include "wrtc/utils/sync.hpp"
 
 namespace ntgcalls {

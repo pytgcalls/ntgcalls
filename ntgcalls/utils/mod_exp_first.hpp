@@ -9,11 +9,10 @@ namespace ntgcalls {
 
 class ModExpFirst {
     static constexpr auto kRandomPowerSize = 256;
-
-    static bool IsGoodModExpFirst(const openssl::BigNum &modexp, const openssl::BigNum &prime);
-
 public:
     bytes::binary randomPower, modexp;
+
+    static bool IsGoodModExpFirst(const openssl::BigNum &modexp, const openssl::BigNum &prime);
 
     ModExpFirst(int32_t g, const bytes::binary& p, const bytes::binary& r);
 };

@@ -4,7 +4,7 @@
 
 #include "mod_exp_first.hpp"
 
-#include "ntgcalls/exceptions.hpp"
+#include "../exceptions.hpp"
 
 namespace ntgcalls {
 
