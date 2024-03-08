@@ -11,6 +11,11 @@
 
 namespace ntgcalls {
 
+#define CHECK_AND_THROW_IF_EXISTS(userId) \
+if (exists(userId)) { \
+throw ConnectionError("Connection cannot be initialized more than once."); \
+}
+
     class NTgCalls {
         std::unordered_map<int64_t, std::shared_ptr<Client>> connections;
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
@@ -23,6 +28,8 @@ namespace ntgcalls {
         bool exists(int64_t chatId) const;
 
         std::shared_ptr<Client> safeConnection(int64_t chatId);
+
+        void setupListeners(int64_t chatId);
 
     public:
         NTgCalls();

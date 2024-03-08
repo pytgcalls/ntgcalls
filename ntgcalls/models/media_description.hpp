@@ -73,9 +73,7 @@ namespace ntgcalls {
         std::optional<AudioDescription> audio;
         std::optional<VideoDescription> video;
 
-        MediaDescription(const std::optional<AudioDescription>& audio, const std::optional<VideoDescription>& video) {
-            this->audio = audio;
-            this->video = video;
-        }
+        MediaDescription(const std::optional<AudioDescription>& audio, const std::optional<VideoDescription>& video):
+                audio(audio), video(video) {}
     };
 } // ntgcalls

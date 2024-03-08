@@ -25,12 +25,7 @@ namespace ntgcalls {
         updateQueue = nullptr;
     }
 
-    std::string NTgCalls::createCall(int64_t chatId, const MediaDescription& media) {
-        std::lock_guard lock(mutex);
-        if (exists(chatId)) {
-            throw ConnectionError("Connection cannot be initialized more than once.");
-        }
-        connections[chatId] = std::make_shared<Client>();
+    void NTgCalls::setupListeners(const int64_t chatId) {
         connections[chatId]->onStreamEnd([this, chatId](const Stream::Type &type) {
             updateQueue->dispatch([this, chatId, type] {
                 (void) onEof(chatId, type);
@@ -47,6 +42,12 @@ namespace ntgcalls {
                 stop(chatId);
             });
         });
+
+    std::string NTgCalls::createCall(const int64_t chatId, const MediaDescription& media) {
+        std::lock_guard lock(mutex);
+        CHECK_AND_THROW_IF_EXISTS(chatId);
+        connections[chatId] = std::make_shared<Client>();
+        setupListeners(chatId);
         return connections[chatId]->init(media);
     }
 
