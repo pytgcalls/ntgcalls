@@ -52,7 +52,7 @@ namespace ntgcalls {
         return connections[userId]->init(g, p, r, g_a_hash);
     }
 
-    AuthParams NTgCalls::confirmP2PCall(const int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const uint64_t& fingerprint) {
+    AuthParams NTgCalls::confirmP2PCall(const int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint) {
         std::lock_guard lock(mutex);
         return safeConnection(userId)->confirmConnection(p, g_a_or_b, fingerprint);
     }

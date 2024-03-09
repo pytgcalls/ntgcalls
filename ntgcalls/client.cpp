@@ -36,7 +36,7 @@ namespace ntgcalls {
         return g_a_hash ? g_a_or_b:g_a_or_b.Sha256();
     }
 
-    AuthParams Client::confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const uint64_t& fingerprint) const {
+    AuthParams Client::confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint) {
         if (connection) {
             throw ConnectionError("Connection already made");
         }
@@ -54,8 +54,8 @@ namespace ntgcalls {
         if (!computedAuthKey) {
             throw ConnectionError("Could not create auth key");
         }
-        const auto authKey = AuthKey::FillData(computedAuthKey);
-        const auto computedFingerprint = AuthKey::GetFingerprint(authKey);
+        encryptionKey = AuthKey::FillData(computedAuthKey);
+        const auto computedFingerprint = static_cast<int64_t>(AuthKey::GetFingerprint(encryptionKey));
         if (g_a_hash && computedFingerprint != fingerprint) {
             throw InvalidParams("Fingerprint mismatch");
         }

@@ -31,7 +31,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("create_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const int32_t g, const py::bytes& p, const py::bytes& r, const std::optional<py::bytes>& g_a_hash) {
         return toBytes(self.createP2PCall(userId, g, toBinary(p), toBinary(r), g_a_hash.has_value() ? toBinary(g_a_hash.value()):nullptr));
     }, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"));
-    wrapper.def("confirm_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const py::bytes& p, const py::bytes& g_a_or_b, const uint64_t fingerprint) {
+    wrapper.def("confirm_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const py::bytes& p, const py::bytes& g_a_or_b, const int64_t fingerprint) {
         return self.confirmP2PCall(userId, toBinary(p), toBinary(g_a_or_b), fingerprint);
     }, py::arg("user_id"), py::arg("p"), py::arg("g_a_or_b"), py::arg("fingerprint"));
     wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
