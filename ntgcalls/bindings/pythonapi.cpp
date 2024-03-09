@@ -17,7 +17,7 @@ bytes::binary toBinary(const py::bytes& p) {
     const auto data = reinterpret_cast<const uint8_t*>(PYBIND11_BYTES_AS_STRING(p.ptr()));
     const auto size = static_cast<size_t>(PYBIND11_BYTES_SIZE(p.ptr()));
     const auto sharedPtr = bytes::binary(size);
-    std::memcpy(sharedPtr.get(), data, size);
+    std::memcpy(sharedPtr, data, size);
     return sharedPtr;
 }
 

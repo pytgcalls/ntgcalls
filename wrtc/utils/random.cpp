@@ -7,7 +7,7 @@
 
 namespace bytes {
     void RandomFill(const binary& bytes) {
-        RAND_bytes(bytes.get(),bytes.size());
+        RAND_bytes(bytes,bytes.size());
     }
 
     void set_random(const binary& destination) {

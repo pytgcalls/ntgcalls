@@ -13,9 +13,8 @@ namespace wrtc {
         return sizeOfLuminancePlane() / 4;
     }
 
-    uint8_t* i420ImageData::dataY() const
-    {
-        return contents.get();
+    uint8_t* i420ImageData::dataY() const {
+        return contents;
     }
 
     uint8_t* i420ImageData::dataU() const

@@ -27,10 +27,7 @@ namespace openssl {
             clear();
             _failed = false;
         } else {
-            _failed = !BN_bin2bn(
-                bytes.get(),
-                bytes.size(),
-                raw());
+            _failed = !BN_bin2bn(bytes, bytes.size(), raw());
         }
     }
 
@@ -110,7 +107,7 @@ namespace openssl {
         }
         const auto length = BN_num_bytes(raw());
         auto result = bytes::binary(length);
-        BN_bn2bin(raw(), result.get());
+        BN_bn2bin(raw(), result);
         return result;
     }
 } // openssl
