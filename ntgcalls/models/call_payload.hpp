@@ -11,7 +11,7 @@
 namespace ntgcalls {
     using nlohmann::json;
 
-    class GroupCallPayload {
+    class CallPayload {
     public:
         std::string ufrag;
         std::string pwd;
@@ -21,7 +21,9 @@ namespace ntgcalls {
         wrtc::TgSSRC audioSource;
         std::vector<wrtc::TgSSRC> sourceGroups;
 
-        explicit GroupCallPayload(wrtc::Description &desc);
+        [[nodiscard]] json toJson() const;
+
+        explicit CallPayload(const wrtc::Description &desc);
 
         explicit operator std::string() const;
     };

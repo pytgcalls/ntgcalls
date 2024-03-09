@@ -2,10 +2,10 @@
 // Created by Laky64 on 21/08/2023.
 //
 
-#include "group_call_payload.hpp"
+#include "call_payload.hpp"
 
 namespace ntgcalls {
-    GroupCallPayload::GroupCallPayload(wrtc::Description &desc) {
+    CallPayload::CallPayload(const wrtc::Description &desc) {
         const auto [fingerprint, hash, setup, pwd, ufrag, audioSource, source_groups] = wrtc::SdpBuilder::parseSdp(desc.getSdp());
         this->ufrag = ufrag;
         this->pwd = pwd;
@@ -18,7 +18,7 @@ namespace ntgcalls {
         }
     }
 
-    GroupCallPayload::operator std::string() const {
+    json CallPayload::toJson() const {
         json jsonRes = {
             {"ufrag", ufrag},
             {"pwd", pwd},
@@ -39,7 +39,11 @@ namespace ntgcalls {
                 }
             };
         }
-        return to_string(jsonRes);
+        return jsonRes;
+    }
+
+    CallPayload::operator std::string() const {
+        return to_string(toJson());
     }
 
 } // ntgcalls
