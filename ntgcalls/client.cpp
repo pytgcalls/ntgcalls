@@ -60,17 +60,17 @@ namespace ntgcalls {
             throw InvalidParams("Fingerprint mismatch");
         }
         return {
-            static_cast<int64_t>(computedFingerprint),
+            computedFingerprint,
             this->g_a_or_b,
         };
     }
 
-    GroupCallPayload Client::init() {
+    CallPayload Client::init() {
         connection = std::make_shared<wrtc::PeerConnection>();
         stream->addTracks(connection);
-        auto offer = connection->createOffer(false, false);
+        const auto offer = connection->createOffer(false, false);
         connection->setLocalDescription(offer);
-        return GroupCallPayload(offer);
+        return CallPayload(offer);
     }
 
     std::string Client::init(const MediaDescription& config) {
