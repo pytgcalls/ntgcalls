@@ -16,10 +16,12 @@ namespace bytes {
 
         binary(uint8_t* data, const size_t size): std::shared_ptr<uint8_t[]>(data), _s(size) {}
 
+        binary(const uint8_t* data, size_t size);
+
         explicit binary(const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {}
 
         // ReSharper disable once CppNonExplicitConvertingConstructor
-        binary(std::nullptr_t): std::shared_ptr<uint8_t[]>(nullptr), _s(0) {} // NOLINT(*-explicit-constructor)
+        binary(std::nullptr_t): binary() {} // NOLINT(*-explicit-constructor)
 
         explicit binary(const std::string& str);
 
@@ -33,10 +35,12 @@ namespace bytes {
 
         [[nodiscard]] binary Sha1() const;
 
+        [[nodiscard]] binary copy() const;
+
         // ReSharper disable once CppNonExplicitConversionOperator
         operator uint8_t*() const; // NOLINT(*-explicit-constructor)
 
-        binary operator+(int64_t offset) const;
+        binary operator+(size_t offset) const;
     };
 
     void set_with_const(const binary& destination, uint8_t value);

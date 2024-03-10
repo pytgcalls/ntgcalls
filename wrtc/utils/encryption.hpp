@@ -22,9 +22,12 @@ namespace openssl {
 
     class Aes {
     public:
-        struct KeyIv {
+        class KeyIv {
+        public:
             bytes::binary key;
             bytes::binary iv;
+
+            KeyIv() : key(32), iv(16) {}
         };
 
         static KeyIv PrepareKeyIv(const bytes::binary& key, const bytes::binary& msgKey, int x);

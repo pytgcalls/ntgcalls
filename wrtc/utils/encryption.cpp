@@ -34,12 +34,12 @@ namespace openssl {
     Aes::KeyIv Aes::PrepareKeyIv(const bytes::binary& key, const bytes::binary& msgKey, const int x) {
         auto result = KeyIv();
         const auto sha256a = Sha256::Concat(
-            bytes::binary(msgKey, 16),
-            bytes::binary(key + x, 36)
+            msgKey,
+            key + x
         );
         const auto sha256b = Sha256::Concat(
-            bytes::binary(key + 40 + x, 36),
-            bytes::binary(msgKey, 16)
+            key + 40 + x,
+            msgKey
         );
         const auto aesKey = result.key;
         const auto aesIv = result.iv;
