@@ -30,9 +30,9 @@ namespace ntgcalls {
         wrtc::synchronized_callback<void> onCloseConnection;
 
         // P2P
-        bytes::binary randomPower, prime, g_a_or_b, g_a_hash, encryptionKey;
+        bytes::binary randomPower, prime, g_a_or_b, g_a_hash;
 
-        GroupCallPayload init();
+        CallPayload init();
 
     public:
         Client();

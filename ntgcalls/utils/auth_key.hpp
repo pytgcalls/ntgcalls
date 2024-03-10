@@ -6,7 +6,6 @@
 #include "wrtc/utils/binary.hpp"
 
 namespace ntgcalls {
-
     class AuthKey {
         static constexpr auto kSize = 256;
     public:
@@ -16,5 +15,4 @@ namespace ntgcalls {
 
         static uint64_t GetFingerprint(const bytes::binary& authKey);
     };
-
 } // ntgcalls
