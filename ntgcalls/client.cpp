@@ -43,23 +43,28 @@ namespace ntgcalls {
         if (!this->g_a_or_b) {
             throw ConnectionError("Connection not initialized");
         }
-        if (g_a_hash && !fingerprint) {
-            throw InvalidParams("Fingerprint not found");
+        if (g_a_hash) {
+            if (!fingerprint) {
+                throw InvalidParams("Fingerprint not found");
+            }
+            if (g_a_hash != g_a_or_b.Sha256()) {
+                throw InvalidParams("Hash mismatch");
+            }
         }
         const auto computedAuthKey = AuthKey::CreateAuthKey(
             g_a_or_b,
-            this->randomPower,
-            p
+            randomPower,
+            g_a_hash ? prime:p
         );
         if (!computedAuthKey) {
             throw ConnectionError("Could not create auth key");
         }
-        auto encryptionKey = AuthKey::FillData(computedAuthKey);
-        const auto computedFingerprint = static_cast<int64_t>(AuthKey::Fingerprint(encryptionKey));
+        auto authKey = AuthKey::FillData(computedAuthKey);
+        const auto computedFingerprint = static_cast<int64_t>(AuthKey::Fingerprint(authKey));
         if (g_a_hash && computedFingerprint != fingerprint) {
             throw InvalidParams("Fingerprint mismatch");
         }
-        signaling = std::make_shared<Signaling>(!g_a_hash, encryptionKey);
+        signaling = std::make_shared<Signaling>(!g_a_hash, authKey);
         auto payLoad = init().toJson();
         payLoad["@type"] = "InitialSetup";
         sendSignalingMessage(bytes::binary(payLoad.dump()));
