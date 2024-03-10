@@ -63,7 +63,7 @@ namespace ntgcalls {
             return counter + kKeepIncomingCountersCount > incomingCounter;
         });
         const auto eraseCount = eraseTill - list.begin();
-        const auto positionIndex = (position - list.begin()) - eraseCount;
+        const auto positionIndex = position - list.begin() - eraseCount;
         list.erase(list.begin(), eraseTill);
 
         assert(positionIndex >= 0 && positionIndex <= list.size());
