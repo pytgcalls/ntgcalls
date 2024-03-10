@@ -10,7 +10,8 @@
 #include "stream.hpp"
 #include "models/auth_params.hpp"
 #include "models/media_description.hpp"
-#include "models/group_call_payload.hpp"
+#include "models/call_payload.hpp"
+#include "utils/signaling.hpp"
 
 
 #define CHECK_CONNECTION_AND_THROW_ERROR() \
@@ -28,12 +29,15 @@ namespace ntgcalls {
         std::shared_ptr<Stream> stream;
         bool connected = false;
         wrtc::synchronized_callback<void> onCloseConnection;
+        wrtc::synchronized_callback<bytes::binary> signalingData;
+        std::shared_ptr<Signaling> signaling;
 
         // P2P
         bytes::binary randomPower, prime, g_a_or_b, g_a_hash;
 
         CallPayload init();
 
+        void sendSignalingMessage(const bytes::binary& data) const;
     public:
         Client();
 
@@ -70,5 +74,7 @@ namespace ntgcalls {
         void onStreamEnd(const std::function<void(Stream::Type)>& callback) const;
 
         void onDisconnect(const std::function<void()>& callback);
+
+        void onSignalingData(const std::function<void(bytes::binary)>& callback);
     };
 }

@@ -42,6 +42,9 @@ namespace ntgcalls {
                 stop(chatId);
             });
         });
+        connections[chatId]->onSignalingData([this, chatId](const bytes::binary& data) {
+            (void) onSignaling(chatId, data);
+        });
     };
 
     bytes::binary NTgCalls::createP2PCall(const int64_t userId, const int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash) {
@@ -117,6 +120,11 @@ namespace ntgcalls {
     void NTgCalls::onDisconnect(const std::function<void(int64_t)>& callback) {
         onCloseConnection = callback;
     }
+
+    void NTgCalls::onSignalingData(const std::function<void(int64_t, bytes::binary)>& callback) {
+        onSignaling = callback;
+    }
+
 
     uint64_t NTgCalls::time(const int64_t chatId) {
         std::lock_guard lock(mutex);

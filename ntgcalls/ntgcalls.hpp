@@ -21,6 +21,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
+        wrtc::synchronized_callback<int64_t, bytes::binary> onSignaling;
         std::shared_ptr<DispatchQueue> updateQueue;
         std::shared_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
@@ -45,6 +46,11 @@ namespace ntgcalls {
         void connect(int64_t chatId, const std::string& params);
 
         void changeStream(int64_t chatId, const MediaDescription& media);
+
+        bytes::binary decrypt(const int64_t chatId, const bytes::binary& msgKey) {
+            std::lock_guard lock(mutex);
+            return safeConnection(chatId)->decrypt(msgKey);
+        }
 
         bool pause(int64_t chatId);
 
@@ -71,6 +77,8 @@ namespace ntgcalls {
         void onStreamEnd(const std::function<void(int64_t, Stream::Type)>& callback);
 
         void onDisconnect(const std::function<void(int64_t)>& callback);
+
+        void onSignalingData(const std::function<void(int64_t, bytes::binary)>& callback);
 
         std::map<int64_t, Stream::Status> calls();
     };

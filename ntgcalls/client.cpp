@@ -54,11 +54,15 @@ namespace ntgcalls {
         if (!computedAuthKey) {
             throw ConnectionError("Could not create auth key");
         }
-        encryptionKey = AuthKey::FillData(computedAuthKey);
+        auto encryptionKey = AuthKey::FillData(computedAuthKey);
         const auto computedFingerprint = static_cast<int64_t>(AuthKey::GetFingerprint(encryptionKey));
         if (g_a_hash && computedFingerprint != fingerprint) {
             throw InvalidParams("Fingerprint mismatch");
         }
+        signaling = std::make_shared<Signaling>(!g_a_hash, encryptionKey);
+        auto payLoad = init().toJson();
+        payLoad["@type"] = "InitialSetup";
+        sendSignalingMessage(bytes::binary(payLoad.dump()));
         return {
             computedFingerprint,
             this->g_a_or_b,
@@ -71,6 +75,10 @@ namespace ntgcalls {
         const auto offer = connection->createOffer(false, false);
         connection->setLocalDescription(offer);
         return CallPayload(offer);
+    }
+
+    void Client::sendSignalingMessage(const bytes::binary& data) const {
+        (void) signalingData(signaling->encrypt(data));
     }
 
     std::string Client::init(const MediaDescription& config) {
@@ -202,6 +210,10 @@ namespace ntgcalls {
 
     void Client::onUpgrade(const std::function<void(MediaState)> &callback) const {
         stream->onUpgrade(callback);
+    }
+
+    void Client::onSignalingData(const std::function<void(bytes::binary)> &callback) {
+        this->signalingData = callback;
     }
 
     uint64_t Client::time() const {
