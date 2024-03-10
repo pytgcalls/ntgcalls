@@ -59,6 +59,13 @@ namespace bytes {
         return subBytes(offset, size() - offset);
     }
 
+    bool binary::operator!=(const binary& other) const {
+        if (size() != other.size()) {
+            return true;
+        }
+        return memcmp(get(), other, size()) != 0;
+    }
+
     void set_with_const(const binary& destination, const uint8_t value) {
         memset(destination, value, destination.size());
     }

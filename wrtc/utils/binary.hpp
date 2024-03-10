@@ -41,6 +41,8 @@ namespace bytes {
         operator uint8_t*() const; // NOLINT(*-explicit-constructor)
 
         binary operator+(size_t offset) const;
+
+        bool operator!=(const binary& other) const;
     };
 
     void set_with_const(const binary& destination, uint8_t value);
