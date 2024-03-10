@@ -42,7 +42,7 @@ namespace ntgcalls {
         auto cb = static_cast<const char*>(b);
         volatile auto different = false;
         for (const auto ce = ca + size; ca != ce; ++ca, ++cb) {
-            different = different | (*ca != *cb);
+            different |= *ca != *cb;
         }
         return different;
     }

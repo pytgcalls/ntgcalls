@@ -55,7 +55,7 @@ namespace ntgcalls {
             throw ConnectionError("Could not create auth key");
         }
         auto encryptionKey = AuthKey::FillData(computedAuthKey);
-        const auto computedFingerprint = static_cast<int64_t>(AuthKey::GetFingerprint(encryptionKey));
+        const auto computedFingerprint = static_cast<int64_t>(AuthKey::Fingerprint(encryptionKey));
         if (g_a_hash && computedFingerprint != fingerprint) {
             throw InvalidParams("Fingerprint mismatch");
         }

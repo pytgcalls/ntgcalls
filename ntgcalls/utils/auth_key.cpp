@@ -34,7 +34,7 @@ namespace ntgcalls {
         return computedAuthKey;
     }
 
-    uint64_t AuthKey::GetFingerprint(const bytes::binary& authKey) {
+    uint64_t AuthKey::Fingerprint(const bytes::binary& authKey) {
         if (authKey.size() != kSize) {
             throw InvalidParams("Invalid auth key size");
         }
