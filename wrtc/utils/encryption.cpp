@@ -15,7 +15,7 @@ namespace openssl {
         return bytes;
     }
 
-    bytes::binary Sha256::Concat(const bytes::binary& first, const bytes::binary& second) {
+    bytes::binary Sha256::Concat(const bytes::span& first, const bytes::span& second) {
         bytes::binary result(SHA256_DIGEST_LENGTH);
         auto context = SHA256_CTX();
         SHA256_Init(&context);
@@ -31,15 +31,16 @@ namespace openssl {
         return bytes;
     }
 
+    // Implementation from https://github.com/TelegramMessenger/tgcalls/blob/master/tgcalls/CryptoHelper.cpp#L8
     Aes::KeyIv Aes::PrepareKeyIv(const bytes::binary& key, const bytes::binary& msgKey, const int x) {
         auto result = KeyIv();
         const auto sha256a = Sha256::Concat(
-            msgKey,
-            key + x
+            bytes::span(msgKey, 16),
+            bytes::span(key + x, 36)
         );
         const auto sha256b = Sha256::Concat(
-            key + 40 + x,
-            msgKey
+            bytes::span(key + 40 + x, 36),
+            bytes::span(msgKey, 16)
         );
         const auto aesKey = result.key;
         const auto aesIv = result.iv;
@@ -52,10 +53,11 @@ namespace openssl {
         return result;
     }
 
+    // Implementation from https://github.com/TelegramMessenger/tgcalls/blob/master/tgcalls/CryptoHelper.cpp#L29
     void Aes::ProcessCtr(const bytes::binary& from, const bytes::binary& to, const KeyIv& keyIv) {
         auto aes = AES_KEY();
         AES_set_encrypt_key(keyIv.key, keyIv.key.size() * CHAR_BIT, &aes);
-        const auto ecountBuf = bytes::binary(16);
+        const auto ecountBuf = bytes::binary(AES_BLOCK_SIZE);
         uint32_t offsetInBlock = 0;
         AES_ctr128_encrypt(from, to, from.size(), &aes, keyIv.iv, ecountBuf, &offsetInBlock);
     }

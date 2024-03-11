@@ -11,7 +11,7 @@ namespace openssl {
     public:
         static bytes::binary Digest(const bytes::binary& data);
 
-        static bytes::binary Concat(const bytes::binary& first, const bytes::binary& second);
+        static bytes::binary Concat(const bytes::span& first, const bytes::span& second);
     };
 
     class Sha1 {
