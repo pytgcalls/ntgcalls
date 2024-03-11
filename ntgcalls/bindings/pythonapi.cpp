@@ -34,6 +34,9 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("confirm_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const py::bytes& p, const py::bytes& g_a_or_b, const int64_t fingerprint) {
         return self.confirmP2PCall(userId, toBinary(p), toBinary(g_a_or_b), fingerprint);
     }, py::arg("user_id"), py::arg("p"), py::arg("g_a_or_b"), py::arg("fingerprint"));
+    wrapper.def("decrypt", [] (ntgcalls::NTgCalls& self, const int64_t chatId, const py::bytes& msgKey) {
+        return toBytes(self.decrypt(chatId, toBinary(msgKey)));
+    }, py::arg("chat_id"), py::arg("msg_key"));
     wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"));
     wrapper.def("change_stream", &ntgcalls::NTgCalls::changeStream, py::arg("chat_id"), py::arg("media"));

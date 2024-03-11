@@ -43,6 +43,13 @@ namespace ntgcalls {
 
         ~Client();
 
+        bytes::binary decrypt(const bytes::binary& msgKey) const {
+            if (signaling) {
+                return signaling->decrypt(msgKey);
+            }
+            return nullptr;
+        }
+
         bytes::binary init(int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
 
         AuthParams confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint);
