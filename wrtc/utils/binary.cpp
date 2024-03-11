@@ -51,6 +51,10 @@ namespace bytes {
         return result;
     }
 
+    binary::operator void*() const {
+        return get();
+    }
+
     binary::operator unsigned char*() const {
         return get();
     }
@@ -64,6 +68,21 @@ namespace bytes {
             return true;
         }
         return memcmp(get(), other, size()) != 0;
+    }
+
+    bool binary::operator==(const binary& other) const {
+        if (size() != other.size()) {
+            return false;
+        }
+        return memcmp(get(), other, size()) == 0;
+    }
+
+    span::operator const void*() const {
+        return _data;
+    }
+
+    size_t span::size() const {
+        return _size;
     }
 
     void set_with_const(const binary& destination, const uint8_t value) {
