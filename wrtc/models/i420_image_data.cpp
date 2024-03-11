@@ -17,13 +17,11 @@ namespace wrtc {
         return contents;
     }
 
-    uint8_t* i420ImageData::dataU() const
-    {
+    uint8_t* i420ImageData::dataU() const {
         return dataY() + sizeOfLuminancePlane();
     }
 
-    uint8_t* i420ImageData::dataV() const
-    {
+    uint8_t* i420ImageData::dataV() const {
         return dataU() + sizeOfChromaPlane();
     }
 
