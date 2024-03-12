@@ -60,14 +60,14 @@ namespace ntgcalls {
             throw ConnectionError("Could not create auth key");
         }
         auto authKey = AuthKey::FillData(computedAuthKey);
-        const auto computedFingerprint = static_cast<int64_t>(AuthKey::Fingerprint(authKey));
+        const auto computedFingerprint = AuthKey::Fingerprint(authKey);
         if (g_a_hash && computedFingerprint != fingerprint) {
             throw InvalidParams("Fingerprint mismatch");
         }
         signaling = std::make_shared<Signaling>(!g_a_hash, authKey);
-        auto payLoad = init().toJson();
-        payLoad["@type"] = "InitialSetup";
-        sendSignalingMessage(bytes::binary(payLoad.dump()));
+        const auto res = init();
+        audioSource = res.audioSource;
+        sendSignalingMessage(res);
         return {
             computedFingerprint,
             this->g_a_or_b,
@@ -79,7 +79,7 @@ namespace ntgcalls {
         stream->addTracks(connection);
         const auto offer = connection->createOffer(false, false);
         connection->setLocalDescription(offer);
-        return CallPayload(offer);
+        return CallPayload(offer, !g_a_or_b);
     }
 
     void Client::sendSignalingMessage(const bytes::binary& data) const {
@@ -94,7 +94,7 @@ namespace ntgcalls {
         for (const auto &ssrc : res.sourceGroups) {
             sourceGroups.push_back(ssrc);
         }
-        return std::string(res);
+        return res;
     }
 
     auto Client::changeStream(const MediaDescription& config) const -> void {
