@@ -7,7 +7,6 @@
 #include <stdexcept>
 #include <string>
 #include <algorithm>
-#include <utility>
 
 namespace bytes {
     class binary: public std::shared_ptr<uint8_t[]> {
@@ -44,6 +43,10 @@ namespace bytes {
         // ReSharper disable once CppNonExplicitConversionOperator
         operator uint8_t*() const; // NOLINT(*-explicit-constructor)
 
+        explicit operator const uint8_t*() const;
+
+        explicit operator char*() const;
+
         binary operator+(size_t offset) const;
 
         bool operator!=(const binary& other) const;
@@ -59,6 +62,8 @@ namespace bytes {
 
         // ReSharper disable once CppNonExplicitConversionOperator
         operator const void*() const; // NOLINT(*-explicit-constructor)
+
+        explicit operator const uint8_t*() const;
 
         [[nodiscard]] size_t size() const;
     };

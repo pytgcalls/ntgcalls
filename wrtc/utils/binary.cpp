@@ -59,6 +59,10 @@ namespace bytes {
         return get();
     }
 
+    binary::operator char*() const {
+        return reinterpret_cast<char*>(get());
+    }
+
     binary binary::operator+(const size_t offset) const {
         return subBytes(offset, size() - offset);
     }
@@ -79,6 +83,10 @@ namespace bytes {
 
     span::operator const void*() const {
         return _data;
+    }
+
+    span::operator const uint8_t*() const {
+        return static_cast<const uint8_t*>(_data);
     }
 
     size_t span::size() const {
