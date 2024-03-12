@@ -23,7 +23,7 @@ namespace ntgcalls {
         }
         source.seekg(readChunks, std::ios::beg);
         auto file_data = bytes::binary(size);
-        source.read(reinterpret_cast<char*>(file_data.get()), size);
+        source.read(static_cast<char*>(file_data), size);
         readChunks += size;
         if (source.fail()) {
             throw FileError("Error while reading the file");

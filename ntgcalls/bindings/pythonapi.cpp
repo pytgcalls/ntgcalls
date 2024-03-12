@@ -22,7 +22,7 @@ bytes::binary toBinary(const py::bytes& p) {
 }
 
 py::bytes toBytes(const bytes::binary& p) {
-    return {reinterpret_cast<const char*>(p.get()), p.size()};
+    return {static_cast<const char*>(p), p.size()};
 }
 
 PYBIND11_MODULE(ntgcalls, m) {

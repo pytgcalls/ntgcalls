@@ -43,8 +43,6 @@ namespace bytes {
         // ReSharper disable once CppNonExplicitConversionOperator
         operator uint8_t*() const; // NOLINT(*-explicit-constructor)
 
-        explicit operator const uint8_t*() const;
-
         explicit operator char*() const;
 
         binary operator+(size_t offset) const;

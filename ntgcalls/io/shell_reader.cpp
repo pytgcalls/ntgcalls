@@ -25,7 +25,7 @@ namespace ntgcalls {
             throw EOFError("Reached end of the stream");
         }
         auto file_data = bytes::binary(size);
-        stdOut.read(reinterpret_cast<char*>(file_data.get()), size);
+        stdOut.read(static_cast<char*>(file_data), size);
         return file_data;
     }
 

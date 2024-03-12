@@ -28,7 +28,7 @@ namespace ntgcalls {
         if (computedAuthKeySize < kSize) {
             const auto authKeyBytes = bytes::binary(kSize);
             set_with_const(authKeyBytes.subBytes(0, kSize - computedAuthKeySize), 0);
-            bytes::copy(authKeyBytes.subBytes(kSize - computedAuthKeySize, computedAuthKeySize), computedAuthKey);
+            copy(authKeyBytes.subBytes(kSize - computedAuthKeySize, computedAuthKeySize), computedAuthKey);
             return authKeyBytes;
         }
         return computedAuthKey;

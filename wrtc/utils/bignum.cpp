@@ -106,7 +106,7 @@ namespace openssl {
             return nullptr;
         }
         const auto length = BN_num_bytes(raw());
-        auto result = bytes::binary(length);
+        bytes::binary result(length);
         BN_bn2bin(raw(), result);
         return result;
     }
