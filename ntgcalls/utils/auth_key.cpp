@@ -34,18 +34,20 @@ namespace ntgcalls {
         return computedAuthKey;
     }
 
-    uint64_t AuthKey::Fingerprint(const bytes::binary& authKey) {
+    int64_t AuthKey::Fingerprint(const bytes::binary& authKey) {
         if (authKey.size() != kSize) {
             throw InvalidParams("Invalid auth key size");
         }
         const auto hash = authKey.Sha1();
-        return static_cast<uint64_t>(hash[19]) << 56 |
-               static_cast<uint64_t>(hash[18]) << 48 |
-               static_cast<uint64_t>(hash[17]) << 40 |
-               static_cast<uint64_t>(hash[16]) << 32 |
-               static_cast<uint64_t>(hash[15]) << 24 |
-               static_cast<uint64_t>(hash[14]) << 16 |
-               static_cast<uint64_t>(hash[13]) << 8 |
-               static_cast<uint64_t>(hash[12]);
+        return static_cast<int64_t>(
+            static_cast<uint64_t>(hash[19]) << 56 |
+            static_cast<uint64_t>(hash[18]) << 48 |
+            static_cast<uint64_t>(hash[17]) << 40 |
+            static_cast<uint64_t>(hash[16]) << 32 |
+            static_cast<uint64_t>(hash[15]) << 24 |
+            static_cast<uint64_t>(hash[14]) << 16 |
+            static_cast<uint64_t>(hash[13]) << 8 |
+            static_cast<uint64_t>(hash[12])
+        );
     }
 } // ntgcalls

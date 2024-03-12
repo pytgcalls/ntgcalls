@@ -13,6 +13,6 @@ namespace ntgcalls {
 
         static bytes::binary FillData(const bytes::binary& computedAuthKey);
 
-        static uint64_t Fingerprint(const bytes::binary& authKey);
+        static int64_t Fingerprint(const bytes::binary& authKey);
     };
 } // ntgcalls
