@@ -11,18 +11,17 @@
 namespace ntgcalls {
     Signaling::Signaling(const bool isOutGoing, bytes::binary key): isOutGoing(isOutGoing), key(std::move(key)) {}
 
-    // Implementation from https://github.com/TelegramMessenger/tgcalls/blob/master/tgcalls/EncryptedConnection.cpp#L322
     bytes::binary Signaling::encryptPrepared(const bytes::binary& buffer) const {
         const auto encrypted = bytes::binary(16 + buffer.size());
         const auto x = (isOutGoing ? 0 : 8) + 128;
         const auto msgKeyLarge = openssl::Sha256::Concat(
             bytes::span(key + 88 + x, 32),
-            bytes::span(buffer, buffer.size())
+            buffer
         );
         memcpy(encrypted, msgKeyLarge + 8, 16);
         auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, encrypted, x);
         openssl::Aes::ProcessCtr(
-            bytes::span(buffer, buffer.size()),
+            buffer,
             encrypted + 16,
             aesKeyIv
         );
@@ -53,11 +52,9 @@ namespace ntgcalls {
         const auto position = std::ranges::lower_bound(list, incomingCounter);
         const auto largest = list.empty() ? 0 : list.back();
         if (position != list.end() && *position == incomingCounter) {
-            // The packet is in the list already.
             return false;
         }
         if (incomingCounter + kKeepIncomingCountersCount <= largest) {
-            // The packet is too old.
             return false;
         }
         const auto eraseTill = std::ranges::find_if(list, [&](const uint32_t counter) {
@@ -72,7 +69,6 @@ namespace ntgcalls {
         return true;
     }
 
-    // Implementation from https://github.com/TelegramMessenger/tgcalls/blob/master/tgcalls/EncryptedConnection.cpp#L102
     bytes::binary Signaling::encrypt(const bytes::binary& buffer) {
         const auto seq = ++counter;
         rtc::ByteBufferWriter writer;
@@ -83,7 +79,6 @@ namespace ntgcalls {
         return encryptPrepared(bytes::binary(result.data(), result.size()));
     }
 
-    // Implementation from https://github.com/TelegramMessenger/tgcalls/blob/master/tgcalls/EncryptedConnection.cpp#L102
     bytes::binary Signaling::decrypt(const bytes::binary& buffer) {
         if (buffer.size() < 21 || buffer.size() > kMaxIncomingPacketSize) {
             std::cout << "Invalid packet size" << std::endl;
@@ -91,18 +86,17 @@ namespace ntgcalls {
         }
         const auto x = (isOutGoing ? 8 : 0) + 128;
         const auto encryptedData = buffer + 16;
-        const auto dataSize = buffer.size() - 16;
         auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, buffer, x);
-        const auto decryptionBuffer = bytes::binary(dataSize);
+        const auto decryptionBuffer = bytes::binary(encryptedData.size());
         openssl::Aes::ProcessCtr(
-            bytes::span(encryptedData, dataSize),
+            encryptedData,
             decryptionBuffer,
             aesKeyIv
         );
 
         if (const auto msgKeyLarge = openssl::Sha256::Concat(
             bytes::span(key + 88 + x, 32),
-            bytes::span(decryptionBuffer, decryptionBuffer.size())
+            decryptionBuffer
         ); ConstTimeIsDifferent(msgKeyLarge + 8, buffer, 16)) {
             return nullptr;
         }

@@ -30,7 +30,7 @@ namespace openssl {
 
         static KeyIv PrepareKeyIv(const bytes::binary& key, const bytes::binary& msgKey, int x);
 
-        static void ProcessCtr(bytes::span from, const bytes::binary& to, KeyIv& keyIv);
+        static void ProcessCtr(const bytes::binary& from, const bytes::binary& to, KeyIv& keyIv);
     };
 
 } // openssl
