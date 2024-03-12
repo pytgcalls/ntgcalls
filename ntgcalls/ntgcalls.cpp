@@ -166,7 +166,7 @@ namespace ntgcalls {
             92,
             true,
             true,
-            {"4.0.0"},
+            {"6.0.0"},
         };
     }
 
