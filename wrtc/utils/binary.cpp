@@ -59,6 +59,10 @@ namespace bytes {
         return get();
     }
 
+    binary::operator span() const {
+        return {get(), _s};
+    }
+
     binary::operator char*() const {
         return reinterpret_cast<char*>(get());
     }

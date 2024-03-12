@@ -9,6 +9,20 @@
 #include <algorithm>
 
 namespace bytes {
+    class span {
+        const void* _data;
+        size_t _size;
+    public:
+        span(const void *data, const size_t size): _data(data), _size(size) {}
+
+        // ReSharper disable once CppNonExplicitConversionOperator
+        operator const void*() const; // NOLINT(*-explicit-constructor)
+
+        explicit operator const uint8_t*() const;
+
+        [[nodiscard]] size_t size() const;
+    };
+
     class binary: public std::shared_ptr<uint8_t[]> {
         size_t _s;
     public:
@@ -43,6 +57,9 @@ namespace bytes {
         // ReSharper disable once CppNonExplicitConversionOperator
         operator uint8_t*() const; // NOLINT(*-explicit-constructor)
 
+        // ReSharper disable once CppNonExplicitConversionOperator
+        operator span() const; // NOLINT(*-explicit-constructor)
+
         explicit operator char*() const;
 
         binary operator+(size_t offset) const;
@@ -50,20 +67,6 @@ namespace bytes {
         bool operator!=(const binary& other) const;
 
         bool operator==(const binary& other) const;
-    };
-
-    class span {
-        const void* _data;
-        size_t _size;
-    public:
-        span(const void *data, const size_t size): _data(data), _size(size) {}
-
-        // ReSharper disable once CppNonExplicitConversionOperator
-        operator const void*() const; // NOLINT(*-explicit-constructor)
-
-        explicit operator const uint8_t*() const;
-
-        [[nodiscard]] size_t size() const;
     };
 
     void set_with_const(const binary& destination, uint8_t value);
