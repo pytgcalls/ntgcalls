@@ -54,11 +54,19 @@ namespace openssl {
     }
 
     // Implementation from https://github.com/TelegramMessenger/tgcalls/blob/master/tgcalls/CryptoHelper.cpp#L29
-    void Aes::ProcessCtr(const bytes::binary& from, const bytes::binary& to, const KeyIv& keyIv) {
+    void Aes::ProcessCtr(const bytes::span from, const bytes::binary& to, KeyIv& keyIv) {
         auto aes = AES_KEY();
-        AES_set_encrypt_key(keyIv.key, keyIv.key.size() * CHAR_BIT, &aes);
-        const auto ecountBuf = bytes::binary(AES_BLOCK_SIZE);
+        AES_set_encrypt_key(keyIv.key, 32 * CHAR_BIT, &aes);
+        const bytes::binary ecountBuf(AES_BLOCK_SIZE);
         uint32_t offsetInBlock = 0;
-        AES_ctr128_encrypt(from, to, from.size(), &aes, keyIv.iv, ecountBuf, &offsetInBlock);
+        AES_ctr128_encrypt(
+            static_cast<const uint8_t*>(from),
+            to,
+            from.size(),
+            &aes,
+            keyIv.iv,
+            ecountBuf,
+            &offsetInBlock
+        );
     }
 } // openssl

@@ -12,17 +12,17 @@ namespace ntgcalls {
     Signaling::Signaling(const bool isOutGoing, bytes::binary key): isOutGoing(isOutGoing), key(std::move(key)) {}
 
     // Implementation from https://github.com/TelegramMessenger/tgcalls/blob/master/tgcalls/EncryptedConnection.cpp#L322
-    bytes::binary Signaling::encryptPrepared(const bytes::binary& data) const {
-        const auto encrypted = bytes::binary(16 + data.size());
+    bytes::binary Signaling::encryptPrepared(const bytes::binary& buffer) const {
+        const auto encrypted = bytes::binary(16 + buffer.size());
         const auto x = (isOutGoing ? 0 : 8) + 128;
         const auto msgKeyLarge = openssl::Sha256::Concat(
             bytes::span(key + 88 + x, 32),
-            bytes::span(data, data.size())
+            bytes::span(buffer, buffer.size())
         );
         memcpy(encrypted, msgKeyLarge + 8, 16);
-        const auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, encrypted, x);
+        auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, encrypted, x);
         openssl::Aes::ProcessCtr(
-            data,
+            bytes::span(buffer, buffer.size()),
             encrypted + 16,
             aesKeyIv
         );
@@ -90,15 +90,12 @@ namespace ntgcalls {
             return nullptr;
         }
         const auto x = (isOutGoing ? 8 : 0) + 128;
-        const auto& msgKey = buffer;
         const auto encryptedData = buffer + 16;
         const auto dataSize = buffer.size() - 16;
-
-        const auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, msgKey, x);
-
+        auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, buffer, x);
         const auto decryptionBuffer = bytes::binary(dataSize);
         openssl::Aes::ProcessCtr(
-            encryptedData,
+            bytes::span(encryptedData, dataSize),
             decryptionBuffer,
             aesKeyIv
         );
@@ -106,15 +103,12 @@ namespace ntgcalls {
         if (const auto msgKeyLarge = openssl::Sha256::Concat(
             bytes::span(key + 88 + x, 32),
             bytes::span(decryptionBuffer, decryptionBuffer.size())
-        ); ConstTimeIsDifferent(msgKeyLarge + 8, msgKey, 16)) {
-            std::cout << "Invalid message key, Size msgKeyLage: " << (key + 88 + x).size() << " Size msgKey: " << msgKey.size() << std::endl;
+        ); ConstTimeIsDifferent(msgKeyLarge + 8, buffer, 16)) {
             return nullptr;
         }
 
         const auto incomingSeq = ReadSeq(decryptionBuffer);
         if (const auto incomingCounter = CounterFromSeq(incomingSeq); !registerIncomingCounter(incomingCounter)) {
-            // We've received that packet already.
-            std::cout << "We've received that packet already." << std::endl;
             return nullptr;
         }
         return decryptionBuffer + 4;

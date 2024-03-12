@@ -20,7 +20,7 @@ namespace ntgcalls {
         static constexpr auto kKeepIncomingCountersCount = 64;
         static constexpr auto kMaxIncomingPacketSize = 128 * 1024;
 
-        [[nodiscard]] bytes::binary encryptPrepared(const bytes::binary& data) const;
+        [[nodiscard]] bytes::binary encryptPrepared(const bytes::binary& buffer) const;
 
         static uint32_t ReadSeq(const void* bytes);
 

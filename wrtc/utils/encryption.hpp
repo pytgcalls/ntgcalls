@@ -24,15 +24,13 @@ namespace openssl {
     public:
         class KeyIv {
         public:
-            bytes::binary key;
-            bytes::binary iv;
-
-            KeyIv() : key(32), iv(16) {}
+            uint8_t key[32];
+            uint8_t iv[16];
         };
 
         static KeyIv PrepareKeyIv(const bytes::binary& key, const bytes::binary& msgKey, int x);
 
-        static void ProcessCtr(const bytes::binary& from, const bytes::binary& to, const KeyIv& keyIv);
+        static void ProcessCtr(bytes::span from, const bytes::binary& to, KeyIv& keyIv);
     };
 
 } // openssl
