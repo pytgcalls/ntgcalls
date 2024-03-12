@@ -33,6 +33,8 @@ namespace ntgcalls {
     public:
         Signaling(bool isOutGoing, bytes::binary key);
 
+        ~Signaling();
+
         bytes::binary encrypt(const bytes::binary& buffer);
 
         bytes::binary decrypt(const bytes::binary& buffer);

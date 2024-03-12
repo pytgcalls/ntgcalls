@@ -15,6 +15,8 @@ public:
     static bool IsGoodModExpFirst(const openssl::BigNum &modexp, const openssl::BigNum &prime);
 
     ModExpFirst(int32_t g, const bytes::binary& p, const bytes::binary& r);
+
+    ~ModExpFirst();
 };
 
 } // ntgcalls

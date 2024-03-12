@@ -32,6 +32,11 @@ namespace ntgcalls {
         }
     }
 
+    ModExpFirst::~ModExpFirst() {
+        randomPower = nullptr;
+        modexp = nullptr;
+    }
+
     bool ModExpFirst::IsGoodModExpFirst(const openssl::BigNum& modexp, const openssl::BigNum& prime) {
         const auto diff = openssl::BigNum();
         diff.setSub(prime, modexp);

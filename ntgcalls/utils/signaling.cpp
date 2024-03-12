@@ -11,6 +11,13 @@
 namespace ntgcalls {
     Signaling::Signaling(const bool isOutGoing, bytes::binary key): isOutGoing(isOutGoing), key(std::move(key)) {}
 
+    Signaling::~Signaling() {
+        counter = 0;
+        isOutGoing = false;
+        key = nullptr;
+        _largestIncomingCounters.clear();
+    }
+
     bytes::binary Signaling::encryptPrepared(const bytes::binary& buffer) const {
         const auto encrypted = bytes::binary(16 + buffer.size());
         const auto x = (isOutGoing ? 0 : 8) + 128;
