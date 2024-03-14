@@ -6,14 +6,16 @@
 #include "../utils/sync.hpp"
 #include "peer_connection/create_session_description_observer.hpp"
 #include "peer_connection/set_session_description_observer.hpp"
+#include "api/jsep_ice_candidate.h"
 
 namespace wrtc {
 
-    PeerConnection::PeerConnection() {
+    PeerConnection::PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers) {
         factory = PeerConnectionFactory::GetOrCreateDefault();
 
         webrtc::PeerConnectionInterface::RTCConfiguration config;
         config.bundle_policy = webrtc::PeerConnectionInterface::BundlePolicy::kBundlePolicyMaxBundle;
+        config.servers = servers;
 
         webrtc::PeerConnectionDependencies dependencies(this);
 
@@ -64,8 +66,7 @@ namespace wrtc {
         future.wait();
     }
 
-    void PeerConnection::setRemoteDescription(const Description &description) const
-    {
+    void PeerConnection::setRemoteDescription(const Description &description) const {
         auto *raw_description = static_cast<webrtc::SessionDescriptionInterface *>(description);
         std::unique_ptr<webrtc::SessionDescriptionInterface> raw_description_ptr(raw_description);
 
@@ -79,6 +80,18 @@ namespace wrtc {
         peerConnection->SetRemoteDescription(observer, raw_description_ptr.release());
 
         future.wait();
+    }
+
+    void PeerConnection::addIceCandidate(const std::string &rawCandidate) const {
+        webrtc::JsepIceCandidate parseCandidate{ std::string(), 0 };
+        if (!parseCandidate.Initialize(rawCandidate, nullptr)) {
+            throw RTCException("Failed to parse candidate");
+        }
+        const auto candidate = webrtc::CreateIceCandidate(parseCandidate.sdp_mid(), parseCandidate.sdp_mline_index(), parseCandidate.candidate());
+        if (!candidate) {
+            throw RTCException("Failed to parse candidate");
+        }
+        peerConnection->AddIceCandidate(candidate.get());
     }
 
     void PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack, const std::vector<std::string>& streamIds) const
@@ -125,6 +138,10 @@ namespace wrtc {
 
     void PeerConnection::onSignalingStateChange(const std::function<void(SignalingState)> &callback) {
         signalingStateChangeCallback = callback;
+    }
+
+    rtc::Thread* PeerConnection::networkThread() const {
+        return factory->networkThread();
     }
 
     void PeerConnection::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) {

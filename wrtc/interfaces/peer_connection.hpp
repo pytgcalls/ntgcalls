@@ -16,7 +16,7 @@ namespace wrtc {
 
     class PeerConnection final : public webrtc::PeerConnectionObserver {
     public:
-        PeerConnection();
+        explicit PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers);
 
         ~PeerConnection() override;
 
@@ -28,6 +28,8 @@ namespace wrtc {
 
         void addTrack(MediaStreamTrack *mediaStreamTrack, const std::vector<std::string>& streamIds = {}) const;
 
+        void addIceCandidate(const std::string &rawCandidate) const;
+
         void restartIce() const;
 
         void close();
@@ -37,6 +39,8 @@ namespace wrtc {
         void onGatheringStateChange(const std::function<void(GatheringState state)> &callback);
 
         void onSignalingStateChange(const std::function<void(SignalingState state)> &callback);
+
+        rtc::Thread *networkThread() const;
 
     private:
         rtc::scoped_refptr<PeerConnectionFactory> factory;

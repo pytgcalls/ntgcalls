@@ -22,6 +22,9 @@ namespace wrtc {
         static void UnRef();
 
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory();
+
+        [[nodiscard]] rtc::Thread* networkThread() const;
+
     private:
         static std::mutex _mutex;
         static int _references;

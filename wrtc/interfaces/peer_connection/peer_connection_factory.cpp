@@ -77,6 +77,10 @@ namespace wrtc {
         return factory_;
     }
 
+    rtc::Thread* PeerConnectionFactory::networkThread() const {
+        return network_thread_.get();
+    }
+
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
         _mutex.lock();
         _references++;
