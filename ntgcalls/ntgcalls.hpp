@@ -21,7 +21,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
-        wrtc::synchronized_callback<int64_t, bytes::binary> onSignaling;
+        wrtc::synchronized_callback<int64_t, bytes::binary> onEmitData;
         std::shared_ptr<DispatchQueue> updateQueue;
         std::shared_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
@@ -39,18 +39,13 @@ namespace ntgcalls {
 
         bytes::binary createP2PCall(int64_t userId, int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
 
-        AuthParams confirmP2PCall(int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint);
+        AuthParams confirmP2PCall(int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers);
 
         std::string createCall(int64_t chatId, const MediaDescription& media);
 
         void connect(int64_t chatId, const std::string& params);
 
         void changeStream(int64_t chatId, const MediaDescription& media);
-
-        bytes::binary decrypt(const int64_t chatId, const bytes::binary& msgKey) {
-            std::lock_guard lock(mutex);
-            return safeConnection(chatId)->decrypt(msgKey);
-        }
 
         bool pause(int64_t chatId);
 
@@ -79,6 +74,8 @@ namespace ntgcalls {
         void onDisconnect(const std::function<void(int64_t)>& callback);
 
         void onSignalingData(const std::function<void(int64_t, bytes::binary)>& callback);
+
+        void sendSignalingData(int64_t chatId, const bytes::binary& msgKey);
 
         std::map<int64_t, Stream::Status> calls();
     };

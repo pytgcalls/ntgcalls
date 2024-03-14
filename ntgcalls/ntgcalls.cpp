@@ -43,7 +43,7 @@ namespace ntgcalls {
             });
         });
         connections[chatId]->onSignalingData([this, chatId](const bytes::binary& data) {
-            (void) onSignaling(chatId, data);
+            (void) onEmitData(chatId, data);
         });
     };
 
@@ -55,9 +55,9 @@ namespace ntgcalls {
         return connections[userId]->init(g, p, r, g_a_hash);
     }
 
-    AuthParams NTgCalls::confirmP2PCall(const int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint) {
+    AuthParams NTgCalls::confirmP2PCall(const int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers) {
         std::lock_guard lock(mutex);
-        return safeConnection(userId)->confirmConnection(p, g_a_or_b, fingerprint);
+        return safeConnection(userId)->confirmConnection(p, g_a_or_b, fingerprint, servers);
     }
 
     std::string NTgCalls::createCall(const int64_t chatId, const MediaDescription& media) {
@@ -122,7 +122,12 @@ namespace ntgcalls {
     }
 
     void NTgCalls::onSignalingData(const std::function<void(int64_t, bytes::binary)>& callback) {
-        onSignaling = callback;
+        onEmitData = callback;
+    }
+
+    void NTgCalls::sendSignalingData(const int64_t chatId, const bytes::binary& msgKey) {
+        std::lock_guard lock(mutex);
+        safeConnection(chatId)->sendSignalingData(msgKey);
     }
 
 

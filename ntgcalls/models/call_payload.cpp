@@ -5,7 +5,7 @@
 #include "call_payload.hpp"
 
 namespace ntgcalls {
-    CallPayload::CallPayload(const wrtc::Description &desc, bool isGroup): isGroup(isGroup) {
+    CallPayload::CallPayload(const wrtc::Description &desc) {
         const auto [fingerprint, hash, setup, pwd, ufrag, audioSource, source_groups] = wrtc::SdpBuilder::parseSdp(desc.getSdp());
         this->ufrag = ufrag;
         this->pwd = pwd;
@@ -30,34 +30,15 @@ namespace ntgcalls {
                     }
             }},
         };
-        if (isGroup) {
-            jsonRes["ssrc"] = audioSource;
-            if (!sourceGroups.empty()){
-                jsonRes["ssrc-groups"] = {
-                    {
-                        {"semantics", "FID"},
-                        {"sources", sourceGroups}
-                    }
-                };
-            }
-        } else {
-            jsonRes["@type"] = "InitialSetup";
-            jsonRes["audio"] = {
-                {"ssrc", audioSource}
+        jsonRes["ssrc"] = audioSource;
+        if (!sourceGroups.empty()){
+            jsonRes["ssrc-groups"] = {
+                {
+                    {"semantics", "FID"},
+                    {"sources", sourceGroups}
+                }
             };
-            if (!sourceGroups.empty()){
-                jsonRes["video"]["ssrcGroups"] = {
-                    {
-                        {"semantics", "FID"},
-                        {"sources", sourceGroups}
-                    }
-                };
-            }
         }
         return to_string(jsonRes);
-    }
-
-    CallPayload::operator bytes::binary() const {
-        return bytes::binary(static_cast<std::string>(*this));
     }
 } // ntgcalls

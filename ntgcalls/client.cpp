@@ -36,7 +36,7 @@ namespace ntgcalls {
         return g_a_hash ? g_a_or_b:g_a_or_b.Sha256();
     }
 
-    AuthParams Client::confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint) {
+    AuthParams Client::confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers) {
         if (connection) {
             throw ConnectionError("Connection already made");
         }
@@ -64,26 +64,32 @@ namespace ntgcalls {
         if (g_a_hash && computedFingerprint != fingerprint) {
             throw InvalidParams("Fingerprint mismatch");
         }
-        signaling = std::make_shared<Signaling>(!g_a_hash, authKey);
-        const auto res = init();
+        const auto res = init(servers);
+        signaling = std::make_shared<SignalingConnection>(
+            connection->networkThread(),
+            SignalingConnection::ProtocolVersion::V2,
+            callType() == Type::Outgoing,
+            authKey,
+            [this](const bytes::binary& data) {
+                (void) this->onEmitData(data);
+            },
+            [this](const bytes::binary& data) {
+                this->processSignalingData(data);
+            }
+        );
         audioSource = res.audioSource;
-        sendSignalingMessage(res);
         return {
             computedFingerprint,
             this->g_a_or_b,
         };
     }
 
-    CallPayload Client::init() {
-        connection = std::make_shared<wrtc::PeerConnection>();
+    CallPayload Client::init(const std::vector<RTCServer>& servers) {
+        connection = std::make_shared<wrtc::PeerConnection>(RTCServer::toIceServers(servers));
         stream->addTracks(connection);
         const auto offer = connection->createOffer(false, false);
         connection->setLocalDescription(offer);
-        return CallPayload(offer, !g_a_or_b);
-    }
-
-    void Client::sendSignalingMessage(const bytes::binary& data) const {
-        (void) signalingData(signaling->encrypt(data));
+        return CallPayload(offer);
     }
 
     std::string Client::init(const MediaDescription& config) {
@@ -218,7 +224,36 @@ namespace ntgcalls {
     }
 
     void Client::onSignalingData(const std::function<void(bytes::binary)> &callback) {
-        this->signalingData = callback;
+        this->onEmitData = callback;
+    }
+
+    void Client::sendSignalingData(const bytes::binary& buffer) const {
+        if (signaling) {
+            signaling->receive(buffer);
+        }
+    }
+
+    void Client::processSignalingData(const bytes::binary& buffer) const {
+        if (signaling) {
+            std::cout << "Signaling data: " << buffer << std::endl;
+            json data = json::parse(std::string(static_cast<char*>(buffer), buffer.size()));
+            if (data["@type"].is_null()) {
+                return;
+            }
+        }
+    }
+
+    Client::Type Client::callType() const {
+        if (g_a_or_b) {
+            if (g_a_hash) {
+                return Type::Incoming;
+            }
+            return Type::Outgoing;
+        }
+        if (connection) {
+            return Type::Group;
+        }
+        return Type::Unknown;
     }
 
     uint64_t Client::time() const {

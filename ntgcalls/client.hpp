@@ -11,7 +11,8 @@
 #include "models/auth_params.hpp"
 #include "models/media_description.hpp"
 #include "models/call_payload.hpp"
-#include "utils/signaling.hpp"
+#include "models/rtc_server.hpp"
+#include "utils/signaling_connection.hpp"
 
 
 #define CHECK_CONNECTION_AND_THROW_ERROR() \
@@ -29,30 +30,31 @@ namespace ntgcalls {
         std::shared_ptr<Stream> stream;
         bool connected = false;
         wrtc::synchronized_callback<void> onCloseConnection;
-        wrtc::synchronized_callback<bytes::binary> signalingData;
-        std::shared_ptr<Signaling> signaling;
+        wrtc::synchronized_callback<bytes::binary> onEmitData;
+        std::shared_ptr<SignalingConnection> signaling;
 
         // P2P
         bytes::binary randomPower, prime, g_a_or_b, g_a_hash;
 
-        CallPayload init();
+        CallPayload init(const std::vector<RTCServer>& servers = {});
 
-        void sendSignalingMessage(const bytes::binary& data) const;
+        void processSignalingData(const bytes::binary& buffer) const;
     public:
+        enum class Type {
+            Group = 1 << 0,
+            Outgoing = 1 << 1,
+            Incoming = 1 << 2,
+            P2P = Outgoing | Incoming,
+            Unknown = 1 << 3
+        };
+
         Client();
 
         ~Client();
 
-        bytes::binary decrypt(const bytes::binary& msgKey) const {
-            if (signaling) {
-                return signaling->decrypt(msgKey);
-            }
-            return nullptr;
-        }
-
         bytes::binary init(int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
 
-        AuthParams confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint);
+        AuthParams confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers);
 
         std::string init(const MediaDescription& config);
 
@@ -83,5 +85,9 @@ namespace ntgcalls {
         void onDisconnect(const std::function<void()>& callback);
 
         void onSignalingData(const std::function<void(bytes::binary)>& callback);
+
+        void sendSignalingData(const bytes::binary& buffer) const;
+
+        Type callType() const;
     };
 }

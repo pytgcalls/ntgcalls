@@ -18,17 +18,13 @@ namespace ntgcalls {
         std::string hash;
         std::string setup;
         std::string fingerprint;
-        bool isGroup;
         wrtc::TgSSRC audioSource;
         std::vector<wrtc::TgSSRC> sourceGroups;
 
-        explicit CallPayload(const wrtc::Description &desc, bool isGroup);
+        explicit CallPayload(const wrtc::Description &desc);
 
         // ReSharper disable once CppNonExplicitConversionOperator
         operator std::string() const; // NOLINT(*-explicit-constructor)
-
-        // ReSharper disable once CppNonExplicitConversionOperator
-        operator bytes::binary() const; // NOLINT(*-explicit-constructor)
     };
 
 } // ntgcalls
