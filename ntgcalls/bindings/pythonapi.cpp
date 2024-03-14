@@ -78,7 +78,9 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd);
     wrapper.def("on_disconnect", &ntgcalls::NTgCalls::onDisconnect);
     wrapper.def("on_signaling", [](ntgcalls::NTgCalls& self, const std::function<void(int64_t, py::bytes)>& callback) {
+        py::gil_scoped_release release;
         self.onSignalingData([callback](const int64_t chatId, const bytes::binary& data) {
+            py::gil_scoped_acquire acquire;
             callback(chatId, toBytes(data));
         });
     }, py::arg("callback"));
