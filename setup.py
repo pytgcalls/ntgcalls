@@ -261,20 +261,17 @@ class SharedCommand(Command):
         if tmp_release_path.exists():
             release_path = tmp_release_path
         for file in os.listdir(release_path):
-            if file.endswith('.dll') or file.endswith('.so') or file.endswith('.dylib'):
-                lib_output = Path(build_output, file)
-                shutil.move(Path(release_path, file), lib_output)
-                shutil.copy(Path(source_dir, 'include', 'ntgcalls.h'), include_output)
-
-                if self.no_preserve_cache:
-                    shutil.rmtree(build_temp)
-                    boost_dir = Path(source_dir, 'deps', 'boost')
-                    for boost_build in os.listdir(boost_dir):
-                        if boost_build.startswith('boost_'):
-                            shutil.rmtree(Path(boost_dir, boost_build))
-                    print('Cleanup successfully')
-                return
-        raise FileNotFoundError('No library files found')
+            target_file = Path(build_output, file)
+            if file.endswith((".lib", ".dll", ".so", ".dylib")):
+                shutil.move(Path(release_path, file), target_file)
+        shutil.copy(Path(source_dir, 'include', 'ntgcalls.h'), include_output)
+        if self.no_preserve_cache:
+            shutil.rmtree(build_temp)
+            boost_dir = Path(source_dir, 'deps', 'boost')
+            for boost_build in os.listdir(boost_dir):
+                if boost_build.startswith('boost_'):
+                    shutil.rmtree(Path(boost_dir, boost_build))
+            print('Cleanup successfully')
 
 
 with open(os.path.join(base_path, 'README.md'), encoding='utf-8') as f:
