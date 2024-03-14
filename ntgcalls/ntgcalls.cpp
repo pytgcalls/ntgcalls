@@ -43,7 +43,9 @@ namespace ntgcalls {
             });
         });
         connections[chatId]->onSignalingData([this, chatId](const bytes::binary& data) {
-            (void) onEmitData(chatId, data);
+            updateQueue->dispatch([this, chatId, data] {
+                (void) onEmitData(chatId, data);
+            });
         });
     };
 
