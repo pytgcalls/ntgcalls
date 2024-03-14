@@ -10,6 +10,10 @@ namespace bytes {
         std::copy_n(data, size, get());
     }
 
+    binary::binary(const char* data, const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {
+        std::copy_n(data, size, get());
+    }
+
     binary::binary(const std::string& str): std::shared_ptr<uint8_t[]>(new uint8_t[str.size()]), _s(str.size()) {
 #ifndef IS_MACOS
         std::ranges::copy(str, get());

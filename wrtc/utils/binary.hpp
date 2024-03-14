@@ -32,6 +32,8 @@ namespace bytes {
 
         binary(const uint8_t* data, size_t size);
 
+        binary(const char* data, size_t size);
+
         explicit binary(const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {}
 
         // ReSharper disable once CppNonExplicitConvertingConstructor
