@@ -26,6 +26,8 @@ namespace wrtc {
 
         [[nodiscard]] std::string getSdp() const;
 
+        static Type parseType(const std::string &type);
+
     private:
         std::unique_ptr<webrtc::SessionDescriptionInterface> _description;
     };

@@ -58,6 +58,21 @@ namespace wrtc {
         return sdp;
     }
 
+    Description::Type Description::parseType(const std::string& type) {
+        if (type == "offer") {
+            return Type::Offer;
+        }
+        if (type == "answer") {
+            return Type::Answer;
+        }
+        if (type == "pranswer") {
+            return Type::Pranswer;
+        }
+        if (type == "rollback") {
+            return Type::Rollback;
+        }
+    }
+
     Description::operator webrtc::SessionDescriptionInterface *() const
     {
         return CreateSessionDescription(_description->GetType(), this->getSdp()).release();
