@@ -4,19 +4,19 @@
 
 #include "signaling_connection.hpp"
 
-#include <iostream>
 #include <memory>
 
 namespace ntgcalls {
     SignalingConnection::SignalingConnection(
-        rtc::Thread* network_thread,
-        const ProtocolVersion version,
+        const std::vector<std::string>& remoteVersions,
+        rtc::Thread* networkThread,
         bool isOutGoing,
         const bytes::binary& key,
         const std::function<void(const bytes::binary&)>& onEmitData,
         const std::function<void(const bytes::binary&)>& onSignalData
-    ): network_thread(network_thread), onEmitData(onEmitData), onSignalData(onSignalData), version(version) {
+    ): network_thread(networkThread), onEmitData(onEmitData), onSignalData(onSignalData) {
         signaling = std::make_shared<Signaling>(isOutGoing, key);
+        version = signalingVersion(remoteVersions);
         if (version == ProtocolVersion::V2) {
             network_thread->BlockingCall([&] {
                 packetTransport = std::make_unique<SignalingPacketTransport>(onEmitData);
@@ -45,12 +45,12 @@ namespace ntgcalls {
                 packetTransport->receiveData(data);
             });
         } else {
-            onSignalData(signaling->decrypt(data));
+            onSignalData(preProcessData(data, false));
         }
     }
 
     void SignalingConnection::send(const bytes::binary& data) {
-        const auto encryptedData = signaling->encrypt(data);
+        const auto encryptedData = preProcessData(data, true);
         if (version == ProtocolVersion::V2) {
             network_thread->BlockingCall([&] {
                 std::lock_guard lock(mutex);
@@ -94,7 +94,46 @@ namespace ntgcalls {
     }
 
     void SignalingConnection::OnDataReceived(int channel_id, webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) {
-        std::cout << "SignalingConnection::OnDataReceived" << std::endl;
-        onSignalData(signaling->decrypt(bytes::binary(buffer.data(), buffer.size())));
+        onSignalData(preProcessData(bytes::binary(buffer.data(), buffer.size()), false));
+    }
+
+    SignalingConnection::ProtocolVersion SignalingConnection::signalingVersion(const std::vector<std::string>& versions) {
+        if (versions.empty()) {
+            throw ConnectionError("No versions provided");
+        }
+        const auto it = std::ranges::find_if(versions, [](const std::string &version) {
+            return version == defaultVersion;
+        });
+        if (const std::string foundVersion = it != versions.end() ? *it : versions[0]; foundVersion == "10.0.0") {
+            return ProtocolVersion::V1;
+        } else if (foundVersion == "11.0.0") {
+            return ProtocolVersion::V2;
+        }
+        throw ConnectionError("Unsupported version");
+    }
+
+    bool SignalingConnection::supportsCompression() const {
+        switch (version) {
+        case ProtocolVersion::V1:
+            return false;
+        case ProtocolVersion::V2:
+            return true;
+        }
+        return false;
+    }
+
+    bytes::binary SignalingConnection::preProcessData(const bytes::binary& data, const bool isOut) const {
+        if (isOut) {
+            auto packetData = data;
+            if (supportsCompression()) {
+                packetData = bytes::GZip::zip(packetData);
+            }
+            return signaling->encrypt(packetData);
+        }
+        auto decryptedData = signaling->decrypt(data);
+        if (bytes::GZip::isGzip(decryptedData)) {
+            decryptedData = bytes::GZip::unzip(decryptedData, 2 * 1024 * 1024);
+        }
+        return decryptedData;
     }
 } // ntgcalls

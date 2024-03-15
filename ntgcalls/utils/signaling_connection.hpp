@@ -8,6 +8,7 @@
 #include "signaling.hpp"
 #include "signaling_packet_transport.hpp"
 #include "media/sctp/sctp_transport_factory.h"
+#include "ntgcalls/exceptions.hpp"
 #include "wrtc/utils/binary.hpp"
 
 
@@ -20,8 +21,8 @@ namespace ntgcalls {
         };
 
         explicit SignalingConnection(
-            rtc::Thread* network_thread,
-            ProtocolVersion version,
+            const std::vector<std::string>& remoteVersions,
+            rtc::Thread* networkThread,
             bool isOutGoing,
             const bytes::binary& key,
             const std::function<void(const bytes::binary&)>& onEmitData,
@@ -53,6 +54,13 @@ namespace ntgcalls {
         std::vector<bytes::binary> pendingData;
         std::mutex mutex;
         ProtocolVersion version;
+        static constexpr std::string defaultVersion = "11.0.0";
+
+        static ProtocolVersion signalingVersion(const std::vector<std::string>& versions);
+
+        [[nodiscard]] bool supportsCompression() const;
+
+        [[nodiscard]] bytes::binary preProcessData(const bytes::binary& data, bool isOut) const;
     };
 
 } // ntgcalls
