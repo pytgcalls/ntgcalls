@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <algorithm>
+#include <vector>
 
 namespace bytes {
     class span {
@@ -28,7 +29,9 @@ namespace bytes {
     public:
         binary() : std::shared_ptr<uint8_t[]>(nullptr), _s(0) {}
 
-        binary(uint8_t* data, const size_t size): std::shared_ptr<uint8_t[]>(data), _s(size) {}
+        explicit binary(std::vector<uint8_t>& data);
+
+        binary(uint8_t* data, size_t size);
 
         binary(const uint8_t* data, size_t size);
 

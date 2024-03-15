@@ -6,6 +6,18 @@
 #include "encryption.hpp"
 
 namespace bytes {
+    binary::binary(std::vector<uint8_t>& data): std::shared_ptr<uint8_t[]>(new uint8_t[data.size()]), _s(data.size()){
+#ifndef IS_MACOS
+        std::ranges::copy(data, get());
+#else
+        std::copy(data.begin(), data.end(), get());
+#endif
+    }
+
+    binary::binary(uint8_t* data, const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {
+        std::copy_n(data, size, get());
+    }
+
     binary::binary(const uint8_t* data, const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {
         std::copy_n(data, size, get());
     }
