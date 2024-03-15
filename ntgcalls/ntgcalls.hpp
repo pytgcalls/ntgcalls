@@ -39,7 +39,7 @@ namespace ntgcalls {
 
         bytes::binary createP2PCall(int64_t userId, int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
 
-        AuthParams confirmP2PCall(int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers);
+        AuthParams confirmP2PCall(int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers, const std::vector<std::string> &versions);
 
         std::string createCall(int64_t chatId, const MediaDescription& media);
 

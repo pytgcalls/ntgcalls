@@ -36,7 +36,7 @@ namespace ntgcalls {
         return g_a_hash ? g_a_or_b:g_a_or_b.Sha256();
     }
 
-    AuthParams Client::confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers) {
+    AuthParams Client::confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers, const std::vector<std::string> &versions) {
         if (connection) {
             throw ConnectionError("Connection already made");
         }
@@ -66,8 +66,8 @@ namespace ntgcalls {
         }
         const auto res = init(servers);
         signaling = std::make_shared<SignalingConnection>(
+            versions,
             connection->networkThread(),
-            SignalingConnection::ProtocolVersion::V2,
             callType() == Type::Outgoing,
             authKey,
             [this](const bytes::binary& data) {
