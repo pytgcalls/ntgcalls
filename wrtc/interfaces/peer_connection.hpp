@@ -16,13 +16,15 @@ namespace wrtc {
 
     class PeerConnection final : public webrtc::PeerConnectionObserver {
     public:
-        explicit PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers);
+        explicit PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers = {});
 
         ~PeerConnection() override;
 
         Description createOffer(bool offerToReceiveAudio = true, bool offerToReceiveVideo = false) const;
 
-        void setLocalDescription(const Description &description) const;
+        std::optional<Description> localDescription() const;
+
+        void setLocalDescription(const std::optional<Description>& description = std::nullopt) const;
 
         void setRemoteDescription(const Description &description) const;
 
@@ -33,6 +35,8 @@ namespace wrtc {
         void restartIce() const;
 
         void close();
+
+        SignalingState signalingState() const;
 
         void onIceStateChange(const std::function<void(IceState state)> &callback);
 
@@ -72,6 +76,8 @@ namespace wrtc {
                         const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams) override;
 
         void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
+
+        static SignalingState parseSignalingState(webrtc::PeerConnectionInterface::SignalingState state);
     };
 
 } // wrtc
