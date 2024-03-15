@@ -5,6 +5,8 @@
 #include "ntgcalls.hpp"
 
 #include "exceptions.hpp"
+#include "instances/group_call.hpp"
+#include "instances/p2p_call.hpp"
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
@@ -42,38 +44,40 @@ namespace ntgcalls {
                 stop(chatId);
             });
         });
-        connections[chatId]->onSignalingData([this, chatId](const bytes::binary& data) {
-            updateQueue->dispatch([this, chatId, data] {
-                (void) onEmitData(chatId, data);
+        if (connections[chatId]->type() & CallInterface::Type::P2P) {
+            SafeCall<P2PCall>(connections[chatId])->onSignalingData([this, chatId](const bytes::binary& data) {
+                updateQueue->dispatch([this, chatId, data] {
+                    (void) onEmitData(chatId, data);
+                });
             });
-        });
-    };
+        }
+    }
 
     bytes::binary NTgCalls::createP2PCall(const int64_t userId, const int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash) {
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(userId);
-        connections[userId] = std::make_shared<Client>();
+        connections[userId] = std::make_shared<P2PCall>();
         setupListeners(userId);
-        return connections[userId]->init(g, p, r, g_a_hash);
+        return SafeCall<P2PCall>(connections[userId])->init(g, p, r, g_a_hash);
     }
 
     AuthParams NTgCalls::confirmP2PCall(const int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers, const std::vector<std::string> &versions) {
         std::lock_guard lock(mutex);
-        return safeConnection(userId)->confirmConnection(p, g_a_or_b, fingerprint, servers, versions);
+        return SafeCall<P2PCall>(safeConnection(userId))->confirmConnection(p, g_a_or_b, fingerprint, servers, versions);
     }
 
     std::string NTgCalls::createCall(const int64_t chatId, const MediaDescription& media) {
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(chatId);
-        connections[chatId] = std::make_shared<Client>();
+        connections[chatId] = std::make_shared<GroupCall>();
         setupListeners(chatId);
-        return connections[chatId]->init(media);
+        return SafeCall<GroupCall>(connections[chatId])->init(media);
     }
 
     void NTgCalls::connect(const int64_t chatId, const std::string& params) {
         std::lock_guard lock(mutex);
         try {
-            safeConnection(chatId)->connect(params);
+            SafeCall<GroupCall>(safeConnection(chatId))->connect(params);
         } catch (TelegramServerError&) {
             stop(chatId);
             throw;
@@ -129,7 +133,7 @@ namespace ntgcalls {
 
     void NTgCalls::sendSignalingData(const int64_t chatId, const bytes::binary& msgKey) {
         std::lock_guard lock(mutex);
-        safeConnection(chatId)->sendSignalingData(msgKey);
+        SafeCall<P2PCall>(safeConnection(chatId))->sendSignalingData(msgKey);
     }
 
 
@@ -151,7 +155,7 @@ namespace ntgcalls {
         return connections.contains(chatId);
     }
 
-    std::shared_ptr<Client> NTgCalls::safeConnection(const int64_t chatId) {
+    std::shared_ptr<CallInterface> NTgCalls::safeConnection(const int64_t chatId) {
         if (!exists(chatId)) {
             throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chatId) + "\" not found");
         }
@@ -173,8 +177,19 @@ namespace ntgcalls {
             92,
             true,
             true,
-            {"6.0.0"},
+            {"11.0.0", "10.0.0"},
         };
+    }
+
+    template<typename DestCallType, typename BaseCallType>
+    DestCallType* NTgCalls::SafeCall(const std::shared_ptr<BaseCallType>& call) {
+        if (!call) {
+            return nullptr;
+        }
+        if (typeid(*call) == typeid(DestCallType)) {
+            return static_cast<DestCallType*>(call.get());
+        }
+        throw ConnectionError("Invalid call type");
     }
 
     std::string NTgCalls::ping() {

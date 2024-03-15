@@ -5,19 +5,22 @@
 
 
 #include <cstdint>
-#include "client.hpp"
+
+#include "instances/call_interface.hpp"
+#include "models/auth_params.hpp"
 #include "models/protocol.hpp"
+#include "models/rtc_server.hpp"
 #include "utils/hardware_info.hpp"
 
-#define CHECK_AND_THROW_IF_EXISTS(userId) \
-if (exists(userId)) { \
+#define CHECK_AND_THROW_IF_EXISTS(chatId) \
+if (exists(chatId)) { \
 throw ConnectionError("Connection cannot be initialized more than once."); \
 }
 
 namespace ntgcalls {
 
     class NTgCalls {
-        std::unordered_map<int64_t, std::shared_ptr<Client>> connections;
+        std::unordered_map<int64_t, std::shared_ptr<CallInterface>> connections;
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
@@ -28,9 +31,12 @@ namespace ntgcalls {
 
         bool exists(int64_t chatId) const;
 
-        std::shared_ptr<Client> safeConnection(int64_t chatId);
+        std::shared_ptr<CallInterface> safeConnection(int64_t chatId);
 
         void setupListeners(int64_t chatId);
+
+        template<typename DestCallType, typename BaseCallType>
+        static DestCallType* SafeCall(const std::shared_ptr<BaseCallType>& call);
 
     public:
         NTgCalls();
