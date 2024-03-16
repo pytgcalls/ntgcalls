@@ -7,9 +7,10 @@
 #include "mod_exp_first.hpp"
 #include "ntgcalls/exceptions.hpp"
 #include "wrtc/utils/bignum.hpp"
+#include "wrtc/utils/encryption.hpp"
 
 namespace ntgcalls {
-    bytes::binary AuthKey::CreateAuthKey(const bytes::binary& firstBytes, const bytes::binary& random, const bytes::binary& primeBytes) {
+    bytes::vector AuthKey::CreateAuthKey(const bytes::const_span firstBytes, const bytes::const_span random, const bytes::const_span primeBytes) {
         const auto first = openssl::BigNum(firstBytes);
         const auto prime = openssl::BigNum(primeBytes);
         if (!ModExpFirst::IsGoodModExpFirst(first, prime)) {
@@ -20,25 +21,25 @@ namespace ntgcalls {
         return authKey.getBytes();
     }
 
-    bytes::binary AuthKey::FillData(const bytes::binary& computedAuthKey) {
+    void AuthKey::FillData(RawKey authKey, const bytes::const_span computedAuthKey) {
         const auto computedAuthKeySize = computedAuthKey.size();
         if (computedAuthKeySize > kSize) {
             throw InvalidParams("Invalid auth key size");
         }
+        const auto authKeyBytes = bytes::make_span(authKey);
         if (computedAuthKeySize < kSize) {
-            const auto authKeyBytes = bytes::binary(kSize);
-            set_with_const(authKeyBytes.subBytes(0, kSize - computedAuthKeySize), 0);
-            copy(authKeyBytes.subBytes(kSize - computedAuthKeySize, computedAuthKeySize), computedAuthKey);
-            return authKeyBytes;
+            bytes::set_with_const(authKeyBytes.subspan(0, kSize - computedAuthKeySize), bytes::byte());
+            bytes::copy(authKeyBytes.subspan(kSize - computedAuthKeySize), computedAuthKey);
+        } else {
+            bytes::copy(authKeyBytes, computedAuthKey);
         }
-        return computedAuthKey;
     }
 
-    int64_t AuthKey::Fingerprint(const bytes::binary& authKey) {
+    uint64_t AuthKey::Fingerprint(const bytes::const_span authKey) {
         if (authKey.size() != kSize) {
             throw InvalidParams("Invalid auth key size");
         }
-        const auto hash = authKey.Sha1();
+        const auto hash = openssl::Sha1::Digest(authKey);
         return static_cast<int64_t>(
             static_cast<uint64_t>(hash[19]) << 56 |
             static_cast<uint64_t>(hash[18]) << 48 |

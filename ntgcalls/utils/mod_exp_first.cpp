@@ -8,14 +8,14 @@
 
 namespace ntgcalls {
 
-    ModExpFirst::ModExpFirst(const int32_t g, const bytes::binary& p, const bytes::binary& r) {
+    ModExpFirst::ModExpFirst(const int32_t g, const bytes::const_span p, const bytes::const_span r) {
         if (r.size() != kRandomPowerSize) {
             throw InvalidParams("Invalid random size");
         }
         const openssl::BigNum prime(p);
-        randomPower = bytes::binary(kRandomPowerSize);
+        randomPower = bytes::vector(kRandomPowerSize);
         while (true) {
-            set_random(randomPower);
+            bytes::set_random(randomPower);
             for (auto i = 0; i != kRandomPowerSize; ++i) {
                 randomPower[i] ^= r[i];
             }
@@ -33,8 +33,8 @@ namespace ntgcalls {
     }
 
     ModExpFirst::~ModExpFirst() {
-        randomPower = nullptr;
-        modexp = nullptr;
+        randomPower.clear();
+        modexp.clear();
     }
 
     bool ModExpFirst::IsGoodModExpFirst(const openssl::BigNum& modexp, const openssl::BigNum& prime) {

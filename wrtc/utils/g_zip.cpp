@@ -21,10 +21,10 @@ namespace bytes {
         stream.zfree = nullptr;
         stream.opaque = nullptr;
         stream.avail_in = static_cast<uint32_t>(data.size());
-        stream.next_in = static_cast<Cr_z_Bytef*>(static_cast<void*>(data));
+        stream.next_in = const_cast<unsigned char*>(data.data());
         stream.total_out = 0;
         stream.avail_out = 0;
-        std::vector<uint8_t> output;
+        binary output;
         if (constexpr int compression = 9; deflateInit2(&stream, compression, Z_DEFLATED, 31, 8, Z_DEFAULT_STRATEGY) == Z_OK) {
             output.resize(ChunkSize);
 
@@ -39,26 +39,25 @@ namespace bytes {
             deflateEnd(&stream);
             output.resize(stream.total_out);
         }
-
-        return binary(output);
+        return output;
     }
 
-    binary GZip::unzip(const binary& data, const size_t sizeLimit) {
+    std::optional<binary> GZip::unzip(const binary& data, const size_t sizeLimit) {
         z_stream stream;
         stream.zalloc = nullptr;
         stream.zfree = nullptr;
         stream.avail_in = static_cast<uint32_t>(data.size());
-        stream.next_in = static_cast<Cr_z_Bytef*>(static_cast<void*>(data));
+        stream.next_in = const_cast<unsigned char*>(data.data());
         stream.total_out = 0;
         stream.avail_out = 0;
 
-        std::vector<uint8_t> output;
+        binary output;
         if (inflateInit2(&stream, 47) == Z_OK) {
             int status = Z_OK;
             output.resize(data.size() * 2);
             while (status == Z_OK) {
                 if (sizeLimit > 0 && stream.total_out > sizeLimit) {
-                    return nullptr;
+                    return std::nullopt;
                 }
                 if (stream.total_out >= output.size()) {
                     output.resize(output.size() + data.size() / 2);
@@ -71,10 +70,10 @@ namespace bytes {
                 if (status == Z_STREAM_END) {
                     output.resize(stream.total_out);
                 } else if (sizeLimit > 0 && output.size() > sizeLimit) {
-                    return nullptr;
+                    return std::nullopt;
                 }
             }
         }
-        return binary(output);
+        return output;
     }
 } // bytes

@@ -4,77 +4,56 @@
 
 #pragma once
 #include <memory>
-#include <stdexcept>
-#include <string>
-#include <algorithm>
+#include <span>
 #include <vector>
+#include <rtc_base/copy_on_write_buffer.h>
 
 namespace bytes {
-    class span {
-        const void* _data;
-        size_t _size;
-    public:
-        span(const void *data, const size_t size): _data(data), _size(size) {}
+    using shared_binary = std::shared_ptr<uint8_t[]>;
+    using binary = std::vector<uint8_t>;
 
-        // ReSharper disable once CppNonExplicitConversionOperator
-        operator const void*() const; // NOLINT(*-explicit-constructor)
+    using byte = std::byte;
+    using vector = std::vector<byte>;
+    using span = std::span<byte>;
+    using const_span = std::span<const byte>;
 
-        explicit operator const uint8_t*() const;
+    template <size_t Size>
+    using array = std::array<byte, Size>;
 
-        [[nodiscard]] size_t size() const;
+    template <typename Container,
+    typename = std::enable_if_t<!std::is_const_v<Container> && !std::is_same_v<Container, binary>>>
+    span make_span(Container &container) {
+        return std::as_writable_bytes(span(container.data(), container.size()));
+    }
+
+    template <typename Container>
+    const_span make_span(const Container &container) {
+        return std::as_bytes(make_span(container));
+    }
+
+    inline shared_binary make_shared_binary(const size_t size) {
+        return std::make_shared<uint8_t[]>(size);
+    }
+
+    template <typename Container>
+    vector make_vector(const Container &container) {
+        const auto buffer = make_span(container);
+        return { buffer.begin(), buffer.end() };
+    }
+
+    template <typename Container>
+    binary make_binary(const Container &container) {
+        return { container.begin(), container.end() };
+    }
+
+    struct memory_span {
+        const void* data = nullptr;
+        size_t size = 0;
+
+        memory_span(const void *data, const size_t size) :data(data), size(size) {}
     };
 
-    class binary: public std::shared_ptr<uint8_t[]> {
-        size_t _s;
-    public:
-        binary() : std::shared_ptr<uint8_t[]>(nullptr), _s(0) {}
+    void set_with_const(span destination, byte value);
 
-        explicit binary(std::vector<uint8_t>& data);
-
-        binary(uint8_t* data, size_t size);
-
-        binary(const uint8_t* data, size_t size);
-
-        binary(const char* data, size_t size);
-
-        explicit binary(const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {}
-
-        // ReSharper disable once CppNonExplicitConvertingConstructor
-        binary(std::nullptr_t): binary() {} // NOLINT(*-explicit-constructor)
-
-        explicit binary(const std::string& str);
-
-        [[nodiscard]] bool empty() const;
-
-        [[nodiscard]] size_t size() const;
-
-        [[nodiscard]] binary subBytes(size_t start, size_t count) const;
-
-        [[nodiscard]] binary Sha256() const;
-
-        [[nodiscard]] binary Sha1() const;
-
-        [[nodiscard]] binary copy() const;
-
-        // ReSharper disable once CppNonExplicitConversionOperator
-        operator void*() const; // NOLINT(*-explicit-constructor)
-
-        // ReSharper disable once CppNonExplicitConversionOperator
-        operator uint8_t*() const; // NOLINT(*-explicit-constructor)
-
-        // ReSharper disable once CppNonExplicitConversionOperator
-        operator span() const; // NOLINT(*-explicit-constructor)
-
-        explicit operator char*() const;
-
-        binary operator+(size_t offset) const;
-
-        bool operator!=(const binary& other) const;
-
-        bool operator==(const binary& other) const;
-    };
-
-    void set_with_const(const binary& destination, uint8_t value);
-
-    void copy(const binary& destination, const binary& source);
+    void copy(span destination, const_span source);
 } // wrtc

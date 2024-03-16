@@ -6,12 +6,12 @@
 #include <openssl/rand.h>
 
 namespace bytes {
-    void RandomFill(const binary& bytes) {
-        RAND_bytes(bytes,bytes.size());
+    void RandomFill(span data) {
+        RAND_bytes(reinterpret_cast<unsigned char*>(data.data()), data.size());
     }
 
-    void set_random(const binary& destination) {
-        if (!destination) {
+    void set_random(const span destination) {
+        if (!destination.empty()) {
             RandomFill(destination);
         }
     }

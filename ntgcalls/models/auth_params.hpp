@@ -8,8 +8,8 @@
 
 namespace ntgcalls {
     struct AuthParams {
-        int64_t key_fingerprint = 0;
-        bytes::binary g_a_or_b;
+        uint64_t key_fingerprint = 0;
+        bytes::vector g_a_or_b;
     };
 } // ntgcalls
 

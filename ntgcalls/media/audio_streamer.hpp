@@ -28,7 +28,7 @@ namespace ntgcalls {
 
         wrtc::MediaStreamTrack *createTrack() override;
 
-        void sendData(const bytes::binary& sample, int64_t absolute_capture_timestamp_ms) override;
+        void sendData(const bytes::shared_binary& sample, int64_t absolute_capture_timestamp_ms) override;
 
         int64_t frameSize() override;
 

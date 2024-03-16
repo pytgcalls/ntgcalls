@@ -1,13 +1,12 @@
 //
-// Created by iraci on 13/03/2024.
+// Created by Laky64 on 13/03/2024.
 //
 
 #include "rtc_server.hpp"
 
-#include "wrtc/utils/binary.hpp"
-
-namespace ntgcalls {
+namespace wrtc {
     RTCServer::RTCServer(
+        const uint64_t id,
         std::string ipv4,
         std::string ipv6,
         const uint16_t port,
@@ -16,7 +15,8 @@ namespace ntgcalls {
         const bool turn,
         const bool stun,
         const bool tcp,
-        const bytes::binary& peerTag) {
+        const std::optional<bytes::binary>& peerTag) {
+        this->id = id;
         this->ipv4 = std::move(ipv4);
         this->ipv6 = std::move(ipv6);
         this->port = port;
@@ -35,15 +35,15 @@ namespace ntgcalls {
                 if (server.tcp) {
                     continue;
                 }
-                const auto hex = [](const unsigned char* value, const size_t size) {
+                const auto hex = [](const bytes::binary& value) {
                     const auto digit = [](const unsigned char c) {
                         return static_cast<char>(c < 10 ? '0' + c : 'a' + c - 10);
                     };
                     auto result = std::string();
-                    result.reserve(size * 2);
-                    for (size_t i = 0; i < size; ++i) {
-                        result += digit(static_cast<unsigned char>(value[i]) / 16);
-                        result += digit(static_cast<unsigned char>(value[i]) % 16);
+                    result.reserve(value.size() * 2);
+                    for (const auto ch : value) {
+                        result += digit(static_cast<unsigned char>(ch) / 16);
+                        result += digit(static_cast<unsigned char>(ch) % 16);
                     }
                     return result;
                 };
@@ -58,7 +58,7 @@ namespace ntgcalls {
                     webrtc::PeerConnectionInterface::IceServer iceServer;
                     iceServer.uri = "turn:" + address.HostAsURIString() + ":" + std::to_string(server.port);
                     iceServer.username = "reflector";
-                    iceServer.password = hex(server.peerTag, server.peerTag.size());
+                    iceServer.password = hex(server.peerTag.value());
                     iceServers.push_back(iceServer);
                 };
                 pushPhone(server.ipv4);
@@ -103,4 +103,4 @@ namespace ntgcalls {
         }
         return iceServers;
     }
-} // ntgcalls
+} // wrtc

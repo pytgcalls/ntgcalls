@@ -22,12 +22,12 @@ namespace openssl {
         return _failed;
     }
 
-    void BigNum::setBytes(const bytes::binary& bytes) const {
+    void BigNum::setBytes(const bytes::const_span bytes) const {
         if (bytes.empty()) {
             clear();
             _failed = false;
         } else {
-            _failed = !BN_bin2bn(bytes, bytes.size(), raw());
+            _failed = !BN_bin2bn(reinterpret_cast<const unsigned char*>(bytes.data()), bytes.size(), raw());
         }
     }
 
@@ -62,7 +62,7 @@ namespace openssl {
         }
     }
 
-    BigNum::BigNum(const bytes::binary& bytes): BigNum() {
+    BigNum::BigNum(const bytes::const_span bytes): BigNum() {
         setBytes(bytes);
     }
 
@@ -101,13 +101,13 @@ namespace openssl {
         return failed() ? 0 : BN_num_bytes(raw());
     }
 
-    bytes::binary BigNum::getBytes() const {
+    bytes::vector BigNum::getBytes() const {
         if (failed()) {
-            return nullptr;
+            return {};
         }
         const auto length = BN_num_bytes(raw());
-        bytes::binary result(length);
-        BN_bn2bin(raw(), result);
+        bytes::vector result(length);
+        BN_bn2bin(raw(), reinterpret_cast<unsigned char*>(result.data()));
         return result;
     }
 } // openssl

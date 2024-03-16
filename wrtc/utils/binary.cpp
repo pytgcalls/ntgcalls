@@ -3,124 +3,18 @@
 //
 
 #include "binary.hpp"
-#include "encryption.hpp"
+
+#include <stdexcept>
 
 namespace bytes {
-    binary::binary(std::vector<uint8_t>& data): std::shared_ptr<uint8_t[]>(new uint8_t[data.size()]), _s(data.size()){
-#ifndef IS_MACOS
-        std::ranges::copy(data, get());
-#else
-        std::copy(data.begin(), data.end(), get());
-#endif
+    void set_with_const(span destination, const byte value) {
+        memset(destination.data(), std::to_integer<unsigned char>(value), destination.size());
     }
 
-    binary::binary(uint8_t* data, const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {
-        std::copy_n(data, size, get());
-    }
-
-    binary::binary(const uint8_t* data, const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {
-        std::copy_n(data, size, get());
-    }
-
-    binary::binary(const char* data, const size_t size): std::shared_ptr<uint8_t[]>(new uint8_t[size]), _s(size) {
-        std::copy_n(data, size, get());
-    }
-
-    binary::binary(const std::string& str): std::shared_ptr<uint8_t[]>(new uint8_t[str.size()]), _s(str.size()) {
-#ifndef IS_MACOS
-        std::ranges::copy(str, get());
-#else
-        std::copy(str.begin(), str.end(), get());
-#endif
-    }
-
-    bool binary::empty() const {
-        return _s == 0 || get() == nullptr;
-    }
-
-    size_t binary::size() const {
-        return _s;
-    }
-
-    binary binary::subBytes(const size_t start, const size_t count) const {
-        const size_t valid_start = std::min(start, _s);
-        const size_t valid_count = std::min(count, _s - valid_start);
-        if (valid_count == 0) {
-            throw std::out_of_range("Invalid subBytes parameters (zero length)");
-        }
-        auto result = binary(valid_count);
-        memcpy(result, get() + valid_start, count);
-        return result;
-    }
-
-    binary binary::Sha256() const {
-        return openssl::Sha256::Digest(*this);
-    }
-
-    binary binary::Sha1() const {
-       return openssl::Sha1::Digest(*this);
-    }
-
-    binary binary::copy() const {
-        auto result = binary(_s);
-        memcpy(result, get(), _s);
-        return result;
-    }
-
-    binary::operator void*() const {
-        return get();
-    }
-
-    binary::operator unsigned char*() const {
-        return get();
-    }
-
-    binary::operator span() const {
-        return {get(), _s};
-    }
-
-    binary::operator char*() const {
-        return reinterpret_cast<char*>(get());
-    }
-
-    binary binary::operator+(const size_t offset) const {
-        return subBytes(offset, size() - offset);
-    }
-
-    bool binary::operator!=(const binary& other) const {
-        if (size() != other.size()) {
-            return true;
-        }
-        return memcmp(get(), other, size()) != 0;
-    }
-
-    bool binary::operator==(const binary& other) const {
-        if (size() != other.size()) {
-            return false;
-        }
-        return memcmp(get(), other, size()) == 0;
-    }
-
-    span::operator const void*() const {
-        return _data;
-    }
-
-    span::operator const uint8_t*() const {
-        return static_cast<const uint8_t*>(_data);
-    }
-
-    size_t span::size() const {
-        return _size;
-    }
-
-    void set_with_const(const binary& destination, const uint8_t value) {
-        memset(destination, value, destination.size());
-    }
-
-    void copy(const binary& destination, const binary& source) {
+    void copy(span destination, const const_span source) {
         if (destination.size() < source.size()) {
             throw std::out_of_range("Destination size is less than source size");
         }
-        memcpy(destination, source, source.size());
+        memcpy(destination.data(), source.data(), source.size());
     }
 } // wrtc

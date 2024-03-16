@@ -14,7 +14,7 @@ namespace wrtc {
     }
 
     uint8_t* i420ImageData::dataY() const {
-        return contents;
+        return contents.get();
     }
 
     uint8_t* i420ImageData::dataU() const {
@@ -25,7 +25,7 @@ namespace wrtc {
         return dataU() + sizeOfChromaPlane();
     }
 
-    i420ImageData::i420ImageData(const uint16_t width, const uint16_t height, const bytes::binary& contents) {
+    i420ImageData::i420ImageData(const uint16_t width, const uint16_t height, const bytes::shared_binary& contents) {
         this->width = width;
         this->height = height;
         this->contents = contents;

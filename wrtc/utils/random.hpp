@@ -7,7 +7,7 @@
 #include "binary.hpp"
 
 namespace bytes {
-    void RandomFill(const binary& bytes);
+    void RandomFill(span data);
 
-    void set_random(const binary& destination);
+    void set_random(span destination);
 } // bytes

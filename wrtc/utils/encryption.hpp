@@ -1,22 +1,24 @@
 //
-// Created by iraci on 09/03/2024.
+// Created by Laky64 on 09/03/2024.
 //
 #pragma once
 
 #include "binary.hpp"
+#include <openssl/sha.h>
 
 namespace openssl {
+    constexpr auto kSha256Size = static_cast<size_t>(SHA256_DIGEST_LENGTH);
 
     class Sha256 {
     public:
-        static bytes::binary Digest(const bytes::binary& data);
+        static bytes::vector Digest(bytes::const_span data);
 
-        static bytes::binary Concat(const bytes::span& first, const bytes::span& second);
+        static std::array<uint8_t, kSha256Size> Concat(const bytes::memory_span& first, const bytes::memory_span& second);
     };
 
     class Sha1 {
     public:
-        static bytes::binary Digest(const bytes::binary& data);
+        static bytes::vector Digest(bytes::const_span data);
     };
 
 
@@ -24,13 +26,13 @@ namespace openssl {
     public:
         class KeyIv {
         public:
-            uint8_t key[32];
-            uint8_t iv[16];
+            std::array<uint8_t, 32> key;
+            std::array<uint8_t, 16> iv;
         };
 
-        static KeyIv PrepareKeyIv(const bytes::binary& key, const bytes::binary& msgKey, int x);
+        static KeyIv PrepareKeyIv(const uint8_t* key, const uint8_t* msgKey, int x);
 
-        static void ProcessCtr(const bytes::binary& from, const bytes::binary& to, KeyIv& keyIv);
+        static void ProcessCtr(const bytes::memory_span& from, void *to, KeyIv& keyIv);
     };
 
 } // openssl

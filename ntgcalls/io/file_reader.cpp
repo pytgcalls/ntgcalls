@@ -17,13 +17,13 @@ namespace ntgcalls {
         source.clear();
     }
 
-    bytes::binary FileReader::readInternal(const int64_t size) {
+    bytes::shared_binary FileReader::readInternal(const int64_t size) {
         if (!source || source.eof() || source.fail() || !source.is_open()) {
             throw EOFError("Reached end of the file");
         }
         source.seekg(readChunks, std::ios::beg);
-        auto file_data = bytes::binary(size);
-        source.read(static_cast<char*>(file_data), size);
+        auto file_data = bytes::make_shared_binary(size);
+        source.read(reinterpret_cast<char*>(file_data.get()), size);
         readChunks += size;
         if (source.fail()) {
             throw FileError("Error while reading the file");

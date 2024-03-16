@@ -35,7 +35,7 @@ namespace openssl {
     public:
         BigNum() = default;
 
-        explicit BigNum(const bytes::binary& bytes);
+        explicit BigNum(bytes::const_span bytes);
 
         explicit BigNum(uint32_t word);
 
@@ -53,13 +53,13 @@ namespace openssl {
 
         bool failed() const;
 
-        bytes::binary getBytes() const;
+        bytes::vector getBytes() const;
 
         BIGNUM *raw() const;
 
         bool isZero() const;
 
-        void setBytes(const bytes::binary& bytes) const;
+        void setBytes(bytes::const_span bytes) const;
 
         void setWord(uint32_t word) const;
 

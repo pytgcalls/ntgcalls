@@ -8,13 +8,13 @@
 namespace ntgcalls {
 
 class ModExpFirst {
-    static constexpr auto kRandomPowerSize = 256;
+    static constexpr size_t kRandomPowerSize = 256;
 public:
-    bytes::binary randomPower, modexp;
+    bytes::vector randomPower, modexp;
 
     static bool IsGoodModExpFirst(const openssl::BigNum &modexp, const openssl::BigNum &prime);
 
-    ModExpFirst(int32_t g, const bytes::binary& p, const bytes::binary& r);
+    ModExpFirst(int32_t g, bytes::const_span p, bytes::const_span r);
 
     ~ModExpFirst();
 };

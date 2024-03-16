@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <optional>
+
 #include "binary.hpp"
 
 namespace bytes {
@@ -14,7 +16,7 @@ namespace bytes {
 
         static binary zip(const binary& data);
 
-        static binary unzip(const binary& data, size_t sizeLimit);
+        static std::optional<binary> unzip(const binary& data, size_t sizeLimit);
     };
 
 } // bytes
