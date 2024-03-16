@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     void SignalingPacketTransport::receiveData(const bytes::binary& data) {
-        SignalReadPacket.emit(this, static_cast<const char*>(data), data.size(), -1, 0);
+        SignalReadPacket.emit(this, reinterpret_cast<const char*>(data.data()), data.size(), -1, 0);
     }
 
     const std::string& SignalingPacketTransport::transport_name() const {
@@ -22,7 +22,7 @@ namespace ntgcalls {
     }
 
     int SignalingPacketTransport::SendPacket(const char* data, const size_t len, const rtc::PacketOptions& options, int flags) {
-        emitData(bytes::binary(data, len));
+        emitData(bytes::binary(data, data + len));
         rtc::SentPacket sentPacket;
         sentPacket.packet_id = options.packet_id;
         SignalSentPacket.emit(this, sentPacket);

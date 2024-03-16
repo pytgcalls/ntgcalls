@@ -14,9 +14,9 @@ namespace ntgcalls {
         std::function<void(const bytes::binary&)> emitData;
         std::string transportName;
     public:
-        explicit SignalingPacketTransport(const std::function<void(const bytes::binary &)>& emitData): emitData(emitData), transportName("signaling") {}
+        explicit SignalingPacketTransport(const std::function<void(const bytes::binary&)>& emitData): emitData(emitData), transportName("signaling") {}
 
-        void receiveData(const bytes::binary &data);
+        void receiveData(const bytes::binary& data);
 
         [[nodiscard]] const std::string& transport_name() const override;
 

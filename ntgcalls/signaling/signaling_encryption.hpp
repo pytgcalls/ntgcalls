@@ -3,24 +3,26 @@
 //
 #pragma once
 #include <cstdint>
+#include <optional>
 #include <rtc_base/byte_buffer.h>
 
+#include "../utils/auth_key.hpp"
 #include "wrtc/utils/binary.hpp"
 
 namespace ntgcalls {
 
-    class Signaling {
+    class SignalingEncryption {
         uint64_t counter = 0;
         bool isOutGoing = false;
-        bytes::binary key;
-        std::vector<uint32_t> _largestIncomingCounters;
+        Key key;
+        std::vector<uint32_t> largestIncomingCounters;
 
         static constexpr auto kSingleMessagePacketSeqBit = static_cast<uint32_t>(1) << 31;
         static constexpr auto kMessageRequiresAckSeqBit = static_cast<uint32_t>(1) << 30;
         static constexpr auto kKeepIncomingCountersCount = 64;
         static constexpr auto kMaxIncomingPacketSize = 128 * 1024;
 
-        [[nodiscard]] bytes::binary encryptPrepared(const bytes::binary& buffer) const;
+        [[nodiscard]] bytes::binary encryptPrepared(const rtc::CopyOnWriteBuffer &buffer) const;
 
         static uint32_t ReadSeq(const void* bytes);
 
@@ -31,13 +33,13 @@ namespace ntgcalls {
         bool registerIncomingCounter(uint32_t incomingCounter);
 
     public:
-        Signaling(bool isOutGoing, bytes::binary key);
+        SignalingEncryption(bool isOutGoing, Key key);
 
-        ~Signaling();
+        ~SignalingEncryption();
 
-        bytes::binary encrypt(const bytes::binary& buffer);
+        rtc::CopyOnWriteBuffer encrypt(const rtc::CopyOnWriteBuffer &buffer);
 
-        bytes::binary decrypt(const bytes::binary& buffer);
+        std::optional<rtc::CopyOnWriteBuffer> decrypt(const rtc::CopyOnWriteBuffer &buffer);
     };
 
 } // ntgcalls
