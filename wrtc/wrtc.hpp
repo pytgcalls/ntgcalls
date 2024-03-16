@@ -14,3 +14,4 @@
 #include "wrtc/utils/bignum.hpp"
 #include "wrtc/utils/random.hpp"
 #include "wrtc/utils/g_zip.hpp"
+#include "wrtc/models/ice_candidate.hpp"

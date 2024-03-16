@@ -36,8 +36,7 @@ namespace wrtc {
         _description = std::move(description);
     }
 
-    Description::Type Description::getType() const
-    {
+    Description::Type Description::getType() const {
         switch (_description->GetType()) {
             case webrtc::SdpType::kOffer:
                 return Type::Offer;
@@ -71,6 +70,21 @@ namespace wrtc {
         if (type == "rollback") {
             return Type::Rollback;
         }
+        throw RTCException("Invalid type");
+    }
+
+    std::string Description::typeToString(const Type type) {
+        switch (type) {
+            case Type::Offer:
+                return "offer";
+            case Type::Answer:
+                return "answer";
+            case Type::Pranswer:
+                return "pranswer";
+            case Type::Rollback:
+                return "rollback";
+        }
+        throw RTCException("Invalid type");
     }
 
     Description::operator webrtc::SessionDescriptionInterface *() const

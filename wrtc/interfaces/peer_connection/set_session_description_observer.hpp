@@ -10,16 +10,16 @@ namespace webrtc { class RTCError; }
 
 namespace wrtc {
 
-  class SetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserver {
+  class SetSessionDescriptionObserver : public webrtc::SetRemoteDescriptionObserverInterface, public webrtc::SetLocalDescriptionObserverInterface {
   public:
     SetSessionDescriptionObserver(
       const std::function<void()>& onSuccess,
       const std::function<void(const std::exception_ptr&)>& onFailure) :
         _onSuccess(onSuccess), _onFailure(onFailure) {}
 
-    void OnSuccess() override;
+    void OnSetRemoteDescriptionComplete(webrtc::RTCError error) override;
 
-    void OnFailure(webrtc::RTCError) override;
+    void OnSetLocalDescriptionComplete(webrtc::RTCError error) override;
 
   private:
     std::function<void()> _onSuccess = nullptr;

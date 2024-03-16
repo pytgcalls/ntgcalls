@@ -3,6 +3,9 @@
 //
 
 #include "peer_connection.hpp"
+
+#include <iostream>
+
 #include "../utils/sync.hpp"
 #include "peer_connection/create_session_description_observer.hpp"
 #include "peer_connection/set_session_description_observer.hpp"
@@ -10,17 +13,24 @@
 
 namespace wrtc {
 
-    PeerConnection::PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers) {
+    PeerConnection::PeerConnection(const std::vector<RTCServer>& servers) {
         factory = PeerConnectionFactory::GetOrCreateDefault();
 
         webrtc::PeerConnectionInterface::RTCConfiguration config;
+        config.type = webrtc::PeerConnectionInterface::IceTransportsType::kAll;
         config.bundle_policy = webrtc::PeerConnectionInterface::BundlePolicy::kBundlePolicyMaxBundle;
-        config.servers = servers;
+        config.servers = RTCServer::toIceServers(servers);
+        config.enable_ice_renomination = true;
+        config.rtcp_mux_policy = webrtc::PeerConnectionInterface::RtcpMuxPolicy::kRtcpMuxPolicyRequire;
+        config.enable_implicit_rollback = true;
+        config.continual_gathering_policy = webrtc::PeerConnectionInterface::ContinualGatheringPolicy::GATHER_CONTINUALLY;
+        config.audio_jitter_buffer_fast_accelerate = true;
 
         webrtc::PeerConnectionDependencies dependencies(this);
 
         auto result = factory->factory()->CreatePeerConnectionOrError(
-                config, std::move(dependencies));
+            config, std::move(dependencies)
+        );
 
 
         if (!result.ok()) {
@@ -57,50 +67,65 @@ namespace wrtc {
         return std::nullopt;
     }
 
-    void PeerConnection::setLocalDescription(const std::optional<Description>& description) const {
+    void PeerConnection::setLocalDescription(const std::optional<Description>& description, const std::function<void()>& onSuccess) const {
         if (!peerConnection ||
             peerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
             throw RTCException("Failed to execute 'setLocalDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
         }
 
         Sync<void> future;
-        const auto observer = new rtc::RefCountedObject<SetSessionDescriptionObserver>(future.onSuccess, future.onFailed);
-        if (!description) {
-            auto *raw_description = static_cast<webrtc::SessionDescriptionInterface *>(description.value());
-            std::unique_ptr<webrtc::SessionDescriptionInterface> raw_description_ptr(raw_description);
-            peerConnection->SetLocalDescription(observer, raw_description_ptr.release());
+        const rtc::scoped_refptr<webrtc::SetLocalDescriptionObserverInterface> observer(new rtc::RefCountedObject<SetSessionDescriptionObserver>(
+            onSuccess ? onSuccess : future.onSuccess,
+            future.onFailed
+        ));
+        if (description) {
+            webrtc::SdpParseError sdpParseError;
+            std::unique_ptr<webrtc::SessionDescriptionInterface> localDescription(
+                CreateSessionDescription(Description::typeToString(description.value().getType()), description.value().getSdp(), &sdpParseError)
+            );
+            if (!localDescription) {
+                throw wrapSdpParseError(sdpParseError);
+            }
+            peerConnection->SetLocalDescription(std::move(localDescription), observer);
         } else {
             peerConnection->SetLocalDescription(observer);
         }
-        future.wait();
+        if (!onSuccess) {
+            future.wait();
+        }
     }
 
-    void PeerConnection::setRemoteDescription(const Description &description) const {
-        auto *raw_description = static_cast<webrtc::SessionDescriptionInterface *>(description);
-        std::unique_ptr<webrtc::SessionDescriptionInterface> raw_description_ptr(raw_description);
-
+    void PeerConnection::setRemoteDescription(const Description &description, const std::function<void()>& onSuccess) const {
+        webrtc::SdpParseError sdpParseError;
+        std::unique_ptr<webrtc::SessionDescriptionInterface> remoteDescription(
+            CreateSessionDescription(Description::typeToString(description.getType()), description.getSdp(), &sdpParseError)
+        );
+        if (!remoteDescription) {
+            throw wrapSdpParseError(sdpParseError);
+        }
         if (!peerConnection ||
             peerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
             throw RTCException("Failed to execute 'setRemoteDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
         }
 
         Sync<void> future;
-        const auto observer = new rtc::RefCountedObject<SetSessionDescriptionObserver>(future.onSuccess, future.onFailed);
-        peerConnection->SetRemoteDescription(observer, raw_description_ptr.release());
-
-        future.wait();
+        const rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(new rtc::RefCountedObject<SetSessionDescriptionObserver>(
+            onSuccess ? onSuccess : future.onSuccess,
+            future.onFailed
+        ));
+        peerConnection->SetRemoteDescription(std::move(remoteDescription), observer);
+        if (!onSuccess) {
+            future.wait();
+        }
     }
 
-    void PeerConnection::addIceCandidate(const std::string &rawCandidate) const {
-        webrtc::JsepIceCandidate parseCandidate{ std::string(), 0 };
-        if (!parseCandidate.Initialize(rawCandidate, nullptr)) {
-            throw RTCException("Failed to parse candidate");
-        }
-        const auto candidate = webrtc::CreateIceCandidate(parseCandidate.sdp_mid(), parseCandidate.sdp_mline_index(), parseCandidate.candidate());
+    void PeerConnection::addIceCandidate(const IceCandidate& rawCandidate) const {
+        webrtc::SdpParseError error;
+        const auto candidate = CreateIceCandidate(rawCandidate.mid, rawCandidate.mLine, rawCandidate.sdp, &error);
         if (!candidate) {
-            throw RTCException("Failed to parse candidate");
+            throw wrapSdpParseError(error);
         }
-        peerConnection->AddIceCandidate(candidate.get());
+        peerConnection->AddIceCandidate(candidate);
     }
 
     void PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack, const std::vector<std::string>& streamIds) const
@@ -153,8 +178,20 @@ namespace wrtc {
         signalingStateChangeCallback = callback;
     }
 
+    void PeerConnection::onIceCandidate(const std::function<void(const IceCandidate& candidate)>& callback) {
+        iceCandidateCallback = callback;
+    }
+
+    void PeerConnection::onRenegotiationNeeded(const std::function<void()>& callback) {
+        renegotiationNeedeCallbackd = callback;
+    }
+
     rtc::Thread* PeerConnection::networkThread() const {
         return factory->networkThread();
+    }
+
+    rtc::Thread* PeerConnection::signalingThread() const {
+        return factory->signalingThread();
     }
 
     void PeerConnection::OnSignalingChange(const webrtc::PeerConnectionInterface::SignalingState new_state) {
@@ -232,11 +269,11 @@ namespace wrtc {
     }
 
     void PeerConnection::OnIceCandidate(const webrtc::IceCandidateInterface *candidate) {
-
+        iceCandidateCallback(IceCandidate(candidate));
     }
 
     void PeerConnection::OnRenegotiationNeeded() {
-
+        (void) renegotiationNeedeCallbackd();
     }
 
     void PeerConnection::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
@@ -258,5 +295,28 @@ namespace wrtc {
 
     void PeerConnection::OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
 
+    }
+
+    void PeerConnection::OnConnectionChange(webrtc::PeerConnectionInterface::PeerConnectionState newState) {
+        switch (newState) {
+            case webrtc::PeerConnectionInterface::PeerConnectionState::kNew:
+                std::cout << "New" << std::endl;
+                break;
+            case webrtc::PeerConnectionInterface::PeerConnectionState::kConnecting:
+                std::cout << "Connecting" << std::endl;
+                break;
+            case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
+                std::cout << "Connected" << std::endl;
+                break;
+            case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
+                std::cout << "Disconnected" << std::endl;
+                break;
+            case webrtc::PeerConnectionInterface::PeerConnectionState::kFailed:
+                std::cout << "Failed" << std::endl;
+                break;
+            case webrtc::PeerConnectionInterface::PeerConnectionState::kClosed:
+                std::cout << "Closed" << std::endl;
+                break;
+        }
     }
 } // wrtc

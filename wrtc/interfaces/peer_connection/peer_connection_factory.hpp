@@ -25,6 +25,8 @@ namespace wrtc {
 
         [[nodiscard]] rtc::Thread* networkThread() const;
 
+        [[nodiscard]] rtc::Thread* signalingThread() const;
+
     private:
         static std::mutex _mutex;
         static int _references;
@@ -35,7 +37,6 @@ namespace wrtc {
         std::unique_ptr<rtc::Thread> signaling_thread_;
 
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;
-        rtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
         rtc::scoped_refptr<webrtc::AudioDeviceModule> _audioDeviceModule;
     };
 

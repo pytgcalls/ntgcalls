@@ -28,6 +28,8 @@ namespace wrtc {
 
         static Type parseType(const std::string &type);
 
+        static std::string typeToString(Type type);
+
     private:
         std::unique_ptr<webrtc::SessionDescriptionInterface> _description;
     };

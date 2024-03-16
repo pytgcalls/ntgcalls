@@ -11,12 +11,14 @@
 #include "../models/rtc_session_description.hpp"
 #include "media/tracks/media_stream_track.hpp"
 #include "peer_connection/peer_connection_factory.hpp"
+#include "wrtc/models/ice_candidate.hpp"
+#include "wrtc/models/rtc_server.hpp"
 
 namespace wrtc {
 
     class PeerConnection final : public webrtc::PeerConnectionObserver {
     public:
-        explicit PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers = {});
+        explicit PeerConnection(const std::vector<RTCServer>& servers = {});
 
         ~PeerConnection() override;
 
@@ -24,13 +26,13 @@ namespace wrtc {
 
         std::optional<Description> localDescription() const;
 
-        void setLocalDescription(const std::optional<Description>& description = std::nullopt) const;
+        void setLocalDescription(const std::optional<Description>& description = std::nullopt, const std::function<void()>& onSuccess = nullptr) const;
 
-        void setRemoteDescription(const Description &description) const;
+        void setRemoteDescription(const Description &description, const std::function<void()>& onSuccess = nullptr) const;
 
         void addTrack(MediaStreamTrack *mediaStreamTrack, const std::vector<std::string>& streamIds = {}) const;
 
-        void addIceCandidate(const std::string &rawCandidate) const;
+        void addIceCandidate(const IceCandidate& rawCandidate) const;
 
         void restartIce() const;
 
@@ -44,7 +46,13 @@ namespace wrtc {
 
         void onSignalingStateChange(const std::function<void(SignalingState state)> &callback);
 
+        void onIceCandidate(const std::function<void(const IceCandidate &candidate)> &callback);
+
+        void onRenegotiationNeeded(const std::function<void()> &callback);
+
         rtc::Thread *networkThread() const;
+
+        rtc::Thread *signalingThread() const;
 
     private:
         rtc::scoped_refptr<PeerConnectionFactory> factory;
@@ -52,7 +60,9 @@ namespace wrtc {
 
         synchronized_callback<IceState> stateChangeCallback;
         synchronized_callback<GatheringState> gatheringStateChangeCallback;
+        synchronized_callback<void> renegotiationNeedeCallbackd;
         synchronized_callback<SignalingState> signalingStateChangeCallback;
+        synchronized_callback<IceCandidate> iceCandidateCallback;
 
 
         // PeerConnectionObserver implementation.
@@ -76,6 +86,8 @@ namespace wrtc {
                         const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams) override;
 
         void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
+
+        void OnConnectionChange(webrtc::PeerConnectionInterface::PeerConnectionState newState) override;
 
         static SignalingState parseSignalingState(webrtc::PeerConnectionInterface::SignalingState state);
     };

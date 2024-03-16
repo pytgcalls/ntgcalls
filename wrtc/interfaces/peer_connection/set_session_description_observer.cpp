@@ -6,12 +6,19 @@
 
 namespace wrtc {
 
-    void SetSessionDescriptionObserver::OnSuccess() {
-        _onSuccess();
+    void SetSessionDescriptionObserver::OnSetRemoteDescriptionComplete(const webrtc::RTCError error) {
+        if (error.ok()) {
+            _onSuccess();
+        } else {
+            _onFailure(std::make_exception_ptr(wrapRTCError(error)));
+        }
     }
 
-    void SetSessionDescriptionObserver::OnFailure(const webrtc::RTCError error) {
-        _onFailure(std::make_exception_ptr(wrapRTCError(error)));
+    void SetSessionDescriptionObserver::OnSetLocalDescriptionComplete(const webrtc::RTCError error) {
+        if (error.ok()) {
+            _onSuccess();
+        } else {
+            _onFailure(std::make_exception_ptr(wrapRTCError(error)));
+        }
     }
-
 } // namespace wrtc

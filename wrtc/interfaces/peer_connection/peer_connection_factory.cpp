@@ -49,7 +49,7 @@ namespace wrtc {
 
         EnableMedia(dependencies);
         if (!factory_) {
-            factory_ = PeerConnectionFactoryWithContext::Create(std::move(dependencies), connection_context_);
+            factory_ = CreateModularPeerConnectionFactory(std::move(dependencies));
         }
         webrtc::PeerConnectionFactoryInterface::Options options;
         options.disable_encryption = false;
@@ -66,7 +66,6 @@ namespace wrtc {
                     _audioDeviceModule = nullptr;
             });
         }
-        connection_context_ = nullptr;
         factory_ = nullptr;
         worker_thread_->Stop();
         signaling_thread_->Stop();
@@ -79,6 +78,10 @@ namespace wrtc {
 
     rtc::Thread* PeerConnectionFactory::networkThread() const {
         return network_thread_.get();
+    }
+
+    rtc::Thread* PeerConnectionFactory::signalingThread() const {
+        return signaling_thread_.get();
     }
 
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
