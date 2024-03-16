@@ -9,7 +9,7 @@
 #include "instances/call_interface.hpp"
 #include "models/auth_params.hpp"
 #include "models/protocol.hpp"
-#include "models/rtc_server.hpp"
+#include "../wrtc/models/rtc_server.hpp"
 #include "utils/hardware_info.hpp"
 
 #define CHECK_AND_THROW_IF_EXISTS(chatId) \
@@ -43,9 +43,9 @@ namespace ntgcalls {
 
         ~NTgCalls();
 
-        bytes::binary createP2PCall(int64_t userId, int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
+        bytes::vector createP2PCall(int64_t userId, const int32_t &g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash);
 
-        AuthParams confirmP2PCall(int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers, const std::vector<std::string> &versions);
+        AuthParams confirmP2PCall(int64_t userId, const bytes::vector &p, const bytes::vector &g_a_or_b, int64_t fingerprint, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions);
 
         std::string createCall(int64_t chatId, const MediaDescription& media);
 
@@ -79,9 +79,9 @@ namespace ntgcalls {
 
         void onDisconnect(const std::function<void(int64_t)>& callback);
 
-        void onSignalingData(const std::function<void(int64_t, bytes::binary)>& callback);
+        void onSignalingData(const std::function<void(int64_t, const bytes::binary&)>& callback);
 
-        void sendSignalingData(int64_t chatId, const bytes::binary& msgKey);
+        void sendSignalingData(int64_t chatId, const bytes::binary &msgKey);
 
         std::map<int64_t, Stream::Status> calls();
     };

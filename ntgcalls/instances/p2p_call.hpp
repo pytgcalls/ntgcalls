@@ -7,17 +7,20 @@
 
 #include "call_interface.hpp"
 #include "ntgcalls/models/auth_params.hpp"
-#include "ntgcalls/models/rtc_server.hpp"
-#include "ntgcalls/utils/signaling_connection.hpp"
+#include "ntgcalls/signaling/signaling.hpp"
+#include "wrtc/models/rtc_server.hpp"
 
 namespace ntgcalls {
     using nlohmann::json;
 
     class P2PCall final: public CallInterface {
-        bytes::binary randomPower, prime, g_a_or_b, g_a_hash;
+        bytes::vector randomPower, prime, g_a_or_b;
+        std::optional<bytes::vector> g_a_hash;
         std::atomic_bool isMakingOffer = false, makingNegotation = false, handshakeCompleted = false;
-        std::shared_ptr<SignalingConnection> signaling;
+        std::shared_ptr<SignalingInterface> signaling;
         wrtc::synchronized_callback<bytes::binary> onEmitData;
+        std::vector<wrtc::IceCandidate> pendingIceCandidates;
+        std::mutex mutex;
 
         void processSignalingData(const bytes::binary& buffer);
 
@@ -25,14 +28,16 @@ namespace ntgcalls {
 
         void applyRemoteSdp(wrtc::Description::Type sdpType, const std::string& sdp);
 
-    public:
-        bytes::binary init(int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash);
+        void applyPendingIceCandidates();
 
-        AuthParams confirmConnection(const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers, const std::vector<std::string> &versions);
+    public:
+        bytes::vector init(int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash);
+
+        AuthParams confirmConnection(const bytes::vector &p, const bytes::vector &g_a_or_b, int64_t fingerprint, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions);
 
         Type type() const override;
 
-        void onSignalingData(const std::function<void(bytes::binary)> &callback);
+        void onSignalingData(const std::function<void(const bytes::binary&)>& callback);
 
         void sendSignalingData(const bytes::binary& buffer) const;
     };

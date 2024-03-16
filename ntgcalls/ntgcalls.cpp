@@ -53,7 +53,7 @@ namespace ntgcalls {
         }
     }
 
-    bytes::binary NTgCalls::createP2PCall(const int64_t userId, const int32_t g, const bytes::binary& p, const bytes::binary& r, const bytes::binary& g_a_hash) {
+    bytes::vector NTgCalls::createP2PCall(const int64_t userId, const int32_t &g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash) {
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(userId);
         connections[userId] = std::make_shared<P2PCall>();
@@ -61,7 +61,7 @@ namespace ntgcalls {
         return SafeCall<P2PCall>(connections[userId])->init(g, p, r, g_a_hash);
     }
 
-    AuthParams NTgCalls::confirmP2PCall(const int64_t userId, const bytes::binary& p, const bytes::binary& g_a_or_b, const int64_t& fingerprint, const std::vector<RTCServer>& servers, const std::vector<std::string> &versions) {
+    AuthParams NTgCalls::confirmP2PCall(const int64_t userId, const bytes::vector &p, const bytes::vector &g_a_or_b, const int64_t fingerprint, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
         std::lock_guard lock(mutex);
         return SafeCall<P2PCall>(safeConnection(userId))->confirmConnection(p, g_a_or_b, fingerprint, servers, versions);
     }
@@ -127,15 +127,14 @@ namespace ntgcalls {
         onCloseConnection = callback;
     }
 
-    void NTgCalls::onSignalingData(const std::function<void(int64_t, bytes::binary)>& callback) {
+    void NTgCalls::onSignalingData(const std::function<void(int64_t, const bytes::binary&)>& callback) {
         onEmitData = callback;
     }
 
-    void NTgCalls::sendSignalingData(const int64_t chatId, const bytes::binary& msgKey) {
+    void NTgCalls::sendSignalingData(const int64_t chatId, const bytes::binary &msgKey) {
         std::lock_guard lock(mutex);
         SafeCall<P2PCall>(safeConnection(chatId))->sendSignalingData(msgKey);
     }
-
 
     uint64_t NTgCalls::time(const int64_t chatId) {
         std::lock_guard lock(mutex);
