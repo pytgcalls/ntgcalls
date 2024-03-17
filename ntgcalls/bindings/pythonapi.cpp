@@ -58,13 +58,17 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("create_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const int32_t g, const py::bytes& p, const py::bytes& r, const std::optional<py::bytes>& g_a_hash) {
         return toBytes(self.createP2PCall(userId, g, toCBytes<bytes::vector>(p), toCBytes<bytes::vector>(r), toCBytes<bytes::vector>(g_a_hash)));
     }, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"));
-    wrapper.def("confirm_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const py::bytes& p, const py::bytes& g_a_or_b, const int64_t fingerprint, const std::vector<PyRTCServer>& servers, const std::vector<std::string>& versions) {
+    wrapper.def("exchange_keys", [](ntgcalls::NTgCalls& self, const int64_t userId, const py::bytes& p, const py::bytes& g_a_or_b, const int64_t fingerprint) {
+        return self.exchangeKeys(userId, toCBytes<bytes::vector>(p), toCBytes<bytes::vector>(g_a_or_b), fingerprint);
+    }, py::arg("user_id"), py::arg("p"), py::arg("g_a_or_b"), py::arg("fingerprint"));
+    wrapper.def("connect_p2p", [](ntgcalls::NTgCalls& self, const int64_t userId, const std::vector<PyRTCServer>& servers, const std::vector<std::string>& versions) {
+        pybind11::gil_scoped_release release;
         std::vector<wrtc::RTCServer> serversTmp;
         for (const auto& server: servers) {
             serversTmp.push_back(server);
         }
-        return self.confirmP2PCall(userId, toCBytes<bytes::vector>(p), toCBytes<bytes::vector>(g_a_or_b), fingerprint, serversTmp, versions);
-    }, py::arg("user_id"), py::arg("p"), py::arg("g_a_or_b"), py::arg("fingerprint"), py::arg("servers"), py::arg("versions"));
+        self.connectP2P(userId, serversTmp, versions);
+    }, py::arg("user_id"), py::arg("servers"), py::arg("versions"));
     wrapper.def("send_signaling", [] (ntgcalls::NTgCalls& self, const int64_t chatId, const py::bytes& msgKey) {
         self.sendSignalingData(chatId, toCBytes<bytes::binary>(msgKey));
     }, py::arg("chat_id"), py::arg("msg_key"));
