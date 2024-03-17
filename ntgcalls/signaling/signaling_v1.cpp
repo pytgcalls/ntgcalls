@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     void SignalingV1::receive(const bytes::binary& data) const {
-        signalingThread->PostTask([&] {
+        signalingThread->PostTask([this, data] {
             onSignalData(preProcessData(data, false));
         });
     }
@@ -16,7 +16,7 @@ namespace ntgcalls {
     }
 
     void SignalingV1::send(const bytes::binary& data) {
-        signalingThread->PostTask([&] {
+        signalingThread->PostTask([this, data] {
             onEmitData(preProcessData(data, true).value());
         });
     }
