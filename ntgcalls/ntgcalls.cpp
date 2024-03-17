@@ -176,7 +176,7 @@ namespace ntgcalls {
             92,
             true,
             true,
-            {"11.0.0"},
+            Signaling::SupportedVersions(),
         };
     }
 

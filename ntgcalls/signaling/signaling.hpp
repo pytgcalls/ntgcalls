@@ -10,8 +10,6 @@
 namespace ntgcalls {
 
     class Signaling {
-        static constexpr std::string defaultVersion = "11.0.0";
-
     public:
         enum class ProtocolVersion{
             Unknown = 1 << 0,
@@ -29,7 +27,16 @@ namespace ntgcalls {
             const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
         );
 
+        static std::vector<std::string> SupportedVersions();
+
+    private:
+        static constexpr std::string defaultVersion = "11.0.0";
+
         static ProtocolVersion signalingVersion(const std::string& version);
+
+        static std::string bestMatch(std::vector<std::string> versions);
+
+        static std::tuple<int, int, int> version_to_tuple(const std::string& version);
     };
 
     inline int operator&(Signaling::ProtocolVersion lhs, Signaling::ProtocolVersion rh);
