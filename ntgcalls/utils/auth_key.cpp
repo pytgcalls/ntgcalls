@@ -21,34 +21,32 @@ namespace ntgcalls {
         return authKey.getBytes();
     }
 
-    void AuthKey::FillData(RawKey authKey, const bytes::const_span computedAuthKey) {
+    void AuthKey::FillData(RawKey &authKey, const bytes::const_span computedAuthKey) {
         const auto computedAuthKeySize = computedAuthKey.size();
-        if (computedAuthKeySize > kSize) {
+        if (computedAuthKeySize > EncryptionKey::kSize) {
             throw InvalidParams("Invalid auth key size");
         }
         const auto authKeyBytes = bytes::make_span(authKey);
-        if (computedAuthKeySize < kSize) {
-            bytes::set_with_const(authKeyBytes.subspan(0, kSize - computedAuthKeySize), bytes::byte());
-            bytes::copy(authKeyBytes.subspan(kSize - computedAuthKeySize), computedAuthKey);
+        if (computedAuthKeySize < EncryptionKey::kSize) {
+            bytes::set_with_const(authKeyBytes.subspan(0, EncryptionKey::kSize - computedAuthKeySize), bytes::byte());
+            bytes::copy(authKeyBytes.subspan(EncryptionKey::kSize - computedAuthKeySize), computedAuthKey);
         } else {
             bytes::copy(authKeyBytes, computedAuthKey);
         }
     }
 
     uint64_t AuthKey::Fingerprint(const bytes::const_span authKey) {
-        if (authKey.size() != kSize) {
+        if (authKey.size() != EncryptionKey::kSize) {
             throw InvalidParams("Invalid auth key size");
         }
         const auto hash = openssl::Sha1::Digest(authKey);
-        return static_cast<int64_t>(
-            static_cast<uint64_t>(hash[19]) << 56 |
+        return static_cast<uint64_t>(hash[19]) << 56 |
             static_cast<uint64_t>(hash[18]) << 48 |
             static_cast<uint64_t>(hash[17]) << 40 |
             static_cast<uint64_t>(hash[16]) << 32 |
             static_cast<uint64_t>(hash[15]) << 24 |
             static_cast<uint64_t>(hash[14]) << 16 |
             static_cast<uint64_t>(hash[13]) << 8 |
-            static_cast<uint64_t>(hash[12])
-        );
+            static_cast<uint64_t>(hash[12]);
     }
 } // ntgcalls

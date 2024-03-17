@@ -6,16 +6,24 @@
 #include "wrtc/utils/binary.hpp"
 
 namespace ntgcalls {
-    static constexpr auto kSize = 256;
-    using Key = std::shared_ptr<std::array<uint8_t, kSize>>;
-    using RawKey = std::array<bytes::byte, kSize>;
+    struct EncryptionKey {
+        static constexpr int kSize = 256;
+
+        std::shared_ptr<const std::array<uint8_t, kSize>> value;
+        bool isOutgoing = false;
+
+        EncryptionKey(
+            std::shared_ptr<std::array<uint8_t, kSize>> value,
+            const bool isOutgoing
+        ): value(std::move(value)), isOutgoing(isOutgoing) {}
+    };
+    using RawKey = std::array<bytes::byte, EncryptionKey::kSize>;
 
     class AuthKey {
-
     public:
         static bytes::vector CreateAuthKey(bytes::const_span firstBytes, bytes::const_span random, bytes::const_span primeBytes);
 
-        static void FillData(RawKey authKey, bytes::const_span computedAuthKey);
+        static void FillData(RawKey &authKey, bytes::const_span computedAuthKey);
 
         static uint64_t Fingerprint(bytes::const_span authKey);
     };
