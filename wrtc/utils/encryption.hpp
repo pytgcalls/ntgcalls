@@ -24,15 +24,14 @@ namespace openssl {
 
     class Aes {
     public:
-        class KeyIv {
-        public:
+        struct KeyIv {
             std::array<uint8_t, 32> key;
             std::array<uint8_t, 16> iv;
         };
 
         static KeyIv PrepareKeyIv(const uint8_t* key, const uint8_t* msgKey, int x);
 
-        static void ProcessCtr(const bytes::memory_span& from, void *to, KeyIv& keyIv);
+        static void ProcessCtr(bytes::memory_span from, void *to, KeyIv& keyIv);
     };
 
 } // openssl
