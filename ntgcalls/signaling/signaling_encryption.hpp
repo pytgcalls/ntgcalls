@@ -13,8 +13,7 @@ namespace ntgcalls {
 
     class SignalingEncryption {
         uint64_t counter = 0;
-        bool isOutGoing = false;
-        Key key;
+        EncryptionKey _key;
         std::vector<uint32_t> largestIncomingCounters;
 
         static constexpr auto kSingleMessagePacketSeqBit = static_cast<uint32_t>(1) << 31;
@@ -33,7 +32,7 @@ namespace ntgcalls {
         bool registerIncomingCounter(uint32_t incomingCounter);
 
     public:
-        SignalingEncryption(bool isOutGoing, Key key);
+        explicit SignalingEncryption(EncryptionKey key);
 
         ~SignalingEncryption();
 

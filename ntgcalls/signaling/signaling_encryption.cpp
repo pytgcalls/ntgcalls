@@ -10,26 +10,24 @@
 #include "wrtc/utils/encryption.hpp"
 
 namespace ntgcalls {
-    SignalingEncryption::SignalingEncryption(const bool isOutGoing, Key key): isOutGoing(isOutGoing), key(std::move(key)) {}
+    SignalingEncryption::SignalingEncryption(EncryptionKey key): _key(std::move(key)) {}
 
     SignalingEncryption::~SignalingEncryption() {
         counter = 0;
-        isOutGoing = false;
         largestIncomingCounters.clear();
-        key = nullptr;
     }
 
     bytes::binary SignalingEncryption::encryptPrepared(const rtc::CopyOnWriteBuffer &buffer) const {
         bytes::binary encrypted(16 + buffer.size());
-        const auto x = (isOutGoing ? 0 : 8) + 128;
-        const auto dataKey = key->data();
+        const auto x = (_key.isOutgoing ? 0 : 8) + 128;
+        const auto key = _key.value->data();
         const auto msgKeyLarge = openssl::Sha256::Concat(
-            bytes::memory_span(dataKey + 88 + x, 32),
+            bytes::memory_span(key + 88 + x, 32),
             bytes::memory_span(buffer.data(), buffer.size())
         );
         const auto msgKey = encrypted.data();
         memcpy(msgKey, msgKeyLarge.data() + 8, 16);
-        auto aesKeyIv = openssl::Aes::PrepareKeyIv(dataKey, msgKey, x);
+        auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, msgKey, x);
         openssl::Aes::ProcessCtr(
             bytes::memory_span(buffer.data(), buffer.size()),
             msgKey + 16,
@@ -101,13 +99,13 @@ namespace ntgcalls {
         if (buffer.size() < 21 || buffer.size() > kMaxIncomingPacketSize) {
             return std::nullopt;
         }
-        const auto x = (isOutGoing ? 8 : 0) + 128;
-        const auto dataKey = key->data();
+        const auto x = (_key.isOutgoing ? 8 : 0) + 128;
+        const auto key = _key.value->data();
         const auto msgKey = buffer.data();
         const auto encryptedData = msgKey + 16;
         const auto dataSize = buffer.size() - 16;
 
-        auto aesKeyIv = openssl::Aes::PrepareKeyIv(dataKey, msgKey, x);
+        auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, msgKey, x);
         auto decryptionBuffer = rtc::Buffer(dataSize);
         openssl::Aes::ProcessCtr(
             bytes::memory_span(encryptedData, dataSize),
@@ -116,8 +114,8 @@ namespace ntgcalls {
         );
 
         if (const auto msgKeyLarge = openssl::Sha256::Concat(
-            bytes::memory_span(dataKey + 88 + x, 32),
-            bytes::memory_span(decryptionBuffer.data<>(), decryptionBuffer.size())
+            bytes::memory_span(key + 88 + x, 32),
+            bytes::memory_span(decryptionBuffer.data(), decryptionBuffer.size())
         ); ConstTimeIsDifferent(msgKeyLarge.data() + 8, msgKey, 16)) {
             return std::nullopt;
         }
