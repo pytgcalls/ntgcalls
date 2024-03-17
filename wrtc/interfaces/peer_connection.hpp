@@ -50,6 +50,8 @@ namespace wrtc {
 
         void onRenegotiationNeeded(const std::function<void()> &callback);
 
+        void onConnectionChange(const std::function<void(PeerConnectionState state)> &callback);
+
         rtc::Thread *networkThread() const;
 
         rtc::Thread *signalingThread() const;
@@ -62,6 +64,7 @@ namespace wrtc {
         synchronized_callback<GatheringState> gatheringStateChangeCallback;
         synchronized_callback<void> renegotiationNeedeCallbackd;
         synchronized_callback<SignalingState> signalingStateChangeCallback;
+        synchronized_callback<PeerConnectionState> connectionChangeCallback;
         synchronized_callback<IceCandidate> iceCandidateCallback;
 
 

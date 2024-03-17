@@ -38,4 +38,14 @@ namespace wrtc {
         HaveRemotePranswer,
         Closed,
     };
+
+    enum class PeerConnectionState {
+        Unknown,
+        New,
+        Connecting,
+        Connected,
+        Disconnected,
+        Failed,
+        Closed,
+    };
 }

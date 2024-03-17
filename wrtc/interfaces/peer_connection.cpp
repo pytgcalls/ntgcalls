@@ -4,8 +4,6 @@
 
 #include "peer_connection.hpp"
 
-#include <iostream>
-
 #include "../utils/sync.hpp"
 #include "peer_connection/create_session_description_observer.hpp"
 #include "peer_connection/set_session_description_observer.hpp"
@@ -186,6 +184,10 @@ namespace wrtc {
         renegotiationNeedeCallbackd = callback;
     }
 
+    void PeerConnection::onConnectionChange(const std::function<void(PeerConnectionState state)>& callback) {
+        connectionChangeCallback = callback;
+    }
+
     rtc::Thread* PeerConnection::networkThread() const {
         return factory->networkThread();
     }
@@ -297,26 +299,28 @@ namespace wrtc {
 
     }
 
-    void PeerConnection::OnConnectionChange(webrtc::PeerConnectionInterface::PeerConnectionState newState) {
+    void PeerConnection::OnConnectionChange(const webrtc::PeerConnectionInterface::PeerConnectionState newState) {
+        auto newValue = PeerConnectionState::Unknown;
         switch (newState) {
             case webrtc::PeerConnectionInterface::PeerConnectionState::kNew:
-                std::cout << "New" << std::endl;
+                newValue = PeerConnectionState::New;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kConnecting:
-                std::cout << "Connecting" << std::endl;
+                newValue = PeerConnectionState::Connecting;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
-                std::cout << "Connected" << std::endl;
+                newValue = PeerConnectionState::Connected;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
-                std::cout << "Disconnected" << std::endl;
+                newValue = PeerConnectionState::Disconnected;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kFailed:
-                std::cout << "Failed" << std::endl;
+                newValue = PeerConnectionState::Failed;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kClosed:
-                std::cout << "Closed" << std::endl;
+                newValue = PeerConnectionState::Closed;
                 break;
         }
+        (void) connectionChangeCallback(newValue);
     }
 } // wrtc
