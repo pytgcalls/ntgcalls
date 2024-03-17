@@ -83,23 +83,23 @@ namespace ntgcalls {
         connection->setRemoteDescription(remoteDescription);
 
         wrtc::Sync<void> waitConnection;
-        connection->onIceStateChange([&](const wrtc::IceState state) {
+        connection->onConnectionChange([&](const wrtc::PeerConnectionState state) {
             switch (state) {
-            case wrtc::IceState::Connected:
-                    if (!this->connected) waitConnection.onSuccess();
-                    break;
-                case wrtc::IceState::Disconnected:
-                case wrtc::IceState::Failed:
-                case wrtc::IceState::Closed:
-                    if (!this->connected) {
-                        waitConnection.onFailed(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
-                    } else {
-                        connection->onIceStateChange(nullptr);
-                        (void) this->onCloseConnection();
-                    }
-                    break;
-                default:
-                    break;
+            case wrtc::PeerConnectionState::Connected:
+                if (!this->connected) waitConnection.onSuccess();
+                break;
+            case wrtc::PeerConnectionState::Disconnected:
+            case wrtc::PeerConnectionState::Failed:
+            case wrtc::PeerConnectionState::Closed:
+                if (!this->connected) {
+                    waitConnection.onFailed(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
+                } else {
+                    connection->onConnectionChange(nullptr);
+                    (void) this->onCloseConnection();
+                }
+                break;
+            default:
+                break;
             }
         });
         waitConnection.wait();
