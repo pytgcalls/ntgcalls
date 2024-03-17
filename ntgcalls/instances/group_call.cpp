@@ -46,8 +46,8 @@ namespace ntgcalls {
         try {
             conference = {
                 {
-                    data["ufrag"].get<std::string>(),
-                    data["pwd"].get<std::string>()
+                    data["ufrag"],
+                    data["pwd"]
                 },
                 audioSource,
                 sourceGroups
@@ -60,16 +60,16 @@ namespace ntgcalls {
             }
             for (const auto& item : data["candidates"].items()) {
                 conference.transport.candidates.push_back({
-                    item.value()["generation"].get<std::string>(),
-                    item.value()["component"].get<std::string>(),
-                    item.value()["protocol"].get<std::string>(),
-                    item.value()["port"].get<std::string>(),
-                    item.value()["ip"].get<std::string>(),
-                    item.value()["foundation"].get<std::string>(),
-                    item.value()["id"].get<std::string>(),
-                    item.value()["priority"].get<std::string>(),
-                    item.value()["type"].get<std::string>(),
-                    item.value()["network"].get<std::string>()
+                    item.value()["generation"],
+                    item.value()["component"],
+                    item.value()["protocol"],
+                    item.value()["port"],
+                    item.value()["ip"],
+                    item.value()["foundation"],
+                    item.value()["id"],
+                    item.value()["priority"],
+                    item.value()["type"],
+                    item.value()["network"]
                 });
             }
         } catch (...) {
@@ -103,7 +103,7 @@ namespace ntgcalls {
             }
         });
         waitConnection.wait();
-        this->connected = true;
+        connected = true;
         stream->start();
     }
 
