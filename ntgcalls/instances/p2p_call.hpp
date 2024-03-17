@@ -14,13 +14,12 @@ namespace ntgcalls {
     using nlohmann::json;
 
     class P2PCall final: public CallInterface {
-        bytes::vector randomPower, prime, g_a_or_b;
-        std::optional<bytes::vector> g_a_hash;
+        bytes::vector randomPower, prime;
+        std::optional<bytes::vector> g_a_hash, g_a_or_b;
         std::atomic_bool isMakingOffer = false, makingNegotation = false, handshakeCompleted = false;
         std::shared_ptr<SignalingInterface> signaling;
         wrtc::synchronized_callback<bytes::binary> onEmitData;
         std::vector<wrtc::IceCandidate> pendingIceCandidates;
-        std::mutex mutex;
 
         void processSignalingData(const bytes::binary& buffer);
 
