@@ -34,7 +34,7 @@ namespace ntgcalls {
             throw ConnectionError("Connection already made");
         }
         if (!this->g_a_or_b) {
-            throw ConnectionError("Connection not initialized");
+            throw ConnectionNotFound("Connection not initialized");
         }
         if (g_a_hash) {
             if (!fingerprint) {

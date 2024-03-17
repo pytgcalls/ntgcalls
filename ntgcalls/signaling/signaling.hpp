@@ -29,7 +29,7 @@ namespace ntgcalls {
             const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
         );
 
-        static ProtocolVersion signalingVersion(const std::vector<std::string>& versions);
+        static ProtocolVersion signalingVersion(const std::string& version);
     };
 
     inline int operator&(Signaling::ProtocolVersion lhs, Signaling::ProtocolVersion rh);
