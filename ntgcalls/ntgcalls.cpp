@@ -61,9 +61,14 @@ namespace ntgcalls {
         return SafeCall<P2PCall>(connections[userId])->init(g, p, r, g_a_hash);
     }
 
-    AuthParams NTgCalls::confirmP2PCall(const int64_t userId, const bytes::vector &p, const bytes::vector &g_a_or_b, const int64_t fingerprint, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
+    AuthParams NTgCalls::exchangeKeys(const int64_t userId, const bytes::vector &p, const bytes::vector &g_a_or_b, const int64_t fingerprint) {
         std::lock_guard lock(mutex);
-        return SafeCall<P2PCall>(safeConnection(userId))->confirmConnection(p, g_a_or_b, fingerprint, servers, versions);
+        return SafeCall<P2PCall>(safeConnection(userId))->exchangeKeys(p, g_a_or_b, fingerprint);
+    }
+
+    void NTgCalls::connectP2P(const int64_t userId, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
+        std::lock_guard lock(mutex);
+        SafeCall<P2PCall>(safeConnection(userId))->connect(servers, versions);
     }
 
     std::string NTgCalls::createCall(const int64_t chatId, const MediaDescription& media) {

@@ -10,6 +10,7 @@
 #include "ntgcalls/utils/auth_key.hpp"
 #include "ntgcalls/utils/mod_exp_first.hpp"
 #include "wrtc/utils/encryption.hpp"
+#include "wrtc/utils/sync.hpp"
 
 namespace ntgcalls {
     bytes::vector P2PCall::init(const int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash) {
@@ -29,12 +30,15 @@ namespace ntgcalls {
         return g_a_hash ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
     }
 
-    AuthParams P2PCall::confirmConnection(const bytes::vector &p, const bytes::vector &g_a_or_b, const int64_t fingerprint, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
+    AuthParams P2PCall::exchangeKeys(const bytes::vector &p, const bytes::vector &g_a_or_b, const int64_t fingerprint) {
         if (connection) {
             throw ConnectionError("Connection already made");
         }
         if (!this->g_a_or_b) {
             throw ConnectionNotFound("Connection not initialized");
+        }
+        if (key) {
+            throw ConnectionError("Key already exchanged");
         }
         if (g_a_hash) {
             if (!fingerprint) {
@@ -58,6 +62,20 @@ namespace ntgcalls {
         if (g_a_hash && computedFingerprint != static_cast<uint64_t>(fingerprint)) {
             throw InvalidParams("Fingerprint mismatch");
         }
+        key = authKey;
+        return {
+            static_cast<int64_t>(computedFingerprint),
+            this->g_a_or_b.value(),
+        };
+    }
+
+    void P2PCall::connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
+        if (connection) {
+            throw ConnectionError("Connection already made");
+        }
+        if (!g_a_or_b || !key) {
+            throw ConnectionNotFound("Connection not initialized");
+        }
         connection = std::make_shared<wrtc::PeerConnection>(servers);
         connection->onRenegotiationNeeded([this] {
             if (makingNegotation) {
@@ -73,22 +91,30 @@ namespace ntgcalls {
             };
             signaling->send(bytes::make_binary(to_string(packets)));
         });
+
+        wrtc::Sync<void> waitConnection;
         connection->onConnectionChange([&](const wrtc::PeerConnectionState state) {
             switch (state) {
-                case wrtc::PeerConnectionState::Connected:
-                    std::cout << "Connected" << std::endl;
-                    break;
-                case wrtc::PeerConnectionState::Disconnected:
-                case wrtc::PeerConnectionState::Failed:
-                case wrtc::PeerConnectionState::Closed:
-                    std::cout << "Disconnected" << std::endl;
-                    break;
-                default:
-                    break;
+            case wrtc::PeerConnectionState::Connected:
+                std::cout << "Connected to the P2P call server" << std::endl;
+                if (!connected) waitConnection.onSuccess();
+                break;
+            case wrtc::PeerConnectionState::Disconnected:
+            case wrtc::PeerConnectionState::Failed:
+            case wrtc::PeerConnectionState::Closed:
+                if (!connected) {
+                    waitConnection.onFailed(std::make_exception_ptr(TelegramServerError("Error while connecting to the P2P call server")));
+                } else {
+                    connection->onConnectionChange(nullptr);
+                    (void) onCloseConnection();
+                }
+                break;
+            default:
+                break;
             }
         });
         auto encryptionKey = std::make_shared<std::array<uint8_t, EncryptionKey::kSize>>();
-        memcpy(encryptionKey->data(), authKey.data(), EncryptionKey::kSize);
+        memcpy(encryptionKey->data(), key.value().data(), EncryptionKey::kSize);
         stream->addTracks(connection);
         signaling = Signaling::Create(
             versions,
@@ -96,10 +122,12 @@ namespace ntgcalls {
             connection->signalingThread(),
             EncryptionKey(std::move(encryptionKey), type() == Type::Outgoing),
             [this](const bytes::binary &data) {
-                (void) this->onEmitData(data);
+                std::cout << "Emit data" << std::endl;
+                (void) onEmitData(data);
             },
             [this](const std::optional<bytes::binary> &data) {
                 if (data) {
+                    std::cout << "Process signaling data" << std::endl;
                     processSignalingData(data.value());
                 }
             }
@@ -108,10 +136,7 @@ namespace ntgcalls {
             makingNegotation = true;
             sendLocalDescription();
         }
-        return {
-            computedFingerprint,
-            this->g_a_or_b.value(),
-        };
+        waitConnection.wait();
     }
 
     void P2PCall::processSignalingData(const bytes::binary& buffer) {
@@ -204,7 +229,7 @@ namespace ntgcalls {
     }
 
     void P2PCall::onSignalingData(const std::function<void(const bytes::binary&)>& callback) {
-        this->onEmitData = callback;
+        onEmitData = callback;
     }
 
     void P2PCall::sendSignalingData(const bytes::binary& buffer) const {

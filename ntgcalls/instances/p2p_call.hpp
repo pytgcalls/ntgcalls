@@ -15,6 +15,7 @@ namespace ntgcalls {
 
     class P2PCall final: public CallInterface {
         bytes::vector randomPower, prime;
+        std::optional<RawKey> key;
         std::optional<bytes::vector> g_a_hash, g_a_or_b;
         std::atomic_bool isMakingOffer = false, makingNegotation = false, handshakeCompleted = false;
         std::shared_ptr<SignalingInterface> signaling;
@@ -32,7 +33,9 @@ namespace ntgcalls {
     public:
         bytes::vector init(int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash);
 
-        AuthParams confirmConnection(const bytes::vector &p, const bytes::vector &g_a_or_b, int64_t fingerprint, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions);
+        AuthParams exchangeKeys(const bytes::vector &p, const bytes::vector &g_a_or_b, int64_t fingerprint);
+
+        void connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions);
 
         Type type() const override;
 
