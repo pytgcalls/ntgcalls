@@ -12,11 +12,10 @@ namespace ntgcalls {
         SignalingV1(
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,
-            const bool isOutGoing,
-            const Key &key,
+            const EncryptionKey &key,
             const std::function<void(const bytes::binary&)>& onEmitData,
             const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
-        ): SignalingInterface(networkThread, signalingThread, isOutGoing, key, onEmitData, onSignalData) {}
+        ): SignalingInterface(networkThread, signalingThread, key, onEmitData, onSignalData) {}
 
         void send(const bytes::binary& data) override;
 

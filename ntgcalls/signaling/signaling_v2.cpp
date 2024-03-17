@@ -8,17 +8,13 @@ namespace ntgcalls {
     SignalingV2::SignalingV2(
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
-        const bool isOutGoing,
-        const Key &key,
+        const EncryptionKey &key,
         const std::function<void(const bytes::binary&)>& onEmitData,
-        const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
-    ): SignalingInterface(networkThread, signalingThread, isOutGoing, key, onEmitData, onSignalData) {
+        const std::function<void(const std::optional<bytes::binary>&)>& onSignalData,
+        const bool allowCompression
+    ): SignalingInterface(networkThread, signalingThread, key, onEmitData, onSignalData), allowCompression(allowCompression) {
         networkThread->BlockingCall([&] {
-            packetTransport = std::make_unique<SignalingPacketTransport>([signalingThread, onEmitData](const bytes::binary& data) {
-                signalingThread->PostTask([&] {
-                    onEmitData(data);
-                });
-            });
+            packetTransport = std::make_unique<SignalingPacketTransport>(onEmitData);
             sctpTransportFactory = std::make_unique<cricket::SctpTransportFactory>(networkThread);
             sctpTransport = sctpTransportFactory->CreateSctpTransport(packetTransport.get());
             sctpTransport->OpenStream(0);
@@ -63,7 +59,7 @@ namespace ntgcalls {
     }
 
     void SignalingV2::OnReadyToSend() {
-        assert(_threads->getNetworkThread()->IsCurrent());
+        assert(networkThread->IsCurrent());
         isReadyToSend = true;
         for (const auto &data : pendingData) {
             webrtc::SendDataParams params;
@@ -80,12 +76,17 @@ namespace ntgcalls {
     }
 
     void SignalingV2::OnDataReceived(int channel_id, webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) {
+        assert(networkThread->IsCurrent());
         signalingThread->PostTask([this, buffer] {
             onSignalData(preProcessData(bytes::binary(buffer.data(), buffer.data() + buffer.size()), false));
         });
     }
 
+    void SignalingV2::OnTransportClosed(webrtc::RTCError error) {
+        assert(networkThread->IsCurrent());
+    }
+
     bool SignalingV2::supportsCompression() const {
-        return true;
+        return allowCompression;
     }
 } // ntgcalls

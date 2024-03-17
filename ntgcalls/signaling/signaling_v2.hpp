@@ -9,21 +9,22 @@
 
 namespace ntgcalls {
 
-    class SignalingV2 final : public SignalingInterface, public webrtc::DataChannelSink {
+    class SignalingV2 final : public sigslot::has_slots<>, public SignalingInterface, public webrtc::DataChannelSink {
         std::unique_ptr<cricket::SctpTransportFactory> sctpTransportFactory;
         std::unique_ptr<SignalingPacketTransport> packetTransport;
         std::unique_ptr<cricket::SctpTransportInternal> sctpTransport;
         std::vector<bytes::binary> pendingData;
+        bool allowCompression = false;
         bool isReadyToSend = false;
 
     public:
         SignalingV2(
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,
-            bool isOutGoing,
-            const Key &key,
+            const EncryptionKey &key,
             const std::function<void(const bytes::binary&)>& onEmitData,
-            const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
+            const std::function<void(const std::optional<bytes::binary>&)>& onSignalData,
+            bool allowCompression
         );
 
         ~SignalingV2() override;
@@ -35,6 +36,8 @@ namespace ntgcalls {
         void OnReadyToSend() override;
 
         void OnDataReceived(int channel_id, webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) override;
+
+        void OnTransportClosed(webrtc::RTCError error) override;
 
         // Unused
         void OnChannelClosing(int channel_id) override{}
