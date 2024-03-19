@@ -8,9 +8,10 @@
 #include <future>
 
 #include "instances/call_interface.hpp"
+// ReSharper disable once CppUnusedIncludeDirective
 #include "models/auth_params.hpp"
 #include "models/protocol.hpp"
-#include "../wrtc/models/rtc_server.hpp"
+#include "models/rtc_server.hpp"
 #include "utils/binding_utils.hpp"
 #include "utils/hardware_info.hpp"
 
@@ -26,7 +27,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
-        wrtc::synchronized_callback<int64_t, bytes::binary> onEmitData;
+        wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> onEmitData;
         std::unique_ptr<DispatchQueue> updateQueue;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
@@ -45,33 +46,33 @@ namespace ntgcalls {
 
         ~NTgCalls();
 
-        bytes::vector createP2PCall(int64_t userId, const int32_t &g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash);
+        ASYNC_RETURN(bytes::vector) createP2PCall(int64_t userId, const int32_t &g, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &r, const std::optional<BYTES(bytes::vector)> &g_a_hash);
 
-        AuthParams exchangeKeys(int64_t userId, const bytes::vector &p, const bytes::vector &g_a_or_b, int64_t fingerprint);
+        ASYNC_RETURN(AuthParams) exchangeKeys(int64_t userId, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &g_a_or_b, int64_t fingerprint);
 
-        void connectP2P(int64_t userId, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions);
+        ASYNC_RETURN(void) connectP2P(int64_t userId, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions);
 
-        std::string createCall(int64_t chatId, const MediaDescription& media);
+        ASYNC_RETURN(std::string) createCall(int64_t chatId, const MediaDescription& media);
 
-        void connect(int64_t chatId, const std::string& params);
+        ASYNC_RETURN(void) connect(int64_t chatId, const std::string& params);
 
-        void changeStream(int64_t chatId, const MediaDescription& media);
+        ASYNC_RETURN(void) changeStream(int64_t chatId, const MediaDescription& media);
 
-        bool pause(int64_t chatId);
+        ASYNC_RETURN(bool) pause(int64_t chatId);
 
-        bool resume(int64_t chatId);
+        ASYNC_RETURN(bool) resume(int64_t chatId);
 
-        bool mute(int64_t chatId);
+        ASYNC_RETURN(bool) mute(int64_t chatId);
 
-        bool unmute(int64_t chatId);
+        ASYNC_RETURN(bool) unmute(int64_t chatId);
 
-        void stop(int64_t chatId);
+        ASYNC_RETURN(void) stop(int64_t chatId);
 
-        uint64_t time(int64_t chatId);
+        ASYNC_RETURN(uint64_t) time(int64_t chatId);
 
-        MediaState getState(int64_t chatId);
+        ASYNC_RETURN(MediaState) getState(int64_t chatId);
 
-        double cpuUsage() const;
+        ASYNC_RETURN(double) cpuUsage() const;
 
         static std::string ping();
 
@@ -83,11 +84,11 @@ namespace ntgcalls {
 
         void onDisconnect(const std::function<void(int64_t)>& callback);
 
-        void onSignalingData(const std::function<void(int64_t, const bytes::binary&)>& callback);
+        void onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
 
-        void sendSignalingData(int64_t chatId, const bytes::binary &msgKey);
+        ASYNC_RETURN(void) sendSignalingData(int64_t chatId, const BYTES(bytes::binary) &msgKey);
 
-        std::map<int64_t, Stream::Status> calls();
+        ASYNC_RETURN(std::map<int64_t, Stream::Status>) calls();
     };
 
 } // ntgcalls

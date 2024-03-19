@@ -7,71 +7,20 @@
 
 #include "../ntgcalls.hpp"
 #include "ntgcalls/exceptions.hpp"
-#include "wrtc/models/rtc_server.hpp"
+#include "../models/rtc_server.hpp"
 
 namespace py = pybind11;
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
-template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
-T toCBytes(const py::bytes& p) {
-    const auto data = reinterpret_cast<const uint8_t*>(PYBIND11_BYTES_AS_STRING(p.ptr()));
-    const auto size = static_cast<size_t>(PYBIND11_BYTES_SIZE(p.ptr()));
-    auto sharedPtr = T(size);
-    std::memcpy(sharedPtr.data(), data, size);
-    return sharedPtr;
-}
-
-template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
-std::optional<T> toCBytes(const std::optional<py::bytes>& p) {
-    if (p) {
-        return toCBytes<T>(p.value());
-    }
-    return std::nullopt;
-}
-
-template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
-py::bytes toBytes(const T& p) {
-    return {reinterpret_cast<const char*>(p.data()), p.size()};
-}
-
 PYBIND11_MODULE(ntgcalls, m) {
-    class PyRTCServer: public wrtc::RTCServer {
-    public:
-        PyRTCServer(
-            const uint64_t id,
-            const std::string &ipv4,
-            const std::string &ipv6,
-            const uint16_t port,
-            const std::optional<std::string>& username,
-            const std::optional<std::string>& password,
-            const bool turn,
-            const bool stun,
-            const bool tcp,
-            const std::optional<py::bytes>& peerTag
-        ): RTCServer(id, ipv4, ipv6, port, username, password, turn, stun, tcp, toCBytes<bytes::binary>(peerTag)) {}
-    };
-
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
-    wrapper.def("create_p2p_call", [](ntgcalls::NTgCalls& self, const int64_t userId, const int32_t g, const py::bytes& p, const py::bytes& r, const std::optional<py::bytes>& g_a_hash) {
-        return toBytes(self.createP2PCall(userId, g, toCBytes<bytes::vector>(p), toCBytes<bytes::vector>(r), toCBytes<bytes::vector>(g_a_hash)));
-    }, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"));
-    wrapper.def("exchange_keys", [](ntgcalls::NTgCalls& self, const int64_t userId, const py::bytes& p, const py::bytes& g_a_or_b, const int64_t fingerprint) {
-        return self.exchangeKeys(userId, toCBytes<bytes::vector>(p), toCBytes<bytes::vector>(g_a_or_b), fingerprint);
-    }, py::arg("user_id"), py::arg("p"), py::arg("g_a_or_b"), py::arg("fingerprint"));
-    wrapper.def("connect_p2p", [](ntgcalls::NTgCalls& self, const int64_t userId, const std::vector<PyRTCServer>& servers, const std::vector<std::string>& versions) {
-        pybind11::gil_scoped_release release;
-        std::vector<wrtc::RTCServer> serversTmp;
-        for (const auto& server: servers) {
-            serversTmp.push_back(server);
-        }
-        self.connectP2P(userId, serversTmp, versions);
-    }, py::arg("user_id"), py::arg("servers"), py::arg("versions"));
-    wrapper.def("send_signaling", [] (ntgcalls::NTgCalls& self, const int64_t chatId, const py::bytes& msgKey) {
-        self.sendSignalingData(chatId, toCBytes<bytes::binary>(msgKey));
-    }, py::arg("chat_id"), py::arg("msg_key"));
+    wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"));
+    wrapper.def("exchange_keys", &ntgcalls::NTgCalls::exchangeKeys, py::arg("user_id"), py::arg("p"), py::arg("g_a_or_b"), py::arg("fingerprint"));
+    wrapper.def("connect_p2p", &ntgcalls::NTgCalls::connectP2P, py::arg("user_id"), py::arg("servers"), py::arg("versions"));
+    wrapper.def("send_signaling", &ntgcalls::NTgCalls::sendSignalingData, py::arg("chat_id"), py::arg("msg_key"));
     wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"));
     wrapper.def("change_stream", &ntgcalls::NTgCalls::changeStream, py::arg("chat_id"), py::arg("media"));
@@ -85,13 +34,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade);
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd);
     wrapper.def("on_disconnect", &ntgcalls::NTgCalls::onDisconnect);
-    wrapper.def("on_signaling", [](ntgcalls::NTgCalls& self, const std::function<void(int64_t, py::bytes)>& callback) {
-        py::gil_scoped_release release;
-        self.onSignalingData([callback](const int64_t chatId, const bytes::binary& data) {
-            py::gil_scoped_acquire acquire;
-            callback(chatId, toBytes(data));
-        });
-    }, py::arg("callback"));
+    wrapper.def("on_signaling", &ntgcalls::NTgCalls::onSignalingData, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
@@ -179,7 +122,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     protocolWrapper.def_readwrite("udp_reflector", &ntgcalls::Protocol::udp_reflector);
     protocolWrapper.def_readwrite("library_versions", &ntgcalls::Protocol::library_versions);
 
-    py::class_<PyRTCServer> rtcServerWrapper(m, "RTCServer");
+    py::class_<wrtc::RTCServer> rtcServerWrapper(m, "RTCServer");
     rtcServerWrapper.def(py::init<uint64_t, std::string, std::string, uint16_t, std::optional<std::string>, std::optional<std::string>, bool, bool, bool, std::optional<py::bytes>>());
 
     py::class_<ntgcalls::AuthParams> authParamsWrapper(m, "AuthParams");
