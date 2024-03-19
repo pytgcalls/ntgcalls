@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <future>
 #include <api/peer_connection_interface.h>
 #include "../enums.hpp"
 #include "../exceptions.hpp"
@@ -12,7 +13,7 @@
 #include "media/tracks/media_stream_track.hpp"
 #include "peer_connection/peer_connection_factory.hpp"
 #include "wrtc/models/ice_candidate.hpp"
-#include "wrtc/models/rtc_server.hpp"
+#include "../../ntgcalls/models/rtc_server.hpp"
 
 namespace wrtc {
 
@@ -22,13 +23,11 @@ namespace wrtc {
 
         ~PeerConnection() override;
 
-        Description createOffer(bool offerToReceiveAudio = true, bool offerToReceiveVideo = false) const;
-
         std::optional<Description> localDescription() const;
 
-        void setLocalDescription(const std::optional<Description>& description = std::nullopt, const std::function<void()>& onSuccess = nullptr) const;
+        std::future<void> setLocalDescription() const;
 
-        void setRemoteDescription(const Description &description, const std::function<void()>& onSuccess = nullptr) const;
+        std::future<void> setRemoteDescription(const Description &description) const;
 
         void addTrack(MediaStreamTrack *mediaStreamTrack, const std::vector<std::string>& streamIds = {}) const;
 

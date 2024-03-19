@@ -7,7 +7,6 @@
 #include <mutex>
 #include <api/peer_connection_interface.h>
 #include <media/engine/webrtc_media_engine.h>
-#include "pc/connection_context.h"
 
 namespace wrtc {
 

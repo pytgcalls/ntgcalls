@@ -6,7 +6,6 @@
 #include <memory>
 #include <span>
 #include <vector>
-#include <rtc_base/copy_on_write_buffer.h>
 
 namespace bytes {
     using shared_binary = std::shared_ptr<uint8_t[]>;

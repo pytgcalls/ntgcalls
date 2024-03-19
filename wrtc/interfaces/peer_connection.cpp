@@ -4,8 +4,6 @@
 
 #include "peer_connection.hpp"
 
-#include "../utils/sync.hpp"
-#include "peer_connection/create_session_description_observer.hpp"
 #include "peer_connection/set_session_description_observer.hpp"
 #include "api/jsep_ice_candidate.h"
 
@@ -42,79 +40,58 @@ namespace wrtc {
         close();
     }
 
-    Description PeerConnection::createOffer(const bool offerToReceiveAudio, const bool offerToReceiveVideo) const {
-        if (!peerConnection ||
-            peerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
-            throw RTCException("Failed to execute 'createOffer' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
-        }
-        Sync<std::optional<Description>> description;
-        const auto observer = new rtc::RefCountedObject<CreateSessionDescriptionObserver>(description.onSuccess, description.onFailed);
-        auto options = webrtc::PeerConnectionInterface::RTCOfferAnswerOptions();
-        options.offer_to_receive_audio = offerToReceiveAudio;
-        options.offer_to_receive_video = offerToReceiveVideo;
-        peerConnection->CreateOffer(observer, options);
-        return description.get();
-    }
-
     std::optional<Description> PeerConnection::localDescription() const {
         if (peerConnection) {
             if (const auto raw_description = peerConnection->local_description()) {
-                return Description::Wrap(raw_description);
+                return Description(raw_description);
             }
         }
         return std::nullopt;
     }
 
-    void PeerConnection::setLocalDescription(const std::optional<Description>& description, const std::function<void()>& onSuccess) const {
-        if (!peerConnection ||
-            peerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
-            throw RTCException("Failed to execute 'setLocalDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
-        }
-
-        Sync<void> future;
-        const rtc::scoped_refptr<webrtc::SetLocalDescriptionObserverInterface> observer(new rtc::RefCountedObject<SetSessionDescriptionObserver>(
-            onSuccess ? onSuccess : future.onSuccess,
-            future.onFailed
-        ));
-        if (description) {
-            webrtc::SdpParseError sdpParseError;
-            std::unique_ptr<webrtc::SessionDescriptionInterface> localDescription(
-                CreateSessionDescription(Description::typeToString(description.value().getType()), description.value().getSdp(), &sdpParseError)
-            );
-            if (!localDescription) {
-                throw wrapSdpParseError(sdpParseError);
+    std::future<void> PeerConnection::setLocalDescription() const{
+        return std::async(std::launch::deferred, [&] {
+            if (!peerConnection || peerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
+                throw RTCException("Failed to execute 'setLocalDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
             }
-            peerConnection->SetLocalDescription(std::move(localDescription), observer);
-        } else {
+            std::promise<void> promise;
+            const rtc::scoped_refptr<webrtc::SetLocalDescriptionObserverInterface> observer(new rtc::RefCountedObject<SetSessionDescriptionObserver>(
+                [&] {
+                    promise.set_value();
+                },
+                [&] (const std::exception_ptr& e) {
+                    promise.set_exception(e);
+                }
+            ));
             peerConnection->SetLocalDescription(observer);
-        }
-        if (!onSuccess) {
-            future.wait();
-        }
+            promise.get_future().wait();
+        });
     }
 
-    void PeerConnection::setRemoteDescription(const Description &description, const std::function<void()>& onSuccess) const {
-        webrtc::SdpParseError sdpParseError;
-        std::unique_ptr<webrtc::SessionDescriptionInterface> remoteDescription(
-            CreateSessionDescription(Description::typeToString(description.getType()), description.getSdp(), &sdpParseError)
-        );
-        if (!remoteDescription) {
-            throw wrapSdpParseError(sdpParseError);
-        }
-        if (!peerConnection ||
-            peerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
-            throw RTCException("Failed to execute 'setRemoteDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
-        }
-
-        Sync<void> future;
-        const rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(new rtc::RefCountedObject<SetSessionDescriptionObserver>(
-            onSuccess ? onSuccess : future.onSuccess,
-            future.onFailed
-        ));
-        peerConnection->SetRemoteDescription(std::move(remoteDescription), observer);
-        if (!onSuccess) {
-            future.wait();
-        }
+    std::future<void> PeerConnection::setRemoteDescription(const Description& description) const {
+        return std::async(std::launch::deferred, [&] {
+            if (!peerConnection || peerConnection->signaling_state() == webrtc::PeerConnectionInterface::SignalingState::kClosed) {
+                throw RTCException("Failed to execute 'setRemoteDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
+            }
+            webrtc::SdpParseError sdpParseError;
+            std::unique_ptr<webrtc::SessionDescriptionInterface> remoteDescription(
+                CreateSessionDescription(Description::SdpTypeToString(description.type()), description.sdp(), &sdpParseError)
+            );
+            if (!remoteDescription) {
+                throw wrapSdpParseError(sdpParseError);
+            }
+            std::promise<void> promise;
+            const rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(new rtc::RefCountedObject<SetSessionDescriptionObserver>(
+                [&] {
+                    promise.set_value();
+                },
+                [&] (const std::exception_ptr& e) {
+                    promise.set_exception(e);
+                }
+            ));
+            peerConnection->SetRemoteDescription(std::move(remoteDescription), observer);
+            promise.get_future().wait();
+        });
     }
 
     void PeerConnection::addIceCandidate(const IceCandidate& rawCandidate) const {
