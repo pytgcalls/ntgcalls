@@ -15,7 +15,8 @@ namespace wrtc {
         const bool turn,
         const bool stun,
         const bool tcp,
-        const std::optional<bytes::binary>& peerTag) {
+        const std::optional<BYTES(bytes::binary)>& peerTag
+    ) {
         this->id = id;
         this->ipv4 = std::move(ipv4);
         this->ipv6 = std::move(ipv6);
@@ -25,7 +26,7 @@ namespace wrtc {
         this->turn = turn;
         this->stun = stun;
         this->tcp = tcp;
-        this->peerTag = peerTag;
+        this->peerTag = CPP_BYTES(peerTag, bytes::binary);
     }
 
     webrtc::PeerConnectionInterface::IceServers RTCServer::toIceServers(const std::vector<RTCServer>& servers) {

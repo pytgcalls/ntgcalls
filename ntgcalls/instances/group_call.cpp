@@ -6,7 +6,6 @@
 
 #include "ntgcalls/exceptions.hpp"
 #include "ntgcalls/models/call_payload.hpp"
-#include "wrtc/utils/sync.hpp"
 
 namespace ntgcalls {
     GroupCall::~GroupCall() {
@@ -19,15 +18,14 @@ namespace ntgcalls {
         }
         connection = std::make_unique<wrtc::PeerConnection>();
         stream->addTracks(connection);
-        const std::optional offer = connection->createOffer(false, false);
-        connection->setLocalDescription(offer);
-        const auto payload = CallPayload(offer.value());
-        stream->setAVStream(config, true);
+        connection->setLocalDescription().wait();
+        const auto payload = CallPayload(connection->localDescription().value());
         audioSource = payload.audioSource;
         for (const auto &ssrc : payload.sourceGroups) {
             sourceGroups.push_back(ssrc);
         }
-        return payload;
+        stream->setAVStream(config, true);
+        return static_cast<std::string>(payload);
     }
 
     void GroupCall::connect(const std::string& jsonData) {
@@ -75,36 +73,37 @@ namespace ntgcalls {
         } catch (...) {
             throw InvalidParams("Invalid transport");
         }
-
-        const auto remoteDescription = wrtc::Description(
-            wrtc::Description::Type::Answer,
-            wrtc::SdpBuilder::fromConference(conference)
-        );
-        connection->setRemoteDescription(remoteDescription);
-
-        wrtc::Sync<void> waitConnection;
+        connection->setRemoteDescription(
+            wrtc::Description(
+                wrtc::Description::SdpType::Offer,
+                wrtc::SdpBuilder::fromConference(conference)
+            )
+        ).wait();
+        std::promise<void> future;
         connection->onConnectionChange([&](const wrtc::PeerConnectionState state) {
             switch (state) {
             case wrtc::PeerConnectionState::Connected:
-                if (!this->connected) waitConnection.onSuccess();
+                if (!this->connected) {
+                    connected = true;
+                    stream->start();
+                    future.set_value();
+                }
                 break;
             case wrtc::PeerConnectionState::Disconnected:
             case wrtc::PeerConnectionState::Failed:
             case wrtc::PeerConnectionState::Closed:
+                connection->onConnectionChange(nullptr);
                 if (!this->connected) {
-                    waitConnection.onFailed(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
+                    future.set_exception(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
                 } else {
-                    connection->onConnectionChange(nullptr);
-                    (void) this->onCloseConnection();
+                    (void) onCloseConnection();
                 }
                 break;
             default:
                 break;
             }
         });
-        waitConnection.wait();
-        connected = true;
-        stream->start();
+        future.get_future().wait();
     }
 
     CallInterface::Type GroupCall::type() const {

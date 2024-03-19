@@ -3,12 +3,13 @@
 //
 
 #pragma once
+#include <future>
 #include <nlohmann/json.hpp>
 
 #include "call_interface.hpp"
 #include "ntgcalls/models/auth_params.hpp"
 #include "ntgcalls/signaling/signaling.hpp"
-#include "wrtc/models/rtc_server.hpp"
+#include "../models/rtc_server.hpp"
 
 namespace ntgcalls {
     using nlohmann::json;
@@ -26,7 +27,7 @@ namespace ntgcalls {
 
         void sendLocalDescription();
 
-        void applyRemoteSdp(wrtc::Description::Type sdpType, const std::string& sdp);
+        void applyRemoteSdp(wrtc::Description::SdpType sdpType, const std::string& sdp);
 
         void applyPendingIceCandidates();
 

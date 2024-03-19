@@ -6,7 +6,8 @@
 #include <string>
 #include <api/peer_connection_interface.h>
 
-#include "../utils/binary.hpp"
+#include "../utils/binding_utils.hpp"
+#include "wrtc/utils/binary.hpp"
 
 namespace wrtc {
     class RTCServer {
@@ -28,7 +29,7 @@ namespace wrtc {
             bool turn,
             bool stun,
             bool tcp,
-            const std::optional<bytes::binary>& peerTag
+            const std::optional<BYTES(bytes::binary)>& peerTag
         );
 
         static webrtc::PeerConnectionInterface::IceServers toIceServers(const std::vector<RTCServer>& servers);

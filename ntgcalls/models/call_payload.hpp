@@ -23,8 +23,7 @@ namespace ntgcalls {
 
         explicit CallPayload(const wrtc::Description &desc);
 
-        // ReSharper disable once CppNonExplicitConversionOperator
-        operator std::string() const; // NOLINT(*-explicit-constructor)
+        explicit operator std::string() const;
     };
 
 } // ntgcalls

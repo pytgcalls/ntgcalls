@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     CallPayload::CallPayload(const wrtc::Description &desc) {
-        const auto [fingerprint, hash, setup, pwd, ufrag, audioSource, source_groups] = wrtc::SdpBuilder::parseSdp(desc.getSdp());
+        const auto [fingerprint, hash, setup, pwd, ufrag, audioSource, source_groups] = wrtc::SdpBuilder::parseSdp(desc.sdp());
         this->ufrag = ufrag;
         this->pwd = pwd;
         this->fingerprint = fingerprint;

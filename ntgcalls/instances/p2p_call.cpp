@@ -4,13 +4,10 @@
 
 #include "p2p_call.hpp"
 
-#include <iostream>
-
 #include "ntgcalls/exceptions.hpp"
 #include "ntgcalls/utils/auth_key.hpp"
 #include "ntgcalls/utils/mod_exp_first.hpp"
 #include "wrtc/utils/encryption.hpp"
-#include "wrtc/utils/sync.hpp"
 
 namespace ntgcalls {
     bytes::vector P2PCall::init(const int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash) {
@@ -63,7 +60,7 @@ namespace ntgcalls {
             throw InvalidParams("Fingerprint mismatch");
         }
         key = authKey;
-        return {
+        return AuthParams{
             static_cast<int64_t>(computedFingerprint),
             this->g_a_or_b.value(),
         };
@@ -91,28 +88,6 @@ namespace ntgcalls {
             };
             signaling->send(bytes::make_binary(to_string(packets)));
         });
-
-        wrtc::Sync<void> waitConnection;
-        connection->onConnectionChange([&](const wrtc::PeerConnectionState state) {
-            switch (state) {
-            case wrtc::PeerConnectionState::Connected:
-                std::cout << "Connected to the P2P call server" << std::endl;
-                if (!connected) waitConnection.onSuccess();
-                break;
-            case wrtc::PeerConnectionState::Disconnected:
-            case wrtc::PeerConnectionState::Failed:
-            case wrtc::PeerConnectionState::Closed:
-                if (!connected) {
-                    waitConnection.onFailed(std::make_exception_ptr(TelegramServerError("Error while connecting to the P2P call server")));
-                } else {
-                    connection->onConnectionChange(nullptr);
-                    (void) onCloseConnection();
-                }
-                break;
-            default:
-                break;
-            }
-        });
         auto encryptionKey = std::make_shared<std::array<uint8_t, EncryptionKey::kSize>>();
         memcpy(encryptionKey->data(), key.value().data(), EncryptionKey::kSize);
         stream->addTracks(connection);
@@ -122,12 +97,10 @@ namespace ntgcalls {
             connection->signalingThread(),
             EncryptionKey(std::move(encryptionKey), type() == Type::Outgoing),
             [this](const bytes::binary &data) {
-                std::cout << "Emit data" << std::endl;
                 (void) onEmitData(data);
             },
             [this](const std::optional<bytes::binary> &data) {
                 if (data) {
-                    std::cout << "Process signaling data" << std::endl;
                     processSignalingData(data.value());
                 }
             }
@@ -136,7 +109,27 @@ namespace ntgcalls {
             makingNegotation = true;
             sendLocalDescription();
         }
-        waitConnection.wait();
+        std::promise<void> promise;
+        connection->onConnectionChange([this, &promise](const wrtc::PeerConnectionState state) {
+            switch (state) {
+            case wrtc::PeerConnectionState::Connected:
+                if (!connected) promise.set_value();
+                break;
+            case wrtc::PeerConnectionState::Disconnected:
+            case wrtc::PeerConnectionState::Failed:
+            case wrtc::PeerConnectionState::Closed:
+                connection->onConnectionChange(nullptr);
+                if (!connected) {
+                    promise.set_exception(std::make_exception_ptr(TelegramServerError("Error while connecting to the P2P call server")));
+                } else {
+                    (void) onCloseConnection();
+                }
+                break;
+            default:
+                break;
+            }
+        });
+        promise.get_future().wait();
     }
 
     void P2PCall::processSignalingData(const bytes::binary& buffer) {
@@ -153,7 +146,7 @@ namespace ntgcalls {
                 return;
             }
             applyRemoteSdp(
-                wrtc::Description::parseType(sdpType),
+                wrtc::Description::SdpTypeFromString(sdpType),
                 jsonSdp
             );
         } else if (sdpType == "candidate") {
@@ -184,33 +177,31 @@ namespace ntgcalls {
 
     void P2PCall::sendLocalDescription() {
         isMakingOffer = true;
-        connection->setLocalDescription(std::nullopt, [this]{
-            connection->signalingThread()->PostTask([this] {
-                const auto description = connection->localDescription();
-                if (!description) {
-                    return;
-                }
-                const json packets = {
-                    {"@type", wrtc::Description::typeToString(description->getType())},
-                    {"sdp", description->getSdp()}
-                };
-                signaling->send(bytes::make_binary(to_string(packets)));
-                isMakingOffer = false;
-            });
+        connection->setLocalDescription().wait();
+        connection->signalingThread()->PostTask([this] {
+            const auto description = connection->localDescription();
+            if (!description) {
+                return;
+            }
+            const json packets = {
+                {"@type", wrtc::Description::SdpTypeToString(description->type())},
+                {"sdp", description->sdp()}
+            };
+            signaling->send(bytes::make_binary(to_string(packets)));
+            isMakingOffer = false;
         });
     }
 
-    void P2PCall::applyRemoteSdp(const wrtc::Description::Type sdpType, const std::string& sdp) {
+    void P2PCall::applyRemoteSdp(const wrtc::Description::SdpType sdpType, const std::string& sdp) {
         connection->setRemoteDescription(wrtc::Description(
             sdpType,
             sdp
-        ), [this, sdpType] {
-            connection->signalingThread()->PostTask([this, sdpType] {
-                if (sdpType == wrtc::Description::Type::Offer) {
-                    makingNegotation = true;
-                    sendLocalDescription();
-                }
-            });
+        )).wait();
+        connection->signalingThread()->PostTask([this, sdpType] {
+            if (sdpType == wrtc::Description::SdpType::Offer) {
+                makingNegotation = true;
+                sendLocalDescription();
+            }
         });
         if (!handshakeCompleted) {
             handshakeCompleted = true;
@@ -233,9 +224,10 @@ namespace ntgcalls {
     }
 
     void P2PCall::sendSignalingData(const bytes::binary& buffer) const {
-        if (signaling) {
-            signaling->receive(buffer);
+        if (!signaling) {
+            throw ConnectionError("Connection not initialized");
         }
+        signaling->send(buffer);
     }
 
     CallInterface::Type P2PCall::type() const {
