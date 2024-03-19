@@ -51,7 +51,7 @@ namespace ntgcalls {
 
         Status status();
 
-        void addTracks(const std::shared_ptr<wrtc::PeerConnection> &pc);
+        void addTracks(const std::unique_ptr<wrtc::PeerConnection> &pc);
 
         void onStreamEnd(const std::function<void(Type)> &callback);
 
@@ -61,13 +61,13 @@ namespace ntgcalls {
         std::shared_ptr<AudioStreamer> audio;
         std::shared_ptr<VideoStreamer> video;
         wrtc::MediaStreamTrack *audioTrack{}, *videoTrack{};
-        std::shared_ptr<MediaReaderFactory> reader;
+        std::unique_ptr<MediaReaderFactory> reader;
         bool idling = false;
         std::atomic_bool hasVideo = false, quit = false;
         wrtc::synchronized_callback<Type> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::thread thread;
-        std::shared_ptr<DispatchQueue> updateQueue;
+        std::unique_ptr<DispatchQueue> updateQueue;
         std::shared_mutex mutex;
 
         void checkStream() const;

@@ -18,7 +18,7 @@ namespace ntgcalls {
             V2Full = V2 | 1 << 3
         };
 
-        static std::shared_ptr<SignalingInterface> Create(
+        static std::unique_ptr<SignalingInterface> Create(
             const std::vector<std::string> &versions,
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,

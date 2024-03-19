@@ -6,9 +6,9 @@
 
 namespace ntgcalls {
     Stream::Stream() {
-        audio = std::make_shared<AudioStreamer>();
-        video = std::make_shared<VideoStreamer>();
-        updateQueue = std::make_shared<DispatchQueue>();
+        audio = std::make_unique<AudioStreamer>();
+        video = std::make_unique<VideoStreamer>();
+        updateQueue = std::make_unique<DispatchQueue>();
     }
 
     Stream::~Stream() {
@@ -23,7 +23,7 @@ namespace ntgcalls {
         reader = nullptr;
     }
 
-    void Stream::addTracks(const std::shared_ptr<wrtc::PeerConnection>& pc) {
+    void Stream::addTracks(const std::unique_ptr<wrtc::PeerConnection>& pc) {
         pc->addTrack(audioTrack = audio->createTrack());
         pc->addTrack(videoTrack = video->createTrack());
     }
@@ -66,7 +66,7 @@ namespace ntgcalls {
         } else {
             hasVideo = false;
         }
-        reader = std::make_shared<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
+        reader = std::make_unique<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }

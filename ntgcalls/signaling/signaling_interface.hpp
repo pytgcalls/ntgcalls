@@ -39,6 +39,6 @@ namespace ntgcalls {
         [[nodiscard]] virtual bool supportsCompression() const = 0;
 
     private:
-        std::shared_ptr<SignalingEncryption> signalingEncryption;
+        std::unique_ptr<SignalingEncryption> signalingEncryption;
     };
 } // ntgcalls

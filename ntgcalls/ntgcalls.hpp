@@ -5,11 +5,13 @@
 
 
 #include <cstdint>
+#include <future>
 
 #include "instances/call_interface.hpp"
 #include "models/auth_params.hpp"
 #include "models/protocol.hpp"
 #include "../wrtc/models/rtc_server.hpp"
+#include "utils/binding_utils.hpp"
 #include "utils/hardware_info.hpp"
 
 #define CHECK_AND_THROW_IF_EXISTS(chatId) \
@@ -25,8 +27,8 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
         wrtc::synchronized_callback<int64_t, bytes::binary> onEmitData;
-        std::shared_ptr<DispatchQueue> updateQueue;
-        std::shared_ptr<HardwareInfo> hardwareInfo;
+        std::unique_ptr<DispatchQueue> updateQueue;
+        std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
 
         bool exists(int64_t chatId) const;

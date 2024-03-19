@@ -7,7 +7,7 @@
 #include "signaling_v2.hpp"
 
 namespace ntgcalls {
-    std::shared_ptr<SignalingInterface> Signaling::Create(
+    std::unique_ptr<SignalingInterface> Signaling::Create(
         const std::vector<std::string> &versions,
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
@@ -25,7 +25,7 @@ namespace ntgcalls {
                 throw SignalingUnsupported("Signaling V1 is not supported");
             }
             if (sigVersion & ProtocolVersion::V2) {
-                return std::make_shared<SignalingV2>(networkThread, signalingThread, key, onEmitData, onSignalData, sigVersion & ProtocolVersion::V2Full);
+                return std::make_unique<SignalingV2>(networkThread, signalingThread, key, onEmitData, onSignalData, sigVersion & ProtocolVersion::V2Full);
             }
         }
         throw SignalingUnsupported("Unsupported " + bestVersion + " protocol version");

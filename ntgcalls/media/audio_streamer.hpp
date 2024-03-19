@@ -15,7 +15,7 @@
 
 namespace ntgcalls {
     class AudioStreamer final : public BaseStreamer {
-        std::shared_ptr<wrtc::RTCAudioSource> audio;
+        std::unique_ptr<wrtc::RTCAudioSource> audio;
         uint8_t bps = 0, channels = 0;
         uint32_t rate = 0;
 

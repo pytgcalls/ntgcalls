@@ -10,8 +10,8 @@
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
-        updateQueue = std::make_shared<DispatchQueue>();
-        hardwareInfo = std::make_shared<HardwareInfo>();
+        updateQueue = std::make_unique<DispatchQueue>();
+        hardwareInfo = std::make_unique<HardwareInfo>();
     }
 
     NTgCalls::~NTgCalls() {

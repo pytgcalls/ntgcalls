@@ -17,7 +17,7 @@ namespace ntgcalls {
         if (connection) {
             throw ConnectionError("Connection already made");
         }
-        connection = std::make_shared<wrtc::PeerConnection>();
+        connection = std::make_unique<wrtc::PeerConnection>();
         stream->addTracks(connection);
         const std::optional offer = connection->createOffer(false, false);
         connection->setLocalDescription(offer);

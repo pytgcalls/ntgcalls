@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     AudioStreamer::AudioStreamer() {
-        audio = std::make_shared<wrtc::RTCAudioSource>();
+        audio = std::make_unique<wrtc::RTCAudioSource>();
     }
 
     AudioStreamer::~AudioStreamer() {

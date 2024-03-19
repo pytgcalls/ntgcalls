@@ -76,7 +76,7 @@ namespace ntgcalls {
         if (!g_a_or_b || !key) {
             throw ConnectionNotFound("Connection not initialized");
         }
-        connection = std::make_shared<wrtc::PeerConnection>(servers);
+        connection = std::make_unique<wrtc::PeerConnection>(servers);
         connection->onRenegotiationNeeded([this] {
             if (makingNegotation) {
                 sendLocalDescription();

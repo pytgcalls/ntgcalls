@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     CallInterface::CallInterface() {
-        stream = std::make_shared<Stream>();
+        stream = std::make_unique<Stream>();
     }
 
     CallInterface::~CallInterface() {
@@ -48,7 +48,7 @@ namespace ntgcalls {
     }
 
     void CallInterface::onDisconnect(const std::function<void()>& callback) {
-        this->onCloseConnection = callback;
+        onCloseConnection = callback;
     }
 
     void CallInterface::onUpgrade(const std::function<void(MediaState)>& callback) const {

@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     VideoStreamer::VideoStreamer() {
-        video = std::make_shared<wrtc::RTCVideoSource>();
+        video = std::make_unique<wrtc::RTCVideoSource>();
     }
 
     VideoStreamer::~VideoStreamer() {

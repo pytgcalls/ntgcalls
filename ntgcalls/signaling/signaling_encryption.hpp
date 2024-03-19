@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <optional>
 #include <rtc_base/byte_buffer.h>
+#include <rtc_base/copy_on_write_buffer.h>
 
 #include "../utils/auth_key.hpp"
 #include "wrtc/utils/binary.hpp"

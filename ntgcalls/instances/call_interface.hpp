@@ -4,6 +4,7 @@
 
 #pragma once
 #include <memory>
+#include <future>
 
 #include "ntgcalls/stream.hpp"
 
@@ -11,8 +12,8 @@ namespace ntgcalls {
 
     class CallInterface {
     protected:
-        std::shared_ptr<wrtc::PeerConnection> connection;
-        std::shared_ptr<Stream> stream;
+        std::unique_ptr<wrtc::PeerConnection> connection;
+        std::unique_ptr<Stream> stream;
         bool connected = false;
         wrtc::synchronized_callback<void> onCloseConnection;
     public:

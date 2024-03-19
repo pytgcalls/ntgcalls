@@ -24,11 +24,11 @@ namespace ntgcalls {
         bool noLatency = desc.inputMode & BaseMediaDescription::InputMode::NoLatency;
         // SUPPORTED ENCODERS
         if ((desc.inputMode & (BaseMediaDescription::InputMode::File | allowedFlags)) == desc.inputMode) {
-            return std::make_shared<FileReader>(desc.input, bufferSize, noLatency);
+            return std::make_unique<FileReader>(desc.input, bufferSize, noLatency);
         }
         if ((desc.inputMode & (BaseMediaDescription::InputMode::Shell | allowedFlags)) == desc.inputMode) {
 #ifdef BOOST_ENABLED
-            return std::make_shared<ShellReader>(desc.input, bufferSize, noLatency);
+            return std::make_unique<ShellReader>(desc.input, bufferSize, noLatency);
 #else
             throw ShellError("Shell execution is not yet supported on your OS/Architecture");
 #endif

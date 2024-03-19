@@ -17,7 +17,7 @@
 
 namespace ntgcalls {
     class VideoStreamer final : public BaseStreamer {
-        std::shared_ptr<wrtc::RTCVideoSource> video;
+        std::unique_ptr<wrtc::RTCVideoSource> video;
         uint16_t w = 0, h = 0;
         uint8_t fps = 0;
 

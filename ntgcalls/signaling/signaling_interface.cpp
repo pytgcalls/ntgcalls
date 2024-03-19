@@ -14,7 +14,7 @@ namespace ntgcalls {
         const std::function<void(const bytes::binary&)>& onEmitData,
         const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
     ): onSignalData(onSignalData), onEmitData(onEmitData), networkThread(networkThread), signalingThread(signalingThread) {
-        signalingEncryption = std::make_shared<SignalingEncryption>(key);
+        signalingEncryption = std::make_unique<SignalingEncryption>(key);
     }
 
     std::optional<bytes::binary> SignalingInterface::preProcessData(const bytes::binary &data, const bool isOut) const {
