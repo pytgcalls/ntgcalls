@@ -18,7 +18,7 @@ namespace ntgcalls {
         }
         connection = std::make_unique<wrtc::PeerConnection>();
         stream->addTracks(connection);
-        connection->setLocalDescription().wait();
+        connection->setLocalDescription();
         const auto payload = CallPayload(connection->localDescription().value());
         audioSource = payload.audioSource;
         for (const auto &ssrc : payload.sourceGroups) {
@@ -75,15 +75,15 @@ namespace ntgcalls {
         }
         connection->setRemoteDescription(
             wrtc::Description(
-                wrtc::Description::SdpType::Offer,
+                wrtc::Description::SdpType::Answer,
                 wrtc::SdpBuilder::fromConference(conference)
             )
-        ).wait();
+        );
         std::promise<void> future;
         connection->onConnectionChange([&](const wrtc::PeerConnectionState state) {
             switch (state) {
             case wrtc::PeerConnectionState::Connected:
-                if (!this->connected) {
+                if (!connected) {
                     connected = true;
                     stream->start();
                     future.set_value();
@@ -93,7 +93,7 @@ namespace ntgcalls {
             case wrtc::PeerConnectionState::Failed:
             case wrtc::PeerConnectionState::Closed:
                 connection->onConnectionChange(nullptr);
-                if (!this->connected) {
+                if (!connected) {
                     future.set_exception(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
                 } else {
                     (void) onCloseConnection();
