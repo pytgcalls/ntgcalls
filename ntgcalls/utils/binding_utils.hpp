@@ -25,7 +25,11 @@ namespace py = pybind11;
 template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
 std::optional<T> toCBytes(const std::optional<py::bytes>& p) {
     if (p) {
-        return toCBytes<T>(p.value());
+        const auto data = reinterpret_cast<const uint8_t*>(PYBIND11_BYTES_AS_STRING(p->ptr()));
+        const auto size = static_cast<size_t>(PYBIND11_BYTES_SIZE(p->ptr()));
+        auto sharedPtr = T(size);
+        std::memcpy(sharedPtr.data(), data, size);
+        return sharedPtr;
     }
     return std::nullopt;
 }
