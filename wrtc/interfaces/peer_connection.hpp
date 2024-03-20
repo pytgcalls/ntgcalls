@@ -25,9 +25,9 @@ namespace wrtc {
 
         std::optional<Description> localDescription() const;
 
-        std::future<void> setLocalDescription() const;
+        void setLocalDescription() const;
 
-        std::future<void> setRemoteDescription(const Description &description) const;
+        void setRemoteDescription(const Description &description) const;
 
         void addTrack(MediaStreamTrack *mediaStreamTrack, const std::vector<std::string>& streamIds = {}) const;
 
