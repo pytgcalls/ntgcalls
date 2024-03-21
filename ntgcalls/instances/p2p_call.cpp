@@ -177,32 +177,38 @@ namespace ntgcalls {
 
     void P2PCall::sendLocalDescription() {
         isMakingOffer = true;
-        connection->setLocalDescription().wait();
-        connection->signalingThread()->PostTask([this] {
-            const auto description = connection->localDescription();
-            if (!description) {
-                return;
-            }
-            const json packets = {
-                {"@type", wrtc::Description::SdpTypeToString(description->type())},
-                {"sdp", description->sdp()}
-            };
-            signaling->send(bytes::make_binary(to_string(packets)));
-            isMakingOffer = false;
-        });
+        connection->setLocalDescription([this] {
+            connection->signalingThread()->PostTask([this] {
+                const auto description = connection->localDescription();
+                if (!description) {
+                    return;
+                }
+                const json packets = {
+                    {"@type", wrtc::Description::SdpTypeToString(description->type())},
+                    {"sdp", description->sdp()}
+                };
+                signaling->send(bytes::make_binary(to_string(packets)));
+                isMakingOffer = false;
+            });
+        }, [this](const std::exception_ptr& error) {});
     }
 
     void P2PCall::applyRemoteSdp(const wrtc::Description::SdpType sdpType, const std::string& sdp) {
-        connection->setRemoteDescription(wrtc::Description(
-            sdpType,
-            sdp
-        )).wait();
-        connection->signalingThread()->PostTask([this, sdpType] {
-            if (sdpType == wrtc::Description::SdpType::Offer) {
-                makingNegotation = true;
-                sendLocalDescription();
-            }
-        });
+        connection->setRemoteDescription(
+            wrtc::Description(
+                sdpType,
+                sdp
+            ),
+            [this, sdpType] {
+                connection->signalingThread()->PostTask([this, sdpType] {
+                    if (sdpType == wrtc::Description::SdpType::Offer) {
+                        makingNegotation = true;
+                        sendLocalDescription();
+                    }
+                });
+            },
+            [this](const std::exception_ptr& error) {}
+        );
         if (!handshakeCompleted) {
             handshakeCompleted = true;
             applyPendingIceCandidates();
@@ -227,7 +233,7 @@ namespace ntgcalls {
         if (!signaling) {
             throw ConnectionError("Connection not initialized");
         }
-        signaling->send(buffer);
+        signaling->receive(buffer);
     }
 
     CallInterface::Type P2PCall::type() const {
