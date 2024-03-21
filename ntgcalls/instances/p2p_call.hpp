@@ -42,7 +42,7 @@ namespace ntgcalls {
 
         void onSignalingData(const std::function<void(const bytes::binary&)>& callback);
 
-        void sendSignalingData(const bytes::binary& buffer) const;
+        void sendSignalingData(const bytes::binary& buffer);
     };
 
 } // ntgcalls

@@ -4,7 +4,6 @@
 
 #pragma once
 #include <memory>
-#include <future>
 
 #include "ntgcalls/stream.hpp"
 
@@ -12,6 +11,7 @@ namespace ntgcalls {
 
     class CallInterface {
     protected:
+        std::mutex mutex;
         std::unique_ptr<wrtc::PeerConnection> connection;
         std::unique_ptr<Stream> stream;
         bool connected = false;
@@ -28,29 +28,29 @@ namespace ntgcalls {
             P2P = Outgoing | Incoming
         };
 
-        bool pause() const;
+        bool pause();
 
-        bool resume() const;
+        bool resume();
 
-        bool mute() const;
+        bool mute();
 
-        bool unmute() const;
+        bool unmute();
 
-        void stop() const;
+        void stop();
 
-        void changeStream(const MediaDescription& config) const;
+        void changeStream(const MediaDescription& config);
 
-        void onStreamEnd(const std::function<void(Stream::Type)> &callback) const;
+        void onStreamEnd(const std::function<void(Stream::Type)> &callback);
 
         void onDisconnect(const std::function<void()> &callback);
 
-        void onUpgrade(const std::function<void(MediaState)> &callback) const;
+        void onUpgrade(const std::function<void(MediaState)> &callback);
 
-        uint64_t time() const;
+        uint64_t time();
 
-        MediaState getState() const;
+        MediaState getState();
 
-        Stream::Status status() const;
+        Stream::Status status();
 
         virtual Type type() const = 0;
     };

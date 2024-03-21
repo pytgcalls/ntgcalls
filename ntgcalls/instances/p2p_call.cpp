@@ -11,6 +11,7 @@
 
 namespace ntgcalls {
     bytes::vector P2PCall::init(const int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash) {
+        std::lock_guard lock(mutex);
         if (g_a_or_b) {
             throw ConnectionError("Connection already made");
         }
@@ -28,6 +29,7 @@ namespace ntgcalls {
     }
 
     AuthParams P2PCall::exchangeKeys(const bytes::vector &p, const bytes::vector &g_a_or_b, const int64_t fingerprint) {
+        std::lock_guard lock(mutex);
         if (connection) {
             throw ConnectionError("Connection already made");
         }
@@ -67,6 +69,7 @@ namespace ntgcalls {
     }
 
     void P2PCall::connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
+        std::unique_lock lock(mutex);
         if (connection) {
             throw ConnectionError("Connection already made");
         }
@@ -129,6 +132,7 @@ namespace ntgcalls {
                 break;
             }
         });
+        lock.unlock();
         promise.get_future().wait();
     }
 
@@ -229,7 +233,8 @@ namespace ntgcalls {
         onEmitData = callback;
     }
 
-    void P2PCall::sendSignalingData(const bytes::binary& buffer) const {
+    void P2PCall::sendSignalingData(const bytes::binary& buffer) {
+        std::lock_guard lock(mutex);
         if (!signaling) {
             throw ConnectionError("Connection not initialized");
         }

@@ -31,6 +31,7 @@ namespace ntgcalls {
         std::unique_ptr<DispatchQueue> updateQueue;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
+        ASYNC_ARGS
 
         bool exists(int64_t chatId) const;
 

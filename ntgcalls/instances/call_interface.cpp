@@ -6,6 +6,7 @@
 
 namespace ntgcalls {
     CallInterface::CallInterface() {
+        std::lock_guard lock(mutex);
         stream = std::make_unique<Stream>();
     }
 
@@ -15,23 +16,28 @@ namespace ntgcalls {
         stream = nullptr;
     }
 
-    bool CallInterface::pause() const {
+    bool CallInterface::pause() {
+        std::lock_guard lock(mutex);
         return stream->pause();
     }
 
-    bool CallInterface::resume() const {
+    bool CallInterface::resume() {
+        std::lock_guard lock(mutex);
         return stream->resume();
     }
 
-    bool CallInterface::mute() const {
+    bool CallInterface::mute() {
+        std::lock_guard lock(mutex);
         return stream->mute();
     }
 
-    bool CallInterface::unmute() const {
+    bool CallInterface::unmute() {
+        std::lock_guard lock(mutex);
         return stream->unmute();
     }
 
-    void CallInterface::stop() const {
+    void CallInterface::stop() {
+        std::lock_guard lock(mutex);
         stream->stop();
         if (connection) {
             connection->onIceStateChange(nullptr);
@@ -39,31 +45,38 @@ namespace ntgcalls {
         }
     }
 
-    void CallInterface::changeStream(const MediaDescription& config) const {
+    void CallInterface::changeStream(const MediaDescription& config) {
+        std::lock_guard lock(mutex);
         stream->setAVStream(config);
     }
 
-    void CallInterface::onStreamEnd(const std::function<void(Stream::Type)>& callback) const {
+    void CallInterface::onStreamEnd(const std::function<void(Stream::Type)>& callback) {
+        std::lock_guard lock(mutex);
         stream->onStreamEnd(callback);
     }
 
     void CallInterface::onDisconnect(const std::function<void()>& callback) {
+        std::lock_guard lock(mutex);
         onCloseConnection = callback;
     }
 
-    void CallInterface::onUpgrade(const std::function<void(MediaState)>& callback) const {
+    void CallInterface::onUpgrade(const std::function<void(MediaState)>& callback) {
+        std::lock_guard lock(mutex);
         stream->onUpgrade(callback);
     }
 
-    uint64_t CallInterface::time() const {
+    uint64_t CallInterface::time() {
+        std::lock_guard lock(mutex);
         return stream->time();
     }
 
-    MediaState CallInterface::getState() const {
+    MediaState CallInterface::getState() {
+        std::lock_guard lock(mutex);
         return stream->getState();
     }
 
-    Stream::Status CallInterface::status() const {
+    Stream::Status CallInterface::status() {
+        std::lock_guard lock(mutex);
         return stream->status();
     }
 } // ntgcalls

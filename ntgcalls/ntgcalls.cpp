@@ -7,11 +7,13 @@
 #include "exceptions.hpp"
 #include "instances/group_call.hpp"
 #include "instances/p2p_call.hpp"
+#include <pybind11/stl.h>
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
         updateQueue = std::make_unique<DispatchQueue>();
         hardwareInfo = std::make_unique<HardwareInfo>();
+        INIT_ASYNC
     }
 
     NTgCalls::~NTgCalls() {
@@ -73,13 +75,11 @@ namespace ntgcalls {
 
     ASYNC_RETURN(AuthParams) NTgCalls::exchangeKeys(const int64_t userId, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &g_a_or_b, const int64_t fingerprint) {
         SMART_ASYNC(this, userId, p, g_a_or_b, fingerprint)
-        std::lock_guard lock(mutex);
         END_ASYNC_RETURN(SafeCall<P2PCall>(safeConnection(userId))->exchangeKeys(CPP_BYTES(p, bytes::vector), CPP_BYTES(g_a_or_b, bytes::vector), fingerprint))
     }
 
     ASYNC_RETURN(void) NTgCalls::connectP2P(const int64_t userId, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
         SMART_ASYNC(this, userId, servers, versions)
-        std::lock_guard lock(mutex);
         SafeCall<P2PCall>(safeConnection(userId))->connect(servers, versions);
         END_ASYNC
     }
@@ -95,88 +95,82 @@ namespace ntgcalls {
 
     ASYNC_RETURN(void) NTgCalls::connect(const int64_t chatId, const std::string& params) {
         SMART_ASYNC(this, chatId, params)
-        std::lock_guard lock(mutex);
         try {
             SafeCall<GroupCall>(safeConnection(chatId))->connect(params);
         } catch (TelegramServerError&) {
             AWAIT(stop(chatId));
             throw;
         }
-        SafeCall<GroupCall>(safeConnection(chatId))->connect(params);
         END_ASYNC
     }
 
     ASYNC_RETURN(void) NTgCalls::changeStream(const int64_t chatId, const MediaDescription& media) {
         SMART_ASYNC(this, chatId, media)
-        std::lock_guard lock(mutex);
         safeConnection(chatId)->changeStream(media);
         END_ASYNC
     }
 
     ASYNC_RETURN(bool) NTgCalls::pause(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        std::lock_guard lock(mutex);
         END_ASYNC_RETURN(safeConnection(chatId)->pause())
     }
 
     ASYNC_RETURN(bool) NTgCalls::resume(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        std::lock_guard lock(mutex);
         END_ASYNC_RETURN(safeConnection(chatId)->resume())
     }
 
     ASYNC_RETURN(bool) NTgCalls::mute(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        std::lock_guard lock(mutex);
         END_ASYNC_RETURN(safeConnection(chatId)->mute())
     }
 
     ASYNC_RETURN(bool) NTgCalls::unmute(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        std::lock_guard lock(mutex);
         END_ASYNC_RETURN(safeConnection(chatId)->unmute())
     }
 
     ASYNC_RETURN(void) NTgCalls::stop(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        std::lock_guard lock(mutex);
         safeConnection(chatId)->stop();
+        std::lock_guard lock(mutex);
         connections.erase(connections.find(chatId));
         END_ASYNC
     }
 
     void NTgCalls::onStreamEnd(const std::function<void(int64_t, Stream::Type)>& callback) {
+        std::lock_guard lock(mutex);
         onEof = callback;
     }
 
     void NTgCalls::onUpgrade(const std::function<void(int64_t, MediaState)>& callback) {
+        std::lock_guard lock(mutex);
         onChangeStatus = callback;
     }
 
     void NTgCalls::onDisconnect(const std::function<void(int64_t)>& callback) {
-        onCloseConnection = callback;
+       std::lock_guard lock(mutex);
+       onCloseConnection = callback;
     }
 
     void NTgCalls::onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback) {
+        std::lock_guard lock(mutex);
         onEmitData = callback;
     }
 
     ASYNC_RETURN(void) NTgCalls::sendSignalingData(const int64_t chatId, const BYTES(bytes::binary) &msgKey) {
         SMART_ASYNC(this, chatId, msgKey)
-        std::lock_guard lock(mutex);
         SafeCall<P2PCall>(safeConnection(chatId))->sendSignalingData(CPP_BYTES(msgKey, bytes::binary));
         END_ASYNC
     }
 
     ASYNC_RETURN(uint64_t) NTgCalls::time(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        std::lock_guard lock(mutex);
         END_ASYNC_RETURN(safeConnection(chatId)->time())
     }
 
     ASYNC_RETURN(MediaState) NTgCalls::getState(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        std::lock_guard lock(mutex);
         END_ASYNC_RETURN(safeConnection(chatId)->getState())
     }
 
@@ -200,6 +194,7 @@ namespace ntgcalls {
     }
 
     std::shared_ptr<CallInterface> NTgCalls::safeConnection(const int64_t chatId) {
+        std::lock_guard lock(mutex);
         if (!exists(chatId)) {
             throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chatId) + "\" not found");
         }

@@ -13,6 +13,7 @@ namespace ntgcalls {
     }
 
     std::string GroupCall::init(const MediaDescription& config) {
+        std::lock_guard lock(mutex);
         if (connection) {
             throw ConnectionError("Connection already made");
         }
@@ -29,6 +30,7 @@ namespace ntgcalls {
     }
 
     void GroupCall::connect(const std::string& jsonData) {
+        std::lock_guard lock(mutex);
         if (!connection) {
             throw ConnectionError("Connection not initialized");
         }
