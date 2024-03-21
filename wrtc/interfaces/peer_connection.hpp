@@ -25,7 +25,11 @@ namespace wrtc {
 
         std::optional<Description> localDescription() const;
 
+        void setLocalDescription(const std::function<void()> &onSuccess, const std::function<void(const std::exception_ptr&)> &onError) const;
+
         void setLocalDescription() const;
+
+        void setRemoteDescription(const Description &description, const std::function<void()> &onSuccess, const std::function<void(const std::exception_ptr&)> &onError) const;
 
         void setRemoteDescription(const Description &description) const;
 
