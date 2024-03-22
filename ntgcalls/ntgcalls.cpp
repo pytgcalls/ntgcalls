@@ -190,7 +190,9 @@ namespace ntgcalls {
     void NTgCalls::internalStop(const int64_t chatId) {
         safeConnection(chatId)->stop();
         std::lock_guard lock(mutex);
-        connections.erase(connections.find(chatId));
+        if (connections.contains(chatId)) {
+            connections.erase(connections.find(chatId));
+        }
     }
 
     bool NTgCalls::exists(const int64_t chatId) const {
