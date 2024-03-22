@@ -25,8 +25,6 @@ namespace wrtc {
 
         [[nodiscard]] std::string sdp() const;
 
-        static SdpType SdpTypeFromString(const std::string &type);
-
         static std::string SdpTypeToString(SdpType type);
 
     private:

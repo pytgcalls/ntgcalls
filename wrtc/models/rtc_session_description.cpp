@@ -35,22 +35,6 @@ namespace wrtc {
         return _sdp;
     }
 
-    Description::SdpType Description::SdpTypeFromString(const std::string& type) {
-        if (type == "offer") {
-            return SdpType::Offer;
-        }
-        if (type == "answer") {
-            return SdpType::Answer;
-        }
-        if (type == "pranswer") {
-            return SdpType::Pranswer;
-        }
-        if (type == "rollback") {
-            return SdpType::Rollback;
-        }
-        throw std::runtime_error("Invalid sdp type");
-    }
-
     std::string Description::SdpTypeToString(const SdpType type) {
         switch (type) {
             case SdpType::Offer:

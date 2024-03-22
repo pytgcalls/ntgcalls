@@ -40,11 +40,6 @@ namespace bytes {
         return { buffer.begin(), buffer.end() };
     }
 
-    template <typename Container>
-    binary make_binary(const Container &container) {
-        return { container.begin(), container.end() };
-    }
-
     struct memory_span {
         const void* data = nullptr;
         size_t size = 0;
