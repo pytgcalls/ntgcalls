@@ -199,7 +199,7 @@ namespace ntgcalls {
                 signaling->send(bytes::make_binary(to_string(packets)));
                 isMakingOffer = false;
             });
-        }, [this](const std::exception_ptr& error) {});
+        }, [this](const std::exception_ptr&) {});
     }
 
     void P2PCall::applyRemoteSdp(const wrtc::Description::SdpType sdpType, const std::string& sdp) {
@@ -216,7 +216,7 @@ namespace ntgcalls {
                     }
                 });
             },
-            [this](const std::exception_ptr& error) {}
+            [this](const std::exception_ptr&) {}
         );
         if (!handshakeCompleted) {
             handshakeCompleted = true;
