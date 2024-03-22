@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <future>
 #include <api/peer_connection_interface.h>
 #include "../enums.hpp"
 #include "../exceptions.hpp"
@@ -14,12 +13,13 @@
 #include "peer_connection/peer_connection_factory.hpp"
 #include "wrtc/models/ice_candidate.hpp"
 #include "../../ntgcalls/models/rtc_server.hpp"
+#include "peer_connection/data_channel_observer_impl.hpp"
 
 namespace wrtc {
 
     class PeerConnection final : public webrtc::PeerConnectionObserver {
     public:
-        explicit PeerConnection(const std::vector<RTCServer>& servers = {});
+        explicit PeerConnection(const std::vector<RTCServer>& servers = {}, bool allowAttachDataChannel = false);
 
         ~PeerConnection() override;
 
@@ -39,6 +39,10 @@ namespace wrtc {
 
         void restartIce() const;
 
+        void createDataChannel(const std::string &label);
+
+        void sendDataChannelMessage(const bytes::binary &data) const;
+
         void close();
 
         SignalingState signalingState() const;
@@ -55,20 +59,31 @@ namespace wrtc {
 
         void onConnectionChange(const std::function<void(PeerConnectionState state)> &callback);
 
+        void onDataChannelOpened(const std::function<void()> &callback);
+
+        void onDataChannelMessage(const std::function<void(bytes::binary)> &callback);
+
         rtc::Thread *networkThread() const;
 
         rtc::Thread *signalingThread() const;
 
+        bool isDataChannelOpen() const;
+
     private:
         rtc::scoped_refptr<PeerConnectionFactory> factory;
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection;
+        rtc::scoped_refptr<webrtc::DataChannelInterface> dataChannel;
+        std::unique_ptr<DataChannelObserverImpl> dataChannelObserver;
 
         synchronized_callback<IceState> stateChangeCallback;
         synchronized_callback<GatheringState> gatheringStateChangeCallback;
-        synchronized_callback<void> renegotiationNeedeCallbackd;
+        synchronized_callback<void> renegotiationNeededCallback;
+        synchronized_callback<void> dataChannelOpenedCallback;
+        synchronized_callback<bytes::binary> dataChannelMessageCallback;
         synchronized_callback<SignalingState> signalingStateChangeCallback;
         synchronized_callback<PeerConnectionState> connectionChangeCallback;
         synchronized_callback<IceCandidate> iceCandidateCallback;
+        bool allowAttachDataChannel, dataChannelOpen = false;
 
 
         // PeerConnectionObserver implementation.
@@ -96,6 +111,10 @@ namespace wrtc {
         void OnConnectionChange(webrtc::PeerConnectionInterface::PeerConnectionState newState) override;
 
         static SignalingState parseSignalingState(webrtc::PeerConnectionInterface::SignalingState state);
+
+        void onDataChannelStateUpdated();
+
+        void attachDataChannel(const rtc::scoped_refptr<webrtc::DataChannelInterface>& dataChannel);
     };
 
 } // wrtc

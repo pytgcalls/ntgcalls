@@ -4,12 +4,14 @@
 
 #include "peer_connection.hpp"
 
+#include <future>
+
 #include "peer_connection/set_session_description_observer.hpp"
 #include "api/jsep_ice_candidate.h"
 
 namespace wrtc {
 
-    PeerConnection::PeerConnection(const std::vector<RTCServer>& servers) {
+    PeerConnection::PeerConnection(const std::vector<RTCServer>& servers, const bool allowAttachDataChannel): allowAttachDataChannel(allowAttachDataChannel) {
         factory = PeerConnectionFactory::GetOrCreateDefault();
 
         webrtc::PeerConnectionInterface::RTCConfiguration config;
@@ -124,10 +126,27 @@ namespace wrtc {
         }
     }
 
-    void PeerConnection::restartIce() const
-    {
+    void PeerConnection::restartIce() const {
         if (peerConnection) {
             peerConnection->RestartIce();
+        }
+    }
+
+    void PeerConnection::createDataChannel(const std::string& label) {
+        const webrtc::DataChannelInit dataChannelInit;
+        if (webrtc::RTCErrorOr<rtc::scoped_refptr<webrtc::DataChannelInterface>> dataChannelOrError = peerConnection->CreateDataChannelOrError(label, &dataChannelInit); dataChannelOrError.ok()) {
+            attachDataChannel(dataChannelOrError.value());
+        } else {
+            throw wrapRTCError(dataChannelOrError.error());
+        }
+    }
+
+    void PeerConnection::sendDataChannelMessage(const bytes::binary& data) const {
+        if (dataChannel) {
+            const std::string stringData(data.begin(), data.end());
+            dataChannel->Send(webrtc::DataBuffer(stringData));
+        } else {
+            throw RTCException("Cannot send data channel message; Data channel is not open");
         }
     }
 
@@ -169,11 +188,19 @@ namespace wrtc {
     }
 
     void PeerConnection::onRenegotiationNeeded(const std::function<void()>& callback) {
-        renegotiationNeedeCallbackd = callback;
+        renegotiationNeededCallback = callback;
     }
 
     void PeerConnection::onConnectionChange(const std::function<void(PeerConnectionState state)>& callback) {
         connectionChangeCallback = callback;
+    }
+
+    void PeerConnection::onDataChannelOpened(const std::function<void()>& callback) {
+        dataChannelOpenedCallback = callback;
+    }
+
+    void PeerConnection::onDataChannelMessage(const std::function<void(bytes::binary)>& callback) {
+        dataChannelMessageCallback = callback;
     }
 
     rtc::Thread* PeerConnection::networkThread() const {
@@ -182,6 +209,10 @@ namespace wrtc {
 
     rtc::Thread* PeerConnection::signalingThread() const {
         return factory->signalingThread();
+    }
+
+    bool PeerConnection::isDataChannelOpen() const {
+        return dataChannelOpen;
     }
 
     void PeerConnection::OnSignalingChange(const webrtc::PeerConnectionInterface::SignalingState new_state) {
@@ -211,6 +242,39 @@ namespace wrtc {
             break;
         }
         return newValue;
+    }
+
+    void PeerConnection::onDataChannelStateUpdated() {
+        if (dataChannel) {
+            if (dataChannel->state() == webrtc::DataChannelInterface::DataState::kOpen) {
+                if (!dataChannelOpen) {
+                    dataChannelOpen = true;
+                    (void) dataChannelOpenedCallback();
+                }
+            } else {
+                dataChannelOpen = false;
+            }
+        }
+    }
+
+    void PeerConnection::attachDataChannel(const rtc::scoped_refptr<webrtc::DataChannelInterface>& dataChannel) {
+        DataChannelObserverImpl::Parameters dataChannelObserverParams;
+        dataChannelObserverParams.onStateChange = [this] {
+            signalingThread() -> PostTask([this] {
+                onDataChannelStateUpdated();
+            });
+        };
+        dataChannelObserverParams.onMessage = [this](const webrtc::DataBuffer &buffer) {
+            signalingThread() -> PostTask([this, buffer] {
+                if (!buffer.binary) {
+                    dataChannelMessageCallback(bytes::binary(buffer.data.data(), buffer.data.data() + buffer.data.size()));
+                }
+            });
+        };
+        this -> dataChannel = dataChannel;
+        dataChannelObserver = std::make_unique<DataChannelObserverImpl>(std::move(dataChannelObserverParams));
+        onDataChannelStateUpdated();
+        dataChannel->RegisterObserver(dataChannelObserver.get());
     }
 
     void PeerConnection::OnIceConnectionChange(const webrtc::PeerConnectionInterface::IceConnectionState new_state) {
@@ -263,11 +327,13 @@ namespace wrtc {
     }
 
     void PeerConnection::OnRenegotiationNeeded() {
-        (void) renegotiationNeedeCallbackd();
+        (void) renegotiationNeededCallback();
     }
 
-    void PeerConnection::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
-
+    void PeerConnection::OnDataChannel(const rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
+        if (allowAttachDataChannel && !dataChannel) {
+            attachDataChannel(data_channel);
+        }
     }
 
     void PeerConnection::OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
