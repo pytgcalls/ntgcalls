@@ -4,24 +4,13 @@
 
 #pragma once
 
-#include "dispatch_queue.hpp"
 #include "wrtc/utils/binary.hpp"
-
-
-class GlobalAsync {
-    typedef std::function<void()> fp_t;
-
-    static std::shared_ptr<DispatchQueue> dispatch_queue;
-    static std::mutex mutex;
-
-public:
-    static std::shared_ptr<DispatchQueue> GetOrCreate();
-};
-
 #ifdef PYTHON_ENABLED
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
+#endif
 
+#ifdef PYTHON_ENABLED
 template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
 std::optional<T> toCBytes(const std::optional<py::bytes>& p) {
     if (p) {
@@ -49,7 +38,7 @@ py::bytes toBytes(const T& p) {
 }
 
 #define THREAD_SAFE { \
-py::gil_scoped_acquire acquire; \
+py::gil_scoped_acquire acquire;
 
 #define BYTES(x) py::bytes
 
@@ -59,16 +48,22 @@ py::gil_scoped_acquire acquire; \
 
 #define ASYNC_RETURN(...) py::object
 
+#define ASYNC_ARGS py::object loop;
+
+#define INIT_ASYNC loop = py::module::import("asyncio").attr("get_event_loop")();
+
 #define SMART_ASYNC(...) \
-py::gil_scoped_acquire acquire;\
-const py::object loop = py::module_::import("asyncio.events").attr("get_event_loop")();\
-py::object promise = loop.attr("create_future")();\
-GlobalAsync::GetOrCreate()->dispatch([loop, promise, __VA_ARGS__] {
+auto promise = loop.attr("create_future")(); \
+py::gil_scoped_release release;\
+std::thread([promise = promise.inc_ref(), __VA_ARGS__] {\
+try {
 
 #define CLOSE_ASYNC(...) \
 py::gil_scoped_acquire acquire;\
 loop.attr("call_soon_threadsafe")(promise.attr("set_result"), __VA_ARGS__); \
-});\
+} catch (const std::exception& e) {\
+}\
+}).detach();\
 return promise;
 
 #define END_ASYNC CLOSE_ASYNC(nullptr)
