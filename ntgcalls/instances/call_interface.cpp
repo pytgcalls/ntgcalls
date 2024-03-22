@@ -39,7 +39,7 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         stream->stop();
         if (connection) {
-            connection->onIceStateChange(nullptr);
+            connection->onConnectionChange(nullptr);
             connection->close();
         }
     }
