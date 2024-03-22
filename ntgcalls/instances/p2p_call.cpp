@@ -10,7 +10,7 @@
 #include "wrtc/utils/encryption.hpp"
 
 namespace ntgcalls {
-    bytes::vector P2PCall::init(const int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash) {
+    bytes::vector P2PCall::init(const int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media) {
         std::lock_guard lock(mutex);
         if (g_a_or_b) {
             throw ConnectionError("Connection already made");
@@ -25,6 +25,7 @@ namespace ntgcalls {
             this->g_a_hash = g_a_hash;
         }
         g_a_or_b = std::move(first.modexp);
+        stream->setAVStream(media);
         return g_a_hash ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
     }
 
@@ -116,7 +117,11 @@ namespace ntgcalls {
         connection->onConnectionChange([this, &promise](const wrtc::PeerConnectionState state) {
             switch (state) {
             case wrtc::PeerConnectionState::Connected:
-                if (!connected) promise.set_value();
+                if (!connected) {
+                    connected = true;
+                    stream->start();
+                    promise.set_value();
+                }
                 break;
             case wrtc::PeerConnectionState::Disconnected:
             case wrtc::PeerConnectionState::Failed:

@@ -32,7 +32,7 @@ namespace ntgcalls {
         void applyPendingIceCandidates();
 
     public:
-        bytes::vector init(int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash);
+        bytes::vector init(int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media);
 
         AuthParams exchangeKeys(const bytes::vector &p, const bytes::vector &g_a_or_b, int64_t fingerprint);
 

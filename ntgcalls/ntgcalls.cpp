@@ -63,13 +63,13 @@ namespace ntgcalls {
         }
     }
 
-    ASYNC_RETURN(bytes::vector) NTgCalls::createP2PCall(const int64_t userId, const int32_t &g, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &r, const std::optional<BYTES(bytes::vector)> &g_a_hash) {
-        SMART_ASYNC(this, userId, g, p = CPP_BYTES(p, bytes::vector), r = CPP_BYTES(r, bytes::vector), g_a_hash = CPP_BYTES(g_a_hash, bytes::vector))
+    ASYNC_RETURN(bytes::vector) NTgCalls::createP2PCall(const int64_t userId, const int32_t &g, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &r, const std::optional<BYTES(bytes::vector)> &g_a_hash, const MediaDescription& media) {
+        SMART_ASYNC(this, userId, g, p = CPP_BYTES(p, bytes::vector), r = CPP_BYTES(r, bytes::vector), g_a_hash = CPP_BYTES(g_a_hash, bytes::vector), media)
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(userId);
         connections[userId] = std::make_shared<P2PCall>();
         setupListeners(userId);
-        const auto result = SafeCall<P2PCall>(connections[userId])->init(g, p, r, g_a_hash);
+        const auto result = SafeCall<P2PCall>(connections[userId])->init(g, p, r, g_a_hash, media);
         END_ASYNC_RETURN_SAFE(CAST_BYTES(result))
     }
 
