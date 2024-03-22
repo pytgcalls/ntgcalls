@@ -37,6 +37,8 @@ py::bytes toBytes(const T& p) {
     return {reinterpret_cast<const char*>(p.data()), p.size()};
 }
 
+py::object translate_current_exception();
+
 #define THREAD_SAFE { \
 py::gil_scoped_acquire acquire;
 
@@ -62,6 +64,8 @@ try {
 py::gil_scoped_acquire acquire;\
 loop.attr("call_soon_threadsafe")(promise.attr("set_result"), __VA_ARGS__); \
 } catch (const std::exception& e) {\
+py::gil_scoped_acquire acquire;\
+loop.attr("call_soon_threadsafe")(promise.attr("set_exception"), translate_current_exception());\
 }\
 }).detach();\
 return promise;
