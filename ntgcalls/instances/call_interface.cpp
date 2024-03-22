@@ -59,11 +59,6 @@ namespace ntgcalls {
         onCloseConnection = callback;
     }
 
-    void CallInterface::onUpgrade(const std::function<void(MediaState)>& callback) {
-        std::lock_guard lock(mutex);
-        stream->onUpgrade(callback);
-    }
-
     uint64_t CallInterface::time() {
         std::lock_guard lock(mutex);
         return stream->time();

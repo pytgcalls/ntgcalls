@@ -44,8 +44,6 @@ namespace ntgcalls {
 
         void onDisconnect(const std::function<void()> &callback);
 
-        void onUpgrade(const std::function<void(MediaState)> &callback);
-
         uint64_t time();
 
         MediaState getState();

@@ -18,6 +18,8 @@ namespace ntgcalls {
         void connect(const std::string& jsonData);
 
         Type type() const override;
+
+        void onUpgrade(const std::function<void(MediaState)> &callback);
     };
 
 } // ntgcalls

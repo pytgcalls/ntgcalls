@@ -4,6 +4,8 @@
 
 #include "group_call.hpp"
 
+#include <future>
+
 #include "ntgcalls/exceptions.hpp"
 #include "ntgcalls/models/call_payload.hpp"
 
@@ -106,6 +108,11 @@ namespace ntgcalls {
             }
         });
         future.get_future().wait();
+    }
+
+    void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) {
+        std::lock_guard lock(mutex);
+        stream->onUpgrade(callback);
     }
 
     CallInterface::Type GroupCall::type() const {

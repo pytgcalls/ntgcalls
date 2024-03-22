@@ -37,13 +37,15 @@ namespace ntgcalls {
                 END_THREAD_SAFE
             });
         });
-        connections[chatId]->onUpgrade([this, chatId](const MediaState &state) {
-            updateQueue->dispatch([this, chatId, state] {
-                THREAD_SAFE
-                (void) onChangeStatus(chatId, state);
-                END_THREAD_SAFE
+        if (connections[chatId]->type() & CallInterface::Type::Group) {
+            SafeCall<GroupCall>(connections[chatId])->onUpgrade([this, chatId](const MediaState &state) {
+                updateQueue->dispatch([this, chatId, state] {
+                    THREAD_SAFE
+                    (void) onChangeStatus(chatId, state);
+                    END_THREAD_SAFE
+                });
             });
-        });
+        }
         connections[chatId]->onDisconnect([this, chatId]{
             updateQueue->dispatch([this, chatId] {
                 THREAD_SAFE
