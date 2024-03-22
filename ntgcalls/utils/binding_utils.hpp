@@ -74,9 +74,11 @@ return promise;
 auto result = __VA_ARGS__; \
 CLOSE_ASYNC(result)
 
-#define AWAIT(...) __VA_ARGS__
-
 #else
+
+#define INIT_ASYNC
+
+#define ASYNC_ARGS
 
 #define THREAD_SAFE {
 
@@ -84,16 +86,17 @@ CLOSE_ASYNC(result)
 
 #define CPP_BYTES(x, type) x
 
-#define PY_BYTES(...) __VA_ARGS__
+#define CAST_BYTES(...) __VA_ARGS__
 
-#define ASYNC_RETURN(...) std::future<__VA_ARGS__>
+#define ASYNC_RETURN(...) __VA_ARGS__
 
-#define SMART_ASYNC(...) \
-return std::async(std::launch::deferred, [__VA_ARGS__] {
+#define SMART_ASYNC(...)
 
-#define END_ASYNC });
+#define CLOSE_ASYNC(...)
+#define END_ASYNC CLOSE_ASYNC()
+#define END_ASYNC_RETURN(...)
+#define END_ASYNC_RETURN_SAFE(...)
 
-#define AWAIT(...) __VA_ARGS__.get()
 #endif
 
 #define END_THREAD_SAFE }

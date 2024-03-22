@@ -6,7 +6,6 @@
 
 namespace ntgcalls {
     CallInterface::CallInterface() {
-        std::lock_guard lock(mutex);
         stream = std::make_unique<Stream>();
     }
 

@@ -49,7 +49,7 @@ namespace ntgcalls {
                 THREAD_SAFE
                 (void) onCloseConnection(chatId);
                 END_THREAD_SAFE
-                stop(chatId);
+                internalStop(chatId);
             });
         });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
@@ -98,7 +98,7 @@ namespace ntgcalls {
         try {
             SafeCall<GroupCall>(safeConnection(chatId))->connect(params);
         } catch (TelegramServerError&) {
-            AWAIT(stop(chatId));
+            internalStop(chatId);
             throw;
         }
         END_ASYNC
@@ -132,9 +132,7 @@ namespace ntgcalls {
 
     ASYNC_RETURN(void) NTgCalls::stop(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        safeConnection(chatId)->stop();
-        std::lock_guard lock(mutex);
-        connections.erase(connections.find(chatId));
+        internalStop(chatId);
         END_ASYNC
     }
 
@@ -187,6 +185,12 @@ namespace ntgcalls {
             statusList->emplace(fst, snd->status());
         }
         END_ASYNC_RETURN_SAFE(std::move(*statusList))
+    }
+
+    void NTgCalls::internalStop(const int64_t chatId) {
+        safeConnection(chatId)->stop();
+        std::lock_guard lock(mutex);
+        connections.erase(connections.find(chatId));
     }
 
     bool NTgCalls::exists(const int64_t chatId) const {
