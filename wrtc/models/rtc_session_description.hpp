@@ -19,7 +19,7 @@ namespace wrtc {
 
         Description(SdpType type, std::string sdp);
 
-        explicit Description(const webrtc::SessionDescriptionInterface *description);
+        explicit Description(webrtc::SdpType type, std::string sdp);
 
         [[nodiscard]] SdpType type() const;
 

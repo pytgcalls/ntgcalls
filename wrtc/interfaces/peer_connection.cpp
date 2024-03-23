@@ -45,7 +45,9 @@ namespace wrtc {
     std::optional<Description> PeerConnection::localDescription() const {
         if (peerConnection) {
             if (const auto raw_description = peerConnection->local_description()) {
-                return Description(raw_description);
+                std::string sdp;
+                raw_description->ToString(&sdp);
+                return Description(raw_description->GetType(), sdp);
             }
         }
         return std::nullopt;

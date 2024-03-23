@@ -8,8 +8,8 @@
 namespace wrtc {
     Description::Description(const SdpType type, std::string sdp): _type(type), _sdp(std::move(sdp)) {}
 
-    Description::Description(const webrtc::SessionDescriptionInterface *description) {
-        switch (description->GetType()) {
+    Description::Description(const webrtc::SdpType type, std::string sdp): _sdp(std::move(sdp)) {
+        switch (type) {
             case webrtc::SdpType::kOffer:
                 _type = SdpType::Offer;
                 break;
@@ -23,7 +23,6 @@ namespace wrtc {
                 _type = SdpType::Rollback;
                 break;
         }
-        description->ToString(&_sdp);
     }
 
 
