@@ -80,11 +80,14 @@ namespace ntgcalls {
         if (!g_a_or_b || !key) {
             throw ConnectionNotFound("Connection not initialized");
         }
-        connection = std::make_unique<wrtc::PeerConnection>(servers);
+        connection = std::make_unique<wrtc::PeerConnection>(servers, true);
         connection->onRenegotiationNeeded([this] {
             if (makingNegotation) {
                 sendLocalDescription();
             }
+        });
+        connection->onDataChannelOpened([this] {
+            sendMediaState(stream->getState());
         });
         connection->onIceCandidate([this](const wrtc::IceCandidate& candidate) {
             CandidateMessage message;
@@ -96,6 +99,9 @@ namespace ntgcalls {
         auto encryptionKey = std::make_shared<std::array<uint8_t, EncryptionKey::kSize>>();
         memcpy(encryptionKey->data(), key.value().data(), EncryptionKey::kSize);
         stream->addTracks(connection);
+        stream->onUpgrade([this] (const MediaState mediaState) {
+            sendMediaState(mediaState);
+        });
         signaling = Signaling::Create(
             versions,
             connection->networkThread(),
@@ -111,6 +117,7 @@ namespace ntgcalls {
             }
         );
         if (type() == Type::Outgoing) {
+            connection->createDataChannel("data");
             makingNegotation = true;
             sendLocalDescription();
         }
@@ -214,6 +221,22 @@ namespace ntgcalls {
             connection->addIceCandidate(candidate);
         }
         pendingIceCandidates.clear();
+    }
+
+    void P2PCall::sendMediaState(const MediaState mediaState) const {
+        if (!connection -> isDataChannelOpen()) {
+            return;
+        }
+        MediaStateMessage message;
+        message.isMuted = mediaState.muted;
+        if (mediaState.videoStopped) {
+            message.videoState = MediaStateMessage::VideoState::Inactive;
+        } else if (mediaState.videoPaused) {
+            message.videoState = MediaStateMessage::VideoState::Suspended;
+        } else {
+            message.videoState = MediaStateMessage::VideoState::Active;
+        }
+        connection->sendDataChannelMessage(message.serialize());
     }
 
     void P2PCall::onSignalingData(const std::function<void(const bytes::binary&)>& callback) {
