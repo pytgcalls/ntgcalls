@@ -10,14 +10,14 @@
 
 namespace ntgcalls {
     bytes::binary MediaStateMessage::serialize() const {
-        return json::to_bson({
+        return bytes::make_binary(to_string(json{
             {"@type", "MediaState"},
             {"muted", isMuted},
             {"lowBattery", isBatteryLow},
             {"videoState", parseVideoState(videoState)},
             {"videoRotation", videoRotation},
             {"screencastState", parseVideoState(screencastState)}
-        });
+        }));
     }
 
     std::string MediaStateMessage::parseVideoState(const VideoState state) {
