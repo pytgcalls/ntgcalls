@@ -5,6 +5,9 @@
 #include "p2p_call.hpp"
 
 #include "ntgcalls/exceptions.hpp"
+#include "ntgcalls/models/candidate_message.hpp"
+#include "ntgcalls/models/media_state_message.hpp"
+#include "ntgcalls/models/rtc_description_message.hpp"
 #include "ntgcalls/utils/auth_key.hpp"
 #include "ntgcalls/utils/mod_exp_first.hpp"
 #include "wrtc/utils/encryption.hpp"
@@ -84,13 +87,11 @@ namespace ntgcalls {
             }
         });
         connection->onIceCandidate([this](const wrtc::IceCandidate& candidate) {
-            const json packets = {
-                {"@type", "candidate"},
-                {"sdp", candidate.sdp},
-                {"mid", candidate.mid},
-                {"mline", candidate.mLine},
-            };
-            signaling->send(bytes::make_binary(to_string(packets)));
+            CandidateMessage message;
+            message.sdp = candidate.sdp;
+            message.mid = candidate.mid;
+            message.mLine = candidate.mLine;
+            signaling->send(message.serialize());
         });
         auto encryptionKey = std::make_shared<std::array<uint8_t, EncryptionKey::kSize>>();
         memcpy(encryptionKey->data(), key.value().data(), EncryptionKey::kSize);
@@ -142,39 +143,21 @@ namespace ntgcalls {
     }
 
     void P2PCall::processSignalingData(const bytes::binary& buffer) {
-        json data = json::parse(buffer.begin(), buffer.end());
-        if (data["@type"].is_null()) {
-            return;
-        }
-        if (const auto sdpType = data["@type"]; sdpType == "offer" || sdpType == "answer") {
-            const auto jsonSdp = data["sdp"];
-            if (jsonSdp.is_null()) {
-                return;
-            }
-            if (type() == Type::Outgoing && sdpType == "offer" && (isMakingOffer || connection->signalingState() != wrtc::SignalingState::Stable)) {
+        if (const auto messageType = Message::type(buffer); messageType == Message::Type::RtcDescription) {
+            const auto message = RtcDescriptionMessage::deserialize(buffer);
+            if (type() == Type::Outgoing && message->type == wrtc::Description::SdpType::Offer && (isMakingOffer || connection->signalingState() != wrtc::SignalingState::Stable)) {
                 return;
             }
             applyRemoteSdp(
-                wrtc::Description::SdpTypeFromString(sdpType),
-                jsonSdp
+                message->type,
+                message->sdp
             );
-        } else if (sdpType == "candidate") {
-            const auto jsonMid = data["mid"];
-            if (jsonMid.is_null()) {
-                return;
-            }
-            const auto jsonMLine = data["mline"];
-            if (jsonMLine.is_null()) {
-                return;
-            }
-            const auto jsonSdp = data["sdp"];
-            if (jsonSdp.is_null()) {
-                return;
-            }
+        } else if (messageType == Message::Type::Candidate) {
+            const auto message = CandidateMessage::deserialize(buffer);
             const auto candidate = wrtc::IceCandidate(
-                jsonMid,
-                jsonMLine,
-                jsonSdp
+                message->mid,
+                message->mLine,
+                message->sdp
             );
             if (handshakeCompleted) {
                 connection->addIceCandidate(candidate);
@@ -192,11 +175,10 @@ namespace ntgcalls {
                 if (!description) {
                     return;
                 }
-                const json packets = {
-                    {"@type", wrtc::Description::SdpTypeToString(description->type())},
-                    {"sdp", description->sdp()}
-                };
-                signaling->send(bytes::make_binary(to_string(packets)));
+                RtcDescriptionMessage message;
+                message.type = description->type();
+                message.sdp = description->sdp();
+                signaling->send(message.serialize());
                 isMakingOffer = false;
             });
         }, [this](const std::exception_ptr&) {});
