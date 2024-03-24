@@ -146,7 +146,9 @@ namespace ntgcalls {
             }
         });
         lock.unlock();
-        promise.get_future().wait();
+        if (promise.get_future().wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+            throw TelegramServerError("Connection timeout");
+        }
     }
 
     void P2PCall::processSignalingData(const bytes::binary& buffer) {

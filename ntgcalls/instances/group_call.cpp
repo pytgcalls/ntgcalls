@@ -83,14 +83,14 @@ namespace ntgcalls {
                 wrtc::SdpBuilder::fromConference(conference)
             )
         );
-        std::promise<void> future;
+        std::promise<void> promise;
         connection->onConnectionChange([&](const wrtc::PeerConnectionState state) {
             switch (state) {
             case wrtc::PeerConnectionState::Connected:
                 if (!connected) {
                     connected = true;
                     stream->start();
-                    future.set_value();
+                    promise.set_value();
                 }
                 break;
             case wrtc::PeerConnectionState::Disconnected:
@@ -98,7 +98,7 @@ namespace ntgcalls {
             case wrtc::PeerConnectionState::Closed:
                 connection->onConnectionChange(nullptr);
                 if (!connected) {
-                    future.set_exception(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
+                    promise.set_exception(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
                 } else {
                     (void) onCloseConnection();
                 }
@@ -107,7 +107,9 @@ namespace ntgcalls {
                 break;
             }
         });
-        future.get_future().wait();
+        if (promise.get_future().wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+            throw TelegramServerError("Connection timeout");
+        }
     }
 
     void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) {
