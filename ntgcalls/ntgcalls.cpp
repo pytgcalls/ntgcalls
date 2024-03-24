@@ -71,7 +71,7 @@ namespace ntgcalls {
         SMART_ASYNC(networkThread, this, userId, g, p = CPP_BYTES(p, bytes::vector), r = CPP_BYTES(r, bytes::vector), g_a_hash = CPP_BYTES(g_a_hash, bytes::vector), media)
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(userId)
-        connections[userId] = std::make_shared<P2PCall>();
+        connections[userId] = std::make_shared<P2PCall>(workerThread.get());
         setupListeners(userId);
         const auto result = SafeCall<P2PCall>(connections[userId])->init(g, p, r, g_a_hash, media);
         END_ASYNC_RETURN_SAFE(CAST_BYTES(result))
@@ -92,7 +92,7 @@ namespace ntgcalls {
         SMART_ASYNC(networkThread, this, chatId, media)
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(chatId)
-        connections[chatId] = std::make_shared<GroupCall>();
+        connections[chatId] = std::make_shared<GroupCall>(workerThread.get());
         setupListeners(chatId);
         END_ASYNC_RETURN(SafeCall<GroupCall>(connections[chatId])->init(media))
     }

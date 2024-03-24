@@ -26,7 +26,7 @@ namespace ntgcalls {
             Idling,
         };
 
-        Stream();
+        explicit Stream(rtc::Thread* workerThread);
 
         ~Stream();
 
@@ -66,7 +66,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<Type> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::thread thread;
-        std::unique_ptr<rtc::Thread> workerThread;
+        rtc::Thread* workerThread;
         std::shared_mutex mutex;
 
         void checkStream() const;

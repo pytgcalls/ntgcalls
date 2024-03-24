@@ -5,17 +5,13 @@
 #include "stream.hpp"
 
 namespace ntgcalls {
-    Stream::Stream() {
+    Stream::Stream(rtc::Thread* workerThread): workerThread(workerThread) {
         audio = std::make_unique<AudioStreamer>();
         video = std::make_unique<VideoStreamer>();
-        workerThread = rtc::Thread::Create();
-        workerThread->Start();
     }
 
     Stream::~Stream() {
         stop();
-        workerThread->Stop();
-
         std::lock_guard lock(mutex);
         audio = nullptr;
         video = nullptr;

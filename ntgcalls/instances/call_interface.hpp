@@ -17,7 +17,7 @@ namespace ntgcalls {
         bool connected = false;
         wrtc::synchronized_callback<void> onCloseConnection;
     public:
-        CallInterface();
+        CallInterface(rtc::Thread* workerThread);
 
         virtual ~CallInterface();
 

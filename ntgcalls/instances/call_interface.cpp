@@ -5,8 +5,8 @@
 #include "call_interface.hpp"
 
 namespace ntgcalls {
-    CallInterface::CallInterface() {
-        stream = std::make_unique<Stream>();
+    CallInterface::CallInterface(rtc::Thread* workerThread) {
+        stream = std::make_unique<Stream>(workerThread);
     }
 
     CallInterface::~CallInterface() {
