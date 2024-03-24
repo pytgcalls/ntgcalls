@@ -46,7 +46,7 @@ namespace ntgcalls {
         template<typename DestCallType, typename BaseCallType>
         static DestCallType* SafeCall(const std::shared_ptr<BaseCallType>& call);
 
-        void internalStop(int64_t chatId);
+        void remove(int64_t chatId);
 
     public:
         explicit NTgCalls();

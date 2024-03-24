@@ -24,7 +24,6 @@ namespace ntgcalls {
         // Temporary fix because macOs sucks and currently doesnt support Elements View
         // ReSharper disable once CppUseElementsView
         for (const auto& [fst, snd] : connections) {
-            snd->onStreamEnd(nullptr);
             snd->stop();
         }
         connections = {};
@@ -55,7 +54,7 @@ namespace ntgcalls {
             THREAD_SAFE
             (void) onCloseConnection(chatId);
             END_THREAD_SAFE
-            internalStop(chatId);
+            remove(chatId);
             END_WORKER
         });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
@@ -104,7 +103,7 @@ namespace ntgcalls {
         try {
             SafeCall<GroupCall>(safeConnection(chatId))->connect(params);
         } catch (TelegramServerError&) {
-            internalStop(chatId);
+            remove(chatId);
             throw;
         }
         END_ASYNC
@@ -138,7 +137,7 @@ namespace ntgcalls {
 
     ASYNC_RETURN(void) NTgCalls::stop(const int64_t chatId) {
         SMART_ASYNC(workerThread, this, chatId)
-        internalStop(chatId);
+        remove(chatId);
         END_ASYNC
     }
 
@@ -193,11 +192,12 @@ namespace ntgcalls {
         END_ASYNC_RETURN_SAFE(std::move(*statusList))
     }
 
-    void NTgCalls::internalStop(const int64_t chatId) {
-        safeConnection(chatId)->stop();
+    void NTgCalls::remove(const int64_t chatId) {
         std::lock_guard lock(mutex);
         if (connections.contains(chatId)) {
             connections.erase(connections.find(chatId));
+        } else {
+            THROW_CONNECTION_NOT_FOUND(chatId)
         }
     }
 
@@ -208,7 +208,7 @@ namespace ntgcalls {
     std::shared_ptr<CallInterface> NTgCalls::safeConnection(const int64_t chatId) {
         std::lock_guard lock(mutex);
         if (!exists(chatId)) {
-            throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chatId) + "\" not found");
+            THROW_CONNECTION_NOT_FOUND(chatId)
         }
         return connections[chatId];
     }

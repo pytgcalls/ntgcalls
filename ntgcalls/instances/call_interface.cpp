@@ -36,6 +36,8 @@ namespace ntgcalls {
     }
 
     void CallInterface::stop() {
+        onStreamEnd(nullptr);
+        onDisconnect(nullptr);
         std::lock_guard lock(mutex);
         stream->stop();
         if (connection) {
