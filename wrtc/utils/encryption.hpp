@@ -5,6 +5,7 @@
 
 #include "binary.hpp"
 #include <openssl/sha.h>
+#include <array>
 
 namespace openssl {
     constexpr auto kSha256Size = static_cast<size_t>(SHA256_DIGEST_LENGTH);
