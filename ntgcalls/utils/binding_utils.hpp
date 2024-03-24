@@ -5,12 +5,16 @@
 #pragma once
 
 #include "wrtc/utils/binary.hpp"
-#ifdef PYTHON_ENABLED
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-#endif
+
+#define WORKER(worker, ...) worker->PostTask([__VA_ARGS__] {
+
+#define END_WORKER });
 
 #ifdef PYTHON_ENABLED
+#include <pybind11/stl.h>
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+
 template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
 std::optional<T> toCBytes(const std::optional<py::bytes>& p) {
     if (p) {
@@ -54,10 +58,6 @@ py::gil_scoped_acquire acquire;
 
 #define INIT_ASYNC loop = py::module::import("asyncio").attr("get_event_loop")();
 
-#define WORKER(worker, ...) worker->PostTask([__VA_ARGS__] {
-
-#define END_WORKER });
-
 #define SMART_ASYNC(worker, ...) \
 auto promise = loop.attr("create_future")(); \
 py::gil_scoped_release release;\
@@ -83,6 +83,20 @@ auto result = __VA_ARGS__; \
 CLOSE_ASYNC(result)
 
 #else
+#include <functional>
+#include <rtc_base/thread.h>
+
+template <typename T>
+class AsyncPromise {
+    rtc::Thread* worker;
+    std::function<T()> callable;
+    std::function<void(const std::exception&)> reject;
+
+public:
+    AsyncPromise(rtc::Thread* worker, std::function<T()> callable);
+
+    void then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject);
+};
 
 #define INIT_ASYNC
 
@@ -96,14 +110,19 @@ CLOSE_ASYNC(result)
 
 #define CAST_BYTES(...) __VA_ARGS__
 
-#define ASYNC_RETURN(...) __VA_ARGS__
+#define ASYNC_FUNC_ARGS(...)
 
-#define SMART_ASYNC(...)
+#define ASYNC_RETURN(...) AsyncPromise<__VA_ARGS__>
 
-#define CLOSE_ASYNC(...)
+#define SMART_ASYNC(worker, ...) return { worker.get(), [__VA_ARGS__]{
+
+#define CLOSE_ASYNC(...) }};
+
 #define END_ASYNC CLOSE_ASYNC()
-#define END_ASYNC_RETURN(...)
-#define END_ASYNC_RETURN_SAFE(...)
+#define END_ASYNC_RETURN(...) \
+return __VA_ARGS__;\
+CLOSE_ASYNC()
+#define END_ASYNC_RETURN_SAFE(...) END_ASYNC_RETURN(__VA_ARGS__)
 
 #endif
 

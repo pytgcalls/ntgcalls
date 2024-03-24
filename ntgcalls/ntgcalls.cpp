@@ -7,7 +7,6 @@
 #include "exceptions.hpp"
 #include "instances/group_call.hpp"
 #include "instances/p2p_call.hpp"
-#include <pybind11/stl.h>
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {

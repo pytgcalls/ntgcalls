@@ -17,4 +17,18 @@ py::object translate_current_exception() {
     )", py::globals(), locals);
     return locals["result"];
 }
+#else
+template <typename T>
+AsyncPromise<T>::AsyncPromise(rtc::Thread* worker, std::function<T()> callable): worker(worker), callable(std::move(callable)) {}
+
+template <typename T>
+void AsyncPromise<T>::then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject) {
+    worker->PostTask([this, resolve, reject]{
+        try {
+            resolve(callable());
+        } catch (const std::exception&) {
+            reject(std::current_exception());
+        }
+    });
+}
 #endif

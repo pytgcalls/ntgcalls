@@ -5,7 +5,6 @@
 
 
 #include <cstdint>
-#include <future>
 
 #include "instances/call_interface.hpp"
 // ReSharper disable once CppUnusedIncludeDirective
