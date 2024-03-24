@@ -27,6 +27,20 @@ int copyAndReturn(std::string s, char *buffer, const int size) {
     return static_cast<int>(s.size() + 1);
 }
 
+#define PREPARE_ASYNC(method, ...) \
+const auto result = new int(NTG_ASYNC_NOT_READY);\
+try {\
+safeUID(uid)->method(__VA_ARGS__).then(\
+
+#define PREPARE_ASYNC_END\
+);\
+} catch (ntgcalls::InvalidUUID&) {\
+*result = NTG_INVALID_UID;\
+} catch (...) {\
+*result = NTG_UNKNOWN_EXCEPTION;\
+}\
+return std::move(result);
+
 template <typename T> int copyAndReturn(std::vector<T> b, T *buffer, const int size) {
     if (!buffer)
         return static_cast<int>(b.size());
@@ -130,158 +144,239 @@ int ntg_destroy(const uint32_t uid) {
     return 0;
 }
 
-int ntg_get_params(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc, char* buffer, const int size) {
-    try {
-        return copyAndReturn(safeUID(uid)->createCall(chatID, parseMediaDescription(desc)), buffer, size);
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionError&) {
-        return NTG_CONNECTION_ALREADY_EXISTS;
-    } catch (ntgcalls::FileError&) {
-        return NTG_FILE_NOT_FOUND;
-    } catch (ntgcalls::InvalidParams&) {
-        return NTG_ENCODER_NOT_FOUND;
-    } catch (ntgcalls::FFmpegError&) {
-        return NTG_FFMPEG_NOT_FOUND;
-    } catch (ntgcalls::ShellError&) {
-        return NTG_SHELL_ERROR;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_get_params(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc, char* buffer, const int size, ntg_async_callback callback) {
+    PREPARE_ASYNC(createCall, chatID, parseMediaDescription(desc))
+    [result, callback, buffer, size](const std::string& s) {
+        *result = copyAndReturn(s, buffer, size);
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::ConnectionError&) {
+            *result = NTG_CONNECTION_ALREADY_EXISTS;
+        } catch (ntgcalls::FileError&) {
+            *result = NTG_FILE_NOT_FOUND;
+        } catch (ntgcalls::InvalidParams&) {
+            *result = NTG_ENCODER_NOT_FOUND;
+        } catch (ntgcalls::FFmpegError&) {
+            *result = NTG_FFMPEG_NOT_FOUND;
+        } catch (ntgcalls::ShellError&) {
+            *result = NTG_SHELL_ERROR;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
+    PREPARE_ASYNC_END
 }
 
-int ntg_connect(const uint32_t uid, const int64_t chatID, char* params) {
-    try {
-        safeUID(uid)->connect(chatID, std::string(params));
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::RTMPNeeded&) {
-        return NTG_RTMP_NEEDED;
-    } catch (ntgcalls::InvalidParams&) {
-        return NTG_INVALID_TRANSPORT;
-    } catch (ntgcalls::ConnectionError&) {
-        return NTG_CONNECTION_FAILED;
-    } catch(ntgcalls::TelegramServerError&) {
-        return NTG_CONNECTION_FAILED;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_connect(const uint32_t uid, const int64_t chatID, char* params, ntg_async_callback callback) {
+    PREPARE_ASYNC(connect, chatID, std::string(params))
+    [result, callback] {
+        *result = 0;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::RTMPNeeded&) {
+            *result = NTG_RTMP_NEEDED;
+        } catch (ntgcalls::InvalidParams&) {
+            *result = NTG_INVALID_TRANSPORT;
+        } catch (ntgcalls::ConnectionError&) {
+            *result = NTG_CONNECTION_FAILED;
+        } catch(ntgcalls::TelegramServerError&) {
+            *result = NTG_CONNECTION_FAILED;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
-    return 0;
+    PREPARE_ASYNC_END
 }
 
-int ntg_change_stream(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc) {
-    try {
-        safeUID(uid)->changeStream(chatID, parseMediaDescription(desc));
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::FileError&) {
-        return NTG_FILE_NOT_FOUND;
-    } catch (ntgcalls::InvalidParams&) {
-        return NTG_ENCODER_NOT_FOUND;
-    } catch (ntgcalls::FFmpegError&) {
-        return NTG_FFMPEG_NOT_FOUND;
-    } catch (ntgcalls::ShellError&) {
-        return NTG_SHELL_ERROR;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_change_stream(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc, ntg_async_callback callback) {
+    PREPARE_ASYNC(changeStream, chatID, parseMediaDescription(desc))
+    [result, callback] {
+        *result = 0;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::RTMPNeeded&) {
+            *result = NTG_RTMP_NEEDED;
+        } catch (ntgcalls::InvalidParams&) {
+            *result = NTG_INVALID_TRANSPORT;
+        } catch (ntgcalls::ConnectionError&) {
+            *result = NTG_CONNECTION_FAILED;
+        } catch(ntgcalls::TelegramServerError&) {
+            *result = NTG_CONNECTION_FAILED;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
-    return 0;
+    PREPARE_ASYNC_END
 }
 
-int ntg_pause(const uint32_t uid, const int64_t chatID) {
-    try {
-        return !safeUID(uid)->pause(chatID);
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_pause(const uint32_t uid, const int64_t chatID, ntg_async_callback callback) {
+    PREPARE_ASYNC(pause, chatID)
+    [result, callback](const bool success) {
+        *result = !success;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::InvalidUUID&) {
+            *result = NTG_INVALID_UID;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
+    PREPARE_ASYNC_END
 }
 
-int ntg_resume(const uint32_t uid, const int64_t chatID) {
-    try {
-        return !safeUID(uid)->resume(chatID);
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_resume(const uint32_t uid, const int64_t chatID, ntg_async_callback callback) {
+    PREPARE_ASYNC(resume, chatID)
+    [result, callback](const bool success) {
+        *result = !success;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::InvalidUUID&) {
+            *result = NTG_INVALID_UID;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
+    PREPARE_ASYNC_END
 }
 
-int ntg_mute(const uint32_t uid, const int64_t chatID) {
-    try {
-        return !safeUID(uid)->mute(chatID);
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_mute(const uint32_t uid, const int64_t chatID, ntg_async_callback callback) {
+    PREPARE_ASYNC(mute, chatID)
+    [result, callback](const bool success) {
+        *result = !success;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::InvalidUUID&) {
+            *result = NTG_INVALID_UID;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
+    PREPARE_ASYNC_END
 }
 
-int ntg_unmute(const uint32_t uid, const int64_t chatID) {
-    try {
-        return !safeUID(uid)->unmute(chatID);
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_unmute(const uint32_t uid, const int64_t chatID, ntg_async_callback callback) {
+    PREPARE_ASYNC(unmute, chatID)
+    [result, callback](const bool success) {
+        *result = !success;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::InvalidUUID&) {
+            *result = NTG_INVALID_UID;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
+    PREPARE_ASYNC_END
 }
 
-int ntg_stop(const uint32_t uid, const int64_t chatID) {
-    try {
-        safeUID(uid)->stop(chatID);
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_stop(const uint32_t uid, const int64_t chatID, ntg_async_callback callback) {
+    PREPARE_ASYNC(stop, chatID)
+    [result, callback] {
+        *result = 0;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::InvalidUUID&) {
+            *result = NTG_INVALID_UID;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
-    return 0;
+    PREPARE_ASYNC_END
 }
 
-int64_t ntg_time(const uint32_t uid, const int64_t chatID) {
-    try {
-        return static_cast<int64_t>(safeUID(uid)->time(chatID));
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_time(const uint32_t uid, const int64_t chatID, int64_t* time, ntg_async_callback callback) {
+    PREPARE_ASYNC(stop, chatID)
+    [result, callback, time](const int64_t t) {
+        *time = t;
+        *result = 0;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::InvalidUUID&) {
+            *result = NTG_INVALID_UID;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
+    PREPARE_ASYNC_END
 }
 
-auto ntg_get_state(const uint32_t uid, const int64_t chatID, ntg_media_state_struct* mediaState) -> int
-{
-    try {
-        *mediaState = parseMediaState(safeUID(uid)->getState(chatID));
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (ntgcalls::ConnectionNotFound&) {
-        return NTG_CONNECTION_NOT_FOUND;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+int* ntg_get_state(const uint32_t uid, const int64_t chatID, ntg_media_state_struct* mediaState, ntg_async_callback callback) {
+    PREPARE_ASYNC(stop, chatID)
+    [result, callback, mediaState](const ntgcalls::MediaState state) {
+        *mediaState = parseMediaState(state);
+        *result = 0;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::InvalidUUID&) {
+            *result = NTG_INVALID_UID;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
-    return 0;
+    PREPARE_ASYNC_END
 }
 
-int ntg_calls(const uint32_t uid, ntg_group_call_struct *buffer, const int size) {
-    try {
-        const auto callsCpp = safeUID(uid)->calls();
+int* ntg_calls(const uint32_t uid, ntg_group_call_struct *buffer, const int size, ntg_async_callback callback) {
+    PREPARE_ASYNC(calls)
+    [result, callback, buffer, size](const auto callsCpp) {
         std::vector<ntg_group_call_struct> groupCalls;
         for (const auto [fst, snd] : callsCpp) {
             groupCalls.push_back(ntg_group_call_struct{
@@ -289,18 +384,47 @@ int ntg_calls(const uint32_t uid, ntg_group_call_struct *buffer, const int size)
                 parseStatus(snd),
             });
         }
-        return copyAndReturn(groupCalls, buffer, size);
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
+        *result = copyAndReturn(groupCalls, buffer, size);
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::InvalidUUID&) {
+            *result = NTG_INVALID_UID;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
     }
+    PREPARE_ASYNC_END
 }
 
-int ntg_calls_count(const uint32_t uid) {
-    try {
-        return static_cast<int>(safeUID(uid)->calls().size());
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
+int* ntg_calls_count(const uint32_t uid, uint64_t* size, ntg_async_callback callback) {
+    PREPARE_ASYNC(calls)
+    [result, size, callback](const auto callsCpp) {
+        *size = callsCpp.size();
+        *result = 0;
+        callback();
+    },
+    [result](const std::exception_ptr&) {
+        *result = NTG_UNKNOWN_EXCEPTION;
     }
+    PREPARE_ASYNC_END
+}
+
+int* ntg_cpu_usage(const uint32_t uid, double *buffer, ntg_async_callback callback) {
+    PREPARE_ASYNC(cpuUsage)
+    [result, callback, buffer](const double usage) {
+        *buffer = usage;
+        *result = 0;
+        callback();
+    },
+    [result, callback](const std::exception_ptr&) {
+        *result = NTG_UNKNOWN_EXCEPTION;
+        callback();
+    }
+    PREPARE_ASYNC_END
 }
 
 int ntg_on_stream_end(const uint32_t uid, ntg_stream_callback callback) {
@@ -325,17 +449,6 @@ int ntg_on_upgrade(const uint32_t uid, ntg_upgrade_callback callback) {
         return NTG_INVALID_UID;
     }
     return 0;
-}
-
-int ntg_cpu_usage(const uint32_t uid, double *buffer) {
-    try {
-        *buffer = safeUID(uid)->cpuUsage();
-        return 0;
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
-    }
 }
 
 int ntg_on_disconnect(const uint32_t uid, ntg_disconnect_callback callback) {

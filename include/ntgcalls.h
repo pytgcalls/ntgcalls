@@ -35,6 +35,7 @@
 #define NTG_UNKNOWN_EXCEPTION (-1)
 #define NTG_INVALID_UID (-2)
 #define NTG_ERR_TOO_SMALL (-3)
+#define NTG_ASYNC_NOT_READY (-4)
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,33 +97,35 @@ typedef void (*ntg_upgrade_callback)(uint32_t, int64_t, ntg_media_state_struct);
 
 typedef void (*ntg_disconnect_callback)(uint32_t, int64_t);
 
+typedef void (*ntg_async_callback)();
+
 NTG_C_EXPORT uint32_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
-NTG_C_EXPORT int ntg_get_params(uint32_t uid, int64_t chatID, ntg_media_description_struct desc, char* buffer, int size);
+NTG_C_EXPORT int* ntg_get_params(uint32_t uid, int64_t chatID, ntg_media_description_struct desc, char* buffer, int size, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_connect(uint32_t uid, int64_t chatID, char* params);
+NTG_C_EXPORT int* ntg_connect(uint32_t uid, int64_t chatID, char* params, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_change_stream(uint32_t uid, int64_t chatID, ntg_media_description_struct desc);
+NTG_C_EXPORT int* ntg_change_stream(uint32_t uid, int64_t chatID, ntg_media_description_struct desc, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_pause(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int* ntg_pause(uint32_t uid, int64_t chatID, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_resume(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int* ntg_resume(uint32_t uid, int64_t chatID, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_mute(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int* ntg_mute(uint32_t uid, int64_t chatID, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_unmute(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int* ntg_unmute(uint32_t uid, int64_t chatID, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_stop(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int* ntg_stop(uint32_t uid, int64_t chatID, ntg_async_callback callback);
 
-NTG_C_EXPORT int64_t ntg_time(uint32_t uid, int64_t chatID);
+NTG_C_EXPORT int* ntg_time(uint32_t uid, int64_t chatID, int64_t* time, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_get_state(uint32_t uid, int64_t chatID, ntg_media_state_struct *mediaState);
+NTG_C_EXPORT int* ntg_get_state(uint32_t uid, int64_t chatID, ntg_media_state_struct *mediaState, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_calls(uint32_t uid, ntg_group_call_struct *buffer, int size);
+NTG_C_EXPORT int* ntg_calls(uint32_t uid, ntg_group_call_struct *buffer, int size, ntg_async_callback callback);
 
-NTG_C_EXPORT int ntg_calls_count(uint32_t uid);
+NTG_C_EXPORT int* ntg_calls_count(uint32_t uid, uint64_t* size, ntg_async_callback callback);
 
 NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback);
 
@@ -132,7 +135,7 @@ NTG_C_EXPORT int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callbac
 
 NTG_C_EXPORT int ntg_get_version(char* buffer, int size);
 
-NTG_C_EXPORT int ntg_cpu_usage(uint32_t uid, double *buffer);
+NTG_C_EXPORT int* ntg_cpu_usage(uint32_t uid, double *buffer, ntg_async_callback callback);
 
 #ifdef __cplusplus
 }
