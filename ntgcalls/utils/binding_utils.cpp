@@ -19,7 +19,7 @@ py::object translate_current_exception() {
 }
 #else
 template <typename T>
-AsyncPromise<T>::AsyncPromise(rtc::Thread* worker, std::function<T()> callable): worker(worker), callable(std::move(callable)) {}
+AsyncPromise<T>::AsyncPromise(rtc::Thread* worker, const std::function<T()>& callable): worker(worker), callable(callable) {}
 
 template <typename T>
 void AsyncPromise<T>::then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject) {
@@ -31,4 +31,17 @@ void AsyncPromise<T>::then(const std::function<void(T)>& resolve, const std::fun
         }
     });
 }
+
+template <typename T>
+void AsyncPromise<T>::then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const{
+    worker->PostTask([this, resolve, reject]{
+        try {
+            callable();
+            resolve();
+        } catch (const std::exception&) {
+            reject(std::current_exception());
+        }
+    });
+}
+
 #endif

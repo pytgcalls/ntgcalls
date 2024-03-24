@@ -32,7 +32,7 @@ const auto result = new int(NTG_ASYNC_NOT_READY);\
 try {\
 safeUID(uid)->method(__VA_ARGS__).then(\
 
-#define PREPARE_ASYNC_END\
+#define PREPARE_ASYNC_END \
 );\
 } catch (ntgcalls::InvalidUUID&) {\
 *result = NTG_INVALID_UID;\
@@ -331,7 +331,7 @@ int* ntg_stop(const uint32_t uid, const int64_t chatID, ntg_async_callback callb
 }
 
 int* ntg_time(const uint32_t uid, const int64_t chatID, int64_t* time, ntg_async_callback callback) {
-    PREPARE_ASYNC(stop, chatID)
+    PREPARE_ASYNC(time, chatID)
     [result, callback, time](const int64_t t) {
         *time = t;
         *result = 0;
@@ -353,7 +353,7 @@ int* ntg_time(const uint32_t uid, const int64_t chatID, int64_t* time, ntg_async
 }
 
 int* ntg_get_state(const uint32_t uid, const int64_t chatID, ntg_media_state_struct* mediaState, ntg_async_callback callback) {
-    PREPARE_ASYNC(stop, chatID)
+    PREPARE_ASYNC(getState, chatID)
     [result, callback, mediaState](const ntgcalls::MediaState state) {
         *mediaState = parseMediaState(state);
         *result = 0;

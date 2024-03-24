@@ -4,13 +4,12 @@
 
 #pragma once
 
-#include "wrtc/utils/binary.hpp"
-
 #define WORKER(worker, ...) worker->PostTask([__VA_ARGS__] {
 
 #define END_WORKER });
 
 #ifdef PYTHON_ENABLED
+#include "wrtc/utils/binary.hpp"
 #include <pybind11/stl.h>
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
@@ -90,12 +89,13 @@ template <typename T>
 class AsyncPromise {
     rtc::Thread* worker;
     std::function<T()> callable;
-    std::function<void(const std::exception&)> reject;
 
 public:
-    AsyncPromise(rtc::Thread* worker, std::function<T()> callable);
+    AsyncPromise(rtc::Thread* worker, const std::function<T()>& callable);
 
     void then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject);
+
+    void then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const;
 };
 
 #define INIT_ASYNC
