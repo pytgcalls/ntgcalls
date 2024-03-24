@@ -11,6 +11,8 @@ set(WEBRTC_REVISION m121.6167.3.0)
 set(BOOST_REVISION 1.84.0)
 set(BOOST_LIBS filesystem)
 
+option(STATIC_BUILD "Build static libraries" ON)
+
 if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
 endif()
