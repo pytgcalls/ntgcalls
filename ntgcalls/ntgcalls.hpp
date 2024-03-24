@@ -20,6 +20,9 @@ if (exists(chatId)) { \
 throw ConnectionError("Connection cannot be initialized more than once."); \
 }
 
+#define THROW_CONNECTION_NOT_FOUND(chatId) \
+throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chatId) + "\" not found");
+
 namespace ntgcalls {
 
     class NTgCalls {
@@ -28,7 +31,8 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
         wrtc::synchronized_callback<int64_t> onCloseConnection;
         wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> onEmitData;
-        std::unique_ptr<DispatchQueue> updateQueue;
+        std::unique_ptr<rtc::Thread> workerThread;
+        std::unique_ptr<rtc::Thread> networkThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
         ASYNC_ARGS
@@ -45,7 +49,7 @@ namespace ntgcalls {
         void internalStop(int64_t chatId);
 
     public:
-        NTgCalls();
+        explicit NTgCalls();
 
         ~NTgCalls();
 

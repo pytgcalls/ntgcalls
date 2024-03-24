@@ -7,8 +7,8 @@
 
 #include <shared_mutex>
 
+#include <thread>
 #include <wrtc/wrtc.hpp>
-#include "../utils/dispatch_queue.hpp"
 
 namespace ntgcalls {
     class BaseReader {

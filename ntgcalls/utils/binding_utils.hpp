@@ -54,10 +54,14 @@ py::gil_scoped_acquire acquire;
 
 #define INIT_ASYNC loop = py::module::import("asyncio").attr("get_event_loop")();
 
-#define SMART_ASYNC(...) \
+#define WORKER(worker, ...) worker->PostTask([__VA_ARGS__] {
+
+#define END_WORKER });
+
+#define SMART_ASYNC(worker, ...) \
 auto promise = loop.attr("create_future")(); \
 py::gil_scoped_release release;\
-std::thread([promise = promise.inc_ref(), __VA_ARGS__] {\
+WORKER(worker, promise = promise.inc_ref(), __VA_ARGS__)\
 try {
 
 #define CLOSE_ASYNC(...) \
@@ -67,7 +71,7 @@ loop.attr("call_soon_threadsafe")(promise.attr("set_result"), __VA_ARGS__); \
 py::gil_scoped_acquire acquire;\
 loop.attr("call_soon_threadsafe")(promise.attr("set_exception"), translate_current_exception());\
 }\
-}).detach();\
+END_WORKER \
 return promise;
 
 #define END_ASYNC CLOSE_ASYNC(nullptr)

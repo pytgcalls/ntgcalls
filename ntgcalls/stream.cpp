@@ -8,12 +8,13 @@ namespace ntgcalls {
     Stream::Stream() {
         audio = std::make_unique<AudioStreamer>();
         video = std::make_unique<VideoStreamer>();
-        updateQueue = std::make_unique<DispatchQueue>();
+        workerThread = rtc::Thread::Create();
+        workerThread->Start();
     }
 
     Stream::~Stream() {
         stop();
-        updateQueue = nullptr;
+        workerThread->Stop();
 
         std::lock_guard lock(mutex);
         audio = nullptr;
@@ -31,13 +32,13 @@ namespace ntgcalls {
     void Stream::checkStream() const {
         if (reader->audio && reader->audio->eof()) {
             reader->audio = nullptr;
-            updateQueue->dispatch([&] {
+            workerThread->PostTask([&] {
                 (void) onEOF(Audio);
             });
         }
         if (reader->video && reader->video->eof()) {
             reader->video = nullptr;
-            updateQueue->dispatch([&] {
+            workerThread->PostTask([&] {
                 (void) onEOF(Video);
             });
         }
@@ -73,7 +74,7 @@ namespace ntgcalls {
     }
 
     void Stream::checkUpgrade() {
-        updateQueue->dispatch([&] {
+        workerThread->PostTask([&] {
             (void) onChangeStatus(getState());
         });
     }

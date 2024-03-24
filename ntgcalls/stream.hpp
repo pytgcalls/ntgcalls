@@ -10,7 +10,6 @@
 #include "models/media_state.hpp"
 #include "media/audio_streamer.hpp"
 #include "media/video_streamer.hpp"
-#include "utils/dispatch_queue.hpp"
 #include "models/media_description.hpp"
 #include "media/media_reader_factory.hpp"
 
@@ -67,7 +66,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<Type> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::thread thread;
-        std::unique_ptr<DispatchQueue> updateQueue;
+        std::unique_ptr<rtc::Thread> workerThread;
         std::shared_mutex mutex;
 
         void checkStream() const;
