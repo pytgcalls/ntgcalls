@@ -37,8 +37,9 @@ namespace ntgcalls {
         return static_cast<int>(lhs) | rhs;
     }
 
-    inline int operator|=(const BaseMediaDescription::InputMode lhs, const BaseMediaDescription::InputMode rhs) {
-        return static_cast<int>(lhs) | static_cast<int>(rhs);
+    inline BaseMediaDescription::InputMode operator|=(BaseMediaDescription::InputMode &lhs, BaseMediaDescription::InputMode rhs) {
+        lhs = static_cast<BaseMediaDescription::InputMode>(static_cast<int>(lhs) | static_cast<int>(rhs));
+        return lhs;
     }
 
     inline int operator&(const BaseMediaDescription::InputMode& lhs, const BaseMediaDescription::InputMode rhs){

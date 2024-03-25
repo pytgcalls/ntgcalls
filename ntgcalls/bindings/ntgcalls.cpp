@@ -86,7 +86,7 @@ std::shared_ptr<ntgcalls::NTgCalls> safeUID(const uint32_t uid) {
 }
 
 ntgcalls::BaseMediaDescription::InputMode parseInputMode(const ntg_input_mode_enum mode) {
-    constexpr auto result = ntgcalls::BaseMediaDescription::InputMode::Unknown;
+    auto result = ntgcalls::BaseMediaDescription::InputMode::Unknown;
     if (mode & NTG_FILE) {
         result |= ntgcalls::BaseMediaDescription::InputMode::File;
     }
