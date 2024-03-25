@@ -10,9 +10,14 @@ namespace ntgcalls {
     }
 
     CallInterface::~CallInterface() {
-        stop();
-        connection = nullptr;
+        onStreamEnd(nullptr);
+        onDisconnect(nullptr);
         stream = nullptr;
+        if (connection) {
+            connection->onConnectionChange(nullptr);
+            connection->close();
+        }
+        connection = nullptr;
     }
 
     bool CallInterface::pause() {
@@ -33,17 +38,6 @@ namespace ntgcalls {
     bool CallInterface::unmute() {
         std::lock_guard lock(mutex);
         return stream->unmute();
-    }
-
-    void CallInterface::stop() {
-        onStreamEnd(nullptr);
-        onDisconnect(nullptr);
-        std::lock_guard lock(mutex);
-        stream->stop();
-        if (connection) {
-            connection->onConnectionChange(nullptr);
-            connection->close();
-        }
     }
 
     void CallInterface::changeStream(const MediaDescription& config) {

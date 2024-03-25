@@ -11,8 +11,20 @@ namespace ntgcalls {
     }
 
     Stream::~Stream() {
-        stop();
+        quit = true;
+        if (thread.joinable()) {
+            thread.join();
+        }
         std::lock_guard lock(mutex);
+        idling = false;
+        if (reader) {
+            if (reader->audio) {
+                reader->audio->close();
+            }
+            if (reader->video) {
+                reader->video->close();
+            }
+        }
         audio = nullptr;
         video = nullptr;
         audioTrack = nullptr;
@@ -185,23 +197,6 @@ namespace ntgcalls {
             checkUpgrade();
         }
         return changed;
-    }
-
-    void Stream::stop() {
-        quit = true;
-        if (thread.joinable()) {
-            thread.join();
-        }
-        std::lock_guard lock(mutex);
-        idling = false;
-        if (reader) {
-            if (reader->audio) {
-                reader->audio->close();
-            }
-            if (reader->video) {
-                reader->video->close();
-            }
-        }
     }
 
     void Stream::onStreamEnd(const std::function<void(Type)> &callback) {

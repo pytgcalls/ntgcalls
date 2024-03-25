@@ -17,7 +17,7 @@ namespace ntgcalls {
         bool connected = false;
         wrtc::synchronized_callback<void> onCloseConnection;
     public:
-        CallInterface(rtc::Thread* workerThread);
+        explicit CallInterface(rtc::Thread* workerThread);
 
         virtual ~CallInterface();
 
@@ -35,8 +35,6 @@ namespace ntgcalls {
         bool mute();
 
         bool unmute();
-
-        void stop();
 
         void changeStream(const MediaDescription& config);
 

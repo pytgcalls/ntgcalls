@@ -42,8 +42,6 @@ namespace ntgcalls {
 
         bool unmute();
 
-        void stop();
-
         MediaState getState();
 
         uint64_t time();

@@ -22,9 +22,6 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         // Temporary fix because macOs sucks and currently doesnt support Elements View
         // ReSharper disable once CppUseElementsView
-        for (const auto& [fst, snd] : connections) {
-            snd->stop();
-        }
         connections = {};
         hardwareInfo = nullptr;
         workerThread->Stop();
@@ -193,7 +190,7 @@ namespace ntgcalls {
 
     void NTgCalls::remove(const int64_t chatId) {
         std::lock_guard lock(mutex);
-        if (connections.contains(chatId)) {
+        if (exists(chatId)) {
             connections.erase(connections.find(chatId));
         } else {
             THROW_CONNECTION_NOT_FOUND(chatId)
