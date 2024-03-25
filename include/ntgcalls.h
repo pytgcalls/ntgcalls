@@ -177,13 +177,13 @@ NTG_C_EXPORT int ntg_calls(uint32_t uid, ntg_group_call_struct *buffer, uint64_t
 
 NTG_C_EXPORT int ntg_calls_count(uint32_t uid, uint64_t* size, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback, void* userData);
+NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback, void* userData = nullptr);
 
-NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback, void* userData);
+NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback, void* userData = nullptr);
 
-NTG_C_EXPORT int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callback, void* userData);
+NTG_C_EXPORT int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callback, void* userData = nullptr);
 
-NTG_C_EXPORT int ntg_on_signaling_data(uint32_t uid, ntg_signaling_callback callback, void* userData);
+NTG_C_EXPORT int ntg_on_signaling_data(uint32_t uid, ntg_signaling_callback callback, void* userData = nullptr);
 
 NTG_C_EXPORT int ntg_get_version(char* buffer, int size);
 
