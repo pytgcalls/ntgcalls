@@ -91,9 +91,17 @@ class AsyncPromise {
     std::function<T()> callable;
 
 public:
-    AsyncPromise(rtc::Thread* worker, const std::function<T()>& callable);
+    AsyncPromise(rtc::Thread* worker, std::function<T()> callable): worker(worker), callable(std::move(callable)) {}
 
-    void then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject);
+    void then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject) {
+        worker->PostTask([this, resolve, reject, callable = callable]{
+            try {
+                resolve(callable());
+            } catch (const std::exception&) {
+                reject(std::current_exception());
+            }
+        });
+    }
 };
 
 template <>
@@ -101,9 +109,18 @@ class AsyncPromise<void> {
     rtc::Thread* worker;
     std::function<void()> callable;
 public:
-    AsyncPromise(rtc::Thread* worker, const std::function<void()>& callable);
+    AsyncPromise(rtc::Thread* worker, std::function<void()> callable): worker(worker), callable(std::move(callable)) {};
 
-    void then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const;
+    void then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const{
+        worker->PostTask([this, resolve, reject, callable = callable]{
+            try {
+                callable();
+                resolve();
+            } catch (const std::exception&) {
+                reject(std::current_exception());
+            }
+        });
+    }
 };
 
 #define INIT_ASYNC
