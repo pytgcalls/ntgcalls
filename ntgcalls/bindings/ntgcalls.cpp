@@ -10,6 +10,32 @@
 std::map<uint32_t, std::shared_ptr<ntgcalls::NTgCalls>> clients;
 uint32_t uidGenerator;
 
+int copyAndReturn(const std::vector<std::byte>& b, uint8_t *buffer, const int size) {
+    if (!buffer)
+        return static_cast<int>(b.size());
+
+    if (size < static_cast<int>(b.size()))
+        return NTG_ERR_TOO_SMALL;
+    const auto *bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
+#ifndef IS_MACOS
+    std::copy_n(bufferTemp, b.size(), buffer);
+#else
+    std::copy(bufferTemp, bufferTemp + b.size(), buffer);
+#endif
+    return static_cast<int>(b.size());
+}
+
+bytes::vector copyAndReturn(const uint8_t *buffer, const int size) {
+    bytes::vector b(size);
+    const auto *bufferTemp = reinterpret_cast<const std::byte*>(buffer);
+#ifndef IS_MACOS
+    std::copy_n(bufferTemp, size, b.begin());
+#else
+    std::copy(bufferTemp, bufferTemp + size, b.begin());
+#endif
+    return b;
+}
+
 int copyAndReturn(std::string s, char *buffer, const int size) {
     if (!buffer)
         return static_cast<int>(s.size() + 1);
@@ -41,7 +67,8 @@ safeUID(uid)->method(__VA_ARGS__).then(\
 }\
 return std::move(result);
 
-template <typename T> int copyAndReturn(std::vector<T> b, T *buffer, const int size) {
+template <typename T>
+int copyAndReturn(std::vector<T> b, T *buffer, const int size) {
     if (!buffer)
         return static_cast<int>(b.size());
 
@@ -95,6 +122,42 @@ ntg_stream_status_enum parseStatus(const ntgcalls::Stream::Status status) {
     return {};
 }
 
+std::vector<wrtc::RTCServer> parseRTCServers(ntg_rtc_server_struct* servers, const int size) {
+    std::vector<wrtc::RTCServer> serversCpp;
+    for (int i = 0; i < size; i++) {
+        serversCpp.emplace_back(
+            servers[i].id,
+            servers[i].ipv4,
+            servers[i].ipv6,
+            servers[i].port,
+            servers[i].username,
+            servers[i].password,
+            servers[i].turn,
+            servers[i].stun,
+            servers[i].tcp,
+            servers[i].peerTagSize? std::optional(bytes::binary(servers[i].peerTag, servers[i].peerTag + servers[i].peerTagSize)) : std::nullopt
+        );
+    }
+    return serversCpp;
+}
+
+std::vector<std::string> copyAndReturn(char** versions, const int size) {
+    std::vector<std::string> versionsCpp;
+    for (int i = 0; i < size; i++) {
+        versionsCpp.emplace_back(versions[i]);
+    }
+    return versionsCpp;
+}
+
+std::pair<char**, int> copyAndReturn(const std::vector<std::string>& versions) {
+    auto versionsCpp = new char*[versions.size()];
+    for (int i = 0; i < versions.size(); i++) {
+        versionsCpp[i] = new char[versions[i].size() + 1];
+        copyAndReturn(versions[i], versionsCpp[i], static_cast<int>(versions[i].size() + 1));
+    }
+    return {versionsCpp, static_cast<int>(versions.size())};
+}
+
 ntgcalls::MediaDescription parseMediaDescription(const ntg_media_description_struct& desc) {
     std::optional<ntgcalls::AudioDescription> audio;
     std::optional<ntgcalls::VideoDescription> video;
@@ -144,7 +207,129 @@ int ntg_destroy(const uint32_t uid) {
     return 0;
 }
 
-int* ntg_get_params(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc, char* buffer, const int size, ntg_async_callback callback) {
+
+int* ntg_create_p2p(const uint32_t uid, const int64_t userId, const int32_t g, const uint8_t* p, const int sizeP, const uint8_t* r, const int sizeR, const uint8_t* g_a_hash, const int sizeGAHash, const ntg_media_description_struct desc, uint8_t* buffer, const int size, ntg_async_callback callback) {
+    PREPARE_ASYNC(createP2PCall, userId, g, copyAndReturn(p, sizeP), copyAndReturn(r, sizeR), sizeGAHash ? std::optional(copyAndReturn(g_a_hash, sizeGAHash)) : std::nullopt, parseMediaDescription(desc))
+    [result, callback, buffer, size] (const bytes::vector& s) {
+        *result = copyAndReturn(s, buffer, size);
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::ConnectionError&) {
+            *result = NTG_CONNECTION_ALREADY_EXISTS;
+        } catch (ntgcalls::FileError&) {
+            *result = NTG_FILE_NOT_FOUND;
+        } catch (ntgcalls::FFmpegError&) {
+            *result = NTG_FFMPEG_NOT_FOUND;
+        } catch (ntgcalls::ShellError&) {
+            *result = NTG_SHELL_ERROR;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
+    }
+    PREPARE_ASYNC_END
+}
+
+int* ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* p, const int sizeP, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct *authParams, ntg_async_callback callback) {
+    PREPARE_ASYNC(exchangeKeys, userId, copyAndReturn(p, sizeP), copyAndReturn(g_a_or_b, sizeGAB), fingerprint)
+    [result, callback, authParams](const ntgcalls::AuthParams& params) {
+        authParams->key_fingerprint = params.key_fingerprint;
+        authParams->g_a_or_b = new uint8_t[params.g_a_or_b.size()];
+        if (const auto rTemp = copyAndReturn(params.g_a_or_b, authParams->g_a_or_b, authParams->sizeGAOrBSize); rTemp < 0) {
+            *result = rTemp;
+        } else {
+            *result = 0;
+            authParams->sizeGAOrBSize = rTemp;
+        }
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::ConnectionError&) {
+            *result = NTG_CONNECTION_ALREADY_EXISTS;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (ntgcalls::CryptoError&) {
+            *result = NTG_CRYPTO_ERROR;
+        } catch (ntgcalls::InvalidParams&) {
+            *result = NTG_MISSING_FINGERPRINT;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
+    }
+    PREPARE_ASYNC_END
+}
+
+
+int* ntg_connect_p2p(const uint32_t uid, const int64_t userId, ntg_rtc_server_struct* servers, const int serversSize, char** versions, const int versionsSize, ntg_async_callback callback) {
+    PREPARE_ASYNC(connectP2P, userId, parseRTCServers(servers, serversSize), copyAndReturn(versions, versionsSize))
+    [result, callback] {
+        *result = 0;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::ConnectionError&) {
+            *result = NTG_CONNECTION_ALREADY_EXISTS;
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (ntgcalls::TelegramServerError&) {
+            *result = NTG_CONNECTION_FAILED;
+        } catch (ntgcalls::CryptoError&) {
+            *result = NTG_CRYPTO_ERROR;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
+    }
+    PREPARE_ASYNC_END
+}
+
+int* ntg_send_signaling_data(const uint32_t uid, const int64_t userId, uint8_t* buffer, const int size, ntg_async_callback callback) {
+    PREPARE_ASYNC(sendSignalingData, userId, bytes::binary(buffer, buffer + size))
+    [result, callback] {
+        *result = 0;
+        callback();
+    },
+    [result, callback](const std::exception_ptr& e) {
+        try {
+            std::rethrow_exception(e);
+        } catch (ntgcalls::ConnectionNotFound&) {
+            *result = NTG_CONNECTION_NOT_FOUND;
+        } catch (...) {
+            *result = NTG_UNKNOWN_EXCEPTION;
+        }
+        callback();
+    }
+    PREPARE_ASYNC_END
+}
+
+int* ntg_get_protocol(const uint32_t uid, ntg_protocol_struct* protocol) {
+    const auto result = new int(0);
+    try {
+        const auto [min_layer, max_layer, udp_p2p, udp_reflector, library_versions] = safeUID(uid)->getProtocol();
+        protocol->minLayer = min_layer;
+        protocol->maxLayer = max_layer;
+        protocol->udpP2P = udp_p2p;
+        protocol->udpReflector = udp_reflector;
+        auto [libraryVersions, libraryVersionsSize] = copyAndReturn(library_versions);
+        protocol->libraryVersionsSize = libraryVersionsSize;
+        protocol->libraryVersions = libraryVersions;
+    } catch (ntgcalls::InvalidUUID&) {
+        *result = NTG_INVALID_UID;
+    } catch (...) {
+        *result = NTG_UNKNOWN_EXCEPTION;
+    }
+    return result;
+}
+
+int* ntg_create(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc, char* buffer, const int size, ntg_async_callback callback) {
     PREPARE_ASYNC(createCall, chatID, parseMediaDescription(desc))
     [result, callback, buffer, size](const std::string& s) {
         *result = copyAndReturn(s, buffer, size);
@@ -455,6 +640,19 @@ int ntg_on_disconnect(const uint32_t uid, ntg_disconnect_callback callback) {
     try {
         safeUID(uid)->onDisconnect([uid, callback](const int64_t chatId) {
             callback(uid, chatId);
+        });
+    } catch (ntgcalls::InvalidUUID&) {
+        return NTG_INVALID_UID;
+    }
+    return 0;
+}
+
+int ntg_on_signaling_data(uint32_t uid, ntg_signaling_callback callback) {
+    try {
+        safeUID(uid)->onSignalingData([uid, callback](const int64_t userId, const bytes::binary& data) {
+            auto* buffer = new uint8_t[data.size()];
+            const auto bufferSize = copyAndReturn(data, buffer, static_cast<int>(data.size()));
+            callback(uid, userId, buffer, bufferSize);
         });
     } catch (ntgcalls::InvalidUUID&) {
         return NTG_INVALID_UID;

@@ -19,6 +19,8 @@
 // NTgCalls
 #define NTG_CONNECTION_ALREADY_EXISTS (-100)
 #define NTG_CONNECTION_NOT_FOUND (-101)
+#define NTG_CRYPTO_ERROR (-102)
+#define NTG_MISSING_FINGERPRINT (-103)
 
 // STREAM
 #define NTG_FILE_NOT_FOUND (-200)
@@ -41,6 +43,7 @@
 extern "C" {
 #endif
 #include <stdint.h>
+// ReSharper disable once CppUnusedIncludeDirective
 #include <stdbool.h>
 
 typedef enum {
@@ -76,6 +79,12 @@ typedef struct {
 } ntg_video_description_struct;
 
 typedef struct {
+    uint8_t* g_a_or_b;
+    int sizeGAOrBSize;
+    int64_t key_fingerprint;
+} ntg_auth_params_struct;
+
+typedef struct {
     ntg_audio_description_struct* audio;
     ntg_video_description_struct* video;
 } ntg_media_description_struct;
@@ -91,11 +100,36 @@ typedef struct {
     bool videoStopped;
 } ntg_media_state_struct;
 
+typedef struct {
+    uint64_t id;
+    char* ipv4;
+    char* ipv6;
+    char* username;
+    char* password;
+    uint16_t port;
+    bool turn;
+    bool stun;
+    bool tcp;
+    uint8_t* peerTag;
+    int peerTagSize;
+} ntg_rtc_server_struct;
+
+typedef struct {
+    int32_t minLayer;
+    int32_t maxLayer;
+    bool udpP2P;
+    bool udpReflector;
+    char** libraryVersions;
+    int libraryVersionsSize;
+} ntg_protocol_struct;
+
 typedef void (*ntg_stream_callback)(uint32_t, int64_t, ntg_stream_type_enum);
 
 typedef void (*ntg_upgrade_callback)(uint32_t, int64_t, ntg_media_state_struct);
 
 typedef void (*ntg_disconnect_callback)(uint32_t, int64_t);
+
+typedef void (*ntg_signaling_callback)(uint32_t, int64_t, uint8_t*, int);
 
 typedef void (*ntg_async_callback)();
 
@@ -103,7 +137,17 @@ NTG_C_EXPORT uint32_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
-NTG_C_EXPORT int* ntg_get_params(uint32_t uid, int64_t chatID, ntg_media_description_struct desc, char* buffer, int size, ntg_async_callback callback);
+NTG_C_EXPORT int* ntg_create_p2p(uint32_t uid, int64_t userId, int32_t g, const uint8_t* p, int sizeP, uint8_t* r, int sizeR, uint8_t* g_a_hash, int sizeGAHash, ntg_media_description_struct desc, uint8_t* buffer, int size, ntg_async_callback callback);
+
+NTG_C_EXPORT int* ntg_exchange_keys(uint32_t uid, int64_t userId, uint8_t* p, int sizeP, uint8_t* g_a_or_b, int sizeGAB, int64_t fingerprint, ntg_auth_params_struct *authParams, ntg_async_callback callback);
+
+NTG_C_EXPORT int* ntg_connect_p2p(uint32_t uid, int64_t userId, ntg_rtc_server_struct* servers, int serversSize, char** versions, int versionsSize, ntg_async_callback callback);
+
+NTG_C_EXPORT int* ntg_send_signaling_data(uint32_t uid, int64_t userId, uint8_t* buffer, int size, ntg_async_callback callback);
+
+NTG_C_EXPORT int* ntg_get_protocol(uint32_t uid, ntg_protocol_struct *protocol);
+
+NTG_C_EXPORT int* ntg_create(uint32_t uid, int64_t chatID, ntg_media_description_struct desc, char* buffer, int size, ntg_async_callback callback);
 
 NTG_C_EXPORT int* ntg_connect(uint32_t uid, int64_t chatID, char* params, ntg_async_callback callback);
 
@@ -132,6 +176,8 @@ NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback);
 NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback);
 
 NTG_C_EXPORT int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callback);
+
+NTG_C_EXPORT int ntg_on_signaling_data(uint32_t uid, ntg_signaling_callback callback);
 
 NTG_C_EXPORT int ntg_get_version(char* buffer, int size);
 
