@@ -30,7 +30,7 @@ namespace ntgcalls {
         static std::vector<std::string> SupportedVersions();
 
     private:
-        static constexpr std::string defaultVersion = "11.0.0";
+        static constexpr char defaultVersion[] = "11.0.0";
 
         static ProtocolVersion signalingVersion(const std::string& version);
 
