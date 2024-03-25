@@ -146,7 +146,7 @@ namespace ntgcalls {
             }
         });
         lock.unlock();
-        if (promise.get_future().wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+        if (promise.get_future().wait_for(std::chrono::seconds(60)) != std::future_status::ready) {
             throw TelegramServerError("Connection timeout");
         }
     }

@@ -74,7 +74,7 @@ namespace wrtc {
                 promise.set_exception(e);
             }
         );
-        if (promise.get_future().wait_for(std::chrono::seconds(15)) != std::future_status::ready) {
+        if (promise.get_future().wait_for(std::chrono::seconds(60)) != std::future_status::ready) {
             throw RTCException("Failed to execute 'setRemoteDescription' on 'PeerConnection': The operation timed out.");
         }
     }
@@ -108,7 +108,7 @@ namespace wrtc {
                 promise.set_exception(e);
             }
         );
-        if (promise.get_future().wait_for(std::chrono::seconds(15)) != std::future_status::ready) {
+        if (promise.get_future().wait_for(std::chrono::seconds(60)) != std::future_status::ready) {
             throw RTCException("Failed to execute 'setRemoteDescription' on 'PeerConnection': The operation timed out.");
         }
     }
