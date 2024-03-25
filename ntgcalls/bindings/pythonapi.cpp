@@ -144,7 +144,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     pybind11::register_exception<ntgcalls::FileError>(m, "FileError", baseExc);
     pybind11::register_exception<ntgcalls::FFmpegError>(m, "FFmpegError", baseExc);
     pybind11::register_exception<ntgcalls::ShellError>(m, "ShellError", baseExc);
-     pybind11::register_exception<ntgcalls::CryptoError>(m, "CryptoError", baseExc);
+    pybind11::register_exception<ntgcalls::CryptoError>(m, "CryptoError", baseExc);
 
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 }
