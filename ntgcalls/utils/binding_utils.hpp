@@ -94,6 +94,14 @@ public:
     AsyncPromise(rtc::Thread* worker, const std::function<T()>& callable);
 
     void then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject);
+};
+
+template <>
+class AsyncPromise<void> {
+    rtc::Thread* worker;
+    std::function<void()> callable;
+public:
+    AsyncPromise(rtc::Thread* worker, const std::function<void()>& callable);
 
     void then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const;
 };

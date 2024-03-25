@@ -32,8 +32,9 @@ void AsyncPromise<T>::then(const std::function<void(T)>& resolve, const std::fun
     });
 }
 
-template <typename T>
-void AsyncPromise<T>::then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const{
+AsyncPromise<void>::AsyncPromise(rtc::Thread* worker, const std::function<void()>& callable): worker(worker), callable(callable) {}
+
+void AsyncPromise<void>::then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const{
     worker->PostTask([this, resolve, reject]{
         try {
             callable();
