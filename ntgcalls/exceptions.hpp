@@ -31,6 +31,10 @@ namespace ntgcalls {
         using BaseRTCException::BaseRTCException;
     };
 
+    class CryptoError final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     class RTMPNeeded final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };

@@ -20,7 +20,7 @@ namespace ntgcalls {
         }
         auto first = ModExpFirst(g, p, r);
         if (first.modexp.empty()) {
-            throw InvalidParams("Invalid modexp");
+            throw CryptoError("Invalid modexp");
         }
         randomPower = std::move(first.randomPower);
         prime = p;
@@ -48,7 +48,7 @@ namespace ntgcalls {
                 throw InvalidParams("Fingerprint not found");
             }
             if (g_a_hash != openssl::Sha256::Digest(g_a_or_b)) {
-                throw InvalidParams("Hash mismatch");
+                throw CryptoError("Hash mismatch");
             }
         }
         const auto computedAuthKey = AuthKey::CreateAuthKey(
@@ -57,13 +57,13 @@ namespace ntgcalls {
             g_a_hash ? prime:p
         );
         if (computedAuthKey.empty()) {
-            throw ConnectionError("Could not create auth key");
+            throw CryptoError("Could not create auth key");
         }
         RawKey authKey;
         AuthKey::FillData(authKey, computedAuthKey);
         const auto computedFingerprint = AuthKey::Fingerprint(authKey);
         if (g_a_hash && computedFingerprint != static_cast<uint64_t>(fingerprint)) {
-            throw InvalidParams("Fingerprint mismatch");
+            throw CryptoError("Fingerprint mismatch");
         }
         key = authKey;
         return AuthParams{
