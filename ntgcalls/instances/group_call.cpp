@@ -36,7 +36,12 @@ namespace ntgcalls {
         if (!connection) {
             throw ConnectionError("Connection not initialized");
         }
-        auto data = json::parse(jsonData);
+        json data;
+        try {
+            data = json::parse(jsonData);
+        } catch (...) {
+            throw InvalidParams("Invalid JSON");
+        }
         if (!data["rtmp"].is_null()) {
             throw RTMPNeeded("Needed rtmp connection");
         }
