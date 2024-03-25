@@ -75,7 +75,7 @@ def get_versions() -> Dict[str, CLangInfo]:
 
 
 def cmake_path():
-    return Path(TOOLS_PATH, f'cmake_{CMAKE_VERSION.replace('.', '_')}')
+    return Path(TOOLS_PATH, f'cmake_{CMAKE_VERSION.replace(".", "_")}')
 
 
 def cmake_bin():
@@ -85,7 +85,7 @@ def cmake_bin():
 
 
 def clang_path():
-    return Path(TOOLS_PATH, f'clang_{CLANG_VERSION.replace('.', '_')}')
+    return Path(TOOLS_PATH, f'clang_{CLANG_VERSION.replace(".", "_")}')
 
 
 def install_cmake(cmake_version: str):
@@ -235,7 +235,7 @@ class SharedCommand(Command):
         cfg = 'RelWithDebInfo' if self.debug else 'Release'
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={cfg}',
-            f'-DSTATIC_BUILD={'ON' if self.static else 'OFF'}',
+            f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
         ]
         cmake_args += get_os_cmake_args()
         build_args = [
