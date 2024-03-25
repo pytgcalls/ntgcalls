@@ -21,7 +21,11 @@ namespace ntgcalls {
         }
         connection = std::make_unique<wrtc::PeerConnection>();
         stream->addTracks(connection);
-        connection->setLocalDescription();
+        try {
+            connection->setLocalDescription();
+        } catch (wrtc::RTCException&) {
+            throw ConnectionError("Failed to set local description");
+        }
         const auto payload = CallPayload(connection->localDescription().value());
         audioSource = payload.audioSource;
         for (const auto &ssrc : payload.sourceGroups) {
@@ -82,12 +86,16 @@ namespace ntgcalls {
         } catch (...) {
             throw InvalidParams("Invalid transport");
         }
-        connection->setRemoteDescription(
-            wrtc::Description(
-                wrtc::Description::SdpType::Answer,
-                wrtc::SdpBuilder::fromConference(conference)
-            )
-        );
+        try {
+            connection->setRemoteDescription(
+                wrtc::Description(
+                    wrtc::Description::SdpType::Answer,
+                    wrtc::SdpBuilder::fromConference(conference)
+                )
+            );
+        } catch (wrtc::RTCException&) {
+            throw TelegramServerError("Telegram Server is having some internal problems");
+        }
         std::promise<void> promise;
         connection->onConnectionChange([&](const wrtc::PeerConnectionState state) {
             switch (state) {
