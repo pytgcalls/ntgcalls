@@ -4,13 +4,13 @@
 
 #pragma once
 
-#define WORKER(worker, ...) \
-RTC_LOG_F(LS_INFO) << "Starting worker"; \
+#define WORKER(funcName, worker, ...) \
+RTC_LOG(LS_INFO) << funcName << ": " << "Starting worker"; \
 worker->PostTask([__VA_ARGS__] {\
-RTC_LOG_F(LS_INFO) << "Worker started";
+RTC_LOG(LS_INFO) << funcName << ": " << "Worker started";
 
 #define END_WORKER \
-RTC_LOG_F(LS_INFO) << "Worker finished";\
+RTC_LOG(LS_INFO) << "Worker finished";\
 });
 
 #ifdef PYTHON_ENABLED
@@ -66,7 +66,8 @@ RTC_LOG(LS_VERBOSE) << "GIL acquired";
 
 #define SMART_ASYNC(worker, ...) \
 auto promise = loop.attr("create_future")(); \
-WORKER(worker, promise = promise.inc_ref(), __VA_ARGS__)\
+auto functionName = __FUNCTION__;\
+WORKER(functionName, worker, functionName, promise = promise.inc_ref(), __VA_ARGS__)\
 try {
 
 #define CLOSE_ASYNC(...) \

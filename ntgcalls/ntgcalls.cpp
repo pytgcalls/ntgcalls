@@ -46,7 +46,7 @@ namespace ntgcalls {
 
     void NTgCalls::setupListeners(const int64_t chatId) {
         connections[chatId]->onStreamEnd([this, chatId](const Stream::Type &type) {
-            WORKER(updateThread, this, chatId, type)
+            WORKER("onStreamEnd", updateThread, this, chatId, type)
             THREAD_SAFE
             (void) onEof(chatId, type);
             END_THREAD_SAFE
@@ -54,7 +54,7 @@ namespace ntgcalls {
         });
         if (connections[chatId]->type() & CallInterface::Type::Group) {
             SafeCall<GroupCall>(connections[chatId])->onUpgrade([this, chatId](const MediaState &state) {
-                WORKER(updateThread, this, chatId, state)
+                WORKER("onUpgrade", updateThread, this, chatId, state)
                 THREAD_SAFE
                 (void) onChangeStatus(chatId, state);
                 END_THREAD_SAFE
@@ -62,7 +62,7 @@ namespace ntgcalls {
             });
         }
         connections[chatId]->onDisconnect([this, chatId]{
-            WORKER(updateThread, this, chatId)
+            WORKER("onDisconnect", updateThread, this, chatId)
             THREAD_SAFE
             (void) onCloseConnection(chatId);
             END_THREAD_SAFE
@@ -71,7 +71,7 @@ namespace ntgcalls {
         });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
             SafeCall<P2PCall>(connections[chatId])->onSignalingData([this, chatId](const bytes::binary& data) {
-                WORKER(updateThread, this, chatId, data)
+                WORKER("onSignalingData", updateThread, this, chatId, data)
                 THREAD_SAFE
                 (void) onEmitData(chatId, CAST_BYTES(data));
                 END_THREAD_SAFE
@@ -84,7 +84,7 @@ namespace ntgcalls {
         SMART_ASYNC(networkThread, this, userId, g, p = CPP_BYTES(p, bytes::vector), r = CPP_BYTES(r, bytes::vector), g_a_hash = CPP_BYTES(g_a_hash, bytes::vector), media)
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(userId)
-        connections[userId] = std::make_shared<P2PCall>(workerThread.get());
+        connections[userId] = std::make_shared<P2PCall>(updateThread.get());
         setupListeners(userId);
         const auto result = SafeCall<P2PCall>(connections[userId])->init(g, p, r, g_a_hash, media);
         END_ASYNC_RETURN_SAFE(CAST_BYTES(result))
@@ -105,7 +105,7 @@ namespace ntgcalls {
         SMART_ASYNC(networkThread, this, chatId, media)
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(chatId)
-        connections[chatId] = std::make_shared<GroupCall>(workerThread.get());
+        connections[chatId] = std::make_shared<GroupCall>(updateThread.get());
         setupListeners(chatId);
         END_ASYNC_RETURN(SafeCall<GroupCall>(connections[chatId])->init(media))
     }
