@@ -62,7 +62,7 @@ namespace wrtc {
                     iceServer.username = "reflector";
                     iceServer.password = hex(server.peerTag.value());
                     iceServers.push_back(iceServer);
-                    RTC_LOG(LS_INFO) << "PHONE server: " << iceServer.uri << " username: " << iceServer.username;
+                    RTC_LOG(LS_INFO) << "PHONE server: " << iceServer.uri << " username: " << iceServer.username << " password: " << iceServer.password;
                 };
                 pushPhone(server.ipv4);
                 pushPhone(server.ipv6);

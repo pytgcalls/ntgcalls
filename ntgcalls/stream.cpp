@@ -16,6 +16,7 @@ namespace ntgcalls {
         if (thread.joinable()) {
             thread.join();
         }
+        RTC_LOG(LS_VERBOSE) << "Thread joined";
         idling = false;
         audio = nullptr;
         video = nullptr;

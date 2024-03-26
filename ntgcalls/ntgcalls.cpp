@@ -206,11 +206,15 @@ namespace ntgcalls {
     }
 
     void NTgCalls::remove(const int64_t chatId) {
+        RTC_LOG(LS_INFO) << "Removing call " << chatId << ", Acquiring lock";
         std::lock_guard lock(mutex);
+        RTC_LOG(LS_INFO) << "Lock acquired, removing call " << chatId;
         if (!exists(chatId)) {
+            RTC_LOG(LS_ERROR) << "Call " << chatId << " not found";
             THROW_CONNECTION_NOT_FOUND(chatId)
         }
         connections.erase(connections.find(chatId));
+        RTC_LOG(LS_INFO) << "Call " << chatId << " removed";
     }
 
     bool NTgCalls::exists(const int64_t chatId) const {
