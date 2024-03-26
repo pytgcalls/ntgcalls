@@ -193,9 +193,9 @@ ntgcalls::MediaDescription parseMediaDescription(const ntg_media_description_str
     };
 }
 
-uint32_t ntg_init(char* logPath) {
+uint32_t ntg_init(char* logPath, bool allowWebrtcLogs) {
     const uint32_t uid = uidGenerator++;
-    clients[uid] = std::make_shared<ntgcalls::NTgCalls>(std::string(logPath));
+    clients[uid] = std::make_shared<ntgcalls::NTgCalls>(std::string(logPath), allowWebrtcLogs);
     return uid;
 }
 

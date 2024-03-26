@@ -139,7 +139,7 @@ typedef void (*ntg_disconnect_callback)(uint32_t, int64_t, void*);
 
 typedef void (*ntg_signaling_callback)(uint32_t, int64_t, uint8_t*, int, void*);
 
-NTG_C_EXPORT uint32_t ntg_init(char* logPath);
+NTG_C_EXPORT uint32_t ntg_init(char* logPath, bool allowWebrtcLogs);
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
