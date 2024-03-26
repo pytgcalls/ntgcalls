@@ -19,7 +19,7 @@ else()
     target_compile_definitions(ntgcalls PRIVATE NTG_EXPORTS)
 endif()
 
-set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20)
+set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20 C_STANDARD 20)
 target_link_libraries(ntgcalls PRIVATE wrtc nlohmann_json::nlohmann_json)
 if(BOOST_ENABLED)
     target_link_libraries(ntgcalls PRIVATE Boost::filesystem)
