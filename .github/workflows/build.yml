@@ -66,34 +66,42 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Build Debug Shared lib
+      - name: Build Shared lib (Debug and Release)
         if: matrix.cibw_archs != 'aarch64'
-        run: python3 setup.py build_shared --no-preserve-cache --debug
+        run: |
+          python3 setup.py build_lib --debug
+          python3 setup.py build_lib
 
-      - name: Build Debug Shared lib (ARM64)
-        if: matrix.cibw_archs == 'aarch64'
-        run: docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache --debug
-
-      - name: Build Release Shared lib
+      - name: Build Static lib (Debug and Release)
         if: matrix.cibw_archs != 'aarch64'
-        run: python3 setup.py build_shared --no-preserve-cache
+        run: |
+          python3 setup.py build_lib --static --debug
+          python3 setup.py build_lib --static
 
-      - name: Build Release Shared lib (ARM64)
+      - name: Build Shared lib (Debug and Release) (ARM64)
         if: matrix.cibw_archs == 'aarch64'
-        run: docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache
+        run: |
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug && \
+          python3 setup.py build_lib --debug
 
-      - name: Upload Debug Shared lib for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ntgcalls.${{ matrix.shared_name }}-debug-shared_libs
-          path: ./shared-output-debug/*
-          if-no-files-found: error
+      - name: Build Static lib (Debug and Release) (ARM64)
+        if: matrix.cibw_archs == 'aarch64'
+        run: |
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug && \
+          python3 setup.py build_lib --static
 
-      - name: Upload Release Shared lib for ${{ matrix.shared_name }}
+      - name: Upload Shared libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
           path: ./shared-output/*
+          if-no-files-found: error
+
+      - name: Upload Static libs for ${{ matrix.shared_name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ntgcalls.${{ matrix.shared_name }}-static_libs
+          path: ./static-output/*
           if-no-files-found: error
 
       - name: Build wheels
