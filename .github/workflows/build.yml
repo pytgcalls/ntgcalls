@@ -66,38 +66,38 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Build Shared lib (Debug and Release)
+      - name: Build Shared Libs (Debug and Release)
         if: matrix.cibw_archs != 'aarch64'
         run: |
           python3 setup.py build_lib --debug
           python3 setup.py build_lib
 
-      - name: Build Static lib (Debug and Release)
+      - name: Build Static Libs (Debug and Release)
         if: matrix.cibw_archs != 'aarch64'
         run: |
           python3 setup.py build_lib --static --debug
           python3 setup.py build_lib --static
 
-      - name: Build Shared lib (Debug and Release) (ARM64)
+      - name: Build Shared Libs (Debug and Release) (ARM64)
         if: matrix.cibw_archs == 'aarch64'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug && \
-          python3 setup.py build_lib --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --no-preserve-cache --debug && \
+          python3 setup.py build_lib --debug --no-preserve-cache
 
-      - name: Build Static lib (Debug and Release) (ARM64)
+      - name: Build Static Libs (Debug and Release) (ARM64)
         if: matrix.cibw_archs == 'aarch64'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug && \
-          python3 setup.py build_lib --static
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --no-preserve-cache --static --debug && \
+          python3 setup.py build_lib --static --no-preserve-cache
 
-      - name: Upload Shared libs for ${{ matrix.shared_name }}
+      - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
           path: ./shared-output/*
           if-no-files-found: error
 
-      - name: Upload Static libs for ${{ matrix.shared_name }}
+      - name: Upload Static Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
         with:
           name: ntgcalls.${{ matrix.shared_name }}-static_libs
