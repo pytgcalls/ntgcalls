@@ -9,7 +9,7 @@
 #include "instances/p2p_call.hpp"
 
 namespace ntgcalls {
-    NTgCalls::NTgCalls(const std::string& logPath) {
+    NTgCalls::NTgCalls(std::optional<std::string> logPath) {
         workerThread = rtc::Thread::Create();
         workerThread->Start();
         networkThread = rtc::Thread::Create();
@@ -18,14 +18,14 @@ namespace ntgcalls {
         updateThread->Start();
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC
-        if (!logPath.empty()) {
+        if (logPath.has_value()) {
 #ifdef DEBUG
             rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
 #else
             rtc::LogMessage::LogToDebug(rtc::LS_INFO);
 #endif
             rtc::LogMessage::SetLogToStderr(false);
-            logSink = std::make_unique<LogSinkImpl>(logPath);
+            logSink = std::make_unique<LogSinkImpl>(logPath.value());
             rtc::LogMessage::AddLogToStream(logSink.get(), rtc::LS_INFO);
         }
     }
