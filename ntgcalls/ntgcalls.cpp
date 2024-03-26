@@ -9,23 +9,36 @@
 #include "instances/p2p_call.hpp"
 
 namespace ntgcalls {
-    NTgCalls::NTgCalls() {
+    NTgCalls::NTgCalls(const std::string& logPath) {
         workerThread = rtc::Thread::Create();
         workerThread->Start();
         networkThread = rtc::Thread::Create();
         networkThread->Start();
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC
+        if (!logPath.empty()) {
+#ifdef DEBUG
+            rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
+#else
+            rtc::LogMessage::LogToDebug(rtc::LS_INFO);
+#endif
+            rtc::LogMessage::SetLogToStderr(false);
+            logSink = std::make_unique<LogSinkImpl>(logPath);
+            rtc::LogMessage::AddLogToStream(logSink.get(), rtc::LS_INFO);
+        }
     }
 
     NTgCalls::~NTgCalls() {
+        RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
         std::lock_guard lock(mutex);
-        // Temporary fix because macOs sucks and currently doesnt support Elements View
-        // ReSharper disable once CppUseElementsView
+        if (logSink) {
+            rtc::LogMessage::RemoveLogToStream(logSink.get());
+        }
         connections = {};
         hardwareInfo = nullptr;
         workerThread->Stop();
         networkThread->Stop();
+        RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
     }
 
     void NTgCalls::setupListeners(const int64_t chatId) {
@@ -99,6 +112,7 @@ namespace ntgcalls {
         try {
             SafeCall<GroupCall>(safeConnection(chatId))->connect(params);
         } catch (TelegramServerError&) {
+            RTC_LOG(LS_INFO) << "Failed to connect to the call, removing it";
             remove(chatId);
             throw;
         }

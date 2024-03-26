@@ -16,15 +16,18 @@ namespace ntgcalls {
         const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
     ) {
         if (versions.empty()) {
+            RTC_LOG(LS_ERROR) << "No versions provided";
             throw SignalingError("No versions provided");
         }
         const auto bestVersion = bestMatch(versions);
         if (!bestVersion.empty()) {
             const auto sigVersion = signalingVersion(bestVersion);
             if (sigVersion == ProtocolVersion::V1) {
+                RTC_LOG(LS_ERROR) << "Signaling V1 is not supported";
                 throw SignalingUnsupported("Signaling V1 is not supported");
             }
             if (sigVersion & ProtocolVersion::V2) {
+                RTC_LOG(LS_INFO) << "Using signaling V2 for version " << bestVersion;
                 return std::make_unique<SignalingV2>(networkThread, signalingThread, key, onEmitData, onSignalData, sigVersion & ProtocolVersion::V2Full);
             }
         }

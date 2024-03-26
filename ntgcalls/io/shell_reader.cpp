@@ -22,6 +22,7 @@ namespace ntgcalls {
 
     bytes::shared_binary ShellReader::readInternal(const int64_t size) {
         if (!stdOut || stdOut.eof() || stdOut.fail() || !stdOut.is_open()) {
+            RTC_LOG(LS_WARNING) << "Reached end of the file";
             throw EOFError("Reached end of the stream");
         }
         auto file_data = bytes::make_shared_binary(size);
@@ -33,14 +34,18 @@ namespace ntgcalls {
         BaseReader::close();
         if (stdOut) {
             stdOut.close();
+            RTC_LOG(LS_VERBOSE) << "StdOut closed";
             if (auto pipe = stdOut.pipe(); pipe.is_open()){
                 pipe.close();
+                RTC_LOG(LS_VERBOSE) << "StdOut pipe closed";
             }
         }
         if (stdIn) {
             stdIn.close();
+            RTC_LOG(LS_VERBOSE) << "StdIn closed";
             if (auto pipe = stdIn.pipe(); pipe.is_open()){
                 pipe.close();
+                RTC_LOG(LS_VERBOSE) << "StdIn pipe closed";
             }
         }
         if (shellProcess) {
@@ -48,6 +53,7 @@ namespace ntgcalls {
             shellProcess.wait();
             shellProcess.detach();
         }
+        RTC_LOG(LS_VERBOSE) << "ShellReader closed";
     }
 } // ntgcalls
 #endif

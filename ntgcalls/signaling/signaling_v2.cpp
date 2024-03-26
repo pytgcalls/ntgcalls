@@ -49,6 +49,7 @@ namespace ntgcalls {
                 payload.AppendData(encryptedData.data(), encryptedData.size());
 
                 if (const auto result = sctpTransport->SendData(0, params, payload); !result.ok()) {
+                    RTC_LOG(LS_ERROR) << "Failed to send data: " << result.message();
                     isReadyToSend = false;
                     pendingData.push_back(encryptedData);
                 }
@@ -68,6 +69,7 @@ namespace ntgcalls {
             rtc::CopyOnWriteBuffer payload;
             payload.AppendData(data.data(), data.size());
             if (const auto result = sctpTransport->SendData(0, params, payload); !result.ok()) {
+                RTC_LOG(LS_ERROR) << "Failed to send data: " << result.message();
                 pendingData.push_back(data);
                 isReadyToSend = false;
             }

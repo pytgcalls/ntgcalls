@@ -66,10 +66,12 @@ namespace ntgcalls {
     }
 
     void BaseReader::close() {
+        RTC_LOG(LS_VERBOSE) << "Closing reader";
         quit = true;
         if(thread.joinable()) {
             thread.join();
         }
+        RTC_LOG(LS_VERBOSE) << "Reader closed";
     }
 
     bool BaseReader::eof() {

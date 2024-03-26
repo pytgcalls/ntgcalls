@@ -10,14 +10,17 @@ namespace ntgcalls {
     }
 
     CallInterface::~CallInterface() {
+        RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
         onStreamEnd(nullptr);
         onDisconnect(nullptr);
         stream = nullptr;
         if (connection) {
             connection->onConnectionChange(nullptr);
             connection->close();
+            RTC_LOG(LS_VERBOSE) << "Connection closed";
         }
         connection = nullptr;
+        RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
     }
 
     bool CallInterface::pause() {

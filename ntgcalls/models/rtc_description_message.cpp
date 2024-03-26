@@ -18,6 +18,7 @@ namespace ntgcalls {
         json j = json::parse(data.begin(), data.end());
         auto message = std::make_unique<RtcDescriptionMessage>();
         if (j["@type"] != "offer" && j["@type"] != "answer") {
+            RTC_LOG(LS_ERROR) << "Invalid sdp type: " << j["@type"];
             throw InvalidParams("Invalid sdp type");
         }
         message->type = j["@type"] == "offer" ? wrtc::Description::SdpType::Offer : wrtc::Description::SdpType::Answer;

@@ -54,6 +54,7 @@ namespace wrtc {
                     }
                     const rtc::SocketAddress address(host, server.port);
                     if (!address.IsComplete()) {
+                        RTC_LOG(LS_ERROR) << "Invalid ICE server host: " << host;
                         return;
                     }
                     webrtc::PeerConnectionInterface::IceServer iceServer;
@@ -61,6 +62,7 @@ namespace wrtc {
                     iceServer.username = "reflector";
                     iceServer.password = hex(server.peerTag.value());
                     iceServers.push_back(iceServer);
+                    RTC_LOG(LS_INFO) << "PHONE server: " << iceServer.uri << " username: " << iceServer.username;
                 };
                 pushPhone(server.ipv4);
                 pushPhone(server.ipv6);
@@ -72,11 +74,13 @@ namespace wrtc {
                         }
                         const rtc::SocketAddress address(host, server.port);
                         if (!address.IsComplete()) {
+                            RTC_LOG(LS_ERROR) << "Invalid ICE server host: " << host;
                             return;
                         }
                         webrtc::PeerConnectionInterface::IceServer iceServer;
                         iceServer.uri = "stun:" + address.HostAsURIString() + ":" + std::to_string(server.port);
                         iceServers.push_back(iceServer);
+                        RTC_LOG(LS_INFO) << "STUN server: " << iceServer.uri;
                     };
                     pushStun(server.ipv4);
                     pushStun(server.ipv6);
@@ -88,6 +92,7 @@ namespace wrtc {
                         }
                         const rtc::SocketAddress address(host, server.port);
                         if (!address.IsComplete()) {
+                            RTC_LOG(LS_ERROR) << "Invalid ICE server host: " << host;
                             return;
                         }
                         webrtc::PeerConnectionInterface::IceServer iceServer;
@@ -95,6 +100,7 @@ namespace wrtc {
                         iceServer.username = server.username.value();
                         iceServer.password = server.password.value();
                         iceServers.push_back(iceServer);
+                        RTC_LOG(LS_INFO) << "TURN server: " << iceServer.uri << " username: " << iceServer.username;
                     };
                     pushTurn(server.ipv4);
                     pushTurn(server.ipv6);

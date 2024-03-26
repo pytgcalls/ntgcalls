@@ -42,5 +42,6 @@ namespace ntgcalls {
         bps = bitsPerSample;
         rate = sampleRate;
         channels = channelCount;
+        RTC_LOG(LS_INFO) << "AudioStreamer configured with " << rate << "Hz, " << bps << "bps, " << channels << " channels";
     }
 }

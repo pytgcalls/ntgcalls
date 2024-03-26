@@ -14,12 +14,15 @@
 
 namespace ntgcalls {
     bytes::vector P2PCall::init(const int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media) {
+        RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);
         if (g_a_or_b) {
+            RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
         auto first = ModExpFirst(g, p, r);
         if (first.modexp.empty()) {
+            RTC_LOG(LS_ERROR) << "Invalid modexp";
             throw CryptoError("Invalid modexp");
         }
         randomPower = std::move(first.randomPower);
@@ -28,26 +31,33 @@ namespace ntgcalls {
             this->g_a_hash = g_a_hash;
         }
         g_a_or_b = std::move(first.modexp);
+        RTC_LOG(LS_INFO) << "P2P call initialized";
         stream->setAVStream(media);
+        RTC_LOG(LS_INFO) << "AVStream settings applied";
         return g_a_hash ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
     }
 
     AuthParams P2PCall::exchangeKeys(const bytes::vector &p, const bytes::vector &g_a_or_b, const int64_t fingerprint) {
         std::lock_guard lock(mutex);
         if (connection) {
+            RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
         if (!this->g_a_or_b) {
+            RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionNotFound("Connection not initialized");
         }
         if (key) {
+            RTC_LOG(LS_ERROR) << "Key already exchanged";
             throw ConnectionError("Key already exchanged");
         }
         if (g_a_hash) {
             if (!fingerprint) {
+                RTC_LOG(LS_ERROR) << "Fingerprint not found";
                 throw InvalidParams("Fingerprint not found");
             }
             if (g_a_hash != openssl::Sha256::Digest(g_a_or_b)) {
+                RTC_LOG(LS_ERROR) << "Hash mismatch";
                 throw CryptoError("Hash mismatch");
             }
         }
@@ -57,15 +67,18 @@ namespace ntgcalls {
             g_a_hash ? prime:p
         );
         if (computedAuthKey.empty()) {
+            RTC_LOG(LS_ERROR) << "Could not create auth key";
             throw CryptoError("Could not create auth key");
         }
         RawKey authKey;
         AuthKey::FillData(authKey, computedAuthKey);
         const auto computedFingerprint = AuthKey::Fingerprint(authKey);
         if (g_a_hash && computedFingerprint != static_cast<uint64_t>(fingerprint)) {
+            RTC_LOG(LS_ERROR) << "Fingerprint mismatch";
             throw CryptoError("Fingerprint mismatch");
         }
         key = authKey;
+        RTC_LOG(LS_INFO) << "Key exchanged";
         return AuthParams{
             static_cast<int64_t>(computedFingerprint),
             this->g_a_or_b.value(),
@@ -73,11 +86,14 @@ namespace ntgcalls {
     }
 
     void P2PCall::connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
+        RTC_LOG(LS_INFO) << "Connecting to P2P call";
         std::unique_lock lock(mutex);
         if (connection) {
+            RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
         if (!g_a_or_b || !key) {
+            RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionNotFound("Connection not initialized");
         }
         connection = std::make_unique<wrtc::PeerConnection>(servers, true);
@@ -117,6 +133,7 @@ namespace ntgcalls {
             }
         );
         if (type() == Type::Outgoing) {
+            RTC_LOG(LS_INFO) << "Creating data channel";
             connection->createDataChannel("data");
             makingNegotation = true;
             sendLocalDescription();
@@ -126,8 +143,10 @@ namespace ntgcalls {
             switch (state) {
             case wrtc::PeerConnectionState::Connected:
                 if (!connected) {
+                    RTC_LOG(LS_INFO) << "Connection established";
                     connected = true;
                     stream->start();
+                    RTC_LOG(LS_INFO) << "Stream started";
                     promise.set_value();
                 }
                 break;
@@ -136,8 +155,10 @@ namespace ntgcalls {
             case wrtc::PeerConnectionState::Closed:
                 connection->onConnectionChange(nullptr);
                 if (!connected) {
+                    RTC_LOG(LS_ERROR) << "Connection failed";
                     promise.set_exception(std::make_exception_ptr(TelegramServerError("Error while connecting to the P2P call server")));
                 } else {
+                    RTC_LOG(LS_INFO) << "Connection closed";
                     (void) onCloseConnection();
                 }
                 break;
@@ -147,11 +168,13 @@ namespace ntgcalls {
         });
         lock.unlock();
         if (promise.get_future().wait_for(std::chrono::seconds(60)) != std::future_status::ready) {
+            RTC_LOG(LS_ERROR) << "Connection timeout";
             throw TelegramServerError("Connection timeout");
         }
     }
 
     void P2PCall::processSignalingData(const bytes::binary& buffer) {
+        RTC_LOG(LS_INFO) << "processSignalingData: " << std::string(buffer.begin(), buffer.end());
         if (const auto messageType = Message::type(buffer); messageType == Message::Type::RtcDescription) {
             const auto message = RtcDescriptionMessage::deserialize(buffer);
             if (type() == Type::Outgoing && message->type == wrtc::Description::SdpType::Offer && (isMakingOffer || connection->signalingState() != wrtc::SignalingState::Stable)) {
@@ -178,6 +201,7 @@ namespace ntgcalls {
 
     void P2PCall::sendLocalDescription() {
         isMakingOffer = true;
+        RTC_LOG(LS_INFO) << "Calling SetLocalDescription";
         connection->setLocalDescription([this] {
             connection->signalingThread()->PostTask([this] {
                 const auto description = connection->localDescription();
@@ -194,6 +218,7 @@ namespace ntgcalls {
     }
 
     void P2PCall::applyRemoteSdp(const wrtc::Description::SdpType sdpType, const std::string& sdp) {
+        RTC_LOG(LS_INFO) << "Calling SetRemoteDescription";
         connection->setRemoteDescription(
             wrtc::Description(
                 sdpType,

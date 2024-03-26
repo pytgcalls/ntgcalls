@@ -7,6 +7,8 @@
 #include <rtc_base/copy_on_write_buffer.h>
 
 #include <utility>
+#include <rtc_base/logging.h>
+
 #include "wrtc/utils/encryption.hpp"
 
 namespace ntgcalls {
@@ -117,11 +119,13 @@ namespace ntgcalls {
             bytes::memory_span(key + 88 + x, 32),
             bytes::memory_span(decryptionBuffer.data(), decryptionBuffer.size())
         ); ConstTimeIsDifferent(msgKeyLarge.data() + 8, msgKey, 16)) {
+            RTC_LOG(LS_ERROR) << "Bad incoming data hash";
             return std::nullopt;
         }
 
         const auto incomingSeq = ReadSeq(decryptionBuffer.data());
         if (const auto incomingCounter = CounterFromSeq(incomingSeq); !registerIncomingCounter(incomingCounter)) {
+            RTC_LOG(LS_ERROR) << "Already handled packet received." << std::to_string(incomingCounter);
             return std::nullopt;
         }
 

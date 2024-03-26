@@ -13,6 +13,7 @@
 #include "models/rtc_server.hpp"
 #include "utils/binding_utils.hpp"
 #include "utils/hardware_info.hpp"
+#include "utils/log_sink_impl.hpp"
 
 #define CHECK_AND_THROW_IF_EXISTS(chatId) \
 if (exists(chatId)) { \
@@ -34,6 +35,7 @@ namespace ntgcalls {
         std::unique_ptr<rtc::Thread> networkThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
+        std::unique_ptr<LogSinkImpl> logSink;
         ASYNC_ARGS
 
         bool exists(int64_t chatId) const;
@@ -48,7 +50,7 @@ namespace ntgcalls {
         void remove(int64_t chatId);
 
     public:
-        explicit NTgCalls();
+        explicit NTgCalls(const std::string& logPath);
 
         ~NTgCalls();
 

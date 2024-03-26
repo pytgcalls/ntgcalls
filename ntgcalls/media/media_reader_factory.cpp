@@ -24,18 +24,23 @@ namespace ntgcalls {
         bool noLatency = desc.inputMode & BaseMediaDescription::InputMode::NoLatency;
         // SUPPORTED ENCODERS
         if ((desc.inputMode & (BaseMediaDescription::InputMode::File | allowedFlags)) == desc.inputMode) {
+            RTC_LOG(LS_INFO) << "Using file reader for " << desc.input;
             return std::make_unique<FileReader>(desc.input, bufferSize, noLatency);
         }
         if ((desc.inputMode & (BaseMediaDescription::InputMode::Shell | allowedFlags)) == desc.inputMode) {
 #ifdef BOOST_ENABLED
+            RTC_LOG(LS_INFO) << "Using shell reader for " << desc.input;
             return std::make_unique<ShellReader>(desc.input, bufferSize, noLatency);
 #else
+            RTC_LOG(LS_ERROR) << "Shell execution is not yet supported on your OS/Architecture";
             throw ShellError("Shell execution is not yet supported on your OS/Architecture");
 #endif
         }
         if ((desc.inputMode & (BaseMediaDescription::InputMode::FFmpeg | allowedFlags)) == desc.inputMode) {
+            RTC_LOG(LS_ERROR) << "FFmpeg encoder is not yet supported";
             throw FFmpegError("FFmpeg encoder is not yet supported");
         }
+        RTC_LOG(LS_ERROR) << "Encoder not found";
         throw InvalidParams("Encoder not found");
     }
 

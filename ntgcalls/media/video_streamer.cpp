@@ -45,6 +45,7 @@ namespace ntgcalls {
         w = width;
         h = height;
         fps = framesPerSecond;
+        RTC_LOG(LS_INFO) << "VideoStreamer configured with " << w << "x" << h << "@" << fps << "fps";
     }
 }
 

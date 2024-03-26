@@ -4,9 +4,14 @@
 
 #pragma once
 
-#define WORKER(worker, ...) worker->PostTask([__VA_ARGS__] {
+#define WORKER(worker, ...) \
+RTC_LOG_F(LS_INFO) << "Starting worker"; \
+worker->PostTask([__VA_ARGS__] {\
+RTC_LOG_F(LS_INFO) << "Worker started";
 
-#define END_WORKER });
+#define END_WORKER \
+RTC_LOG_F(LS_INFO) << "Worker finished";\
+});
 
 #ifdef PYTHON_ENABLED
 #include "wrtc/utils/binary.hpp"
@@ -43,7 +48,9 @@ py::bytes toBytes(const T& p) {
 py::object translate_current_exception();
 
 #define THREAD_SAFE { \
-py::gil_scoped_acquire acquire;
+RTC_LOG(LS_VERBOSE) << "Acquiring GIL"; \
+py::gil_scoped_acquire acquire; \
+RTC_LOG(LS_VERBOSE) << "GIL acquired";
 
 #define BYTES(x) py::bytes
 
@@ -59,16 +66,21 @@ py::gil_scoped_acquire acquire;
 
 #define SMART_ASYNC(worker, ...) \
 auto promise = loop.attr("create_future")(); \
-py::gil_scoped_release release;\
 WORKER(worker, promise = promise.inc_ref(), __VA_ARGS__)\
 try {
 
 #define CLOSE_ASYNC(...) \
+RTC_LOG(LS_VERBOSE) << "Acquiring GIL for setResult"; \
 py::gil_scoped_acquire acquire;\
+RTC_LOG(LS_VERBOSE) << "GIL acquired for setResult";\
 loop.attr("call_soon_threadsafe")(promise.attr("set_result"), __VA_ARGS__); \
+promise.dec_ref();\
 } catch (const std::exception& e) {\
+RTC_LOG(LS_VERBOSE) << "Acquiring GIL for setException"; \
 py::gil_scoped_acquire acquire;\
+RTC_LOG(LS_VERBOSE) << "GIL acquired for setException";\
 loop.attr("call_soon_threadsafe")(promise.attr("set_exception"), translate_current_exception());\
+promise.dec_ref();\
 }\
 END_WORKER \
 return promise;
