@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(ntgcalls, m) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
-    wrapper.def(py::init<std::optional<std::string>>(), py::arg("log_path") = std::nullopt);
+    wrapper.def(py::init<std::optional<std::string>, bool>(), py::arg("log_path") = std::nullopt, py::arg("allow_webrtc_logs") = false);
     wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"), py::arg("media"));
     wrapper.def("exchange_keys", &ntgcalls::NTgCalls::exchangeKeys, py::arg("user_id"), py::arg("p"), py::arg("g_a_or_b"), py::arg("fingerprint"));
     wrapper.def("connect_p2p", &ntgcalls::NTgCalls::connectP2P, py::arg("user_id"), py::arg("servers"), py::arg("versions"));
