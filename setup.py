@@ -242,6 +242,8 @@ class SharedCommand(Command):
             '--config', cfg,
             f'-j{multiprocessing.cpu_count()}',
         ]
+        build_type = 'static' if self.static else 'shared'
+        config_type = 'debug' if self.debug else 'release'
         build_temp = Path('build_lib')
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
@@ -256,8 +258,8 @@ class SharedCommand(Command):
         tmp_release_path = Path(release_path, cfg)
 
         build_output = Path(
-            'static-output' if self.static else 'shared-output',
-            'debug' if self.debug else 'release',
+            f'{build_type}-output',
+            config_type,
         )
         if build_output.exists():
             shutil.rmtree(build_output)

@@ -81,14 +81,14 @@ jobs:
       - name: Build Shared Libs (Debug and Release) (ARM64)
         if: matrix.cibw_archs == 'aarch64'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --no-preserve-cache --debug && \
-          python3 setup.py build_lib --debug --no-preserve-cache
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib
 
       - name: Build Static Libs (Debug and Release) (ARM64)
         if: matrix.cibw_archs == 'aarch64'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --no-preserve-cache --static --debug && \
-          python3 setup.py build_lib --static --no-preserve-cache
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
