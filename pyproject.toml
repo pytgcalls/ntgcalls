@@ -1,0 +1,42 @@
+[project]
+dynamic = ["version"]
+name = "ntgcalls"
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+    'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: Implementation :: CPython',
+]
+authors = [
+    {name = "Laky-64", email = "iraci.matteo@gmail.com"},
+]
+keywords = [
+    "audio", "python", "library", "video", "telegram", "stream",
+    "ffmpeg", "cpp", "webrtc", "voice-chat", "voip", "group-chat",
+    "video-calls", "calls", "video-chat", "pytgcalls", "ntgcalls",
+    "tgcalls", "py-tgcalls",
+]
+requires-python = ">=3.8"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://pytgcalls.github.io/"
+Repository = "https://github.com/pytgcalls/ntgcalls.git"
+Documentation = "https://pytgcalls.github.io/NTgCalls"
+Changelog = "https://pytgcalls.github.io/PyTgCalls/Changelogs"
+
+[project.optional-dependencies]
+test = ['pytest>=6.0']
+
+[tool.setuptools]
+packages = []

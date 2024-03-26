@@ -282,35 +282,12 @@ class SharedCommand(Command):
             print('Cleanup successfully')
 
 
-with open(os.path.join(base_path, 'README.md'), encoding='utf-8') as f:
-    readme = f.read()
-
 setup(
-    name='ntgcalls',
     version=version,
-    long_description=readme,
-    long_description_content_type='text/markdown',
-    url='https://github.com/pytgcalls/ntgcalls',
-    author='Laky-64',
-    author_email='iraci.matteo@gmail.com',
-    classifiers=[
-        'License :: OSI Approved :: '
-        'GNU Lesser General Public License v3 (LGPLv3)',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Programming Language :: Python :: 3.12',
-        'Programming Language :: Python :: Implementation :: CPython',
-    ],
     ext_modules=[CMakeExtension('ntgcalls')],
     cmdclass={
         'build_ext': CMakeBuild,
         'build_lib': SharedCommand
     },
     zip_safe=False,
-    extras_require={'test': ['pytest>=6.0']},
-    python_requires='>=3.8',
 )
