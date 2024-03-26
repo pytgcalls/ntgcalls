@@ -1,6 +1,6 @@
 package ntgcalls
 
-type Instance struct {
+type Client struct {
 	uid       uint32
 	exists    bool
 	streamEnd []StreamEndCallback
