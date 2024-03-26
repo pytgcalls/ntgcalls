@@ -1,5 +1,6 @@
 name: Build Arm64 Image
 on:
+  workflow_dispatch:
   push:
     branches: [ master ]
     paths:
