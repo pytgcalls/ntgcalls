@@ -14,6 +14,8 @@ namespace ntgcalls {
         workerThread->Start();
         networkThread = rtc::Thread::Create();
         networkThread->Start();
+        updateThread = rtc::Thread::Create();
+        updateThread->Start();
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC
         if (!logPath.empty()) {
@@ -38,12 +40,13 @@ namespace ntgcalls {
         hardwareInfo = nullptr;
         workerThread->Stop();
         networkThread->Stop();
+        updateThread->Stop();
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
     }
 
     void NTgCalls::setupListeners(const int64_t chatId) {
         connections[chatId]->onStreamEnd([this, chatId](const Stream::Type &type) {
-            WORKER(workerThread, this, chatId, type)
+            WORKER(updateThread, this, chatId, type)
             THREAD_SAFE
             (void) onEof(chatId, type);
             END_THREAD_SAFE
@@ -51,7 +54,7 @@ namespace ntgcalls {
         });
         if (connections[chatId]->type() & CallInterface::Type::Group) {
             SafeCall<GroupCall>(connections[chatId])->onUpgrade([this, chatId](const MediaState &state) {
-                WORKER(workerThread, this, chatId, state)
+                WORKER(updateThread, this, chatId, state)
                 THREAD_SAFE
                 (void) onChangeStatus(chatId, state);
                 END_THREAD_SAFE
@@ -59,7 +62,7 @@ namespace ntgcalls {
             });
         }
         connections[chatId]->onDisconnect([this, chatId]{
-            WORKER(workerThread, this, chatId)
+            WORKER(updateThread, this, chatId)
             THREAD_SAFE
             (void) onCloseConnection(chatId);
             END_THREAD_SAFE
@@ -68,7 +71,7 @@ namespace ntgcalls {
         });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
             SafeCall<P2PCall>(connections[chatId])->onSignalingData([this, chatId](const bytes::binary& data) {
-                WORKER(workerThread, this, chatId, data)
+                WORKER(updateThread, this, chatId, data)
                 THREAD_SAFE
                 (void) onEmitData(chatId, CAST_BYTES(data));
                 END_THREAD_SAFE
@@ -204,11 +207,10 @@ namespace ntgcalls {
 
     void NTgCalls::remove(const int64_t chatId) {
         std::lock_guard lock(mutex);
-        if (exists(chatId)) {
-            connections.erase(connections.find(chatId));
-        } else {
+        if (!exists(chatId)) {
             THROW_CONNECTION_NOT_FOUND(chatId)
         }
+        connections.erase(connections.find(chatId));
     }
 
     bool NTgCalls::exists(const int64_t chatId) const {

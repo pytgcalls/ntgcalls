@@ -23,28 +23,23 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
     }
 
-    bool CallInterface::pause() {
-        std::lock_guard lock(mutex);
+    bool CallInterface::pause() const {
         return stream->pause();
     }
 
-    bool CallInterface::resume() {
-        std::lock_guard lock(mutex);
+    bool CallInterface::resume() const {
         return stream->resume();
     }
 
-    bool CallInterface::mute() {
-        std::lock_guard lock(mutex);
+    bool CallInterface::mute() const {
         return stream->mute();
     }
 
-    bool CallInterface::unmute() {
-        std::lock_guard lock(mutex);
+    bool CallInterface::unmute() const {
         return stream->unmute();
     }
 
-    void CallInterface::changeStream(const MediaDescription& config) {
-        std::lock_guard lock(mutex);
+    void CallInterface::changeStream(const MediaDescription& config) const {
         stream->setAVStream(config);
     }
 
@@ -58,18 +53,15 @@ namespace ntgcalls {
         onCloseConnection = callback;
     }
 
-    uint64_t CallInterface::time() {
-        std::lock_guard lock(mutex);
+    uint64_t CallInterface::time() const {
         return stream->time();
     }
 
-    MediaState CallInterface::getState() {
-        std::lock_guard lock(mutex);
+    MediaState CallInterface::getState() const {
         return stream->getState();
     }
 
-    Stream::Status CallInterface::status() {
-        std::lock_guard lock(mutex);
+    Stream::Status CallInterface::status() const {
         return stream->status();
     }
 } // ntgcalls

@@ -32,6 +32,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t> onCloseConnection;
         wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> onEmitData;
         std::unique_ptr<rtc::Thread> workerThread;
+        std::unique_ptr<rtc::Thread> updateThread;
         std::unique_ptr<rtc::Thread> networkThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;

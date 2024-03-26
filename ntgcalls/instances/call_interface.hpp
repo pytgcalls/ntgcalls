@@ -28,25 +28,25 @@ namespace ntgcalls {
             P2P = Outgoing | Incoming
         };
 
-        bool pause();
+        bool pause() const;
 
-        bool resume();
+        bool resume() const;
 
-        bool mute();
+        bool mute() const;
 
-        bool unmute();
+        bool unmute() const;
 
-        void changeStream(const MediaDescription& config);
+        void changeStream(const MediaDescription& config) const;
 
         void onStreamEnd(const std::function<void(Stream::Type)> &callback);
 
         void onDisconnect(const std::function<void()> &callback);
 
-        uint64_t time();
+        uint64_t time() const;
 
-        MediaState getState();
+        MediaState getState() const;
 
-        Stream::Status status();
+        Stream::Status status() const;
 
         virtual Type type() const = 0;
     };
