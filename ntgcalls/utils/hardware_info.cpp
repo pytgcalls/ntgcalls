@@ -65,7 +65,6 @@ namespace ntgcalls {
             percent /= numProcessors;
             percent *= 100;
         }
-
         lastCPU = now;
         lastSysCPU = usage.ru_stime.tv_sec;
         lastUserCPU = usage.ru_utime.tv_sec;

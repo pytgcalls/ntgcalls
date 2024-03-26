@@ -18,7 +18,6 @@ namespace ntgcalls {
 
     class HardwareInfo {
         uint16_t numProcessors;
-        std::thread infoRetriever;
 #ifdef _WIN32
         ULARGE_INTEGER lastCPU{}, lastSysCPU{}, lastUserCPU{};
         HANDLE self;
