@@ -24,7 +24,7 @@ namespace ntgcalls {
         }
     }
 
-    LogSinkImpl::LogSinkImpl(const std::string& logPath) {
+    LogSinkImpl::LogSinkImpl(const std::string& logPath, const bool allowWebrtcLogs): allowWebrtcLogs(allowWebrtcLogs) {
         _file.open(logPath);
     }
 
@@ -37,6 +37,9 @@ namespace ntgcalls {
     }
 
     void LogSinkImpl::OnLogMessage(const std::string& message) {
+        if (!allowWebrtcLogs && message.find(".cc:") != std::string::npos) {
+            return;
+        }
         std::ostringstream logStream;
         const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
         std::time_t timeNow = std::chrono::system_clock::to_time_t(now);

@@ -12,11 +12,12 @@ namespace ntgcalls {
     class LogSinkImpl final: public rtc::LogSink {
         std::ofstream _file;
         std::ostringstream _data;
+        bool allowWebrtcLogs;
 
         static std::string severityToString(rtc::LoggingSeverity severity);
 
     public:
-        explicit LogSinkImpl(const std::string &logPath);
+        explicit LogSinkImpl(const std::string &logPath, bool allowWebrtcLogs = false);
 
         void OnLogMessage(const std::string &msg, rtc::LoggingSeverity severity, const char *tag) override;
         void OnLogMessage(const std::string &message, rtc::LoggingSeverity severity) override;

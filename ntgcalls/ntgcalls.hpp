@@ -51,7 +51,7 @@ namespace ntgcalls {
         void remove(int64_t chatId);
 
     public:
-        explicit NTgCalls(std::optional<std::string> logPath = std::nullopt);
+        explicit NTgCalls(std::optional<std::string> logPath = std::nullopt, bool allowWebrtcLogs = false);
 
         ~NTgCalls();
 
