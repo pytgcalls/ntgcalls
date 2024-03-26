@@ -18,7 +18,7 @@ var handlerSignal = make(map[uint32][]SignalCallback)
 
 func NTgCalls() *Client {
 	Client := &Client{
-		uid:    uint32(C.ntg_init()),
+		uid:    uint32(C.ntg_init(C.CString("")),
 		exists: true,
 	}
 	C.ntg_on_stream_end(C.uint32_t(Client.uid), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStream)), nil)
