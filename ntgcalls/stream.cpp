@@ -11,6 +11,7 @@ namespace ntgcalls {
     }
 
     Stream::~Stream() {
+        RTC_LOG(LS_VERBOSE) << "Destroying Stream";
         quit = true;
         if (thread.joinable()) {
             thread.join();
@@ -30,6 +31,7 @@ namespace ntgcalls {
         audioTrack = nullptr;
         videoTrack = nullptr;
         reader = nullptr;
+        RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
 
     void Stream::addTracks(const std::unique_ptr<wrtc::PeerConnection>& pc) {
@@ -53,7 +55,9 @@ namespace ntgcalls {
     }
 
     void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
+        RTC_LOG(LS_INFO) << "Setting AVStream, Acquiring lock";
         std::lock_guard lock(mutex);
+        RTC_LOG(LS_INFO) << "Setting AVStream, Lock acquired";
         const auto audioConfig = streamConfig.audio;
         const auto videoConfig = streamConfig.video;
         idling = false;
@@ -63,6 +67,7 @@ namespace ntgcalls {
                 audioConfig->bitsPerSample,
                 audioConfig->channelCount
             );
+            RTC_LOG(LS_INFO) << "Audio config set";
         }
         const bool wasVideo = hasVideo;
         if (videoConfig) {
@@ -72,9 +77,11 @@ namespace ntgcalls {
                 videoConfig->height,
                 videoConfig->fps
             );
+            RTC_LOG(LS_INFO) << "Video config set";
         } else {
             hasVideo = false;
         }
+        RTC_LOG(LS_INFO) << "Creating MediaReaderFactory";
         reader = std::make_unique<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
