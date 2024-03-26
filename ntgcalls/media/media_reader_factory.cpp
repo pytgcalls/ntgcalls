@@ -45,6 +45,12 @@ namespace ntgcalls {
     }
 
     MediaReaderFactory::~MediaReaderFactory() {
+        if (audio) {
+            audio->close();
+        }
+        if (video) {
+            video->close();
+        }
         audio = nullptr;
         video = nullptr;
     }

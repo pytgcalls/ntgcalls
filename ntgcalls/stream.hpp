@@ -60,7 +60,7 @@ namespace ntgcalls {
         wrtc::MediaStreamTrack *audioTrack{}, *videoTrack{};
         std::unique_ptr<MediaReaderFactory> reader;
         bool idling = false;
-        std::atomic_bool hasVideo = false, quit = false;
+        std::atomic_bool hasVideo = false, changing = false, quit = false;
         wrtc::synchronized_callback<Type> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::thread thread;

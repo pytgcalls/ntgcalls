@@ -16,16 +16,7 @@ namespace ntgcalls {
         if (thread.joinable()) {
             thread.join();
         }
-        std::lock_guard lock(mutex);
         idling = false;
-        if (reader) {
-            if (reader->audio) {
-                reader->audio->close();
-            }
-            if (reader->video) {
-                reader->video->close();
-            }
-        }
         audio = nullptr;
         video = nullptr;
         audioTrack = nullptr;
@@ -56,6 +47,7 @@ namespace ntgcalls {
 
     void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
         RTC_LOG(LS_INFO) << "Setting AVStream, Acquiring lock";
+        changing = true;
         std::lock_guard lock(mutex);
         RTC_LOG(LS_INFO) << "Setting AVStream, Lock acquired";
         const auto audioConfig = streamConfig.audio;
@@ -83,9 +75,11 @@ namespace ntgcalls {
         }
         RTC_LOG(LS_INFO) << "Creating MediaReaderFactory";
         reader = std::make_unique<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
+        RTC_LOG(LS_INFO) << "MediaReaderFactory created";
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }
+        changing = false;
     }
 
     void Stream::checkUpgrade() {
@@ -131,7 +125,7 @@ namespace ntgcalls {
         thread = std::thread([this] {
             do {
                 std::shared_lock lock(mutex);
-                if (idling || !reader || !(reader->audio || reader->video)) {
+                if (idling || changing || !reader || !(reader->audio || reader->video)) {
                     lock.unlock();
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     lock.lock();
