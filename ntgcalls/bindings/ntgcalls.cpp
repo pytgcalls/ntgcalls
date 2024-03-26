@@ -193,9 +193,9 @@ ntgcalls::MediaDescription parseMediaDescription(const ntg_media_description_str
     };
 }
 
-uint32_t ntg_init() {
+uint32_t ntg_init(char* logPath) {
     const uint32_t uid = uidGenerator++;
-    clients[uid] = std::make_shared<ntgcalls::NTgCalls>();
+    clients[uid] = std::make_shared<ntgcalls::NTgCalls>(std::string(logPath));
     return uid;
 }
 
