@@ -238,12 +238,9 @@ int ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* p
     [future, authParams](const ntgcalls::AuthParams& params) {
         authParams->key_fingerprint = params.key_fingerprint;
         authParams->g_a_or_b = new uint8_t[params.g_a_or_b.size()];
-        if (const auto rTemp = copyAndReturn(params.g_a_or_b, authParams->g_a_or_b, authParams->sizeGAOrBSize); rTemp < 0) {
-            *future.errorCode = rTemp;
-        } else {
-            *future.errorCode = 0;
-            authParams->sizeGAOrBSize = rTemp;
-        }
+        authParams->sizeGAB = static_cast<int>(params.g_a_or_b.size());
+        copyAndReturn(params.g_a_or_b, authParams->g_a_or_b, authParams->sizeGAB);
+        *future.errorCode = 0;
         future.promise(future.userData);
     },
     [future](const std::exception_ptr& e) {

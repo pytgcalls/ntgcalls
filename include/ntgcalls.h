@@ -80,7 +80,7 @@ typedef struct {
 
 typedef struct {
     uint8_t* g_a_or_b;
-    int sizeGAOrBSize;
+    int sizeGAB;
     int64_t key_fingerprint;
 } ntg_auth_params_struct;
 
