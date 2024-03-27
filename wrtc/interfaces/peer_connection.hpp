@@ -19,7 +19,7 @@ namespace wrtc {
 
     class PeerConnection final : public webrtc::PeerConnectionObserver {
     public:
-        explicit PeerConnection(const std::vector<RTCServer>& servers = {}, bool allowAttachDataChannel = false);
+        explicit PeerConnection(const std::vector<RTCServer>& servers = {}, bool allowAttachDataChannel = false, bool p2pAllowed = true);
 
         ~PeerConnection() override;
 

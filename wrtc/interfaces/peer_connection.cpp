@@ -11,11 +11,16 @@
 
 namespace wrtc {
 
-    PeerConnection::PeerConnection(const std::vector<RTCServer>& servers, const bool allowAttachDataChannel): allowAttachDataChannel(allowAttachDataChannel) {
+    PeerConnection::PeerConnection(const std::vector<RTCServer>& servers, const bool allowAttachDataChannel, const bool p2pAllowed): allowAttachDataChannel(allowAttachDataChannel) {
         factory = PeerConnectionFactory::GetOrCreateDefault();
 
         webrtc::PeerConnectionInterface::RTCConfiguration config;
-        config.type = webrtc::PeerConnectionInterface::IceTransportsType::kAll;
+        if (p2pAllowed) {
+            config.type = webrtc::PeerConnectionInterface::IceTransportsType::kAll;
+        } else {
+            config.type = webrtc::PeerConnectionInterface::IceTransportsType::kRelay;
+        }
+        config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
         config.bundle_policy = webrtc::PeerConnectionInterface::BundlePolicy::kBundlePolicyMaxBundle;
         config.servers = RTCServer::toIceServers(servers);
         config.enable_ice_renomination = true;
@@ -170,6 +175,13 @@ namespace wrtc {
                 PeerConnectionFactory::UnRef();
                 factory = nullptr;
             }
+        }
+        if (dataChannel) {
+            dataChannel->UnregisterObserver();
+            dataChannel = nullptr;
+        }
+        if (dataChannelObserver) {
+            dataChannelObserver = nullptr;
         }
     }
 

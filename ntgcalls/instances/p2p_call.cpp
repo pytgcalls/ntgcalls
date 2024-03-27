@@ -78,15 +78,15 @@ namespace ntgcalls {
             throw CryptoError("Fingerprint mismatch");
         }
         key = authKey;
-        RTC_LOG(LS_INFO) << "Key exchanged";
+        RTC_LOG(LS_INFO) << "Key exchanged, fingerprint: " << computedFingerprint;
         return AuthParams{
             static_cast<int64_t>(computedFingerprint),
             this->g_a_or_b.value(),
         };
     }
 
-    void P2PCall::connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions) {
-        RTC_LOG(LS_INFO) << "Connecting to P2P call";
+    void P2PCall::connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
+        RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2pAllowed ? "true" : "false");
         std::unique_lock lock(mutex);
         if (connection) {
             RTC_LOG(LS_ERROR) << "Connection already made";
@@ -96,14 +96,16 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionNotFound("Connection not initialized");
         }
-        connection = std::make_unique<wrtc::PeerConnection>(servers, true);
+        connection = std::make_unique<wrtc::PeerConnection>(servers, true, p2pAllowed);
         connection->onRenegotiationNeeded([this] {
             if (makingNegotation) {
+                RTC_LOG(LS_INFO) << "Renegotiation needed";
                 sendLocalDescription();
             }
         });
         connection->onDataChannelOpened([this] {
             sendMediaState(stream->getState());
+            RTC_LOG(LS_INFO) << "Data channel opened";
         });
         connection->onIceCandidate([this](const wrtc::IceCandidate& candidate) {
             CandidateMessage message;
