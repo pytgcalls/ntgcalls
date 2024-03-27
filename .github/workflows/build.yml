@@ -178,7 +178,7 @@ jobs:
       - name: Zip releases
         run: |
           mkdir releases
-          for dir in tmp/*shared_libs; do
+          for dir in tmp/*_libs; do
             if [ -d "$dir" ]; then
               echo "$dir"
               folder_name=$(basename "$dir" .zip)
