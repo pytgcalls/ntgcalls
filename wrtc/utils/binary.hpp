@@ -5,6 +5,7 @@
 #pragma once
 #include <memory>
 #include <span>
+#include <string>
 #include <vector>
 
 namespace bytes {
@@ -44,6 +45,8 @@ namespace bytes {
     binary make_binary(const Container &container) {
         return { container.begin(), container.end() };
     }
+
+    std::string to_string(const binary &buffer);
 
     struct memory_span {
         const void* data = nullptr;

@@ -7,6 +7,10 @@
 #include <stdexcept>
 
 namespace bytes {
+    std::string to_string(const binary& buffer) {
+        return {buffer.begin(), buffer.end()};
+    }
+
     void set_with_const(span destination, const byte value) {
         memset(destination.data(), std::to_integer<unsigned char>(value), destination.size());
     }

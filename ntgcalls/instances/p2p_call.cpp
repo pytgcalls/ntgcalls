@@ -112,6 +112,7 @@ namespace ntgcalls {
             message.sdp = candidate.sdp;
             message.mid = candidate.mid;
             message.mLine = candidate.mLine;
+            RTC_LOG(LS_INFO) << "Sending candidate: " << bytes::to_string(message.serialize());
             signaling->send(message.serialize());
         });
         auto encryptionKey = std::make_shared<std::array<uint8_t, EncryptionKey::kSize>>();
@@ -213,6 +214,7 @@ namespace ntgcalls {
                 RtcDescriptionMessage message;
                 message.type = description->type();
                 message.sdp = description->sdp();
+                RTC_LOG(LS_INFO) << "Sending local description: " << bytes::to_string(message.serialize());
                 signaling->send(message.serialize());
                 isMakingOffer = false;
             });
@@ -265,6 +267,7 @@ namespace ntgcalls {
         } else {
             message.videoState = MediaStateMessage::VideoState::Active;
         }
+        RTC_LOG(LS_INFO) << "Sending media state: " << bytes::to_string(message.serialize());
         connection->sendDataChannelMessage(message.serialize());
     }
 
