@@ -263,8 +263,8 @@ int ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* p
 }
 
 
-int ntg_connect_p2p(const uint32_t uid, const int64_t userId, ntg_rtc_server_struct* servers, const int serversSize, char** versions, const int versionsSize, ntg_async_struct future) {
-    PREPARE_ASYNC(connectP2P, userId, parseRTCServers(servers, serversSize), copyAndReturn(versions, versionsSize))
+int ntg_connect_p2p(const uint32_t uid, const int64_t userId, ntg_rtc_server_struct* servers, const int serversSize, char** versions, const int versionsSize, const bool p2pAllowed, ntg_async_struct future) {
+    PREPARE_ASYNC(connectP2P, userId, parseRTCServers(servers, serversSize), copyAndReturn(versions, versionsSize), p2pAllowed)
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
