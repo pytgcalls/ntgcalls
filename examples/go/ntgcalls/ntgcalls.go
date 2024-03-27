@@ -18,7 +18,7 @@ var handlerSignal = make(map[uint32][]SignalCallback)
 
 func NTgCalls() *Client {
 	Client := &Client{
-		uid:    uint32(C.ntg_init(C.CString("")),
+		uid:    uint32(C.ntg_init(C.CString(""))),
 		exists: true,
 	}
 	C.ntg_on_stream_end(C.uint32_t(Client.uid), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStream)), nil)
@@ -195,7 +195,7 @@ func (ctx *Client) ExchangeKeys(chatId int64, p []byte, gAB []byte, fingerprint 
 	}, parseErrorCode(*f.errCode)
 }
 
-func (ctx *Client) ConnectP2P(chatId int64, rtcServers []RTCServer, versions []string) error {
+func (ctx *Client) ConnectP2P(chatId int64, rtcServers []RTCServer, versions []string, P2PAllowed bool) error {
 	f := CreateFuture()
 	servers := make([]C.ntg_rtc_server_struct, len(rtcServers))
 	for i, server := range rtcServers {
@@ -218,7 +218,7 @@ func (ctx *Client) ConnectP2P(chatId int64, rtcServers []RTCServer, versions []s
 		}
 	}
 	versionsC, sizeVersions := parseStringVectorC(versions)
-	C.ntg_connect_p2p(C.uint32_t(ctx.uid), C.int64_t(chatId), (*C.ntg_rtc_server_struct)(unsafe.Pointer(&servers[0])), C.int(len(servers)), versionsC, C.int(sizeVersions), f.ParseToC())
+	C.ntg_connect_p2p(C.uint32_t(ctx.uid), C.int64_t(chatId), (*C.ntg_rtc_server_struct)(unsafe.Pointer(&servers[0])), C.int(len(servers)), versionsC, C.int(sizeVersions), C.bool(P2PAllowed), f.ParseToC())
 	f.wait()
 	return parseErrorCode(*f.errCode)
 }

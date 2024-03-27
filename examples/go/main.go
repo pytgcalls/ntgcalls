@@ -106,7 +106,7 @@ func p2pOutCall(client *ntgcalls.Client, mtproto *tg.Client, username string) {
 				}
 			}
 			go func(rtcServers []ntgcalls.RTCServer, versions []string) {
-				_ = client.ConnectP2P(user.ID, rtcServers, versions)
+				_ = client.ConnectP2P(user.ID, rtcServers, versions, callRes.P2PAllowed)
 			}(rtcServers, callRes.Protocol.LibraryVersions)
 		}
 		return nil
