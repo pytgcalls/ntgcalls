@@ -162,6 +162,13 @@ namespace wrtc {
     }
 
     void PeerConnection::close() {
+        if (dataChannel) {
+            dataChannel->UnregisterObserver();
+            dataChannel = nullptr;
+        }
+        if (dataChannelObserver) {
+            dataChannelObserver = nullptr;
+        }
         if (peerConnection) {
             peerConnection->Close();
             if (peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
@@ -175,13 +182,6 @@ namespace wrtc {
                 PeerConnectionFactory::UnRef();
                 factory = nullptr;
             }
-        }
-        if (dataChannel) {
-            dataChannel->UnregisterObserver();
-            dataChannel = nullptr;
-        }
-        if (dataChannelObserver) {
-            dataChannelObserver = nullptr;
         }
     }
 
