@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <optional>
 #include <api/peer_connection_interface.h>
 #include "../enums.hpp"
 #include "../exceptions.hpp"
