@@ -37,7 +37,7 @@ namespace ntgcalls {
     }
 
     void LogSinkImpl::OnLogMessage(const std::string& message) {
-        if (!allowWebrtcLogs && message.find(".cc:") != std::string::npos) {
+        if (!allowWebrtcLogs && message.find(".cpp:") == std::string::npos) {
             return;
         }
         std::ostringstream logStream;
