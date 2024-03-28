@@ -31,9 +31,7 @@ namespace wrtc {
         dependencies.worker_thread = worker_thread_.get();
         dependencies.signaling_thread = signaling_thread_.get();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
-        dependencies.event_log_factory =
-                absl::make_unique<webrtc::RtcEventLogFactory>(
-                        dependencies.task_queue_factory.get());
+        dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>();
         dependencies.adm = worker_thread_->BlockingCall([&] {
             if (!_audioDeviceModule)
                 _audioDeviceModule = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kDummyAudio, dependencies.task_queue_factory.get());

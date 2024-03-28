@@ -33,7 +33,7 @@ namespace wrtc {
         } else if (codec == webrtc::kVideoCodecAV1) {
             r.emplace_back(
                 cricket::kAv1CodecName,
-                webrtc::SdpVideoFormat::Parameters(),
+                webrtc::CodecParameterMap(),
                 webrtc::LibaomAv1EncoderSupportedScalabilityModes()
             );
         } else if (codec == webrtc::kVideoCodecH264) {
