@@ -233,8 +233,8 @@ int ntg_create_p2p(const uint32_t uid, const int64_t userId, const int32_t g, co
     PREPARE_ASYNC_END
 }
 
-int ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* p, const int sizeP, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct *authParams, ntg_async_struct future) {
-    PREPARE_ASYNC(exchangeKeys, userId, copyAndReturn(p, sizeP), copyAndReturn(g_a_or_b, sizeGAB), fingerprint)
+int ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct *authParams, ntg_async_struct future) {
+    PREPARE_ASYNC(exchangeKeys, userId, copyAndReturn(g_a_or_b, sizeGAB), fingerprint)
     [future, authParams](const ntgcalls::AuthParams& params) {
         authParams->key_fingerprint = params.key_fingerprint;
         authParams->g_a_or_b = new uint8_t[params.g_a_or_b.size()];

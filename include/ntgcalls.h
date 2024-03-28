@@ -145,7 +145,7 @@ NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
 NTG_C_EXPORT int ntg_create_p2p(uint32_t uid, int64_t userId, int32_t g, const uint8_t* p, int sizeP, const uint8_t* r, int sizeR, const uint8_t* g_a_hash, int sizeGAHash, ntg_media_description_struct desc, uint8_t* buffer, int size, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_exchange_keys(uint32_t uid, int64_t userId, const uint8_t* p, int sizeP, const uint8_t* g_a_or_b, int sizeGAB, int64_t fingerprint, ntg_auth_params_struct *authParams, ntg_async_struct future);
+NTG_C_EXPORT int ntg_exchange_keys(uint32_t uid, int64_t userId, const uint8_t* g_a_or_b, int sizeGAB, int64_t fingerprint, ntg_auth_params_struct *authParams, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_connect_p2p(uint32_t uid, int64_t userId, ntg_rtc_server_struct* servers, int serversSize, char** versions, int versionsSize, bool p2pAllowed, ntg_async_struct future);
 
