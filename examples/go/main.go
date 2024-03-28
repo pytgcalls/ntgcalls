@@ -62,7 +62,7 @@ func p2pOutCall(client *ntgcalls.Client, mtproto *tg.Client, username string) {
 		switch phoneCall.(type) {
 		case *tg.PhoneCallAccepted:
 			call := phoneCall.(*tg.PhoneCallAccepted)
-			res, _ := client.ExchangeKeys(user.ID, dhConfig.P, call.GB, 0)
+			res, _ := client.ExchangeKeys(user.ID, call.GB, 0)
 			inputCall = &tg.InputPhoneCall{
 				ID:         call.ID,
 				AccessHash: call.AccessHash,

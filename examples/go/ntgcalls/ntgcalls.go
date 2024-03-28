@@ -182,12 +182,11 @@ func (ctx *Client) CreateP2PCall(chatId int64, g int32, p []byte, r []byte, gAHa
 	return C.GoBytes(unsafe.Pointer(&buffer[0]), size), parseErrorCode(*f.errCode)
 }
 
-func (ctx *Client) ExchangeKeys(chatId int64, p []byte, gAB []byte, fingerprint int64) (AuthParams, error) {
+func (ctx *Client) ExchangeKeys(chatId int64, gAB []byte, fingerprint int64) (AuthParams, error) {
 	f := CreateFuture()
 	var buffer C.ntg_auth_params_struct
-	pC, pSize := parseBytes(p)
 	gABC, gABSize := parseBytes(gAB)
-	C.ntg_exchange_keys(C.uint32_t(ctx.uid), C.int64_t(chatId), pC, pSize, gABC, gABSize, C.int64_t(fingerprint), &buffer, f.ParseToC())
+	C.ntg_exchange_keys(C.uint32_t(ctx.uid), C.int64_t(chatId), gABC, gABSize, C.int64_t(fingerprint), &buffer, f.ParseToC())
 	f.wait()
 	return AuthParams{
 		GAOrB:          C.GoBytes(unsafe.Pointer(buffer.g_a_or_b), buffer.sizeGAB),
