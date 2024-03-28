@@ -3,7 +3,6 @@
 //
 
 #include "p2p_call.hpp"
-
 #include "ntgcalls/exceptions.hpp"
 #include "ntgcalls/models/candidate_message.hpp"
 #include "ntgcalls/models/media_state_message.hpp"
@@ -16,7 +15,7 @@ namespace ntgcalls {
     bytes::vector P2PCall::init(const int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media) {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);
-        if (g_a_or_b) {
+        if (g_a_or_b.has_value()) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
@@ -34,7 +33,7 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "P2P call initialized";
         stream->setAVStream(media);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
-        return g_a_hash ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
+        return g_a_hash.has_value() ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
     }
 
     AuthParams P2PCall::exchangeKeys(const bytes::vector &g_a_or_b, const int64_t fingerprint) {
@@ -43,15 +42,15 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        if (!this->g_a_or_b) {
+        if (!this->g_a_or_b.has_value()) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionNotFound("Connection not initialized");
         }
-        if (key) {
+        if (key.has_value()) {
             RTC_LOG(LS_ERROR) << "Key already exchanged";
             throw ConnectionError("Key already exchanged");
         }
-        if (g_a_hash) {
+        if (g_a_hash.has_value()) {
             if (!fingerprint) {
                 RTC_LOG(LS_ERROR) << "Fingerprint not found";
                 throw InvalidParams("Fingerprint not found");
@@ -73,7 +72,7 @@ namespace ntgcalls {
         RawKey authKey;
         AuthKey::FillData(authKey, computedAuthKey);
         const auto computedFingerprint = AuthKey::Fingerprint(authKey);
-        if (g_a_hash && computedFingerprint != static_cast<uint64_t>(fingerprint)) {
+        if (g_a_hash.has_value() && computedFingerprint != static_cast<uint64_t>(fingerprint)) {
             RTC_LOG(LS_ERROR) << "Fingerprint mismatch";
             throw CryptoError("Fingerprint mismatch");
         }
@@ -92,7 +91,7 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        if (!g_a_or_b || !key) {
+        if (!g_a_or_b.has_value() || !key.has_value()) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionNotFound("Connection not initialized");
         }
@@ -116,7 +115,7 @@ namespace ntgcalls {
             signaling->send(message.serialize());
         });
         auto encryptionKey = std::make_shared<std::array<uint8_t, EncryptionKey::kSize>>();
-        memcpy(encryptionKey->data(), key.value().data(), EncryptionKey::kSize);
+        memcpy(encryptionKey->data(), key->data(), EncryptionKey::kSize);
         stream->addTracks(connection);
         stream->onUpgrade([this] (const MediaState mediaState) {
             sendMediaState(mediaState);
@@ -131,7 +130,7 @@ namespace ntgcalls {
             },
             [this](const std::optional<bytes::binary> &data) {
                 if (data) {
-                    processSignalingData(data.value());
+                    processSignalingData(*data);
                 }
             }
         );
@@ -257,7 +256,7 @@ namespace ntgcalls {
     }
 
     void P2PCall::sendMediaState(const MediaState mediaState) const {
-        if (!connection -> isDataChannelOpen()) {
+        if (!connection->isDataChannelOpen()) {
             return;
         }
         MediaStateMessage message;
@@ -286,8 +285,8 @@ namespace ntgcalls {
     }
 
     CallInterface::Type P2PCall::type() const {
-        if (g_a_or_b) {
-            if (g_a_hash) {
+        if (g_a_or_b.has_value()) {
+            if (g_a_hash.has_value()) {
                 return Type::Incoming;
             }
             return Type::Outgoing;
