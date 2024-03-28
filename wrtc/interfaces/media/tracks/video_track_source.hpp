@@ -10,7 +10,7 @@ namespace wrtc {
 
     class VideoTrackSource: public rtc::AdaptedVideoTrackSource {
     public:
-        VideoTrackSource(bool is_screencast = false, absl::optional<bool> needs_denoising = false);
+        explicit VideoTrackSource(bool is_screencast = false, absl::optional<bool> needs_denoising = false);
 
         SourceState state() const override;
 

@@ -10,21 +10,21 @@ namespace wrtc {
             webrtc::PeerConnectionFactoryDependencies dependencies,
             rtc::scoped_refptr<webrtc::ConnectionContext> &context) {
         using result_type =
-                std::pair<rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>,
+                std::pair<rtc::scoped_refptr<PeerConnectionFactoryInterface>,
                         rtc::scoped_refptr<webrtc::ConnectionContext>>;
-        auto p = dependencies.signaling_thread->BlockingCall([&dependencies]() {
-            auto factory =
-                    PeerConnectionFactoryWithContext::Create(std::move(dependencies));
+        auto [fst, snd] = dependencies.signaling_thread->BlockingCall([&dependencies] {
+            const auto factory =
+                Create(std::move(dependencies));
             if (factory == nullptr) {
                 return result_type(nullptr, nullptr);
             }
-            auto context = factory->GetContext();
+            auto connection_context = factory->GetContext();
             auto proxy = webrtc::PeerConnectionFactoryProxy::Create(
                     factory->signaling_thread(), factory->worker_thread(), factory);
-            return result_type(proxy, context);
+            return result_type(proxy, connection_context);
         });
-        context = p.second;
-        return p.first;
+        context = snd;
+        return fst;
     }
 
     rtc::scoped_refptr<PeerConnectionFactoryWithContext>
@@ -38,14 +38,14 @@ namespace wrtc {
     }
 
     PeerConnectionFactoryWithContext::PeerConnectionFactoryWithContext(
-            rtc::scoped_refptr<webrtc::ConnectionContext> context,
+        const rtc::scoped_refptr<webrtc::ConnectionContext>& context,
             webrtc::PeerConnectionFactoryDependencies *dependencies)
-            : conn_context_(context),
-              webrtc::PeerConnectionFactory(context, dependencies) {}
+            : PeerConnectionFactory(context, dependencies),
+              conn_context_(context) {}
 
     PeerConnectionFactoryWithContext::PeerConnectionFactoryWithContext(
             webrtc::PeerConnectionFactoryDependencies dependencies)
             : PeerConnectionFactoryWithContext(
-            webrtc::ConnectionContext::Create(&dependencies),
+            webrtc::ConnectionContext::Create(webrtc::CreateEnvironment(), &dependencies),
             &dependencies) {}
 } // wrtc

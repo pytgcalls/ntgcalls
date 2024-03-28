@@ -4,15 +4,15 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 namespace wrtc {
-    typedef std::shared_ptr<uint8_t[]> binary;
     typedef uint32_t SSRC;
     typedef int32_t TgSSRC;
 
     enum class IceState: int {
+        Unknown,
         New,
         Checking,
         Connected,
@@ -23,16 +23,29 @@ namespace wrtc {
     };
 
     enum class GatheringState: int {
+        Unknown,
         New,
         InProgress,
         Complete
     };
 
     enum class SignalingState: int {
+        Unknown,
         Stable,
         HaveLocalOffer,
         HaveRemoteOffer,
         HaveLocalPranswer,
         HaveRemotePranswer,
+        Closed,
+    };
+
+    enum class PeerConnectionState {
+        Unknown,
+        New,
+        Connecting,
+        Connected,
+        Disconnected,
+        Failed,
+        Closed,
     };
 }

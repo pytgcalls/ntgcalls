@@ -1,54 +1,103 @@
 //
 // Created by Laky64 on 22/08/2023.
 //
+#pragma once
+
 
 #include <cstdint>
-#include "client.hpp"
-#include "models/media_description.hpp"
+
+#include "instances/call_interface.hpp"
+// ReSharper disable once CppUnusedIncludeDirective
+#include "models/auth_params.hpp"
+#include "models/protocol.hpp"
+#include "models/rtc_server.hpp"
+#include "utils/binding_utils.hpp"
+#include "utils/hardware_info.hpp"
+#include "utils/log_sink_impl.hpp"
+
+#define CHECK_AND_THROW_IF_EXISTS(chatId) \
+if (exists(chatId)) { \
+throw ConnectionError("Connection cannot be initialized more than once."); \
+}
+
+#define THROW_CONNECTION_NOT_FOUND(chatId) \
+throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chatId) + "\" not found");
 
 namespace ntgcalls {
 
     class NTgCalls {
-    private:
-        std::map<int64_t, std::shared_ptr<Client>> connections;
+        std::unordered_map<int64_t, std::shared_ptr<CallInterface>> connections;
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
+        wrtc::synchronized_callback<int64_t> onCloseConnection;
+        wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> onEmitData;
+        std::unique_ptr<rtc::Thread> workerThread;
+        std::unique_ptr<rtc::Thread> updateThread;
+        std::unique_ptr<rtc::Thread> networkThread;
+        std::unique_ptr<HardwareInfo> hardwareInfo;
+        std::mutex mutex;
+        std::unique_ptr<LogSinkImpl> logSink;
+        ASYNC_ARGS
 
-        bool exists(int64_t chatId);
+        bool exists(int64_t chatId) const;
 
-        std::shared_ptr<Client> safeConnection(int64_t chatId);
+        std::shared_ptr<CallInterface> safeConnection(int64_t chatId);
+
+        void setupListeners(int64_t chatId);
+
+        template<typename DestCallType, typename BaseCallType>
+        static DestCallType* SafeCall(const std::shared_ptr<BaseCallType>& call);
+
+        void remove(int64_t chatId);
 
     public:
+        explicit NTgCalls(std::optional<std::string> logPath = std::nullopt, bool allowWebrtcLogs = false);
+
         ~NTgCalls();
 
-        std::string createCall(int64_t chatId, MediaDescription media);
+        ASYNC_RETURN(bytes::vector) createP2PCall(int64_t userId, const int32_t &g, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &r, const std::optional<BYTES(bytes::vector)> &g_a_hash, const MediaDescription& media);
 
-        void connect(int64_t chatId, std::string params);
+        ASYNC_RETURN(AuthParams) exchangeKeys(int64_t userId, const BYTES(bytes::vector) &g_a_or_b, int64_t fingerprint);
 
-        void changeStream(int64_t chatId, MediaDescription media);
+        ASYNC_RETURN(void) connectP2P(int64_t userId, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
 
-        bool pause(int64_t chatId);
+        ASYNC_RETURN(std::string) createCall(int64_t chatId, const MediaDescription& media);
 
-        bool resume(int64_t chatId);
+        ASYNC_RETURN(void) connect(int64_t chatId, const std::string& params);
 
-        bool mute(int64_t chatId);
+        ASYNC_RETURN(void) changeStream(int64_t chatId, const MediaDescription& media);
 
-        bool unmute(int64_t chatId);
+        ASYNC_RETURN(bool) pause(int64_t chatId);
 
-        void stop(int64_t chatId);
+        ASYNC_RETURN(bool) resume(int64_t chatId);
 
-        uint64_t time(int64_t chatId);
+        ASYNC_RETURN(bool) mute(int64_t chatId);
 
-        MediaState getState(int64_t chatId);
+        ASYNC_RETURN(bool) unmute(int64_t chatId);
+
+        ASYNC_RETURN(void) stop(int64_t chatId);
+
+        ASYNC_RETURN(uint64_t) time(int64_t chatId);
+
+        ASYNC_RETURN(MediaState) getState(int64_t chatId);
+
+        ASYNC_RETURN(double) cpuUsage() const;
 
         static std::string ping();
 
-        void onUpgrade(std::function<void(int64_t, MediaState)> callback);
+        static Protocol getProtocol();
 
-        void onStreamEnd(std::function<void(int64_t, Stream::Type)> callback);
+        void onUpgrade(const std::function<void(int64_t, MediaState)>& callback);
 
-        std::map<int64_t, Stream::Status> calls();
+        void onStreamEnd(const std::function<void(int64_t, Stream::Type)>& callback);
+
+        void onDisconnect(const std::function<void(int64_t)>& callback);
+
+        void onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
+
+        ASYNC_RETURN(void) sendSignalingData(int64_t chatId, const BYTES(bytes::binary) &msgKey);
+
+        ASYNC_RETURN(std::map<int64_t, Stream::Status>) calls();
     };
 
 } // ntgcalls
-

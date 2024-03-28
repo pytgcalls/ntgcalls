@@ -4,43 +4,38 @@
 
 #include "google.hpp"
 
+#include <modules/video_coding/codecs/vp8/include/vp8.h>
+#include <modules/video_coding/codecs/vp9/include/vp9.h>
+
 namespace google {
 
     void addEncoders(std::vector<wrtc::VideoEncoderConfig> &encoders) {
-        encoders.push_back(
-                wrtc::VideoEncoderConfig(
-                        webrtc::kVideoCodecVP8,
-                        [](auto format) {
-                            return webrtc::VP8Encoder::Create();
-                        }
-                )
+        encoders.emplace_back(
+          webrtc::kVideoCodecVP8,
+          [](auto) {
+              return webrtc::VP8Encoder::Create();
+          }
         );
-        encoders.push_back(
-                wrtc::VideoEncoderConfig(
-                        webrtc::kVideoCodecVP9,
-                        [](auto format) {
-                            return webrtc::VP8Encoder::Create();
-                        }
-                )
+        encoders.emplace_back(
+            webrtc::kVideoCodecVP9,
+            [](auto) {
+                return webrtc::VP8Encoder::Create();
+            }
         );
     }
 
     void addDecoders(std::vector<wrtc::VideoDecoderConfig> &decoders) {
-        decoders.push_back(
-                wrtc::VideoDecoderConfig(
-                        webrtc::kVideoCodecVP8,
-                        [](auto format) {
-                            return webrtc::VP8Decoder::Create();
-                        }
-                )
+        decoders.emplace_back(
+           webrtc::kVideoCodecVP8,
+           [](auto) {
+               return webrtc::VP8Decoder::Create();
+           }
         );
-        decoders.push_back(
-                wrtc::VideoDecoderConfig(
-                        webrtc::kVideoCodecVP9,
-                        [](auto format) {
-                            return webrtc::VP9Decoder::Create();
-                        }
-                )
+        decoders.emplace_back(
+            webrtc::kVideoCodecVP9,
+            [](auto) {
+                return webrtc::VP9Decoder::Create();
+            }
         );
     }
 

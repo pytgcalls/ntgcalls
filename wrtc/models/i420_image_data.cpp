@@ -13,25 +13,30 @@ namespace wrtc {
         return sizeOfLuminancePlane() / 4;
     }
 
-    uint8_t* i420ImageData::dataY() {
+    uint8_t* i420ImageData::dataY() const {
         return contents.get();
     }
 
-    uint8_t* i420ImageData::dataU() {
+    uint8_t* i420ImageData::dataU() const {
         return dataY() + sizeOfLuminancePlane();
     }
 
-    uint8_t* i420ImageData::dataV() {
+    uint8_t* i420ImageData::dataV() const {
         return dataU() + sizeOfChromaPlane();
     }
 
-    i420ImageData::i420ImageData(uint16_t width, uint16_t height, binary contents) {
+    i420ImageData::i420ImageData(const uint16_t width, const uint16_t height, const bytes::shared_binary& contents) {
         this->width = width;
         this->height = height;
         this->contents = contents;
     }
 
-    rtc::scoped_refptr<webrtc::I420Buffer> i420ImageData::buffer() {
+    i420ImageData::~i420ImageData() {
+        this->contents = nullptr;
+    }
+
+    rtc::scoped_refptr<webrtc::I420Buffer> i420ImageData::buffer() const
+    {
         auto buffer = webrtc::I420Buffer::Create(width, height);
         memcpy(buffer->MutableDataY(), dataY(), sizeOfLuminancePlane());
         memcpy(buffer->MutableDataU(), dataU(), sizeOfChromaPlane());

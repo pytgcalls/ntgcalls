@@ -5,98 +5,54 @@
 #include "stream.hpp"
 
 namespace ntgcalls {
-    Stream::Stream() {
-        audio = std::make_shared<AudioStreamer>();
-        video = std::make_shared<VideoStreamer>();
-        streamQueue = std::make_shared<DispatchQueue>();
-        updateQueue = std::make_shared<DispatchQueue>();
+    Stream::Stream(rtc::Thread* workerThread): workerThread(workerThread) {
+        audio = std::make_unique<AudioStreamer>();
+        video = std::make_unique<VideoStreamer>();
     }
 
     Stream::~Stream() {
-        stop();
+        RTC_LOG(LS_VERBOSE) << "Destroying Stream";
+        quit = true;
+        if (thread.joinable()) {
+            thread.join();
+        }
+        RTC_LOG(LS_VERBOSE) << "Thread joined";
+        idling = false;
         audio = nullptr;
         video = nullptr;
         audioTrack = nullptr;
         videoTrack = nullptr;
         reader = nullptr;
-        running = false;
-        updateQueue = nullptr;
+        RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
 
-    void Stream::addTracks(const std::shared_ptr<wrtc::PeerConnection>& pc) {
-        audioTrack = audio->createTrack();
-        videoTrack = video->createTrack();
-        pc->addTrack(audioTrack);
-        pc->addTrack(videoTrack);
+    void Stream::addTracks(const std::unique_ptr<wrtc::PeerConnection>& pc) {
+        pc->addTrack(audioTrack = audio->createTrack());
+        pc->addTrack(videoTrack = video->createTrack());
     }
 
-    std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> Stream::unsafePrepareForSample() {
-        std::shared_ptr<BaseStreamer> bs;
-        std::shared_ptr<BaseReader> br;
-        if (reader->audio && reader->video) {
-            if (audio->nanoTime() <= video->nanoTime()) {
-                bs = audio;
-                br = reader->audio;
-            } else {
-                bs = video;
-                br = reader->video;
-            }
-        } else if (reader->audio) {
-            bs = audio;
-            br = reader->audio;
-        } else {
-            bs = video;
-            br = reader->video;
-        }
-
-        auto waitTime = bs->waitTime();
-        if (waitTime.count() > 0) {
-            std::this_thread::sleep_for(waitTime);
-        }
-        return {bs, br};
-    }
-
-    void Stream::checkStream() {
+    void Stream::checkStream() const {
         if (reader->audio && reader->audio->eof()) {
             reader->audio = nullptr;
-            updateQueue->dispatch([&]() {
-                onEOF(Audio);
+            workerThread->PostTask([&] {
+                (void) onEOF(Audio);
             });
         }
         if (reader->video && reader->video->eof()) {
             reader->video = nullptr;
-            updateQueue->dispatch([&]() {
-                onEOF(Video);
+            workerThread->PostTask([&] {
+                (void) onEOF(Video);
             });
         }
     }
 
-    void Stream::sendSample() {
-        if (running) {
-            if (idling || !reader || !(reader->audio || reader->video)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            } else {
-                auto bsBR = unsafePrepareForSample();
-                if (bsBR.first && bsBR.second) {
-                    auto sample = bsBR.second->read(bsBR.first->frameSize());
-                    if (sample) {
-                        bsBR.first->sendData(sample);
-                    }
-                }
-                checkStream();
-            }
-            if (streamQueue) {
-                streamQueue->dispatch([this]() {
-                    sendSample();
-                });
-            }
-        }
-    }
-
-    void Stream::setAVStream(MediaDescription streamConfig, bool noUpgrade) {
-        auto audioConfig = streamConfig.audio;
-        auto videoConfig = streamConfig.video;
-        reader = std::make_shared<MediaReaderFactory>(streamConfig);
+    void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
+        RTC_LOG(LS_INFO) << "Setting AVStream, Acquiring lock";
+        changing = true;
+        std::lock_guard lock(mutex);
+        RTC_LOG(LS_INFO) << "Setting AVStream, Lock acquired";
+        const auto audioConfig = streamConfig.audio;
+        const auto videoConfig = streamConfig.video;
         idling = false;
         if (audioConfig) {
             audio->setConfig(
@@ -104,8 +60,9 @@ namespace ntgcalls {
                 audioConfig->bitsPerSample,
                 audioConfig->channelCount
             );
+            RTC_LOG(LS_INFO) << "Audio config set";
         }
-        bool wasVideo = hasVideo;
+        const bool wasVideo = hasVideo;
         if (videoConfig) {
             hasVideo = true;
             video->setConfig(
@@ -113,35 +70,44 @@ namespace ntgcalls {
                 videoConfig->height,
                 videoConfig->fps
             );
+            RTC_LOG(LS_INFO) << "Video config set";
         } else {
             hasVideo = false;
         }
+        RTC_LOG(LS_INFO) << "Creating MediaReaderFactory";
+        reader = std::make_unique<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
+        RTC_LOG(LS_INFO) << "MediaReaderFactory created";
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }
+        changing = false;
     }
 
     void Stream::checkUpgrade() {
-        updateQueue->dispatch([&]() {
-            onChangeStatus(getState());
+        workerThread->PostTask([&] {
+            (void) onChangeStatus(getState());
         });
     }
 
     MediaState Stream::getState() {
+        std::shared_lock lock(mutex);
         return MediaState{
-                audioTrack->isMuted() && videoTrack->isMuted(),
-                idling || videoTrack->isMuted(),
-                !hasVideo
+            (audioTrack ? audioTrack->isMuted() : false) && (videoTrack ? videoTrack->isMuted() : false),
+            idling || (videoTrack ? videoTrack->isMuted() : false),
+            !hasVideo
         };
     }
 
     uint64_t Stream::time() {
+        std::shared_lock lock(mutex);
         if (reader) {
             if (reader->audio && reader->video) {
                 return (audio->time() + video->time()) / 2;
-            } else if (reader->audio) {
+            }
+            if (reader->audio) {
                 return audio->time();
-            } else if (reader->video) {
+            }
+            if (reader->video) {
                 return video->time();
             }
         }
@@ -149,76 +115,97 @@ namespace ntgcalls {
     }
 
     Stream::Status Stream::status() {
-        if ((reader->audio || reader->video) && running) {
-            return idling ? Status::Paused : Status::Playing;
+        std::shared_lock lock(mutex);
+        if (reader && (reader->audio || reader->video)) {
+            return idling ? Paused : Playing;
         }
-        return Status::Idling;
+        return Idling;
     }
 
     void Stream::start() {
-        if (!running) {
-            running = true;
-            streamQueue->dispatch([this]() {
-                sendSample();
-            });
-        }
+        thread = std::thread([this] {
+            do {
+                std::shared_lock lock(mutex);
+                if (idling || changing || !reader || !(reader->audio || reader->video)) {
+                    lock.unlock();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    lock.lock();
+                } else {
+                    std::shared_ptr<BaseStreamer> bs;
+                    std::shared_ptr<BaseReader> br;
+                    if (reader->audio && reader->video) {
+                        if (audio->nanoTime() <= video->nanoTime()) {
+                            bs = audio;
+                            br = reader->audio;
+                        } else {
+                            bs = video;
+                            br = reader->video;
+                        }
+                    } else if (reader->audio) {
+                        bs = audio;
+                        br = reader->audio;
+                    } else {
+                        bs = video;
+                        br = reader->video;
+                    }
+                    if (auto [sample, captureTime] = br->read(); sample && bs) {
+                        if (const auto waitTime = bs->waitTime(); std::chrono::duration_cast<std::chrono::milliseconds>(waitTime).count() > 0) {
+                            lock.unlock();
+                            std::this_thread::sleep_for(waitTime);
+                            lock.lock();
+                        }
+                        bs->sendData(sample, captureTime);
+                    }
+                    checkStream();
+                }
+            } while (!quit);
+        });
     }
 
     bool Stream::pause() {
-        auto res = std::exchange(idling, true);
+        std::lock_guard lock(mutex);
+        const auto res = std::exchange(idling, true);
         checkUpgrade();
         return !res;
     }
 
     bool Stream::resume() {
-        auto res = std::exchange(idling, false);
+        std::lock_guard lock(mutex);
+        const auto res = std::exchange(idling, false);
         checkUpgrade();
         return res;
     }
 
     bool Stream::mute() {
-        if (!audioTrack->isMuted() || !videoTrack->isMuted()) {
-            audioTrack->Mute(true);
-            videoTrack->Mute(true);
-            checkUpgrade();
-            return true;
-        } else {
-            checkUpgrade();
-            return false;
-        }
+        return updateMute(true);
     }
 
     bool Stream::unmute() {
-        if (audioTrack->isMuted() || videoTrack->isMuted()) {
-            audioTrack->Mute(false);
-            videoTrack->Mute(false);
-            checkUpgrade();
-            return true;
-        } else {
-            checkUpgrade();
-            return false;
-        }
+        return updateMute(false);
     }
 
-    void Stream::stop() {
-        running = false;
-        idling = false;
-        streamQueue = nullptr;
-        if (reader) {
-            if (reader->audio) {
-                reader->audio->close();
-            }
-            if (reader->video) {
-                reader->video->close();
-            }
+    bool Stream::updateMute(const bool isMuted) {
+        std::lock_guard lock(mutex);
+        bool changed = false;
+        if (audioTrack && audioTrack->isMuted() != isMuted) {
+            audioTrack->Mute(isMuted);
+            changed = true;
         }
+        if (videoTrack && videoTrack->isMuted() != isMuted) {
+            videoTrack->Mute(isMuted);
+            changed = true;
+        }
+        if (changed) {
+            checkUpgrade();
+        }
+        return changed;
     }
 
-    void Stream::onStreamEnd(std::function<void(Stream::Type)> &callback) {
+    void Stream::onStreamEnd(const std::function<void(Type)> &callback) {
         onEOF = callback;
     }
 
-    void Stream::onUpgrade(std::function<void(MediaState)> &callback) {
+    void Stream::onUpgrade(const std::function<void(MediaState)> &callback) {
         onChangeStatus = callback;
     }
 }

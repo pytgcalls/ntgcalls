@@ -6,9 +6,6 @@
 
 #include <vector>
 #include <string>
-#include <optional>
-#include <sstream>
-#include <rtc_base/helpers.h>
 
 #include "enums.hpp"
 
@@ -56,7 +53,6 @@ namespace wrtc {
     };
 
     class SdpBuilder {
-    private:
         std::vector<std::string> lines;
         std::vector<std::string> newLine;
 
@@ -68,8 +64,8 @@ namespace wrtc {
         void addTransport(const Transport& transport);
         void addSsrcEntry(const Transport& transport);
 
-        std::string join();
-        std::string finalize();
+        [[nodiscard]] std::string join() const;
+        [[nodiscard]] std::string finalize() const;
         void addConference(const Conference& conference);
 
     public:

@@ -4,44 +4,58 @@
 
 #pragma once
 
-#include <exception>
-#include <string>
 #include <wrtc/wrtc.hpp>
 
 namespace ntgcalls {
-    class ConnectionError: public wrtc::BaseRTCException {
+    class ConnectionError final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 
-    class ConnectionNotFound: public wrtc::BaseRTCException {
+    class TelegramServerError final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 
-    class InvalidParams: public wrtc::BaseRTCException {
+    class ConnectionNotFound final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 
-    class RTMPNeeded: public wrtc::BaseRTCException {
+    class SignalingUnsupported final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 
-    class FileError: public wrtc::BaseRTCException {
+    class SignalingError final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 
-    class FFmpegError: public wrtc::BaseRTCException {
+    class InvalidParams final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 
-    class ShellError: public wrtc::BaseRTCException {
+    class CryptoError final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 
-    class InvalidUUID: public wrtc::BaseRTCException {
+    class RTMPNeeded final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 
-    class EOFError: public wrtc::BaseRTCException {
+    class FileError final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
+    class FFmpegError final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
+    class ShellError final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
+    class InvalidUUID final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
+    class EOFError final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 }

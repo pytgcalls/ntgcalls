@@ -7,7 +7,6 @@
 #include <pc/local_audio_source.h>
 
 #include "../../../models/rtc_on_data_event.hpp"
-#include "../../peer_connection/peer_connection_factory.hpp"
 
 namespace wrtc {
 
@@ -23,7 +22,7 @@ namespace wrtc {
 
         void RemoveSink(webrtc::AudioTrackSinkInterface *sink) override;
 
-        void PushData(RTCOnDataEvent &);
+        void PushData(const RTCOnDataEvent &, int64_t absolute_capture_timestamp_ms) const;
 
     private:
         std::atomic<webrtc::AudioTrackSinkInterface *> _sink = {nullptr};

@@ -5,34 +5,36 @@
 #pragma once
 
 
-#include <cstdint>
-#include <vector>
-#include <mutex>
+#include <shared_mutex>
 
+#include <thread>
 #include <wrtc/wrtc.hpp>
-#include "../utils/dispatch_queue.hpp"
 
 namespace ntgcalls {
     class BaseReader {
-    private:
-        std::vector<wrtc::binary> nextBuffer;
-        bool _eof = false;
-        std::shared_ptr<DispatchQueue> dispatchQueue;
+        std::queue<bytes::shared_binary> buffer;
+        std::mutex mutex;
+        std::condition_variable bufferCondition;
+        std::atomic_bool _eof = false, noLatency = false, quit = false;
+        std::thread thread;
+        int64_t size = 0;
 
     protected:
-        size_t readChunks = 0;
+        int64_t readChunks = 0;
 
-        BaseReader();
+        explicit BaseReader(int64_t bufferSize, bool noLatency);
 
         virtual ~BaseReader();
 
-        virtual wrtc::binary readInternal(size_t size) = 0;
+        virtual bytes::shared_binary readInternal(int64_t size) = 0;
 
     public:
-        wrtc::binary read(size_t size);
+        std::pair<bytes::shared_binary, int64_t> read();
 
-        bool eof();
+        [[nodiscard]] bool eof();
 
         virtual void close();
+
+        void start();
     };
 }

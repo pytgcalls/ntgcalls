@@ -6,23 +6,21 @@
 
 #include <fstream>
 #include <string>
-#include <vector>
 
 #include "base_reader.hpp"
 #include "../exceptions.hpp"
 
 namespace ntgcalls {
     class FileReader final: public BaseReader {
-    private:
         std::ifstream source;
 
-        wrtc::binary readInternal(size_t size) final;
+        bytes::shared_binary readInternal(int64_t size) override;
 
     public:
-        FileReader(const std::string& path);
+        explicit FileReader(const std::string& path, int64_t bufferSize, bool noLatecy);
 
         ~FileReader() override;
 
-        void close() final;
+        void close() override;
     };
 }

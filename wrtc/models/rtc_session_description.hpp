@@ -4,31 +4,31 @@
 
 #pragma once
 
-#include <future>
-
-#include "rtc_session_description_init.hpp"
-#include "../exceptions.hpp"
+#include <api/jsep.h>
 
 namespace wrtc {
 
     class Description {
     public:
-        enum class Type {Offer, Answer, Pranswer, Rollback };
+        enum class SdpType {
+            Offer,
+            Answer,
+            Pranswer,
+            Rollback
+        };
 
-        Description(Type type, const std::string &sdp);
+        Description(SdpType type, std::string sdp);
 
-        explicit Description(const RTCSessionDescriptionInit &rtcSessionDescriptionInit);
+        explicit Description(webrtc::SdpType type, std::string sdp);
 
-        static Description Wrap(webrtc::SessionDescriptionInterface *);
+        [[nodiscard]] SdpType type() const;
 
-        explicit operator webrtc::SessionDescriptionInterface *();
+        [[nodiscard]] std::string sdp() const;
 
-        Type getType();
-
-        std::string getSdp();
+        static std::string SdpTypeToString(SdpType type);
 
     private:
-        std::unique_ptr<webrtc::SessionDescriptionInterface> _description;
+        SdpType _type;
+        std::string _sdp;
     };
-
 } // namespace wrtc

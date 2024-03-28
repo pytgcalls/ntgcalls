@@ -6,6 +6,7 @@ env
 .vscode
 output/
 output_cgo/
+build_tools/
 linux_output/
 *.session
 *.session-journal
@@ -17,10 +18,11 @@ deps/libwebrtc/
 deps/libcxxabi/
 deps/boost/
 build/
-shared-build/
+build_lib/
 shared-output/
+static-output/
 dist/
-clang/
+tests/
 __pycache__
 *.i420
 *.pcm

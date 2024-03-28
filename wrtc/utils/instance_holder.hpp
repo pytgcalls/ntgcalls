@@ -31,7 +31,7 @@ namespace wrtc {
 
     template<typename T, typename U, typename... V>
     T InstanceHolder<T, U, V...>::GetOrCreate(V... args, U key) {
-        if (_uToTstore.find(key) != _uToTstore.end()) {
+        if (_uToTstore.contains(key)) {
             return _uToTstore.at(key);
         }
 

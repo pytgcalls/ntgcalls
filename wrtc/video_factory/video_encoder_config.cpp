@@ -6,13 +6,13 @@
 
 namespace wrtc {
 
-    VideoEncoderConfig::VideoEncoderConfig(webrtc::VideoCodecType codec, EncoderCallback encoder, int alignment) {
+    VideoEncoderConfig::VideoEncoderConfig(const webrtc::VideoCodecType codec, EncoderCallback encoder, const int alignment) {
         this->codec = codec;
         this->encoder = std::move(encoder);
         this->alignment = alignment;
     }
 
-    VideoEncoderConfig::VideoEncoderConfig(FormatsRetriever formatsRetriever, EncoderCallback encoder, int alignment) {
+    VideoEncoderConfig::VideoEncoderConfig(FormatsRetriever formatsRetriever, EncoderCallback encoder, const int alignment) {
         this->formatsRetriever = std::move(formatsRetriever);
         this->encoder = std::move(encoder);
         this->alignment = alignment;
@@ -26,12 +26,12 @@ namespace wrtc {
         return factory->GetSupportedFormats();
     }
 
-    std::unique_ptr<webrtc::VideoEncoder> VideoEncoderConfig::CreateVideoCodec(const webrtc::SdpVideoFormat& format) {
+    std::unique_ptr<webrtc::VideoEncoder> VideoEncoderConfig::CreateVideoCodec(const webrtc::SdpVideoFormat& format) const
+    {
         if (factory) {
             return factory->CreateVideoEncoder(format);
-        } else {
-            return encoder(format);
         }
+        return encoder(format);
     }
 
     VideoEncoderConfig::~VideoEncoderConfig() {

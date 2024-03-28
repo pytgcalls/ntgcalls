@@ -4,6 +4,8 @@
 
 #include "video_factory_config.hpp"
 
+#include "software/vlc/vlc.hpp"
+
 namespace wrtc {
 
     VideoFactoryConfig::VideoFactoryConfig() {

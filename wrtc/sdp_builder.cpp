@@ -4,8 +4,12 @@
 
 #include "sdp_builder.hpp"
 
+#include <sstream>
+#include <rtc_base/helpers.h>
+
 namespace wrtc {
-    std::string SdpBuilder::join() {
+    std::string SdpBuilder::join() const
+    {
         std::string joinedSdp;
         for (const auto& line : lines) {
             joinedSdp += line + "\r\n";
@@ -13,7 +17,8 @@ namespace wrtc {
         return joinedSdp;
     }
 
-    std::string SdpBuilder::finalize() {
+    std::string SdpBuilder::finalize() const
+    {
         return join();
     }
 
@@ -39,8 +44,7 @@ namespace wrtc {
 
     void SdpBuilder::addCandidate(const Candidate& c) {
         push("a=candidate:");
-        push(c.foundation + " " + c.component + " " + c.protocol + " " + c.priority + " " +
-             c.ip + " " + c.port + " typ " + c.type);
+        push(c.foundation + " " + c.component + " " + c.protocol + " " + c.priority + " " + c.ip + " " + c.port + " typ " + c.type);
         push(" generation " + c.generation);
         addJoined();
     }
@@ -58,8 +62,12 @@ namespace wrtc {
         add("a=ice-ufrag:" + transport.ufrag);
         add("a=ice-pwd:" + transport.pwd);
 
-        for (const auto& fingerprint : transport.fingerprints) {
-            add("a=fingerprint:" + fingerprint.hash + " " + fingerprint.fingerprint);
+        for (const auto& [hash, fingerprint] : transport.fingerprints) {
+            push("a=fingerprint:");
+            push(hash);
+            push(" ");
+            push(fingerprint);
+            addJoined();
             add("a=setup:passive");
         }
 
@@ -143,9 +151,9 @@ namespace wrtc {
         }
 
         auto lookup = [&lines](const std::string& prefix) -> std::string {
-            for (const auto& line : lines) {
-                if (line.compare(0, prefix.size(), prefix) == 0) {
-                    return line.substr(prefix.size());
+            for (const auto& basic_string : lines) {
+                if (basic_string.compare(0, prefix.size(), prefix) == 0) {
+                    return basic_string.substr(prefix.size());
                 }
             }
             return "";

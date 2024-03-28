@@ -5,17 +5,18 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
-#include <vector>
-#include "../enums.hpp"
+
+#include "../utils/binary.hpp"
 
 namespace wrtc {
 
   class RTCOnDataEvent {
   public:
-    RTCOnDataEvent(binary, uint16_t);
+    RTCOnDataEvent(const bytes::shared_binary&, uint16_t);
 
-    binary audioData;
+    ~RTCOnDataEvent();
+
+    bytes::shared_binary audioData;
     uint16_t numberOfFrames;
     uint32_t sampleRate = 48000;
     uint8_t bitsPerSample = 16;

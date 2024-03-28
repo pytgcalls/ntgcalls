@@ -1,0 +1,75 @@
+name: cibuildwheel
+description: 'Installs and runs cibuildwheel on the current runner'
+inputs:
+  python-path:
+    description: 'Path to the Python interpreter to use'
+    required: false
+    default: ''
+
+branding:
+  icon: package
+  color: yellow
+
+runs:
+  using: composite
+  steps:
+    - name: Check out the repository
+      uses: actions/checkout@v4
+      with:
+        repository: "pypa/cibuildwheel"
+        path: "${{ github.action_path }}/tmp"
+
+    - id: cibw
+      name: Install cibuildwheel
+      run: |
+        "${{ inputs.python-path }}" -u << "EOF"
+        import os
+        import shutil
+        import sys
+        import venv
+
+        from pathlib import Path
+        from subprocess import run
+
+
+        class EnvBuilder(venv.EnvBuilder):
+            def __init__(self):
+                super().__init__()
+
+            def setup_scripts(self, context):
+                pass
+
+            def post_setup(self, context):
+                super().post_setup(context)
+                self.bin_path = Path(context.env_exe).parent
+                run([sys.executable, "-m", "pip", "--python", context.env_exe, "install", r"${{ github.action_path }}/tmp"], check=True)
+
+
+        print("::group::Install cibuildwheel")
+        venv_path = Path(r"${{ runner.temp }}") / "cibw"
+        if venv_path.exists():
+            shutil.rmtree(venv_path)
+        builder = EnvBuilder()
+        builder.create(venv_path)
+        cibw_path = [path for path in builder.bin_path.glob("cibuildwheel*") if path.stem == "cibuildwheel"][0]
+        with open(os.environ["GITHUB_OUTPUT"], "at") as f:
+            f.write(f"cibw-path={cibw_path}\n")
+        print("::endgroup::")
+        EOF
+      shell: bash
+
+    - run: >
+        "${{ steps.cibw.outputs.cibw-path }}" .
+        --output-dir "wheelhouse"
+        2>&1
+      shell: bash
+      if: runner.os != 'Windows'
+
+    - run: >
+        if ($PSNativeCommandArgumentPassing) {
+            $PSNativeCommandArgumentPassing = 'Legacy'
+        };
+        & "${{ steps.cibw.outputs.cibw-path }}" .
+        --output-dir '"wheelhouse"'
+      shell: pwsh
+      if: runner.os == 'Windows'

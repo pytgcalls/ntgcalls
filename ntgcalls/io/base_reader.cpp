@@ -6,50 +6,78 @@
 #include "ntgcalls/exceptions.hpp"
 
 namespace ntgcalls {
-    BaseReader::BaseReader() {
-        dispatchQueue = std::make_shared<DispatchQueue>();
-    }
+    BaseReader::BaseReader(const int64_t bufferSize, const bool noLatency): noLatency(noLatency), size(bufferSize) {}
 
     BaseReader::~BaseReader() {
-        close();
+        BaseReader::close();
         readChunks = 0;
     }
 
-    wrtc::binary BaseReader::read(size_t size) {
-        if (dispatchQueue != nullptr) {
-            wrtc::binary res;
-            auto promise = std::make_shared<std::promise<void>>();
-            if (!_eof && nextBuffer.size() <= 4) {
-                dispatchQueue->dispatch([this, promise, size] {
-                    try {
-                        auto availableSpace = 10 - nextBuffer.size();
-                        for (int i = 0; i < availableSpace; i++) {
-                            auto tmpRead = readInternal(size);
-                            if (tmpRead != nullptr) nextBuffer.push_back(tmpRead);
+    void BaseReader::start() {
+        if (!noLatency) {
+            thread = std::thread([this] {
+                do {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    std::unique_lock lock(mutex);
+                    const auto availableSpace = 10 - buffer.size();
+                    lock.unlock();
+                    for (int i = 0; i < availableSpace; i++) {
+                        try {
+                            if (auto tmp = this->readInternal(size); tmp) {
+                                lock.lock();
+                                buffer.push(std::move(tmp));
+                                lock.unlock();
+                                bufferCondition.notify_one();
+                            }
+                        } catch (...) {
+                            lock.lock();
+                            _eof = true;
+                            lock.unlock();
+                            bufferCondition.notify_one();
+                            break;
                         }
-                    } catch (...) {
-                        _eof = true;
                     }
-                    if (promise != nullptr) promise->set_value();
-                });
-            }
-            if (nextBuffer.empty() && !_eof) {
-                if (promise != nullptr) promise->get_future().wait();
-            }
-            if (!nextBuffer.empty()) {
-                res = nextBuffer[0];
-                nextBuffer.erase(nextBuffer.begin());
-                return res;
-            }
+                } while (!quit && !_eof);
+            });
         }
-        return nullptr;
+    }
+
+    std::pair<bytes::shared_binary, int64_t> BaseReader::read() {
+        auto timeMillis = rtc::TimeMillis();
+        if (eof()) {
+            return {nullptr, timeMillis};
+        }
+        if (noLatency) {
+            try {
+                return {readInternal(size), timeMillis};
+            } catch (...) {
+                _eof = true;
+            }
+            return {nullptr, timeMillis};
+        }
+        std::unique_lock lock(mutex);
+        bufferCondition.wait_for(lock, std::chrono::milliseconds(500), [this] {
+            return !buffer.empty() || quit || _eof;
+        });
+        if (buffer.empty()) {
+            return {nullptr, timeMillis};
+        }
+        auto data = std::move(buffer.front());
+        buffer.pop();
+        return {data, timeMillis};
     }
 
     void BaseReader::close() {
-        dispatchQueue = nullptr;
+        RTC_LOG(LS_VERBOSE) << "Closing reader";
+        quit = true;
+        if(thread.joinable()) {
+            thread.join();
+        }
+        RTC_LOG(LS_VERBOSE) << "Reader closed";
     }
 
     bool BaseReader::eof() {
-        return _eof && nextBuffer.empty();
+        std::lock_guard lock(mutex);
+        return _eof && buffer.empty();
     }
 }

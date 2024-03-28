@@ -1,9 +1,10 @@
 name: Build And Publish
 on:
+  workflow_dispatch:
   push:
     branches: [ master ]
     paths:
-      - '.github/workflows/*'
+      - '.github/workflows/build.yml'
       - 'cmake/*'
       - 'deps/*'
       - 'include/*'
@@ -22,63 +23,103 @@ jobs:
             cibw_archs: "native"
             shared_name: "linux-x86_64"
             cibw_os_build: "manylinux_"
-          #- os: ubuntu-latest
-          #  cibw_archs: "aarch64"
-          #  shared_name: "linux-arm64"
-          #  cibw_os_build: "manylinux_"
-          - os: windows-latest
+          - os: arm64-server
+            cibw_archs: "aarch64"
+            shared_name: "linux-arm64"
+            cibw_os_build: "manylinux_"
+          - os: windows-2019
             cibw_archs: "native"
             shared_name: "windows-x86_64"
-          - os: macos-13
+          - os: macos-14
             cibw_archs: "arm64"
             cibw_os_build: "macosx_arm64"
             shared_name: "macos-arm64"
-      fail-fast: false
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        if: matrix.cibw_archs != 'aarch64'
+        id: python
+        with:
+          python-version: "3.8 - 3.12"
+          update-environment: false
+
+      - name: Set up Python (ARM64)
+        if: matrix.cibw_archs == 'aarch64'
+        id: python-arm64
+        run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
+
+      - name: Install Python Requirements
+        run:  |
+          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools
+          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install pipx
+        shell: bash
+          
       - name: Set up QEMU
         if: matrix.cibw_archs == 'aarch64'
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
-      - name: Build Debug Shared lib
-        run: python3 setup.py build_shared --no-preserve-cache --debug
+      - name: Build Shared Libs (Debug and Release)
+        if: matrix.cibw_archs != 'aarch64'
+        run: |
+          python3 setup.py build_lib --debug
+          python3 setup.py build_lib
 
-      - name: Build Release Shared lib
-        run: python3 setup.py build_shared --no-preserve-cache
+      - name: Build Static Libs (Debug and Release)
+        if: matrix.cibw_archs != 'aarch64'
+        run: |
+          python3 setup.py build_lib --static --debug
+          python3 setup.py build_lib --static
 
-      - name: Upload Debug Shared lib for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: ntgcalls.${{ matrix.shared_name }}-debug-shared_libs
-          path: ./shared-output-debug/*
-          if-no-files-found: error
+      - name: Build Shared Libs (Debug and Release) (ARM64)
+        if: matrix.cibw_archs == 'aarch64'
+        run: |
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib
 
-      - name: Upload Release Shared lib for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v3
+      - name: Build Static Libs (Debug and Release) (ARM64)
+        if: matrix.cibw_archs == 'aarch64'
+        run: |
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static
+
+      - name: Upload Shared Libs for ${{ matrix.shared_name }}
+        uses: actions/upload-artifact@v4
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
           path: ./shared-output/*
           if-no-files-found: error
 
+      - name: Upload Static Libs for ${{ matrix.shared_name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ntgcalls.${{ matrix.shared_name }}-static_libs
+          path: ./static-output/*
+          if-no-files-found: error
+
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
+        uses: ./.github/cibuildwheel
+        with:
+          python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
+
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp36-* cp37-*
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_TEST_SKIP: "*-macosx_arm64"
+          CIBW_TEST_SKIP: "cp38-macosx_*:arm64 *-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
+          CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
           path: ./wheelhouse/*.whl
@@ -92,7 +133,7 @@ jobs:
       contents: write
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -107,7 +148,7 @@ jobs:
         id: patch-version
         run: |
           version="${{ steps.get-library-version.outputs.version }}"
-          if [[ "$version" == *.*.* ]]; then
+          if [[ "$version" == *.*.*.* ]]; then
             echo "Version contains three dots"
             major=$(echo "$version" | cut -d. -f1)
             minor=$(echo "$version" | cut -d. -f2)
@@ -124,7 +165,7 @@ jobs:
           fi
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: tmp/
 
@@ -137,7 +178,7 @@ jobs:
       - name: Zip releases
         run: |
           mkdir releases
-          for dir in tmp/*shared_libs; do
+          for dir in tmp/*_libs; do
             if [ -d "$dir" ]; then
               echo "$dir"
               folder_name=$(basename "$dir" .zip)
@@ -147,7 +188,7 @@ jobs:
 
       - name: Create Release
         id: create-new-release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v0.1.15
         with:
           files: |
             ./releases/*

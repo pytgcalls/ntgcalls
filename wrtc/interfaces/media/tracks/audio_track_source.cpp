@@ -3,6 +3,7 @@
 //
 
 #include "audio_track_source.hpp"
+#include <rtc_base/time_utils.h>
 
 namespace wrtc {
 
@@ -11,7 +12,7 @@ namespace wrtc {
     }
 
     webrtc::MediaSourceInterface::SourceState AudioTrackSource::state() const {
-        return webrtc::MediaSourceInterface::SourceState::kLive;
+        return kLive;
     }
 
     bool AudioTrackSource::remote() const {
@@ -26,16 +27,15 @@ namespace wrtc {
         _sink = nullptr;
     }
 
-    void AudioTrackSource::PushData(RTCOnDataEvent &data) {
-        webrtc::AudioTrackSinkInterface *sink = _sink;
-        if (sink) {
+    void AudioTrackSource::PushData(const RTCOnDataEvent &data, const int64_t absolute_capture_timestamp_ms) const {
+        if (webrtc::AudioTrackSinkInterface *sink = _sink) {
             sink->OnData(
-                    data.audioData.get(),
-                    data.bitsPerSample,
-                    data.sampleRate,
-                    data.channelCount,
-                    data.numberOfFrames,
-                    rtc::TimeMillis()
+                data.audioData.get(),
+                data.bitsPerSample,
+                static_cast<int>(data.sampleRate),
+                data.channelCount,
+                data.numberOfFrames,
+                absolute_capture_timestamp_ms
             );
         }
     }

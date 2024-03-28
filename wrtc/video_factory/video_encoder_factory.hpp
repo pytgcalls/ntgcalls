@@ -10,9 +10,9 @@
 
 namespace wrtc {
 
-    class VideoEncoderFactory: public webrtc::VideoEncoderFactory {
+    class VideoEncoderFactory final : public webrtc::VideoEncoderFactory {
     public:
-        VideoEncoderFactory(std::vector<VideoEncoderConfig> encoders): encoders(encoders){};
+        explicit VideoEncoderFactory(const std::vector<VideoEncoderConfig>& encoders): encoders(encoders){};
 
     private:
         std::vector<VideoEncoderConfig> encoders;

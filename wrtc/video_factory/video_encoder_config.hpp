@@ -13,19 +13,19 @@
 
 namespace wrtc {
 
-    class VideoEncoderConfig: public VideoBaseConfig {
+    class VideoEncoderConfig final : public VideoBaseConfig {
     public:
         VideoEncoderConfig() = default;
 
-        ~VideoEncoderConfig();
+        ~VideoEncoderConfig() override;
 
         VideoEncoderConfig(webrtc::VideoCodecType codec, EncoderCallback encoder, int alignment = 0);
 
         VideoEncoderConfig(FormatsRetriever formatsRetriever, EncoderCallback encoder, int alignment = 0);
 
-        VideoEncoderConfig(std::unique_ptr<webrtc::VideoEncoderFactory> factory): factory(std::move(factory)) {}
+        explicit VideoEncoderConfig(std::unique_ptr<webrtc::VideoEncoderFactory> factory): factory(std::move(factory)) {}
 
-        std::unique_ptr<webrtc::VideoEncoder> CreateVideoCodec(const webrtc::SdpVideoFormat &format);
+        [[nodiscard]] std::unique_ptr<webrtc::VideoEncoder> CreateVideoCodec(const webrtc::SdpVideoFormat &format) const;
 
     private:
         EncoderCallback encoder;

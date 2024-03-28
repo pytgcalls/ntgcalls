@@ -1,16 +1,39 @@
-# NativeTgCalls: <br/> An experimental implementation of Telegram Group Calls
-[![Build And Publish](https://github.com/pytgcalls/ntgcalls/actions/workflows/build.yml/badge.svg)](https://github.com/pytgcalls/ntgcalls/actions/workflows/build.yml)
-[![CodeQL](https://github.com/pytgcalls/ntgcalls/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/pytgcalls/ntgcalls/actions/workflows/github-code-scanning/codeql)
-[![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ntgcalls?logo=python&logoColor=%23959DA5&labelColor=%23282f37)](https://www.python.org/)
-[![GitHub](https://img.shields.io/github/license/pytgcalls/ntgcalls?logo=unlicense&logoColor=%23959DA5&labelColor=%23282f37)](https://github.com/pytgcalls/ntgcalls/blob/master/LICENSE)
-[![Downloads](https://pepy.tech/badge/ntgcalls)](https://pepy.tech/project/ntgcalls)
+<img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/banner.png" alt="pytgcalls logo" />
+<p align="center">
+    <b>A Native Implementation of Telegram Group Calls in a seamless way.</b>
+    <br>
+    <a href="https://github.com/pytgcalls/ntgcalls/tree/master/examples">
+        Examples
+    </a>
+    •
+    <a href="https://pytgcalls.github.io/">
+        Documentation
+    </a>
+    •
+    <a href="https://pypi.org/project/ntgcalls/">
+        PyPi
+    </a>
+    •
+    <a href="https://github.com/pytgcalls/ntgcalls/releases">
+        Releases
+    </a>
+    •
+    <a href="https://t.me/pytgcallsnews">
+        Channel
+    </a>
+    •
+    <a href="https://t.me/pytgcallschat">
+        Chat
+    </a>
+</p>
+
+# NativeTgCalls [![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/) [![Downloads](https://pepy.tech/badge/ntgcalls)](https://pepy.tech/project/ntgcalls)
 
 Welcome to NativeTgCalls, an innovative open-source project. NativeTgCalls represents the next evolution in Telegram calling, building on the foundation laid by PyTgCalls.
 
-|                                                                                         Powerful                                                                                          |                                                                                 Simple                                                                                 |                                                                                                   Light                                                                                                    |
-|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/fast.gif" width=150 alt="Fast Logo"/><br>Built from scratch in C++ using Boost, libwebrtc and FFmpeg | <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/simple.gif" width=150 alt="Simple Logo"/><br>Simple Python, GO and C Bindings<br> | <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/light.gif" width=150 alt="Light logo"/><br>We removed anything that could burden the library, including <b>NodeJS</b> |
+|                                                                                     Powerful                                                                                      |                                                                                 Simple                                                                                 |                                                                                                   Light                                                                                                    |
+|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/fast.gif" width=150 alt="Fast Logo"/><br>Built from scratch in C++ using Boost and libwebrtc | <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/simple.gif" width=150 alt="Simple Logo"/><br>Simple Python, GO and C Bindings<br> | <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/light.gif" width=150 alt="Light logo"/><br>We removed anything that could burden the library, including <b>NodeJS</b> |
 
 ...and more, **without even rewriting your code that uses PyTgCalls!**
 
@@ -22,7 +45,7 @@ Telegram calling experience and introduces innovative features while preserving 
 | Architecture |                                                                   Windows                                                                   |                                                                Linux                                                                |                                                                  MacOS                                                                  |
 |:------------:|:-------------------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------------:|
 |    x86_64    |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   | ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745) | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) |
-|    ARM64     | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) | ![BUILD](https://img.shields.io/badge/build-failing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%23d12f3d) |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   |
+|    ARM64     | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) | ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745) |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   |
 
 ## Key Features
 
@@ -100,6 +123,9 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
   We extend our special thanks to morethanwords for their invaluable help in integrating the connection to WebRTC with Telegram Web K. 
   Their assistance has been instrumental in enhancing the functionality of our library.
 
+* <b><a href="https://github.com/MarshalX">@MarshalX</a>:</b> for their generous assistance in answering questions and providing insights regarding WebRTC.
+
+* <b><a href="https://github.com/LyzCoote">@LyzCoote</a>:</b> for providing an ARM64 Server and allowing us to build an image with clang-18 preinstalled on manylinux2014 arm64.
 
 _We would like to extend a special thanks to <b><a href='https://github.com/null-nick'>@null-nick</a></b>
 and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library.

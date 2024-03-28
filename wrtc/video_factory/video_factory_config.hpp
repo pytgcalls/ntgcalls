@@ -8,7 +8,6 @@
 #include "video_encoder_factory.hpp"
 #include "video_decoder_factory.hpp"
 #include "software/google/google.hpp"
-#include "software/vlc/vlc.hpp"
 
 
 namespace wrtc {

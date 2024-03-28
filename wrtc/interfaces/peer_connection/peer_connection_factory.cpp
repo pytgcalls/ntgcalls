@@ -3,6 +3,15 @@
 //
 
 #include "peer_connection_factory.hpp"
+#include <api/enable_media.h>
+#include <rtc_base/ssl_adapter.h>
+#include <api/create_peerconnection_factory.h>
+#include <api/rtc_event_log/rtc_event_log_factory.h>
+#include <api/task_queue/default_task_queue_factory.h>
+#include <api/audio_codecs/builtin_audio_encoder_factory.h>
+#include <api/audio_codecs/builtin_audio_decoder_factory.h>
+#include "peer_connection_factory_with_context.hpp"
+#include "../../video_factory/video_factory_config.hpp"
 
 namespace wrtc {
     std::mutex PeerConnectionFactory::_mutex{};
@@ -22,54 +31,57 @@ namespace wrtc {
         dependencies.worker_thread = worker_thread_.get();
         dependencies.signaling_thread = signaling_thread_.get();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
-        dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.event_log_factory =
                 absl::make_unique<webrtc::RtcEventLogFactory>(
                         dependencies.task_queue_factory.get());
-        cricket::MediaEngineDependencies media_dependencies;
-        media_dependencies.task_queue_factory = dependencies.task_queue_factory.get();
-        media_dependencies.adm = worker_thread_->BlockingCall([&] {
+        dependencies.adm = worker_thread_->BlockingCall([&] {
             if (!_audioDeviceModule)
                 _audioDeviceModule = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kDummyAudio, dependencies.task_queue_factory.get());
             return _audioDeviceModule;
         });
         auto config = VideoFactoryConfig();
-        media_dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
-        media_dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
-        media_dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
-        media_dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
-        media_dependencies.audio_mixer = nullptr;
-        media_dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
-        dependencies.media_engine = cricket::CreateMediaEngine(std::move(media_dependencies));
-        if (!_factory) {
-            _factory = wrtc::PeerConnectionFactoryWithContext::Create(std::move(dependencies), connection_context_);
+        dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
+        dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
+        dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
+        dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
+        dependencies.audio_mixer = nullptr;
+        dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
+
+        EnableMedia(dependencies);
+        if (!factory_) {
+            factory_ = CreateModularPeerConnectionFactory(std::move(dependencies));
         }
         webrtc::PeerConnectionFactoryInterface::Options options;
         options.disable_encryption = false;
         options.ssl_max_version = rtc::SSL_PROTOCOL_DTLS_12;
         options.crypto_options.srtp.enable_gcm_crypto_suites = true;
-        _factory->SetOptions(options);
+        factory_->SetOptions(options);
     }
 
     PeerConnectionFactory::~PeerConnectionFactory() {
-        _factory = nullptr;
-
         if (_audioDeviceModule) {
-            worker_thread_->BlockingCall([this] { DestroyAudioDeviceModule_w(); });
+            worker_thread_->BlockingCall([this]
+            {
+                if (_audioDeviceModule)
+                    _audioDeviceModule = nullptr;
+            });
         }
-
+        factory_ = nullptr;
         worker_thread_->Stop();
         signaling_thread_->Stop();
         network_thread_->Stop();
     }
 
-    void PeerConnectionFactory::DestroyAudioDeviceModule_w() {
-        if (_audioDeviceModule)
-            _audioDeviceModule = nullptr;
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> PeerConnectionFactory::factory() {
+        return factory_;
     }
 
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> PeerConnectionFactory::factory() {
-        return _factory;
+    rtc::Thread* PeerConnectionFactory::networkThread() const {
+        return network_thread_.get();
+    }
+
+    rtc::Thread* PeerConnectionFactory::signalingThread() const {
+        return signaling_thread_.get();
     }
 
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
@@ -88,6 +100,7 @@ namespace wrtc {
         _references--;
         if (!_references) {
             rtc::CleanupSSL();
+            rtc::ThreadManager::Instance()->SetCurrentThread(nullptr);
             _default = nullptr;
         }
         _mutex.unlock();

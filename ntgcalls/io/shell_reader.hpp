@@ -15,19 +15,18 @@ namespace bp = boost::process;
 namespace ntgcalls {
 
     class ShellReader final: public BaseReader {
-    private:
         bp::ipstream stdOut;
         bp::opstream stdIn;
         bp::child shellProcess;
 
-        wrtc::binary readInternal(size_t size) override;
+        bytes::shared_binary readInternal(int64_t size) override;
 
     public:
-        ShellReader(const std::string& command);
+        explicit ShellReader(const std::string& command, int64_t bufferSize, bool noLatency);
 
         ~ShellReader() override;
 
-        void close() final;
+        void close() override;
     };
 
 } // ntgcalls

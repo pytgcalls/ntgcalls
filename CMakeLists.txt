@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.27)
 
 if (WIN32)
     add_compile_options(/wd4068)
@@ -7,15 +7,17 @@ endif ()
 include(ExternalProject)
 
 # https://chromiumdash.appspot.com/branches
-set(WEBRTC_REVISION m117.5938.2.0)
-set(BOOST_REVISION 1.83.0)
+set(WEBRTC_REVISION m121.6167.3.0)
+set(BOOST_REVISION 1.84.0)
 set(BOOST_LIBS filesystem)
+
+option(STATIC_BUILD "Build static libraries" ON)
 
 if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
 endif()
 
-project(ntgcalls VERSION 1.0.0.17 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.2.0.2 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)

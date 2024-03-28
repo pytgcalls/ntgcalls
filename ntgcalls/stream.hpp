@@ -5,11 +5,11 @@
 #pragma once
 
 
-#include "io/base_reader.hpp"
+#include <shared_mutex>
+
 #include "models/media_state.hpp"
 #include "media/audio_streamer.hpp"
 #include "media/video_streamer.hpp"
-#include "utils/dispatch_queue.hpp"
 #include "models/media_description.hpp"
 #include "media/media_reader_factory.hpp"
 
@@ -26,11 +26,11 @@ namespace ntgcalls {
             Idling,
         };
 
-        Stream();
+        explicit Stream(rtc::Thread* workerThread);
 
         ~Stream();
 
-        void setAVStream(MediaDescription streamConfig, bool noUpgrade = false);
+        void setAVStream(const MediaDescription& streamConfig, bool noUpgrade = false);
 
         void start();
 
@@ -42,37 +42,35 @@ namespace ntgcalls {
 
         bool unmute();
 
-        void stop();
-
         MediaState getState();
 
         uint64_t time();
 
         Status status();
 
-        void addTracks(const std::shared_ptr<wrtc::PeerConnection> &pc);
+        void addTracks(const std::unique_ptr<wrtc::PeerConnection> &pc);
 
-        void onStreamEnd(std::function<void(Stream::Type)> &callback);
+        void onStreamEnd(const std::function<void(Type)> &callback);
 
-        void onUpgrade(std::function<void(MediaState)> &callback);
+        void onUpgrade(const std::function<void(MediaState)> &callback);
 
     private:
         std::shared_ptr<AudioStreamer> audio;
         std::shared_ptr<VideoStreamer> video;
-        wrtc::MediaStreamTrack *audioTrack, *videoTrack;
-        std::shared_ptr<MediaReaderFactory> reader;
-        bool running = false, idling = false, hasVideo = false;
+        wrtc::MediaStreamTrack *audioTrack{}, *videoTrack{};
+        std::unique_ptr<MediaReaderFactory> reader;
+        bool idling = false;
+        std::atomic_bool hasVideo = false, changing = false, quit = false;
         wrtc::synchronized_callback<Type> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
-        std::shared_ptr<DispatchQueue> streamQueue;
-        std::shared_ptr<DispatchQueue> updateQueue;
+        std::thread thread;
+        rtc::Thread* workerThread;
+        std::shared_mutex mutex;
 
-        void sendSample();
-
-        void checkStream();
-
-        std::pair<std::shared_ptr<BaseStreamer>, std::shared_ptr<BaseReader>> unsafePrepareForSample();
+        void checkStream() const;
 
         void checkUpgrade();
+
+        bool updateMute(bool isMuted);
     };
 }

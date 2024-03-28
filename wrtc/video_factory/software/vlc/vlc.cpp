@@ -4,30 +4,31 @@
 
 #include "vlc.hpp"
 
+#if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
+#include <modules/video_coding/codecs/av1/dav1d_decoder.h>
+#include <modules/video_coding/codecs/av1/libaom_av1_encoder.h>
+#endif
+
 namespace vlc {
 
     void addEncoders(std::vector<wrtc::VideoEncoderConfig> &encoders) {
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
-        encoders.push_back(
-                wrtc::VideoEncoderConfig(
-                        webrtc::kVideoCodecAV1,
-                        [](auto format) {
-                            return webrtc::CreateLibaomAv1Encoder();
-                        }
-                )
+        encoders.emplace_back(
+            webrtc::kVideoCodecAV1,
+            [](auto) {
+                return webrtc::CreateLibaomAv1Encoder();
+            }
         );
 #endif
     }
 
     void addDecoders(std::vector<wrtc::VideoDecoderConfig> &decoders) {
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
-        decoders.push_back(
-                wrtc::VideoDecoderConfig(
-                        webrtc::kVideoCodecAV1,
-                        [](auto format) {
-                            return webrtc::CreateDav1dDecoder();
-                        }
-                )
+        decoders.emplace_back(
+            webrtc::kVideoCodecAV1,
+            [](auto) {
+                return webrtc::CreateDav1dDecoder();
+            }
         );
 #endif
     }

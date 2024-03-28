@@ -6,7 +6,7 @@
 
 #ifdef BOOST_ENABLED
 namespace ntgcalls {
-    ntgcalls::ShellReader::ShellReader(const std::string &command) {
+    ShellReader::ShellReader(const std::string &command, const int64_t bufferSize, const bool noLatency): BaseReader(bufferSize, noLatency) {
         try {
             shellProcess = bp::child(command, bp::std_out > stdOut, bp::std_in < stdIn);
         } catch (std::runtime_error &e) {
@@ -16,17 +16,17 @@ namespace ntgcalls {
 
     ShellReader::~ShellReader() {
         close();
+        stdOut.clear();
+        stdIn.clear();
     }
 
-    wrtc::binary ShellReader::readInternal(size_t size) {
-        if (stdOut.eof() || stdOut.fail() || !stdOut.is_open() || !shellProcess || !shellProcess.running()) {
+    bytes::shared_binary ShellReader::readInternal(const int64_t size) {
+        if (!stdOut || stdOut.eof() || stdOut.fail() || !stdOut.is_open()) {
+            RTC_LOG(LS_WARNING) << "Reached end of the file";
             throw EOFError("Reached end of the stream");
         }
-        auto file_data = std::make_shared<uint8_t[]>(size);
+        auto file_data = bytes::make_shared_binary(size);
         stdOut.read(reinterpret_cast<char*>(file_data.get()), size);
-        if (stdOut.fail()) {
-            throw FileError("Error while reading the file");
-        }
         return file_data;
     }
 
@@ -34,17 +34,26 @@ namespace ntgcalls {
         BaseReader::close();
         if (stdOut) {
             stdOut.close();
-            stdOut.pipe().close();
+            RTC_LOG(LS_VERBOSE) << "StdOut closed";
+            if (auto pipe = stdOut.pipe(); pipe.is_open()){
+                pipe.close();
+                RTC_LOG(LS_VERBOSE) << "StdOut pipe closed";
+            }
         }
         if (stdIn) {
             stdIn.close();
-            stdIn.pipe().close();
+            RTC_LOG(LS_VERBOSE) << "StdIn closed";
+            if (auto pipe = stdIn.pipe(); pipe.is_open()){
+                pipe.close();
+                RTC_LOG(LS_VERBOSE) << "StdIn pipe closed";
+            }
         }
         if (shellProcess) {
             shellProcess.terminate();
             shellProcess.wait();
             shellProcess.detach();
         }
+        RTC_LOG(LS_VERBOSE) << "ShellReader closed";
     }
 } // ntgcalls
 #endif
