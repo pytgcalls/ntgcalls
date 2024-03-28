@@ -16,6 +16,7 @@ namespace ntgcalls {
         std::unique_ptr<Stream> stream;
         bool connected = false;
         wrtc::synchronized_callback<void> onCloseConnection;
+        rtc::Thread* workerThread;
     public:
         explicit CallInterface(rtc::Thread* workerThread);
 

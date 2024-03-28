@@ -156,7 +156,9 @@ namespace ntgcalls {
             case wrtc::PeerConnectionState::Disconnected:
             case wrtc::PeerConnectionState::Failed:
             case wrtc::PeerConnectionState::Closed:
-                connection->onConnectionChange(nullptr);
+                workerThread->PostTask([this] {
+                    connection->onConnectionChange(nullptr);
+                });
                 if (!connected) {
                     RTC_LOG(LS_ERROR) << "Connection failed";
                     promise.set_exception(std::make_exception_ptr(TelegramServerError("Error while connecting to the P2P call server")));
