@@ -5,7 +5,6 @@
 #pragma once
 #include <future>
 #include <nlohmann/json.hpp>
-
 #include "call_interface.hpp"
 #include "ntgcalls/models/auth_params.hpp"
 #include "ntgcalls/signaling/signaling.hpp"
@@ -14,7 +13,7 @@
 namespace ntgcalls {
     using nlohmann::json;
 
-    class P2PCall final: public CallInterface {
+    class P2PCall final : public CallInterface {
         bytes::vector randomPower, prime;
         std::optional<RawKey> key;
         std::optional<bytes::vector> g_a_hash, g_a_or_b;
