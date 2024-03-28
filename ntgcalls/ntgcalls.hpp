@@ -57,7 +57,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(bytes::vector) createP2PCall(int64_t userId, const int32_t &g, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &r, const std::optional<BYTES(bytes::vector)> &g_a_hash, const MediaDescription& media);
 
-        ASYNC_RETURN(AuthParams) exchangeKeys(int64_t userId, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &g_a_or_b, int64_t fingerprint);
+        ASYNC_RETURN(AuthParams) exchangeKeys(int64_t userId, const BYTES(bytes::vector) &g_a_or_b, int64_t fingerprint);
 
         ASYNC_RETURN(void) connectP2P(int64_t userId, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
 

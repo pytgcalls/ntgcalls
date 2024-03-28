@@ -38,7 +38,7 @@ namespace ntgcalls {
 
         bytes::vector init(int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media);
 
-        AuthParams exchangeKeys(const bytes::vector &p, const bytes::vector &g_a_or_b, int64_t fingerprint);
+        AuthParams exchangeKeys(const bytes::vector &g_a_or_b, int64_t fingerprint);
 
         void connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
 

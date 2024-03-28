@@ -37,7 +37,7 @@ namespace ntgcalls {
         return g_a_hash ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
     }
 
-    AuthParams P2PCall::exchangeKeys(const bytes::vector &p, const bytes::vector &g_a_or_b, const int64_t fingerprint) {
+    AuthParams P2PCall::exchangeKeys(const bytes::vector &g_a_or_b, const int64_t fingerprint) {
         std::lock_guard lock(mutex);
         if (connection) {
             RTC_LOG(LS_ERROR) << "Connection already made";
@@ -64,7 +64,7 @@ namespace ntgcalls {
         const auto computedAuthKey = AuthKey::CreateAuthKey(
             g_a_or_b,
             randomPower,
-            g_a_hash ? prime:p
+            prime
         );
         if (computedAuthKey.empty()) {
             RTC_LOG(LS_ERROR) << "Could not create auth key";

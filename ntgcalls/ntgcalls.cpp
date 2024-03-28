@@ -90,9 +90,9 @@ namespace ntgcalls {
         END_ASYNC_RETURN_SAFE(CAST_BYTES(result))
     }
 
-    ASYNC_RETURN(AuthParams) NTgCalls::exchangeKeys(const int64_t userId, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &g_a_or_b, const int64_t fingerprint) {
-        SMART_ASYNC(workerThread, this, userId, p = CPP_BYTES(p, bytes::vector), g_a_or_b = CPP_BYTES(g_a_or_b, bytes::vector), fingerprint)
-        END_ASYNC_RETURN(SafeCall<P2PCall>(safeConnection(userId))->exchangeKeys(p, g_a_or_b, fingerprint))
+    ASYNC_RETURN(AuthParams) NTgCalls::exchangeKeys(const int64_t userId, const BYTES(bytes::vector) &g_a_or_b, const int64_t fingerprint) {
+        SMART_ASYNC(workerThread, this, userId, g_a_or_b = CPP_BYTES(g_a_or_b, bytes::vector), fingerprint)
+        END_ASYNC_RETURN(SafeCall<P2PCall>(safeConnection(userId))->exchangeKeys(g_a_or_b, fingerprint))
     }
 
     ASYNC_RETURN(void) NTgCalls::connectP2P(const int64_t userId, const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
