@@ -149,7 +149,7 @@ namespace ntgcalls {
     }
 
     ASYNC_RETURN(void) NTgCalls::stop(const int64_t chatId) {
-        SMART_ASYNC(workerThread, this, chatId)
+        SMART_ASYNC(networkThread, this, chatId)
         remove(chatId);
         END_ASYNC
     }

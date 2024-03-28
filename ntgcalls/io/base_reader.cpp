@@ -33,6 +33,8 @@ namespace ntgcalls {
                             lock.lock();
                             _eof = true;
                             lock.unlock();
+                            bufferCondition.notify_one();
+                            break;
                         }
                     }
                 } while (!quit && !_eof);
@@ -54,7 +56,7 @@ namespace ntgcalls {
             return {nullptr, timeMillis};
         }
         std::unique_lock lock(mutex);
-        bufferCondition.wait(lock, [this] {
+        bufferCondition.wait_for(lock, std::chrono::milliseconds(500), [this] {
             return !buffer.empty() || quit || _eof;
         });
         if (buffer.empty()) {
