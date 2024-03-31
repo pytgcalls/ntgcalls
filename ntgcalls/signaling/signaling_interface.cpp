@@ -4,48 +4,69 @@
 
 #include "signaling_interface.hpp"
 
+#include <utility>
+
 #include "ntgcalls/exceptions.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     SignalingInterface::SignalingInterface(
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
         const EncryptionKey& key,
-        const std::function<void(const bytes::binary&)>& onEmitData,
-        const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
-    ): onSignalData(onSignalData), onEmitData(onEmitData), networkThread(networkThread), signalingThread(signalingThread) {
+        DataEmitter onEmitData,
+        DataReceiver onSignalData
+    ): onSignalData(std::move(onSignalData)), onEmitData(std::move(onEmitData)), networkThread(networkThread), signalingThread(signalingThread) {
         signalingEncryption = std::make_unique<SignalingEncryption>(key);
+        signalingEncryption->onServiceMessage([this](const int delayMs, int cause) {
+            if (delayMs == 0) {
+                 this->signalingThread->PostTask([this, cause] {
+                     this->onEmitData(signalingEncryption->prepareForSendingService(cause));
+                 });
+             } else {
+                 this->signalingThread->PostDelayedTask([this, cause] {
+                     this->onEmitData(signalingEncryption->prepareForSendingService(cause));
+                 }, webrtc::TimeDelta::Millis(delayMs));
+             }
+        });
     }
 
-    std::optional<bytes::binary> SignalingInterface::preProcessData(const bytes::binary &data, const bool isOut) const {
-        if (isOut) {
-            auto packetData = data;
-            if (supportsCompression()) {
-                RTC_LOG(LS_VERBOSE) << "Compressing packet";
-                packetData = std::move(bytes::GZip::zip(packetData));
+    std::vector<bytes::binary> SignalingInterface::preReadData(const bytes::binary &data, const bool isRaw) const {
+        RTC_LOG(LS_VERBOSE) << "Decrypting packets";
+        const auto raw = signalingEncryption->decrypt(rtc::CopyOnWriteBuffer(data.data(), data.size()), isRaw);
+        if (raw.empty()) {
+            return {};
+        }
+        RTC_LOG(LS_VERBOSE) << "Packets decrypted";
+        std::vector<bytes::binary> packets;
+        for (auto& packet : raw) {
+            auto decryptedData = bytes::binary(packet.data(), packet.data() + packet.size());
+            if (bytes::GZip::isGzip(decryptedData)) {
+                RTC_LOG(LS_VERBOSE) << "Decompressing packet";
+                if (auto unzipped = bytes::GZip::unzip(decryptedData, 2 * 1024 * 1024); unzipped.has_value()) {
+                    packets.push_back(unzipped.value());
+                    continue;
+                }
+                RTC_LOG(LS_ERROR) << "Failed to decompress packet";
+                continue;
             }
-            RTC_LOG(LS_VERBOSE) << "Encrypting packet";
-            const auto raw = signalingEncryption->encrypt(rtc::CopyOnWriteBuffer(packetData.data(), packetData.size()));
-            RTC_LOG(LS_VERBOSE) << "Packet encrypted";
-            return bytes::binary(raw.data(), raw.data() + raw.size());
+            packets.push_back(decryptedData);
         }
-        RTC_LOG(LS_VERBOSE) << "Decrypting packet";
-        const auto raw = signalingEncryption->decrypt(rtc::CopyOnWriteBuffer(data.data(), data.size()));
-        if (!raw.has_value()) {
-            RTC_LOG(LS_ERROR) << "Failed to decrypt packet";
-            return std::nullopt;
-        }
-        RTC_LOG(LS_VERBOSE) << "Packet decrypted";
-        auto decryptedData = bytes::binary(raw->data(), raw->data() + raw->size());
-        if (bytes::GZip::isGzip(decryptedData)) {
-            RTC_LOG(LS_VERBOSE) << "Decompressing packet";
-            if (auto unzipped = bytes::GZip::unzip(decryptedData, 2 * 1024 * 1024); unzipped.has_value()) {
-                RTC_LOG(LS_VERBOSE) << "Packet decompressed";
-                return unzipped.value();
-            }
-            RTC_LOG(LS_ERROR) << "Failed to decompress packet";
-            return std::nullopt;
-        }
-        return decryptedData;
+        return packets;
     }
-} // ntgcalls
+
+    bytes::binary SignalingInterface::preSendData(const bytes::binary &data, const bool isRaw) const {
+        auto packetData = data;
+        if (supportsCompression()) {
+            RTC_LOG(LS_VERBOSE) << "Compressing packet";
+            packetData = std::move(bytes::GZip::zip(packetData));
+        }
+        RTC_LOG(LS_VERBOSE) << "Encrypting packet";
+        const auto packet = signalingEncryption->encrypt(rtc::CopyOnWriteBuffer(packetData.data(), packetData.size()), isRaw);
+        if (!packet.has_value()) {
+            RTC_LOG(LS_ERROR) << "Failed to encrypt packet";
+            return {};
+        }
+        RTC_LOG(LS_VERBOSE) << "Packet encrypted";
+        return *packet;
+    }
+} // signaling

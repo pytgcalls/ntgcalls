@@ -2,15 +2,15 @@
 // Created by Laky64 on 16/03/2024.
 //
 
-#include "signaling_v2.hpp"
+#include "signaling_sctp_connection.hpp"
 
-namespace ntgcalls {
-    SignalingV2::SignalingV2(
+namespace signaling {
+    SignalingSctpConnection::SignalingSctpConnection(
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
         const EncryptionKey &key,
-        const std::function<void(const bytes::binary&)>& onEmitData,
-        const std::function<void(const std::optional<bytes::binary>&)>& onSignalData,
+        const DataEmitter& onEmitData,
+        const DataReceiver& onSignalData,
         const bool allowCompression
     ): SignalingInterface(networkThread, signalingThread, key, onEmitData, onSignalData), allowCompression(allowCompression) {
         networkThread->BlockingCall([&] {
@@ -23,23 +23,23 @@ namespace ntgcalls {
         });
     }
 
-    SignalingV2::~SignalingV2() {
+    SignalingSctpConnection::~SignalingSctpConnection() {
         networkThread->BlockingCall([&] {
-            sctpTransport.reset();
-            sctpTransportFactory.reset();
-            packetTransport.reset();
+            sctpTransport = nullptr;
+            sctpTransportFactory = nullptr;
+            packetTransport = nullptr;
         });
     }
 
-    void SignalingV2::receive(const bytes::binary& data) const {
+    void SignalingSctpConnection::receive(const bytes::binary& data) const {
         networkThread->BlockingCall([&] {
             packetTransport->receiveData(data);
         });
     }
 
-    void SignalingV2::send(const bytes::binary& data) {
+    void SignalingSctpConnection::send(const bytes::binary& data) {
         networkThread->BlockingCall([&] {
-            const auto encryptedData = preProcessData(data, true).value();
+            const auto encryptedData = preSendData(data);
             if (isReadyToSend) {
                 webrtc::SendDataParams params;
                 params.type = webrtc::DataMessageType::kBinary;
@@ -59,7 +59,7 @@ namespace ntgcalls {
         });
     }
 
-    void SignalingV2::OnReadyToSend() {
+    void SignalingSctpConnection::OnReadyToSend() {
         assert(networkThread->IsCurrent());
         isReadyToSend = true;
         for (const auto &data : pendingData) {
@@ -77,18 +77,18 @@ namespace ntgcalls {
         pendingData.clear();
     }
 
-    void SignalingV2::OnDataReceived(int channel_id, webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) {
+    void SignalingSctpConnection::OnDataReceived(int channel_id, webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) {
         assert(networkThread->IsCurrent());
         signalingThread->PostTask([this, buffer] {
-            onSignalData(preProcessData(bytes::binary(buffer.data(), buffer.data() + buffer.size()), false));
+            onSignalData(preReadData({buffer.data(), buffer.data() + buffer.size()}));
         });
     }
 
-    void SignalingV2::OnTransportClosed(webrtc::RTCError error) {
+    void SignalingSctpConnection::OnTransportClosed(webrtc::RTCError error) {
         assert(networkThread->IsCurrent());
     }
 
-    bool SignalingV2::supportsCompression() const {
+    bool SignalingSctpConnection::supportsCompression() const {
         return allowCompression;
     }
-} // ntgcalls
+} // signaling

@@ -4,7 +4,7 @@
 
 #include "signaling_packet_transport.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     void SignalingPacketTransport::receiveData(const bytes::binary& data) {
         SignalReadPacket.emit(this, reinterpret_cast<const char*>(data.data()), data.size(), -1, 0);
     }
@@ -44,4 +44,4 @@ namespace ntgcalls {
     absl::optional<rtc::NetworkRoute> SignalingPacketTransport::network_route() const {
         return absl::nullopt;
     }
-} // ntgcalls
+} // signaling

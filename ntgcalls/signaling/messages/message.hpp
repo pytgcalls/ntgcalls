@@ -4,9 +4,12 @@
 
 #pragma once
 #include <nlohmann/json.hpp>
+#include <rtc_base/byte_buffer.h>
+#include <rtc_base/copy_on_write_buffer.h>
+
 #include "wrtc/utils/binary.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     using nlohmann::json;
 
     class Message {
@@ -14,6 +17,9 @@ namespace ntgcalls {
         enum class Type {
             Candidate,
             RtcDescription,
+            InitialSetup,
+            Candidates,
+            NegotiateChannels,
             Unknown
         };
 
@@ -22,6 +28,10 @@ namespace ntgcalls {
         [[nodiscard]] virtual bytes::binary serialize() const = 0;
 
         static Type type(const bytes::binary& data);
+
+        static std::optional<rtc::CopyOnWriteBuffer> deserializeRaw(rtc::ByteBufferReader &reader);
+
+        static uint32_t stringToUInt32(std::string const &string);
     };
 
 } // wrtc

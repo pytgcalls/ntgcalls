@@ -4,55 +4,63 @@
 
 #include "signaling.hpp"
 
-#include "signaling_v2.hpp"
+#include "external_signaling_connection.hpp"
+#include "signaling_sctp_connection.hpp"
 
-namespace ntgcalls {
+
+namespace signaling {
     std::unique_ptr<SignalingInterface> Signaling::Create(
-        const std::vector<std::string> &versions,
+        const Version version,
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
         const EncryptionKey &key,
-        const std::function<void(const bytes::binary&)>& onEmitData,
-        const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
+        const DataEmitter& onEmitData,
+        const DataReceiver& onSignalData
     ) {
-        if (versions.empty()) {
-            RTC_LOG(LS_ERROR) << "No versions provided";
-            throw SignalingError("No versions provided");
+        if (version == Version::V1) {
+            RTC_LOG(LS_ERROR) << "Signaling V1 is not supported";
+            throw ntgcalls::SignalingUnsupported("Signaling V1 is not supported");
         }
-        const auto bestVersion = bestMatch(versions);
-        if (!bestVersion.empty()) {
-            const auto sigVersion = signalingVersion(bestVersion);
-            if (sigVersion == ProtocolVersion::V1) {
-                RTC_LOG(LS_ERROR) << "Signaling V1 is not supported";
-                throw SignalingUnsupported("Signaling V1 is not supported");
+        if (version & Version::V2) {
+            RTC_LOG(LS_INFO) << "Using signaling V2" << (version & Version::V2Full ? " full" : "");
+            if (version & Version::V2Full) {
+                return std::make_unique<SignalingSctpConnection>(networkThread, signalingThread, key, onEmitData, onSignalData, true);
             }
-            if (sigVersion & ProtocolVersion::V2) {
-                RTC_LOG(LS_INFO) << "Using signaling V2 for version " << bestVersion;
-                return std::make_unique<SignalingV2>(networkThread, signalingThread, key, onEmitData, onSignalData, sigVersion & ProtocolVersion::V2Full);
-            }
+            return std::make_unique<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
         }
-        throw SignalingUnsupported("Unsupported " + bestVersion + " protocol version");
+        throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
     }
 
     std::vector<std::string> Signaling::SupportedVersions() {
         return {
-            defaultVersion,
+            "8.0.0",
+            "9.0.0",
+            "11.0.0",
         };
     }
 
-    Signaling::ProtocolVersion Signaling::signalingVersion(const std::string& version) {
+    Signaling::Version Signaling::matchVersion(const std::vector<std::string> &versions) {
+        const auto version = bestMatch(versions);
+        RTC_LOG(LS_INFO) << "Selected version: " << version;
+        if (version == "8.0.0" || version == "9.0.0") {
+            return Version::V2;
+        }
         if (version == "10.0.0") {
-            return ProtocolVersion::V1;
+            return Version::V1;
         }
         if (version == "11.0.0") {
-            return ProtocolVersion::V2Full;
+            return Version::V2Full;
         }
-        return ProtocolVersion::Unknown;
+        throw ntgcalls::SignalingUnsupported("Unsupported " + version + " protocol version");
     }
 
     std::string Signaling::bestMatch(std::vector<std::string> versions) {
+        if (versions.empty()) {
+            RTC_LOG(LS_ERROR) << "No versions provided";
+            throw ntgcalls::SignalingError("No versions provided");
+        }
         std::ranges::sort(versions, [](const std::string& a, const std::string& b) {
-            return version_to_tuple(b) < version_to_tuple(a);
+            return versionToTuple(b) < versionToTuple(a);
         });
         auto supported = SupportedVersions();
         for (const auto& version : versions) {
@@ -63,10 +71,10 @@ namespace ntgcalls {
                 return version;
             }
         }
-        return "";
+        throw ntgcalls::SignalingUnsupported("No supported version found");
     }
 
-    std::tuple<int, int, int> Signaling::version_to_tuple(const std::string& version) {
+    std::tuple<int, int, int> Signaling::versionToTuple(const std::string& version) {
         try {
             std::vector<std::string> parts;
             std::istringstream stream(version);
@@ -82,8 +90,4 @@ namespace ntgcalls {
             return std::make_tuple(0, 0, 0);
         }
     }
-
-    int operator&(const Signaling::ProtocolVersion lhs, const Signaling::ProtocolVersion rhs) {
-        return static_cast<int>(lhs) & static_cast<int>(rhs);
-    }
-} // ntgcalls
+} // signaling

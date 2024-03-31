@@ -6,7 +6,7 @@
 
 #include "ntgcalls/exceptions.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     bytes::binary RtcDescriptionMessage::serialize() const {
         return bytes::make_binary(to_string(json{
             {"@type", wrtc::Description::SdpTypeToString(type)},
@@ -19,10 +19,10 @@ namespace ntgcalls {
         auto message = std::make_unique<RtcDescriptionMessage>();
         if (j["@type"] != "offer" && j["@type"] != "answer") {
             RTC_LOG(LS_ERROR) << "Invalid sdp type: " << j["@type"];
-            throw InvalidParams("Invalid sdp type");
+            throw ntgcalls::InvalidParams("Invalid sdp type");
         }
         message->type = j["@type"] == "offer" ? wrtc::Description::SdpType::Offer : wrtc::Description::SdpType::Answer;
         message->sdp = j["sdp"];
         return std::move(message);
     }
-} // ntgcalls
+} // signaling

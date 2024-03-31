@@ -5,7 +5,7 @@
 #pragma once
 #include "message.hpp"
 
-namespace ntgcalls {
+namespace signaling {
 
     class CandidateMessage final : public Message {
     public:
@@ -18,4 +18,4 @@ namespace ntgcalls {
         static std::unique_ptr<CandidateMessage> deserialize(const bytes::binary& data);
     };
 
-} // ntgcalls
+} // signaling

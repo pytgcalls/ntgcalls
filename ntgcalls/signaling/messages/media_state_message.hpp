@@ -7,7 +7,7 @@
 #include "message.hpp"
 #include "wrtc/utils/binary.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     class MediaStateMessage final : public Message {
     public:
         enum class VideoState {
@@ -34,4 +34,4 @@ namespace ntgcalls {
         static std::string parseVideoState(VideoState state);
     };
 
-} // ntgcalls
+} // signaling

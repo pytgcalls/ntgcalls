@@ -7,37 +7,39 @@
 #include "signaling_interface.hpp"
 #include "ntgcalls/exceptions.hpp"
 
-namespace ntgcalls {
+namespace signaling {
 
     class Signaling {
     public:
-        enum class ProtocolVersion{
-            Unknown = 1 << 0,
-            V1 = 1 << 1,
-            V2 = 1 << 2,
-            V2Full = V2 | 1 << 3
+        enum class Version{
+            Unknown = 0,
+            V1 = 1 << 0,
+            V2 = 1 << 1,
+            V2Full = V2 & 1 << 2
         };
 
         static std::unique_ptr<SignalingInterface> Create(
-            const std::vector<std::string> &versions,
+            Version version,
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,
             const EncryptionKey &key,
-            const std::function<void(const bytes::binary&)>& onEmitData,
-            const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
+            const DataEmitter& onEmitData,
+            const DataReceiver& onSignalData
         );
 
         static std::vector<std::string> SupportedVersions();
 
-    private:
-        static constexpr char defaultVersion[] = "11.0.0";
+        static Version matchVersion(const std::vector<std::string> &versions);
 
-        static ProtocolVersion signalingVersion(const std::string& version);
+    private:
+        static constexpr char defaultVersion[] = "8.0.0";
 
         static std::string bestMatch(std::vector<std::string> versions);
 
-        static std::tuple<int, int, int> version_to_tuple(const std::string& version);
+        static std::tuple<int, int, int> versionToTuple(const std::string& version);
     };
 
-    inline int operator&(Signaling::ProtocolVersion lhs, Signaling::ProtocolVersion rh);
-} // ntgcalls
+    inline bool operator&(const Signaling::Version lhs, Signaling::Version rhs) {
+        return static_cast<int>(lhs) & static_cast<int>(rhs);
+    }
+} // signaling

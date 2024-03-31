@@ -5,7 +5,7 @@
 #pragma once
 #include "wrtc/utils/binary.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     struct EncryptionKey {
         static constexpr int kSize = 256;
 
@@ -27,4 +27,4 @@ namespace ntgcalls {
 
         static uint64_t Fingerprint(bytes::const_span authKey);
     };
-} // ntgcalls
+} // signaling

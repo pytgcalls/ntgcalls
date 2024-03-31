@@ -7,9 +7,9 @@
 #include "signaling_packet_transport.hpp"
 #include "media/sctp/sctp_transport_factory.h"
 
-namespace ntgcalls {
+namespace signaling {
 
-    class SignalingV2 final : public sigslot::has_slots<>, public SignalingInterface, public webrtc::DataChannelSink {
+    class SignalingSctpConnection final : public sigslot::has_slots<>, public SignalingInterface, public webrtc::DataChannelSink {
         std::unique_ptr<cricket::SctpTransportFactory> sctpTransportFactory;
         std::unique_ptr<SignalingPacketTransport> packetTransport;
         std::unique_ptr<cricket::SctpTransportInternal> sctpTransport;
@@ -18,16 +18,16 @@ namespace ntgcalls {
         bool isReadyToSend = false;
 
     public:
-        SignalingV2(
+        SignalingSctpConnection(
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,
             const EncryptionKey &key,
-            const std::function<void(const bytes::binary&)>& onEmitData,
-            const std::function<void(const std::optional<bytes::binary>&)>& onSignalData,
+            const DataEmitter& onEmitData,
+            const DataReceiver& onSignalData,
             bool allowCompression
         );
 
-        ~SignalingV2() override;
+        ~SignalingSctpConnection() override;
 
         void receive(const bytes::binary& data) const override;
 
@@ -47,4 +47,4 @@ namespace ntgcalls {
         [[nodiscard]] bool supportsCompression() const override;
     };
 
-} // ntgcalls
+} // signaling

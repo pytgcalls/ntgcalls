@@ -3,15 +3,15 @@
 //
 
 #pragma once
-#include <optional>
-#include <string>
 #include <vector>
 #include <rtc_base/thread.h>
 
-#include "signaling_encryption.hpp"
-#include "../utils/auth_key.hpp"
+#include "crypto/signaling_encryption.hpp"
+#include "crypto/auth_key.hpp"
 
-namespace ntgcalls {
+namespace signaling {
+    using DataEmitter = std::function<void(const bytes::binary&)>;
+    using DataReceiver = std::function<void(const std::vector<bytes::binary>&)>;
 
     class SignalingInterface {
     public:
@@ -21,8 +21,8 @@ namespace ntgcalls {
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,
             const EncryptionKey &key,
-            const std::function<void(const bytes::binary&)>& onEmitData,
-            const std::function<void(const std::optional<bytes::binary>&)>& onSignalData
+            DataEmitter onEmitData,
+            DataReceiver onSignalData
         );
 
         virtual void send(const bytes::binary& data) = 0;
@@ -30,15 +30,17 @@ namespace ntgcalls {
         virtual void receive(const bytes::binary& data) const = 0;
 
     protected:
-        std::function<void(const std::optional<bytes::binary>&)> onSignalData;
-        std::function<void(const bytes::binary&)> onEmitData;
+        DataReceiver onSignalData;
+        DataEmitter onEmitData;
         rtc::Thread *networkThread, *signalingThread;
 
-        [[nodiscard]] std::optional<bytes::binary> preProcessData(const bytes::binary &data, bool isOut) const;
+        [[nodiscard]] std::vector<bytes::binary> preReadData(const bytes::binary &data, bool isRaw = false) const;
+
+        [[nodiscard]] bytes::binary preSendData(const bytes::binary &data, bool isRaw = false) const;
 
         [[nodiscard]] virtual bool supportsCompression() const = 0;
 
     private:
         std::unique_ptr<SignalingEncryption> signalingEncryption;
     };
-} // ntgcalls
+} // signaling

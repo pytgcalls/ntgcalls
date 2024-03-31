@@ -4,13 +4,13 @@
 
 #include "mod_exp_first.hpp"
 
-#include "../exceptions.hpp"
+#include "../../exceptions.hpp"
 
-namespace ntgcalls {
+namespace signaling {
 
     ModExpFirst::ModExpFirst(const int32_t g, const bytes::const_span p, const bytes::const_span r) {
         if (r.size() != kRandomPowerSize) {
-            throw InvalidParams("Invalid random size");
+            throw ntgcalls::InvalidParams("Invalid random size");
         }
         const openssl::BigNum prime(p);
         randomPower = bytes::vector(kRandomPowerSize);
@@ -51,4 +51,4 @@ namespace ntgcalls {
             }
         return true;
     }
-} // ntgcalls
+} // signaling

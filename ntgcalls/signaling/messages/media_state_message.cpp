@@ -8,7 +8,7 @@
 
 #include "ntgcalls/exceptions.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     bytes::binary MediaStateMessage::serialize() const {
         return bytes::make_binary(to_string(json{
             {"@type", "MediaState"},
@@ -29,6 +29,6 @@ namespace ntgcalls {
         case VideoState::Active:
             return "active";
         }
-        throw InvalidParams("Invalid video state");
+        throw ntgcalls::InvalidParams("Invalid video state");
     }
-} // ntgcalls
+} // signaling

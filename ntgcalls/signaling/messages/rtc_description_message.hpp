@@ -7,7 +7,7 @@
 #include "message.hpp"
 #include "wrtc/models/rtc_session_description.hpp"
 
-namespace ntgcalls {
+namespace signaling {
 
 class RtcDescriptionMessage final : public Message  {
 public:
@@ -20,4 +20,4 @@ public:
 
 };
 
-} // ntgcalls
+} // signaling

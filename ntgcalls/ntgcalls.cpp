@@ -235,7 +235,7 @@ namespace ntgcalls {
             92,
             true,
             true,
-            Signaling::SupportedVersions(),
+            signaling::Signaling::SupportedVersions(),
         };
     }
 

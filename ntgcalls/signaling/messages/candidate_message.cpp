@@ -4,7 +4,7 @@
 
 #include "candidate_message.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     bytes::binary CandidateMessage::serialize() const {
         return bytes::make_binary(to_string(json{
             {"@type", "candidate"},
@@ -22,4 +22,4 @@ namespace ntgcalls {
         message->sdp = j["sdp"];
         return std::move(message);
     }
-} // ntgcalls
+} // signaling

@@ -6,9 +6,8 @@
 #include <p2p/base/packet_transport_internal.h>
 
 #include "wrtc/utils/binary.hpp"
-#include "wrtc/utils/syncronized_callback.hpp"
 
-namespace ntgcalls {
+namespace signaling {
 
     class SignalingPacketTransport final : public rtc::PacketTransportInternal {
         std::function<void(const bytes::binary&)> emitData;
@@ -35,4 +34,4 @@ namespace ntgcalls {
         [[nodiscard]] absl::optional<rtc::NetworkRoute> network_route() const override;
     };
 
-} // ntgcalls
+} // signaling

@@ -9,12 +9,12 @@
 #include "wrtc/utils/bignum.hpp"
 #include "wrtc/utils/encryption.hpp"
 
-namespace ntgcalls {
+namespace signaling {
     bytes::vector AuthKey::CreateAuthKey(const bytes::const_span firstBytes, const bytes::const_span random, const bytes::const_span primeBytes) {
         const auto first = openssl::BigNum(firstBytes);
         const auto prime = openssl::BigNum(primeBytes);
         if (!ModExpFirst::IsGoodModExpFirst(first, prime)) {
-            throw InvalidParams("Bad first prime");
+            throw ntgcalls::InvalidParams("Bad first prime");
         }
         const auto authKey = openssl::BigNum();
         authKey.setModExp(first, openssl::BigNum(random), prime);
@@ -24,7 +24,7 @@ namespace ntgcalls {
     void AuthKey::FillData(RawKey &authKey, const bytes::const_span computedAuthKey) {
         const auto computedAuthKeySize = computedAuthKey.size();
         if (computedAuthKeySize > EncryptionKey::kSize) {
-            throw InvalidParams("Invalid auth key size");
+            throw ntgcalls::InvalidParams("Invalid auth key size");
         }
         const auto authKeyBytes = bytes::make_span(authKey);
         if (computedAuthKeySize < EncryptionKey::kSize) {
@@ -37,7 +37,7 @@ namespace ntgcalls {
 
     uint64_t AuthKey::Fingerprint(const bytes::const_span authKey) {
         if (authKey.size() != EncryptionKey::kSize) {
-            throw InvalidParams("Invalid auth key size");
+            throw ntgcalls::InvalidParams("Invalid auth key size");
         }
         const auto hash = openssl::Sha1::Digest(authKey);
         return static_cast<uint64_t>(hash[19]) << 56 |
@@ -49,4 +49,4 @@ namespace ntgcalls {
             static_cast<uint64_t>(hash[13]) << 8 |
             static_cast<uint64_t>(hash[12]);
     }
-} // ntgcalls
+} // signaling
