@@ -244,8 +244,8 @@ namespace ntgcalls {
         if (!call) {
             return nullptr;
         }
-        if (typeid(*call) == typeid(DestCallType)) {
-            return static_cast<DestCallType*>(call.get());
+        if (auto* derivedCall = dynamic_cast<DestCallType*>(call.get())) {
+            return derivedCall;
         }
         throw ConnectionError("Invalid call type");
     }
