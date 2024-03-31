@@ -23,13 +23,18 @@ namespace wrtc {
             const rtc::scoped_refptr<webrtc::ConnectionContext>& context,
                 webrtc::PeerConnectionFactoryDependencies* dependencies);
 
-    private:
         static rtc::scoped_refptr<PeerConnectionFactoryWithContext> Create(
-                webrtc::PeerConnectionFactoryDependencies dependencies);
+        webrtc::PeerConnectionFactoryDependencies dependencies);
 
         [[nodiscard]] rtc::scoped_refptr<webrtc::ConnectionContext> GetContext() const;
 
+    private:
         rtc::scoped_refptr<webrtc::ConnectionContext> conn_context_;
     };
+
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> CreateModularPeerConnectionFactoryWithContext(
+        webrtc::PeerConnectionFactoryDependencies dependencies,
+        rtc::scoped_refptr<webrtc::ConnectionContext>& context
+    );
 } // wrtc
 

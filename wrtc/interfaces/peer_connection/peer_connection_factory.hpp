@@ -6,7 +6,8 @@
 
 #include <mutex>
 #include <api/peer_connection_interface.h>
-#include <media/engine/webrtc_media_engine.h>
+
+#include "peer_connection_factory_with_context.hpp"
 
 namespace wrtc {
 
@@ -26,6 +27,15 @@ namespace wrtc {
 
         [[nodiscard]] rtc::Thread* signalingThread() const;
 
+        [[nodiscard]] rtc::Thread* workerThread() const;
+
+        [[nodiscard]] cricket::MediaEngineInterface* mediaEngine() const;
+
+        [[nodiscard]] const webrtc::FieldTrialsView &fieldTrials() const;
+
+        [[nodiscard]] const webrtc::Environment& environment() const;
+
+        [[nodiscard]] webrtc::MediaFactory* mediaFactory() const;
     private:
         static std::mutex _mutex;
         static int _references;
@@ -34,6 +44,7 @@ namespace wrtc {
         std::unique_ptr<rtc::Thread> network_thread_;
         std::unique_ptr<rtc::Thread> worker_thread_;
         std::unique_ptr<rtc::Thread> signaling_thread_;
+        rtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
 
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;
         rtc::scoped_refptr<webrtc::AudioDeviceModule> _audioDeviceModule;

@@ -10,8 +10,10 @@
 #include <api/task_queue/default_task_queue_factory.h>
 #include <api/audio_codecs/builtin_audio_encoder_factory.h>
 #include <api/audio_codecs/builtin_audio_decoder_factory.h>
-#include "peer_connection_factory_with_context.hpp"
-#include "../../video_factory/video_factory_config.hpp"
+#include <pc/media_factory.h>
+#include <system_wrappers/include/field_trial.h>
+
+#include "wrtc/video_factory/video_factory_config.hpp"
 
 namespace wrtc {
     std::mutex PeerConnectionFactory::_mutex{};
@@ -19,6 +21,12 @@ namespace wrtc {
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::_default = nullptr;
 
     PeerConnectionFactory::PeerConnectionFactory() {
+        webrtc::field_trial::InitFieldTrialsFromString(
+            "WebRTC-DataChannel-Dcsctp/Enabled/"
+            "WebRTC-Audio-MinimizeResamplingOnMobile/Enabled/"
+            "WebRTC-Audio-iOS-Holding/Enabled/"
+            "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
+        );
         network_thread_ = rtc::Thread::CreateWithSocketServer();
         network_thread_->Start();
         worker_thread_ = rtc::Thread::Create();
@@ -47,12 +55,11 @@ namespace wrtc {
 
         EnableMedia(dependencies);
         if (!factory_) {
-            factory_ = CreateModularPeerConnectionFactory(std::move(dependencies));
+            factory_ = CreateModularPeerConnectionFactoryWithContext(std::move(dependencies), connection_context_);
         }
         webrtc::PeerConnectionFactoryInterface::Options options;
-        options.disable_encryption = false;
-        options.ssl_max_version = rtc::SSL_PROTOCOL_DTLS_12;
         options.crypto_options.srtp.enable_gcm_crypto_suites = true;
+        options.crypto_options.srtp.enable_aes128_sha1_80_crypto_cipher = true;
         factory_->SetOptions(options);
     }
 
@@ -80,6 +87,26 @@ namespace wrtc {
 
     rtc::Thread* PeerConnectionFactory::signalingThread() const {
         return signaling_thread_.get();
+    }
+
+    rtc::Thread* PeerConnectionFactory::workerThread() const {
+        return worker_thread_.get();
+    }
+
+    cricket::MediaEngineInterface* PeerConnectionFactory::mediaEngine() const {
+        return connection_context_->media_engine();
+    }
+
+    const webrtc::FieldTrialsView& PeerConnectionFactory::fieldTrials() const {
+        return connection_context_->env().field_trials();
+    }
+
+    const webrtc::Environment& PeerConnectionFactory::environment() const {
+        return connection_context_->env();
+    }
+
+    webrtc::MediaFactory* PeerConnectionFactory::mediaFactory() const {
+        return connection_context_->call_factory();
     }
 
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
