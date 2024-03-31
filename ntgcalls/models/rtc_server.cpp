@@ -4,7 +4,7 @@
 
 #include "rtc_server.hpp"
 
-namespace wrtc {
+namespace ntgcalls {
     RTCServer::RTCServer(
         const uint64_t id,
         std::string ipv4,
@@ -29,13 +29,10 @@ namespace wrtc {
         this->peerTag = CPP_BYTES(peerTag, bytes::binary);
     }
 
-    webrtc::PeerConnectionInterface::IceServers RTCServer::toIceServers(const std::vector<RTCServer>& servers) {
-        webrtc::PeerConnectionInterface::IceServers iceServers;
+    std::vector<wrtc::RTCServer> RTCServer::toRtcServers(const std::vector<RTCServer>& servers) {
+        std::vector<wrtc::RTCServer> wrtcServers;
         for (const auto& server: servers) {
             if (server.peerTag) {
-                if (server.tcp) {
-                    continue;
-                }
                 const auto hex = [](const bytes::binary& value) {
                     const auto digit = [](const unsigned char c) {
                         return static_cast<char>(c < 10 ? '0' + c : 'a' + c - 10);
@@ -49,64 +46,69 @@ namespace wrtc {
                     return result;
                 };
                 const auto pushPhone = [&](const std::string &host) {
-                    if (host.empty()) {
-                        return;
-                    }
-                    const rtc::SocketAddress address(host, server.port);
-                    if (!address.IsComplete()) {
-                        RTC_LOG(LS_ERROR) << "Invalid ICE server host: " << host;
-                        return;
-                    }
-                    webrtc::PeerConnectionInterface::IceServer iceServer;
-                    iceServer.uri = "turn:" + address.HostAsURIString() + ":" + std::to_string(server.port);
-                    iceServer.username = "reflector";
-                    iceServer.password = hex(server.peerTag.value());
-                    iceServers.push_back(iceServer);
-                    RTC_LOG(LS_INFO) << "PHONE server: " << iceServer.uri << " username: " << iceServer.username << " password: " << iceServer.password;
+                    wrtc::RTCServer rtcServer;
+                    rtcServer.id = server.id;
+                    rtcServer.host = host;
+                    rtcServer.port = server.port;
+                    rtcServer.login = "reflector";
+                    rtcServer.password = hex(server.peerTag.value());
+                    rtcServer.isTurn = true;
+                    rtcServer.isTcp = server.tcp;
+                    wrtcServers.push_back(rtcServer);
+                    RTC_LOG(LS_INFO) << "PHONE server: turn:" << rtcServer.host << ":" << rtcServer.port << " username: " << rtcServer.login << " password: " << rtcServer.password;
                 };
                 pushPhone(server.ipv4);
                 pushPhone(server.ipv6);
             } else {
                 if (server.stun) {
                     const auto pushStun = [&](const std::string &host) {
-                        if (host.empty()) {
-                            return;
-                        }
-                        const rtc::SocketAddress address(host, server.port);
-                        if (!address.IsComplete()) {
-                            RTC_LOG(LS_ERROR) << "Invalid ICE server host: " << host;
-                            return;
-                        }
-                        webrtc::PeerConnectionInterface::IceServer iceServer;
-                        iceServer.uri = "stun:" + address.HostAsURIString() + ":" + std::to_string(server.port);
-                        iceServers.push_back(iceServer);
-                        RTC_LOG(LS_INFO) << "STUN server: " << iceServer.uri;
+                        wrtc::RTCServer rtcServer;
+                        rtcServer.host = host;
+                        rtcServer.port = server.port;
+                        wrtcServers.push_back(rtcServer);
+                        RTC_LOG(LS_INFO) << "STUN server: stun:" << rtcServer.host << ":" << rtcServer.port;
                     };
                     pushStun(server.ipv4);
                     pushStun(server.ipv6);
                 }
                 if (server.turn && server.username && server.password) {
                     const auto pushTurn = [&](const std::string &host) {
-                        if (host.empty()) {
-                            return;
-                        }
-                        const rtc::SocketAddress address(host, server.port);
-                        if (!address.IsComplete()) {
-                            RTC_LOG(LS_ERROR) << "Invalid ICE server host: " << host;
-                            return;
-                        }
-                        webrtc::PeerConnectionInterface::IceServer iceServer;
-                        iceServer.uri = "turn:" + address.HostAsURIString() + ":" + std::to_string(server.port);
-                        iceServer.username = server.username.value();
-                        iceServer.password = server.password.value();
-                        iceServers.push_back(iceServer);
-                        RTC_LOG(LS_INFO) << "TURN server: " << iceServer.uri << " username: " << iceServer.username;
+                        wrtc::RTCServer rtcServer;
+                        rtcServer.host = host;
+                        rtcServer.port = server.port;
+                        rtcServer.login = *server.username;
+                        rtcServer.password = *server.password;
+                        rtcServer.isTurn = true;
+                        RTC_LOG(LS_INFO) << "TURN server: turn:" << rtcServer.host << ":" << rtcServer.port << " username: " << rtcServer.login << " password: " << rtcServer.password;
                     };
                     pushTurn(server.ipv4);
                     pushTurn(server.ipv6);
                 }
             }
+        }
+        return wrtcServers;
+    }
 
+    webrtc::PeerConnectionInterface::IceServers RTCServer::toIceServers(const std::vector<RTCServer>& servers) {
+        webrtc::PeerConnectionInterface::IceServers iceServers;
+        for (std::vector<wrtc::RTCServer> wrtcServers = toRtcServers(servers); const auto & [id, host, port, login, password, isTurn, isTcp] : wrtcServers) {
+            if (isTcp) {
+                continue;
+            }
+            rtc::SocketAddress address(host, port);
+            if (!address.IsComplete()) {
+                RTC_LOG(LS_ERROR) << "Invalid ICE server host: " << host;
+                continue;
+            }
+            webrtc::PeerConnectionInterface::IceServer iceServer;
+            if (isTurn) {
+                iceServer.urls.push_back("turn:" + address.HostAsURIString() + ":" + std::to_string(port));
+                iceServer.username = login;
+                iceServer.password = password;
+            } else {
+                iceServer.urls.push_back("stun:" + address.HostAsURIString() + ":" + std::to_string(port));
+            }
+            iceServers.push_back(iceServer);
         }
         return iceServers;
     }

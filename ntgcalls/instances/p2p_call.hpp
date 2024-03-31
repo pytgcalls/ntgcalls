@@ -40,7 +40,7 @@ namespace ntgcalls {
 
         AuthParams exchangeKeys(const bytes::vector &g_a_or_b, int64_t fingerprint);
 
-        void connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
+        void connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
 
         Type type() const override;
 

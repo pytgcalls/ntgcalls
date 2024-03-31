@@ -85,7 +85,7 @@ namespace ntgcalls {
         };
     }
 
-    void P2PCall::connect(const std::vector<wrtc::RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
+    void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
         RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2pAllowed ? "true" : "false");
         std::unique_lock lock(mutex);
         if (connection) {

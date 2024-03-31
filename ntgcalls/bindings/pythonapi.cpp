@@ -122,7 +122,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     protocolWrapper.def_readwrite("udp_reflector", &ntgcalls::Protocol::udp_reflector);
     protocolWrapper.def_readwrite("library_versions", &ntgcalls::Protocol::library_versions);
 
-    py::class_<wrtc::RTCServer> rtcServerWrapper(m, "RTCServer");
+    py::class_<ntgcalls::RTCServer> rtcServerWrapper(m, "RTCServer");
     rtcServerWrapper.def(py::init<uint64_t, std::string, std::string, uint16_t, std::optional<std::string>, std::optional<std::string>, bool, bool, bool, std::optional<py::bytes>>());
 
     py::class_<ntgcalls::AuthParams> authParamsWrapper(m, "AuthParams");

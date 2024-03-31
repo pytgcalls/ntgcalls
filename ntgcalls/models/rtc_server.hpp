@@ -7,9 +7,10 @@
 #include <api/peer_connection_interface.h>
 
 #include "../utils/binding_utils.hpp"
+#include "wrtc/models/rtc_server.hpp"
 #include "wrtc/utils/binary.hpp"
 
-namespace wrtc {
+namespace ntgcalls {
     class RTCServer {
     public:
         uint64_t id;
@@ -31,6 +32,8 @@ namespace wrtc {
             bool tcp,
             const std::optional<BYTES(bytes::binary)>& peerTag
         );
+
+        static std::vector<wrtc::RTCServer> toRtcServers(const std::vector<RTCServer>& servers);
 
         static webrtc::PeerConnectionInterface::IceServers toIceServers(const std::vector<RTCServer>& servers);
     };
