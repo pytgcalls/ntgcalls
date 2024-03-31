@@ -39,7 +39,7 @@ namespace wrtc {
         Closed,
     };
 
-    enum class PeerConnectionState {
+    enum class ConnectionState {
         Unknown,
         New,
         Connecting,

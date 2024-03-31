@@ -26,7 +26,7 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
 
-    void Stream::addTracks(const std::unique_ptr<wrtc::PeerConnection>& pc) {
+    void Stream::addTracks(const std::unique_ptr<wrtc::NetworkInterface>& pc) {
         pc->addTrack(audioTrack = audio->createTrack());
         pc->addTrack(videoTrack = video->createTrack());
     }

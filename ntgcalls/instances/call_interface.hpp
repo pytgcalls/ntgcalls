@@ -6,13 +6,14 @@
 #include <memory>
 
 #include "ntgcalls/stream.hpp"
+#include "wrtc/interfaces/native_connection.hpp"
 
 namespace ntgcalls {
 
     class CallInterface {
     protected:
         std::mutex mutex;
-        std::unique_ptr<wrtc::PeerConnection> connection;
+        std::unique_ptr<wrtc::NetworkInterface> connection;
         std::unique_ptr<Stream> stream;
         bool connected = false;
         wrtc::synchronized_callback<void> onCloseConnection;
@@ -50,6 +51,17 @@ namespace ntgcalls {
         Stream::Status status() const;
 
         virtual Type type() const = 0;
+
+        template<typename DestCallType, typename BaseCallType>
+        static DestCallType* Safe(const std::unique_ptr<BaseCallType>& call) {
+            if (!call) {
+                return nullptr;
+            }
+            if (auto* derivedCall = dynamic_cast<DestCallType*>(call.get())) {
+                return derivedCall;
+            }
+            throw std::runtime_error("Invalid NetworkInterface type");
+        }
     };
 
     inline int operator&(const CallInterface::Type& lhs, const CallInterface::Type rhs){

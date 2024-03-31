@@ -48,7 +48,7 @@ namespace ntgcalls {
 
         Status status();
 
-        void addTracks(const std::unique_ptr<wrtc::PeerConnection> &pc);
+        void addTracks(const std::unique_ptr<wrtc::NetworkInterface> &pc);
 
         void onStreamEnd(const std::function<void(Type)> &callback);
 

@@ -7,13 +7,10 @@
 #include <future>
 
 #include "peer_connection/set_session_description_observer.hpp"
-#include "api/jsep_ice_candidate.h"
 
 namespace wrtc {
 
-    PeerConnection::PeerConnection(const std::vector<RTCServer>& servers, const bool allowAttachDataChannel, const bool p2pAllowed): allowAttachDataChannel(allowAttachDataChannel) {
-        factory = PeerConnectionFactory::GetOrCreateDefault();
-
+    PeerConnection::PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers, const bool allowAttachDataChannel, const bool p2pAllowed): allowAttachDataChannel(allowAttachDataChannel) {
         webrtc::PeerConnectionInterface::RTCConfiguration config;
         if (p2pAllowed) {
             config.type = webrtc::PeerConnectionInterface::IceTransportsType::kAll;
@@ -22,7 +19,7 @@ namespace wrtc {
         }
         config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
         config.bundle_policy = webrtc::PeerConnectionInterface::BundlePolicy::kBundlePolicyMaxBundle;
-        config.servers = RTCServer::toIceServers(servers);
+        config.servers = servers;
         config.enable_ice_renomination = true;
         config.rtcp_mux_policy = webrtc::PeerConnectionInterface::RtcpMuxPolicy::kRtcpMuxPolicyRequire;
         config.enable_implicit_rollback = true;
@@ -34,7 +31,6 @@ namespace wrtc {
         auto result = factory->factory()->CreatePeerConnectionOrError(
             config, std::move(dependencies)
         );
-
 
         if (!result.ok()) {
             throw wrapRTCError(result.error());
@@ -119,20 +115,14 @@ namespace wrtc {
     }
 
     void PeerConnection::addIceCandidate(const IceCandidate& rawCandidate) const {
-        webrtc::SdpParseError error;
-        const auto candidate = CreateIceCandidate(rawCandidate.mid, rawCandidate.mLine, rawCandidate.sdp, &error);
-        if (!candidate) {
-            throw wrapSdpParseError(error);
-        }
-        peerConnection->AddIceCandidate(candidate);
+        peerConnection->AddIceCandidate(parseIceCandidate(rawCandidate));
     }
 
-    void PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack, const std::vector<std::string>& streamIds) const
-    {
+    void PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack) const {
         if (!peerConnection) {
             throw RTCException("Cannot add track; PeerConnection is closed");
         }
-        if (const auto result = peerConnection->AddTrack(mediaStreamTrack->track(), streamIds); !result.ok()) {
+        if (const auto result = peerConnection->AddTrack(mediaStreamTrack->track(), {}); !result.ok()) {
             throw wrapRTCError(result.error());
         }
     }
@@ -178,11 +168,8 @@ namespace wrtc {
                 }
             }
             peerConnection = nullptr;
-            if (factory) {
-                PeerConnectionFactory::UnRef();
-                factory = nullptr;
-            }
         }
+        NetworkInterface::close();
     }
 
     SignalingState PeerConnection::signalingState() const {
@@ -201,36 +188,12 @@ namespace wrtc {
         signalingStateChangeCallback = callback;
     }
 
-    void PeerConnection::onIceCandidate(const std::function<void(const IceCandidate& candidate)>& callback) {
-        iceCandidateCallback = callback;
-    }
-
     void PeerConnection::onRenegotiationNeeded(const std::function<void()>& callback) {
         renegotiationNeededCallback = callback;
     }
 
-    void PeerConnection::onConnectionChange(const std::function<void(PeerConnectionState state)>& callback) {
-        connectionChangeCallback = callback;
-    }
-
-    void PeerConnection::onDataChannelOpened(const std::function<void()>& callback) {
-        dataChannelOpenedCallback = callback;
-    }
-
     void PeerConnection::onDataChannelMessage(const std::function<void(bytes::binary)>& callback) {
         dataChannelMessageCallback = callback;
-    }
-
-    rtc::Thread* PeerConnection::networkThread() const {
-        return factory->networkThread();
-    }
-
-    rtc::Thread* PeerConnection::signalingThread() const {
-        return factory->signalingThread();
-    }
-
-    bool PeerConnection::isDataChannelOpen() const {
-        return dataChannelOpen;
     }
 
     void PeerConnection::OnSignalingChange(const webrtc::PeerConnectionInterface::SignalingState new_state) {
@@ -372,25 +335,25 @@ namespace wrtc {
     }
 
     void PeerConnection::OnConnectionChange(const webrtc::PeerConnectionInterface::PeerConnectionState newState) {
-        auto newValue = PeerConnectionState::Unknown;
+        auto newValue = ConnectionState::Unknown;
         switch (newState) {
             case webrtc::PeerConnectionInterface::PeerConnectionState::kNew:
-                newValue = PeerConnectionState::New;
+                newValue = ConnectionState::New;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kConnecting:
-                newValue = PeerConnectionState::Connecting;
+                newValue = ConnectionState::Connecting;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
-                newValue = PeerConnectionState::Connected;
+                newValue = ConnectionState::Connected;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
-                newValue = PeerConnectionState::Disconnected;
+                newValue = ConnectionState::Disconnected;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kFailed:
-                newValue = PeerConnectionState::Failed;
+                newValue = ConnectionState::Failed;
                 break;
             case webrtc::PeerConnectionInterface::PeerConnectionState::kClosed:
-                newValue = PeerConnectionState::Closed;
+                newValue = ConnectionState::Closed;
                 break;
         }
         (void) connectionChangeCallback(newValue);

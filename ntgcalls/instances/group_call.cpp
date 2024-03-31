@@ -24,13 +24,13 @@ namespace ntgcalls {
         connection = std::make_unique<wrtc::PeerConnection>();
         stream->addTracks(connection);
         try {
-            connection->setLocalDescription();
+            Safe<wrtc::PeerConnection>(connection)->setLocalDescription();
         } catch (wrtc::RTCException&) {
             RTC_LOG(LS_ERROR) << "Failed to set local description";
             throw ConnectionError("Failed to set local description");
         }
         RTC_LOG(LS_INFO) << "Group call initialized";
-        const auto payload = CallPayload(connection->localDescription().value());
+        const auto payload = CallPayload(Safe<wrtc::PeerConnection>(connection)->localDescription().value());
         audioSource = payload.audioSource;
         for (const auto &ssrc : payload.sourceGroups) {
             sourceGroups.push_back(ssrc);
@@ -98,7 +98,7 @@ namespace ntgcalls {
         }
         RTC_LOG(LS_INFO) << "Setting remote description";
         try {
-            connection->setRemoteDescription(
+            Safe<wrtc::PeerConnection>(connection)->setRemoteDescription(
                 wrtc::Description(
                     wrtc::Description::SdpType::Answer,
                     wrtc::SdpBuilder::fromConference(conference)
@@ -109,9 +109,9 @@ namespace ntgcalls {
         }
         RTC_LOG(LS_INFO) << "Remote description set";
         std::promise<void> promise;
-        connection->onConnectionChange([&](const wrtc::PeerConnectionState state) {
+        connection->onConnectionChange([&](const wrtc::ConnectionState state) {
             switch (state) {
-            case wrtc::PeerConnectionState::Connected:
+            case wrtc::ConnectionState::Connected:
                 if (!connected) {
                     RTC_LOG(LS_INFO) << "Connection established";
                     connected = true;
@@ -120,9 +120,9 @@ namespace ntgcalls {
                     promise.set_value();
                 }
                 break;
-            case wrtc::PeerConnectionState::Disconnected:
-            case wrtc::PeerConnectionState::Failed:
-            case wrtc::PeerConnectionState::Closed:
+            case wrtc::ConnectionState::Disconnected:
+            case wrtc::ConnectionState::Failed:
+            case wrtc::ConnectionState::Closed:
                 workerThread->PostTask([this] {
                     connection->onConnectionChange(nullptr);
                 });
