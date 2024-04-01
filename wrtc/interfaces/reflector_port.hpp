@@ -24,6 +24,8 @@ namespace wrtc {
 
         bool ready() const;
 
+        bool connected() const;
+
         ~ReflectorPort() override;
 
         static std::unique_ptr<ReflectorPort> Create(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* socket, uint8_t serverId, int serverPriority);
@@ -100,6 +102,10 @@ namespace wrtc {
 
         void ResolveTurnAddress(const rtc::SocketAddress& address);
 
+        void OnSendStunPacket(const void *data, size_t size, cricket::StunRequest *request);
+
+        int Send(const void* data, size_t size, const rtc::PacketOptions& options) const;
+
         bool CreateReflectorClientSocket();
 
         void OnSocketConnect(rtc::AsyncPacketSocket* socket);
@@ -110,11 +116,11 @@ namespace wrtc {
 
         void SendReflectorHello();
 
-        int Send(const void* data, size_t size, const rtc::PacketOptions& options) const;
-
         void DispatchPacket(const rtc::ReceivedPacket& packet);
 
         static rtc::CopyOnWriteBuffer parseHex(std::string const &string);
+
+        bool FailAndPruneConnection(const rtc::SocketAddress& address);
     };
 
 } // wrtc

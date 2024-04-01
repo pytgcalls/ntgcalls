@@ -4,8 +4,26 @@
 
 #include "reflector_port.hpp"
 
+#include <functional>
+#include <memory>
+#include <utility>
 #include <random>
+#include <sstream>
+#include <absl/memory/memory.h>
 
+#include "absl/algorithm/container.h"
+#include "absl/strings/match.h"
+#include "absl/types/optional.h"
+#include "api/transport/stun.h"
+#include "p2p/base/connection.h"
+#include "rtc_base/async_packet_socket.h"
+#include "rtc_base/byte_order.h"
+#include "rtc_base/checks.h"
+#include "rtc_base/logging.h"
+#include "rtc_base/net_helpers.h"
+#include "rtc_base/socket_address.h"
+#include "rtc_base/strings/string_builder.h"
+#include "system_wrappers/include/field_trial.h"
 
 namespace wrtc {
     ReflectorPort::ReflectorPort(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* socket, const uint8_t serverId, const int serverPriority): Port(
@@ -64,11 +82,35 @@ namespace wrtc {
         peerTag.AppendData(reinterpret_cast<uint8_t*>(&randomTag), 4);
     }
 
+    bool ReflectorPort::ready() const {
+        return state == STATE_READY;
+    }
+
+    bool ReflectorPort::connected() const {
+        return state == STATE_READY || state == STATE_CONNECTED;
+    }
+
     ReflectorPort::~ReflectorPort() {
         if (ready()) {
             Release();
         }
         delete socket;
+    }
+
+    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const cricket::CreateRelayPortArgs &args, rtc::AsyncPacketSocket *socket, const uint8_t serverId, const int serverPriority) {
+        if (args.config->credentials.username.size() > 32) {
+            RTC_LOG(LS_ERROR) << "Attempt to use REFLECTOR with a too long username of length " << args.config->credentials.username.size();
+            return nullptr;
+        }
+        return absl::WrapUnique(new ReflectorPort(args, socket, serverId, serverPriority));
+    }
+
+    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const cricket::CreateRelayPortArgs &args, const uint16_t minPort, const uint16_t maxPort, const uint8_t serverId, const int serverPriority) {
+        if (args.config->credentials.username.size() > 32) {
+            RTC_LOG(LS_ERROR) << "Attempt to use TURN with a too long username of length " << args.config->credentials.username.size();
+            return nullptr;
+        }
+        return absl::WrapUnique(new ReflectorPort(args, minPort, maxPort, serverId, serverPriority));
     }
 
     rtc::SocketAddress ReflectorPort::GetLocalAddress() const {
@@ -116,7 +158,7 @@ namespace wrtc {
     }
 
     void ReflectorPort::SendReflectorHello() {
-        if (state != STATE_CONNECTED && state != STATE_READY) {
+        if (!(state == STATE_CONNECTED || state == STATE_READY)) {
             return;
         }
         RTC_LOG(LS_WARNING) << ToString() << ": REFLECTOR sending ping to " << serverAddress.address.ToString();
@@ -197,7 +239,7 @@ namespace wrtc {
             return socket_address.ipaddr() == addr;
         })) {
             if (socket->GetLocalAddress().IsLoopbackIP()) {
-                RTC_LOG(LS_WARNING) << "Socket is bound to the address:"<< socket_address.ipaddr().ToSensitiveString()
+                RTC_LOG(LS_WARNING) << "Socket is bound to the address:" << socket_address.ipaddr().ToSensitiveString()
                 << ", rather than an address associated with network:"
                 << Network()->ToString()
                 << ". Still allowing it since it's localhost.";
@@ -218,6 +260,7 @@ namespace wrtc {
                     cricket::STUN_ERROR_GLOBAL_FAILURE,
                     "Address not associated with the desired network interface."
                 );
+                return;
             }
         }
         state = STATE_CONNECTED;
@@ -256,6 +299,14 @@ namespace wrtc {
         return conn;
     }
 
+    bool ReflectorPort::FailAndPruneConnection(const rtc::SocketAddress& address) {
+        if (cricket::Connection* conn = GetConnection(address); conn != nullptr) {
+            conn->FailAndPrune();
+            return true;
+        }
+        return false;
+    }
+
     int ReflectorPort::SetOption(const rtc::Socket::Option opt, int value) {
         if (opt == rtc::Socket::OPT_DSCP) {
             stunDscpValue = static_cast<rtc::DiffServCodePoint>(value);
@@ -291,13 +342,13 @@ namespace wrtc {
             resolvedPeerTag = resolvedPeerTagIt->second;
         } else {
             const auto prefixFormat = "reflector-" + std::to_string(static_cast<uint32_t>(serverId)) + "-";
-            const std::string suffixFormat = ".reflector";
+            std::string suffixFormat = ".reflector";
             if (!absl::StartsWith(syntheticHostname, prefixFormat) || !absl::EndsWith(syntheticHostname, suffixFormat)) {
                 RTC_LOG(LS_ERROR) << ToString() << ": Discarding SendTo request with destination " << addr.ToString();
                 return -1;
             }
-            const auto startPosition = prefixFormat.size();
-            const auto tagString = syntheticHostname.substr(startPosition, syntheticHostname.size() - suffixFormat.size() - startPosition);
+            auto startPosition = prefixFormat.size();
+            auto tagString = syntheticHostname.substr(startPosition, syntheticHostname.size() - suffixFormat.size() - startPosition);
             std::stringstream tagStringStream(tagString);
             tagStringStream >> resolvedPeerTag;
             if (resolvedPeerTag == 0) {
@@ -329,7 +380,7 @@ namespace wrtc {
         return serverAddress.address == addr;
     }
 
-    bool ReflectorPort::HandleIncomingPacket(rtc::AsyncPacketSocket* socket, const rtc::ReceivedPacket& packet) {
+    bool ReflectorPort::HandleIncomingPacket(rtc::AsyncPacketSocket* socket, rtc::ReceivedPacket const &packet) {
         if (socket != this->socket) {
             return false;
         }
@@ -338,17 +389,17 @@ namespace wrtc {
         rtc::SocketAddress const &remote_addr = packet.source_address();
         auto packet_time_us = packet.arrival_time();
 
-        if (remote_addr!= serverAddress.address) {
+        if (remote_addr != serverAddress.address) {
             RTC_LOG(LS_WARNING) << ToString()
             << ": Discarding REFLECTOR message from unknown address: "
-            << packet.source_address().ToSensitiveString()
+            << remote_addr.ToSensitiveString()
             << " server_address_: "
             << serverAddress.address.ToSensitiveString();
             return false;
         }
         if (size < 16) {
             RTC_LOG(LS_WARNING) << ToString()
-            << ": Received REFLECTOR message that was too short (" << packet.payload().size() << ")";
+            << ": Received REFLECTOR message that was too short (" << size << ")";
             return false;
         }
         if (state == STATE_DISCONNECTED) {
@@ -473,6 +524,17 @@ namespace wrtc {
         });
     }
 
+    void ReflectorPort::OnSendStunPacket(const void* data, const size_t size, cricket::StunRequest* request) {
+        RTC_DCHECK(connected());
+        rtc::PacketOptions options(StunDscpValue());
+        options.info_signaled_after_sent.packet_type = rtc::PacketType::kTurnMessage;
+        CopyPortInformationToPacketInfo(&options.info_signaled_after_sent);
+        if (Send(data, size, options) < 0) {
+            RTC_LOG(LS_ERROR) << ToString() << ": Failed to send TURN message, error: "
+            << socket->GetError();
+        }
+    }
+
     void ReflectorPort::OnAllocateError(const int error_code, const std::string& reason) {
         thread()->PostTask(SafeTask(taskSafety.flag(), [this] {
             SignalPortError(this);
@@ -495,10 +557,22 @@ namespace wrtc {
             OnAllocateError(cricket::SERVER_NOT_REACHABLE_ERROR, "");
         }
         state = STATE_DISCONNECTED;
-        for (const auto& [fst, snd] : connections()) {
+        for (auto [fst, snd] : connections()) {
             snd->Destroy();
         }
         SignalReflectorPortClosed(this);
+    }
+
+    int ReflectorPort::GetRelayPreference(const cricket::ProtocolType proto) {
+        switch (proto) {
+            case cricket::PROTO_TCP:
+                return cricket::ICE_TYPE_PREFERENCE_RELAY_TCP;
+            case cricket::PROTO_TLS:
+                return cricket::ICE_TYPE_PREFERENCE_RELAY_TLS;
+            default:
+                RTC_DCHECK(proto == cricket::PROTO_UDP);
+            return cricket::ICE_TYPE_PREFERENCE_RELAY_UDP;
+        }
     }
 
     rtc::DiffServCodePoint ReflectorPort::StunDscpValue() const {
@@ -513,46 +587,7 @@ namespace wrtc {
         }
     }
 
-    int ReflectorPort::Send(const void* data, const size_t size, const rtc::PacketOptions& options) const {
-        return socket->SendTo(data, size, serverAddress.address, options);
-    }
-
-    std::string ReflectorPort::ReconstructedServerUrl(const bool useHostname) const {
-        std::string scheme = "turn";
-        std::string transport = "tcp";
-        switch (serverAddress.proto) {
-            case cricket::PROTO_SSLTCP:
-            case cricket::PROTO_TLS:
-                scheme = "turns";
-            break;
-            case cricket::PROTO_UDP:
-                transport = "udp";
-            break;
-            case cricket::PROTO_TCP:
-                break;
-        }
-        rtc::StringBuilder url;
-        url << scheme << ":" << (useHostname ? serverAddress.address.hostname() : serverAddress.address.ipaddr().ToString()) << ":" << serverAddress.address.port() << "?transport=" << transport;
-        return url.Release();
-    }
-
-    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* socket, const uint8_t serverId, const int serverPriority) {
-        if (args.config->credentials.username.size() > 32) {
-            RTC_LOG(LS_ERROR) << "Attempt to use REFLECTOR with a too long username of length " << args.config->credentials.username.size();
-            return nullptr;
-        }
-        return std::unique_ptr<ReflectorPort>(new ReflectorPort(args, socket, serverId, serverPriority));
-    }
-
-    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const cricket::CreateRelayPortArgs& args, const uint16_t minPort, const uint16_t maxPort, const uint8_t serverId, const int serverPriority) {
-        if (args.config->credentials.username.size() > 32) {
-            RTC_LOG(LS_ERROR) << "Attempt to use TURN with a too long username of length " << args.config->credentials.username.size();
-            return nullptr;
-        }
-        return std::unique_ptr<ReflectorPort>(new ReflectorPort(args, minPort, maxPort, serverId, serverPriority));
-    }
-
-    rtc::CopyOnWriteBuffer ReflectorPort::parseHex(std::string const& string) {
+    rtc::CopyOnWriteBuffer ReflectorPort::parseHex(std::string const &string) {
         rtc::CopyOnWriteBuffer result;
         for (size_t i = 0; i < string.length(); i += 2) {
             std::string byteString = string.substr(i, 2);
@@ -562,21 +597,30 @@ namespace wrtc {
         return result;
     }
 
-    bool ReflectorPort::ready() const {
-        return state == STATE_READY;
-    }
-
-    int ReflectorPort::GetRelayPreference(const cricket::ProtocolType proto) {
-        switch (proto) {
-        case cricket::PROTO_TCP:
-            return cricket::ICE_TYPE_PREFERENCE_RELAY_TCP;
-        case cricket::PROTO_TLS:
-            return cricket::ICE_TYPE_PREFERENCE_RELAY_TLS;
-        default:
-            RTC_DCHECK(proto == cricket::PROTO_UDP);
-            return cricket::ICE_TYPE_PREFERENCE_RELAY_UDP;
-        }
+    int ReflectorPort::Send(const void* data, const size_t size, const rtc::PacketOptions& options) const {
+        return socket->SendTo(data, size, serverAddress.address, options);
     }
 
     void ReflectorPort::HandleConnectionDestroyed(cricket::Connection* conn) {}
-} // wrtc
+
+    std::string ReflectorPort::ReconstructedServerUrl(const bool useHostname) const {
+        std::string scheme = "turn";
+        std::string transport = "tcp";
+        switch (serverAddress.proto) {
+            case cricket::PROTO_SSLTCP:
+            case cricket::PROTO_TLS:
+                scheme = "turns";
+                break;
+            case cricket::PROTO_UDP:
+                transport = "udp";
+                break;
+            case cricket::PROTO_TCP:
+                break;
+        }
+        rtc::StringBuilder url;
+        url << scheme << ":"
+        << (useHostname ? serverAddress.address.hostname() : serverAddress.address.ipaddr().ToString())
+        << ":" << serverAddress.address.port() << "?transport=" << transport;
+        return url.Release();
+    }
+}  // namespace cricket
