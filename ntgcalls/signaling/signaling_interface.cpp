@@ -20,11 +20,15 @@ namespace signaling {
         signalingEncryption->onServiceMessage([this](const int delayMs, int cause) {
             if (delayMs == 0) {
                  this->signalingThread->PostTask([this, cause] {
-                     this->onEmitData(signalingEncryption->prepareForSendingService(cause));
+                     if (const auto service = signalingEncryption->prepareForSendingService(cause)) {
+                         this->onEmitData(*service);
+                     }
                  });
              } else {
                  this->signalingThread->PostDelayedTask([this, cause] {
-                     this->onEmitData(signalingEncryption->prepareForSendingService(cause));
+                     if (const auto service = signalingEncryption->prepareForSendingService(cause)) {
+                         this->onEmitData(*service);
+                     }
                  }, webrtc::TimeDelta::Millis(delayMs));
              }
         });

@@ -84,7 +84,7 @@ namespace signaling {
 
         void appendAcksToSend(rtc::CopyOnWriteBuffer &buffer);
 
-        bool haveAdditionalMessages() const;
+        bool haveMessages() const;
 
         std::optional<bytes::binary> prepareForSendingMessageInternal(rtc::CopyOnWriteBuffer &serialized, uint32_t seq);
 
@@ -99,7 +99,7 @@ namespace signaling {
 
         void onServiceMessage(const std::function<void(int delayMs, int cause)> &requestSendService);
 
-        bytes::binary prepareForSendingService(int cause);
+        std::optional<bytes::binary> prepareForSendingService(int cause);
     };
 
 } // signaling

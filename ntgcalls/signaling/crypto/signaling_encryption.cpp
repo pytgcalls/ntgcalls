@@ -227,7 +227,7 @@ namespace signaling {
             return std::nullopt;
         }
 
-        return ++counter | 0 | (messageRequiresAck ? kMessageRequiresAckSeqBit : 0);
+        return ++counter | (messageRequiresAck ? kMessageRequiresAckSeqBit : 0);
     }
 
     bool SignalingEncryption::enoughSpaceInPacket(const rtc::CopyOnWriteBuffer &buffer, const size_t amount) {
@@ -267,7 +267,7 @@ namespace signaling {
             const auto counter = CounterFromSeq(ReadSeq(data.data()));
             const auto type = static_cast<uint8_t>(data.data()[4]);
             if (when > now) {
-                RTC_LOG(LS_INFO)<< "Skip RESEND:type" << type << "#" << counter << " (wait " << (when - now) << "ms).";
+                RTC_LOG(LS_INFO)<< "Skip RESEND:type" << type << "#" << counter << " (wait " << when - now << "ms).";
                 break;
             }
             if (enoughSpaceInPacket(buffer, data.size())) {
@@ -303,7 +303,7 @@ namespace signaling {
         }
     }
 
-    bool SignalingEncryption::haveAdditionalMessages() const {
+    bool SignalingEncryption::haveMessages() const {
         return !myNotYetAckedMessages.empty() || !acksToSendSeqs.empty();
     }
 
@@ -338,8 +338,8 @@ namespace signaling {
                 return std::nullopt;
             }
             const auto seq = *maybeSeq;
-            const auto serialized = SerializeRawMessageWithSeq(buffer, seq);
-            return encryptPrepared(serialized);
+            auto serialized = SerializeRawMessageWithSeq(buffer, seq);
+            return prepareForSendingMessageInternal(serialized, seq);
         }
         const auto seq = ++counter;
         rtc::ByteBufferWriter writer;
@@ -395,20 +395,23 @@ namespace signaling {
         requestSendServiceCallback = requestSendService;
     }
 
-    bytes::binary SignalingEncryption::prepareForSendingService(const int cause) {
+    std::optional<bytes::binary> SignalingEncryption::prepareForSendingService(const int cause) {
         if (cause == kServiceCauseAcks) {
             sendAcksTimerActive = false;
         } else if (cause == kServiceCauseResend) {
             resendTimerActive = false;
         }
+        if (!haveMessages()) {
+            return std::nullopt;
+        }
         const auto seq = computeNextSeq(false);
         if (!seq) {
-            return {};
+            return std::nullopt;
         }
         auto serialized = SerializeEmptyMessageWithSeq(*seq);
         if (!enoughSpaceInPacket(serialized, 0)) {
             RTC_LOG(LS_ERROR) << "Failed to serialize empty message";
-            return {};
+            return std::nullopt;
         }
         RTC_LOG(LS_INFO) << "SEND:empty#" << CounterFromSeq(*seq);
         appendMessages(serialized);
