@@ -118,7 +118,7 @@ namespace wrtc {
         peerConnection->AddIceCandidate(parseIceCandidate(rawCandidate));
     }
 
-    void PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack) const {
+    void PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack) {
         if (!peerConnection) {
             throw RTCException("Cannot add track; PeerConnection is closed");
         }

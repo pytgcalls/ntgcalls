@@ -45,7 +45,7 @@ namespace wrtc {
 
         virtual void addIceCandidate(const IceCandidate& rawCandidate) const = 0;
 
-        virtual void addTrack(MediaStreamTrack *mediaStreamTrack) const = 0;
+        virtual void addTrack(MediaStreamTrack *mediaStreamTrack) = 0;
 
         bool isDataChannelOpen() const;
     };

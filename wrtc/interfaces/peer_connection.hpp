@@ -35,7 +35,7 @@ namespace wrtc {
 
         void setRemoteDescription(const Description &description) const;
 
-        void addTrack(MediaStreamTrack *mediaStreamTrack) const override;
+        void addTrack(MediaStreamTrack *mediaStreamTrack) override;
 
         void addIceCandidate(const IceCandidate& rawCandidate) const override;
 
