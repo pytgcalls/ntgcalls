@@ -89,11 +89,6 @@ namespace wrtc {
         });
     }
 
-    void SctpDataChannelProviderInterfaceImpl::OnTransportClosed(const webrtc::RTCError error) {
-        assert(networkThread->IsCurrent());
-        (void) onTerminatedCallback();
-    }
-
     void SctpDataChannelProviderInterfaceImpl::updateIsConnected(const bool isConnected) {
         assert(networkThread->IsCurrent());
         if (isConnected) {
@@ -117,9 +112,5 @@ namespace wrtc {
 
     void SctpDataChannelProviderInterfaceImpl::onStateChanged(const std::function<void(bool)>& callback) {
         onStateChangedCallback = callback;
-    }
-
-    void SctpDataChannelProviderInterfaceImpl::onTerminated(const std::function<void()>& callback) {
-        onTerminatedCallback = callback;
     }
 } // wrtc
