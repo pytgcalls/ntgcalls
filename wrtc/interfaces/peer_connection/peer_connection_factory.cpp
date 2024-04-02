@@ -93,6 +93,18 @@ namespace wrtc {
         return worker_thread_.get();
     }
 
+    rtc::NetworkManager* PeerConnectionFactory::networkManager() const {
+        return connection_context_->default_network_manager();
+    }
+
+    rtc::PacketSocketFactory* PeerConnectionFactory::socketFactory() const {
+        return connection_context_->default_socket_factory();
+    }
+
+    rtc::UniqueRandomIdGenerator* PeerConnectionFactory::ssrcGenerator() const {
+        return connection_context_->ssrc_generator();
+    }
+
     cricket::MediaEngineInterface* PeerConnectionFactory::mediaEngine() const {
         return connection_context_->media_engine();
     }

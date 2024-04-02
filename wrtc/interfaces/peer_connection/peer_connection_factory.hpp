@@ -29,6 +29,12 @@ namespace wrtc {
 
         [[nodiscard]] rtc::Thread* workerThread() const;
 
+        rtc::NetworkManager *networkManager() const;
+
+        rtc::PacketSocketFactory *socketFactory() const;
+
+        rtc::UniqueRandomIdGenerator *ssrcGenerator() const;
+
         [[nodiscard]] cricket::MediaEngineInterface* mediaEngine() const;
 
         [[nodiscard]] const webrtc::FieldTrialsView &fieldTrials() const;
