@@ -16,8 +16,7 @@ namespace wrtc {
         PeerConnectionFactory::UnRef();
     }
 
-    MediaStreamTrack *RTCVideoSource::createTrack() const
-    {
+    MediaStreamTrack *RTCVideoSource::createTrack() const {
         return MediaStreamTrack::holder()->GetOrCreate(
             factory->factory()->CreateVideoTrack(source, rtc::CreateRandomUuid())
         );
