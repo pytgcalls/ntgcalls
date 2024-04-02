@@ -4,6 +4,8 @@
 
 #include "set_session_description_observer.hpp"
 
+#include "wrtc/exceptions.hpp"
+
 namespace wrtc {
 
     void SetSessionDescriptionObserver::OnSetRemoteDescriptionComplete(const webrtc::RTCError error) {
