@@ -24,7 +24,7 @@ namespace signaling {
             if (type == "Candidates") {
                 return Type::Candidates;
             }
-            if (type == "audio" || type == "video") {
+            if (type == "NegotiateChannels") {
                 return Type::NegotiateChannels;
             }
         }
