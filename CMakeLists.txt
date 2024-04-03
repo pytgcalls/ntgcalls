@@ -12,6 +12,10 @@ set(BOOST_REVISION 1.84.0)
 set(BOOST_LIBS filesystem)
 
 option(STATIC_BUILD "Build static libraries" ON)
+option(LEGACY_SUPPORT "Build with V8 TgCalls protocol (Experimental)" OFF)
+if (LEGACY_SUPPORT)
+    add_compile_definitions(LEGACY_SUPPORT)
+endif()
 
 if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)

@@ -22,19 +22,22 @@ namespace signaling {
             throw ntgcalls::SignalingUnsupported("Signaling V1 is not supported");
         }
         if (version & Version::V2) {
-            RTC_LOG(LS_INFO) << "Using signaling V2" << (version & Version::V2Full ? " full" : "");
-            if (version & Version::V2Full) {
-                return std::make_unique<SignalingSctpConnection>(networkThread, signalingThread, key, onEmitData, onSignalData, true);
-            }
+            RTC_LOG(LS_WARNING) << "Using experimental signaling V2 Legacy";
             return std::make_unique<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
+        }
+        if (version & Version::V2Full) {
+            RTC_LOG(LS_INFO) << "Using signaling V2 Full";
+            return std::make_unique<SignalingSctpConnection>(networkThread, signalingThread, key, onEmitData, onSignalData, true);
         }
         throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
     }
 
     std::vector<std::string> Signaling::SupportedVersions() {
         return {
+#ifdef LEGACY_SUPPORT
             "8.0.0",
             "9.0.0",
+#endif
             "11.0.0",
         };
     }
@@ -42,9 +45,11 @@ namespace signaling {
     Signaling::Version Signaling::matchVersion(const std::vector<std::string> &versions) {
         const auto version = bestMatch(versions);
         RTC_LOG(LS_INFO) << "Selected version: " << version;
+#ifdef LEGACY_SUPPORT
         if (version == "8.0.0" || version == "9.0.0") {
             return Version::V2;
         }
+#endif
         if (version == "10.0.0") {
             return Version::V1;
         }
