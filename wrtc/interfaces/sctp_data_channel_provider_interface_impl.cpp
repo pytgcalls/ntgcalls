@@ -10,7 +10,8 @@ namespace wrtc {
     SctpDataChannelProviderInterfaceImpl::SctpDataChannelProviderInterfaceImpl(
         rtc::PacketTransportInternal* transportChannel,
         const bool isOutgoing,
-        rtc::Thread* networkThread
+        rtc::Thread* networkThread,
+        rtc::Thread* signalingThread
     ): networkThread(networkThread), weakFactory(this) {
         assert(networkThread->IsCurrent());
         sctpTransportFactory = std::make_unique<cricket::SctpTransportFactory>(networkThread);
@@ -25,7 +26,7 @@ namespace wrtc {
             "data",
             true,
             dataChannelInit,
-            networkThread,
+            signalingThread,
             networkThread
         );
         if (dataChannel == nullptr) {

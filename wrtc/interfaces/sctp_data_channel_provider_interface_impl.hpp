@@ -11,10 +11,6 @@
 #include "wrtc/utils/binary.hpp"
 #include "wrtc/utils/syncronized_callback.hpp"
 
-namespace cricket {
-    class DtlsTransport;
-} // namespace cricket
-
 namespace wrtc {
 
     class SctpDataChannelProviderInterfaceImpl final : public sigslot::has_slots<>, public webrtc::SctpDataChannelControllerInterface, public webrtc::DataChannelObserver, public webrtc::DataChannelSink {
@@ -32,7 +28,8 @@ namespace wrtc {
         SctpDataChannelProviderInterfaceImpl(
             rtc::PacketTransportInternal* transportChannel,
             bool isOutgoing,
-            rtc::Thread* networkThread
+            rtc::Thread* networkThread,
+            rtc::Thread* signalingThread
         );
 
         ~SctpDataChannelProviderInterfaceImpl() override;
