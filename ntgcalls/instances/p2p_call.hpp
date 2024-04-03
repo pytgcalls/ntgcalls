@@ -5,6 +5,7 @@
 #pragma once
 #include <future>
 #include <nlohmann/json.hpp>
+#include <call/call.h>
 
 #include "call_interface.hpp"
 #include "ntgcalls/models/auth_params.hpp"
@@ -16,12 +17,13 @@ namespace ntgcalls {
 
     class P2PCall final: public CallInterface {
         bytes::vector randomPower, prime;
-        std::optional<RawKey> key;
+        std::optional<signaling::RawKey> key;
         std::optional<bytes::vector> g_a_hash, g_a_or_b;
         std::atomic_bool isMakingOffer = false, makingNegotation = false, handshakeCompleted = false;
-        std::unique_ptr<SignalingInterface> signaling;
+        std::unique_ptr<signaling::SignalingInterface> signaling;
         wrtc::synchronized_callback<bytes::binary> onEmitData;
         std::vector<wrtc::IceCandidate> pendingIceCandidates;
+        signaling::Signaling::Version protocolVersion = signaling::Signaling::Version::Unknown;
 
         void processSignalingData(const bytes::binary& buffer);
 
@@ -32,6 +34,10 @@ namespace ntgcalls {
         void applyPendingIceCandidates();
 
         void sendMediaState(MediaState mediaState) const;
+
+        void sendOfferIfNeeded() const;
+
+        void sendInitialSetup() const;
 
     public:
         explicit P2PCall(rtc::Thread* workerThread): CallInterface(workerThread) {}
