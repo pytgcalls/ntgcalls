@@ -218,7 +218,8 @@ class SharedCommand(Command):
     user_options = [
         ('no-preserve-cache', None, 'Do not preserve cache'),
         ('debug', None, 'Debug build'),
-        ('static', None, 'Static build')
+        ('static', None, 'Static build'),
+        ('legacy', None, 'Build with experimental legacy support'),
     ]
 
     # noinspection PyAttributeOutsideInit
@@ -236,6 +237,7 @@ class SharedCommand(Command):
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={cfg}',
             f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
+            f'-DLEGACY_SUPPORT={"ON" if self.legacy else "OFF"}',
         ]
         cmake_args += get_os_cmake_args()
         build_args = [
