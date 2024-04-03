@@ -28,11 +28,18 @@ namespace wrtc {
             "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
         );
         network_thread_ = rtc::Thread::CreateWithSocketServer();
+        network_thread_->SetName("ntg-net", nullptr);
         network_thread_->Start();
         worker_thread_ = rtc::Thread::Create();
+        worker_thread_->SetName("ntg-work", nullptr);
         worker_thread_->Start();
         signaling_thread_ = rtc::Thread::Create();
+        signaling_thread_->SetName("ntg-media", nullptr);
         signaling_thread_->Start();
+
+        signaling_thread_->AllowInvokesToThread(worker_thread_.get());
+        signaling_thread_->AllowInvokesToThread(network_thread_.get());
+        worker_thread_->AllowInvokesToThread(network_thread_.get());
 
         webrtc::PeerConnectionFactoryDependencies dependencies;
         dependencies.network_thread = network_thread_.get();
