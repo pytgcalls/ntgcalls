@@ -73,14 +73,14 @@ jobs:
       - name: Build Shared Libs (Debug and Release)
         if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-shared-libs
         run: |
-          python3 setup.py build_lib --debug
-          python3 setup.py build_lib
+          ${{ steps.python.outputs.python-path }} setup.py build_lib --debug
+          ${{ steps.python.outputs.python-path }} setup.py build_lib
 
       - name: Build Static Libs (Debug and Release)
         if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-static-libs
         run: |
-          python3 setup.py build_lib --static --debug
-          python3 setup.py build_lib --static
+          ${{ steps.python.outputs.python-path }} setup.py build_lib --static --debug
+          ${{ steps.python.outputs.python-path }} setup.py build_lib --static
 
       - name: Build Shared Libs (Debug and Release) (ARM64)
         if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-shared-libs
