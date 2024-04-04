@@ -17,15 +17,15 @@ var handlerDisconnect = make(map[uint32][]DisconnectCallback)
 var handlerSignal = make(map[uint32][]SignalCallback)
 
 func NTgCalls() *Client {
-	Client := &Client{
-		uid:    uint32(C.ntg_init(C.CString(""))),
+	instance := &Client{
+		uid:    uint32(C.ntg_init()),
 		exists: true,
 	}
-	C.ntg_on_stream_end(C.uint32_t(Client.uid), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStream)), nil)
-	C.ntg_on_upgrade(C.uint32_t(Client.uid), (C.ntg_upgrade_callback)(unsafe.Pointer(C.handleUpgrade)), nil)
-	C.ntg_on_disconnect(C.uint32_t(Client.uid), (C.ntg_disconnect_callback)(unsafe.Pointer(C.handleDisconnect)), nil)
-	C.ntg_on_signaling_data(C.uint32_t(Client.uid), (C.ntg_signaling_callback)(unsafe.Pointer(C.handleSignal)), nil)
-	return Client
+	C.ntg_on_stream_end(C.uint32_t(instance.uid), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStream)), nil)
+	C.ntg_on_upgrade(C.uint32_t(instance.uid), (C.ntg_upgrade_callback)(unsafe.Pointer(C.handleUpgrade)), nil)
+	C.ntg_on_disconnect(C.uint32_t(instance.uid), (C.ntg_disconnect_callback)(unsafe.Pointer(C.handleDisconnect)), nil)
+	C.ntg_on_signaling_data(C.uint32_t(instance.uid), (C.ntg_signaling_callback)(unsafe.Pointer(C.handleSignal)), nil)
+	return instance
 }
 
 //export handleStream
@@ -129,7 +129,6 @@ func parseStringVectorC(data []string) (**C.char, C.int) {
 
 func parseErrorCode(errorCode C.int) error {
 	pErrorCode := int16(errorCode)
-	fmt.Println(pErrorCode)
 	switch pErrorCode {
 	case -100:
 		return fmt.Errorf("connection already made")

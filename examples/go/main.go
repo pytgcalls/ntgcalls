@@ -20,10 +20,10 @@ func main() {
 	})
 	_ = mtproto.Start()
 	p2pOutCall(client, mtproto, "@PyTgCallsVideoBeta")
-	mtproto.Idle()
 	client.OnStreamEnd(func(chatId int64, streamType ntgcalls.StreamType) {
 		fmt.Println(chatId)
 	})
+	mtproto.Idle()
 }
 
 func p2pOutCall(client *ntgcalls.Client, mtproto *tg.Client, username string) {
