@@ -51,7 +51,7 @@ jobs:
               matrix="$matrix{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\"}"
           fi
           if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
-              matrix="$matrix,{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-aarch64\",\"cibw_os_build\":\"manylinux_\"}"
+              matrix="$matrix,{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-aarch64\",\"cibw_os_build\":\"manylinux_\"}"
           fi
           if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
               matrix="$matrix,{\"os\":\"macos-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-x86_64\",\"cibw_os_build\":\"macosx_\"}"
