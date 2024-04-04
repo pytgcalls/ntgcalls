@@ -17,27 +17,55 @@ on:
         required: false
         default: false
         type: boolean
+      linux-build:
+        description: 'Build for Linux'
+        required: false
+        default: true
+        type: boolean
+      linux-arm64-build:
+        description: 'Build for Linux ARM64'
+        required: false
+        default: true
+        type: boolean
+      macos-build:
+        description: 'Build for macOS'
+        required: false
+        default: false
+        type: boolean
+      windows-build:
+        description: 'Build for Windows'
+        required: false
+        default: false
+        type: boolean
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          matrix="{\"include\":["
+          if [[ "${{ github.event.inputs.linux-build }}" == "true" ]]; then
+              matrix="$matrix{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\"}"
+          fi
+          if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
+              matrix="$matrix,{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-aarch64\",\"cibw_os_build\":\"manylinux_\"}"
+          fi
+          if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
+              matrix="$matrix,{\"os\":\"macos-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-x86_64\",\"cibw_os_build\":\"macosx_\"}"
+          fi
+          if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
+              matrix="$matrix,{\"os\":\"windows-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"windows-x86_64\",\"cibw_os_build\":\"win_\"}"
+          fi
+          matrix="$matrix]}"
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
   build:
+    needs: setup
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            cibw_archs: "native"
-            shared_name: "linux-x86_64"
-            cibw_os_build: "manylinux_"
-          - os: arm64-server
-            cibw_archs: "aarch64"
-            shared_name: "linux-arm64"
-            cibw_os_build: "manylinux_"
-          - os: windows-2019
-            cibw_archs: "native"
-            shared_name: "windows-x86_64"
-          - os: macos-14
-            cibw_archs: "arm64"
-            cibw_os_build: "macosx_arm64"
-            shared_name: "macos-arm64"
+      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
 
     steps:
       - name: Check out the repo
@@ -71,32 +99,32 @@ jobs:
           platforms: arm64
 
       - name: Build Shared Libs (Debug and Release)
-        if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-shared-libs
+        if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-shared-libs == 'true'
         run: |
           ${{ steps.python.outputs.python-path }} setup.py build_lib --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib
 
       - name: Build Static Libs (Debug and Release)
-        if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-static-libs
+        if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-static-libs == 'true'
         run: |
           ${{ steps.python.outputs.python-path }} setup.py build_lib --static --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib --static
 
       - name: Build Shared Libs (Debug and Release) (ARM64)
-        if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-shared-libs
+        if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-shared-libs == 'true'
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib
 
       - name: Build Static Libs (Debug and Release) (ARM64)
-        if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-static-libs
+        if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-static-libs == 'true'
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
-        if: github.event.inputs.build-shared-libs
+        if: github.event.inputs.build-shared-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
           path: ./shared-output/*
@@ -104,7 +132,7 @@ jobs:
 
       - name: Upload Static Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
-        if: github.event.inputs.build-static-libs
+        if: github.event.inputs.build-static-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-static_libs
           path: ./static-output/*
@@ -112,7 +140,7 @@ jobs:
 
       - name: Build wheels
         uses: ./.github/cibuildwheel
-        if: github.event.inputs.build-wheels
+        if: github.event.inputs.build-wheels == 'true'
         with:
           python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
         env:
@@ -126,7 +154,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
 
       - uses: actions/upload-artifact@v4
-        if: github.event.inputs.build-wheels
+        if: github.event.inputs.build-wheels == 'true'
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
           path: ./wheelhouse/*.whl
@@ -177,7 +205,7 @@ jobs:
           path: tmp/
 
       - name: Prepare source distribution
-        if: github.event.inputs.build-wheels
+        if: github.event.inputs.build-wheels == 'true'
         run: |
           python3 -m pip install --upgrade setuptools
           python3 setup.py sdist
@@ -208,7 +236,7 @@ jobs:
         run: find tmp -type f -name "*.whl" | xargs -I {} mv {} dist
 
       - name: Publish a Python distribution to PyPI.
-        if: github.event.inputs.build-wheels
+        if: github.event.inputs.build-wheels == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
