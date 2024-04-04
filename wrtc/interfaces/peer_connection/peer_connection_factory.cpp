@@ -129,24 +129,22 @@ namespace wrtc {
     }
 
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
-        _mutex.lock();
+        std::lock_guard lock(_mutex);
         _references++;
         if (_references == 1) {
             rtc::InitializeSSL();
             _default = rtc::scoped_refptr<PeerConnectionFactory>(new rtc::RefCountedObject<PeerConnectionFactory>());
         }
-        _mutex.unlock();
         return _default;
     }
 
     void PeerConnectionFactory::UnRef() {
-        _mutex.lock();
+        std::lock_guard lock(_mutex);
         _references--;
         if (!_references) {
             rtc::CleanupSSL();
             rtc::ThreadManager::Instance()->SetCurrentThread(nullptr);
             _default = nullptr;
         }
-        _mutex.unlock();
     }
 } // wrtc
