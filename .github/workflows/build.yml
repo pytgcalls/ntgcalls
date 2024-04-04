@@ -1,18 +1,22 @@
 name: Build And Publish
 on:
   workflow_dispatch:
-  push:
-    branches: [ master ]
-    paths:
-      - '.github/workflows/build.yml'
-      - 'cmake/*'
-      - 'deps/*'
-      - 'include/*'
-      - 'ntgcalls/*'
-      - 'wrtc/*'
-      - 'CMakeLists.txt'
-      - 'setup.py'
-
+    inputs:
+      build-shared-libs:
+        description: 'Build shared libraries'
+        required: false
+        default: true
+        type: boolean
+      build-static-libs:
+        description: 'Build static libraries'
+        required: false
+        default: true
+        type: boolean
+      build-wheels:
+        description: 'Build wheels'
+        required: false
+        default: false
+        type: boolean
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -55,11 +59,11 @@ jobs:
         run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
 
       - name: Install Python Requirements
-        run:  |
+        run: |
           "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools
           "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install pipx
         shell: bash
-          
+
       - name: Set up QEMU
         if: matrix.cibw_archs == 'aarch64'
         uses: docker/setup-qemu-action@v3
@@ -67,31 +71,32 @@ jobs:
           platforms: arm64
 
       - name: Build Shared Libs (Debug and Release)
-        if: matrix.cibw_archs != 'aarch64'
+        if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-shared-libs
         run: |
           python3 setup.py build_lib --debug
           python3 setup.py build_lib
 
       - name: Build Static Libs (Debug and Release)
-        if: matrix.cibw_archs != 'aarch64'
+        if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-static-libs
         run: |
           python3 setup.py build_lib --static --debug
           python3 setup.py build_lib --static
 
       - name: Build Shared Libs (Debug and Release) (ARM64)
-        if: matrix.cibw_archs == 'aarch64'
+        if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-shared-libs
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib
 
       - name: Build Static Libs (Debug and Release) (ARM64)
-        if: matrix.cibw_archs == 'aarch64'
+        if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-static-libs
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
+        if: github.event.inputs.build-shared-libs
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
           path: ./shared-output/*
@@ -99,6 +104,7 @@ jobs:
 
       - name: Upload Static Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
+        if: github.event.inputs.build-static-libs
         with:
           name: ntgcalls.${{ matrix.shared_name }}-static_libs
           path: ./static-output/*
@@ -106,9 +112,9 @@ jobs:
 
       - name: Build wheels
         uses: ./.github/cibuildwheel
+        if: github.event.inputs.build-wheels
         with:
           python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
-
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
@@ -120,6 +126,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
 
       - uses: actions/upload-artifact@v4
+        if: github.event.inputs.build-wheels
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
           path: ./wheelhouse/*.whl
@@ -127,7 +134,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [ build ]
     permissions:
       id-token: write
       contents: write
@@ -170,10 +177,10 @@ jobs:
           path: tmp/
 
       - name: Prepare source distribution
+        if: github.event.inputs.build-wheels
         run: |
           python3 -m pip install --upgrade setuptools
           python3 setup.py sdist
-  
 
       - name: Zip releases
         run: |
@@ -201,7 +208,7 @@ jobs:
         run: find tmp -type f -name "*.whl" | xargs -I {} mv {} dist
 
       - name: Publish a Python distribution to PyPI.
-        if: github.ref == 'refs/heads/master' && github.repository == 'pytgcalls/ntgcalls'
+        if: github.event.inputs.build-wheels
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
