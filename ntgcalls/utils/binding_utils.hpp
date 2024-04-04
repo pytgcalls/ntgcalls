@@ -48,9 +48,7 @@ py::bytes toBytes(const T& p) {
 py::object translate_current_exception();
 
 #define THREAD_SAFE { \
-RTC_LOG(LS_VERBOSE) << "Acquiring GIL"; \
-py::gil_scoped_acquire acquire; \
-RTC_LOG(LS_VERBOSE) << "GIL acquired";
+py::gil_scoped_acquire acquire;
 
 #define BYTES(x) py::bytes
 
