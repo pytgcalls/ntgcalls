@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(ntgcalls, m) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
-    wrapper.def(py::init<std::optional<std::string>, bool>(), py::arg("log_path") = std::nullopt, py::arg("allow_webrtc_logs") = false);
+    wrapper.def(py::init<>());
     wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"), py::arg("media"));
     wrapper.def("exchange_keys", &ntgcalls::NTgCalls::exchangeKeys, py::arg("user_id"), py::arg("g_a_or_b"), py::arg("fingerprint"));
     wrapper.def("connect_p2p", &ntgcalls::NTgCalls::connectP2P, py::arg("user_id"), py::arg("servers"), py::arg("versions"), py::arg("p2p_allowed"));
@@ -41,21 +41,21 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def_static("get_protocol", &ntgcalls::NTgCalls::getProtocol);
 
     py::enum_<ntgcalls::Stream::Type>(m, "StreamType")
-            .value("Audio", ntgcalls::Stream::Type::Audio)
-            .value("Video", ntgcalls::Stream::Type::Video)
+            .value("AUDIO", ntgcalls::Stream::Type::Audio)
+            .value("VIDEO", ntgcalls::Stream::Type::Video)
             .export_values();
 
     py::enum_<ntgcalls::Stream::Status>(m, "StreamStatus")
-            .value("Playing", ntgcalls::Stream::Status::Playing)
-            .value("Paused", ntgcalls::Stream::Status::Paused)
-            .value("Idling", ntgcalls::Stream::Status::Idling)
+            .value("PLAYING", ntgcalls::Stream::Status::Playing)
+            .value("PAUSED", ntgcalls::Stream::Status::Paused)
+            .value("IDLING", ntgcalls::Stream::Status::Idling)
             .export_values();
 
     py::enum_<ntgcalls::BaseMediaDescription::InputMode>(m, "InputMode")
-            .value("File", ntgcalls::BaseMediaDescription::InputMode::File)
-            .value("Shell", ntgcalls::BaseMediaDescription::InputMode::Shell)
-            .value("FFmpeg", ntgcalls::BaseMediaDescription::InputMode::FFmpeg)
-            .value("NoLatency", ntgcalls::BaseMediaDescription::InputMode::NoLatency)
+            .value("FILE", ntgcalls::BaseMediaDescription::InputMode::File)
+            .value("SHELL", ntgcalls::BaseMediaDescription::InputMode::Shell)
+            .value("FFMPEG", ntgcalls::BaseMediaDescription::InputMode::FFmpeg)
+            .value("NO_LATENCY", ntgcalls::BaseMediaDescription::InputMode::NoLatency)
             .export_values()
             .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
                 return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
@@ -69,7 +69,6 @@ PYBIND11_MODULE(ntgcalls, m) {
             .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
                 return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
             });
-
 
     py::class_<ntgcalls::MediaState>(m, "MediaState")
             .def_readonly("muted", &ntgcalls::MediaState::muted)
@@ -145,6 +144,8 @@ PYBIND11_MODULE(ntgcalls, m) {
     pybind11::register_exception<ntgcalls::FFmpegError>(m, "FFmpegError", baseExc);
     pybind11::register_exception<ntgcalls::ShellError>(m, "ShellError", baseExc);
     pybind11::register_exception<ntgcalls::CryptoError>(m, "CryptoError", baseExc);
+    pybind11::register_exception<ntgcalls::SignalingError>(m, "SignalingError", baseExc);
+    pybind11::register_exception<ntgcalls::SignalingUnsupported>(m, "SignalingUnsupported", baseExc);
 
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 }
