@@ -227,6 +227,7 @@ class SharedCommand(Command):
         self.no_preserve_cache = False
         self.debug = False
         self.static = False
+        self.legacy = False
 
     def finalize_options(self):
         pass
