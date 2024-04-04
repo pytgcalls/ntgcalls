@@ -12,12 +12,12 @@ namespace ntgcalls {
 
     Stream::~Stream() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
-        std::lock_guard lock(mutex);
         quit = true;
         if (thread.joinable()) {
             thread.join();
         }
         RTC_LOG(LS_VERBOSE) << "Thread joined";
+        std::lock_guard lock(mutex);
         idling = false;
         audio = nullptr;
         video = nullptr;

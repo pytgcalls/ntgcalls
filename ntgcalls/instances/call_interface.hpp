@@ -6,7 +6,6 @@
 #include <memory>
 
 #include "ntgcalls/stream.hpp"
-#include "wrtc/interfaces/native_connection.hpp"
 
 namespace ntgcalls {
 

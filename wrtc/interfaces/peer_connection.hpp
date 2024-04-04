@@ -21,7 +21,7 @@ namespace wrtc {
 
     class PeerConnection final : public webrtc::PeerConnectionObserver, public NetworkInterface {
     public:
-        explicit PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers = {}, bool allowAttachDataChannel = false, bool p2pAllowed = true);
+        explicit PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers = {}, bool allowAttachDataChannel = false);
 
         ~PeerConnection() override;
 

@@ -35,10 +35,6 @@ namespace ntgcalls {
 
         void sendMediaState(MediaState mediaState) const;
 
-        void sendOfferIfNeeded() const;
-
-        void sendInitialSetup() const;
-
     public:
         explicit P2PCall(rtc::Thread* workerThread): CallInterface(workerThread) {}
 

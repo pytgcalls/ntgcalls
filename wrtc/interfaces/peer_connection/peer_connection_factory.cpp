@@ -23,9 +23,7 @@ namespace wrtc {
     PeerConnectionFactory::PeerConnectionFactory() {
         webrtc::field_trial::InitFieldTrialsFromString(
             "WebRTC-DataChannel-Dcsctp/Enabled/"
-            "WebRTC-Audio-MinimizeResamplingOnMobile/Enabled/"
             "WebRTC-Audio-iOS-Holding/Enabled/"
-            "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
         );
         network_thread_ = rtc::Thread::CreateWithSocketServer();
         network_thread_->SetName("ntg-net", nullptr);
@@ -132,7 +130,6 @@ namespace wrtc {
         std::lock_guard lock(_mutex);
         _references++;
         if (_references == 1) {
-            rtc::InitializeSSL();
             _default = rtc::scoped_refptr<PeerConnectionFactory>(new rtc::RefCountedObject<PeerConnectionFactory>());
         }
         return _default;
@@ -142,8 +139,6 @@ namespace wrtc {
         std::lock_guard lock(_mutex);
         _references--;
         if (!_references) {
-            rtc::CleanupSSL();
-            rtc::ThreadManager::Instance()->SetCurrentThread(nullptr);
             _default = nullptr;
         }
     }
