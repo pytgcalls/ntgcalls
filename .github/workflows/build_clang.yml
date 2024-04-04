@@ -1,11 +1,6 @@
 name: Build Arm64 Image
 on:
   workflow_dispatch:
-  push:
-    branches: [ master ]
-    paths:
-      - '.github/workflows/build_clang.yml'
-      - 'Dockerfile'
 
 jobs:
   build:
