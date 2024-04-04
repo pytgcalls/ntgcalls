@@ -9,6 +9,7 @@
 
 std::map<uint32_t, std::shared_ptr<ntgcalls::NTgCalls>> clients;
 uint32_t uidGenerator;
+std::mutex mutex;
 
 int copyAndReturn(const std::vector<std::byte>& b, uint8_t *buffer, const int size) {
     if (!buffer)
@@ -79,8 +80,9 @@ int copyAndReturn(std::vector<T> b, T *buffer, const int size) {
 }
 
 std::shared_ptr<ntgcalls::NTgCalls> safeUID(const uint32_t uid) {
+    std::lock_guard lock(mutex);
     if (!clients.contains(uid)) {
-        throw ntgcalls::InvalidUUID("UUID" + std::to_string(uid) + " not found");
+        throw ntgcalls::InvalidUUID("UUID " + std::to_string(uid) + " not found");
     }
     return clients[uid];
 }
@@ -122,8 +124,33 @@ ntg_stream_status_enum parseStatus(const ntgcalls::Stream::Status status) {
     return {};
 }
 
-std::vector<wrtc::RTCServer> parseRTCServers(ntg_rtc_server_struct* servers, const int size) {
-    std::vector<wrtc::RTCServer> serversCpp;
+ntg_log_level_enum parseLevel(const ntgcalls::LogSink::Level level) {
+    switch (level) {
+        case ntgcalls::LogSink::Level::Debug:
+            return NTG_LOG_DEBUG;
+        case ntgcalls::LogSink::Level::Info:
+            return NTG_LOG_INFO;
+        case ntgcalls::LogSink::Level::Warning:
+            return NTG_LOG_WARNING;
+        case ntgcalls::LogSink::Level::Error:
+            return NTG_LOG_ERROR;
+        default:
+            return NTG_LOG_UNKNOWN;
+    }
+}
+
+ntg_log_source_enum parseSource(const ntgcalls::LogSink::Source source) {
+    switch (source) {
+        case ntgcalls::LogSink::Source::WebRTC:
+            return NTG_LOG_WEBRTC;
+        case ntgcalls::LogSink::Source::Self:
+            return NTG_LOG_SELF;
+    }
+    return {};
+}
+
+std::vector<ntgcalls::RTCServer> parseRTCServers(ntg_rtc_server_struct* servers, const int size) {
+    std::vector<ntgcalls::RTCServer> serversCpp;
     for (int i = 0; i < size; i++) {
         serversCpp.emplace_back(
             servers[i].id,
@@ -193,18 +220,20 @@ ntgcalls::MediaDescription parseMediaDescription(const ntg_media_description_str
     };
 }
 
-uint32_t ntg_init(char* logPath, bool allowWebrtcLogs) {
+uint32_t ntg_init() {
+    std::lock_guard lock(mutex);
     const uint32_t uid = uidGenerator++;
-    clients[uid] = std::make_shared<ntgcalls::NTgCalls>(std::string(logPath), allowWebrtcLogs);
+    clients[uid] = std::make_shared<ntgcalls::NTgCalls>();
     return uid;
 }
 
 int ntg_destroy(const uint32_t uid) {
-    if (!clients.contains(uid)) {
-        return NTG_INVALID_UID;
+    std::lock_guard lock(mutex);
+    if (clients.contains(uid)) {
+        clients.erase(clients.find(uid));
+        return 0;
     }
-    clients.erase(clients.find(uid));
-    return 0;
+    return NTG_INVALID_UID;
 }
 
 
@@ -280,6 +309,12 @@ int ntg_connect_p2p(const uint32_t uid, const int64_t userId, ntg_rtc_server_str
             *future.errorCode = NTG_CONNECTION_FAILED;
         } catch (ntgcalls::CryptoError&) {
             *future.errorCode = NTG_CRYPTO_ERROR;
+        } catch (ntgcalls::SignalingError&) {
+            *future.errorCode = NTG_SIGNALING_ERROR;
+        } catch (ntgcalls::SignalingUnsupported&) {
+            *future.errorCode = NTG_SIGNALING_UNSUPPORTED;
+        } catch (ntgcalls::InvalidParams&) {
+            *future.errorCode = NTG_INVALID_TRANSPORT;
         } catch (...) {
             *future.errorCode = NTG_UNKNOWN_EXCEPTION;
         }
@@ -650,4 +685,20 @@ int ntg_on_signaling_data(uint32_t uid, ntg_signaling_callback callback, void* u
 
 int ntg_get_version(char* buffer, const int size) {
     return copyAndReturn(NTG_VERSION, buffer, size);
+}
+
+void ntg_register_logger(ntg_log_message_callback callback) {
+    ntgcalls::LogSink::registerLogger([callback](const ntgcalls::LogSink::LogMessage &message) {
+        auto* fileName = new char[message.file.size()];
+        copyAndReturn(message.file, fileName, static_cast<int>(message.file.size()));
+        auto* messageContent = new char[message.message.size()];
+        copyAndReturn(message.message, messageContent, static_cast<int>(message.message.size()));
+        callback({
+            parseLevel(message.level),
+            parseSource(message.source),
+            fileName,
+            message.line,
+            messageContent
+        });
+    });
 }

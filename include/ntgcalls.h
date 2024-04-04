@@ -14,37 +14,40 @@
 #define NTG_C_EXPORT
 #endif
 
-// EXCEPTIONS CODES
-
-// NTgCalls
-#define NTG_CONNECTION_ALREADY_EXISTS (-100)
-#define NTG_CONNECTION_NOT_FOUND (-101)
-#define NTG_CRYPTO_ERROR (-102)
-#define NTG_MISSING_FINGERPRINT (-103)
-
-// STREAM
-#define NTG_FILE_NOT_FOUND (-200)
-#define NTG_ENCODER_NOT_FOUND (-201)
-#define NTG_FFMPEG_NOT_FOUND (-202)
-#define NTG_SHELL_ERROR (-203)
-
-// WebRTC
-#define NTG_RTMP_NEEDED (-300)
-#define NTG_INVALID_TRANSPORT (-301)
-#define NTG_CONNECTION_FAILED (-302)
-
-// Others
-#define NTG_UNKNOWN_EXCEPTION (-1)
-#define NTG_INVALID_UID (-2)
-#define NTG_ERR_TOO_SMALL (-3)
-#define NTG_ASYNC_NOT_READY (-4)
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include <stdint.h>
 // ReSharper disable once CppUnusedIncludeDirective
 #include <stdbool.h>
+
+// EXCEPTIONS CODES
+typedef enum {
+    // NTgCalls
+    NTG_CONNECTION_ALREADY_EXISTS = -100,
+    NTG_CONNECTION_NOT_FOUND = -101,
+    NTG_CRYPTO_ERROR = -102,
+    NTG_MISSING_FINGERPRINT = -103,
+    NTG_SIGNALING_ERROR = -104,
+    NTG_SIGNALING_UNSUPPORTED = -105,
+
+    // STREAM
+    NTG_FILE_NOT_FOUND = -200,
+    NTG_ENCODER_NOT_FOUND = -201,
+    NTG_FFMPEG_NOT_FOUND = -202,
+    NTG_SHELL_ERROR = -203,
+
+    // WebRTC
+    NTG_RTMP_NEEDED = -300,
+    NTG_INVALID_TRANSPORT = -301,
+    NTG_CONNECTION_FAILED = -302,
+
+    // Others
+    NTG_UNKNOWN_EXCEPTION = -1,
+    NTG_INVALID_UID = -2,
+    NTG_ERR_TOO_SMALL = -3,
+    NTG_ASYNC_NOT_READY = -4
+} ntg_error_code_enum;
 
 typedef enum {
     NTG_FILE = 1 << 0,
@@ -139,7 +142,32 @@ typedef void (*ntg_disconnect_callback)(uint32_t, int64_t, void*);
 
 typedef void (*ntg_signaling_callback)(uint32_t, int64_t, uint8_t*, int, void*);
 
-NTG_C_EXPORT uint32_t ntg_init(char* logPath, bool allowWebrtcLogs);
+typedef enum {
+    NTG_LOG_DEBUG = 1 << 0,
+    NTG_LOG_INFO = 1 << 1,
+    NTG_LOG_WARNING = 1 << 2,
+    NTG_LOG_ERROR = 1 << 3,
+    NTG_LOG_UNKNOWN = -1,
+} ntg_log_level_enum;
+
+typedef enum {
+    NTG_LOG_WEBRTC = 1 << 0,
+    NTG_LOG_SELF = 1 << 1
+} ntg_log_source_enum;
+
+typedef struct {
+    ntg_log_level_enum level;
+    ntg_log_source_enum source;
+    char* file;
+    uint32_t line;
+    char* message;
+} ntg_log_message_struct;
+
+typedef void (*ntg_log_message_callback)(ntg_log_message_struct);
+
+NTG_C_EXPORT void ntg_register_logger(ntg_log_message_callback callback);
+
+NTG_C_EXPORT uint32_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
