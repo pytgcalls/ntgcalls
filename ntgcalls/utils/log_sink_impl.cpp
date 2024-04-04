@@ -4,58 +4,152 @@
 
 #include "log_sink_impl.hpp"
 
-#include <chrono>
+#include <regex>
+#include <rtc_base/ref_counted_object.h>
 
 namespace ntgcalls {
-    std::string LogSinkImpl::severityToString(const rtc::LoggingSeverity severity) {
+    rtc::scoped_refptr<LogSink> LogSink::instance = nullptr;
+    std::mutex LogSink::mutex{};
+    uint32_t LogSink::references = 0;
+#ifndef PYTHON_ENABLED
+    wrtc::synchronized_callback<LogSink::LogMessage> LogSink::onLogMessage{};
+#endif
+
+    LogSink::LogSink() {
+        thread = rtc::Thread::Create();
+        thread->SetName("LogSink", nullptr);
+        thread->Start();
+#ifdef DEBUG
+        rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
+#else
+        rtc::LogMessage::LogToDebug(rtc::LS_INFO);
+#endif
+        rtc::LogMessage::SetLogToStderr(false);
+        rtc::LogMessage::AddLogToStream(this, rtc::LS_INFO);
+#ifdef PYTHON_ENABLED
+        THREAD_SAFE
+        const auto loggingLib = py::module::import("logging");
+        rtcLogs = loggingLib.attr("getLogger")("webrtc");
+        if (rtcLogs.attr("level").equal(loggingLib.attr("NOTSET"))) {
+            rtcLogs.attr("setLevel")(loggingLib.attr("CRITICAL"));
+        }
+        ntgLogs = loggingLib.attr("getLogger")("ntgcalls");
+        if (ntgLogs.attr("level").equal(loggingLib.attr("NOTSET"))) {
+            ntgLogs.attr("setLevel")(loggingLib.attr("CRITICAL"));
+        }
+        END_THREAD_SAFE
+#endif
+    }
+
+    LogSink::~LogSink() {
+        rtc::LogMessage::RemoveLogToStream(this);
+        thread->Stop();
+    }
+
+#ifdef PYTHON_ENABLED
+    py::object LogSink::parseSeverity(const rtc::LoggingSeverity severity) {
+        THREAD_SAFE
+        const auto loggingLib = py::module::import("logging");
         switch (severity) {
             case rtc::LS_VERBOSE:
-                return "VERBOSE";
+                return loggingLib.attr("DEBUG");
             case rtc::LS_INFO:
-                return "INFO";
+                return loggingLib.attr("INFO");
             case rtc::LS_WARNING:
-                return "WARNING";
+                return loggingLib.attr("WARNING");
             case rtc::LS_ERROR:
-                return "ERROR";
-            case rtc::LS_NONE:
-                return "NONE";
+                return loggingLib.attr("ERROR");
             default:
-                return "UNKNOWN";
+                return loggingLib.attr("NOTSET");
+        }
+        END_THREAD_SAFE
+    }
+#else
+    LogSink::Level LogSink::parseSeverity(const rtc::LoggingSeverity severity) {
+        switch (severity) {
+            case rtc::LS_VERBOSE:
+                return Level::Debug;
+            case rtc::LS_INFO:
+                return Level::Info;
+            case rtc::LS_WARNING:
+                return Level::Warning;
+            case rtc::LS_ERROR:
+                return Level::Error;
+            default:
+                return Level::Unknown;
         }
     }
+#endif
 
-    LogSinkImpl::LogSinkImpl(const std::string& logPath, const bool allowWebrtcLogs): allowWebrtcLogs(allowWebrtcLogs) {
-        _file.open(logPath);
+    uint32_t LogSink::parseLineNumber(const std::string &message) {
+        uint32_t port = -1;
+        std::stringstream ss(message);
+        ss >> port;
+        return port;
     }
 
-    void LogSinkImpl::OnLogMessage(const std::string& msg, const rtc::LoggingSeverity severity, const char* tag) {
+    void LogSink::registerLogMessage(const std::string &message, const rtc::LoggingSeverity severity) const {
+        thread->PostTask([this, message, severity] {
+            const std::regex regex(R"(\((.*)\.(.*):([0-9]+)\):\s?(.*))");
+            if (std::smatch match; std::regex_search(message, match, regex)) {
+                const auto fileName = std::string(match[1]) + "." + std::string(match[2]);
+                const auto lineNum = parseLineNumber(match[3]);
+                const auto level = parseSeverity(severity);
+                const auto parsedMessage = std::string(match[4]);
+#ifdef PYTHON_ENABLED
+                const auto logMess = fileName + ":" + std::to_string(lineNum) + " " + parsedMessage;
+                THREAD_SAFE
+                if (match[2] == "cpp") {
+                    (void) ntgLogs.attr("log")(level, logMess);
+                } else {
+                    (void) rtcLogs.attr("log")(level, logMess);
+                }
+                END_THREAD_SAFE
+#else
+                (void) onLogMessage({
+                    level,
+                    std::string(match[2]) == "cpp" ? Source::Self : Source::WebRTC,
+                    fileName,
+                    lineNum,
+                    parsedMessage
+                });
+#endif
+            }
+        });
+    }
+
+    void LogSink::OnLogMessage(const std::string& msg, const rtc::LoggingSeverity severity, const char* tag) {
         OnLogMessage(std::string(tag) + ": " + msg, severity);
     }
 
-    void LogSinkImpl::OnLogMessage(const std::string& message, const rtc::LoggingSeverity severity) {
-        OnLogMessage("[" + severityToString(severity) + "] " + message);
+    void LogSink::OnLogMessage(const std::string& message, const rtc::LoggingSeverity severity) {
+        registerLogMessage(message, severity);
     }
 
-    void LogSinkImpl::OnLogMessage(const std::string& message) {
-        if (!allowWebrtcLogs && message.find(".cpp:") == std::string::npos) {
-            return;
-        }
-        std::ostringstream logStream;
-        const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-        std::time_t timeNow = std::chrono::system_clock::to_time_t(now);
-        const auto nowMs = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
-        std::tm timeinfo{};
-#ifdef _WIN32
-        localtime_s(&timeinfo, &timeNow);
-#else
-        localtime_r(&timeNow, &timeinfo);
+    void LogSink::OnLogMessage(const std::string& message) {
+        registerLogMessage(message, rtc::LS_NONE);
+    }
+
+#ifndef PYTHON_ENABLED
+    void LogSink::registerLogger(std::function<void(LogMessage)> callback) {
+        onLogMessage = std::move(callback);
+    }
 #endif
-        logStream << std::put_time(&timeinfo, "%Y-%m-%d %H:%M:%S:") << std::setw(3) << std::setfill('0') << nowMs << " " << message;
-        auto& outputStream = _file.is_open() ? static_cast<std::ostream&>(_file) : _data;
-        outputStream << logStream.str();
+
+    void LogSink::GetOrCreate() {
+        mutex.lock();
+        references++;
+        if (references == 1) {
+            instance = rtc::scoped_refptr<LogSink>(new rtc::RefCountedObject<LogSink>());
+        }
+        mutex.unlock();
     }
 
-    std::string LogSinkImpl::result() const {
-        return _data.str();
+    void LogSink::UnRef() {
+        std::lock_guard lock(mutex);
+        references--;
+        if (!references) {
+            instance = nullptr;
+        }
     }
 } // ntgcalls

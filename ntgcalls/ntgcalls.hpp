@@ -36,7 +36,6 @@ namespace ntgcalls {
         std::unique_ptr<rtc::Thread> networkThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
-        std::unique_ptr<LogSinkImpl> logSink;
         ASYNC_ARGS
 
         bool exists(int64_t chatId) const;
@@ -51,7 +50,7 @@ namespace ntgcalls {
         void remove(int64_t chatId);
 
     public:
-        explicit NTgCalls(std::optional<std::string> logPath = std::nullopt, bool allowWebrtcLogs = false);
+        explicit NTgCalls();
 
         ~NTgCalls();
 
