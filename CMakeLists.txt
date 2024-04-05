@@ -21,6 +21,7 @@ project(ntgcalls VERSION 1.2.0.5 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter QUIET)
 
 get_filename_component(deps_loc "deps" REALPATH)
 
