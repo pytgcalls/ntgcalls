@@ -102,25 +102,37 @@ jobs:
           platforms: arm64
 
       - name: Build Shared Libs (Debug and Release)
-        if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-shared-libs == 'true'
+        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
         run: |
           ${{ steps.python.outputs.python-path }} setup.py build_lib --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib
 
       - name: Build Static Libs (Debug and Release)
-        if: matrix.cibw_archs != 'aarch64' && github.event.inputs.build-static-libs == 'true'
+        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
         run: |
           ${{ steps.python.outputs.python-path }} setup.py build_lib --static --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib --static
 
-      - name: Build Shared Libs (Debug and Release) (ARM64)
-        if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-shared-libs == 'true'
+      - name: Build Shared Libs (Debug and Release) (Linux) (x86_64)
+        if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-shared-libs == 'true'
+        run: |
+          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3 setup.py build_lib --debug
+          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3 setup.py build_lib
+
+      - name: Build Static Libs (Debug and Release) (Linux) (x86_64)
+        if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-static-libs == 'true'
+        run: |
+          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3 setup.py build_lib --static --debug
+          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3 setup.py build_lib --static
+
+      - name: Build Shared Libs (Debug and Release) (Linux) (ARM64)
+        if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib
 
-      - name: Build Static Libs (Debug and Release) (ARM64)
-        if: matrix.cibw_archs == 'aarch64' && github.event.inputs.build-static-libs == 'true'
+      - name: Build Static Libs (Debug and Release) (Linux ARM64)
+        if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static
