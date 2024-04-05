@@ -12,7 +12,7 @@ namespace ntgcalls {
     CallInterface::~CallInterface() {
         RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
         onStreamEnd(nullptr);
-        onDisconnect(nullptr);
+        onConnectionChange(nullptr);
         stream = nullptr;
         if (connection) {
             connection->onConnectionChange(nullptr);
@@ -20,6 +20,7 @@ namespace ntgcalls {
             RTC_LOG(LS_VERBOSE) << "Connection closed";
         }
         connection = nullptr;
+        workerThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
     }
 
@@ -48,9 +49,9 @@ namespace ntgcalls {
         stream->onStreamEnd(callback);
     }
 
-    void CallInterface::onDisconnect(const std::function<void()>& callback) {
+    void CallInterface::onConnectionChange(const std::function<void(ConnectionState)>& callback) {
         std::lock_guard lock(mutex);
-        onCloseConnection = callback;
+        connectionChangeCallback = callback;
     }
 
     uint64_t CallInterface::time() const {
@@ -63,5 +64,54 @@ namespace ntgcalls {
 
     Stream::Status CallInterface::status() const {
         return stream->status();
+    }
+
+    void CallInterface::setConnectionObserver() {
+        connection->onConnectionChange([this](const wrtc::ConnectionState state) {
+            switch (state) {
+            case wrtc::ConnectionState::Connecting:
+                if (!connected) {
+                    RTC_LOG(LS_INFO) << "Connecting...";
+                    (void) connectionChangeCallback(ConnectionState::Connecting);
+                } else {
+                    RTC_LOG(LS_INFO) << "Reconnecting...";
+                }
+                break;
+            case wrtc::ConnectionState::Connected:
+                RTC_LOG(LS_INFO) << "Connection established";
+                if (!connected) {
+                    connected = true;
+                    stream->start();
+                    RTC_LOG(LS_INFO) << "Stream started";
+                    (void) connectionChangeCallback(ConnectionState::Connected);
+                }
+                break;
+            case wrtc::ConnectionState::Disconnected:
+            case wrtc::ConnectionState::Failed:
+            case wrtc::ConnectionState::Closed:
+                workerThread->PostTask([this] {
+                    connection->onConnectionChange(nullptr);
+                });
+                if (state == wrtc::ConnectionState::Failed) {
+                    RTC_LOG(LS_ERROR) << "Connection failed";
+                    (void) connectionChangeCallback(ConnectionState::Failed);
+                } else {
+                    RTC_LOG(LS_INFO) << "Connection closed";
+                    (void) connectionChangeCallback(ConnectionState::Closed);
+                }
+                break;
+            default:
+                break;
+            }
+        });
+        workerThread->PostDelayedTask([this] {
+            if (!workerThread) {
+                return;
+            }
+            if (!connected) {
+                RTC_LOG(LS_ERROR) << "Connection timeout";
+                (void) connectionChangeCallback(ConnectionState::Timeout);
+            }
+        }, webrtc::TimeDelta::Seconds(20));
     }
 } // ntgcalls

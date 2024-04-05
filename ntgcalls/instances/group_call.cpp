@@ -108,40 +108,7 @@ namespace ntgcalls {
             throw TelegramServerError("Telegram Server is having some internal problems");
         }
         RTC_LOG(LS_INFO) << "Remote description set";
-        std::promise<void> promise;
-        connection->onConnectionChange([&](const wrtc::ConnectionState state) {
-            switch (state) {
-            case wrtc::ConnectionState::Connected:
-                if (!connected) {
-                    RTC_LOG(LS_INFO) << "Connection established";
-                    connected = true;
-                    stream->start();
-                    RTC_LOG(LS_INFO) << "Stream started";
-                    promise.set_value();
-                }
-                break;
-            case wrtc::ConnectionState::Disconnected:
-            case wrtc::ConnectionState::Failed:
-            case wrtc::ConnectionState::Closed:
-                workerThread->PostTask([this] {
-                    connection->onConnectionChange(nullptr);
-                });
-                if (!connected) {
-                    RTC_LOG(LS_ERROR) << "Connection failed";
-                    promise.set_exception(std::make_exception_ptr(TelegramServerError("Telegram Server is having some internal problems")));
-                } else {
-                    RTC_LOG(LS_INFO) << "Connection closed";
-                    (void) onCloseConnection();
-                }
-                break;
-            default:
-                break;
-            }
-        });
-        if (promise.get_future().wait_for(std::chrono::seconds(20)) != std::future_status::ready) {
-            RTC_LOG(LS_ERROR) << "Connection timeout";
-            throw TelegramServerError("Connection timeout");
-        }
+        setConnectionObserver();
     }
 
     void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) {

@@ -10,13 +10,25 @@
 namespace ntgcalls {
 
     class CallInterface {
+        bool connected = false;
+
+    public:
+        enum class ConnectionState {
+            Connecting = 1 << 0,
+            Connected = 1 << 1,
+            Failed = 1 << 2,
+            Timeout = 1 << 3,
+            Closed = 1 << 4
+        };
     protected:
         std::mutex mutex;
         std::unique_ptr<wrtc::NetworkInterface> connection;
         std::unique_ptr<Stream> stream;
-        bool connected = false;
-        wrtc::synchronized_callback<void> onCloseConnection;
+        wrtc::synchronized_callback<ConnectionState> connectionChangeCallback;
         rtc::Thread* workerThread;
+
+        void setConnectionObserver();
+
     public:
         explicit CallInterface(rtc::Thread* workerThread);
 
@@ -41,7 +53,7 @@ namespace ntgcalls {
 
         void onStreamEnd(const std::function<void(Stream::Type)> &callback);
 
-        void onDisconnect(const std::function<void()> &callback);
+        void onConnectionChange(const std::function<void(ConnectionState)> &callback);
 
         uint64_t time() const;
 

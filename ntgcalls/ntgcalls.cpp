@@ -45,24 +45,32 @@ namespace ntgcalls {
             SafeCall<GroupCall>(connections[chatId])->onUpgrade([this, chatId](const MediaState &state) {
                 WORKER("onUpgrade", updateThread, this, chatId, state)
                 THREAD_SAFE
-                (void) onChangeStatus(chatId, state);
+                (void) mediaStateCallback(chatId, state);
                 END_THREAD_SAFE
                 END_WORKER
             });
         }
-        connections[chatId]->onDisconnect([this, chatId]{
-            WORKER("onDisconnect", updateThread, this, chatId)
+        connections[chatId]->onConnectionChange([this, chatId](const CallInterface::ConnectionState &state) {
+            WORKER("onConnectionChange", updateThread, this, chatId, state)
             THREAD_SAFE
-            (void) onCloseConnection(chatId);
+            switch (state) {
+                case CallInterface::ConnectionState::Closed:
+                case CallInterface::ConnectionState::Failed:
+                case CallInterface::ConnectionState::Timeout:
+                    remove(chatId);
+                    break;
+                default:
+                    break;
+            }
+            (void) connectionChangeCallback(chatId, state);
             END_THREAD_SAFE
-            remove(chatId);
             END_WORKER
         });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
             SafeCall<P2PCall>(connections[chatId])->onSignalingData([this, chatId](const bytes::binary& data) {
                 WORKER("onSignalingData", updateThread, this, chatId, data)
                 THREAD_SAFE
-                (void) onEmitData(chatId, CAST_BYTES(data));
+                (void) emitCallaback(chatId, CAST_BYTES(data));
                 END_THREAD_SAFE
                 END_WORKER
             });
@@ -101,13 +109,7 @@ namespace ntgcalls {
 
     ASYNC_RETURN(void) NTgCalls::connect(const int64_t chatId, const std::string& params) {
         SMART_ASYNC(networkThread, this, chatId, params)
-        try {
-            SafeCall<GroupCall>(safeConnection(chatId))->connect(params);
-        } catch (TelegramServerError&) {
-            RTC_LOG(LS_INFO) << "Failed to connect to the call, removing it";
-            remove(chatId);
-            throw;
-        }
+        SafeCall<GroupCall>(safeConnection(chatId))->connect(params);
         END_ASYNC
     }
 
@@ -150,17 +152,17 @@ namespace ntgcalls {
 
     void NTgCalls::onUpgrade(const std::function<void(int64_t, MediaState)>& callback) {
         std::lock_guard lock(mutex);
-        onChangeStatus = callback;
+        mediaStateCallback = callback;
     }
 
-    void NTgCalls::onDisconnect(const std::function<void(int64_t)>& callback) {
+    void NTgCalls::onConnectionChange(const std::function<void(int64_t, CallInterface::ConnectionState)>& callback) {
        std::lock_guard lock(mutex);
-       onCloseConnection = callback;
+       connectionChangeCallback = callback;
     }
 
     void NTgCalls::onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback) {
         std::lock_guard lock(mutex);
-        onEmitData = callback;
+        emitCallaback = callback;
     }
 
     ASYNC_RETURN(void) NTgCalls::sendSignalingData(const int64_t chatId, const BYTES(bytes::binary) &msgKey) {

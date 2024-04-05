@@ -28,9 +28,9 @@ namespace ntgcalls {
     class NTgCalls {
         std::unordered_map<int64_t, std::shared_ptr<CallInterface>> connections;
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
-        wrtc::synchronized_callback<int64_t, MediaState> onChangeStatus;
-        wrtc::synchronized_callback<int64_t> onCloseConnection;
-        wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> onEmitData;
+        wrtc::synchronized_callback<int64_t, MediaState> mediaStateCallback;
+        wrtc::synchronized_callback<int64_t, CallInterface::ConnectionState> connectionChangeCallback;
+        wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallaback;
         std::unique_ptr<rtc::Thread> workerThread;
         std::unique_ptr<rtc::Thread> updateThread;
         std::unique_ptr<rtc::Thread> networkThread;
@@ -90,7 +90,7 @@ namespace ntgcalls {
 
         void onStreamEnd(const std::function<void(int64_t, Stream::Type)>& callback);
 
-        void onDisconnect(const std::function<void(int64_t)>& callback);
+        void onConnectionChange(const std::function<void(int64_t, CallInterface::ConnectionState)>& callback);
 
         void onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
 
