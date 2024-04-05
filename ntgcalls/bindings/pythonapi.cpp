@@ -33,7 +33,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("get_state", &ntgcalls::NTgCalls::getState, py::arg("chat_id"));
     wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade);
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd);
-    wrapper.def("on_disconnect", &ntgcalls::NTgCalls::onDisconnect);
+    wrapper.def("on_connection_change", &ntgcalls::NTgCalls::onConnectionChange);
     wrapper.def("on_signaling", &ntgcalls::NTgCalls::onSignalingData, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
@@ -49,6 +49,14 @@ PYBIND11_MODULE(ntgcalls, m) {
             .value("PLAYING", ntgcalls::Stream::Status::Playing)
             .value("PAUSED", ntgcalls::Stream::Status::Paused)
             .value("IDLING", ntgcalls::Stream::Status::Idling)
+            .export_values();
+
+    py::enum_<ntgcalls::CallInterface::ConnectionState>(m, "ConnectionState")
+            .value("CONNECTING", ntgcalls::CallInterface::ConnectionState::Connecting)
+            .value("CONNECTED", ntgcalls::CallInterface::ConnectionState::Connected)
+            .value("FAILED", ntgcalls::CallInterface::ConnectionState::Failed)
+            .value("TIMEOUT", ntgcalls::CallInterface::ConnectionState::Timeout)
+            .value("CLOSED", ntgcalls::CallInterface::ConnectionState::Closed)
             .export_values();
 
     py::enum_<ntgcalls::BaseMediaDescription::InputMode>(m, "InputMode")
