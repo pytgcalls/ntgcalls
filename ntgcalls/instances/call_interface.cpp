@@ -67,13 +67,12 @@ namespace ntgcalls {
     }
 
     void CallInterface::setConnectionObserver() {
+        RTC_LOG(LS_INFO) << "Connecting...";
+        (void) connectionChangeCallback(ConnectionState::Connecting);
         connection->onConnectionChange([this](const wrtc::ConnectionState state) {
             switch (state) {
             case wrtc::ConnectionState::Connecting:
-                if (!connected) {
-                    RTC_LOG(LS_INFO) << "Connecting...";
-                    (void) connectionChangeCallback(ConnectionState::Connecting);
-                } else {
+                if (connected) {
                     RTC_LOG(LS_INFO) << "Reconnecting...";
                 }
                 break;
