@@ -67,6 +67,14 @@ typedef enum {
     NTG_IDLING
 } ntg_stream_status_enum;
 
+typedef enum {
+    NTG_STATE_CONNECTING,
+    NTG_STATE_CONNECTED,
+    NTG_STATE_TIMEOUT,
+    NTG_STATE_FAILED,
+    NTG_STATE_CLOSED,
+} ntg_connection_state_enum;
+
 typedef struct {
     ntg_input_mode_enum inputMode;
     char* input;
@@ -138,7 +146,7 @@ typedef void (*ntg_stream_callback)(uint32_t, int64_t, ntg_stream_type_enum, voi
 
 typedef void (*ntg_upgrade_callback)(uint32_t, int64_t, ntg_media_state_struct, void*);
 
-typedef void (*ntg_disconnect_callback)(uint32_t, int64_t, void*);
+typedef void (*ntg_connection_callback)(uint32_t, int64_t, ntg_connection_state_enum, void*);
 
 typedef void (*ntg_signaling_callback)(uint32_t, int64_t, uint8_t*, int, void*);
 
@@ -209,7 +217,7 @@ NTG_C_EXPORT int ntg_on_stream_end(uint32_t uid, ntg_stream_callback callback, v
 
 NTG_C_EXPORT int ntg_on_upgrade(uint32_t uid, ntg_upgrade_callback callback, void* userData);
 
-NTG_C_EXPORT int ntg_on_disconnect(uint32_t uid, ntg_disconnect_callback callback, void* userData);
+NTG_C_EXPORT int ntg_on_connection_change(uint32_t uid, ntg_connection_callback callback, void* userData);
 
 NTG_C_EXPORT int ntg_on_signaling_data(uint32_t uid, ntg_signaling_callback callback, void* userData);
 

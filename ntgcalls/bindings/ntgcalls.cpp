@@ -139,6 +139,22 @@ ntg_log_level_enum parseLevel(const ntgcalls::LogSink::Level level) {
     }
 }
 
+ntg_connection_state_enum parseConnectionState(const ntgcalls::CallInterface::ConnectionState state) {
+    switch (state) {
+        case ntgcalls::CallInterface::ConnectionState::Connecting:
+            return NTG_STATE_CONNECTING;
+        case ntgcalls::CallInterface::ConnectionState::Connected:
+            return NTG_STATE_CONNECTED;
+        case ntgcalls::CallInterface::ConnectionState::Timeout:
+            return NTG_STATE_TIMEOUT;
+        case ntgcalls::CallInterface::ConnectionState::Failed:
+            return NTG_STATE_FAILED;
+        case ntgcalls::CallInterface::ConnectionState::Closed:
+            return NTG_STATE_CLOSED;
+    }
+    return {};
+}
+
 ntg_log_source_enum parseSource(const ntgcalls::LogSink::Source source) {
     switch (source) {
         case ntgcalls::LogSink::Source::WebRTC:
@@ -659,10 +675,10 @@ int ntg_on_upgrade(const uint32_t uid, ntg_upgrade_callback callback, void* user
     return 0;
 }
 
-int ntg_on_disconnect(const uint32_t uid, ntg_disconnect_callback callback, void* userData) {
+int ntg_on_connection_change(const uint32_t uid, ntg_connection_callback callback, void* userData) {
     try {
-        safeUID(uid)->onDisconnect([uid, callback, userData](const int64_t chatId) {
-            callback(uid, chatId, userData);
+        safeUID(uid)->onConnectionChange([uid, callback, userData](const int64_t chatId, const ntgcalls::CallInterface::ConnectionState state) {
+            callback(uid, chatId, parseConnectionState(state), userData);
         });
     } catch (ntgcalls::InvalidUUID&) {
         return NTG_INVALID_UID;
