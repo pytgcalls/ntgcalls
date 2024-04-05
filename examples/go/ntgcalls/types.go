@@ -4,12 +4,13 @@ package ntgcalls
 import "C"
 
 type StreamType int
+type ConnectionState int
 type StreamStatus int
 type InputMode int
 
 type StreamEndCallback func(chatId int64, streamType StreamType)
-type UpgradeCallback func(chatId int64, streamType MediaState)
-type DisconnectCallback func(chatId int64)
+type UpgradeCallback func(chatId int64, state MediaState)
+type ConnectionChangeCallback func(chatId int64, state ConnectionState)
 type SignalCallback func(chatId int64, signal []byte)
 
 const (
@@ -30,8 +31,15 @@ const (
 	IdlingStream
 )
 
-func (ctx InputMode) ParseToC() C.ntg_input_mode_enum {
+const (
+	Connecting ConnectionState = iota
+	Connected
+	Failed
+	Timeout
+	Closed
+)
 
+func (ctx InputMode) ParseToC() C.ntg_input_mode_enum {
 	switch ctx {
 	case InputModeFile:
 		return C.NTG_FILE
@@ -39,6 +47,7 @@ func (ctx InputMode) ParseToC() C.ntg_input_mode_enum {
 		return C.NTG_SHELL
 	case InputModeFFmpeg:
 		return C.NTG_FFMPEG
+	default:
+		return C.NTG_FILE
 	}
-	return C.NTG_FILE
 }

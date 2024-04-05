@@ -3,7 +3,7 @@ package ntgcalls
 //#include "ntgcalls.h"
 //extern void handleStream(uint32_t uid, int64_t chatID, ntg_stream_type_enum streamType, void*);
 //extern void handleUpgrade(uint32_t uid, int64_t chatID, ntg_media_state_struct state, void*);
-//extern void handleDisconnect(uint32_t uid, int64_t chatID, void*);
+//extern void handleConnectionChange(uint32_t uid, int64_t chatID, ntg_connection_state_enum state, void*);
 //extern void handleSignal(uint32_t uid, int64_t chatID, uint8_t*, int, void*);
 import "C"
 import (
@@ -13,7 +13,7 @@ import (
 
 var handlerEnd = make(map[uint32][]StreamEndCallback)
 var handlerUpgrade = make(map[uint32][]UpgradeCallback)
-var handlerDisconnect = make(map[uint32][]DisconnectCallback)
+var handlerConnectionChange = make(map[uint32][]ConnectionChangeCallback)
 var handlerSignal = make(map[uint32][]SignalCallback)
 
 func NTgCalls() *Client {
@@ -23,8 +23,8 @@ func NTgCalls() *Client {
 	}
 	C.ntg_on_stream_end(C.uint32_t(instance.uid), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStream)), nil)
 	C.ntg_on_upgrade(C.uint32_t(instance.uid), (C.ntg_upgrade_callback)(unsafe.Pointer(C.handleUpgrade)), nil)
-	C.ntg_on_disconnect(C.uint32_t(instance.uid), (C.ntg_disconnect_callback)(unsafe.Pointer(C.handleDisconnect)), nil)
 	C.ntg_on_signaling_data(C.uint32_t(instance.uid), (C.ntg_signaling_callback)(unsafe.Pointer(C.handleSignal)), nil)
+	C.ntg_on_connection_change(C.uint32_t(instance.uid), (C.ntg_connection_callback)(unsafe.Pointer(C.handleConnectionChange)), nil)
 	return instance
 }
 
@@ -61,17 +61,6 @@ func handleUpgrade(uid C.uint32_t, chatID C.int64_t, state C.ntg_media_state_str
 	}
 }
 
-//export handleDisconnect
-func handleDisconnect(uid C.uint32_t, chatID C.int64_t, _ unsafe.Pointer) {
-	goChatID := int64(chatID)
-	goUID := uint32(uid)
-	if handlerDisconnect[goUID] != nil {
-		for _, x0 := range handlerDisconnect[goUID] {
-			go x0(goChatID)
-		}
-	}
-}
-
 //export handleSignal
 func handleSignal(uid C.uint32_t, chatID C.int64_t, data *C.uint8_t, size C.int, _ unsafe.Pointer) {
 	goChatID := int64(chatID)
@@ -79,6 +68,30 @@ func handleSignal(uid C.uint32_t, chatID C.int64_t, data *C.uint8_t, size C.int,
 	if handlerSignal[goUID] != nil {
 		for _, x0 := range handlerSignal[goUID] {
 			go x0(goChatID, C.GoBytes(unsafe.Pointer(data), size))
+		}
+	}
+}
+
+//export handleConnectionChange
+func handleConnectionChange(uid C.uint32_t, chatID C.int64_t, state C.ntg_connection_state_enum, _ unsafe.Pointer) {
+	goChatID := int64(chatID)
+	goUID := uint32(uid)
+	var goState ConnectionState
+	switch state {
+	case C.NTG_STATE_CONNECTING:
+		goState = Connecting
+	case C.NTG_STATE_CONNECTED:
+		goState = Connected
+	case C.NTG_STATE_FAILED:
+		goState = Failed
+	case C.NTG_STATE_TIMEOUT:
+		goState = Timeout
+	case C.NTG_STATE_CLOSED:
+		goState = Closed
+	}
+	if handlerConnectionChange[goUID] != nil {
+		for _, x0 := range handlerConnectionChange[goUID] {
+			go x0(goChatID, goState)
 		}
 	}
 }
@@ -91,8 +104,8 @@ func (ctx *Client) OnUpgrade(callback UpgradeCallback) {
 	handlerUpgrade[ctx.uid] = append(handlerUpgrade[ctx.uid], callback)
 }
 
-func (ctx *Client) OnDisconnect(callback DisconnectCallback) {
-	handlerDisconnect[ctx.uid] = append(handlerDisconnect[ctx.uid], callback)
+func (ctx *Client) OnConnectionChange(callback ConnectionChangeCallback) {
+	handlerConnectionChange[ctx.uid] = append(handlerConnectionChange[ctx.uid], callback)
 }
 
 func (ctx *Client) OnSignal(callback SignalCallback) {
@@ -343,7 +356,7 @@ func (ctx *Client) Free() {
 	C.ntg_destroy(C.uint32_t(ctx.uid))
 	delete(handlerEnd, ctx.uid)
 	delete(handlerUpgrade, ctx.uid)
-	delete(handlerDisconnect, ctx.uid)
+	delete(handlerConnectionChange, ctx.uid)
 	delete(handlerSignal, ctx.uid)
 	ctx.exists = false
 }
