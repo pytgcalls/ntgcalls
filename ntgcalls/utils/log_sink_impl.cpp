@@ -25,7 +25,7 @@ namespace ntgcalls {
         rtc::LogMessage::LogToDebug(rtc::LS_INFO);
 #endif
         rtc::LogMessage::SetLogToStderr(false);
-        rtc::LogMessage::AddLogToStream(this, rtc::LS_INFO);
+        rtc::LogMessage::AddLogToStream(this, rtc::LS_VERBOSE);
 #ifdef PYTHON_ENABLED
         THREAD_SAFE
         const auto loggingLib = py::module::import("logging");
