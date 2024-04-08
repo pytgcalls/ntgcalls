@@ -238,7 +238,7 @@ jobs:
 
       - name: Create Release
         id: create-new-release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v2.0.4
         with:
           files: |
             ./releases/*
