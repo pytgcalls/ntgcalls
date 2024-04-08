@@ -79,6 +79,7 @@ namespace ntgcalls {
                         rtcServer.login = *server.username;
                         rtcServer.password = *server.password;
                         rtcServer.isTurn = true;
+                        wrtcServers.push_back(rtcServer);
                         RTC_LOG(LS_INFO) << "TURN server: turn:" << rtcServer.host << ":" << rtcServer.port << " username: " << rtcServer.login << " password: " << rtcServer.password;
                     };
                     pushTurn(server.ipv4);
