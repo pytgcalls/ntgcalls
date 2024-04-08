@@ -54,7 +54,7 @@ jobs:
             build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\"}"
           fi
           if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"macos-14\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-x86_64\",\"cibw_os_build\":\"macosx_\"}"
+            build_list+=",{\"os\":\"macos-14\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
           fi
           if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
             build_list+=",{\"os\":\"windows-2019\",\"cibw_archs\":\"native\",\"shared_name\":\"windows-x86_64\"}"
@@ -164,7 +164,7 @@ jobs:
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp36-* cp37-*
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_TEST_SKIP: "cp38-macosx_*:arm64 *-manylinux_aarch64"
+          CIBW_TEST_SKIP: "cp38-macosx_arm64 *-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
 
