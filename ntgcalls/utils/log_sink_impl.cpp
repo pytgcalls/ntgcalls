@@ -44,6 +44,7 @@ namespace ntgcalls {
     LogSink::~LogSink() {
         rtc::LogMessage::RemoveLogToStream(this);
         thread->Stop();
+        thread.reset();
     }
 
 #ifdef PYTHON_ENABLED

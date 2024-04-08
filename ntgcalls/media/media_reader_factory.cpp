@@ -19,7 +19,7 @@ namespace ntgcalls {
         }
     }
 
-    std::shared_ptr<BaseReader> MediaReaderFactory::fromInput(const BaseMediaDescription& desc, const int64_t bufferSize) {
+    std::unique_ptr<BaseReader> MediaReaderFactory::fromInput(const BaseMediaDescription& desc, const int64_t bufferSize) {
         constexpr auto allowedFlags = BaseMediaDescription::InputMode::NoLatency;
         bool noLatency = desc.inputMode & BaseMediaDescription::InputMode::NoLatency;
         // SUPPORTED ENCODERS
@@ -51,8 +51,8 @@ namespace ntgcalls {
         if (video) {
             video->close();
         }
-        audio = nullptr;
-        video = nullptr;
+        audio.reset();
+        video.reset();
     }
 
 } // ntgcalls

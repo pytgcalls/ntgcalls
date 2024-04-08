@@ -12,18 +12,22 @@ namespace ntgcalls {
 
     Stream::~Stream() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
+        std::unique_lock lock(mutex);
+        onEOF = nullptr;
+        lock.unlock();
         quit = true;
         if (thread.joinable()) {
             thread.join();
         }
         RTC_LOG(LS_VERBOSE) << "Thread joined";
-        std::lock_guard lock(mutex);
+        lock.lock();
         idling = false;
-        audio = nullptr;
-        video = nullptr;
+        audio.reset();
+        video.reset();
         audioTrack = nullptr;
         videoTrack = nullptr;
-        reader = nullptr;
+        reader.reset();
+        workerThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
 
@@ -34,13 +38,13 @@ namespace ntgcalls {
 
     void Stream::checkStream() const {
         if (reader->audio && reader->audio->eof()) {
-            reader->audio = nullptr;
+            reader->audio.reset();
             workerThread->PostTask([&] {
                 (void) onEOF(Audio);
             });
         }
         if (reader->video && reader->video->eof()) {
-            reader->video = nullptr;
+            reader->video.reset();
             workerThread->PostTask([&] {
                 (void) onEOF(Video);
             });
@@ -93,8 +97,8 @@ namespace ntgcalls {
     MediaState Stream::getState() {
         std::shared_lock lock(mutex);
         return MediaState{
-            (audioTrack ? audioTrack->isMuted() : false) && (videoTrack ? videoTrack->isMuted() : false),
-            idling || (videoTrack ? videoTrack->isMuted() : false),
+            (audioTrack ? !audioTrack->enabled() : false) && (videoTrack ? !videoTrack->enabled() : false),
+            idling || (videoTrack ? !videoTrack->enabled() : false),
             !hasVideo
         };
     }
@@ -132,22 +136,22 @@ namespace ntgcalls {
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     lock.lock();
                 } else {
-                    std::shared_ptr<BaseStreamer> bs;
-                    std::shared_ptr<BaseReader> br;
+                    BaseStreamer* bs;
+                    BaseReader* br;
                     if (reader->audio && reader->video) {
                         if (audio->nanoTime() <= video->nanoTime()) {
-                            bs = audio;
-                            br = reader->audio;
+                            bs = audio.get();
+                            br = reader->audio.get();
                         } else {
-                            bs = video;
-                            br = reader->video;
+                            bs = video.get();
+                            br = reader->video.get();
                         }
                     } else if (reader->audio) {
-                        bs = audio;
-                        br = reader->audio;
+                        bs = audio.get();
+                        br = reader->audio.get();
                     } else {
-                        bs = video;
-                        br = reader->video;
+                        bs = video.get();
+                        br = reader->video.get();
                     }
                     if (auto [sample, captureTime] = br->read(); sample && bs) {
                         if (const auto waitTime = bs->waitTime(); std::chrono::duration_cast<std::chrono::milliseconds>(waitTime).count() > 0) {
@@ -155,7 +159,7 @@ namespace ntgcalls {
                             std::this_thread::sleep_for(waitTime);
                             lock.lock();
                         }
-                        bs->sendData(sample, captureTime);
+                        bs->sendData(sample.get(), captureTime);
                     }
                     checkStream();
                 }
@@ -188,12 +192,12 @@ namespace ntgcalls {
     bool Stream::updateMute(const bool isMuted) {
         std::lock_guard lock(mutex);
         bool changed = false;
-        if (audioTrack && audioTrack->isMuted() != isMuted) {
-            audioTrack->Mute(isMuted);
+        if (audioTrack && !audioTrack->enabled() != isMuted) {
+            audioTrack->set_enabled(!isMuted);
             changed = true;
         }
-        if (videoTrack && videoTrack->isMuted() != isMuted) {
-            videoTrack->Mute(isMuted);
+        if (videoTrack && !videoTrack->enabled() != isMuted) {
+            videoTrack->set_enabled(!isMuted);
             changed = true;
         }
         if (changed) {

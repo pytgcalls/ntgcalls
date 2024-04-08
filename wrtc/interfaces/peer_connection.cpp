@@ -115,11 +115,11 @@ namespace wrtc {
         peerConnection->AddIceCandidate(parseIceCandidate(rawCandidate));
     }
 
-    void PeerConnection::addTrack(MediaStreamTrack *mediaStreamTrack) {
+    void PeerConnection::addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
         if (!peerConnection) {
             throw RTCException("Cannot add track; PeerConnection is closed");
         }
-        if (const auto result = peerConnection->AddTrack(mediaStreamTrack->track(), {}); !result.ok()) {
+        if (const auto result = peerConnection->AddTrack(track, {}); !result.ok()) {
             throw wrapRTCError(result.error());
         }
     }
@@ -154,16 +154,10 @@ namespace wrtc {
             dataChannel = nullptr;
         }
         if (dataChannelObserver) {
-            dataChannelObserver = nullptr;
+            dataChannelObserver.reset();
         }
         if (peerConnection) {
             peerConnection->Close();
-            if (peerConnection->GetConfiguration().sdp_semantics == webrtc::SdpSemantics::kUnifiedPlan) {
-                for (const auto &transceiver: peerConnection->GetTransceivers()) {
-                    const auto track = MediaStreamTrack::holder()->GetOrCreate(transceiver->receiver()->track());
-                    track->OnPeerConnectionClosed();
-                }
-            }
             peerConnection = nullptr;
         }
         NetworkInterface::close();

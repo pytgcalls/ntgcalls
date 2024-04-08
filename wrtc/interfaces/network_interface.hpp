@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include "media/tracks/media_stream_track.hpp"
 #include "peer_connection/peer_connection_factory.hpp"
 #include "wrtc/enums.hpp"
 #include "wrtc/models/ice_candidate.hpp"
@@ -45,7 +44,7 @@ namespace wrtc {
 
         virtual void addIceCandidate(const IceCandidate& rawCandidate) const = 0;
 
-        virtual void addTrack(MediaStreamTrack *mediaStreamTrack) = 0;
+        virtual void addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) = 0;
 
         bool isDataChannelOpen() const;
     };

@@ -25,10 +25,13 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
         std::lock_guard lock(mutex);
         connections = {};
-        hardwareInfo = nullptr;
+        hardwareInfo.reset();
         workerThread->Stop();
         networkThread->Stop();
         updateThread->Stop();
+        workerThread.reset();
+        networkThread.reset();
+        updateThread.reset();
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
         LogSink::UnRef();
     }
@@ -42,7 +45,7 @@ namespace ntgcalls {
             END_WORKER
         });
         if (connections[chatId]->type() & CallInterface::Type::Group) {
-            SafeCall<GroupCall>(connections[chatId])->onUpgrade([this, chatId](const MediaState &state) {
+            SafeCall<GroupCall>(connections[chatId].get())->onUpgrade([this, chatId](const MediaState &state) {
                 WORKER("onUpgrade", updateThread, this, chatId, state)
                 THREAD_SAFE
                 (void) mediaStateCallback(chatId, state);
@@ -67,7 +70,7 @@ namespace ntgcalls {
             END_WORKER
         });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
-            SafeCall<P2PCall>(connections[chatId])->onSignalingData([this, chatId](const bytes::binary& data) {
+            SafeCall<P2PCall>(connections[chatId].get())->onSignalingData([this, chatId](const bytes::binary& data) {
                 WORKER("onSignalingData", updateThread, this, chatId, data)
                 THREAD_SAFE
                 (void) emitCallaback(chatId, CAST_BYTES(data));
@@ -83,7 +86,7 @@ namespace ntgcalls {
         CHECK_AND_THROW_IF_EXISTS(userId)
         connections[userId] = std::make_shared<P2PCall>(updateThread.get());
         setupListeners(userId);
-        const auto result = SafeCall<P2PCall>(connections[userId])->init(g, p, r, g_a_hash, media);
+        const auto result = SafeCall<P2PCall>(connections[userId].get())->init(g, p, r, g_a_hash, media);
         END_ASYNC_RETURN_SAFE(CAST_BYTES(result))
     }
 
@@ -104,7 +107,7 @@ namespace ntgcalls {
         CHECK_AND_THROW_IF_EXISTS(chatId)
         connections[chatId] = std::make_shared<GroupCall>(updateThread.get());
         setupListeners(chatId);
-        END_ASYNC_RETURN(SafeCall<GroupCall>(connections[chatId])->init(media))
+        END_ASYNC_RETURN(SafeCall<GroupCall>(connections[chatId].get())->init(media))
     }
 
     ASYNC_RETURN(void) NTgCalls::connect(const int64_t chatId, const std::string& params) {
@@ -212,12 +215,12 @@ namespace ntgcalls {
         return connections.contains(chatId);
     }
 
-    std::shared_ptr<CallInterface> NTgCalls::safeConnection(const int64_t chatId) {
+    CallInterface* NTgCalls::safeConnection(const int64_t chatId) {
         std::lock_guard lock(mutex);
         if (!exists(chatId)) {
             THROW_CONNECTION_NOT_FOUND(chatId)
         }
-        return connections[chatId];
+        return connections[chatId].get();
     }
 
     Protocol NTgCalls::getProtocol() {
@@ -231,11 +234,11 @@ namespace ntgcalls {
     }
 
     template<typename DestCallType, typename BaseCallType>
-    DestCallType* NTgCalls::SafeCall(const std::shared_ptr<BaseCallType>& call) {
+    DestCallType* NTgCalls::SafeCall(BaseCallType* call) {
         if (!call) {
             return nullptr;
         }
-        if (auto* derivedCall = dynamic_cast<DestCallType*>(call.get())) {
+        if (auto* derivedCall = dynamic_cast<DestCallType*>(call)) {
             return derivedCall;
         }
         throw ConnectionError("Invalid call type");

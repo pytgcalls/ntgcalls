@@ -28,9 +28,9 @@ namespace ntgcalls {
 
         ~VideoStreamer();
 
-        wrtc::MediaStreamTrack *createTrack() override;
+        rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() override;
 
-        void sendData(const bytes::shared_binary& sample, int64_t absolute_capture_timestamp_ms) override;
+        void sendData(uint8_t* sample, int64_t absolute_capture_timestamp_ms) override;
 
         int64_t frameSize() override;
 

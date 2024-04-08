@@ -40,12 +40,12 @@ namespace ntgcalls {
 
         bool exists(int64_t chatId) const;
 
-        std::shared_ptr<CallInterface> safeConnection(int64_t chatId);
+        CallInterface* safeConnection(int64_t chatId);
 
         void setupListeners(int64_t chatId);
 
         template<typename DestCallType, typename BaseCallType>
-        static DestCallType* SafeCall(const std::shared_ptr<BaseCallType>& call);
+        static DestCallType* SafeCall(BaseCallType* call);
 
         void remove(int64_t chatId);
 

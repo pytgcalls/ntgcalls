@@ -13,7 +13,7 @@
 namespace wrtc {
     class i420ImageData {
         uint16_t width, height;
-        bytes::shared_binary contents;
+        uint8_t* contents;
 
         [[nodiscard]] size_t sizeOfLuminancePlane() const;
 
@@ -27,7 +27,7 @@ namespace wrtc {
 
 
     public:
-        i420ImageData(uint16_t width, uint16_t height, const bytes::shared_binary& contents);
+        i420ImageData(uint16_t width, uint16_t height, uint8_t* contents);
 
         ~i420ImageData();
 

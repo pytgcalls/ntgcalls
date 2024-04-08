@@ -12,7 +12,6 @@
 #include "../exceptions.hpp"
 #include "../utils/syncronized_callback.hpp"
 #include "../models/rtc_session_description.hpp"
-#include "media/tracks/media_stream_track.hpp"
 #include "wrtc/models/ice_candidate.hpp"
 #include "peer_connection/data_channel_observer_impl.hpp"
 #include "wrtc/utils/binary.hpp"
@@ -35,7 +34,7 @@ namespace wrtc {
 
         void setRemoteDescription(const Description &description) const;
 
-        void addTrack(MediaStreamTrack *mediaStreamTrack) override;
+        void addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
 
         void addIceCandidate(const IceCandidate& rawCandidate) const override;
 

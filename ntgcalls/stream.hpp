@@ -55,9 +55,9 @@ namespace ntgcalls {
         void onUpgrade(const std::function<void(MediaState)> &callback);
 
     private:
-        std::shared_ptr<AudioStreamer> audio;
-        std::shared_ptr<VideoStreamer> video;
-        wrtc::MediaStreamTrack *audioTrack{}, *videoTrack{};
+        std::unique_ptr<AudioStreamer> audio;
+        std::unique_ptr<VideoStreamer> video;
+        rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> audioTrack, videoTrack;
         std::unique_ptr<MediaReaderFactory> reader;
         bool idling = false;
         std::atomic_bool hasVideo = false, changing = false, quit = false;

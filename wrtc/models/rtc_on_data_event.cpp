@@ -6,7 +6,7 @@
 
 namespace wrtc {
 
-  RTCOnDataEvent::RTCOnDataEvent(const bytes::shared_binary& data, const uint16_t length) {
+  RTCOnDataEvent::RTCOnDataEvent(uint8_t* data, const uint16_t length) {
     audioData = data;
     numberOfFrames = length;
   }

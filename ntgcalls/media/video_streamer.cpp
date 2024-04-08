@@ -13,18 +13,18 @@ namespace ntgcalls {
         fps = 0;
         w = 0;
         h = 0;
-        video = nullptr;
+        video.reset();
     }
 
     std::chrono::nanoseconds VideoStreamer::frameTime() {
         return std::chrono::microseconds(static_cast<uint64_t>(1000.0 * 1000.0 / static_cast<double_t>(fps))); // ms
     }
 
-    wrtc::MediaStreamTrack *VideoStreamer::createTrack() {
+    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> VideoStreamer::createTrack() {
         return video->createTrack();
     }
 
-    void VideoStreamer::sendData(const bytes::shared_binary& sample, const int64_t absolute_capture_timestamp_ms) {
+    void VideoStreamer::sendData(uint8_t* sample, const int64_t absolute_capture_timestamp_ms) {
         BaseStreamer::sendData(sample, absolute_capture_timestamp_ms);
         video->OnFrame(
             wrtc::i420ImageData(

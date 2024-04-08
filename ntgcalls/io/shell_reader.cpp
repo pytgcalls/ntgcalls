@@ -20,14 +20,14 @@ namespace ntgcalls {
         stdIn.clear();
     }
 
-    bytes::shared_binary ShellReader::readInternal(const int64_t size) {
+    bytes::unique_binary ShellReader::readInternal(const int64_t size) {
         if (!stdOut || stdOut.eof() || stdOut.fail() || !stdOut.is_open()) {
             RTC_LOG(LS_WARNING) << "Reached end of the file";
             throw EOFError("Reached end of the stream");
         }
-        auto file_data = bytes::make_shared_binary(size);
+        auto file_data = bytes::make_unique_binary(size);
         stdOut.read(reinterpret_cast<char*>(file_data.get()), size);
-        return file_data;
+        return std::move(file_data);
     }
 
     void ShellReader::close() {

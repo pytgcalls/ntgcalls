@@ -11,15 +11,15 @@ namespace ntgcalls {
 
     CallInterface::~CallInterface() {
         RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
-        onStreamEnd(nullptr);
-        onConnectionChange(nullptr);
-        stream = nullptr;
+        std::lock_guard lock(mutex);
+        connectionChangeCallback = nullptr;
+        stream.reset();
         if (connection) {
             connection->onConnectionChange(nullptr);
             connection->close();
             RTC_LOG(LS_VERBOSE) << "Connection closed";
         }
-        connection = nullptr;
+        connection.reset();
         workerThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
     }

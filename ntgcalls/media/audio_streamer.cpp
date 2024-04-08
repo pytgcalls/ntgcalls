@@ -13,10 +13,10 @@ namespace ntgcalls {
         bps = 0;
         rate = 0;
         channels = 0;
-        audio = nullptr;
+        audio.reset();
     }
 
-    wrtc::MediaStreamTrack *AudioStreamer::createTrack() {
+    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> AudioStreamer::createTrack() {
         return audio->createTrack();
     }
 
@@ -24,7 +24,7 @@ namespace ntgcalls {
         return std::chrono::milliseconds(10); // ms
     }
 
-    void AudioStreamer::sendData(const bytes::shared_binary& sample, const int64_t absolute_capture_timestamp_ms) {
+    void AudioStreamer::sendData(uint8_t* sample, const int64_t absolute_capture_timestamp_ms) {
         BaseStreamer::sendData(sample, absolute_capture_timestamp_ms);
         auto event = wrtc::RTCOnDataEvent(sample, frameSize() / (2 * channels));
         event.channelCount = channels;

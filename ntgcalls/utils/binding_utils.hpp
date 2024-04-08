@@ -65,21 +65,30 @@ py::gil_scoped_acquire acquire;
 #define SMART_ASYNC(worker, ...) \
 auto promise = loop.attr("create_future")(); \
 auto functionName = __FUNCTION__;\
-WORKER(functionName, worker, functionName, promise = promise.inc_ref(), __VA_ARGS__)\
-try {
+WORKER(functionName, worker, functionName, promisePtr = promise.ptr(), __VA_ARGS__)\
+try {\
+if (promisePtr == nullptr) {\
+return;\
+}
 
 #define CLOSE_ASYNC(...) \
 RTC_LOG(LS_VERBOSE) << "Acquiring GIL for setResult"; \
 py::gil_scoped_acquire acquire;\
 RTC_LOG(LS_VERBOSE) << "GIL acquired for setResult";\
+if (promisePtr == nullptr) {\
+return;\
+}\
+const auto promise = py::reinterpret_borrow<py::object>(promisePtr);\
 loop.attr("call_soon_threadsafe")(promise.attr("set_result"), __VA_ARGS__); \
-promise.dec_ref();\
 } catch (const std::exception& e) {\
 RTC_LOG(LS_VERBOSE) << "Acquiring GIL for setException"; \
 py::gil_scoped_acquire acquire;\
 RTC_LOG(LS_VERBOSE) << "GIL acquired for setException";\
+if (promisePtr == nullptr) {\
+return;\
+}\
+const auto promise = py::reinterpret_borrow<py::object>(promisePtr);\
 loop.attr("call_soon_threadsafe")(promise.attr("set_exception"), translate_current_exception());\
-promise.dec_ref();\
 }\
 END_WORKER \
 return promise;

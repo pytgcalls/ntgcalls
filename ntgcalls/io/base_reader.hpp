@@ -12,7 +12,7 @@
 
 namespace ntgcalls {
     class BaseReader {
-        std::queue<bytes::shared_binary> buffer;
+        std::queue<bytes::unique_binary> buffer;
         std::mutex mutex;
         std::condition_variable bufferCondition;
         std::atomic_bool _eof = false, noLatency = false, quit = false;
@@ -22,14 +22,13 @@ namespace ntgcalls {
     protected:
         int64_t readChunks = 0;
 
+        virtual bytes::unique_binary readInternal(int64_t size) = 0;
+    public:
         explicit BaseReader(int64_t bufferSize, bool noLatency);
 
         virtual ~BaseReader();
 
-        virtual bytes::shared_binary readInternal(int64_t size) = 0;
-
-    public:
-        std::pair<bytes::shared_binary, int64_t> read();
+        std::pair<bytes::unique_binary, int64_t> read();
 
         [[nodiscard]] bool eof();
 

@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace bytes {
-    using shared_binary = std::shared_ptr<uint8_t[]>;
+    using unique_binary = std::unique_ptr<uint8_t[]>;
     using binary = std::vector<uint8_t>;
 
     using byte = std::byte;
@@ -31,8 +31,8 @@ namespace bytes {
         return std::as_bytes(make_span(container));
     }
 
-    inline shared_binary make_shared_binary(const size_t size) {
-        return std::make_shared<uint8_t[]>(size);
+    inline unique_binary make_unique_binary(const size_t size) {
+        return std::make_unique<uint8_t[]>(size);
     }
 
     template <typename Container>

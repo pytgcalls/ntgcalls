@@ -18,20 +18,20 @@ namespace ntgcalls {
         source.clear();
     }
 
-    bytes::shared_binary FileReader::readInternal(const int64_t size) {
+    bytes::unique_binary FileReader::readInternal(const int64_t size) {
         if (!source || source.eof() || source.fail() || !source.is_open()) {
             RTC_LOG(LS_WARNING) << "Reached end of the file";
             throw EOFError("Reached end of the file");
         }
         source.seekg(readChunks, std::ios::beg);
-        auto file_data = bytes::make_shared_binary(size);
+        auto file_data = bytes::make_unique_binary(size);
         source.read(reinterpret_cast<char*>(file_data.get()), size);
         readChunks += size;
         if (source.fail()) {
             RTC_LOG(LS_ERROR) << "Error while reading the file";
             throw FileError("Error while reading the file");
         }
-        return file_data;
+        return std::move(file_data);
     }
 
     void FileReader::close() {
