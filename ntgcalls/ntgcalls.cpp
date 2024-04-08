@@ -22,8 +22,10 @@ namespace ntgcalls {
     }
 
     NTgCalls::~NTgCalls() {
+#ifdef PYTHON_ENABLED
+        py::gil_scoped_release release;
+#endif
         RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
-        std::lock_guard lock(mutex);
         connections = {};
         hardwareInfo.reset();
         workerThread->Stop();
