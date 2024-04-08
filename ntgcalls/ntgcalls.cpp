@@ -25,9 +25,11 @@ namespace ntgcalls {
 #ifdef PYTHON_ENABLED
         py::gil_scoped_release release;
 #endif
+        std::unique_lock lock(mutex);
         RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
         connections = {};
         hardwareInfo.reset();
+        lock.unlock();
         workerThread->Stop();
         networkThread->Stop();
         updateThread->Stop();
