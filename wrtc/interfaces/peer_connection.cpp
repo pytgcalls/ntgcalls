@@ -10,10 +10,13 @@
 
 namespace wrtc {
 
-    PeerConnection::PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers, const bool allowAttachDataChannel): allowAttachDataChannel(allowAttachDataChannel) {
+    PeerConnection::PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers, const bool allowAttachDataChannel, const bool allowP2P): allowAttachDataChannel(allowAttachDataChannel) {
         webrtc::PeerConnectionInterface::RTCConfiguration config;
-        // TODO: Temporary fix for P2P calls
-        config.type = webrtc::PeerConnectionInterface::IceTransportsType::kAll;
+        if (allowP2P) {
+            config.type = webrtc::PeerConnectionInterface::IceTransportsType::kAll;
+        } else {
+            config.type = webrtc::PeerConnectionInterface::IceTransportsType::kRelay;
+        }
         config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
         config.bundle_policy = webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle;
         config.servers = servers;

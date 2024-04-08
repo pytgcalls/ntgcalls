@@ -101,7 +101,8 @@ namespace ntgcalls {
         protocolVersion = signaling::Signaling::matchVersion(versions);
         connection = std::make_unique<wrtc::PeerConnection>(
             RTCServer::toIceServers(servers),
-            true
+            true,
+            p2pAllowed
         );
         Safe<wrtc::PeerConnection>(connection)->onRenegotiationNeeded([this] {
             if (makingNegotation) {
