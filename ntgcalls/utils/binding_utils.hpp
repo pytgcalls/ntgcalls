@@ -15,8 +15,8 @@ RTC_LOG(LS_INFO) << "Worker finished";\
 
 #ifdef PYTHON_ENABLED
 #include "wrtc/utils/binary.hpp"
-#include <pybind11/stl.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 namespace py = pybind11;
 
 template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
@@ -62,44 +62,12 @@ py::gil_scoped_acquire acquire;
 
 #define INIT_ASYNC loop = py::module::import("asyncio").attr("get_event_loop")();
 
-#define SMART_ASYNC(worker, ...) \
-auto promise = loop.attr("create_future")(); \
-auto functionName = __FUNCTION__;\
-WORKER(functionName, worker, functionName, promisePtr = promise.ptr(), __VA_ARGS__)\
-try {\
-if (promisePtr == nullptr) {\
-return;\
-}
+#define DESTROY_ASYNC
 
-#define CLOSE_ASYNC(...) \
-RTC_LOG(LS_VERBOSE) << "Acquiring GIL for setResult"; \
-py::gil_scoped_acquire acquire;\
-RTC_LOG(LS_VERBOSE) << "GIL acquired for setResult";\
-if (promisePtr == nullptr) {\
-return;\
-}\
-const auto promise = py::reinterpret_borrow<py::object>(promisePtr);\
-loop.attr("call_soon_threadsafe")(promise.attr("set_result"), __VA_ARGS__); \
-} catch (const std::exception& e) {\
-RTC_LOG(LS_VERBOSE) << "Acquiring GIL for setException"; \
-py::gil_scoped_acquire acquire;\
-RTC_LOG(LS_VERBOSE) << "GIL acquired for setException";\
-if (promisePtr == nullptr) {\
-return;\
-}\
-const auto promise = py::reinterpret_borrow<py::object>(promisePtr);\
-loop.attr("call_soon_threadsafe")(promise.attr("set_exception"), translate_current_exception());\
-}\
-END_WORKER \
-return promise;
+#define SMART_ASYNC(...) \
+return loop.attr("run_in_executor")(nullptr, py::cpp_function([__VA_ARGS__](){
 
-#define END_ASYNC CLOSE_ASYNC(nullptr)
-
-#define END_ASYNC_RETURN_SAFE(...) CLOSE_ASYNC(__VA_ARGS__)
-
-#define END_ASYNC_RETURN(...) \
-auto result = __VA_ARGS__; \
-CLOSE_ASYNC(result)
+#define END_ASYNC }));
 
 #else
 #include <functional>
@@ -143,9 +111,15 @@ public:
     }
 };
 
-#define INIT_ASYNC
+#define INIT_ASYNC \
+    asyncWorker = rtc::Thread::Create();\
+    asyncWorker->Start();
 
-#define ASYNC_ARGS
+#define DESTROY_ASYNC \
+    asyncWorker->Stop();\
+    asyncWorker.reset();
+
+#define ASYNC_ARGS std::unique_ptr<rtc::Thread> asyncWorker;
 
 #define THREAD_SAFE {
 
@@ -159,15 +133,9 @@ public:
 
 #define ASYNC_RETURN(...) AsyncPromise<__VA_ARGS__>
 
-#define SMART_ASYNC(worker, ...) return { worker.get(), [__VA_ARGS__]{
+#define SMART_ASYNC(...) return { asyncWorker.get(), [__VA_ARGS__]{
 
-#define CLOSE_ASYNC(...) }};
-
-#define END_ASYNC CLOSE_ASYNC()
-#define END_ASYNC_RETURN(...) \
-return __VA_ARGS__;\
-CLOSE_ASYNC()
-#define END_ASYNC_RETURN_SAFE(...) END_ASYNC_RETURN(__VA_ARGS__)
+#define END_ASYNC }};
 
 #endif
 

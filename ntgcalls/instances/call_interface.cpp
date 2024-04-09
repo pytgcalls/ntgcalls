@@ -70,6 +70,7 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Connecting...";
         (void) connectionChangeCallback(ConnectionState::Connecting);
         connection->onConnectionChange([this](const wrtc::ConnectionState state) {
+            std::lock_guard lock(mutex);
             switch (state) {
             case wrtc::ConnectionState::Connecting:
                 if (connected) {
@@ -78,7 +79,7 @@ namespace ntgcalls {
                 break;
             case wrtc::ConnectionState::Connected:
                 RTC_LOG(LS_INFO) << "Connection established";
-                if (!connected) {
+                if (!connected && stream) {
                     connected = true;
                     stream->start();
                     RTC_LOG(LS_INFO) << "Stream started";
