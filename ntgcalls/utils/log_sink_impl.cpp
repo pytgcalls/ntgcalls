@@ -138,12 +138,11 @@ namespace ntgcalls {
 #endif
 
     void LogSink::GetOrCreate() {
-        mutex.lock();
+        std::lock_guard lock(mutex);
         references++;
         if (references == 1) {
             instance = rtc::scoped_refptr<LogSink>(new rtc::RefCountedObject<LogSink>());
         }
-        mutex.unlock();
     }
 
     void LogSink::UnRef() {
