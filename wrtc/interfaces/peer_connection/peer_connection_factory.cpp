@@ -130,6 +130,7 @@ namespace wrtc {
         std::lock_guard lock(_mutex);
         _references++;
         if (_references == 1) {
+            rtc::InitializeSSL();
             _default = rtc::scoped_refptr<PeerConnectionFactory>(new rtc::RefCountedObject<PeerConnectionFactory>());
         }
         return _default;
@@ -140,6 +141,7 @@ namespace wrtc {
         _references--;
         if (!_references) {
             _default = nullptr;
+            rtc::CleanupSSL();
         }
     }
 } // wrtc
