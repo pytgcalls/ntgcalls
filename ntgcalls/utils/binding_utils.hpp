@@ -16,6 +16,7 @@ RTC_LOG(LS_INFO) << "Worker finished";\
 #ifdef PYTHON_ENABLED
 #include "wrtc/utils/binary.hpp"
 #include <pybind11/pybind11.h>
+// ReSharper disable once CppUnusedIncludeDirective
 #include <pybind11/stl.h>
 namespace py = pybind11;
 
@@ -65,7 +66,8 @@ py::gil_scoped_acquire acquire;
 #define DESTROY_ASYNC
 
 #define SMART_ASYNC(...) \
-return loop.attr("run_in_executor")(nullptr, py::cpp_function([__VA_ARGS__](){
+return loop.attr("run_in_executor")(py::none(), py::cpp_function([__VA_ARGS__](){\
+py::gil_scoped_release release;
 
 #define END_ASYNC }));
 
