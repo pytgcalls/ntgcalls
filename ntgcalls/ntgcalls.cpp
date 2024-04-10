@@ -84,7 +84,9 @@ namespace ntgcalls {
         connections[userId] = std::make_shared<P2PCall>(updateThread.get());
         setupListeners(userId);
         const auto result = SafeCall<P2PCall>(connections[userId].get())->init(g, p, r, g_a_hash, media);
+        THREAD_SAFE
         return CAST_BYTES(result);
+        END_THREAD_SAFE
         END_ASYNC
     }
 
