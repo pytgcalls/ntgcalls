@@ -598,12 +598,12 @@ int ntg_get_state(const uint32_t uid, const int64_t chatID, ntg_media_state_stru
     PREPARE_ASYNC_END
 }
 
-int ntg_calls(const uint32_t uid, ntg_group_call_struct *buffer, const uint64_t size, ntg_async_struct future) {
+int ntg_calls(const uint32_t uid, ntg_call_struct *buffer, const uint64_t size, ntg_async_struct future) {
     PREPARE_ASYNC(calls)
     [future, buffer, size](const auto callsCpp) {
-        std::vector<ntg_group_call_struct> groupCalls;
+        std::vector<ntg_call_struct> groupCalls;
         for (const auto [fst, snd] : callsCpp) {
-            groupCalls.push_back(ntg_group_call_struct{
+            groupCalls.push_back(ntg_call_struct{
                 fst,
                 parseStatus(snd),
             });

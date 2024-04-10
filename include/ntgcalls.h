@@ -103,7 +103,7 @@ typedef struct {
 typedef struct {
     int64_t chatId;
     ntg_stream_status_enum status;
-} ntg_group_call_struct;
+} ntg_call_struct;
 
 typedef struct {
     bool muted;
@@ -209,7 +209,7 @@ NTG_C_EXPORT int ntg_time(uint32_t uid, int64_t chatID, int64_t* time, ntg_async
 
 NTG_C_EXPORT int ntg_get_state(uint32_t uid, int64_t chatID, ntg_media_state_struct *mediaState, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_calls(uint32_t uid, ntg_group_call_struct *buffer, uint64_t size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_calls(uint32_t uid, ntg_call_struct *buffer, uint64_t size, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_calls_count(uint32_t uid, uint64_t* size, ntg_async_struct future);
 
