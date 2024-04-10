@@ -1,6 +1,7 @@
 [project]
 dynamic = ["version"]
 name = "ntgcalls"
+description = "A Native Implementation of Telegram Calls in a seamless way."
 readme = "README.md"
 license = {file = "LICENSE"}
 classifiers = [
