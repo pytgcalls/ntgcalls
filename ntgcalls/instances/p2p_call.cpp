@@ -13,20 +13,20 @@
 #include "wrtc/utils/encryption.hpp"
 
 namespace ntgcalls {
-    bytes::vector P2PCall::init(const int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media) {
+    bytes::vector P2PCall::init(const DhConfig &dhConfig, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media) {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);
         if (g_a_or_b) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        auto first = signaling::ModExpFirst(g, p, r);
+        auto first = signaling::ModExpFirst(dhConfig.g, dhConfig.p, dhConfig.random);
         if (first.modexp.empty()) {
             RTC_LOG(LS_ERROR) << "Invalid modexp";
             throw CryptoError("Invalid modexp");
         }
         randomPower = std::move(first.randomPower);
-        prime = p;
+        prime = dhConfig.p;
         if (g_a_hash) {
             this->g_a_hash = g_a_hash;
         }

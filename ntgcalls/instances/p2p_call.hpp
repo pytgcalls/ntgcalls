@@ -11,6 +11,7 @@
 #include "ntgcalls/models/auth_params.hpp"
 #include "ntgcalls/signaling/signaling.hpp"
 #include "../models/rtc_server.hpp"
+#include "ntgcalls/models/dh_config.hpp"
 
 namespace ntgcalls {
     using nlohmann::json;
@@ -38,7 +39,7 @@ namespace ntgcalls {
     public:
         explicit P2PCall(rtc::Thread* workerThread): CallInterface(workerThread) {}
 
-        bytes::vector init(int32_t g, const bytes::vector &p, const bytes::vector &r, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media);
+        bytes::vector init(const DhConfig &dhConfig, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media);
 
         AuthParams exchangeKeys(const bytes::vector &g_a_or_b, int64_t fingerprint);
 

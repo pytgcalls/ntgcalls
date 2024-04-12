@@ -9,6 +9,7 @@
 #include "instances/call_interface.hpp"
 // ReSharper disable once CppUnusedIncludeDirective
 #include "models/auth_params.hpp"
+#include "models/dh_config.hpp"
 #include "models/protocol.hpp"
 #include "models/rtc_server.hpp"
 #include "utils/binding_utils.hpp"
@@ -52,7 +53,7 @@ namespace ntgcalls {
 
         ~NTgCalls();
 
-        ASYNC_RETURN(bytes::vector) createP2PCall(int64_t userId, const int32_t &g, const BYTES(bytes::vector) &p, const BYTES(bytes::vector) &r, const std::optional<BYTES(bytes::vector)> &g_a_hash, const MediaDescription& media);
+        ASYNC_RETURN(bytes::vector) createP2PCall(int64_t userId, const DhConfig& dhConfig, const std::optional<BYTES(bytes::vector)> &g_a_hash, const MediaDescription& media);
 
         ASYNC_RETURN(AuthParams) exchangeKeys(int64_t userId, const BYTES(bytes::vector) &g_a_or_b, int64_t fingerprint);
 
