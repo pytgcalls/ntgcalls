@@ -155,6 +155,14 @@ ntg_connection_state_enum parseConnectionState(const ntgcalls::CallInterface::Co
     return {};
 }
 
+ntgcalls::DhConfig parseDhConfig(const ntg_dh_config_struct& config) {
+    return {
+        config.g,
+        bytes::vector(config.p, config.p + config.sizeP),
+        bytes::vector(config.random, config.random + config.sizeRandom)
+    };
+}
+
 ntg_log_source_enum parseSource(const ntgcalls::LogSink::Source source) {
     switch (source) {
         case ntgcalls::LogSink::Source::WebRTC:
@@ -253,8 +261,8 @@ int ntg_destroy(const uint32_t uid) {
 }
 
 
-int ntg_create_p2p(const uint32_t uid, const int64_t userId, const int32_t g, const uint8_t* p, const int sizeP, const uint8_t* r, const int sizeR, const uint8_t* g_a_hash, const int sizeGAHash, const ntg_media_description_struct desc, uint8_t* buffer, const int size, ntg_async_struct future) {
-    PREPARE_ASYNC(createP2PCall, userId, g, copyAndReturn(p, sizeP), copyAndReturn(r, sizeR), sizeGAHash ? std::optional(copyAndReturn(g_a_hash, sizeGAHash)) : std::nullopt, parseMediaDescription(desc))
+int ntg_create_p2p(const uint32_t uid, const int64_t userId, const ntg_dh_config_struct& dhConfig, const uint8_t* g_a_hash, const int sizeGAHash, const ntg_media_description_struct desc, uint8_t* buffer, const int size, ntg_async_struct future) {
+    PREPARE_ASYNC(createP2PCall, userId, parseDhConfig(dhConfig), sizeGAHash ? std::optional(copyAndReturn(g_a_hash, sizeGAHash)) : std::nullopt, parseMediaDescription(desc))
     [future, buffer, size] (const bytes::vector& s) {
         *future.errorCode = copyAndReturn(s, buffer, size);
         future.promise(future.userData);
@@ -278,13 +286,13 @@ int ntg_create_p2p(const uint32_t uid, const int64_t userId, const int32_t g, co
     PREPARE_ASYNC_END
 }
 
-int ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct *authParams, ntg_async_struct future) {
+int ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct *buffer, ntg_async_struct future) {
     PREPARE_ASYNC(exchangeKeys, userId, copyAndReturn(g_a_or_b, sizeGAB), fingerprint)
-    [future, authParams](const ntgcalls::AuthParams& params) {
-        authParams->key_fingerprint = params.key_fingerprint;
-        authParams->g_a_or_b = new uint8_t[params.g_a_or_b.size()];
-        authParams->sizeGAB = static_cast<int>(params.g_a_or_b.size());
-        copyAndReturn(params.g_a_or_b, authParams->g_a_or_b, authParams->sizeGAB);
+    [future, buffer](const ntgcalls::AuthParams& params) {
+        buffer->key_fingerprint = params.key_fingerprint;
+        buffer->g_a_or_b = new uint8_t[params.g_a_or_b.size()];
+        buffer->sizeGAB = static_cast<int>(params.g_a_or_b.size());
+        copyAndReturn(params.g_a_or_b, buffer->g_a_or_b, buffer->sizeGAB);
         *future.errorCode = 0;
         future.promise(future.userData);
     },
@@ -321,8 +329,6 @@ int ntg_connect_p2p(const uint32_t uid, const int64_t userId, ntg_rtc_server_str
             *future.errorCode = NTG_CONNECTION_ALREADY_EXISTS;
         } catch (ntgcalls::ConnectionNotFound&) {
             *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (ntgcalls::TelegramServerError&) {
-            *future.errorCode = NTG_CONNECTION_FAILED;
         } catch (ntgcalls::CryptoError&) {
             *future.errorCode = NTG_CRYPTO_ERROR;
         } catch (ntgcalls::SignalingError&) {

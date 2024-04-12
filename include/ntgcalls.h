@@ -134,6 +134,15 @@ typedef struct {
     int libraryVersionsSize;
 } ntg_protocol_struct;
 
+
+typedef struct {
+    int32_t g;
+    uint8_t* p;
+    int sizeP;
+    const uint8_t* random;
+    int sizeRandom;
+} ntg_dh_config_struct;
+
 typedef void (*ntg_async_callback)(void*);
 
 typedef struct {
@@ -179,9 +188,9 @@ NTG_C_EXPORT uint32_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
-NTG_C_EXPORT int ntg_create_p2p(uint32_t uid, int64_t userId, int32_t g, const uint8_t* p, int sizeP, const uint8_t* r, int sizeR, const uint8_t* g_a_hash, int sizeGAHash, ntg_media_description_struct desc, uint8_t* buffer, int size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_create_p2p(uint32_t uid, int64_t userId, const ntg_dh_config_struct& dhConfig, const uint8_t* g_a_hash, int sizeGAHash, ntg_media_description_struct desc, uint8_t* buffer, int size, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_exchange_keys(uint32_t uid, int64_t userId, const uint8_t* g_a_or_b, int sizeGAB, int64_t fingerprint, ntg_auth_params_struct *authParams, ntg_async_struct future);
+NTG_C_EXPORT int ntg_exchange_keys(uint32_t uid, int64_t userId, const uint8_t* g_a_or_b, int sizeGAB, int64_t fingerprint, ntg_auth_params_struct *buffer, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_connect_p2p(uint32_t uid, int64_t userId, ntg_rtc_server_struct* servers, int serversSize, char** versions, int versionsSize, bool p2pAllowed, ntg_async_struct future);
 
