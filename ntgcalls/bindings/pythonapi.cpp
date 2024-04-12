@@ -17,7 +17,7 @@ namespace py = pybind11;
 PYBIND11_MODULE(ntgcalls, m) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
-    wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"), py::arg("g"), py::arg("p"), py::arg("r"), py::arg("g_a_hash"), py::arg("media"));
+    wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"), py::arg("dh_config"), py::arg("g_a_hash"), py::arg("media"));
     wrapper.def("exchange_keys", &ntgcalls::NTgCalls::exchangeKeys, py::arg("user_id"), py::arg("g_a_or_b"), py::arg("fingerprint"));
     wrapper.def("connect_p2p", &ntgcalls::NTgCalls::connectP2P, py::arg("user_id"), py::arg("servers"), py::arg("versions"), py::arg("p2p_allowed"));
     wrapper.def("send_signaling", &ntgcalls::NTgCalls::sendSignalingData, py::arg("chat_id"), py::arg("msg_key"));
@@ -130,7 +130,19 @@ PYBIND11_MODULE(ntgcalls, m) {
     protocolWrapper.def_readwrite("library_versions", &ntgcalls::Protocol::library_versions);
 
     py::class_<ntgcalls::RTCServer> rtcServerWrapper(m, "RTCServer");
-    rtcServerWrapper.def(py::init<uint64_t, std::string, std::string, uint16_t, std::optional<std::string>, std::optional<std::string>, bool, bool, bool, std::optional<py::bytes>>());
+    rtcServerWrapper.def(
+        py::init<uint64_t, std::string, std::string, uint16_t, std::optional<std::string>,std::optional<std::string>, bool, bool, bool, std::optional<py::bytes>>(),
+        py::arg("id"),
+        py::arg("ipv4"),
+        py::arg("ipv6"),
+        py::arg("port"),
+        py::arg("username") = std::nullopt,
+        py::arg("password") = std::nullopt,
+        py::arg("turn"),
+        py::arg("stun"),
+        py::arg("tcp"),
+        py::arg("peer_tag") = std::nullopt
+    );
 
     py::class_<ntgcalls::AuthParams> authParamsWrapper(m, "AuthParams");
     authParamsWrapper.def(py::init<>());
@@ -138,6 +150,9 @@ PYBIND11_MODULE(ntgcalls, m) {
         return toBytes(self.g_a_or_b);
     });
     authParamsWrapper.def_readwrite("key_fingerprint", &ntgcalls::AuthParams::key_fingerprint);
+
+    py::class_<ntgcalls::DhConfig> dhConfigWrapper(m, "DhConfig");
+    dhConfigWrapper.def(py::init<int32_t, py::bytes, py::bytes>(), py::arg("g"), py::arg("p"), py::arg("random"));
 
     // Exceptions
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
