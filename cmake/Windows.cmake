@@ -20,6 +20,7 @@ target_compile_definitions(${target_name} PRIVATE
 )
 target_compile_definitions(${target_name} PUBLIC
     WEBRTC_WIN
+    RTC_ENABLE_H265
     _ITERATOR_DEBUG_LEVEL=0
     NDEBUG
 )

@@ -65,6 +65,8 @@ namespace wrtc {
                             "0"
                     )
             );
+        } else if (codec == webrtc::kVideoCodecH265) {
+            r.emplace_back(cricket::kH265CodecName);
         }
         return r;
     }
