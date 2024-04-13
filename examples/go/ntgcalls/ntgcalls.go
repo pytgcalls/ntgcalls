@@ -182,14 +182,12 @@ func (ctx *Client) CreateCall(chatId int64, desc MediaDescription) (string, erro
 	return C.GoString(&buffer[0]), parseErrorCode(*f.errCode)
 }
 
-func (ctx *Client) CreateP2PCall(chatId int64, g int32, p []byte, r []byte, gAHash []byte, desc MediaDescription) ([]byte, error) {
+func (ctx *Client) CreateP2PCall(chatId int64, dhConfig DhConfig, gAHash []byte, desc MediaDescription) ([]byte, error) {
 	f := CreateFuture()
 	var buffer [32]C.uint8_t
 	size := C.int(len(buffer))
-	pC, pSize := parseBytes(p)
-	rC, rSize := parseBytes(r)
 	gAHashC, gAHashSize := parseBytes(gAHash)
-	C.ntg_create_p2p(C.uint32_t(ctx.uid), C.int64_t(chatId), C.int32_t(g), pC, pSize, rC, rSize, gAHashC, gAHashSize, desc.ParseToC(), &buffer[0], size, f.ParseToC())
+	C.ntg_create_p2p(C.uint32_t(ctx.uid), C.int64_t(chatId), dhConfig.ParseToC(), gAHashC, gAHashSize, desc.ParseToC(), &buffer[0], size, f.ParseToC())
 	f.wait()
 	return C.GoBytes(unsafe.Pointer(&buffer[0]), size), parseErrorCode(*f.errCode)
 }
