@@ -158,8 +158,8 @@ ntg_connection_state_enum parseConnectionState(const ntgcalls::CallInterface::Co
 ntgcalls::DhConfig parseDhConfig(const ntg_dh_config_struct& config) {
     return {
         config.g,
-        bytes::vector(config.p, config.p + config.sizeP),
-        bytes::vector(config.random, config.random + config.sizeRandom)
+        copyAndReturn(config.p, config.sizeP),
+        copyAndReturn(config.random, config.sizeRandom)
     };
 }
 
