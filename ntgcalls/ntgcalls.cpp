@@ -4,6 +4,8 @@
 
 #include "ntgcalls.hpp"
 
+#include <iostream>
+
 #include "exceptions.hpp"
 #include "instances/group_call.hpp"
 #include "instances/p2p_call.hpp"
@@ -82,7 +84,7 @@ namespace ntgcalls {
         SMART_ASYNC(this, userId, dhConfig, g_a_hash = CPP_BYTES(g_a_hash, bytes::vector), media)
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(userId)
-        connections[userId] = std::make_shared<P2PCall>(updateThread.get());
+        connections[userId] = std::make_shared<P2PCall>();
         setupListeners(userId);
         const auto result = SafeCall<P2PCall>(connections[userId].get())->init(dhConfig, g_a_hash, media);
         THREAD_SAFE
@@ -107,7 +109,7 @@ namespace ntgcalls {
         SMART_ASYNC(this, chatId, media)
         std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(chatId)
-        connections[chatId] = std::make_shared<GroupCall>(updateThread.get());
+        connections[chatId] = std::make_shared<GroupCall>();
         setupListeners(chatId);
         return SafeCall<GroupCall>(connections[chatId].get())->init(media);
         END_ASYNC

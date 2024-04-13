@@ -25,12 +25,12 @@ namespace ntgcalls {
         std::unique_ptr<wrtc::NetworkInterface> connection;
         std::unique_ptr<Stream> stream;
         wrtc::synchronized_callback<ConnectionState> connectionChangeCallback;
-        rtc::Thread* workerThread;
+        std::unique_ptr<rtc::Thread> workerThread;
 
         void setConnectionObserver();
 
     public:
-        explicit CallInterface(rtc::Thread* workerThread);
+        explicit CallInterface();
 
         virtual ~CallInterface();
 

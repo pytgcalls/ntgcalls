@@ -59,14 +59,20 @@ py::gil_scoped_acquire acquire;
 
 #define ASYNC_RETURN(...) py::object
 
-#define ASYNC_ARGS py::object loop;
+#define ASYNC_ARGS \
+py::object loop;\
+py::object executor;
 
-#define INIT_ASYNC loop = py::module::import("asyncio").attr("get_event_loop")();
+#define INIT_ASYNC \
+loop = py::module::import("asyncio").attr("get_event_loop")();\
+executor = py::module::import("concurrent.futures").attr("ThreadPoolExecutor")(std::min(static_cast<uint32_t>(32), std::thread::hardware_concurrency()));
 
-#define DESTROY_ASYNC
+#define DESTROY_ASYNC \
+loop = py::none();\
+executor = py::none();
 
 #define SMART_ASYNC(...) \
-return loop.attr("run_in_executor")(py::none(), py::cpp_function([__VA_ARGS__](){\
+return loop.attr("run_in_executor")(executor, py::cpp_function([__VA_ARGS__](){\
 py::gil_scoped_release release;
 
 #define END_ASYNC }));

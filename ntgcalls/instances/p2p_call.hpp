@@ -37,8 +37,6 @@ namespace ntgcalls {
         void sendMediaState(MediaState mediaState) const;
 
     public:
-        explicit P2PCall(rtc::Thread* workerThread): CallInterface(workerThread) {}
-
         bytes::vector init(const DhConfig &dhConfig, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media);
 
         AuthParams exchangeKeys(const bytes::vector &g_a_or_b, int64_t fingerprint);

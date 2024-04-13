@@ -5,8 +5,10 @@
 #include "call_interface.hpp"
 
 namespace ntgcalls {
-    CallInterface::CallInterface(rtc::Thread* workerThread): workerThread(workerThread){
-        stream = std::make_unique<Stream>(workerThread);
+    CallInterface::CallInterface() {
+        workerThread = rtc::Thread::Create();
+        workerThread->Start();
+        stream = std::make_unique<Stream>(workerThread.get());
     }
 
     CallInterface::~CallInterface() {
@@ -20,7 +22,8 @@ namespace ntgcalls {
             RTC_LOG(LS_VERBOSE) << "Connection closed";
         }
         connection.reset();
-        workerThread = nullptr;
+        workerThread->Stop();
+        workerThread.reset();
         RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
     }
 
