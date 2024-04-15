@@ -25,9 +25,9 @@ namespace signaling {
 
     SignalingSctpConnection::~SignalingSctpConnection() {
         networkThread->BlockingCall([&] {
-            sctpTransport.reset();
-            sctpTransportFactory.reset();
-            packetTransport.reset();
+            sctpTransport = nullptr;
+            sctpTransportFactory = nullptr;
+            packetTransport = nullptr;
         });
     }
 

@@ -125,7 +125,7 @@ public:
 
 #define DESTROY_ASYNC \
     asyncWorker->Stop();\
-    asyncWorker.reset();
+    asyncWorker = nullptr;
 
 #define ASYNC_ARGS std::unique_ptr<rtc::Thread> asyncWorker;
 

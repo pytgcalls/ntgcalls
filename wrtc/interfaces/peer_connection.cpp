@@ -157,7 +157,7 @@ namespace wrtc {
             dataChannel = nullptr;
         }
         if (dataChannelObserver) {
-            dataChannelObserver.reset();
+            dataChannelObserver = nullptr;
         }
         if (peerConnection) {
             peerConnection->Close();

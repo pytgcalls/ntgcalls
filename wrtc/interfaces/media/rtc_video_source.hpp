@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <rtc_base/ref_count.h>
-
 #include "tracks/video_track_source.hpp"
 #include "../../models/i420_image_data.hpp"
 #include "../peer_connection/peer_connection_factory.hpp"

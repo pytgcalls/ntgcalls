@@ -8,7 +8,7 @@
 namespace ntgcalls {
     ShellReader::ShellReader(const std::string &command, const int64_t bufferSize, const bool noLatency): BaseReader(bufferSize, noLatency) {
         try {
-            shellProcess = bp::child(command, bp::std_out > stdOut, bp::std_in < bp::null);
+            shellProcess = bp::child(command, bp::std_out > stdOut, bp::std_in.close());
         } catch (std::runtime_error &e) {
             throw ShellError(e.what());
         }
@@ -31,14 +31,6 @@ namespace ntgcalls {
 
     void ShellReader::close() {
         BaseReader::close();
-        if (stdOut) {
-            stdOut.close();
-            RTC_LOG(LS_VERBOSE) << "StdOut closed";
-            if (auto pipe = stdOut.pipe(); pipe.is_open()){
-                pipe.close();
-                RTC_LOG(LS_VERBOSE) << "StdOut pipe closed";
-            }
-        }
         if (shellProcess) {
             shellProcess.terminate();
             shellProcess.wait();

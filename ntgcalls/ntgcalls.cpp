@@ -27,10 +27,10 @@ namespace ntgcalls {
         std::unique_lock lock(mutex);
         RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
         connections = {};
-        hardwareInfo.reset();
+        hardwareInfo = nullptr;
         lock.unlock();
         updateThread->Stop();
-        updateThread.reset();
+        updateThread = nullptr;
         DESTROY_ASYNC
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
         LogSink::UnRef();

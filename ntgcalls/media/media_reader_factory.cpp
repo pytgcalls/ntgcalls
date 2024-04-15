@@ -51,8 +51,8 @@ namespace ntgcalls {
         if (video) {
             video->close();
         }
-        audio.reset();
-        video.reset();
+        audio = nullptr;
+        video = nullptr;
     }
 
 } // ntgcalls

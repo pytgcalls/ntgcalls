@@ -13,7 +13,7 @@ namespace ntgcalls {
         fps = 0;
         w = 0;
         h = 0;
-        video.reset();
+        video = nullptr;
     }
 
     std::chrono::nanoseconds VideoStreamer::frameTime() {

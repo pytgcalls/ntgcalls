@@ -22,11 +22,11 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "Thread joined";
         lock.lock();
         idling = false;
-        audio.reset();
-        video.reset();
+        audio = nullptr;
+        video = nullptr;
         audioTrack = nullptr;
         videoTrack = nullptr;
-        reader.reset();
+        reader = nullptr;
         workerThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
@@ -38,13 +38,13 @@ namespace ntgcalls {
 
     void Stream::checkStream() const {
         if (reader->audio && reader->audio->eof()) {
-            reader->audio.reset();
+            reader->audio = nullptr;
             workerThread->PostTask([&] {
                 (void) onEOF(Audio);
             });
         }
         if (reader->video && reader->video->eof()) {
-            reader->video.reset();
+            reader->video = nullptr;
             workerThread->PostTask([&] {
                 (void) onEOF(Video);
             });
