@@ -4,16 +4,16 @@ package ntgcalls
 import "C"
 
 type DhConfig struct {
-	g      int32
-	p      []byte
-	random []byte
+	G      int32
+	P      []byte
+	Random []byte
 }
 
 func (ctx *DhConfig) ParseToC() C.ntg_dh_config_struct {
 	var x C.ntg_dh_config_struct
-	x.g = C.int32_t(ctx.g)
-	pC, pSize := parseBytes(ctx.p)
-	rC, rSize := parseBytes(ctx.random)
+	x.g = C.int32_t(ctx.G)
+	pC, pSize := parseBytes(ctx.P)
+	rC, rSize := parseBytes(ctx.Random)
 	x.p = pC
 	x.sizeP = pSize
 	x.random = rC

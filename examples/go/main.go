@@ -91,7 +91,11 @@ func outgoingCall(client *ntgcalls.Client, mtproto *tg.Client, username string) 
 	user := rawUser.(*tg.UserObj)
 	dhConfigRaw, _ := mtproto.MessagesGetDhConfig(0, 256)
 	dhConfig := dhConfigRaw.(*tg.MessagesDhConfigObj)
-	gAHash, _ := client.CreateP2PCall(user.ID, dhConfig.G, dhConfig.P, dhConfig.Random, nil, ntgcalls.MediaDescription{
+	gAHash, _ := client.CreateP2PCall(user.ID, ntgcalls.DhConfig{
+		G:      dhConfig.G,
+		P:      dhConfig.P,
+		Random: dhConfig.Random,
+	}, nil, ntgcalls.MediaDescription{
 		Audio: &ntgcalls.AudioDescription{
 			InputMode:     ntgcalls.InputModeShell,
 			SampleRate:    96000,
