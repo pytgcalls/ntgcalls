@@ -67,9 +67,7 @@ py::object executor;
 loop = py::module::import("asyncio").attr("get_event_loop")();\
 executor = py::module::import("concurrent.futures").attr("ThreadPoolExecutor")(std::min(static_cast<uint32_t>(32), std::thread::hardware_concurrency()));
 
-#define DESTROY_ASYNC \
-loop = py::none();\
-executor = py::none();
+#define DESTROY_ASYNC
 
 #define SMART_ASYNC(...) \
 return loop.attr("run_in_executor")(executor, py::cpp_function([__VA_ARGS__](){\
