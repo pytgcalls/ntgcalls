@@ -11,6 +11,10 @@ if(LINUX)
         URL https://chromium.googlesource.com/chromium/src/buildtools.git/+/refs/heads/main/third_party/libc++/__config_site
         DIRECTORY ${LIBCXX_INCLUDE}/include/__config_site
     )
+    GitFile(
+        URL https://chromium.googlesource.com/chromium/src/buildtools.git/+/refs/heads/main/third_party/libc++/__assertion_handler
+        DIRECTORY ${LIBCXX_INCLUDE}/include/__assertion_handler
+    )
     GitClone(
         URL https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxxabi.git
         COMMIT ${LIBCXX_ABI_COMMIT}

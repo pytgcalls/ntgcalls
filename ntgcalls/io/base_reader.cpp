@@ -23,7 +23,7 @@ namespace ntgcalls {
                     lock.unlock();
                     for (int i = 0; i < availableSpace; i++) {
                         try {
-                            if (auto tmp = this->readInternal(size); tmp) {
+                            if (auto tmp = readInternal(size); tmp) {
                                 lock.lock();
                                 buffer.push(std::move(tmp));
                                 lock.unlock();
@@ -33,6 +33,8 @@ namespace ntgcalls {
                             lock.lock();
                             _eof = true;
                             lock.unlock();
+                            bufferCondition.notify_one();
+                            break;
                         }
                     }
                 } while (!quit && !_eof);
@@ -40,21 +42,21 @@ namespace ntgcalls {
         }
     }
 
-    std::pair<wrtc::binary, int64_t> BaseReader::read() {
+    std::pair<bytes::unique_binary, int64_t> BaseReader::read() {
         auto timeMillis = rtc::TimeMillis();
         if (eof()) {
             return {nullptr, timeMillis};
         }
         if (noLatency) {
             try {
-                return {readInternal(size), timeMillis};
+                return {std::move(readInternal(size)), timeMillis};
             } catch (...) {
                 _eof = true;
             }
             return {nullptr, timeMillis};
         }
         std::unique_lock lock(mutex);
-        bufferCondition.wait(lock, [this] {
+        bufferCondition.wait_for(lock, std::chrono::milliseconds(500), [this] {
             return !buffer.empty() || quit || _eof;
         });
         if (buffer.empty()) {
@@ -62,14 +64,16 @@ namespace ntgcalls {
         }
         auto data = std::move(buffer.front());
         buffer.pop();
-        return {data, timeMillis};
+        return {std::move(data), timeMillis};
     }
 
     void BaseReader::close() {
+        RTC_LOG(LS_VERBOSE) << "Closing reader";
         quit = true;
         if(thread.joinable()) {
             thread.join();
         }
+        RTC_LOG(LS_VERBOSE) << "Reader closed";
     }
 
     bool BaseReader::eof() {

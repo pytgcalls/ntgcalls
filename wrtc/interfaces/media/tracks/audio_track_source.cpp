@@ -27,16 +27,15 @@ namespace wrtc {
         _sink = nullptr;
     }
 
-    void AudioTrackSource::PushData(const RTCOnDataEvent &data, const int64_t absolute_capture_timestamp_ms) const
-    {
+    void AudioTrackSource::PushData(const RTCOnDataEvent &data, const int64_t absolute_capture_timestamp_ms) const {
         if (webrtc::AudioTrackSinkInterface *sink = _sink) {
             sink->OnData(
-                    data.audioData.get(),
-                    data.bitsPerSample,
-                    static_cast<int>(data.sampleRate),
-                    data.channelCount,
-                    data.numberOfFrames,
-                    absolute_capture_timestamp_ms
+                data.audioData,
+                data.bitsPerSample,
+                static_cast<int>(data.sampleRate),
+                data.channelCount,
+                data.numberOfFrames,
+                absolute_capture_timestamp_ms
             );
         }
     }

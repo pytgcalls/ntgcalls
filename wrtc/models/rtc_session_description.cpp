@@ -3,65 +3,48 @@
 //
 
 #include "rtc_session_description.hpp"
+#include "wrtc/exceptions.hpp"
 
 namespace wrtc {
-    Description::Description(const Type type, const std::string &sdp) {
-        webrtc::SdpType newType = {};
+    Description::Description(const SdpType type, std::string sdp): _type(type), _sdp(std::move(sdp)) {}
+
+    Description::Description(const webrtc::SdpType type, std::string sdp): _sdp(std::move(sdp)) {
         switch (type) {
-            case Type::Offer:
-                newType = webrtc::SdpType::kOffer;
-                break;
-            case Type::Answer:
-                newType = webrtc::SdpType::kAnswer;
-                break;
-            case Type::Pranswer:
-                newType = webrtc::SdpType::kPrAnswer;
-                break;
-            case Type::Rollback:
-                newType = webrtc::SdpType::kRollback;
-                break;
-        }
-        *this = Description(RTCSessionDescriptionInit(newType, sdp));
-    }
-
-    Description::Description(const RTCSessionDescriptionInit &rtcSessionDescriptionInit) {
-        webrtc::SdpParseError error;
-        auto description = CreateSessionDescription(rtcSessionDescriptionInit.type, rtcSessionDescriptionInit.sdp, &error);
-        if (!description) {
-            throw wrapSdpParseError(error);
-        }
-
-        _description = std::move(description);
-    }
-
-    Description::Type Description::getType() const
-    {
-        switch (_description->GetType()) {
             case webrtc::SdpType::kOffer:
-                return Type::Offer;
+                _type = SdpType::Offer;
+                break;
             case webrtc::SdpType::kPrAnswer:
-                return Type::Pranswer;
+                _type = SdpType::Pranswer;
+                break;
             case webrtc::SdpType::kAnswer:
-                return Type::Answer;
+                _type = SdpType::Answer;
+                break;
             case webrtc::SdpType::kRollback:
-                return Type::Rollback;
+                _type = SdpType::Rollback;
+                break;
         }
-        return {};
     }
 
-    std::string Description::getSdp() const
-    {
-        std::string sdp;
-        _description->ToString(&sdp);
-        return sdp;
+
+    Description::SdpType Description::type() const {
+        return _type;
     }
 
-    Description::operator webrtc::SessionDescriptionInterface *() const
-    {
-        return CreateSessionDescription(_description->GetType(), this->getSdp()).release();
+    std::string Description::sdp() const {
+        return _sdp;
     }
 
-    Description Description::Wrap(const webrtc::SessionDescriptionInterface *description) {
-        return Description(RTCSessionDescriptionInit::Wrap(description));
+    std::string Description::SdpTypeToString(const SdpType type) {
+        switch (type) {
+            case SdpType::Offer:
+                return "offer";
+            case SdpType::Answer:
+                return "answer";
+            case SdpType::Pranswer:
+                return "pranswer";
+            case SdpType::Rollback:
+                return "rollback";
+        }
+        throw std::runtime_error("Invalid sdp type");
     }
 } // wrtc

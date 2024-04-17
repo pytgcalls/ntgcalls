@@ -1,38 +1,74 @@
 name: Build And Publish
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - '.github/workflows/build.yml'
-      - 'cmake/*'
-      - 'deps/*'
-      - 'include/*'
-      - 'ntgcalls/*'
-      - 'wrtc/*'
-      - 'CMakeLists.txt'
-      - 'setup.py'
-
+  workflow_dispatch:
+    inputs:
+      build-shared-libs:
+        description: 'Build shared libraries'
+        required: false
+        default: true
+        type: boolean
+      build-static-libs:
+        description: 'Build static libraries'
+        required: false
+        default: true
+        type: boolean
+      build-wheels:
+        description: 'Build wheels'
+        required: false
+        default: false
+        type: boolean
+      linux-build:
+        description: 'Build for Linux'
+        required: false
+        default: true
+        type: boolean
+      linux-arm64-build:
+        description: 'Build for Linux ARM64'
+        required: false
+        default: true
+        type: boolean
+      macos-build:
+        description: 'Build for macOS'
+        required: false
+        default: false
+        type: boolean
+      windows-build:
+        description: 'Build for Windows'
+        required: false
+        default: false
+        type: boolean
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          build_list=""
+          if [[ "${{ github.event.inputs.linux-build }}" == "true" ]]; then
+            build_list+=",{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\"}"
+          fi
+          if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
+            build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\"}"
+          fi
+          if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
+            build_list+=",{\"os\":\"macos-14\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
+          fi
+          if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
+            build_list+=",{\"os\":\"windows-2019\",\"cibw_archs\":\"native\",\"shared_name\":\"windows-x86_64\"}"
+          fi
+          if [[ -n "$build_list" ]]; then
+            build_list="${build_list:1}"
+          fi
+          matrix=$(echo "{\"include\":[$build_list]}")
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
   build:
+    needs: setup
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            cibw_archs: "native"
-            shared_name: "linux-x86_64"
-            cibw_os_build: "manylinux_"
-          - os: arm64-server
-            cibw_archs: "aarch64"
-            shared_name: "linux-arm64"
-            cibw_os_build: "manylinux_"
-          - os: windows-2019
-            cibw_archs: "native"
-            shared_name: "windows-x86_64"
-          - os: macos-14
-            cibw_archs: "arm64"
-            cibw_os_build: "macosx_arm64"
-            shared_name: "macos-arm64"
+      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
 
     steps:
       - name: Check out the repo
@@ -54,63 +90,86 @@ jobs:
         run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
 
       - name: Install Python Requirements
-        run:  |
+        run: |
           "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools
           "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install pipx
         shell: bash
-          
+
       - name: Set up QEMU
         if: matrix.cibw_archs == 'aarch64'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
-      - name: Build Debug Shared lib
-        if: matrix.cibw_archs != 'aarch64'
-        run: python3 setup.py build_shared --no-preserve-cache --debug
+      - name: Build Shared Libs (Debug and Release)
+        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
+        run: |
+          ${{ steps.python.outputs.python-path }} setup.py build_lib --debug
+          ${{ steps.python.outputs.python-path }} setup.py build_lib
 
-      - name: Build Debug Shared lib (ARM64)
-        if: matrix.cibw_archs == 'aarch64'
-        run: docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache --debug
+      - name: Build Static Libs (Debug and Release)
+        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
+        run: |
+          ${{ steps.python.outputs.python-path }} setup.py build_lib --static --debug
+          ${{ steps.python.outputs.python-path }} setup.py build_lib --static
 
-      - name: Build Release Shared lib
-        if: matrix.cibw_archs != 'aarch64'
-        run: python3 setup.py build_shared --no-preserve-cache
+      - name: Build Shared Libs (Debug and Release) (Linux) (x86_64)
+        if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-shared-libs == 'true'
+        run: |
+          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --debug
+          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib
 
-      - name: Build Release Shared lib (ARM64)
-        if: matrix.cibw_archs == 'aarch64'
-        run: docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_shared --no-preserve-cache
+      - name: Build Static Libs (Debug and Release) (Linux) (x86_64)
+        if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-static-libs == 'true'
+        run: |
+          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --static --debug
+          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --static
 
-      - name: Upload Debug Shared lib for ${{ matrix.shared_name }}
+      - name: Build Shared Libs (Debug and Release) (Linux) (ARM64)
+        if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
+        run: |
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib
+
+      - name: Build Static Libs (Debug and Release) (Linux ARM64)
+        if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
+        run: |
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static
+
+      - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
-        with:
-          name: ntgcalls.${{ matrix.shared_name }}-debug-shared_libs
-          path: ./shared-output-debug/*
-          if-no-files-found: error
-
-      - name: Upload Release Shared lib for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v4
+        if: github.event.inputs.build-shared-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
           path: ./shared-output/*
           if-no-files-found: error
 
+      - name: Upload Static Libs for ${{ matrix.shared_name }}
+        uses: actions/upload-artifact@v4
+        if: github.event.inputs.build-static-libs == 'true'
+        with:
+          name: ntgcalls.${{ matrix.shared_name }}-static_libs
+          path: ./static-output/*
+          if-no-files-found: error
+
       - name: Build wheels
         uses: ./.github/cibuildwheel
+        if: github.event.inputs.build-wheels == 'true'
         with:
           python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
-
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp36-* cp37-*
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_TEST_SKIP: "cp38-macosx_*:arm64 *-manylinux_aarch64"
+          CIBW_TEST_SKIP: "cp38-macosx_arm64 *-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
 
       - uses: actions/upload-artifact@v4
+        if: github.event.inputs.build-wheels == 'true'
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
           path: ./wheelhouse/*.whl
@@ -118,7 +177,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [ build ]
     permissions:
       id-token: write
       contents: write
@@ -161,15 +220,15 @@ jobs:
           path: tmp/
 
       - name: Prepare source distribution
+        if: github.event.inputs.build-wheels == 'true'
         run: |
           python3 -m pip install --upgrade setuptools
           python3 setup.py sdist
-  
 
       - name: Zip releases
         run: |
           mkdir releases
-          for dir in tmp/*shared_libs; do
+          for dir in tmp/*_libs; do
             if [ -d "$dir" ]; then
               echo "$dir"
               folder_name=$(basename "$dir" .zip)
@@ -179,7 +238,7 @@ jobs:
 
       - name: Create Release
         id: create-new-release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v2.0.4
         with:
           files: |
             ./releases/*
@@ -192,7 +251,7 @@ jobs:
         run: find tmp -type f -name "*.whl" | xargs -I {} mv {} dist
 
       - name: Publish a Python distribution to PyPI.
-        if: github.ref == 'refs/heads/master' && github.repository == 'pytgcalls/ntgcalls'
+        if: github.event.inputs.build-wheels == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true

@@ -1,7 +1,7 @@
 [submodule "deps/pybind11"]
 	path = deps/pybind11
 	url = https://github.com/pybind/pybind11
-	branch = stable
+	branch = master
 [submodule "deps/json"]
 	path = deps/json
 	url = https://github.com/nlohmann/json

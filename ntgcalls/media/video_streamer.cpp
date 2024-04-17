@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     VideoStreamer::VideoStreamer() {
-        video = std::make_shared<wrtc::RTCVideoSource>();
+        video = std::make_unique<wrtc::RTCVideoSource>();
     }
 
     VideoStreamer::~VideoStreamer() {
@@ -20,11 +20,11 @@ namespace ntgcalls {
         return std::chrono::microseconds(static_cast<uint64_t>(1000.0 * 1000.0 / static_cast<double_t>(fps))); // ms
     }
 
-    wrtc::MediaStreamTrack *VideoStreamer::createTrack() {
+    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> VideoStreamer::createTrack() {
         return video->createTrack();
     }
 
-    void VideoStreamer::sendData(const wrtc::binary& sample, const int64_t absolute_capture_timestamp_ms) {
+    void VideoStreamer::sendData(uint8_t* sample, const int64_t absolute_capture_timestamp_ms) {
         BaseStreamer::sendData(sample, absolute_capture_timestamp_ms);
         video->OnFrame(
             wrtc::i420ImageData(
@@ -45,6 +45,7 @@ namespace ntgcalls {
         w = width;
         h = height;
         fps = framesPerSecond;
+        RTC_LOG(LS_INFO) << "VideoStreamer configured with " << w << "x" << h << "@" << fps << "fps";
     }
 }
 

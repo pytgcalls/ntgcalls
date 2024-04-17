@@ -8,12 +8,12 @@
 #include <api/scoped_refptr.h>
 #include <api/video/i420_buffer.h>
 
-#include "rtc_on_data_event.hpp"
+#include "../utils/binary.hpp"
 
 namespace wrtc {
     class i420ImageData {
         uint16_t width, height;
-        binary contents;
+        uint8_t* contents;
 
         [[nodiscard]] size_t sizeOfLuminancePlane() const;
 
@@ -27,7 +27,7 @@ namespace wrtc {
 
 
     public:
-        i420ImageData(uint16_t width, uint16_t height, const binary& contents);
+        i420ImageData(uint16_t width, uint16_t height, uint8_t* contents);
 
         ~i420ImageData();
 

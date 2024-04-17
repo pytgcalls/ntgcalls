@@ -4,7 +4,7 @@
 # pragma once
 #include <cstdint>
 
-#include "dispatch_queue.hpp"
+#include <thread>
 #ifdef _WIN32
 #include <windows.h>
 #elif __APPLE__
@@ -18,7 +18,6 @@ namespace ntgcalls {
 
     class HardwareInfo {
         uint16_t numProcessors;
-        std::thread infoRetriever;
 #ifdef _WIN32
         ULARGE_INTEGER lastCPU{}, lastSysCPU{}, lastUserCPU{};
         HANDLE self;

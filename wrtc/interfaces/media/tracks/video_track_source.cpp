@@ -28,7 +28,7 @@ namespace wrtc {
     }
 
     void VideoTrackSource::PushFrame(const webrtc::VideoFrame &frame) {
-        this->OnFrame(frame);
+        OnFrame(frame);
     }
 
 } // wrtc

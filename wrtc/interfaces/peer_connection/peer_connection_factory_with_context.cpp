@@ -48,4 +48,22 @@ namespace wrtc {
             : PeerConnectionFactoryWithContext(
             webrtc::ConnectionContext::Create(webrtc::CreateEnvironment(), &dependencies),
             &dependencies) {}
+
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> CreateModularPeerConnectionFactoryWithContext(
+        webrtc::PeerConnectionFactoryDependencies dependencies,
+        rtc::scoped_refptr<webrtc::ConnectionContext>& context
+    ) {
+        using result_type =std::pair<rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>, rtc::scoped_refptr<webrtc::ConnectionContext>>;
+        auto [fst, snd] = dependencies.signaling_thread->BlockingCall([&dependencies]() {
+            const auto factory = PeerConnectionFactoryWithContext::Create(std::move(dependencies));
+            if (factory == nullptr) {
+              return result_type(nullptr, nullptr);
+            }
+            auto ctx = factory->GetContext();
+            auto proxy = webrtc::PeerConnectionFactoryProxy::Create(factory->signaling_thread(), factory->worker_thread(), factory);
+            return result_type(proxy, ctx);
+        });
+        context = snd;
+        return fst;
+    }
 } // wrtc

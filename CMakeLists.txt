@@ -7,18 +7,21 @@ endif ()
 include(ExternalProject)
 
 # https://chromiumdash.appspot.com/branches
-set(WEBRTC_REVISION m121.6167.4.0)
-set(BOOST_REVISION 1.84.0)
+set(WEBRTC_REVISION m123.6312.3.2)
+set(BOOST_REVISION 1.85.0)
 set(BOOST_LIBS filesystem)
+
+option(STATIC_BUILD "Build static libraries" ON)
 
 if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
 endif()
 
-project(ntgcalls VERSION 1.1.3 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.2.0 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter QUIET)
 
 get_filename_component(deps_loc "deps" REALPATH)
 

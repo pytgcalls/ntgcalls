@@ -37,8 +37,9 @@ namespace ntgcalls {
         return static_cast<int>(lhs) | rhs;
     }
 
-    inline int operator|=(const BaseMediaDescription::InputMode lhs, const BaseMediaDescription::InputMode rhs) {
-        return static_cast<int>(lhs) | static_cast<int>(rhs);
+    inline BaseMediaDescription::InputMode operator|=(BaseMediaDescription::InputMode &lhs, BaseMediaDescription::InputMode rhs) {
+        lhs = static_cast<BaseMediaDescription::InputMode>(static_cast<int>(lhs) | static_cast<int>(rhs));
+        return lhs;
     }
 
     inline int operator&(const BaseMediaDescription::InputMode& lhs, const BaseMediaDescription::InputMode rhs){
@@ -73,9 +74,7 @@ namespace ntgcalls {
         std::optional<AudioDescription> audio;
         std::optional<VideoDescription> video;
 
-        MediaDescription(const std::optional<AudioDescription>& audio, const std::optional<VideoDescription>& video) {
-            this->audio = audio;
-            this->video = video;
-        }
+        MediaDescription(const std::optional<AudioDescription>& audio, const std::optional<VideoDescription>& video):
+                audio(audio), video(video) {}
     };
 } // ntgcalls

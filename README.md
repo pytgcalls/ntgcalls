@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/banner.png" alt="pytgcalls logo" />
 <p align="center">
-    <b>A Native Implementation of Telegram Group Calls in a seamless way.</b>
+    <b>A Native Implementation of Telegram Calls in a seamless way.</b>
     <br>
     <a href="https://github.com/pytgcalls/ntgcalls/tree/master/examples">
         Examples

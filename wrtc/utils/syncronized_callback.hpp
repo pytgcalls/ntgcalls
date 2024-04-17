@@ -39,7 +39,7 @@ namespace wrtc {
         }
 
         std::function<void(Args...)> callback;
-        mutable std::recursive_mutex mutex;
+        mutable std::mutex mutex;
     };
 
     template <> class
@@ -72,7 +72,7 @@ namespace wrtc {
         }
 
         std::function<void()> callback;
-        mutable std::recursive_mutex mutex;
+        mutable std::mutex mutex;
     };
 
 } // wrtc

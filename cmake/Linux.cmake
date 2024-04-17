@@ -6,6 +6,7 @@ target_compile_definitions(${target_name} PUBLIC
     _LIBCPP_DISABLE_AVAILABILITY
     BOOST_NO_CXX98_FUNCTION_BASE
     NDEBUG
+    RTC_ENABLE_H265
 )
 
 set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)

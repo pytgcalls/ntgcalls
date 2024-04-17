@@ -46,7 +46,7 @@ with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f
 
 
 class CMakeExtension(Extension):
-    def __init__(self, name: str, sourcedir: str = "") -> None:
+    def __init__(self, name: str, sourcedir: str = '') -> None:
         super().__init__(name, sources=[])
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
 
@@ -216,14 +216,16 @@ class CMakeBuild(build_ext):
 class SharedCommand(Command):
     description = 'Generate shared-libs files'
     user_options = [
-        ('no-preserve-cache', None, "Do not preserve cache"),
-        ('debug', None, "Debug build"),
+        ('no-preserve-cache', None, 'Do not preserve cache'),
+        ('debug', None, 'Debug build'),
+        ('static', None, 'Static build'),
     ]
 
     # noinspection PyAttributeOutsideInit
     def initialize_options(self):
         self.no_preserve_cache = False
         self.debug = False
+        self.static = False
 
     def finalize_options(self):
         pass
@@ -233,13 +235,16 @@ class SharedCommand(Command):
         cfg = 'RelWithDebInfo' if self.debug else 'Release'
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={cfg}',
+            f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
         ]
         cmake_args += get_os_cmake_args()
         build_args = [
             '--config', cfg,
             f'-j{multiprocessing.cpu_count()}',
         ]
-        build_temp = Path('shared-build')
+        build_type = 'static' if self.static else 'shared'
+        config_type = 'debug' if self.debug else 'release'
+        build_temp = Path('build_lib')
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
         source_dir = os.path.dirname(os.path.abspath(__file__))
@@ -247,12 +252,15 @@ class SharedCommand(Command):
             [cmake_bin(), source_dir, *cmake_args], cwd=build_temp, check=True
         )
         subprocess.run(
-            [cmake_bin(), "--build", ".", *build_args], cwd=build_temp, check=True
+            [cmake_bin(), '--build', '.', *build_args], cwd=build_temp, check=True
         )
         release_path = Path(build_temp, 'ntgcalls')
         tmp_release_path = Path(release_path, cfg)
 
-        build_output = Path('shared-output-debug' if self.debug else 'shared-output')
+        build_output = Path(
+            f'{build_type}-output',
+            config_type,
+        )
         if build_output.exists():
             shutil.rmtree(build_output)
         build_output.mkdir(parents=True)
@@ -262,7 +270,7 @@ class SharedCommand(Command):
             release_path = tmp_release_path
         for file in os.listdir(release_path):
             target_file = Path(build_output, file)
-            if file.endswith((".lib", ".dll", ".so", ".dylib")):
+            if file.endswith(('.lib', '.dll', '.so', '.dylib', '.a')):
                 shutil.move(Path(release_path, file), target_file)
         shutil.copy(Path(source_dir, 'include', 'ntgcalls.h'), include_output)
         if self.no_preserve_cache:
@@ -274,35 +282,12 @@ class SharedCommand(Command):
             print('Cleanup successfully')
 
 
-with open(os.path.join(base_path, 'README.md'), encoding='utf-8') as f:
-    readme = f.read()
-
 setup(
-    name='ntgcalls',
     version=version,
-    long_description=readme,
-    long_description_content_type='text/markdown',
-    url='https://github.com/pytgcalls/ntgcalls',
-    author='Laky-64',
-    author_email='iraci.matteo@gmail.com',
-    classifiers=[
-        'License :: OSI Approved :: '
-        'GNU Lesser General Public License v3 (LGPLv3)',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Programming Language :: Python :: 3.12',
-        'Programming Language :: Python :: Implementation :: CPython',
-    ],
-    ext_modules=[CMakeExtension("ntgcalls")],
+    ext_modules=[CMakeExtension('ntgcalls')],
     cmdclass={
         'build_ext': CMakeBuild,
-        'build_shared': SharedCommand
+        'build_lib': SharedCommand
     },
     zip_safe=False,
-    extras_require={"test": ["pytest>=6.0"]},
-    python_requires=">=3.8",
 )

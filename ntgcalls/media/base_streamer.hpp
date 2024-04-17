@@ -26,9 +26,9 @@ namespace ntgcalls {
 
         std::chrono::nanoseconds waitTime();
 
-        virtual wrtc::MediaStreamTrack *createTrack() = 0;
+        virtual rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() = 0;
 
-        virtual void sendData(const wrtc::binary& sample, int64_t absolute_capture_timestamp_ms);
+        virtual void sendData(uint8_t* sample, int64_t absolute_capture_timestamp_ms);
 
         virtual int64_t frameSize() = 0;
     };

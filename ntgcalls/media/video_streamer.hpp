@@ -17,7 +17,7 @@
 
 namespace ntgcalls {
     class VideoStreamer final : public BaseStreamer {
-        std::shared_ptr<wrtc::RTCVideoSource> video;
+        std::unique_ptr<wrtc::RTCVideoSource> video;
         uint16_t w = 0, h = 0;
         uint8_t fps = 0;
 
@@ -28,9 +28,9 @@ namespace ntgcalls {
 
         ~VideoStreamer();
 
-        wrtc::MediaStreamTrack *createTrack() override;
+        rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() override;
 
-        void sendData(const wrtc::binary& sample, int64_t absolute_capture_timestamp_ms) override;
+        void sendData(uint8_t* sample, int64_t absolute_capture_timestamp_ms) override;
 
         int64_t frameSize() override;
 

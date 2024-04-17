@@ -10,7 +10,6 @@
 #include "models/media_state.hpp"
 #include "media/audio_streamer.hpp"
 #include "media/video_streamer.hpp"
-#include "utils/dispatch_queue.hpp"
 #include "models/media_description.hpp"
 #include "media/media_reader_factory.hpp"
 
@@ -27,7 +26,7 @@ namespace ntgcalls {
             Idling,
         };
 
-        Stream();
+        explicit Stream(rtc::Thread* workerThread);
 
         ~Stream();
 
@@ -43,31 +42,29 @@ namespace ntgcalls {
 
         bool unmute();
 
-        void stop();
-
         MediaState getState();
 
         uint64_t time();
 
         Status status();
 
-        void addTracks(const std::shared_ptr<wrtc::PeerConnection> &pc);
+        void addTracks(const std::unique_ptr<wrtc::NetworkInterface> &pc);
 
         void onStreamEnd(const std::function<void(Type)> &callback);
 
         void onUpgrade(const std::function<void(MediaState)> &callback);
 
     private:
-        std::shared_ptr<AudioStreamer> audio;
-        std::shared_ptr<VideoStreamer> video;
-        wrtc::MediaStreamTrack *audioTrack{}, *videoTrack{};
-        std::shared_ptr<MediaReaderFactory> reader;
+        std::unique_ptr<AudioStreamer> audio;
+        std::unique_ptr<VideoStreamer> video;
+        rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> audioTrack, videoTrack;
+        std::unique_ptr<MediaReaderFactory> reader;
         bool idling = false;
-        std::atomic_bool hasVideo = false, quit = false;
+        std::atomic_bool hasVideo = false, changing = false, quit = false;
         wrtc::synchronized_callback<Type> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         std::thread thread;
-        std::shared_ptr<DispatchQueue> updateQueue;
+        rtc::Thread* workerThread;
         std::shared_mutex mutex;
 
         void checkStream() const;

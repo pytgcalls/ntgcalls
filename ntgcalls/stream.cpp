@@ -5,25 +5,33 @@
 #include "stream.hpp"
 
 namespace ntgcalls {
-    Stream::Stream() {
-        audio = std::make_shared<AudioStreamer>();
-        video = std::make_shared<VideoStreamer>();
-        updateQueue = std::make_shared<DispatchQueue>();
+    Stream::Stream(rtc::Thread* workerThread): workerThread(workerThread) {
+        audio = std::make_unique<AudioStreamer>();
+        video = std::make_unique<VideoStreamer>();
     }
 
     Stream::~Stream() {
-        stop();
-        updateQueue = nullptr;
-
-        std::lock_guard lock(mutex);
+        RTC_LOG(LS_VERBOSE) << "Destroying Stream";
+        std::unique_lock lock(mutex);
+        onEOF = nullptr;
+        lock.unlock();
+        quit = true;
+        if (thread.joinable()) {
+            thread.join();
+        }
+        RTC_LOG(LS_VERBOSE) << "Thread joined";
+        lock.lock();
+        idling = false;
         audio = nullptr;
         video = nullptr;
         audioTrack = nullptr;
         videoTrack = nullptr;
         reader = nullptr;
+        workerThread = nullptr;
+        RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
 
-    void Stream::addTracks(const std::shared_ptr<wrtc::PeerConnection>& pc) {
+    void Stream::addTracks(const std::unique_ptr<wrtc::NetworkInterface>& pc) {
         pc->addTrack(audioTrack = audio->createTrack());
         pc->addTrack(videoTrack = video->createTrack());
     }
@@ -31,20 +39,23 @@ namespace ntgcalls {
     void Stream::checkStream() const {
         if (reader->audio && reader->audio->eof()) {
             reader->audio = nullptr;
-            updateQueue->dispatch([&] {
+            workerThread->PostTask([&] {
                 (void) onEOF(Audio);
             });
         }
         if (reader->video && reader->video->eof()) {
             reader->video = nullptr;
-            updateQueue->dispatch([&] {
+            workerThread->PostTask([&] {
                 (void) onEOF(Video);
             });
         }
     }
 
     void Stream::setAVStream(const MediaDescription& streamConfig, const bool noUpgrade) {
+        RTC_LOG(LS_INFO) << "Setting AVStream, Acquiring lock";
+        changing = true;
         std::lock_guard lock(mutex);
+        RTC_LOG(LS_INFO) << "Setting AVStream, Lock acquired";
         const auto audioConfig = streamConfig.audio;
         const auto videoConfig = streamConfig.video;
         idling = false;
@@ -54,6 +65,7 @@ namespace ntgcalls {
                 audioConfig->bitsPerSample,
                 audioConfig->channelCount
             );
+            RTC_LOG(LS_INFO) << "Audio config set";
         }
         const bool wasVideo = hasVideo;
         if (videoConfig) {
@@ -63,17 +75,21 @@ namespace ntgcalls {
                 videoConfig->height,
                 videoConfig->fps
             );
+            RTC_LOG(LS_INFO) << "Video config set";
         } else {
             hasVideo = false;
         }
-        reader = std::make_shared<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
+        RTC_LOG(LS_INFO) << "Creating MediaReaderFactory";
+        reader = std::make_unique<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
+        RTC_LOG(LS_INFO) << "MediaReaderFactory created";
         if (wasVideo != hasVideo && !noUpgrade) {
             checkUpgrade();
         }
+        changing = false;
     }
 
     void Stream::checkUpgrade() {
-        updateQueue->dispatch([&] {
+        workerThread->PostTask([&] {
             (void) onChangeStatus(getState());
         });
     }
@@ -81,8 +97,8 @@ namespace ntgcalls {
     MediaState Stream::getState() {
         std::shared_lock lock(mutex);
         return MediaState{
-            (audioTrack ? audioTrack->isMuted() : false) && (videoTrack ? videoTrack->isMuted() : false),
-            idling || (videoTrack ? videoTrack->isMuted() : false),
+            (audioTrack ? !audioTrack->enabled() : false) && (videoTrack ? !videoTrack->enabled() : false),
+            idling || (videoTrack ? !videoTrack->enabled() : false),
             !hasVideo
         };
     }
@@ -115,27 +131,27 @@ namespace ntgcalls {
         thread = std::thread([this] {
             do {
                 std::shared_lock lock(mutex);
-                if (idling || !reader || !(reader->audio || reader->video)) {
+                if (idling || changing || !reader || !(reader->audio || reader->video)) {
                     lock.unlock();
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     lock.lock();
                 } else {
-                    std::shared_ptr<BaseStreamer> bs;
-                    std::shared_ptr<BaseReader> br;
+                    BaseStreamer* bs;
+                    BaseReader* br;
                     if (reader->audio && reader->video) {
                         if (audio->nanoTime() <= video->nanoTime()) {
-                            bs = audio;
-                            br = reader->audio;
+                            bs = audio.get();
+                            br = reader->audio.get();
                         } else {
-                            bs = video;
-                            br = reader->video;
+                            bs = video.get();
+                            br = reader->video.get();
                         }
                     } else if (reader->audio) {
-                        bs = audio;
-                        br = reader->audio;
+                        bs = audio.get();
+                        br = reader->audio.get();
                     } else {
-                        bs = video;
-                        br = reader->video;
+                        bs = video.get();
+                        br = reader->video.get();
                     }
                     if (auto [sample, captureTime] = br->read(); sample && bs) {
                         if (const auto waitTime = bs->waitTime(); std::chrono::duration_cast<std::chrono::milliseconds>(waitTime).count() > 0) {
@@ -143,7 +159,7 @@ namespace ntgcalls {
                             std::this_thread::sleep_for(waitTime);
                             lock.lock();
                         }
-                        bs->sendData(sample, captureTime);
+                        bs->sendData(sample.get(), captureTime);
                     }
                     checkStream();
                 }
@@ -176,35 +192,18 @@ namespace ntgcalls {
     bool Stream::updateMute(const bool isMuted) {
         std::lock_guard lock(mutex);
         bool changed = false;
-        if (audioTrack && audioTrack->isMuted() != isMuted) {
-            audioTrack->Mute(isMuted);
+        if (audioTrack && !audioTrack->enabled() != isMuted) {
+            audioTrack->set_enabled(!isMuted);
             changed = true;
         }
-        if (videoTrack && videoTrack->isMuted() != isMuted) {
-            videoTrack->Mute(isMuted);
+        if (videoTrack && !videoTrack->enabled() != isMuted) {
+            videoTrack->set_enabled(!isMuted);
             changed = true;
         }
         if (changed) {
             checkUpgrade();
         }
         return changed;
-    }
-
-    void Stream::stop() {
-        quit = true;
-        if (thread.joinable()) {
-            thread.join();
-        }
-        std::lock_guard lock(mutex);
-        idling = false;
-        if (reader) {
-            if (reader->audio) {
-                reader->audio->close();
-            }
-            if (reader->video) {
-                reader->video->close();
-            }
-        }
     }
 
     void Stream::onStreamEnd(const std::function<void(Type)> &callback) {
