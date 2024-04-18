@@ -137,7 +137,7 @@ typedef struct {
 
 typedef struct {
     int32_t g;
-    uint8_t* p;
+    const uint8_t* p;
     int sizeP;
     const uint8_t* random;
     int sizeRandom;
@@ -188,7 +188,7 @@ NTG_C_EXPORT uint32_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uint32_t uid);
 
-NTG_C_EXPORT int ntg_create_p2p(uint32_t uid, int64_t userId, const ntg_dh_config_struct& dhConfig, const uint8_t* g_a_hash, int sizeGAHash, ntg_media_description_struct desc, uint8_t* buffer, int size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_create_p2p(uint32_t uid, int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, int sizeGAHash, ntg_media_description_struct desc, uint8_t* buffer, int size, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_exchange_keys(uint32_t uid, int64_t userId, const uint8_t* g_a_or_b, int sizeGAB, int64_t fingerprint, ntg_auth_params_struct *buffer, ntg_async_struct future);
 
