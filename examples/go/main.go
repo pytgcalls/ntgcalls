@@ -20,6 +20,7 @@ func main() {
 	})
 	_ = mtproto.Start()
 	// Choose between outgoingCall or joinGroupCall
+	fmt.Println(client.Calls())
 	//outgoingCall(client, mtproto, "@PyTgCallsVideoBeta")
 	//joinGroupCall(client, mtproto, "@pytgcallschat")
 	client.OnStreamEnd(func(chatId int64, streamType ntgcalls.StreamType) {
