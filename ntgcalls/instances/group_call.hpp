@@ -11,6 +11,8 @@ namespace ntgcalls {
         wrtc::SSRC audioSource = 0;
         std::vector<wrtc::SSRC> sourceGroups = {};
     public:
+        explicit GroupCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
+
         ~GroupCall() override;
 
         std::string init(const MediaDescription& config);
