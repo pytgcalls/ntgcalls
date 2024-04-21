@@ -5,7 +5,6 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 
 namespace wrtc {
     typedef uint32_t SSRC;
