@@ -3,7 +3,7 @@ import asyncio
 from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, InputMode
 from pyrogram import Client, idle
 
-from utils import connect_call, ToAsync, get_youtube_stream
+from utils import connect_call, get_youtube_stream
 
 api_id = 2799555
 api_hash = '47d66bbf0939d0ddf32caf8bad590ed7'
@@ -16,24 +16,27 @@ async def main():
 
     audio, video = await get_youtube_stream("https://www.youtube.com/watch?v=u__gKd2mCVA")
     async with client:
-        call_params = await ToAsync(wrtc.create_call, chat_id, MediaDescription(
-            audio=AudioDescription(
-                input_mode=InputMode.Shell,
-                input=f"ffmpeg -i {audio} -loglevel panic -f s16le -ac 2 -ar 96k pipe:1",
-                sample_rate=96000,
-                bits_per_sample=16,
-                channel_count=2,
+        call_params = wrtc.create_call(
+            chat_id,
+            MediaDescription(
+                audio=AudioDescription(
+                    input_mode=InputMode.SHELL,
+                    input=f"ffmpeg -i {audio} -loglevel panic -f s16le -ac 2 -ar 96k pipe:1",
+                    sample_rate=96000,
+                    bits_per_sample=16,
+                    channel_count=2,
+                ),
+                video=VideoDescription(
+                    input_mode=InputMode.SHELL,
+                    input=f"ffmpeg -i {video} -loglevel panic -f rawvideo -r 60 -pix_fmt yuv420p -vf scale=1920:1080 pipe:1",
+                    width=1920,
+                    height=1080,
+                    fps=60,
+                ),
             ),
-            video=VideoDescription(
-                input_mode=InputMode.Shell,
-                input=f"ffmpeg -i {video} -loglevel panic -f rawvideo -r 60 -pix_fmt yuv420p -vf scale=1920:1080 pipe:1",
-                width=1920,
-                height=1080,
-                fps=60,
-            ),
-        ))
+        )
         result = await connect_call(client, chat_id, call_params)
-        await ToAsync(wrtc.connect, chat_id, result)
+        await wrtc.connect(chat_id, result)
         print("Connected!")
         await idle()
         print("Closed!")

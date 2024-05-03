@@ -10,25 +10,6 @@ from pyrogram.raw.functions.phone import JoinGroupCall
 from pyrogram.raw.types import UpdateGroupCallConnection, Updates, DataJSON, InputChannel
 
 
-class ToAsync:
-    def __init__(self, function: Callable, *args):
-        self._loop: AbstractEventLoop = asyncio.get_event_loop()
-        self._function: Callable = function
-        self._function_args: tuple = args
-
-    async def _run(self):
-        result: Any = await self._loop.run_in_executor(
-            None,
-            self._function,
-            *self._function_args
-        )
-
-        return result
-
-    def __await__(self):
-        return self._run().__await__()
-
-
 async def connect_call(client: Client, chat_id: int, call_params: str) -> str:
     chat = await client.resolve_peer(chat_id)
     local_peer = await client.resolve_peer((await client.get_me()).id)
