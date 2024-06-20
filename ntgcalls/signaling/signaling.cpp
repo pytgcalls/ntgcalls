@@ -12,6 +12,7 @@ namespace signaling {
         const Version version,
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
+        const webrtc::Environment& env,
         const EncryptionKey &key,
         const DataEmitter& onEmitData,
         const DataReceiver& onSignalData
@@ -22,7 +23,7 @@ namespace signaling {
         }
         if (version & Version::V2Full) {
             RTC_LOG(LS_INFO) << "Using signaling V2 Full";
-            return std::make_unique<SignalingSctpConnection>(networkThread, signalingThread, key, onEmitData, onSignalData, true);
+            return std::make_unique<SignalingSctpConnection>(networkThread, signalingThread, env, key, onEmitData, onSignalData, true);
         }
         throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
     }

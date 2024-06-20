@@ -22,6 +22,7 @@ namespace signaling {
             Version version,
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,
+            const webrtc::Environment& env,
             const EncryptionKey &key,
             const DataEmitter& onEmitData,
             const DataReceiver& onSignalData

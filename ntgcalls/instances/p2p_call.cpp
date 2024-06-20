@@ -114,6 +114,7 @@ namespace ntgcalls {
             protocolVersion,
             connection->networkThread(),
             connection->signalingThread(),
+            connection->environment(),
             signaling::EncryptionKey(std::move(encryptionKey), type() == Type::Outgoing),
             [this](const bytes::binary &data) {
                 (void) onEmitData(data);

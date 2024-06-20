@@ -32,6 +32,8 @@ namespace wrtc {
 
         [[nodiscard]] rtc::Thread *workerThread() const;
 
+        const webrtc::Environment& environment() const;
+
         void onDataChannelOpened(const std::function<void()> &callback);
 
         void onIceCandidate(const std::function<void(const IceCandidate& candidate)>& callback);

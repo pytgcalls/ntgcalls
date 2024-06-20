@@ -21,6 +21,7 @@ namespace signaling {
         SignalingSctpConnection(
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,
+            const webrtc::Environment& env,
             const EncryptionKey &key,
             const DataEmitter& onEmitData,
             const DataReceiver& onSignalData,
@@ -42,6 +43,7 @@ namespace signaling {
         // Unused
         void OnChannelClosing(int channel_id) override{}
         void OnChannelClosed(int channel_id) override{}
+        void OnBufferedAmountLow(int channel_id) override{}
 
     protected:
         [[nodiscard]] bool supportsCompression() const override;
