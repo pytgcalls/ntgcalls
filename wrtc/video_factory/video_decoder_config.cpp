@@ -29,13 +29,11 @@ namespace wrtc {
         decoder = nullptr;
     }
 
-    std::unique_ptr<webrtc::VideoDecoder> VideoDecoderConfig::CreateVideoCodec(const webrtc::SdpVideoFormat& format) const
-    {
+    std::unique_ptr<webrtc::VideoDecoder> VideoDecoderConfig::CreateVideoCodec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const {
        if (factory) {
-           return factory->CreateVideoDecoder(format);
-       } else {
-           return decoder(format);
+           return factory->Create(env, format);
        }
+       return decoder(format);
     }
 
 } // wrtc

@@ -4,6 +4,8 @@
 
 #include "vlc.hpp"
 
+#include <api/environment/environment_factory.h>
+
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
 #include <modules/video_coding/codecs/av1/dav1d_decoder.h>
 #include <modules/video_coding/codecs/av1/libaom_av1_encoder.h>
@@ -16,7 +18,7 @@ namespace vlc {
         encoders.emplace_back(
             webrtc::kVideoCodecAV1,
             [](auto) {
-                return webrtc::CreateLibaomAv1Encoder();
+                return CreateLibaomAv1Encoder(webrtc::CreateEnvironment());
             }
         );
 #endif

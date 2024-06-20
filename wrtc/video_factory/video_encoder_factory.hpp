@@ -18,7 +18,7 @@ namespace wrtc {
         std::vector<VideoEncoderConfig> encoders;
         mutable std::vector<std::vector<webrtc::SdpVideoFormat>> formats_;
 
-        std::unique_ptr<webrtc::VideoEncoder> CreateVideoEncoder(const webrtc::SdpVideoFormat &format) override;
+        std::unique_ptr<webrtc::VideoEncoder> Create(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) override;
 
         std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const override;
     };
