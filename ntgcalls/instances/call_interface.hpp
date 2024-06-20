@@ -12,6 +12,8 @@ namespace ntgcalls {
     class CallInterface {
         bool connected = false;
 
+        void cancelNetworkListener();
+
     public:
         enum class ConnectionState {
             Connecting = 1 << 0,
@@ -25,12 +27,13 @@ namespace ntgcalls {
         std::unique_ptr<wrtc::NetworkInterface> connection;
         std::unique_ptr<Stream> stream;
         wrtc::synchronized_callback<ConnectionState> connectionChangeCallback;
-        std::unique_ptr<rtc::Thread> workerThread;
+        rtc::Thread* updateThread;
+        std::unique_ptr<rtc::Thread> networkThread;
 
         void setConnectionObserver();
 
     public:
-        explicit CallInterface();
+        explicit CallInterface(rtc::Thread* updateThread);
 
         virtual ~CallInterface();
 

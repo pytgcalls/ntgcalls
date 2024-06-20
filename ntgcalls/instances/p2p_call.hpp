@@ -5,7 +5,6 @@
 #pragma once
 #include <future>
 #include <nlohmann/json.hpp>
-#include <call/call.h>
 
 #include "call_interface.hpp"
 #include "ntgcalls/models/auth_params.hpp"
@@ -37,6 +36,8 @@ namespace ntgcalls {
         void sendMediaState(MediaState mediaState) const;
 
     public:
+        explicit P2PCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
+
         bytes::vector init(const DhConfig &dhConfig, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media);
 
         AuthParams exchangeKeys(const bytes::vector &g_a_or_b, int64_t fingerprint);

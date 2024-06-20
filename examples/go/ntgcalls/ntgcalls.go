@@ -187,7 +187,8 @@ func (ctx *Client) CreateP2PCall(chatId int64, dhConfig DhConfig, gAHash []byte,
 	var buffer [32]C.uint8_t
 	size := C.int(len(buffer))
 	gAHashC, gAHashSize := parseBytes(gAHash)
-	C.ntg_create_p2p(C.uint32_t(ctx.uid), C.int64_t(chatId), dhConfig.ParseToC(), gAHashC, gAHashSize, desc.ParseToC(), &buffer[0], size, f.ParseToC())
+	dhConfigC := dhConfig.ParseToC()
+	C.ntg_create_p2p(C.uint32_t(ctx.uid), C.int64_t(chatId), &dhConfigC, gAHashC, gAHashSize, desc.ParseToC(), &buffer[0], size, f.ParseToC())
 	f.wait()
 	return C.GoBytes(unsafe.Pointer(&buffer[0]), size), parseErrorCode(*f.errCode)
 }
@@ -325,6 +326,9 @@ func (ctx *Client) Calls() map[int64]StreamStatus {
 	_ = C.ntg_calls_count(C.uint32_t(ctx.uid), &callSize, f.ParseToC())
 	f.wait()
 	f = CreateFuture()
+	if callSize == 0 {
+		return mapReturn
+	}
 	buffer := make([]C.ntg_call_struct, callSize)
 	C.ntg_calls(C.uint32_t(ctx.uid), &buffer[0], callSize, f.ParseToC())
 	f.wait()

@@ -155,11 +155,11 @@ ntg_connection_state_enum parseConnectionState(const ntgcalls::CallInterface::Co
     return {};
 }
 
-ntgcalls::DhConfig parseDhConfig(const ntg_dh_config_struct& config) {
+ntgcalls::DhConfig parseDhConfig(ntg_dh_config_struct* config) {
     return {
-        config.g,
-        copyAndReturn(config.p, config.sizeP),
-        copyAndReturn(config.random, config.sizeRandom)
+        config->g,
+        copyAndReturn(config->p, config->sizeP),
+        copyAndReturn(config->random, config->sizeRandom)
     };
 }
 
@@ -261,7 +261,7 @@ int ntg_destroy(const uint32_t uid) {
 }
 
 
-int ntg_create_p2p(const uint32_t uid, const int64_t userId, const ntg_dh_config_struct& dhConfig, const uint8_t* g_a_hash, const int sizeGAHash, const ntg_media_description_struct desc, uint8_t* buffer, const int size, ntg_async_struct future) {
+int ntg_create_p2p(const uint32_t uid, const int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, const int sizeGAHash, const ntg_media_description_struct desc, uint8_t* buffer, const int size, ntg_async_struct future) {
     PREPARE_ASYNC(createP2PCall, userId, parseDhConfig(dhConfig), sizeGAHash ? std::optional(copyAndReturn(g_a_hash, sizeGAHash)) : std::nullopt, parseMediaDescription(desc))
     [future, buffer, size] (const bytes::vector& s) {
         *future.errorCode = copyAndReturn(s, buffer, size);

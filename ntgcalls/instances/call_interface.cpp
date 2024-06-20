@@ -5,10 +5,10 @@
 #include "call_interface.hpp"
 
 namespace ntgcalls {
-    CallInterface::CallInterface() {
-        workerThread = rtc::Thread::Create();
-        workerThread->Start();
-        stream = std::make_unique<Stream>(workerThread.get());
+    CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {
+        networkThread = rtc::Thread::Create();
+        networkThread->Start();
+        stream = std::make_unique<Stream>(updateThread);
     }
 
     CallInterface::~CallInterface() {
@@ -22,8 +22,8 @@ namespace ntgcalls {
             RTC_LOG(LS_VERBOSE) << "Connection closed";
         }
         connection = nullptr;
-        workerThread->Stop();
-        workerThread = nullptr;
+        updateThread = nullptr;
+        cancelNetworkListener();
         RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
     }
 
@@ -69,6 +69,13 @@ namespace ntgcalls {
         return stream->status();
     }
 
+    void CallInterface::cancelNetworkListener() {
+        if (networkThread) {
+            networkThread->Stop();
+            networkThread = nullptr;
+        }
+    }
+
     void CallInterface::setConnectionObserver() {
         RTC_LOG(LS_INFO) << "Connecting...";
         (void) connectionChangeCallback(ConnectionState::Connecting);
@@ -92,8 +99,10 @@ namespace ntgcalls {
             case wrtc::ConnectionState::Disconnected:
             case wrtc::ConnectionState::Failed:
             case wrtc::ConnectionState::Closed:
-                workerThread->PostTask([this] {
-                    connection->onConnectionChange(nullptr);
+                updateThread->PostTask([this] {
+                    if (connection) {
+                        connection->onConnectionChange(nullptr);
+                    }
                 });
                 if (state == wrtc::ConnectionState::Failed) {
                     RTC_LOG(LS_ERROR) << "Connection failed";
@@ -106,11 +115,9 @@ namespace ntgcalls {
             default:
                 break;
             }
+            cancelNetworkListener();
         });
-        workerThread->PostDelayedTask([this] {
-            if (!workerThread) {
-                return;
-            }
+        networkThread->PostDelayedTask([this] {
             if (!connected) {
                 RTC_LOG(LS_ERROR) << "Connection timeout";
                 (void) connectionChangeCallback(ConnectionState::Timeout);
