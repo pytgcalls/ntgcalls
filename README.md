@@ -73,13 +73,13 @@ NativeTgCalls offers Py Bindings, enabling seamless integration with Python. Fol
 NativeTgCalls offers Go Bindings, enabling seamless integration with Go. Follow these steps to compile NativeTgCalls with Go Bindings:
 1. There is an example project for go in the `./examples/go/` directory, ensure you are in that directory
 2. Download **shared** release of the library from https://github.com/pytgcalls/ntgcalls/releases
-  2.1 Static won't work
+2.1 Static won't work
 3. Copy `ntgcalls.h` file into `./examples/go/ntgcalls/` directory
 4. The rest of the files should be copied to `./examples/go/` directory
-  4.1 `ntgcalls.dll` and `ntgcalls.lib` files in case of Windows amd64 shared release
+4.1 `ntgcalls.dll` and `ntgcalls.lib` files in case of Windows amd64 shared release
 5. Then in `./examples/go/` directory run `go build` or `go run .` with CGO_ENABLED=1 env variable set
-  5.1 `$env:CGO_ENABLED=1; go run .` for Windows PowerShell
-  5.2 `CGO_ENABLED=1 go run .` for UNIX
+5.1 `$env:CGO_ENABLED=1; go run .` for Windows PowerShell
+5.2 `CGO_ENABLED=1 go run .` for UNIX
 
 
 ### C Bindings
