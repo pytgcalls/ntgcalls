@@ -8,11 +8,11 @@ if(LINUX)
         DIRECTORY ${LIBCXX_INCLUDE}
     )
     GitFile(
-        URL https://chromium.googlesource.com/chromium/src/buildtools.git/+/refs/heads/main/third_party/libc++/__config_site
+        URL https://chromium.googlesource.com/chromium/src/buildtools.git/+/${BUILDTOOLS_COMMIT}/third_party/libc++/__config_site
         DIRECTORY ${LIBCXX_INCLUDE}/include/__config_site
     )
     GitFile(
-        URL https://chromium.googlesource.com/chromium/src/buildtools.git/+/refs/heads/main/third_party/libc++/__assertion_handler
+        URL https://chromium.googlesource.com/chromium/src/buildtools.git/+/${BUILDTOOLS_COMMIT}/third_party/libc++/__assertion_handler
         DIRECTORY ${LIBCXX_INCLUDE}/include/__assertion_handler
     )
     GitClone(
