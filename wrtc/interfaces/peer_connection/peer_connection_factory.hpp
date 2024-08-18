@@ -11,7 +11,7 @@
 
 namespace wrtc {
 
-    class PeerConnectionFactory: public rtc::RefCountInterface {
+    class PeerConnectionFactory: public webrtc::RefCountInterface {
     public:
         PeerConnectionFactory();
 
