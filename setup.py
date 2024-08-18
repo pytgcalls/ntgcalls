@@ -15,8 +15,8 @@ from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
-CLANG_VERSION = '18'
-CMAKE_VERSION = '3.28.1'
+CLANG_VERSION = '19'
+CMAKE_VERSION = '3.29.6'
 TOOLS_PATH = Path(Path.cwd(), 'build_tools')
 
 
