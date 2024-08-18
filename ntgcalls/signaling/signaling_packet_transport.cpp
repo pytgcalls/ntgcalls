@@ -8,7 +8,7 @@ namespace signaling {
     void SignalingPacketTransport::receiveData(const bytes::binary& data) {
         NotifyPacketReceived(
             rtc::ReceivedPacket(
-                rtc::ArrayView<const uint8_t>(data.data(), data.size()),
+                  rtc::MakeArrayView(data.data(), data.size()),
                 rtc::SocketAddress()
             )
         );

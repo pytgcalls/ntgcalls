@@ -139,7 +139,7 @@ namespace signaling {
 
         auto currentSeq = packetSeq;
         auto currentCounter = CounterFromSeq(currentSeq);
-        rtc::ByteBufferReader reader(rtc::ArrayView<const uint8_t>(fullBuffer.data() + 4, fullBuffer.size() - 4));
+        rtc::ByteBufferReader reader(rtc::MakeArrayView(fullBuffer.data() + 4, fullBuffer.size() - 4));
         auto messages = std::vector<rtc::CopyOnWriteBuffer>();
         while (true) {
             const auto type = static_cast<uint8_t>(*reader.Data());

@@ -35,7 +35,7 @@ namespace signaling {
         }
         rtc::CopyOnWriteBuffer result;
         result.SetSize(length);
-        if (!reader.ReadBytes(rtc::ArrayView<uint8_t>(result.MutableData(), result.size()))) {
+        if (!reader.ReadBytes(rtc::MakeArrayView(result.MutableData(), result.size()))) {
             return std::nullopt;
         }
         return result;
