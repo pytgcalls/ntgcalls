@@ -7,8 +7,8 @@ endif ()
 include(ExternalProject)
 
 # https://chromiumdash.appspot.com/branches
-set(WEBRTC_REVISION m125.6422.2.3)
-set(BOOST_REVISION 1.85.0)
+set(WEBRTC_REVISION m127.6533.1.1)
+set(BOOST_REVISION 1.86.0)
 set(BOOST_LIBS filesystem)
 
 option(STATIC_BUILD "Build static libraries" ON)
