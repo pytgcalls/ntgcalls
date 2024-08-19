@@ -18,10 +18,9 @@ namespace ntgcalls {
         stream = nullptr;
         if (connection) {
             connection->onConnectionChange(nullptr);
-            connection->close();
+            connection = nullptr;
             RTC_LOG(LS_VERBOSE) << "Connection closed";
         }
-        connection = nullptr;
         updateThread = nullptr;
         cancelNetworkListener();
         RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
