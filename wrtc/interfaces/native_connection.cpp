@@ -347,7 +347,7 @@ namespace wrtc {
         transportChannel->MaybeStartGathering();
         dataChannelInterface = std::make_unique<SctpDataChannelProviderInterfaceImpl>(
             environment(),
-            transportChannel.get(),
+            dtlsTransport.get(),
             isOutgoing,
             networkThread(),
             signalingThread()
