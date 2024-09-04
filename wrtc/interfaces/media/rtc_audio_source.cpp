@@ -3,7 +3,7 @@
 //
 
 #include "rtc_audio_source.hpp"
-
+#include <rtc_base/crypto_random.h>
 
 namespace wrtc {
     RTCAudioSource::RTCAudioSource() {

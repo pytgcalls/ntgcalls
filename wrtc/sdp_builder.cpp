@@ -5,7 +5,7 @@
 #include "sdp_builder.hpp"
 
 #include <sstream>
-#include <rtc_base/helpers.h>
+#include <rtc_base/crypto_random.h>
 
 namespace wrtc {
     std::string SdpBuilder::join() const
