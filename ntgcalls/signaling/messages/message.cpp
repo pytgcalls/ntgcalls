@@ -18,6 +18,15 @@ namespace signaling {
             if (type == "offer" || type == "answer") {
                 return Type::RtcDescription;
             }
+            if (type == "InitialSetup") {
+                return Type::InitialSetup;
+            }
+            if (type == "Candidates") {
+                return Type::Candidates;
+            }
+            if (type == "NegotiateChannels") {
+                return Type::NegotiateChannels;
+            }
         }
         return Type::Unknown;
     }

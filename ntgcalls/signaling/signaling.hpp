@@ -33,11 +33,7 @@ namespace signaling {
         static Version matchVersion(const std::vector<std::string> &versions);
 
     private:
-#ifdef LEGACY_SUPPORT
         static constexpr char defaultVersion[] = "8.0.0";
-#else
-        static constexpr char defaultVersion[] = "11.0.0";
-#endif
 
         static std::string bestMatch(std::vector<std::string> versions);
 

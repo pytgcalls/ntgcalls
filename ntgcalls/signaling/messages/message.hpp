@@ -17,6 +17,9 @@ namespace signaling {
         enum class Type {
             Candidate,
             RtcDescription,
+            InitialSetup,
+            Candidates,
+            NegotiateChannels,
             Unknown
         };
 

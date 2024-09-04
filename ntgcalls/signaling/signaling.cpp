@@ -4,6 +4,7 @@
 
 #include "signaling.hpp"
 
+#include "external_signaling_connection.hpp"
 #include "signaling_sctp_connection.hpp"
 
 
@@ -21,6 +22,10 @@ namespace signaling {
             RTC_LOG(LS_ERROR) << "Signaling V1 is not supported";
             throw ntgcalls::SignalingUnsupported("Signaling V1 is not supported");
         }
+        if (version & Version::V2) {
+            RTC_LOG(LS_WARNING) << "Using signaling V2 Legacy";
+            return std::make_unique<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
+        }
         if (version & Version::V2Full) {
             RTC_LOG(LS_INFO) << "Using signaling V2 Full";
             return std::make_unique<SignalingSctpConnection>(networkThread, signalingThread, env, key, onEmitData, onSignalData, true);
@@ -30,6 +35,8 @@ namespace signaling {
 
     std::vector<std::string> Signaling::SupportedVersions() {
         return {
+            "8.0.0",
+            "9.0.0",
             "11.0.0",
         };
     }
@@ -37,6 +44,9 @@ namespace signaling {
     Signaling::Version Signaling::matchVersion(const std::vector<std::string> &versions) {
         const auto version = bestMatch(versions);
         RTC_LOG(LS_INFO) << "Selected version: " << version;
+        if (version == "8.0.0" || version == "9.0.0") {
+            return Version::V2;
+        }
         if (version == "10.0.0") {
             return Version::V1;
         }
