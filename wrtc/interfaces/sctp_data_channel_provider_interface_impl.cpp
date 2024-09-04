@@ -54,19 +54,16 @@ namespace wrtc {
     }
 
     void SctpDataChannelProviderInterfaceImpl::OnDataReceived(int channel_id, const webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) {
-        std::cout << "OnDataReceived" << std::endl;
         assert(networkThread->IsCurrent());
         dataChannel->OnDataReceived(type, buffer);
     }
 
     void SctpDataChannelProviderInterfaceImpl::OnReadyToSend() {
-        std::cout << "OnReadyToSend" << std::endl;
         assert(networkThread->IsCurrent());
         dataChannel->OnTransportReady();
     }
 
     void SctpDataChannelProviderInterfaceImpl::OnStateChange() {
-        std::cout << "OnStateChange" << std::endl;
         assert(networkThread->IsCurrent());
         const auto state = dataChannel->state();
         if (const bool isDataChannelOpen = state == webrtc::DataChannelInterface::DataState::kOpen; isOpen != isDataChannelOpen) {
@@ -76,24 +73,20 @@ namespace wrtc {
     }
 
     void SctpDataChannelProviderInterfaceImpl::OnMessage(const webrtc::DataBuffer& buffer) {
-        std::cout << "OnMessage" << std::endl;
         assert(networkThread->IsCurrent());
     }
 
     webrtc::RTCError SctpDataChannelProviderInterfaceImpl::SendData(const webrtc::StreamId sid, const webrtc::SendDataParams& params, const rtc::CopyOnWriteBuffer& payload) {
-        std::cout << "SendData" << std::endl;
         assert(networkThread->IsCurrent());
         return sctpTransport->SendData(sid.stream_id_int(), params, payload);
     }
 
     void SctpDataChannelProviderInterfaceImpl::AddSctpDataStream(const webrtc::StreamId sid) {
-        std::cout << "AddSctpDataStream" << std::endl;
         assert(networkThread->IsCurrent());
         sctpTransport->OpenStream(sid.stream_id_int());
     }
 
     void SctpDataChannelProviderInterfaceImpl::RemoveSctpDataStream(webrtc::StreamId sid) {
-        std::cout << "RemoveSctpDataStream" << std::endl;
         assert(networkThread->IsCurrent());
         networkThread->BlockingCall([this, sid] {
             sctpTransport->ResetStream(sid.stream_id_int());
@@ -101,12 +94,10 @@ namespace wrtc {
     }
 
     void SctpDataChannelProviderInterfaceImpl::updateIsConnected(const bool isConnected) {
-        std::cout << "updateIsConnected" << std::endl;
         assert(networkThread->IsCurrent());
         if (isConnected) {
             if (!isSctpTransportStarted) {
                 isSctpTransportStarted = true;
-                std::cout << "isSctpTransportStarted" << std::endl;
                 sctpTransport->Start(5000, 5000, 262144);
             }
         }

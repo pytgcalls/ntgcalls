@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <iostream>
 #include <rtc_base/weak_ptr.h>
 #include <api/data_channel_interface.h>
 #include <pc/sctp_data_channel.h>
@@ -57,22 +56,10 @@ namespace wrtc {
         void sendDataChannelMessage(const bytes::binary& data) const;
 
         // Unused
-        void OnChannelClosing(int channel_id) override
-        {
-            std::cout << "OnChannelClosing" << std::endl;
-        }
-        void OnChannelClosed(int channel_id) override
-        {
-            std::cout << "OnChannelClosed" << std::endl;
-        }
-        void OnChannelStateChanged(webrtc::SctpDataChannel* data_channel, webrtc::DataChannelInterface::DataState state) override
-        {
-            std::cout << "OnChannelStateChanged" << std::endl;
-        }
-        void OnTransportClosed(webrtc::RTCError error) override
-        {
-            std::cout << "OnTransportClosed" << std::endl;
-        };
+        void OnChannelClosing(int channel_id) override {}
+        void OnChannelClosed(int channel_id) override{}
+        void OnChannelStateChanged(webrtc::SctpDataChannel* data_channel, webrtc::DataChannelInterface::DataState state) override{}
+        void OnTransportClosed(webrtc::RTCError error) override{}
 
         void onStateChanged(const std::function<void(bool)>& callback);
 
