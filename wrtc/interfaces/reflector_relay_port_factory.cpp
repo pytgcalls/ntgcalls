@@ -8,7 +8,12 @@
 #include "reflector_port.hpp"
 
 namespace wrtc {
-    ReflectorRelayPortFactory::ReflectorRelayPortFactory(const std::vector<RTCServer>& servers): servers(servers) {}
+    ReflectorRelayPortFactory::ReflectorRelayPortFactory(const std::vector<RTCServer>& servers,
+        const bool standaloneReflectorMode,
+        const uint32_t standaloneReflectorRoleId):
+    servers(servers),
+    standaloneReflectorMode(standaloneReflectorMode),
+    standaloneReflectorRoleId(standaloneReflectorRoleId) {}
 
     std::unique_ptr<cricket::Port> ReflectorRelayPortFactory::Create(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* udp_socket) {
         if (args.config->credentials.username == "reflector") {
@@ -22,7 +27,7 @@ namespace wrtc {
             if (foundId == 0) {
                 return nullptr;
             }
-            auto port = ReflectorPort::Create(args, udp_socket, foundId, args.relative_priority);
+            auto port = ReflectorPort::Create(args, udp_socket, foundId, args.relative_priority, standaloneReflectorMode, standaloneReflectorRoleId);
             if (!port) {
                 return nullptr;
             }
@@ -49,7 +54,7 @@ namespace wrtc {
             if (foundId == 0) {
                 return nullptr;
             }
-            auto port = ReflectorPort::Create(args, min_port, max_port, foundId, args.relative_priority);
+            auto port = ReflectorPort::Create(args, min_port, max_port, foundId, args.relative_priority, standaloneReflectorMode, standaloneReflectorRoleId);
             if (!port) {
                 return nullptr;
             }

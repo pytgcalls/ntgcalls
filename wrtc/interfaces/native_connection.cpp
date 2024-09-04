@@ -66,7 +66,16 @@ namespace wrtc {
     }
 
     void NativeConnection::resetDtlsSrtpTransport() {
-        relayPortFactory = std::make_unique<ReflectorRelayPortFactory>(rtcServers);
+        bool standaloneReflectorMode = getCustomParameterBool("network_standalone_reflectors");
+        uint32_t standaloneReflectorRoleId = 0;
+        if (standaloneReflectorMode) {
+            if (isOutgoing) {
+                standaloneReflectorRoleId = 1;
+            } else {
+                standaloneReflectorRoleId = 2;
+            }
+        }
+        relayPortFactory = std::make_unique<ReflectorRelayPortFactory>(rtcServers, standaloneReflectorMode, standaloneReflectorRoleId);
         portAllocator = std::make_unique<cricket::BasicPortAllocator>(
             factory->networkManager(),
             factory->socketFactory(),
@@ -74,6 +83,13 @@ namespace wrtc {
             relayPortFactory.get()
         );
         uint32_t flags = portAllocator->flags();
+        if (getCustomParameterBool("network_use_default_route")) {
+            flags |= cricket::PORTALLOCATOR_DISABLE_ADAPTER_ENUMERATION;
+        }
+
+        if (getCustomParameterBool("network_enable_shared_socket")) {
+            flags |= cricket::PORTALLOCATOR_ENABLE_SHARED_SOCKET;
+        }
         flags |= cricket::PORTALLOCATOR_ENABLE_IPV6;
         flags |= cricket::PORTALLOCATOR_ENABLE_IPV6_ON_WIFI;
         flags |= cricket::PORTALLOCATOR_DISABLE_TCP;
@@ -114,6 +130,9 @@ namespace wrtc {
         iceConfig.continual_gathering_policy = cricket::GATHER_CONTINUALLY;
         iceConfig.prioritize_most_likely_candidate_pairs = true;
         iceConfig.regather_on_failed_networks_interval = 8000;
+        if (getCustomParameterBool("network_skip_initial_ping")) {
+            iceConfig.presume_writable_when_fully_relayed = true;
+        }
         transportChannel->SetIceConfig(iceConfig);
         const cricket::IceParameters localIceParameters(
             localParameters.ufrag,
@@ -134,6 +153,13 @@ namespace wrtc {
         dtlsTransport->SignalReceivingState.connect(this, &NativeConnection::OnTransportReceivingState_n);
         dtlsTransport->SetLocalCertificate(localCertificate);
         dtlsSrtpTransport->SetDtlsTransports(dtlsTransport.get(), nullptr);
+    }
+
+    bool NativeConnection::getCustomParameterBool(const std::string& name) const {
+        if (customParameters == nullptr) {
+            return false;
+        }
+        return customParameters[name].is_boolean() && customParameters[name];
     }
 
     void NativeConnection::createChannels() {
@@ -368,8 +394,15 @@ namespace wrtc {
     }
 
     void NativeConnection::addIceCandidate(const IceCandidate& rawCandidate) const {
-        networkThread()->PostTask([this, rawCandidate] {
-            transportChannel->AddRemoteCandidate(parseIceCandidate(rawCandidate)->candidate());
+        const bool standaloneReflectorMode = getCustomParameterBool("network_standalone_reflectors");
+        const auto candidate = parseIceCandidate(rawCandidate)->candidate();
+        if (standaloneReflectorMode) {
+            if (absl::EndsWith(candidate.address().hostname(), ".reflector")) {
+                return;
+            }
+        }
+        networkThread()->PostTask([this, candidate] {
+            transportChannel->AddRemoteCandidate(candidate);
         });
     }
 
@@ -382,15 +415,16 @@ namespace wrtc {
                 remoteIceParameters.supportsRenomination
             );
             transportChannel->SetRemoteIceParameters(parameters);
+            rtc::SSLRole sslRole;
             if (sslSetup == "active") {
-                dtlsTransport->SetDtlsRole(rtc::SSLRole::SSL_SERVER);
+                sslRole = rtc::SSLRole::SSL_SERVER;
             } else if (sslSetup == "passive") {
-                dtlsTransport->SetDtlsRole(rtc::SSLRole::SSL_CLIENT);
+                sslRole = rtc::SSLRole::SSL_CLIENT;
             } else {
-                dtlsTransport->SetDtlsRole(isOutgoing ? rtc::SSLRole::SSL_CLIENT : rtc::SSLRole::SSL_SERVER);
+                sslRole = isOutgoing ? rtc::SSLRole::SSL_CLIENT : rtc::SSLRole::SSL_SERVER;
             }
             if (fingerprint) {
-                dtlsTransport->SetRemoteFingerprint(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size());
+                dtlsTransport->SetRemoteParameters(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size(), sslRole);
             }
         });
     }

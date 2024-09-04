@@ -26,63 +26,86 @@
 #include "system_wrappers/include/field_trial.h"
 
 namespace wrtc {
-    ReflectorPort::ReflectorPort(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* socket, const uint8_t serverId, const int serverPriority): Port(
-            PortParametersRef(
-                args.network_thread,
-                args.socket_factory,
-                args.network,
-                args.username,
-                args.password
-            ),
-            webrtc::IceCandidateType::kRelay
+    ReflectorPort::ReflectorPort(const cricket::CreateRelayPortArgs& args,
+        rtc::AsyncPacketSocket* socket,
+        const uint8_t serverId,
+        const int serverPriority,
+        const bool standaloneReflectorMode,
+        const uint32_t standaloneReflectorRoleId):
+    Port(
+        PortParametersRef(
+            args.network_thread,
+            args.socket_factory,
+            args.network,
+            args.username,
+            args.password
         ),
-        serverAddress(*args.server_address),
-        serverId(serverId),
-        socket(socket),
-        error(0),
-        state(STATE_CONNECTING),
-        stunDscpValue(rtc::DSCP_NO_CHANGE),
-        credentials(args.config->credentials),
-        serverPriority(serverPriority)
-    {
+        webrtc::IceCandidateType::kRelay
+    ),
+    serverAddress(*args.server_address),
+    serverId(serverId),
+    socket(socket),
+    error(0),
+    state(STATE_CONNECTING),
+    standaloneReflectorMode(standaloneReflectorMode),
+    standaloneReflectorRoleId(standaloneReflectorRoleId),
+    stunDscpValue(rtc::DSCP_NO_CHANGE),
+    credentials(args.config->credentials),
+    serverPriority(serverPriority) {
         const auto rawPeerTag = parseHex(args.config->credentials.password);
-        auto generator = std::mt19937(std::random_device()());
-        do {
-            std::uniform_int_distribution<uint32_t> distribution;
-            randomTag = distribution(generator);
-        } while (!randomTag);
         peerTag.AppendData(rawPeerTag.data(), rawPeerTag.size() - 4);
+        if (standaloneReflectorMode) {
+            randomTag = standaloneReflectorRoleId;
+        } else {
+            auto generator = std::mt19937(std::random_device()());
+            do {
+                std::uniform_int_distribution<uint32_t> distribution;
+                randomTag = distribution(generator);
+            } while (!randomTag);
+        }
         peerTag.AppendData(reinterpret_cast<uint8_t*>(&randomTag), 4);
     }
 
-    ReflectorPort::ReflectorPort(const cricket::CreateRelayPortArgs& args, const uint16_t min_port, const uint16_t max_port, const uint8_t serverId, const int serverPriority): Port(
-            PortParametersRef(
-                args.network_thread,
-                args.socket_factory,
-                args.network,
-                args.username,
-                args.password
-            ),
-            webrtc::IceCandidateType::kRelay,
-            min_port,
-            max_port
+    ReflectorPort::ReflectorPort(const cricket::CreateRelayPortArgs& args,
+        const uint16_t min_port,
+        const uint16_t max_port,
+        const uint8_t serverId,
+        const int serverPriority,
+        const bool standaloneReflectorMode,
+        const uint32_t standaloneReflectorRoleId):
+    Port(
+        PortParametersRef(
+            args.network_thread,
+            args.socket_factory,
+            args.network,
+            args.username,
+            args.password
         ),
-        serverAddress(*args.server_address),
-        serverId(serverId),
-        socket(nullptr),
-        error(0),
-        state(STATE_CONNECTING),
-        stunDscpValue(rtc::DSCP_NO_CHANGE),
-        credentials(args.config->credentials),
-        serverPriority(serverPriority)
-    {
+        webrtc::IceCandidateType::kRelay,
+        min_port,
+        max_port // TODO: Check if "Shared" is needed
+    ),
+    serverAddress(*args.server_address),
+    serverId(serverId),
+    socket(nullptr),
+    error(0),
+    state(STATE_CONNECTING),
+    standaloneReflectorMode(standaloneReflectorMode),
+    standaloneReflectorRoleId(standaloneReflectorRoleId),
+    stunDscpValue(rtc::DSCP_NO_CHANGE),
+    credentials(args.config->credentials),
+    serverPriority(serverPriority) {
         const auto rawPeerTag = parseHex(args.config->credentials.password);
-        auto generator = std::mt19937(std::random_device()());
-        do {
-            std::uniform_int_distribution<uint32_t> distribution;
-            randomTag = distribution(generator);
-        } while (!randomTag);
         peerTag.AppendData(rawPeerTag.data(), rawPeerTag.size() - 4);
+        if (standaloneReflectorMode) {
+            randomTag = standaloneReflectorRoleId;
+        } else {
+            auto generator = std::mt19937(std::random_device()());
+            do {
+                std::uniform_int_distribution<uint32_t> distribution;
+                randomTag = distribution(generator);
+            } while (!randomTag);
+        }
         peerTag.AppendData(reinterpret_cast<uint8_t*>(&randomTag), 4);
     }
 
@@ -101,20 +124,33 @@ namespace wrtc {
         delete socket;
     }
 
-    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const cricket::CreateRelayPortArgs &args, rtc::AsyncPacketSocket *socket, const uint8_t serverId, const int serverPriority) {
+    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const cricket::CreateRelayPortArgs &args,
+        rtc::AsyncPacketSocket *socket,
+        const uint8_t serverId,
+        const int serverPriority,
+        const bool standaloneReflectorMode,
+        const uint32_t standaloneReflectorRoleId) {
         if (args.config->credentials.username.size() > 32) {
             RTC_LOG(LS_ERROR) << "Attempt to use REFLECTOR with a too long username of length " << args.config->credentials.username.size();
             return nullptr;
         }
-        return absl::WrapUnique(new ReflectorPort(args, socket, serverId, serverPriority));
+        return absl::WrapUnique(new ReflectorPort(args, socket, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
     }
 
-    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const cricket::CreateRelayPortArgs &args, const uint16_t minPort, const uint16_t maxPort, const uint8_t serverId, const int serverPriority) {
+    std::unique_ptr<ReflectorPort> ReflectorPort::Create(
+        const cricket::CreateRelayPortArgs &args,
+        const uint16_t minPort,
+        const uint16_t maxPort,
+        const uint8_t serverId,
+        const int serverPriority,
+        const bool standaloneReflectorMode,
+        const uint32_t standaloneReflectorRoleId
+    ) {
         if (args.config->credentials.username.size() > 32) {
             RTC_LOG(LS_ERROR) << "Attempt to use TURN with a too long username of length " << args.config->credentials.username.size();
             return nullptr;
         }
-        return absl::WrapUnique(new ReflectorPort(args, minPort, maxPort, serverId, serverPriority));
+        return absl::WrapUnique(new ReflectorPort(args, minPort, maxPort, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
     }
 
     rtc::SocketAddress ReflectorPort::GetLocalAddress() const {
@@ -197,7 +233,12 @@ namespace wrtc {
     bool ReflectorPort::CreateReflectorClientSocket() {
         RTC_DCHECK(!socket || SharedSocket());
         if (serverAddress.proto == cricket::PROTO_UDP && !SharedSocket()) {
-            socket = socket_factory()->CreateUdpSocket(rtc::SocketAddress(Network()->GetBestIP(), 0), min_port(), max_port());
+            if (standaloneReflectorMode && Network()->name() == "shared-reflector-network") {
+                const rtc::IPAddress ipv4_any_address(INADDR_ANY);
+                socket = socket_factory()->CreateUdpSocket(rtc::SocketAddress(ipv4_any_address, 12345), min_port(), max_port());
+            } else {
+                socket = socket_factory()->CreateUdpSocket(rtc::SocketAddress(Network()->GetBestIP(), 0), min_port(), max_port());
+            }
         } else if (serverAddress.proto == cricket::PROTO_TCP) {
             RTC_DCHECK(!SharedSocket());
             constexpr int opts = rtc::PacketSocketFactory::OPT_STUN;
@@ -429,7 +470,9 @@ namespace wrtc {
 
             const auto ipFormat = "reflector-" + std::to_string(static_cast<uint32_t>(serverId)) + "-" + std::to_string(randomTag) + ".reflector";
             rtc::SocketAddress candidateAddress(ipFormat, serverAddress.address.port());
-            candidateAddress.SetResolvedIP(serverAddress.address.ipaddr());
+            if (standaloneReflectorMode) {
+                candidateAddress.SetResolvedIP(serverAddress.address.ipaddr());
+            }
             AddAddress(
                 candidateAddress,
                 serverAddress.address,
@@ -529,6 +572,7 @@ namespace wrtc {
         });
     }
 
+    // ReSharper disable once CppMemberFunctionMayBeConst
     void ReflectorPort::OnSendStunPacket(const void* data, const size_t size, cricket::StunRequest* _) {
         RTC_DCHECK(connected());
         rtc::PacketOptions options(StunDscpValue());

@@ -169,6 +169,7 @@ namespace ntgcalls {
                 sendLocalDescription();
             } else {
                 sendInitialSetup();
+                sendOfferIfNeeded();
                 sendMediaState(stream->getState());
             }
         }
@@ -194,9 +195,7 @@ namespace ntgcalls {
                 }
                 Safe<wrtc::NativeConnection>(connection)->setRemoteParams(remoteIceParameters, std::move(fingerprint), sslSetup);
                 handshakeCompleted = true;
-                if (type() == Type::Outgoing) {
-                    sendOfferIfNeeded();
-                } else {
+                if (type() == Type::Incoming) {
                     sendInitialSetup();
                 }
                 applyPendingIceCandidates();

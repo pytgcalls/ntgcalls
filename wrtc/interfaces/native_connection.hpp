@@ -22,9 +22,13 @@
 #include "wrtc/models/content_negotiation_context.hpp"
 #include "wrtc/models/peer_ice_parameters.hpp"
 #include "wrtc/models/rtc_server.hpp"
+#include <nlohmann/json.hpp>
 
 namespace wrtc {
+    using nlohmann::json;
+
     class NativeConnection final : public sigslot::has_slots<>, public InstanceNetworking, public NetworkInterface {
+        json customParameters;
         bool connected = false, failed = false;
         std::atomic<bool> isExiting;
         bool isOutgoing, enableP2P;
@@ -75,6 +79,8 @@ namespace wrtc {
         void start();
 
         void resetDtlsSrtpTransport();
+
+        bool getCustomParameterBool(const std::string& name) const;
 
 
     public:

@@ -12,8 +12,10 @@ namespace wrtc {
 
     class ReflectorRelayPortFactory final : public cricket::RelayPortFactoryInterface {
         std::vector<RTCServer> servers;
+        bool standaloneReflectorMode;
+        uint32_t standaloneReflectorRoleId;
     public:
-        explicit ReflectorRelayPortFactory(const std::vector<RTCServer>& servers);
+        explicit ReflectorRelayPortFactory(const std::vector<RTCServer>& servers, bool standaloneReflectorMode, uint32_t standaloneReflectorRoleId);
 
         ~ReflectorRelayPortFactory() override = default;
 

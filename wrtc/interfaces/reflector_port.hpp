@@ -28,9 +28,24 @@ namespace wrtc {
 
         ~ReflectorPort() override;
 
-        static std::unique_ptr<ReflectorPort> Create(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* socket, uint8_t serverId, int serverPriority);
+        static std::unique_ptr<ReflectorPort> Create(
+            const cricket::CreateRelayPortArgs& args,
+            rtc::AsyncPacketSocket* socket,
+            uint8_t serverId,
+            int serverPriority,
+            bool standaloneReflectorMode,
+            uint32_t standaloneReflectorRoleId
+        );
 
-        static std::unique_ptr<ReflectorPort> Create(const cricket::CreateRelayPortArgs& args, uint16_t minPort, uint16_t maxPort, uint8_t serverId, int serverPriority);
+        static std::unique_ptr<ReflectorPort> Create(
+            const cricket::CreateRelayPortArgs& args,
+            uint16_t minPort,
+            uint16_t maxPort,
+            uint8_t serverId,
+            int serverPriority,
+            bool standaloneReflectorMode,
+            uint32_t standaloneReflectorRoleId
+       );
 
         rtc::SocketAddress GetLocalAddress() const;
 
@@ -67,9 +82,24 @@ namespace wrtc {
         void HandleConnectionDestroyed(cricket::Connection* conn) override;
 
     protected:
-        ReflectorPort(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* socket, uint8_t serverId, int serverPriority);
+        ReflectorPort(
+            const cricket::CreateRelayPortArgs& args,
+            rtc::AsyncPacketSocket* socket,
+            uint8_t serverId,
+            int serverPriority,
+            bool standaloneReflectorMode,
+            uint32_t standaloneReflectorRoleId
+        );
 
-        ReflectorPort(const cricket::CreateRelayPortArgs& args, uint16_t min_port, uint16_t max_port, uint8_t serverId, int serverPriority);
+        ReflectorPort(
+            const cricket::CreateRelayPortArgs& args,
+            uint16_t min_port,
+            uint16_t max_port,
+            uint8_t serverId,
+            int serverPriority,
+            bool standaloneReflectorMode,
+            uint32_t standaloneReflectorRoleId
+        );
 
         rtc::DiffServCodePoint StunDscpValue() const override;
 
@@ -91,6 +121,9 @@ namespace wrtc {
         PortState state;
         AttemptedServerSet attemptedServerAddresses;
         bool isRunningPingTask = false;
+        bool standaloneReflectorMode;
+        uint32_t standaloneReflectorRoleId;
+
         rtc::DiffServCodePoint stunDscpValue;
         std::map<std::string, uint32_t> resolvedPeerTagsByHostname;
         cricket::RelayCredentials credentials;
