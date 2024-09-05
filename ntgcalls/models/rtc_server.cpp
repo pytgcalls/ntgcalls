@@ -5,6 +5,16 @@
 #include "rtc_server.hpp"
 
 namespace ntgcalls {
+    std::set<int64_t> RTCServer::collectEndpointIds(const std::vector<RTCServer>& servers) {
+        std::set<int64_t> result;
+        for (const auto &server: servers) {
+            if (server.peerTag) {
+                result.emplace(server.id);
+            }
+        }
+        return result;
+    }
+
     RTCServer::RTCServer(
         const uint64_t id,
         std::string ipv4,
@@ -30,6 +40,7 @@ namespace ntgcalls {
     }
 
     std::vector<wrtc::RTCServer> RTCServer::toRtcServers(const std::vector<RTCServer>& servers) {
+        const auto ids = collectEndpointIds(servers);
         std::vector<wrtc::RTCServer> wrtcServers;
         for (const auto& server: servers) {
             if (server.peerTag) {
@@ -45,9 +56,11 @@ namespace ntgcalls {
                     }
                     return result;
                 };
+                const auto i = ids.find(server.id);
+		        const auto id = static_cast<uint8_t>(std::distance(ids.begin(), i) + 1);
                 const auto pushPhone = [&](const std::string &host) {
                     wrtc::RTCServer rtcServer;
-                    rtcServer.id = server.id;
+                    rtcServer.id = id;
                     rtcServer.host = host;
                     rtcServer.port = server.port;
                     rtcServer.login = "reflector";

@@ -12,6 +12,8 @@
 
 namespace ntgcalls {
     class RTCServer {
+        static std::set<int64_t> collectEndpointIds(const std::vector<RTCServer>& servers);
+
     public:
         uint64_t id;
         std::string ipv4, ipv6;
