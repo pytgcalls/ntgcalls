@@ -32,8 +32,8 @@ namespace ntgcalls {
     }
 
     void Stream::addTracks(const std::unique_ptr<wrtc::NetworkInterface>& pc) {
-        pc->addTrack(audioTrack = audio->createTrack());
-        pc->addTrack(videoTrack = video->createTrack());
+        audioTrack = pc->addTrack(audio->createTrack());
+        videoTrack = pc->addTrack(video->createTrack());
     }
 
     void Stream::checkStream() const {

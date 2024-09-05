@@ -16,6 +16,7 @@ namespace wrtc {
         std::unique_ptr<cricket::VoiceChannel> channel;
         rtc::Thread* workerThread;
         rtc::Thread* networkThread;
+        webrtc::LocalAudioSinkAdapter* sink;
 
     public:
         OutgoingAudioChannel(
@@ -27,6 +28,8 @@ namespace wrtc {
             rtc::Thread* networkThread,
             webrtc::LocalAudioSinkAdapter* sink
         );
+
+        void set_enabled(bool enable) const;
 
         ~OutgoingAudioChannel() override;
 

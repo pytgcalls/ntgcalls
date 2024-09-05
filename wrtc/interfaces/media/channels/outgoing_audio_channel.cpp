@@ -15,18 +15,17 @@ namespace wrtc {
         rtc::Thread *workerThread,
         rtc::Thread* networkThread,
         webrtc::LocalAudioSinkAdapter* sink
-    ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread) {
+    ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
         cricket::AudioOptions audioOptions;
         audioOptions.echo_cancellation = false;
         audioOptions.noise_suppression = false;
         audioOptions.auto_gain_control = false;
         audioOptions.highpass_filter = false;
 
-        const auto contentId = std::to_string(_ssrc);
         channel = channelManager->CreateVoiceChannel(
             call,
             cricket::MediaConfig(),
-            contentId,
+            std::to_string(_ssrc),
             false,
             NativeConnection::getDefaultCryptoOptions(),
             audioOptions
@@ -72,9 +71,8 @@ namespace wrtc {
             channel->SetLocalContent(outgoingDescription.get(), webrtc::SdpType::kOffer, errorDesc);
             channel->SetRemoteContent(incomingDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
         });
-        channel->Enable(true);
+        set_enabled(true);
         workerThread->BlockingCall([&] {
-            channel->send_channel()->SetAudioSend(_ssrc, true, nullptr, sink);
             webrtc::RtpParameters initialParameters = channel->send_channel()->GetRtpSendParameters(_ssrc);
             webrtc::RtpParameters updatedParameters = initialParameters;
             if (updatedParameters.encodings.empty()) {
@@ -87,6 +85,13 @@ namespace wrtc {
         });
     }
 
+    void OutgoingAudioChannel::set_enabled(const bool enable) const {
+        channel->Enable(enable);
+        workerThread->BlockingCall([&] {
+            channel->send_channel()->SetAudioSend(_ssrc, enable, nullptr, sink);
+        });
+    }
+
     OutgoingAudioChannel::~OutgoingAudioChannel() {
         channel->Enable(false);
         networkThread->BlockingCall([&] {
@@ -95,6 +100,7 @@ namespace wrtc {
         workerThread->BlockingCall([&] {
             channel = nullptr;
         });
+        sink = nullptr;
     }
 
     uint32_t OutgoingAudioChannel::ssrc() const {

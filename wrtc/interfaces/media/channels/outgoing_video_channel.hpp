@@ -17,6 +17,7 @@ namespace wrtc {
         rtc::Thread* workerThread;
         rtc::Thread* networkThread;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> bitrateAllocatorFactory;
+        LocalVideoAdapter* sink;
 
     public:
         OutgoingVideoChannel(
@@ -30,6 +31,8 @@ namespace wrtc {
         );
 
         ~OutgoingVideoChannel() override;
+
+        void set_enabled(bool enable) const;
 
         [[nodiscard]] uint32_t ssrc() const;
     };

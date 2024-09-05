@@ -16,14 +16,14 @@ namespace wrtc {
         rtc::Thread *workerThread,
         rtc::Thread *networkThread,
         LocalVideoAdapter* sink
-    ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread) {
+    ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
         cricket::VideoOptions videoOptions;
         videoOptions.is_screencast = false;
         bitrateAllocatorFactory = webrtc::CreateBuiltinVideoBitrateAllocatorFactory();
         channel = channelManager->CreateVideoChannel(
             call,
             cricket::MediaConfig(),
-            std::to_string(mediaContent.ssrc),
+            std::to_string(_ssrc),
             false,
             NativeConnection::getDefaultCryptoOptions(),
             videoOptions,
@@ -98,11 +98,11 @@ namespace wrtc {
             channel->SetRemoteContent(incomingVideoDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
         });
         channel->Enable(true);
+        set_enabled(true);
         workerThread->BlockingCall([&] {
-            channel->send_channel()->SetVideoSend(mediaContent.ssrc, nullptr, sink);
-            webrtc::RtpParameters rtpParameters = channel->send_channel()->GetRtpSendParameters(mediaContent.ssrc);
+            webrtc::RtpParameters rtpParameters = channel->send_channel()->GetRtpSendParameters(_ssrc);
             rtpParameters.degradation_preference = webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
-            channel->send_channel()->SetRtpSendParameters(mediaContent.ssrc, rtpParameters);
+            channel->send_channel()->SetRtpSendParameters(_ssrc, rtpParameters);
         });
     }
 
@@ -114,6 +114,14 @@ namespace wrtc {
         workerThread->BlockingCall([&] {
             channel = nullptr;
             bitrateAllocatorFactory = nullptr;
+        });
+        sink = nullptr;
+    }
+
+    void OutgoingVideoChannel::set_enabled(const bool enable) const {
+        channel->Enable(enable);
+        workerThread->BlockingCall([&] {
+            channel->send_channel()->SetVideoSend(_ssrc, nullptr, enable ? sink:nullptr);
         });
     }
 

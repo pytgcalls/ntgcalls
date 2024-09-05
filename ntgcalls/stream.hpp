@@ -57,7 +57,7 @@ namespace ntgcalls {
     private:
         std::unique_ptr<AudioStreamer> audio;
         std::unique_ptr<VideoStreamer> video;
-        rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> audioTrack, videoTrack;
+        std::unique_ptr<wrtc::MediaTrackInterface> audioTrack, videoTrack;
         std::unique_ptr<MediaReaderFactory> reader;
         bool idling = false;
         std::atomic_bool hasVideo = false, changing = false, quit = false;

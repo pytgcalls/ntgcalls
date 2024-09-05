@@ -104,7 +104,7 @@ namespace wrtc {
 
         std::unique_ptr<ContentNegotiationContext::NegotiationContents> setPendingAnswer(std::unique_ptr<ContentNegotiationContext::NegotiationContents> answer) const;
 
-        void addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
+        std::unique_ptr<MediaTrackInterface> addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
 
         std::unique_ptr<rtc::SSLFingerprint> localFingerprint() const;
 

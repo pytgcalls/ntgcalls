@@ -16,6 +16,7 @@
 
 #include "reflector_relay_port_factory.hpp"
 #include "media/rtc_audio_source.hpp"
+#include "wrtc/exceptions.hpp"
 
 
 namespace wrtc {
@@ -437,14 +438,26 @@ namespace wrtc {
         return contentNegotiationContext->setPendingAnwer(std::move(answer));
     }
 
-    void NativeConnection::addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
+    std::unique_ptr<MediaTrackInterface> NativeConnection::addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
         if (const auto audioTrack = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
             audioChannelId = contentNegotiationContext->addOutgoingChannel(audioTrack);
             audioTrack->AddSink(&audioSink);
-        } else if (const auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
+            return std::make_unique<MediaTrackInterface>([this](const bool enable) {
+                if (audioChannel != nullptr) {
+                    audioChannel->set_enabled(enable);
+                }
+            });
+        }
+        if (const auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
             videoChannelId = contentNegotiationContext->addOutgoingChannel(videoTrack);
             videoTrack->AddOrUpdateSink(&videoSink, rtc::VideoSinkWants());
+            return std::make_unique<MediaTrackInterface>([this](const bool enable) {
+                if (videoChannel != nullptr) {
+                    videoChannel->set_enabled(enable);
+                }
+            });
         }
+        throw RTCException("Unsupported track type");
     }
 
     std::unique_ptr<rtc::SSLFingerprint> NativeConnection::localFingerprint() const {
