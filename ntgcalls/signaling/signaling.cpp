@@ -23,7 +23,7 @@ namespace signaling {
             throw ntgcalls::SignalingUnsupported("Signaling V1 is not supported");
         }
         if (version & Version::V2) {
-            RTC_LOG(LS_WARNING) << "Using signaling V2 Legacy";
+            RTC_LOG(LS_INFO) << "Using signaling V2 Legacy";
             return std::make_unique<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
         }
         if (version & Version::V2Full) {
