@@ -4,7 +4,6 @@
 
 #include "sctp_data_channel_provider_interface_impl.hpp"
 
-#include <iostream>
 #include <p2p/base/dtls_transport.h>
 #include <memory>
 
@@ -104,7 +103,6 @@ namespace wrtc {
     }
 
     void SctpDataChannelProviderInterfaceImpl::sendDataChannelMessage(const bytes::binary& data) const {
-        std::cout << "sendDataChannelMessage" << std::endl;
         if (isOpen) {
             const std::string message = bytes::to_string(data);
             RTC_LOG(LS_INFO) << "Outgoing DataChannel message: " << message;
