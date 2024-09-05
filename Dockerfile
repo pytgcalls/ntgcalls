@@ -5,7 +5,7 @@ RUN yum install -y \
 ENV MAKEFLAGS="-j$(nproc)"
 ENV CFLAGS="-march=native -O3"
 ENV CXXFLAGS="-march=native -O3"
-RUN git clone --depth=1 -b release/18.x https://github.com/llvm/llvm-project.git \
+RUN git clone --depth=1 -b release/19.x https://github.com/llvm/llvm-project.git \
     && cd llvm-project \
     && mkdir build \
     && cd build \
@@ -14,5 +14,5 @@ RUN git clone --depth=1 -b release/18.x https://github.com/llvm/llvm-project.git
     && make install \
     && cd ../.. \
     && rm -rf llvm-project \
-    && ln -s /usr/local/bin/clang++ /usr/local/bin/clang++-18 \
+    && ln -s /usr/local/bin/clang++ /usr/local/bin/clang++-19 \
     && ln -s /usr/local/bin/python3.12 /usr/local/bin/python3
