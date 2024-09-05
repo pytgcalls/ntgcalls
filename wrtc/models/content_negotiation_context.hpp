@@ -62,7 +62,7 @@ namespace wrtc {
 
         static cricket::ContentInfo convertSignalingContentToContentInfo(const std::string &contentId, const MediaContent &content, webrtc::RtpTransceiverDirection direction);
 
-        static MediaContent convertContentInfoToSingalingContent(const cricket::ContentInfo &content);
+        static MediaContent convertContentInfoToSignalingContent(const cricket::ContentInfo &content);
 
         static cricket::ContentInfo createInactiveContentInfo(const std::string &contentId);
 
@@ -86,7 +86,7 @@ namespace wrtc {
 
         std::unique_ptr<NegotiationContents> getPendingOffer();
 
-        std::unique_ptr<NegotiationContents> setPendingAnwer(std::unique_ptr<NegotiationContents>&& answer);
+        std::unique_ptr<NegotiationContents> setPendingAnswer(std::unique_ptr<NegotiationContents>&& answer);
 
         [[nodiscard]] std::unique_ptr<CoordinatedState> coordinatedState() const;
 

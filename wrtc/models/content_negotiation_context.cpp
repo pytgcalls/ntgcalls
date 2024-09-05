@@ -160,7 +160,7 @@ namespace wrtc {
         auto mappedOffer = std::make_unique<NegotiationContents>();
         mappedOffer->exchangeId = pendingOutgoingOffer->exchangeId;
         for (const auto &content : offer->contents()) {
-            auto mappedContent = convertContentInfoToSingalingContent(content);
+            auto mappedContent = convertContentInfoToSignalingContent(content);
             if (content.media_description()->direction() == webrtc::RtpTransceiverDirection::kSendOnly) {
                 mappedOffer->contents.push_back(std::move(mappedContent));
                 for (auto &channel : outgoingChannelDescriptions) {
@@ -174,7 +174,7 @@ namespace wrtc {
         return mappedOffer;
     }
 
-    std::unique_ptr<ContentNegotiationContext::NegotiationContents> ContentNegotiationContext::setPendingAnwer(std::unique_ptr<NegotiationContents>&& answer) {
+    std::unique_ptr<ContentNegotiationContext::NegotiationContents> ContentNegotiationContext::setPendingAnswer(std::unique_ptr<NegotiationContents>&& answer) {
         if (!answer) {
             return nullptr;
         }
@@ -381,7 +381,7 @@ namespace wrtc {
         return mappedContentInfo;
     }
 
-    MediaContent ContentNegotiationContext::convertContentInfoToSingalingContent(const cricket::ContentInfo &content) {
+    MediaContent ContentNegotiationContext::convertContentInfoToSignalingContent(const cricket::ContentInfo &content) {
         MediaContent mappedContent;
         switch (content.media_description()->type()) {
             case cricket::MediaType::MEDIA_TYPE_AUDIO:
@@ -622,7 +622,7 @@ namespace wrtc {
         std::vector<MediaContent> incomingChannels;
 
         for (const auto &content : answer->contents()) {
-            auto mappedContent = convertContentInfoToSingalingContent(content);
+            auto mappedContent = convertContentInfoToSignalingContent(content);
 
             if (content.media_description()->direction() == webrtc::RtpTransceiverDirection::kRecvOnly) {
                 for (const auto &[type, ssrc, ssrcGroups, payloadTypes, rtpExtensions] : offer->contents) {

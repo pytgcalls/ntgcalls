@@ -434,7 +434,7 @@ namespace wrtc {
     }
 
     std::unique_ptr<ContentNegotiationContext::NegotiationContents> NativeConnection::setPendingAnswer(std::unique_ptr<ContentNegotiationContext::NegotiationContents> answer) const {
-        return contentNegotiationContext->setPendingAnwer(std::move(answer));
+        return contentNegotiationContext->setPendingAnswer(std::move(answer));
     }
 
     std::unique_ptr<MediaTrackInterface> NativeConnection::addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
