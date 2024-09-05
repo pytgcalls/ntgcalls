@@ -170,7 +170,6 @@ namespace ntgcalls {
             } else {
                 sendInitialSetup();
                 sendOfferIfNeeded();
-                sendMediaState(stream->getState());
             }
         }
         setConnectionObserver();
@@ -236,7 +235,6 @@ namespace ntgcalls {
                 }
                 sendOfferIfNeeded();
                 Safe<wrtc::NativeConnection>(connection)->createChannels();
-                sendMediaState(stream->getState());
                 break;
             }
             case signaling::Message::Type::RtcDescription: {
