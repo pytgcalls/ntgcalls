@@ -26,4 +26,5 @@ target_link_libraries(${target_name} PUBLIC
     "-framework MetalKit"
     "-framework OpenGL"
     "-framework IOSurface"
+    "-framework ScreenCaptureKit"
 )
