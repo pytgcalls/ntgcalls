@@ -261,8 +261,7 @@ namespace wrtc {
         signalingThread()->PostTask([this, candidate] {
             cricket::Candidate patchedCandidate = candidate;
             patchedCandidate.set_component(1);
-            webrtc::JsepIceCandidate iceCandidate{std::string(),0};
-            iceCandidate.SetCandidate(patchedCandidate);
+            webrtc::JsepIceCandidate iceCandidate{std::string(),0, patchedCandidate};
             (void) iceCandidateCallback(IceCandidate(&iceCandidate));
         });
     }
