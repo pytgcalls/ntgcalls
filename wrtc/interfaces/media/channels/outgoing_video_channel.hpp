@@ -26,7 +26,7 @@ namespace wrtc {
             const MediaContent& mediaContent,
             rtc::Thread* workerThread,
             rtc::Thread* networkThread,
-            LocalVideoAdapter* videoSink
+            LocalVideoAdapter* sink
         );
 
         ~OutgoingVideoChannel() override;

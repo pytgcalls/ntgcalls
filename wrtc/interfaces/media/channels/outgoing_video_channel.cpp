@@ -15,7 +15,7 @@ namespace wrtc {
         const MediaContent &mediaContent,
         rtc::Thread *workerThread,
         rtc::Thread *networkThread,
-        LocalVideoAdapter* videoSink
+        LocalVideoAdapter* sink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread) {
         cricket::VideoOptions videoOptions;
         videoOptions.is_screencast = false;
@@ -96,13 +96,13 @@ namespace wrtc {
             std::string errorDesc;
             channel->SetLocalContent(outgoingVideoDescription.get(), webrtc::SdpType::kOffer, errorDesc);
             channel->SetRemoteContent(incomingVideoDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
+        });
+        channel->Enable(true);
+        workerThread->BlockingCall([&] {
+            channel->send_channel()->SetVideoSend(mediaContent.ssrc, nullptr, sink);
             webrtc::RtpParameters rtpParameters = channel->send_channel()->GetRtpSendParameters(mediaContent.ssrc);
             rtpParameters.degradation_preference = webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
             channel->send_channel()->SetRtpSendParameters(mediaContent.ssrc, rtpParameters);
-        });
-        channel->Enable(false);
-        workerThread->BlockingCall([&] {
-            channel->send_channel()->SetVideoSend(mediaContent.ssrc, nullptr, videoSink);
         });
     }
 
