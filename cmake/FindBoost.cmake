@@ -61,7 +61,7 @@ if(NOT DEFINED LAST_BOOST_LIBS OR
 
     set(BOOST_DOWNLOAD_DIR ${BOOST_DIR}/download)
     DownloadProject(
-        URL https://boostorg.jfrog.io/artifactory/main/release/${BOOST_REVISION}/source/boost_${BOOST_REVISION_UNDERSCORE}.tar.gz
+        URL https://archives.boost.io/release/${BOOST_REVISION}/source/boost_${BOOST_REVISION_UNDERSCORE}.tar.gz
         DOWNLOAD_DIR ${BOOST_DOWNLOAD_DIR}
         SOURCE_DIR ${BOOST_WORKDIR}
     )
