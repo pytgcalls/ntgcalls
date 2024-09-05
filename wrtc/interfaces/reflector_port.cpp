@@ -33,13 +33,14 @@ namespace wrtc {
         const bool standaloneReflectorMode,
         const uint32_t standaloneReflectorRoleId):
     Port(
-        PortParametersRef(
+        PortParametersRef{
             args.network_thread,
             args.socket_factory,
             args.network,
             args.username,
-            args.password
-        ),
+            args.password,
+            args.field_trials
+        },
         webrtc::IceCandidateType::kRelay
     ),
     serverAddress(*args.server_address),
@@ -74,13 +75,14 @@ namespace wrtc {
         const bool standaloneReflectorMode,
         const uint32_t standaloneReflectorRoleId):
     Port(
-        PortParametersRef(
+        PortParametersRef{
             args.network_thread,
             args.socket_factory,
             args.network,
             args.username,
-            args.password
-        ),
+            args.password,
+            args.field_trials
+        },
         webrtc::IceCandidateType::kRelay,
         min_port,
         max_port // TODO: Check if "Shared" is needed

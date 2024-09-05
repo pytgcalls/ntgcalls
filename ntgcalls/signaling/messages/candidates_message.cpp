@@ -23,7 +23,7 @@ namespace signaling {
         json j = json::parse(data.begin(), data.end());
         auto message = std::make_unique<CandidatesMessage>();
         for (const auto& iceCandidate : j["candidates"]) {
-            message->iceCandidates.emplace_back(iceCandidate["sdpString"]);
+            message->iceCandidates.push_back(IceCandidate{iceCandidate["sdpString"]});
         }
         return std::move(message);
     }
