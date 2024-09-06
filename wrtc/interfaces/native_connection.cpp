@@ -229,9 +229,6 @@ namespace wrtc {
 
     NativeConnection::~NativeConnection() {
         close();
-        isExiting = true;
-        dtlsSrtpTransport = nullptr;
-        asyncResolverFactory = nullptr;
     }
 
     void NativeConnection::notifyStateUpdated() const {
@@ -368,24 +365,37 @@ namespace wrtc {
     }
 
     void NativeConnection::close() {
+        isExiting = true;
+        audioChannel = nullptr;
+        videoChannel = nullptr;
+        channelManager = nullptr;
         if (factory) {
-            audioChannel = nullptr;
-            videoChannel = nullptr;
-            networkThread()->BlockingCall([this] {
-                dtlsSrtpTransport->UnsubscribeReadyToSend(this);
-                transportChannel->SignalCandidateGathered.disconnect(this);
-                transportChannel->SignalIceTransportStateChanged.disconnect(this);
-                transportChannel->SignalNetworkRouteChanged.disconnect(this);
-                dtlsTransport->SignalWritableState.disconnect(this);
-                dtlsTransport->SignalReceivingState.disconnect(this);
-                dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
+            workerThread()->BlockingCall([&] {
+                call = nullptr;
+            });
+        }
+        contentNegotiationContext = nullptr;
+        if (factory) {
+            networkThread()->BlockingCall([&] {
+                if (transportChannel) {
+                    transportChannel->SignalCandidateGathered.disconnect(this);
+                    transportChannel->SignalIceTransportStateChanged.disconnect(this);
+                    transportChannel->SignalNetworkRouteChanged.disconnect(this);
+                }
                 dataChannelInterface = nullptr;
+                if (dtlsTransport) {
+                    dtlsTransport->SignalWritableState.disconnect(this);
+                    dtlsTransport->SignalReceivingState.disconnect(this);
+                }
+                if (dtlsSrtpTransport) {
+                    dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
+                }
                 dtlsTransport = nullptr;
                 transportChannel = nullptr;
                 portAllocator = nullptr;
             });
-            NetworkInterface::close();
         }
+        NetworkInterface::close();
     }
 
     void NativeConnection::sendDataChannelMessage(const bytes::binary& data) const {
