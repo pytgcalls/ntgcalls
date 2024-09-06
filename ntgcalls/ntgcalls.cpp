@@ -73,7 +73,7 @@ namespace ntgcalls {
             SafeCall<P2PCall>(connections[chatId].get())->onSignalingData([this, chatId](const bytes::binary& data) {
                 WORKER("onSignalingData", updateThread, this, chatId, data)
                 THREAD_SAFE
-                (void) emitCallaback(chatId, CAST_BYTES(data));
+                (void) emitCallback(chatId, CAST_BYTES(data));
                 END_THREAD_SAFE
                 END_WORKER
             });
@@ -174,7 +174,7 @@ namespace ntgcalls {
 
     void NTgCalls::onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback) {
         std::lock_guard lock(mutex);
-        emitCallaback = callback;
+        emitCallback = callback;
     }
 
     ASYNC_RETURN(void) NTgCalls::sendSignalingData(const int64_t chatId, const BYTES(bytes::binary) &msgKey) {

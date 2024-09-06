@@ -31,7 +31,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> mediaStateCallback;
         wrtc::synchronized_callback<int64_t, CallInterface::ConnectionState> connectionChangeCallback;
-        wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallaback;
+        wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
         std::unique_ptr<rtc::Thread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
