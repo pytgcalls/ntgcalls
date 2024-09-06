@@ -20,10 +20,13 @@
 
 
 namespace wrtc {
-    NativeConnection::NativeConnection(
-        std::vector<RTCServer> rtcServers,
+    NativeConnection::NativeConnection(std::vector<RTCServer> rtcServers,
         const bool enableP2P,
-        const bool isOutgoing): isOutgoing(isOutgoing), enableP2P(enableP2P), rtcServers(std::move(rtcServers)) {
+        const bool isOutgoing):
+    isOutgoing(isOutgoing),
+    enableP2P(enableP2P),
+    rtcServers(std::move(rtcServers)),
+    eventLog(std::make_unique<webrtc::RtcEventLogNull>()) {
         networkThread()->PostTask([this] {
             localParameters = PeerIceParameters(
                 rtc::CreateRandomString(cricket::ICE_UFRAG_LENGTH),
