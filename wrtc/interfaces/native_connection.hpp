@@ -46,7 +46,6 @@ namespace wrtc {
         absl::optional<RouteDescription> currentRouteDescription;
         absl::optional<ConnectionDescription> currentConnectionDescription;
         std::unique_ptr<webrtc::RtcEventLogNull> eventLog;
-        std::unique_ptr<webrtc::TaskQueueFactory> taskQueueFactory;
         std::unique_ptr<ContentNegotiationContext> contentNegotiationContext;
         std::optional<std::string> audioChannelId, videoChannelId;
         std::unique_ptr<webrtc::Call> call;
