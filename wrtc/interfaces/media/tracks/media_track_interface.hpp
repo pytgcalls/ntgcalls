@@ -10,7 +10,7 @@
 namespace wrtc {
     class MediaTrackInterface {
         synchronized_callback<bool> enableCallback;
-        std::atomic<bool> status = true;
+        std::atomic_bool status = true;
 
     public:
         explicit MediaTrackInterface(const std::function<void(bool)>& enableCallback);

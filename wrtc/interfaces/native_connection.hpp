@@ -30,7 +30,7 @@ namespace wrtc {
     class NativeConnection final : public sigslot::has_slots<>, public InstanceNetworking, public NetworkInterface {
         json customParameters;
         bool connected = false, failed = false;
-        std::atomic<bool> isExiting;
+        std::atomic_bool isExiting;
         bool isOutgoing, enableP2P;
         int64_t lastDisconnectedTimestamp = 0;
         std::vector<RTCServer> rtcServers;
