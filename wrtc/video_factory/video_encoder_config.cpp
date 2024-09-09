@@ -26,10 +26,9 @@ namespace wrtc {
         return factory->GetSupportedFormats();
     }
 
-    std::unique_ptr<webrtc::VideoEncoder> VideoEncoderConfig::CreateVideoCodec(const webrtc::SdpVideoFormat& format) const
-    {
+    std::unique_ptr<webrtc::VideoEncoder> VideoEncoderConfig::CreateVideoCodec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const {
         if (factory) {
-            return factory->CreateVideoEncoder(format);
+            return factory->Create(env, format);
         }
         return encoder(format);
     }

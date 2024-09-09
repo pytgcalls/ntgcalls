@@ -6,7 +6,12 @@
 
 namespace signaling {
     void SignalingPacketTransport::receiveData(const bytes::binary& data) {
-        SignalReadPacket.emit(this, reinterpret_cast<const char*>(data.data()), data.size(), -1, 0);
+        NotifyPacketReceived(
+            rtc::ReceivedPacket(
+                  rtc::MakeArrayView(data.data(), data.size()),
+                rtc::SocketAddress()
+            )
+        );
     }
 
     const std::string& SignalingPacketTransport::transport_name() const {

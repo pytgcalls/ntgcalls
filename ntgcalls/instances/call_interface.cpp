@@ -13,15 +13,15 @@ namespace ntgcalls {
 
     CallInterface::~CallInterface() {
         RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
+        isExiting = true;
         std::lock_guard lock(mutex);
         connectionChangeCallback = nullptr;
         stream = nullptr;
         if (connection) {
             connection->onConnectionChange(nullptr);
-            connection->close();
+            connection = nullptr;
             RTC_LOG(LS_VERBOSE) << "Connection closed";
         }
-        connection = nullptr;
         updateThread = nullptr;
         cancelNetworkListener();
         RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
@@ -80,6 +80,7 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Connecting...";
         (void) connectionChangeCallback(ConnectionState::Connecting);
         connection->onConnectionChange([this](const wrtc::ConnectionState state) {
+            if (isExiting) return;
             std::lock_guard lock(mutex);
             switch (state) {
             case wrtc::ConnectionState::Connecting:

@@ -33,6 +33,10 @@ namespace wrtc {
         return factory->workerThread();
     }
 
+    const webrtc::Environment& NetworkInterface::environment() const {
+        return factory->environment();
+    }
+
     void NetworkInterface::onDataChannelOpened(const std::function<void()>& callback) {
         dataChannelOpenedCallback = callback;
     }

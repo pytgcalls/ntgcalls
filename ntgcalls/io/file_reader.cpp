@@ -5,7 +5,7 @@
 #include "file_reader.hpp"
 
 namespace ntgcalls {
-    FileReader::FileReader(const std::string& path, const int64_t bufferSize, const bool noLatecy): BaseReader(bufferSize, noLatecy) {
+    FileReader::FileReader(const std::string& path, const int64_t bufferSize, const bool noLatency): BaseReader(bufferSize, noLatency) {
         source = std::ifstream(path, std::ios::binary);
         if (!source) {
             RTC_LOG(LS_ERROR) << "Unable to open the file located at \"" << path << "\"";

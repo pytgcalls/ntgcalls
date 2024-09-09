@@ -4,10 +4,13 @@
 
 #include "signaling_sctp_connection.hpp"
 
+#include <api/environment/environment_factory.h>
+
 namespace signaling {
     SignalingSctpConnection::SignalingSctpConnection(
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
+        const webrtc::Environment& env,
         const EncryptionKey &key,
         const DataEmitter& onEmitData,
         const DataReceiver& onSignalData,
@@ -16,7 +19,7 @@ namespace signaling {
         networkThread->BlockingCall([&] {
             packetTransport = std::make_unique<SignalingPacketTransport>(onEmitData);
             sctpTransportFactory = std::make_unique<cricket::SctpTransportFactory>(networkThread);
-            sctpTransport = sctpTransportFactory->CreateSctpTransport(packetTransport.get());
+            sctpTransport = sctpTransportFactory->CreateSctpTransport(env, packetTransport.get());
             sctpTransport->OpenStream(0);
             sctpTransport->SetDataChannelSink(this);
             sctpTransport->Start(5000, 5000, 262144);

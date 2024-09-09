@@ -34,7 +34,7 @@ namespace signaling {
         auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, msgKey, x);
         openssl::Aes::ProcessCtr(
             bytes::memory_span(buffer.data(), buffer.size()),
-            msgKey + 16,
+            encrypted.data() + 16,
             aesKeyIv
         );
         return encrypted;
@@ -139,7 +139,7 @@ namespace signaling {
 
         auto currentSeq = packetSeq;
         auto currentCounter = CounterFromSeq(currentSeq);
-        rtc::ByteBufferReader reader(rtc::ArrayView<const uint8_t>(fullBuffer.data() + 4, fullBuffer.size() - 4));
+        rtc::ByteBufferReader reader(rtc::MakeArrayView(fullBuffer.data() + 4, fullBuffer.size() - 4));
         auto messages = std::vector<rtc::CopyOnWriteBuffer>();
         while (true) {
             const auto type = static_cast<uint8_t>(*reader.Data());
@@ -263,7 +263,7 @@ namespace signaling {
         for (auto &[data, lastSent] : myNotYetAckedMessages) {
             const auto sent = lastSent;
             const auto when = sent ? sent + minDelayBeforeMessageResend : 0;
-            assert(resending.data.size() >= 5);
+            assert(data.size() >= 5);
             const auto counter = CounterFromSeq(ReadSeq(data.data()));
             const auto type = static_cast<uint8_t>(data.data()[4]);
             if (when > now) {

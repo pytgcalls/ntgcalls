@@ -16,7 +16,7 @@ async def main():
 
     audio, video = await get_youtube_stream("https://www.youtube.com/watch?v=u__gKd2mCVA")
     async with client:
-        call_params = wrtc.create_call(
+        call_params = await wrtc.create_call(
             chat_id,
             MediaDescription(
                 audio=AudioDescription(

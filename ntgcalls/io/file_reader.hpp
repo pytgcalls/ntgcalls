@@ -17,7 +17,7 @@ namespace ntgcalls {
         bytes::unique_binary readInternal(int64_t size) override;
 
     public:
-        explicit FileReader(const std::string& path, int64_t bufferSize, bool noLatecy);
+        explicit FileReader(const std::string& path, int64_t bufferSize, bool noLatency);
 
         ~FileReader() override;
 

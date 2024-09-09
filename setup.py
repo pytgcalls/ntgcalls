@@ -15,8 +15,8 @@ from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
-CLANG_VERSION = '18'
-CMAKE_VERSION = '3.28.1'
+CLANG_VERSION = '19'
+CMAKE_VERSION = '3.29.6'
 TOOLS_PATH = Path(Path.cwd(), 'build_tools')
 
 
@@ -148,9 +148,12 @@ def get_os():
     return subprocess.run(['uname', '-o'], stdout=subprocess.PIPE, text=True).stdout.strip()
 
 
-def get_os_cmake_args():
+def get_os_cmake_args(debug: bool):
     if sys.platform.startswith('win32'):
-        pass
+        cxx_flags = ["/EHsc", "/D_ITERATOR_DEBUG_LEVEL=0", "/MTd" if debug else "/MT"]
+        return [
+            f'-DCMAKE_CXX_Flags={" ".join(cxx_flags)}',
+        ]
     elif sys.platform.startswith('darwin'):
         return [
             '-DCMAKE_OSX_ARCHITECTURES=arm64',
@@ -200,7 +203,7 @@ class CMakeBuild(build_ext):
             '--config', cfg,
             f'-j{multiprocessing.cpu_count()}',
         ]
-        cmake_args += get_os_cmake_args()
+        cmake_args += get_os_cmake_args('b' in version)
 
         build_temp = Path(self.build_temp) / ext.name
         if not build_temp.exists():
@@ -237,7 +240,7 @@ class SharedCommand(Command):
             f'-DCMAKE_BUILD_TYPE={cfg}',
             f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
         ]
-        cmake_args += get_os_cmake_args()
+        cmake_args += get_os_cmake_args(self.debug)
         build_args = [
             '--config', cfg,
             f'-j{multiprocessing.cpu_count()}',

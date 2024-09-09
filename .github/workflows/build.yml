@@ -57,7 +57,7 @@ jobs:
             build_list+=",{\"os\":\"macos-14\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
           fi
           if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"windows-2019\",\"cibw_archs\":\"native\",\"shared_name\":\"windows-x86_64\"}"
+            build_list+=",{\"os\":\"windows-2022\",\"cibw_archs\":\"native\",\"shared_name\":\"windows-x86_64\"}"
           fi
           if [[ -n "$build_list" ]]; then
             build_list="${build_list:1}"
@@ -238,7 +238,7 @@ jobs:
 
       - name: Create Release
         id: create-new-release
-        uses: softprops/action-gh-release@v2.0.4
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             ./releases/*

@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <api/scoped_refptr.h>
-
 #include "tracks/audio_track_source.hpp"
 #include "../peer_connection/peer_connection_factory.hpp"
 #include "../../models/rtc_on_data_event.hpp"

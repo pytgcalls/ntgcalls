@@ -11,6 +11,7 @@ namespace ntgcalls {
 
     class CallInterface {
         bool connected = false;
+        std::atomic_bool isExiting;
 
         void cancelNetworkListener();
 

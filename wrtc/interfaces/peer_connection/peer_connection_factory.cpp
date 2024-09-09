@@ -23,7 +23,9 @@ namespace wrtc {
     PeerConnectionFactory::PeerConnectionFactory() {
         webrtc::field_trial::InitFieldTrialsFromString(
             "WebRTC-DataChannel-Dcsctp/Enabled/"
+            "WebRTC-Audio-MinimizeResamplingOnMobile/Enabled/"
             "WebRTC-Audio-iOS-Holding/Enabled/"
+            "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
         );
         network_thread_ = rtc::Thread::CreateWithSocketServer();
         network_thread_->SetName("ntg-net", nullptr);

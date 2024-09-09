@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "media/tracks/media_track_interface.hpp"
 #include "peer_connection/peer_connection_factory.hpp"
 #include "wrtc/enums.hpp"
 #include "wrtc/models/ice_candidate.hpp"
@@ -32,6 +33,8 @@ namespace wrtc {
 
         [[nodiscard]] rtc::Thread *workerThread() const;
 
+        const webrtc::Environment& environment() const;
+
         void onDataChannelOpened(const std::function<void()> &callback);
 
         void onIceCandidate(const std::function<void(const IceCandidate& candidate)>& callback);
@@ -44,7 +47,7 @@ namespace wrtc {
 
         virtual void addIceCandidate(const IceCandidate& rawCandidate) const = 0;
 
-        virtual void addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) = 0;
+        virtual std::unique_ptr<MediaTrackInterface> addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) = 0;
 
         bool isDataChannelOpen() const;
     };

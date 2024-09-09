@@ -32,8 +32,8 @@ namespace ntgcalls {
     }
 
     void Stream::addTracks(const std::unique_ptr<wrtc::NetworkInterface>& pc) {
-        pc->addTrack(audioTrack = audio->createTrack());
-        pc->addTrack(videoTrack = video->createTrack());
+        audioTrack = pc->addTrack(audio->createTrack());
+        videoTrack = pc->addTrack(video->createTrack());
     }
 
     void Stream::checkStream() const {
@@ -58,6 +58,7 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Setting AVStream, Lock acquired";
         const auto audioConfig = streamConfig.audio;
         const auto videoConfig = streamConfig.video;
+        const bool wasIdling = idling;
         idling = false;
         if (audioConfig) {
             audio->setConfig(
@@ -82,7 +83,7 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Creating MediaReaderFactory";
         reader = std::make_unique<MediaReaderFactory>(streamConfig, audio->frameSize(), video->frameSize());
         RTC_LOG(LS_INFO) << "MediaReaderFactory created";
-        if (wasVideo != hasVideo && !noUpgrade) {
+        if ((wasVideo != hasVideo || wasIdling) && !noUpgrade) {
             checkUpgrade();
         }
         changing = false;

@@ -6,10 +6,14 @@
 
 #include "ntgcalls/exceptions.hpp"
 #include "ntgcalls/signaling/crypto/mod_exp_first.hpp"
+#include "ntgcalls/signaling/messages/candidates_message.hpp"
 #include "ntgcalls/signaling/messages/candidate_message.hpp"
+#include "ntgcalls/signaling/messages/initial_setup_message.hpp"
 #include "ntgcalls/signaling/messages/media_state_message.hpp"
 #include "ntgcalls/signaling/messages/message.hpp"
+#include "ntgcalls/signaling/messages/negotiate_channels_message.hpp"
 #include "ntgcalls/signaling/messages/rtc_description_message.hpp"
+#include "wrtc/interfaces/native_connection.hpp"
 #include "wrtc/utils/encryption.hpp"
 
 namespace ntgcalls {
@@ -99,21 +103,30 @@ namespace ntgcalls {
         auto encryptionKey = std::make_shared<std::array<uint8_t, signaling::EncryptionKey::kSize>>();
         memcpy(encryptionKey->data(), key.value().data(), signaling::EncryptionKey::kSize);
         protocolVersion = signaling::Signaling::matchVersion(versions);
-        connection = std::make_unique<wrtc::PeerConnection>(
+        if (protocolVersion & signaling::Signaling::Version::V2Full) {
+            connection = std::make_unique<wrtc::PeerConnection>(
             RTCServer::toIceServers(servers),
             true,
             p2pAllowed
         );
-        Safe<wrtc::PeerConnection>(connection)->onRenegotiationNeeded([this] {
-            if (makingNegotation) {
-                RTC_LOG(LS_INFO) << "Renegotiation needed";
-                sendLocalDescription();
-            }
-        });
+            Safe<wrtc::PeerConnection>(connection)->onRenegotiationNeeded([this] {
+                if (makingNegotation) {
+                    RTC_LOG(LS_INFO) << "Renegotiation needed";
+                    sendLocalDescription();
+                }
+            });
+        } else {
+            connection = std::make_unique<wrtc::NativeConnection>(
+                RTCServer::toRtcServers(servers),
+                p2pAllowed,
+                type() == Type::Outgoing
+            );
+        }
         signaling = signaling::Signaling::Create(
             protocolVersion,
             connection->networkThread(),
             connection->signalingThread(),
+            connection->environment(),
             signaling::EncryptionKey(std::move(encryptionKey), type() == Type::Outgoing),
             [this](const bytes::binary &data) {
                 (void) onEmitData(data);
@@ -125,12 +138,20 @@ namespace ntgcalls {
             }
         );
         connection->onIceCandidate([this](const wrtc::IceCandidate& candidate) {
-            signaling::CandidateMessage candMess;
-            candMess.sdp = candidate.sdp;
-            candMess.mid = candidate.mid;
-            candMess.mLine = candidate.mLine;
-            RTC_LOG(LS_INFO) << "Sending candidate: " << bytes::to_string(candMess.serialize());
-            signaling->send(candMess.serialize());
+            bytes::binary message;
+            if (protocolVersion & signaling::Signaling::Version::V2Full) {
+                signaling::CandidateMessage candMess;
+                candMess.sdp = candidate.sdp;
+                candMess.mid = candidate.mid;
+                candMess.mLine = candidate.mLine;
+                message = candMess.serialize();
+            } else {
+                signaling::CandidatesMessage candMess;
+                candMess.iceCandidates.push_back({candidate.sdp});
+                message = candMess.serialize();
+            }
+            RTC_LOG(LS_INFO) << "Sending candidate: " << bytes::to_string(message);
+            signaling->send(message);
         });
         connection->onDataChannelOpened([this] {
             sendMediaState(stream->getState());
@@ -141,10 +162,15 @@ namespace ntgcalls {
             sendMediaState(mediaState);
         });
         if (type() == Type::Outgoing) {
-            RTC_LOG(LS_INFO) << "Creating data channel";
-            Safe<wrtc::PeerConnection>(connection)->createDataChannel("data");
-            makingNegotation = true;
-            sendLocalDescription();
+            if (protocolVersion & signaling::Signaling::Version::V2Full) {
+                RTC_LOG(LS_INFO) << "Creating data channel";
+                Safe<wrtc::PeerConnection>(connection)->createDataChannel("data");
+                makingNegotation = true;
+                sendLocalDescription();
+            } else {
+                sendInitialSetup();
+                sendOfferIfNeeded();
+            }
         }
         setConnectionObserver();
     }
@@ -153,6 +179,64 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "processSignalingData: " << std::string(buffer.begin(), buffer.end());
         try {
             switch (signaling::Message::type(buffer)) {
+            case signaling::Message::Type::InitialSetup: {
+                const auto message = signaling::InitialSetupMessage::deserialize(buffer);
+                wrtc::PeerIceParameters remoteIceParameters;
+                remoteIceParameters.ufrag = message->ufrag;
+                remoteIceParameters.pwd = message->pwd;
+                remoteIceParameters.supportsRenomination = message->supportsRenomination;
+
+                std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                std::string sslSetup;
+                if (!message->fingerprints.empty()) {
+                    fingerprint = rtc::SSLFingerprint::CreateUniqueFromRfc4572(message->fingerprints[0].hash, message->fingerprints[0].fingerprint);
+                    sslSetup = message->fingerprints[0].setup;
+                }
+                Safe<wrtc::NativeConnection>(connection)->setRemoteParams(remoteIceParameters, std::move(fingerprint), sslSetup);
+                handshakeCompleted = true;
+                if (type() == Type::Incoming) {
+                    sendInitialSetup();
+                }
+                applyPendingIceCandidates();
+                break;
+            }
+            case signaling::Message::Type::Candidates: {
+                for (const auto message = signaling::CandidatesMessage::deserialize(buffer); const auto&[sdpString] : message->iceCandidates) {
+                    webrtc::JsepIceCandidate parseCandidate{ std::string(), 0 };
+                    if (!parseCandidate.Initialize(sdpString, nullptr)) {
+                        RTC_LOG(LS_ERROR) << "Could not parse candidate: " << sdpString;
+                        continue;
+                    }
+                    std::string sdp;
+                    parseCandidate.ToString(&sdp);
+                    pendingIceCandidates.emplace_back(
+                        parseCandidate.sdp_mid(),
+                        parseCandidate.sdp_mline_index(),
+                        sdp
+                    );
+                }
+                if (handshakeCompleted) {
+                    applyPendingIceCandidates();
+                }
+                break;
+            }
+            case signaling::Message::Type::NegotiateChannels: {
+                const auto message = signaling::NegotiateChannelsMessage::deserialize(buffer);
+                auto negotiationContents = std::make_unique<wrtc::ContentNegotiationContext::NegotiationContents>();
+                negotiationContents->exchangeId = message->exchangeId;
+                negotiationContents->contents = message->contents;
+                auto negotiation = message->serialize();
+                if (const auto response = Safe<wrtc::NativeConnection>(connection)->setPendingAnswer(std::move(negotiationContents))) {
+                    signaling::NegotiateChannelsMessage channelMessage;
+                    channelMessage.exchangeId = response->exchangeId;
+                    channelMessage.contents = response->contents;
+                    RTC_LOG(LS_INFO) << "Sending negotiate channels: " << bytes::to_string(channelMessage.serialize());
+                    signaling->send(channelMessage.serialize());
+                }
+                sendOfferIfNeeded();
+                Safe<wrtc::NativeConnection>(connection)->createChannels();
+                break;
+            }
             case signaling::Message::Type::RtcDescription: {
                 const auto message = signaling::RtcDescriptionMessage::deserialize(buffer);
                 if (
@@ -258,6 +342,48 @@ namespace ntgcalls {
         }
         RTC_LOG(LS_INFO) << "Sending media state: " << bytes::to_string(message.serialize());
         connection->sendDataChannelMessage(message.serialize());
+    }
+
+    void P2PCall::sendOfferIfNeeded() const {
+        if (const auto offer = Safe<wrtc::NativeConnection>(connection)->getPendingOffer()) {
+            signaling::NegotiateChannelsMessage data;
+            data.exchangeId = offer->exchangeId;
+            data.contents = offer->contents;
+            RTC_LOG(LS_INFO) << "Sending offer: " << bytes::to_string(data.serialize());
+            signaling->send(data.serialize());
+        }
+    }
+
+    void P2PCall::sendInitialSetup() const {
+        connection->networkThread()->PostTask([this] {
+            const auto localFingerprint = Safe<wrtc::NativeConnection>(connection)->localFingerprint();
+            std::string hash;
+            std::string fingerprint;
+            if (localFingerprint) {
+                hash = localFingerprint->algorithm;
+                fingerprint = localFingerprint->GetRfc4572Fingerprint();
+            }
+            std::string setup;
+            if (type() == Type::Outgoing) {
+                setup = "actpass";
+            } else {
+                setup = "passive";
+            }
+            const auto localIceParams = Safe<wrtc::NativeConnection>(connection)->localIceParameters();
+            connection->signalingThread()->PostTask([this, localIceParams, hash, fingerprint, setup] {
+                signaling::InitialSetupMessage message;
+                message.ufrag = localIceParams.ufrag;
+                message.pwd = localIceParams.pwd;
+                message.supportsRenomination = localIceParams.supportsRenomination;
+                signaling::InitialSetupMessage::DtlsFingerprint dtlsFingerprint;
+                dtlsFingerprint.hash = hash;
+                dtlsFingerprint.fingerprint = fingerprint;
+                dtlsFingerprint.setup = setup;
+                message.fingerprints.push_back(std::move(dtlsFingerprint));
+                RTC_LOG(LS_INFO) << "Sending initial setup: " << bytes::to_string(message.serialize());
+                signaling->send(message.serialize());
+            });
+        });
     }
 
     void P2PCall::onSignalingData(const std::function<void(const bytes::binary&)>& callback) {

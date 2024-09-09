@@ -118,13 +118,18 @@ namespace wrtc {
         peerConnection->AddIceCandidate(parseIceCandidate(rawCandidate));
     }
 
-    void PeerConnection::addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
+    std::unique_ptr<MediaTrackInterface> PeerConnection::addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
         if (!peerConnection) {
             throw RTCException("Cannot add track; PeerConnection is closed");
         }
         if (const auto result = peerConnection->AddTrack(track, {}); !result.ok()) {
             throw wrapRTCError(result.error());
         }
+        return std::make_unique<MediaTrackInterface>([track](const bool enable) {
+            if (track != nullptr) {
+                track->set_enabled(enable);
+            }
+        });
     }
 
     void PeerConnection::restartIce() const {

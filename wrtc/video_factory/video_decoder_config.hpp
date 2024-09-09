@@ -22,7 +22,7 @@ namespace wrtc {
 
         explicit VideoDecoderConfig(std::unique_ptr<webrtc::VideoDecoderFactory> factory): factory(std::move(factory)) {}
 
-        [[nodiscard]] std::unique_ptr<webrtc::VideoDecoder> CreateVideoCodec(const webrtc::SdpVideoFormat& format) const;
+        [[nodiscard]] std::unique_ptr<webrtc::VideoDecoder> CreateVideoCodec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const;
 
     private:
         DecoderCallback decoder;

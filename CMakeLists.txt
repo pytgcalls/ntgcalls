@@ -7,8 +7,8 @@ endif ()
 include(ExternalProject)
 
 # https://chromiumdash.appspot.com/branches
-set(WEBRTC_REVISION m123.6312.3.5)
-set(BOOST_REVISION 1.85.0)
+set(WEBRTC_REVISION m128.6613.2.0)
+set(BOOST_REVISION 1.86.0)
 set(BOOST_LIBS filesystem)
 
 option(STATIC_BUILD "Build static libraries" ON)
@@ -17,7 +17,7 @@ if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
 endif()
 
-project(ntgcalls VERSION 1.2.1 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.2.2 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
