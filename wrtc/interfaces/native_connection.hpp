@@ -12,7 +12,6 @@
 #include <pc/video_track_source_proxy.h>
 #include <memory>
 
-#include "instance_networking.hpp"
 #include "network_interface.hpp"
 #include "sctp_data_channel_provider_interface_impl.hpp"
 #include "media/channel_manager.hpp"
@@ -24,10 +23,13 @@
 #include "wrtc/models/rtc_server.hpp"
 #include <nlohmann/json.hpp>
 
+#include "wrtc/models/connection_description.hpp"
+#include "wrtc/models/route_description.hpp"
+
 namespace wrtc {
     using nlohmann::json;
 
-    class NativeConnection final : public sigslot::has_slots<>, public InstanceNetworking, public NetworkInterface {
+    class NativeConnection final : public sigslot::has_slots<>, public NetworkInterface {
         json customParameters;
         bool connected = false, failed = false;
         std::atomic_bool isExiting;
@@ -81,6 +83,7 @@ namespace wrtc {
 
         bool getCustomParameterBool(const std::string& name) const;
 
+        static CandidateDescription connectionDescriptionFromCandidate(const cricket::Candidate &candidate);
 
     public:
         explicit NativeConnection(std::vector<RTCServer> rtcServers, bool enableP2P, bool isOutgoing);

@@ -166,6 +166,14 @@ namespace wrtc {
         return customParameters[name].is_boolean() && customParameters[name];
     }
 
+    CandidateDescription NativeConnection::connectionDescriptionFromCandidate(const cricket::Candidate& candidate) {
+        CandidateDescription result;
+        result.type = candidate.type_name();
+        result.protocol = candidate.protocol();
+        result.address = candidate.address().ToString();
+        return result;
+    }
+
     void NativeConnection::createChannels() {
         const auto coordinatedState = contentNegotiationContext->coordinatedState();
         if (!coordinatedState) {
