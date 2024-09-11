@@ -17,6 +17,10 @@
 #include "wrtc/utils/encryption.hpp"
 
 namespace ntgcalls {
+    P2PCall::~P2PCall() {
+        signaling = nullptr;
+    }
+
     bytes::vector P2PCall::init(const DhConfig &dhConfig, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media) {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);

@@ -9,6 +9,10 @@
 #include "ntgcalls/exceptions.hpp"
 
 namespace signaling {
+    SignalingInterface::~SignalingInterface() {
+        signalingEncryption = nullptr;
+    }
+
     SignalingInterface::SignalingInterface(
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
@@ -16,21 +20,30 @@ namespace signaling {
         DataEmitter onEmitData,
         DataReceiver onSignalData
     ): onSignalData(std::move(onSignalData)), onEmitData(std::move(onEmitData)), networkThread(networkThread), signalingThread(signalingThread) {
-        signalingEncryption = std::make_unique<SignalingEncryption>(key);
+        signalingEncryption = std::make_shared<SignalingEncryption>(key);
+        signalingEncryptionWeak = signalingEncryption;
         signalingEncryption->onServiceMessage([this](const int delayMs, int cause) {
             if (delayMs == 0) {
-                 this->signalingThread->PostTask([this, cause] {
-                     if (const auto service = signalingEncryption->prepareForSendingService(cause)) {
-                         this->onEmitData(*service);
-                     }
-                 });
-             } else {
-                 this->signalingThread->PostDelayedTask([this, cause] {
-                     if (const auto service = signalingEncryption->prepareForSendingService(cause)) {
-                         this->onEmitData(*service);
-                     }
-                 }, webrtc::TimeDelta::Millis(delayMs));
-             }
+                this->signalingThread->PostTask([this, cause] {
+                    const auto strong = signalingEncryptionWeak.lock();
+                    if (!strong) {
+                        return;
+                    }
+                    if (const auto service = strong->prepareForSendingService(cause)) {
+                        this->onEmitData(*service);
+                    }
+                });
+            } else {
+                this->signalingThread->PostDelayedTask([this, cause] {
+                    const auto strong = signalingEncryptionWeak.lock();
+                    if (!strong) {
+                        return;
+                    }
+                    if (const auto service = strong->prepareForSendingService(cause)) {
+                        this->onEmitData(*service);
+                    }
+                }, webrtc::TimeDelta::Millis(delayMs));
+            }
         });
     }
 

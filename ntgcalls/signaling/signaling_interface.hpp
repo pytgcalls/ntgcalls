@@ -15,7 +15,7 @@ namespace signaling {
 
     class SignalingInterface {
     public:
-        virtual ~SignalingInterface() = default;
+        virtual ~SignalingInterface();
 
         SignalingInterface(
             rtc::Thread* networkThread,
@@ -41,6 +41,7 @@ namespace signaling {
         [[nodiscard]] virtual bool supportsCompression() const = 0;
 
     private:
-        std::unique_ptr<SignalingEncryption> signalingEncryption;
+        std::shared_ptr<SignalingEncryption> signalingEncryption;
+        std::weak_ptr<SignalingEncryption> signalingEncryptionWeak;
     };
 } // signaling
