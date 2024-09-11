@@ -26,8 +26,7 @@ namespace signaling {
         std::vector<MessageForResend> myNotYetAckedMessages;
         std::vector<uint32_t> acksSentCounters;
         std::vector<uint32_t> acksToSendSeqs;
-        bool sendAcksTimerActive = false;
-        bool resendTimerActive = false;
+        bool sendAcksTimerActive, resendTimerActive;
 
         static constexpr auto kSingleMessagePacketSeqBit = static_cast<uint32_t>(1) << 31;
         static constexpr auto kMessageRequiresAckSeqBit = static_cast<uint32_t>(1) << 30;
