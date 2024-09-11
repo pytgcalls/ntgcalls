@@ -147,6 +147,9 @@ def install_clang(clang_version: str):
 def get_os():
     return subprocess.run(['uname', '-o'], stdout=subprocess.PIPE, text=True).stdout.strip()
 
+def linux_cxx_flags() -> str:
+    return ' '.join(['-nostdinc++','-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE'])
+
 
 def get_os_cmake_args(debug: bool):
     if sys.platform.startswith('win32'):
@@ -173,10 +176,11 @@ def get_os_cmake_args(debug: bool):
             install_clang(CLANG_VERSION)
             clang_c = Path(clang_path(), 'bin', 'clang')
             clang_cxx = Path(clang_path(), 'bin', 'clang++')
+
         return [
             f'-DCMAKE_C_COMPILER={clang_c}',
             f'-DCMAKE_CXX_COMPILER={clang_cxx}',
-            '-DCMAKE_CXX_FLAGS=-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE',
+            f'-DCMAKE_CXX_FLAGS={linux_cxx_flags()}',
         ]
     return []
 
@@ -196,8 +200,7 @@ class CMakeBuild(build_ext):
         ]
 
         if sys.platform.startswith('linux'):
-            cxx_flags = ['-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE']
-            cmake_args.append(f"-DCMAKE_CXX_FLAGS={' '.join(cxx_flags)}")
+            cmake_args.append(f"-DCMAKE_CXX_FLAGS={linux_cxx_flags()}")
 
         build_args = [
             '--config', cfg,
