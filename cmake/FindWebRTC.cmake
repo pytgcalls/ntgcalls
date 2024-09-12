@@ -54,7 +54,7 @@ if(NOT TARGET WebRTC::webrtc)
 
     target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_PATCH_LOCATION})
 
-    set(WEBRTC_INCLUDE
+    set(_DIRS
         ${WEBRTC_INCLUDE}
         ${WEBRTC_INCLUDE}/third_party/abseil-cpp
         ${WEBRTC_INCLUDE}/third_party/boringssl/src/include
@@ -68,7 +68,9 @@ if(NOT TARGET WebRTC::webrtc)
         )
     endif()
 
-    set_target_properties(WebRTC::webrtc PROPERTIES IMPORTED_LOCATION "${WEBRTC_LIB}")
+    set_target_properties(WebRTC::webrtc PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${_DIRS}"
+            IMPORTED_LOCATION "${WEBRTC_LIB}")
 
     file(READ ${WEBRTC_SRC}/VERSIONS WEBRTC_DATA)
     string(REGEX MATCH "WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT=([^ \n]+)" matched "${WEBRTC_DATA}")
