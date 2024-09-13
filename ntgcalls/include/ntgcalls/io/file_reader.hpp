@@ -1,0 +1,26 @@
+//
+// Created by Laky64 on 04/08/2023.
+//
+
+#pragma once
+
+#include <fstream>
+#include <string>
+
+#include "base_reader.hpp"
+#include "ntgcalls/exceptions.hpp"
+
+namespace ntgcalls {
+    class FileReader final: public BaseReader {
+        std::ifstream source;
+
+        bytes::unique_binary readInternal(int64_t size) override;
+
+    public:
+        explicit FileReader(const std::string& path, int64_t bufferSize, bool noLatency);
+
+        ~FileReader() override;
+
+        void close() override;
+    };
+}
