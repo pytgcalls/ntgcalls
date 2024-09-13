@@ -12,6 +12,7 @@ set(BOOST_REVISION 1.86.0)
 set(BOOST_LIBS filesystem)
 
 option(STATIC_BUILD "Build static libraries" ON)
+option(USE_LIBCXX   "Use libc++" ON)
 
 if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
