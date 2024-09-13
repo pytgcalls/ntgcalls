@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <../../deps/libcxx/include/cstdint>
+#include <cstdint>
 
 namespace wrtc {
     typedef uint32_t SSRC;

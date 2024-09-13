@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <../../deps/libcxx/include/vector>
-#include <../../deps/libcxx/include/string>
+#include <vector>
+#include <string>
 
 #include "enums.hpp"
 

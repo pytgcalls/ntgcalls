@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <../../deps/libcxx/include/exception>
-#include <../../deps/libwebrtc/src/include/api/rtc_error.h>
-#include "../../deps/libwebrtc/src/include/api/jsep.h"
+#include <exception>
+#include <api/rtc_error.h>
+#include <api/jsep.h>
 
 namespace wrtc {
 
