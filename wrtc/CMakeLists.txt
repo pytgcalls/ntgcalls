@@ -10,3 +10,9 @@ target_link_libraries(wrtc PUBLIC WebRTC::webrtc)
 target_link_libraries(wrtc PRIVATE nlohmann_json::nlohmann_json)
 
 setup_platform_libs(wrtc)
+
+if (ANDROID)
+    set_target_properties(wrtc PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${android_loc}/library/src/main/jni/wrtc/${ANDROID_ABI}"
+    )
+endif ()
