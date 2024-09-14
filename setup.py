@@ -6,34 +6,14 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime
-from urllib.parse import quote
 from pathlib import Path
-from typing import Dict
 from urllib.request import urlopen
 from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
-CLANG_VERSION = '19'
 CMAKE_VERSION = '3.29.6'
 TOOLS_PATH = Path(Path.cwd(), 'build_tools')
-
-
-class CLangInfo:
-    def __init__(
-        self,
-        timestamp: int,
-        revision: str,
-        sub_revision: str
-    ):
-        self.time = timestamp
-        self.revision = revision
-        self.sub_revision = sub_revision
-
-    @staticmethod
-    def to_timestamp(time: str) -> int:
-        return int(datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp())
 
 
 with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
@@ -51,29 +31,6 @@ class CMakeExtension(Extension):
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
 
 
-def get_versions() -> Dict[str, CLangInfo]:
-    versions: Dict[str, CLangInfo] = {}
-    url_base = 'https://commondatastorage.googleapis.com/chromium-browser-clang/?delimiter=/&prefix=Linux_x64/'
-    url_tmp = url_base
-    while True:
-        with urlopen(url_tmp) as response:
-            res = response.read().decode('utf-8').replace('><Key>', '>\n<Key>')
-            match_1 = re.findall(
-                r'<Key>Linux_x64/clang-(llvmorg-([0-9]+)-.*?)-([0-9]+)\.tgz</Key>.*?'
-                r'<LastModified>(.*?)</LastModified>',
-                res,
-            )
-            for data in match_1:
-                curr_time = CLangInfo.to_timestamp(data[3])
-                if data[1] not in versions or curr_time > versions[data[1]].time:
-                    versions[data[1]] = CLangInfo(curr_time, data[0], data[2])
-            match_2 = re.findall(f'<NextMarker>(.*?)</NextMarker>', res)
-            if len(match_2) == 0:
-                break
-            url_tmp = f'{url_base}&marker={quote(match_2[0])}'
-    return versions
-
-
 def cmake_path():
     return Path(TOOLS_PATH, f'cmake_{CMAKE_VERSION.replace(".", "_")}')
 
@@ -82,10 +39,6 @@ def cmake_bin():
     if sys.platform.startswith('linux'):
         return Path(cmake_path(), 'bin', 'cmake')
     return 'cmake'
-
-
-def clang_path():
-    return Path(TOOLS_PATH, f'clang_{CLANG_VERSION.replace(".", "_")}')
 
 
 def install_cmake(cmake_version: str):
@@ -108,83 +61,6 @@ def install_cmake(cmake_version: str):
     )
 
 
-def install_clang(clang_version: str):
-    fixed_name = clang_path()
-    if Path(fixed_name, 'bin').exists():
-        return
-    url = 'https://chromium.googlesource.com/chromium/src/tools/+/refs/heads/main/clang/scripts/update.py?format=text'
-
-    if not fixed_name.exists():
-        os.mkdir(fixed_name)
-    version_info = get_versions()[clang_version]
-    download_py = Path(fixed_name, 'download.py')
-    with urlopen(url) as response:
-        with open(download_py, 'w') as file:
-            f_content = base64.b64decode(response.read()).decode('utf-8')
-            f_content = re.sub(
-                r"CLANG_REVISION = '(.*?)'",
-                f"CLANG_REVISION = '{version_info.revision}'",
-                f_content
-            )
-            f_content = re.sub(
-                r"CLANG_SUB_REVISION = [0-9]+",
-                f"CLANG_SUB_REVISION = {version_info.sub_revision}",
-                f_content
-            )
-            f_content = re.sub(
-                r"RELEASE_VERSION = '[0-9]+'",
-                f"RELEASE_VERSION = '{clang_version}'",
-                f_content
-            )
-            file.write(f_content)
-
-    subprocess.run(
-        [sys.executable, download_py, '--output-dir', fixed_name],
-        check=True,
-    )
-
-
-def get_os():
-    return subprocess.run(['uname', '-o'], stdout=subprocess.PIPE, text=True).stdout.strip()
-
-def linux_cxx_flags() -> str:
-    return ' '.join(['-nostdinc++','-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE'])
-
-
-def get_os_cmake_args(debug: bool):
-    if sys.platform.startswith('win32'):
-        cxx_flags = ["/EHsc", "/D_ITERATOR_DEBUG_LEVEL=0", "/MTd" if debug else "/MT"]
-        return [
-            f'-DCMAKE_CXX_Flags={" ".join(cxx_flags)}',
-        ]
-    elif sys.platform.startswith('darwin'):
-        return [
-            '-DCMAKE_OSX_ARCHITECTURES=arm64',
-            '-G',
-            'Xcode',
-        ]
-    elif get_os() == 'Android':
-        raise NotImplementedError('Android is not supported yet')
-    elif sys.platform.startswith('linux'):
-        clang_c, clang_cxx = f'clang-{CLANG_VERSION}', f'clang++-{CLANG_VERSION}'
-
-        if not TOOLS_PATH.exists():
-            os.mkdir(TOOLS_PATH)
-
-        install_cmake(CMAKE_VERSION)
-        if platform.machine() != 'aarch64':
-            install_clang(CLANG_VERSION)
-            clang_c = Path(clang_path(), 'bin', 'clang')
-            clang_cxx = Path(clang_path(), 'bin', 'clang++')
-
-        return [
-            f'-DCMAKE_C_COMPILER={clang_c}',
-            f'-DCMAKE_CXX_COMPILER={clang_cxx}',
-            f'-DCMAKE_CXX_FLAGS={linux_cxx_flags()}',
-        ]
-    return []
-
-
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
@@ -197,16 +73,13 @@ class CMakeBuild(build_ext):
             f'-DCMAKE_BUILD_TYPE={cfg}',
             f'-DPY_VERSION_INFO={version}',
             f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}',
+            f'-DCMAKE_TOOLCHAIN_FILE={Path(Path.cwd(), "cmake", "Toolchain.cmake")}',
         ]
-
-        if sys.platform.startswith('linux'):
-            cmake_args.append(f"-DCMAKE_CXX_FLAGS={linux_cxx_flags()}")
 
         build_args = [
             '--config', cfg,
             f'-j{multiprocessing.cpu_count()}',
         ]
-        cmake_args += get_os_cmake_args('b' in version)
 
         build_temp = Path(self.build_temp) / ext.name
         if not build_temp.exists():
@@ -225,6 +98,7 @@ class SharedCommand(Command):
         ('no-preserve-cache', None, 'Do not preserve cache'),
         ('debug', None, 'Debug build'),
         ('static', None, 'Static build'),
+        ('android', None, 'Android build'),
     ]
 
     # noinspection PyAttributeOutsideInit
@@ -232,53 +106,54 @@ class SharedCommand(Command):
         self.no_preserve_cache = False
         self.debug = False
         self.static = False
+        self.android = False
 
     def finalize_options(self):
         pass
 
     # noinspection PyMethodMayBeStatic
     def run(self):
+        if sys.platform.startswith('linux'):
+            install_cmake(CMAKE_VERSION)
         cfg = 'RelWithDebInfo' if self.debug else 'Release'
+        arch_outputs = [
+            'auto',
+        ]
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={cfg}',
             f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
+            f'-DCMAKE_TOOLCHAIN_FILE={Path(Path.cwd(), "cmake", "Toolchain.cmake")}',
         ]
-        cmake_args += get_os_cmake_args(self.debug)
         build_args = [
             '--config', cfg,
             f'-j{multiprocessing.cpu_count()}',
         ]
-        build_type = 'static' if self.static else 'shared'
-        config_type = 'debug' if self.debug else 'release'
         build_temp = Path('build_lib')
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
         source_dir = os.path.dirname(os.path.abspath(__file__))
-        subprocess.run(
-            [cmake_bin(), source_dir, *cmake_args], cwd=build_temp, check=True
-        )
-        subprocess.run(
-            [cmake_bin(), '--build', '.', *build_args], cwd=build_temp, check=True
-        )
-        release_path = Path(build_temp, 'ntgcalls')
-        tmp_release_path = Path(release_path, cfg)
+        if self.android:
+            arch_outputs = [
+                'arm64-v8a',
+                'armeabi-v7a',
+            ]
+        for arch in arch_outputs:
+            new_cmake_args = cmake_args.copy()
+            if arch != 'auto':
+                new_cmake_args += [
+                    f'-DANDROID_ABI={arch}',
+                ]
+            else:
+                new_cmake_args += [
+                    f'-DANDROID_ABI=OFF',
+                ]
 
-        build_output = Path(
-            f'{build_type}-output',
-            config_type,
-        )
-        if build_output.exists():
-            shutil.rmtree(build_output)
-        build_output.mkdir(parents=True)
-        include_output = Path(build_output, 'include')
-        include_output.mkdir(parents=True)
-        if tmp_release_path.exists():
-            release_path = tmp_release_path
-        for file in os.listdir(release_path):
-            target_file = Path(build_output, file)
-            if file.endswith(('.lib', '.dll', '.so', '.dylib', '.a')):
-                shutil.move(Path(release_path, file), target_file)
-        shutil.copy(Path(source_dir, 'include', 'ntgcalls.h'), include_output)
+            subprocess.run(
+                [cmake_bin(), source_dir, *new_cmake_args], cwd=build_temp, check=True
+            )
+            subprocess.run(
+                [cmake_bin(), '--build', '.', *build_args], cwd=build_temp, check=True
+            )
         if self.no_preserve_cache:
             shutil.rmtree(build_temp)
             boost_dir = Path(source_dir, 'deps', 'boost')

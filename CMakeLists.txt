@@ -22,14 +22,11 @@ project(ntgcalls VERSION 1.2.3 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
-find_package(Python3 REQUIRED COMPONENTS Interpreter QUIET)
 
-get_filename_component(deps_loc "deps" REALPATH)
+get_filename_component(deps_loc     "deps" REALPATH)
+get_filename_component(android_loc  "android" REALPATH)
+get_filename_component(props_loc    "version.properties" REALPATH)
 
-include(cmake/PlatformUtil.cmake)
-include(cmake/DownloadProject.cmake)
-include(cmake/GitUtils.cmake)
-include(cmake/FindCURL.cmake)
 include(cmake/FindWebRTC.cmake)
 include(cmake/FindLibCXX.cmake)
 include(cmake/FindBoost.cmake)
