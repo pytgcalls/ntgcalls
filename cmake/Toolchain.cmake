@@ -8,7 +8,7 @@ get_filename_component(props_loc "${CMAKE_CURRENT_LIST_DIR}/../version.propertie
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter QUIET)
 
-include(${CMAKE_CURRENT_LIST_DIR}/PlatformUtil.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/PlatformUtils.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/FindCURL.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/PythonUtils.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/DownloadProject.cmake)
