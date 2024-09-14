@@ -17,6 +17,8 @@ deps/libcxx/
 deps/libwebrtc/
 deps/libcxxabi/
 deps/boost/
+deps/clang/
+deps/ndk/
 build/
 build_lib/
 shared-output/
