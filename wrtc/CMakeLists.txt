@@ -13,6 +13,6 @@ setup_platform_libs(wrtc)
 
 if (ANDROID)
     set_target_properties(wrtc PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${android_loc}/library/src/main/jni/wrtc/${ANDROID_ABI}"
+        ARCHIVE_OUTPUT_DIRECTORY "${jni_loc}/wrtc/${ANDROID_ABI}"
     )
 endif ()

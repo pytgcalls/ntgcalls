@@ -25,6 +25,7 @@ find_package(Threads REQUIRED)
 
 get_filename_component(deps_loc     "deps" REALPATH)
 get_filename_component(android_loc  "android" REALPATH)
+get_filename_component(jni_loc      "${android_loc}/app/src/main/jni" REALPATH)
 get_filename_component(props_loc    "version.properties" REALPATH)
 
 include(cmake/FindWebRTC.cmake)

@@ -22,7 +22,7 @@ else ()
     target_sources(ntgcalls PRIVATE ${MODULE_SRC})
     if (ANDROID)
         set_target_properties(ntgcalls PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${android_loc}/library/src/main/jni/ntgcalls/${ANDROID_ABI}"
+            ARCHIVE_OUTPUT_DIRECTORY "${jni_loc}/ntgcalls/${ANDROID_ABI}"
         )
     else ()
         set(ARCHIVE_TYPE)
