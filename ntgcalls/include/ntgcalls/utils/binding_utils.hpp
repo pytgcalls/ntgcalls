@@ -75,6 +75,18 @@ py::gil_scoped_release release;
 
 #define END_ASYNC }));
 
+#elif IS_ANDROID
+#define INIT_ASYNC
+#define DESTROY_ASYNC
+#define ASYNC_ARGS
+#define THREAD_SAFE {
+#define BYTES(x) x
+#define CPP_BYTES(x, type) x
+#define CAST_BYTES(...) __VA_ARGS__
+#define ASYNC_FUNC_ARGS(...)
+#define ASYNC_RETURN(...) __VA_ARGS__
+#define SMART_ASYNC(...)
+#define END_ASYNC
 #else
 #include <functional>
 #include <rtc_base/thread.h>
