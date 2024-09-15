@@ -1,4 +1,6 @@
 .idea
+.cxx
+.gradle
 venv
 .env
 env
@@ -19,6 +21,9 @@ deps/libcxxabi/
 deps/boost/
 deps/clang/
 deps/ndk/
+android/app/src/main/jni/ntgcalls/
+android/app/src/main/jni/wrtc/
+android/local.properties
 build/
 build_lib/
 shared-output/
