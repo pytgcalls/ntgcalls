@@ -17,7 +17,7 @@ namespace wrtc {
         std::vector<VideoEncoderConfig> encoders;
         std::vector<VideoDecoderConfig> decoders;
 
-        VideoFactoryConfig();
+        explicit VideoFactoryConfig(void* jniEnv);
 
         std::unique_ptr<VideoEncoderFactory> CreateVideoEncoderFactory();
 
