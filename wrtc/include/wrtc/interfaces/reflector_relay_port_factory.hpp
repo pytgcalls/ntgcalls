@@ -6,7 +6,7 @@
 
 #include <p2p/client/relay_port_factory_interface.h>
 
-#include "../models/rtc_server.hpp"
+#include "wrtc/models/rtc_server.hpp"
 
 namespace wrtc {
 

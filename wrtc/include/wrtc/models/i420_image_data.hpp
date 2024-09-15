@@ -8,8 +8,6 @@
 #include <api/scoped_refptr.h>
 #include <api/video/i420_buffer.h>
 
-#include "../utils/binary.hpp"
-
 namespace wrtc {
     class i420ImageData {
         uint16_t width, height;

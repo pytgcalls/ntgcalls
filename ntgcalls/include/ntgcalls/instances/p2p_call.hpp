@@ -9,7 +9,7 @@
 #include "call_interface.hpp"
 #include "ntgcalls/models/auth_params.hpp"
 #include "ntgcalls/signaling/signaling.hpp"
-#include "../models/rtc_server.hpp"
+#include "ntgcalls/models/rtc_server.hpp"
 #include "ntgcalls/models/dh_config.hpp"
 
 namespace ntgcalls {
