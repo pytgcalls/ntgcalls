@@ -1,7 +1,5 @@
 package org.pytgcalls.ntgcalls.media;
 
-import java.util.Optional;
-
 public class MediaDescription {
     public AudioDescription audio;
     public VideoDescription video;

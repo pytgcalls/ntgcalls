@@ -1,6 +1,16 @@
 package org.pytgcalls.ntgcalls;
 
+import org.pytgcalls.ntgcalls.exceptions.ConnectionException;
+import org.pytgcalls.ntgcalls.exceptions.ConnectionNotFoundException;
 import org.pytgcalls.ntgcalls.media.MediaDescription;
+import org.pytgcalls.ntgcalls.media.MediaState;
+import org.pytgcalls.ntgcalls.p2p.AuthParams;
+import org.pytgcalls.ntgcalls.p2p.DhConfig;
+import org.pytgcalls.ntgcalls.p2p.Protocol;
+import org.pytgcalls.ntgcalls.p2p.RTCServer;
+
+import java.io.FileNotFoundException;
+import java.util.List;
 
 public class NTgCalls {
     @SuppressWarnings("unused")
@@ -12,15 +22,11 @@ public class NTgCalls {
 
     private native void init();
 
-    private native void destroy();
-
-    private static native String pingNative();
-
-    public native String createCall(long chatId, MediaDescription mediaDescription);
-
     public NTgCalls() {
         init();
     }
+
+    private native void destroy();
 
     @Override
     protected void finalize() throws Throwable {
@@ -30,6 +36,44 @@ public class NTgCalls {
             super.finalize();
         }
     }
+
+    private static native String pingNative();
+
+    public native byte[] createP2PCall(long chatId, DhConfig dhConfig, byte[] g_a_hash, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
+
+    public byte[] createP2PCall(long chatId, DhConfig dhConfig, byte[] g_a_hash) throws FileNotFoundException, ConnectionException {
+        return createP2PCall(chatId, dhConfig, g_a_hash, null);
+    }
+
+    public native AuthParams exchangeKeys(long chatId, byte[] g_a_or_b, int keyFingerprint) throws ConnectionException;
+
+    public native void connectP2P(long chatId, List<RTCServer> rtcServers, List<String> versions, boolean p2pAllowed) throws ConnectionException;
+
+    public native String createCall(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
+
+    public String createCall(long chatId) throws FileNotFoundException, ConnectionException {
+        return createCall(chatId, null);
+    }
+
+    public native void connect(long chatId, String params) throws ConnectionException;
+
+    public native void changeStream(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionNotFoundException;
+
+    public native boolean pause(long chatId) throws ConnectionNotFoundException;
+
+    public native boolean resume(long chatId) throws ConnectionNotFoundException;
+
+    public native boolean mute(long chatId) throws ConnectionNotFoundException;
+
+    public native boolean unmute(long chatId) throws ConnectionNotFoundException;
+
+    public native void stop(long chatId) throws ConnectionNotFoundException;
+
+    public native long time(long chatId) throws ConnectionNotFoundException;
+
+    public native MediaState getState(long chatId) throws ConnectionNotFoundException;
+
+    public static native Protocol getProtocol();
 
     public static long ping() {
         var startTime = System.currentTimeMillis();
