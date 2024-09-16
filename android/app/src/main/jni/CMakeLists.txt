@@ -11,7 +11,7 @@ find_package(Threads REQUIRED)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
     ntgcalls.cpp
-    jni_onload.cc
+    jni_onload.cpp
     utils.cpp
     utils.hpp
 )

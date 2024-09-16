@@ -1,6 +1,7 @@
 //
 // Created by Laky64 on 15/09/24.
 //
+#undef JNIEXPORT
 #define JNIEXPORT __attribute__((visibility("default")))
 
 #include <rtc_base/logging.h>
