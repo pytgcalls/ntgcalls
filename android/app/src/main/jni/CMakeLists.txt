@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("ntgcalls" C CXX)
 
-include(cmake/AndroidPlatformUtil.cmake)
+include(cmake/CompileUtils.cmake)
 include(cmake/FindNTgCalls.cmake)
 include(cmake/FindWRTC.cmake)
 include(cmake/FindWebRTC.cmake)
@@ -11,7 +11,7 @@ find_package(Threads REQUIRED)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
     ntgcalls.cpp
-    jni_onload.cpp
+    jni_onload.cc
     utils.cpp
     utils.hpp
 )
@@ -22,9 +22,8 @@ target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
     "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
 )
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE IS_ANDROID)
-setup_platform_libs(${CMAKE_PROJECT_NAME})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} WebRTC::webrtc Wrtc::wrtc NTgCalls::ntgcalls android log OpenSLES EGL)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE NTgCalls::ntgcalls android log OpenSLES EGL)
 target_link_options(${CMAKE_PROJECT_NAME}
     PRIVATE
     ${WEBRTC_ANDROID_LDFLAGS}
