@@ -39,7 +39,8 @@ android {
                         "-DDEPS_DIR=$depsDir",
                         "-DNTGCALLS_INCLUDE_DIR=$ntgcallsIncludeDir",
                         "-DWRTC_INCLUDE_DIR=$wrtcIncludeDir",
-                        "-DANDROID_CMAKE_DIR=$androidCmakeDir"
+                        "-DANDROID_CMAKE_DIR=$androidCmakeDir",
+                        "-DCMAKE_ANDROID_EXCEPTIONS=ON"
             }
         }
         ndk {
