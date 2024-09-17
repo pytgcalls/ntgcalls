@@ -4,6 +4,7 @@ import org.pytgcalls.ntgcalls.exceptions.ConnectionException;
 import org.pytgcalls.ntgcalls.exceptions.ConnectionNotFoundException;
 import org.pytgcalls.ntgcalls.media.MediaDescription;
 import org.pytgcalls.ntgcalls.media.MediaState;
+import org.pytgcalls.ntgcalls.media.StreamStatus;
 import org.pytgcalls.ntgcalls.p2p.AuthParams;
 import org.pytgcalls.ntgcalls.p2p.DhConfig;
 import org.pytgcalls.ntgcalls.p2p.Protocol;
@@ -11,6 +12,7 @@ import org.pytgcalls.ntgcalls.p2p.RTCServer;
 
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 public class NTgCalls {
     @SuppressWarnings("unused")
@@ -88,4 +90,8 @@ public class NTgCalls {
     public native void setConnectionChangeCallback(ConnectionChangeCallback callback);
 
     public native void setSignalingDataCallback(SignalingDataCallback callback);
+
+    public native void sendSignalingData(long chatId, byte[] data) throws ConnectionNotFoundException;
+
+    public native Map<Long, StreamStatus> calls();
 }

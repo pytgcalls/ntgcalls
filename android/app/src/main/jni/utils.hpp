@@ -64,6 +64,10 @@ jobject parseStreamType(JNIEnv *env, ntgcalls::Stream::Type type);
 
 jobject parseConnectionState(JNIEnv *env, ntgcalls::CallInterface::ConnectionState state);
 
+jobject parseStreamStatus(JNIEnv *env, ntgcalls::Stream::Status status);
+
+jobject parseStreamStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::Stream::Status>& calls);
+
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 
 #define TRANSLATE_NTG_EXCEPTION(x) \

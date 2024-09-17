@@ -209,3 +209,17 @@ REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLorg/pytgcalls/ntgcalls/
 REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLorg/pytgcalls/ntgcalls/ConnectionState;)V")
 
 REGISTER_CALLBACK(setSignalingDataCallback, onSignalingData, "(J[B)V")
+
+extern "C"
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_sendSignalingData(JNIEnv *env, jobject thiz, jlong chat_id, jbyteArray data) {
+    try {
+        auto instance = getInstance(env, thiz);
+        instance->sendSignalingData(static_cast<long>(chat_id), parseBinary(env, data));
+    } HANDLE_EXCEPTIONS
+}
+
+extern "C"
+JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_calls(JNIEnv *env, jobject thiz) {
+    auto instance = getInstance(env, thiz);
+    return parseStreamStatusMap(env, instance->calls());
+}

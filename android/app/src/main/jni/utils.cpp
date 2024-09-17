@@ -353,6 +353,48 @@ jobject parseConnectionState(JNIEnv *env, ntgcalls::CallInterface::ConnectionSta
     return result;
 }
 
+jobject parseStreamStatus(JNIEnv *env, ntgcalls::Stream::Status status) {
+    jclass streamStatusClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamStatus");
+    jfieldID playingField = env->GetStaticFieldID(streamStatusClass, "PLAYING", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
+    jfieldID pausedField = env->GetStaticFieldID(streamStatusClass, "PAUSED", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
+    jfieldID idlingField = env->GetStaticFieldID(streamStatusClass, "IDLING", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
+
+    jobject result;
+    switch (status) {
+        case ntgcalls::Stream::Status::Playing:
+            result = env->GetStaticObjectField(streamStatusClass, playingField);
+            break;
+        case ntgcalls::Stream::Status::Paused:
+            result = env->GetStaticObjectField(streamStatusClass, pausedField);
+            break;
+        case ntgcalls::Stream::Status::Idling:
+            result = env->GetStaticObjectField(streamStatusClass, idlingField);
+            break;
+    }
+    env->DeleteLocalRef(streamStatusClass);
+    return result;
+}
+
+jobject parseStreamStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::Stream::Status> &calls) {
+    jclass mapClass = env->FindClass("java/util/HashMap");
+    jmethodID mapConstructor = env->GetMethodID(mapClass, "<init>", "()V");
+    jobject hashMap = env->NewObject(mapClass, mapConstructor);
+    jmethodID putMethod = env->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+    jclass longClass = env->FindClass("java/lang/Long");
+    jmethodID longConstructor = env->GetMethodID(longClass, "<init>", "(J)V");
+    for (auto const& [key, val] : calls) {
+        jobject longKey = env->NewObject(longClass, longConstructor, static_cast<jlong>(key));
+        jobject status = parseStreamStatus(env, val);
+        env->CallObjectMethod(hashMap, putMethod, longKey, status);
+        env->DeleteLocalRef(longKey);
+        env->DeleteLocalRef(status);
+    }
+    env->DeleteLocalRef(mapClass);
+    env->DeleteLocalRef(longClass);
+    return hashMap;
+}
+
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message) {
     if (name == "RuntimeException") {
         name = "java/lang/" + name;
