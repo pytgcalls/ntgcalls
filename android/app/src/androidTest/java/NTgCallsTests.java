@@ -12,7 +12,6 @@ import org.pytgcalls.ntgcalls.exceptions.TelegramServerException;
 import org.pytgcalls.ntgcalls.media.AudioDescription;
 import org.pytgcalls.ntgcalls.media.InputMode;
 import org.pytgcalls.ntgcalls.media.MediaDescription;
-import org.pytgcalls.ntgcalls.p2p.Protocol;
 
 import java.io.FileNotFoundException;
 
