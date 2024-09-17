@@ -1,0 +1,73 @@
+apply plugin: 'com.android.library'
+
+def baseDir = "$projectDir/../.."
+def depsDir = "$baseDir/deps"
+def ndkDir = "$depsDir/ndk/src"
+def ntgcallsIncludeDir = "$baseDir/ntgcalls/include"
+def wrtcIncludeDir = "$baseDir/wrtc/include"
+def androidCmakeDir = "$baseDir/cmake/Android.cmake"
+def versionProps = new Properties()
+new File("$baseDir/version.properties").withInputStream {
+    versionProps.load(it)
+}
+
+android {
+    namespace = "org.pytgcalls.ntgcalls"
+    compileSdk = 34
+    testBuildType "release"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        minSdk = 21
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                cppFlags '-std=gnu++20'
+                arguments "-DANDROID_STL=none",
+                        "-DANDROID_NATIVE_API_LEVEL=${versionProps.getProperty('version.sdk_compile')}",
+                        "-DANDROID_PLATFORM=${versionProps.getProperty('version.sdk_compile')}",
+                        "-DANDROID_CPP_FEATURES=exceptions rtti",
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DLIBCXX_INCLUDE_DIR=$depsDir/libcxx/include",
+                        "-DCMAKE_TOOLCHAIN_FILE=$ndkDir/build/cmake/android.toolchain.cmake",
+                        "-DANDROID_NDK=$ndkDir",
+                        "-DDEPS_DIR=$depsDir",
+                        "-DNTGCALLS_INCLUDE_DIR=$ntgcallsIncludeDir",
+                        "-DWRTC_INCLUDE_DIR=$wrtcIncludeDir",
+                        "-DANDROID_CMAKE_DIR=$androidCmakeDir",
+                        "-DCMAKE_ANDROID_EXCEPTIONS=ON"
+            }
+        }
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
+    }
+    sourceSets.main.jniLibs.srcDirs = ['./jni']
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/jni/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            testCoverageEnabled true
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.8.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    implementation fileTree(dir: "$depsDir/libwebrtc/src/jar/", include: ['webrtc.jar'])
+}

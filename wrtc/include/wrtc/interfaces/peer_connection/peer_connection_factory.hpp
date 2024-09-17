@@ -45,6 +45,7 @@ namespace wrtc {
     private:
         static std::mutex _mutex;
         static int _references;
+        void *jniEnv;
         static rtc::scoped_refptr<PeerConnectionFactory> _default;
 
         std::unique_ptr<rtc::Thread> network_thread_;

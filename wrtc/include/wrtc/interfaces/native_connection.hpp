@@ -10,7 +10,6 @@
 #include <pc/dtls_srtp_transport.h>
 #include <pc/dtls_transport.h>
 #include <pc/video_track_source_proxy.h>
-#include <memory>
 
 #include "network_interface.hpp"
 #include "sctp_data_channel_provider_interface_impl.hpp"

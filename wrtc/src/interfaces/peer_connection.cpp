@@ -5,6 +5,7 @@
 #include "wrtc/interfaces/peer_connection.hpp"
 
 #include <future>
+#include <wrtc/exceptions.hpp>
 
 #include "wrtc/interfaces/peer_connection/set_session_description_observer.hpp"
 

@@ -4,10 +4,8 @@
 
 #pragma once
 
-#include <modules/video_coding/codecs/h264/include/h264.h>
-
-#include "../../video_encoder_config.hpp"
-#include "../../video_decoder_config.hpp"
+#include "wrtc/video_factory/video_encoder_config.hpp"
+#include "wrtc/video_factory/video_decoder_config.hpp"
 
 namespace google {
 

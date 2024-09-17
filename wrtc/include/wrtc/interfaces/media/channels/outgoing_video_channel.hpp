@@ -6,8 +6,8 @@
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
 
-#include "../../../models/media_content.hpp"
-#include "../channel_manager.hpp"
+#include "wrtc/models/media_content.hpp"
+#include "wrtc/interfaces/media/channel_manager.hpp"
 #include "wrtc/interfaces/media/local_video_adapter.hpp"
 
 namespace wrtc {

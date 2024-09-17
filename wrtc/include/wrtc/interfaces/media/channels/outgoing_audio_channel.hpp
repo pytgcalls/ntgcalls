@@ -7,8 +7,8 @@
 #include <pc/dtls_srtp_transport.h>
 #include <pc/rtp_sender.h>
 
-#include "../../../models/media_content.hpp"
-#include "../channel_manager.hpp"
+#include "wrtc/models/media_content.hpp"
+#include "wrtc/interfaces/media/channel_manager.hpp"
 
 namespace wrtc {
     class OutgoingAudioChannel : public sigslot::has_slots<> {

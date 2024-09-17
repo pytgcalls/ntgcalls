@@ -1,0 +1,7 @@
+plugins {
+    id 'com.android.library' version '8.2.2' apply false
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}
