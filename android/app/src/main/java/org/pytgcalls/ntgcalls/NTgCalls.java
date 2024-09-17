@@ -80,4 +80,12 @@ public class NTgCalls {
         pingNative();
         return System.currentTimeMillis() - startTime;
     }
+
+    public native void setUpgradeCallback(UpgradeCallback callback);
+
+    public native void setStreamEndCallback(StreamEndCallback callback);
+
+    public native void setConnectionChangeCallback(ConnectionChangeCallback callback);
+
+    public native void setSignalingDataCallback(SignalingDataCallback callback);
 }

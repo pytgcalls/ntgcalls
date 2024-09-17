@@ -1,13 +1,18 @@
 #include "utils.hpp"
 
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj) {
-    jclass clazz = env->GetObjectClass(obj);
-    jlong ptr = env->GetLongField(obj,  env->GetFieldID(clazz, "nativePointer", "J"));
+    auto ptr = getInstancePtr(env, obj);
     if (ptr != 0) {
         return reinterpret_cast<ntgcalls::NTgCalls*>(ptr);
     }
-    env->DeleteLocalRef(clazz);
     return nullptr;
+}
+
+jlong getInstancePtr(JNIEnv *env, jobject obj) {
+    jclass clazz = env->GetObjectClass(obj);
+    jlong ptr = env->GetLongField(obj,  env->GetFieldID(clazz, "nativePointer", "J"));
+    env->DeleteLocalRef(clazz);
+    return ptr;
 }
 
 ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescription) {
@@ -167,6 +172,12 @@ bytes::binary parseBinary(JNIEnv *env, jbyteArray byteArray) {
     return result;
 }
 
+jbyteArray parseJBinary(JNIEnv *env, const bytes::binary& binary) {
+    jbyteArray result = env->NewByteArray( static_cast<jsize>(binary.size()));
+    env->SetByteArrayRegion(result, 0,  static_cast<jsize>(binary.size()), reinterpret_cast<const jbyte*>(binary.data()));
+    return result;
+}
+
 jobject parseAuthParams(JNIEnv *env, const ntgcalls::AuthParams& authParams) {
     jclass authParamsClass = env->FindClass("org/pytgcalls/ntgcalls/p2p/AuthParams");
     jmethodID constructor = env->GetMethodID(authParamsClass, "<init>", "([BJ)V");
@@ -291,6 +302,54 @@ jobject parseProtocol(JNIEnv *env, const ntgcalls::Protocol &protocol) {
     jobject libraryVersions = parseJStringList(env, protocol.library_versions);
     jobject result = env->NewObject(protocolClass, constructor, protocol.min_layer, protocol.max_layer, protocol.udp_p2p, protocol.udp_reflector, libraryVersions);
     env->DeleteLocalRef(protocolClass);
+    return result;
+}
+
+jobject parseStreamType(JNIEnv *env, ntgcalls::Stream::Type type) {
+    jclass streamTypeClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamType");
+    jfieldID audioField = env->GetStaticFieldID(streamTypeClass, "AUDIO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
+    jfieldID videoField = env->GetStaticFieldID(streamTypeClass, "VIDEO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
+
+    jobject result;
+    switch (type) {
+        case ntgcalls::Stream::Type::Audio:
+            result = env->GetStaticObjectField(streamTypeClass, audioField);
+            break;
+        case ntgcalls::Stream::Type::Video:
+            result = env->GetStaticObjectField(streamTypeClass, videoField);
+            break;
+    }
+    env->DeleteLocalRef(streamTypeClass);
+    return result;
+}
+
+jobject parseConnectionState(JNIEnv *env, ntgcalls::CallInterface::ConnectionState state) {
+    jclass connectionStateClass = env->FindClass("org/pytgcalls/ntgcalls/ConnectionState");
+    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass, "CONNECTING", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
+    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass, "CONNECTED", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
+    jfieldID failedField = env->GetStaticFieldID(connectionStateClass, "FAILED", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
+    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass, "TIMEOUT", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
+    jfieldID closedField = env->GetStaticFieldID(connectionStateClass, "CLOSED", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
+
+    jobject result;
+    switch (state) {
+        case ntgcalls::CallInterface::ConnectionState::Connecting:
+            result = env->GetStaticObjectField(connectionStateClass, connectingField);
+            break;
+        case ntgcalls::CallInterface::ConnectionState::Connected:
+            result = env->GetStaticObjectField(connectionStateClass, connectedField);
+            break;
+        case ntgcalls::CallInterface::ConnectionState::Failed:
+            result = env->GetStaticObjectField(connectionStateClass, failedField);
+            break;
+        case ntgcalls::CallInterface::ConnectionState::Timeout:
+            result = env->GetStaticObjectField(connectionStateClass, timeoutField);
+            break;
+        case ntgcalls::CallInterface::ConnectionState::Closed:
+            result = env->GetStaticObjectField(connectionStateClass, closedField);
+            break;
+    }
+    env->DeleteLocalRef(connectionStateClass);
     return result;
 }
 

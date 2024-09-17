@@ -8,7 +8,21 @@
 #include "ntgcalls/ntgcalls.hpp"
 #include <ntgcalls/exceptions.hpp>
 
+struct JavaCallback {
+    jobject callback;
+    jmethodID methodId;
+};
+
+struct InstanceCallbacks {
+    std::optional<JavaCallback> onUpgradeCallback;
+    std::optional<JavaCallback> onStreamEndCallback;
+    std::optional<JavaCallback> onConnectionChangeCallback;
+    std::optional<JavaCallback> onSignalingDataCallback;
+};
+
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj);
+
+jlong getInstancePtr(JNIEnv *env, jobject obj);
 
 ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescription);
 
@@ -28,6 +42,8 @@ jbyteArray parseJByteArray(JNIEnv *env, const bytes::vector& byteArray);
 
 bytes::binary parseBinary(JNIEnv *env, jbyteArray byteArray);
 
+jbyteArray parseJBinary(JNIEnv *env, const bytes::binary& binary);
+
 jobject parseAuthParams(JNIEnv *env, const ntgcalls::AuthParams& authParams);
 
 std::vector<std::string> parseStringList(JNIEnv *env, jobject list);
@@ -43,6 +59,10 @@ ntgcalls::BaseMediaDescription::InputMode parseInputMode(jint inputMode);
 jobject parseMediaState(JNIEnv *env, ntgcalls::MediaState mediaState);
 
 jobject parseProtocol(JNIEnv *env, const ntgcalls::Protocol& protocol);
+
+jobject parseStreamType(JNIEnv *env, ntgcalls::Stream::Type type);
+
+jobject parseConnectionState(JNIEnv *env, ntgcalls::CallInterface::ConnectionState state);
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 
@@ -70,4 +90,19 @@ throwJavaException(env, "RuntimeException", e.what()); \
 } \
 catch (...) { \
 throwJavaException(env, "RuntimeException", "Unknown error"); \
+}
+
+#define REGISTER_CALLBACK(name, method, data_class) \
+extern "C" \
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_##name(JNIEnv *env, jobject thiz, jobject callback) { \
+auto instancePtr = getInstancePtr(env, thiz); \
+if (auto checkCallback = callbacksInstances[instancePtr].method##Callback) { \
+env->DeleteGlobalRef(checkCallback->callback); \
+} \
+auto callbackClass = env->GetObjectClass(callback); \
+callbacksInstances[instancePtr].method##Callback = JavaCallback{ \
+env->NewGlobalRef(callback), \
+env->GetMethodID(callbackClass, #method, data_class) \
+}; \
+env->DeleteLocalRef(callbackClass);\
 }

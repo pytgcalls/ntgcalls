@@ -1,5 +1,8 @@
 #include "utils.hpp"
 #include <string>
+#include <wrtc/utils/java_context.hpp>
+
+std::map<jlong, InstanceCallbacks> callbacksInstances;
 
 extern "C"
 JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jobject thiz) {
@@ -7,6 +10,46 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
     jfieldID fid = env->GetFieldID(clazz, "nativePointer", "J");
     env->SetLongField(thiz, fid, reinterpret_cast<jlong>(new ntgcalls::NTgCalls()));
     env->DeleteLocalRef(clazz);
+
+    auto instancePtr = getInstancePtr(env, thiz);
+    auto instance = reinterpret_cast<ntgcalls::NTgCalls*>(instancePtr);
+    callbacksInstances[instancePtr] = InstanceCallbacks();
+
+    instance->onUpgrade([instancePtr](int64_t chatId, ntgcalls::MediaState mediaState) {
+        auto callback = callbacksInstances[instancePtr].onUpgradeCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseMediaState(env, mediaState));
+    });
+
+    instance->onStreamEnd([instancePtr](int64_t chatId, ntgcalls::Stream::Type type) {
+        auto callback = callbacksInstances[instancePtr].onStreamEndCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseStreamType(env, type));
+    });
+
+    instance->onConnectionChange([instancePtr](int64_t chatId, ntgcalls::CallInterface::ConnectionState state) {
+        auto callback = callbacksInstances[instancePtr].onConnectionChangeCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseConnectionState(env, state));
+    });
+
+    instance->onSignalingData([instancePtr](int64_t chatId, const bytes::binary& data) {
+        auto callback = callbacksInstances[instancePtr].onSignalingDataCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseJBinary(env, data));
+    });
 }
 
 extern "C"
@@ -19,6 +62,20 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_destroy(JNIEnv *env,
         delete cppObject;
         env->SetLongField(thiz, fid, static_cast<jlong>(static_cast<long>(0)));
     }
+    auto callbackInfo = callbacksInstances[ptr];
+    if (auto callback = callbackInfo.onUpgradeCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onStreamEndCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onConnectionChangeCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onSignalingDataCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    callbacksInstances.erase(ptr);
     env->DeleteLocalRef(clazz);
 }
 
@@ -144,3 +201,11 @@ extern "C"
 JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_getProtocol(JNIEnv* env, jclass) {
     return parseProtocol(env, ntgcalls::NTgCalls::getProtocol());
 }
+
+REGISTER_CALLBACK(setUpgradeCallback, onUpgrade, "(JLorg/pytgcalls/ntgcalls/media/MediaState;)V")
+
+REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLorg/pytgcalls/ntgcalls/media/StreamType;)V")
+
+REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLorg/pytgcalls/ntgcalls/ConnectionState;)V")
+
+REGISTER_CALLBACK(setSignalingDataCallback, onSignalingData, "(J[B)V")
