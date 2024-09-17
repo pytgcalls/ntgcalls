@@ -5,9 +5,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "../ntgcalls.hpp"
+#include "ntgcalls/ntgcalls.hpp"
 #include "ntgcalls/exceptions.hpp"
-#include "../models/rtc_server.hpp"
 
 namespace py = pybind11;
 
