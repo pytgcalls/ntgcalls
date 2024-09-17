@@ -63,6 +63,7 @@ PYBIND11_MODULE(ntgcalls, m) {
             .value("SHELL", ntgcalls::BaseMediaDescription::InputMode::Shell)
             .value("FFMPEG", ntgcalls::BaseMediaDescription::InputMode::FFmpeg)
             .value("NO_LATENCY", ntgcalls::BaseMediaDescription::InputMode::NoLatency)
+            .value("DEVICE", ntgcalls::BaseMediaDescription::InputMode::Device)
             .export_values()
             .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
                 return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
