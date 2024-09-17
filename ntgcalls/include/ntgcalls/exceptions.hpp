@@ -51,6 +51,10 @@ namespace ntgcalls {
         using BaseRTCException::BaseRTCException;
     };
 
+    class MediaDeviceError final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     class InvalidUUID final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };

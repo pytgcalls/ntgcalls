@@ -16,12 +16,15 @@ namespace ntgcalls {
             Shell = 1 << 1,
             FFmpeg = 1 << 2,
             NoLatency = 1 << 3,
+            Device = 1 << 4,
         };
 
         std::string input;
         InputMode inputMode;
 
         BaseMediaDescription(std::string  input, const InputMode inputMode): input(std::move(input)), inputMode(inputMode) {}
+
+        virtual ~BaseMediaDescription() = default;
     };
 
     inline int operator&(const BaseMediaDescription::InputMode lhs, const int rhs) {
