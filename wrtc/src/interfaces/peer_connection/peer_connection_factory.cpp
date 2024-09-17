@@ -2,7 +2,7 @@
 // Created by Laky64 on 16/08/2023.
 //
 
-#include "wrtc/interfaces/peer_connection/peer_connection_factory.hpp"
+#include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
 #include <api/enable_media.h>
 #include <rtc_base/ssl_adapter.h>
 #include <api/create_peerconnection_factory.h>
@@ -14,7 +14,7 @@
 #include <system_wrappers/include/field_trial.h>
 #include <wrtc/utils/java_context.hpp>
 
-#include "wrtc/video_factory/video_factory_config.hpp"
+#include <wrtc/video_factory/video_factory_config.hpp>
 
 namespace wrtc {
     std::mutex PeerConnectionFactory::_mutex{};

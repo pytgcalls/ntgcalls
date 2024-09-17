@@ -6,9 +6,9 @@
 #include <string>
 #include <api/peer_connection_interface.h>
 
-#include "ntgcalls/utils/binding_utils.hpp"
-#include "wrtc/models/rtc_server.hpp"
-#include "wrtc/utils/binary.hpp"
+#include <ntgcalls/utils/binding_utils.hpp>
+#include <wrtc/models/rtc_server.hpp>
+#include <wrtc/utils/binary.hpp>
 
 namespace ntgcalls {
     class RTCServer {

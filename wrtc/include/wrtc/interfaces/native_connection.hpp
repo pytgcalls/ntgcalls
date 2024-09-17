@@ -17,13 +17,13 @@
 #include "media/local_video_adapter.hpp"
 #include "media/channels/outgoing_audio_channel.hpp"
 #include "media/channels/outgoing_video_channel.hpp"
-#include "wrtc/models/content_negotiation_context.hpp"
-#include "wrtc/models/peer_ice_parameters.hpp"
-#include "wrtc/models/rtc_server.hpp"
+#include <wrtc/models/content_negotiation_context.hpp>
+#include <wrtc/models/peer_ice_parameters.hpp>
+#include <wrtc/models/rtc_server.hpp>
 #include <nlohmann/json.hpp>
 
-#include "wrtc/models/connection_description.hpp"
-#include "wrtc/models/route_description.hpp"
+#include <wrtc/models/connection_description.hpp>
+#include <wrtc/models/route_description.hpp>
 
 namespace wrtc {
     using nlohmann::json;

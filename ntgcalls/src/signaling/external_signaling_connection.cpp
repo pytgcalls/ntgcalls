@@ -2,7 +2,7 @@
 // Created by Laky64 on 18/08/2024.
 //
 
-#include "ntgcalls/signaling/external_signaling_connection.hpp"
+#include <ntgcalls/signaling/external_signaling_connection.hpp>
 
 namespace signaling {
     ExternalSignalingConnection::ExternalSignalingConnection(

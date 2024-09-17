@@ -2,9 +2,9 @@
 // Created by Laky64 on 08/03/2024.
 //
 
-#include "ntgcalls/signaling/crypto/mod_exp_first.hpp"
+#include <ntgcalls/signaling/crypto/mod_exp_first.hpp>
 
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/exceptions.hpp>
 
 namespace signaling {
 

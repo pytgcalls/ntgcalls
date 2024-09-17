@@ -7,10 +7,10 @@
 #include <nlohmann/json.hpp>
 
 #include "call_interface.hpp"
-#include "ntgcalls/models/auth_params.hpp"
-#include "ntgcalls/signaling/signaling.hpp"
-#include "ntgcalls/models/rtc_server.hpp"
-#include "ntgcalls/models/dh_config.hpp"
+#include <ntgcalls/models/auth_params.hpp>
+#include <ntgcalls/signaling/signaling.hpp>
+#include <ntgcalls/models/rtc_server.hpp>
+#include <ntgcalls/models/dh_config.hpp>
 
 namespace ntgcalls {
     using nlohmann::json;

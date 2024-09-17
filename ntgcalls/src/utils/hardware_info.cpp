@@ -2,7 +2,7 @@
 // Created by Laky64 on 02/03/2024.
 //
 
-#include "ntgcalls/utils/hardware_info.hpp"
+#include <ntgcalls/utils/hardware_info.hpp>
 
 namespace ntgcalls {
     HardwareInfo::HardwareInfo() {

@@ -14,7 +14,7 @@ RTC_LOG(LS_INFO) << "Worker finished";\
 });
 
 #ifdef PYTHON_ENABLED
-#include "wrtc/utils/binary.hpp"
+#include <wrtc/utils/binary.hpp>
 #include <pybind11/pybind11.h>
 // ReSharper disable once CppUnusedIncludeDirective
 #include <pybind11/stl.h>

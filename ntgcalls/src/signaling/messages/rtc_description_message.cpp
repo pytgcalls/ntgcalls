@@ -2,9 +2,9 @@
 // Created by Laky64 on 22/03/2024.
 //
 
-#include "ntgcalls/signaling/messages/rtc_description_message.hpp"
+#include <ntgcalls/signaling/messages/rtc_description_message.hpp>
 
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/exceptions.hpp>
 
 namespace signaling {
     bytes::binary RtcDescriptionMessage::serialize() const {

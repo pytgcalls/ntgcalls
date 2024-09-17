@@ -2,10 +2,10 @@
 // Created by Laky64 on 29/03/2024.
 //
 
-#include "wrtc/interfaces/network_interface.hpp"
+#include <wrtc/interfaces/network_interface.hpp>
 
-#include "wrtc/interfaces/peer_connection/peer_connection_factory.hpp"
-#include "wrtc/exceptions.hpp"
+#include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
+#include <wrtc/exceptions.hpp>
 
 namespace wrtc {
     webrtc::IceCandidateInterface* NetworkInterface::parseIceCandidate(const IceCandidate& rawCandidate) {

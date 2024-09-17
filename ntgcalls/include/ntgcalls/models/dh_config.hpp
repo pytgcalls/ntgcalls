@@ -5,8 +5,8 @@
 #pragma once
 #include <cstdint>
 
-#include "ntgcalls/utils/binding_utils.hpp"
-#include "wrtc/utils/binary.hpp"
+#include <ntgcalls/utils/binding_utils.hpp>
+#include <wrtc/utils/binary.hpp>
 
 namespace ntgcalls {
     class DhConfig {

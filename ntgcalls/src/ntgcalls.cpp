@@ -2,14 +2,14 @@
 // Created by Laky64 on 22/08/2023.
 //
 
-#include "ntgcalls/ntgcalls.hpp"
+#include <ntgcalls/ntgcalls.hpp>
 
 #include <iostream>
 
-#include "ntgcalls/exceptions.hpp"
-#include "ntgcalls/instances/group_call.hpp"
-#include "ntgcalls/instances/p2p_call.hpp"
-#include "ntgcalls/models/dh_config.hpp"
+#include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/instances/group_call.hpp>
+#include <ntgcalls/instances/p2p_call.hpp>
+#include <ntgcalls/models/dh_config.hpp>
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {

@@ -2,7 +2,7 @@
 // Created by Laky64 on 18/08/2023.
 //
 
-#include "wrtc/video_factory/software/google/google.hpp"
+#include <wrtc/video_factory/software/google/google.hpp>
 
 #include <api/environment/environment_factory.h>
 #include <modules/video_coding/codecs/vp8/include/vp8.h>

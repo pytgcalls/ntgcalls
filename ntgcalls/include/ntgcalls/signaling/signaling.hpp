@@ -5,7 +5,7 @@
 #pragma once
 
 #include "signaling_interface.hpp"
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/exceptions.hpp>
 
 namespace signaling {
 

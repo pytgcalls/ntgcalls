@@ -2,8 +2,8 @@
 // Created by laky64 on 15/09/24.
 //
 
-#include "wrtc/video_factory/hardware/android/android.hpp"
-#include "wrtc/video_factory/hardware/android/video_factory.hpp"
+#include <wrtc/video_factory/hardware/android/android.hpp>
+#include <wrtc/video_factory/hardware/android/video_factory.hpp>
 
 namespace android {
     void addEncoders(std::vector<wrtc::VideoEncoderConfig>& encoders, void* jniEnv) {

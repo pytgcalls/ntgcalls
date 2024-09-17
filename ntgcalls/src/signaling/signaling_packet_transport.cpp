@@ -2,7 +2,7 @@
 // Created by Laky64 on 14/03/2024.
 //
 
-#include "ntgcalls/signaling/signaling_packet_transport.hpp"
+#include <ntgcalls/signaling/signaling_packet_transport.hpp>
 
 namespace signaling {
     void SignalingPacketTransport::receiveData(const bytes::binary& data) {

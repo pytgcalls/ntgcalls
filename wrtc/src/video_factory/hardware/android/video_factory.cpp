@@ -3,7 +3,7 @@
 //
 
 #ifdef IS_ANDROID
-#include "wrtc/video_factory/hardware/android/video_factory.hpp"
+#include <wrtc/video_factory/hardware/android/video_factory.hpp>
 #include <sdk/android/native_api/codecs/wrapper.h>
 #include <sdk/android/native_api/jni/class_loader.h>
 #include <sdk/android/native_api/jni/scoped_java_ref.h>

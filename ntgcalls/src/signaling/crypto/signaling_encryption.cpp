@@ -2,15 +2,15 @@
 // Created by Laky64 on 09/03/2024.
 //
 
-#include "ntgcalls/signaling/crypto/signaling_encryption.hpp"
+#include <ntgcalls/signaling/crypto/signaling_encryption.hpp>
 
 #include <rtc_base/copy_on_write_buffer.h>
 
 #include <rtc_base/logging.h>
 #include <rtc_base/time_utils.h>
 
-#include "ntgcalls/signaling/messages/message.hpp"
-#include "wrtc/utils/encryption.hpp"
+#include <ntgcalls/signaling/messages/message.hpp>
+#include <wrtc/utils/encryption.hpp>
 
 namespace signaling {
     SignalingEncryption::SignalingEncryption(EncryptionKey key): _key(std::move(key)) {}

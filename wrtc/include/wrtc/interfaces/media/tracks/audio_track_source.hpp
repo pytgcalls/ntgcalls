@@ -6,7 +6,7 @@
 
 #include <pc/local_audio_source.h>
 
-#include "wrtc/models/rtc_on_data_event.hpp"
+#include <wrtc/models/rtc_on_data_event.hpp>
 
 namespace wrtc {
 

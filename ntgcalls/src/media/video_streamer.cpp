@@ -2,7 +2,7 @@
 // Created by Laky64 on 12/08/2023.
 //
 
-#include "ntgcalls/media/video_streamer.hpp"
+#include <ntgcalls/media/video_streamer.hpp>
 
 namespace ntgcalls {
     VideoStreamer::VideoStreamer() {

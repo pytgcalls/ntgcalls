@@ -2,11 +2,11 @@
 // Created by Laky64 on 23/08/2023.
 //
 
-#include "ntgcalls/media/media_reader_factory.hpp"
+#include <ntgcalls/media/media_reader_factory.hpp>
 
 #include <ntgcalls/devices/media_device.hpp>
-#include "ntgcalls/io/file_reader.hpp"
-#include "ntgcalls/io/shell_reader.hpp"
+#include <ntgcalls/io/file_reader.hpp>
+#include <ntgcalls/io/shell_reader.hpp>
 
 namespace ntgcalls {
     MediaReaderFactory::MediaReaderFactory(const MediaDescription& desc, const int64_t audioSize, const int64_t videoSize) {

@@ -2,8 +2,8 @@
 // Created by Laky64 on 04/08/2023.
 //
 
-#include "ntgcalls/io/base_reader.hpp"
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/io/base_reader.hpp>
+#include <ntgcalls/exceptions.hpp>
 
 namespace ntgcalls {
     BaseReader::BaseReader(const int64_t bufferSize, const bool noLatency): noLatency(noLatency), size(bufferSize) {}

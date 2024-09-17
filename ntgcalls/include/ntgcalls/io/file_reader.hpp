@@ -8,7 +8,7 @@
 #include <string>
 
 #include "base_reader.hpp"
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/exceptions.hpp>
 
 namespace ntgcalls {
     class FileReader final: public BaseReader {

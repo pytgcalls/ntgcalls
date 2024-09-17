@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-#include "wrtc/utils/binary.hpp"
+#include <wrtc/utils/binary.hpp>
 
 namespace wrtc {
 

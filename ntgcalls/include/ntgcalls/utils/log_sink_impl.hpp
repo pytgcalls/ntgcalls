@@ -7,7 +7,7 @@
 #include <rtc_base/thread.h>
 #include <rtc_base/logging.h>
 #include "binding_utils.hpp"
-#include "wrtc/utils/syncronized_callback.hpp"
+#include <wrtc/utils/syncronized_callback.hpp>
 
 namespace ntgcalls {
 

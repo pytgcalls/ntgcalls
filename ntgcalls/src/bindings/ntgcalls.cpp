@@ -2,10 +2,10 @@
 // Created by Laky64 on 29/08/2023.
 //
 
-#include "ntgcalls/ntgcalls.hpp"
+#include <ntgcalls/ntgcalls.hpp>
 #include "ntgcalls.h"
 
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/exceptions.hpp>
 
 std::map<uint32_t, std::shared_ptr<ntgcalls::NTgCalls>> clients;
 uint32_t uidGenerator;

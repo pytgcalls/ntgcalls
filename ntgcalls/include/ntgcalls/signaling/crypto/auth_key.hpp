@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "wrtc/utils/binary.hpp"
+#include <wrtc/utils/binary.hpp>
 
 namespace signaling {
     struct EncryptionKey {

@@ -2,7 +2,7 @@
 // Created by Laky64 on 08/08/2023.
 //
 
-#include "wrtc/exceptions.hpp"
+#include <wrtc/exceptions.hpp>
 
 namespace wrtc {
     const char *BaseRTCException::what() const noexcept {

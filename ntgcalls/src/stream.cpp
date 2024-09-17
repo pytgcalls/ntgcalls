@@ -2,7 +2,7 @@
 // Created by Laky64 on 12/08/2023.
 //
 
-#include "ntgcalls/stream.hpp"
+#include <ntgcalls/stream.hpp>
 
 namespace ntgcalls {
     Stream::Stream(rtc::Thread* workerThread): workerThread(workerThread) {

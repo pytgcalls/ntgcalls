@@ -2,7 +2,7 @@
 // Created by Laky64 on 17/09/24.
 //
 
-#include "ntgcalls/devices/media_device.hpp"
+#include <ntgcalls/devices/media_device.hpp>
 
 #include <ntgcalls/devices/audio/audio_device.hpp>
 #include <utility>

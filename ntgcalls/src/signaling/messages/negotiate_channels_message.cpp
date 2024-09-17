@@ -2,9 +2,9 @@
 // Created by Laky64 on 30/03/2024.
 //
 
-#include "ntgcalls/signaling/messages/negotiate_channels_message.hpp"
+#include <ntgcalls/signaling/messages/negotiate_channels_message.hpp>
 
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/exceptions.hpp>
 
 namespace signaling {
     json NegotiateChannelsMessage::serializeSourceGroup(const wrtc::SsrcGroup &ssrcGroup) {

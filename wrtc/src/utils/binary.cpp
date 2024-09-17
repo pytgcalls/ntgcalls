@@ -2,7 +2,7 @@
 // Created by Laky64 on 07/03/2024.
 //
 
-#include "wrtc/utils/binary.hpp"
+#include <wrtc/utils/binary.hpp>
 
 #include <stdexcept>
 

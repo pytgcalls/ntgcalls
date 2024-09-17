@@ -2,7 +2,7 @@
 // Created by Laky64 on 13/03/2024.
 //
 
-#include "ntgcalls/models/rtc_server.hpp"
+#include <ntgcalls/models/rtc_server.hpp>
 
 namespace ntgcalls {
     std::set<int64_t> RTCServer::collectEndpointIds(const std::vector<RTCServer>& servers) {

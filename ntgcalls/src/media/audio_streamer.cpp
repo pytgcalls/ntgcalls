@@ -2,7 +2,7 @@
 // Created by Laky64 on 12/08/2023.
 //
 
-#include "ntgcalls/media/audio_streamer.hpp"
+#include <ntgcalls/media/audio_streamer.hpp>
 
 namespace ntgcalls {
     AudioStreamer::AudioStreamer() {

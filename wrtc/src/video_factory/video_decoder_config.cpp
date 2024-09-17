@@ -2,7 +2,7 @@
 // Created by Laky64 on 18/08/2023.
 //
 
-#include "wrtc/video_factory/video_decoder_config.hpp"
+#include <wrtc/video_factory/video_decoder_config.hpp>
 
 namespace wrtc {
     VideoDecoderConfig::VideoDecoderConfig(const webrtc::VideoCodecType codec, DecoderCallback createVideoDecoder) {

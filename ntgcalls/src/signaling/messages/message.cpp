@@ -1,9 +1,9 @@
 //
 // Created by Laky64 on 22/03/2024.
 //
-#include "ntgcalls/signaling/messages/message.hpp"
+#include <ntgcalls/signaling/messages/message.hpp>
 
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/exceptions.hpp>
 
 namespace signaling {
     Message::Type Message::type(const bytes::binary& data) {

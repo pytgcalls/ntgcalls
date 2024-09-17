@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "wrtc/utils/syncronized_callback.hpp"
+#include <wrtc/utils/syncronized_callback.hpp>
 #include <atomic>
 
 namespace wrtc {

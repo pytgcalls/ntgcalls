@@ -5,7 +5,7 @@
 #pragma once
 #include <p2p/base/packet_transport_internal.h>
 
-#include "wrtc/utils/binary.hpp"
+#include <wrtc/utils/binary.hpp>
 
 namespace signaling {
 

@@ -5,7 +5,7 @@
 #pragma once
 #include <memory>
 
-#include "ntgcalls/stream.hpp"
+#include <ntgcalls/stream.hpp>
 
 namespace ntgcalls {
 

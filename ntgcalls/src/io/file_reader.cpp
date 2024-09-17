@@ -2,7 +2,7 @@
 // Created by Laky64 on 04/08/2023.
 //
 
-#include "ntgcalls/io/file_reader.hpp"
+#include <ntgcalls/io/file_reader.hpp>
 
 namespace ntgcalls {
     FileReader::FileReader(const std::string& path, const int64_t bufferSize, const bool noLatency): BaseReader(bufferSize, noLatency) {

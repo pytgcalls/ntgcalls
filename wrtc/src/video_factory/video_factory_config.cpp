@@ -2,9 +2,9 @@
 // Created by Laky64 on 18/08/2023.
 //
 
-#include "wrtc/video_factory/video_factory_config.hpp"
-#include "wrtc/video_factory/hardware/android/android.hpp"
-#include "wrtc/video_factory/software/vlc/vlc.hpp"
+#include <wrtc/video_factory/video_factory_config.hpp>
+#include <wrtc/video_factory/hardware/android/android.hpp>
+#include <wrtc/video_factory/software/vlc/vlc.hpp>
 
 namespace wrtc {
 

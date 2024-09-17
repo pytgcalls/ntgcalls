@@ -2,19 +2,19 @@
 // Created by Laky64 on 15/03/2024.
 //
 
-#include "ntgcalls/instances/p2p_call.hpp"
+#include <ntgcalls/instances/p2p_call.hpp>
 
-#include "ntgcalls/exceptions.hpp"
-#include "ntgcalls/signaling/crypto/mod_exp_first.hpp"
-#include "ntgcalls/signaling/messages/candidates_message.hpp"
-#include "ntgcalls/signaling/messages/candidate_message.hpp"
-#include "ntgcalls/signaling/messages/initial_setup_message.hpp"
-#include "ntgcalls/signaling/messages/media_state_message.hpp"
-#include "ntgcalls/signaling/messages/message.hpp"
-#include "ntgcalls/signaling/messages/negotiate_channels_message.hpp"
-#include "ntgcalls/signaling/messages/rtc_description_message.hpp"
-#include "wrtc/interfaces/native_connection.hpp"
-#include "wrtc/utils/encryption.hpp"
+#include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/signaling/crypto/mod_exp_first.hpp>
+#include <ntgcalls/signaling/messages/candidates_message.hpp>
+#include <ntgcalls/signaling/messages/candidate_message.hpp>
+#include <ntgcalls/signaling/messages/initial_setup_message.hpp>
+#include <ntgcalls/signaling/messages/media_state_message.hpp>
+#include <ntgcalls/signaling/messages/message.hpp>
+#include <ntgcalls/signaling/messages/negotiate_channels_message.hpp>
+#include <ntgcalls/signaling/messages/rtc_description_message.hpp>
+#include <wrtc/interfaces/native_connection.hpp>
+#include <wrtc/utils/encryption.hpp>
 
 namespace ntgcalls {
     P2PCall::~P2PCall() {

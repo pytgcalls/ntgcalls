@@ -2,9 +2,9 @@
 // Created by Laky64 on 02/04/2024.
 //
 
-#include "wrtc/interfaces/media/channels/outgoing_video_channel.hpp"
+#include <wrtc/interfaces/media/channels/outgoing_video_channel.hpp>
 
-#include "wrtc/interfaces/native_connection.hpp"
+#include <wrtc/interfaces/native_connection.hpp>
 #include "api/video/builtin_video_bitrate_allocator_factory.h"
 
 namespace wrtc {

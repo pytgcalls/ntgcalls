@@ -2,7 +2,7 @@
 // Created by Laky64 on 26/03/2024.
 //
 
-#include "ntgcalls/utils/log_sink_impl.hpp"
+#include <ntgcalls/utils/log_sink_impl.hpp>
 
 #include <regex>
 #include <rtc_base/ref_counted_object.h>

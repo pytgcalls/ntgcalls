@@ -5,7 +5,7 @@
 #pragma once
 
 #include "message.hpp"
-#include "wrtc/utils/binary.hpp"
+#include <wrtc/utils/binary.hpp>
 
 namespace signaling {
     class MediaStateMessage final : public Message {

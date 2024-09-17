@@ -4,7 +4,7 @@
 
 #include <utility>
 
-#include "ntgcalls/devices/audio/audio_device.hpp"
+#include <ntgcalls/devices/audio/audio_device.hpp>
 
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/devices/audio/audio_device_alsa_linux.hpp>

@@ -2,12 +2,12 @@
 // Created by Laky64 on 15/03/2024.
 //
 
-#include "ntgcalls/instances/group_call.hpp"
+#include <ntgcalls/instances/group_call.hpp>
 
 #include <future>
 
-#include "ntgcalls/exceptions.hpp"
-#include "ntgcalls/models/call_payload.hpp"
+#include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/models/call_payload.hpp>
 
 namespace ntgcalls {
     GroupCall::~GroupCall() {

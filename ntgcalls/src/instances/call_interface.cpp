@@ -2,7 +2,7 @@
 // Created by Laky64 on 15/03/2024.
 //
 
-#include "ntgcalls/instances/call_interface.hpp"
+#include <ntgcalls/instances/call_interface.hpp>
 
 namespace ntgcalls {
     CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {

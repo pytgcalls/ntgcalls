@@ -2,7 +2,7 @@
 // Created by Laky64 on 30/03/2024.
 //
 
-#include "ntgcalls/signaling/messages/candidates_message.hpp"
+#include <ntgcalls/signaling/messages/candidates_message.hpp>
 
 namespace signaling {
     bytes::binary CandidatesMessage::serialize() const {

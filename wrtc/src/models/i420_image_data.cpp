@@ -2,7 +2,7 @@
 // Created by Laky64 on 13/08/2023.
 //
 
-#include "wrtc/models/i420_image_data.hpp"
+#include <wrtc/models/i420_image_data.hpp>
 
 namespace wrtc {
     size_t i420ImageData::sizeOfLuminancePlane() const {

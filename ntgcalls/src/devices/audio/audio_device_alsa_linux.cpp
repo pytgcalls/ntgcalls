@@ -2,7 +2,7 @@
 // Created by Laky64 on 17/09/24.
 //
 
-#include "ntgcalls/devices/audio/audio_device_alsa_linux.hpp"
+#include <ntgcalls/devices/audio/audio_device_alsa_linux.hpp>
 
 #ifdef IS_LINUX
 #include <ntgcalls/exceptions.hpp>

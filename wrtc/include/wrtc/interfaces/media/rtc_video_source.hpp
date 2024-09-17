@@ -5,8 +5,8 @@
 #pragma once
 
 #include "tracks/video_track_source.hpp"
-#include "wrtc/models/i420_image_data.hpp"
-#include "wrtc/interfaces/peer_connection/peer_connection_factory.hpp"
+#include <wrtc/models/i420_image_data.hpp>
+#include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
 
 namespace wrtc {
 

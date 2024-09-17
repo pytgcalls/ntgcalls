@@ -8,7 +8,7 @@
 #include <boost/process.hpp>
 
 #include "base_reader.hpp"
-#include "ntgcalls/exceptions.hpp"
+#include <ntgcalls/exceptions.hpp>
 
 namespace bp = boost::process;
 

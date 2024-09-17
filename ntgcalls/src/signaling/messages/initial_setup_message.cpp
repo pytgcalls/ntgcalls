@@ -2,7 +2,7 @@
 // Created by Laky64 on 28/03/2024.
 //
 
-#include "ntgcalls/signaling/messages/initial_setup_message.hpp"
+#include <ntgcalls/signaling/messages/initial_setup_message.hpp>
 
 namespace signaling {
     bytes::binary InitialSetupMessage::serialize() const {

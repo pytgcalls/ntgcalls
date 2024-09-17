@@ -2,7 +2,7 @@
 // Created by Laky64 on 12/08/2023.
 //
 
-#include "ntgcalls/media/base_streamer.hpp"
+#include <ntgcalls/media/base_streamer.hpp>
 
 namespace ntgcalls {
     BaseStreamer::~BaseStreamer() {

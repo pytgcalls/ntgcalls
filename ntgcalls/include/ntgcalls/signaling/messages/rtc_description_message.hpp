@@ -5,7 +5,7 @@
 #pragma once
 
 #include "message.hpp"
-#include "wrtc/models/rtc_session_description.hpp"
+#include <wrtc/models/rtc_session_description.hpp>
 
 namespace signaling {
 

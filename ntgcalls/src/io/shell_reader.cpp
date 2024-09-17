@@ -2,7 +2,7 @@
 // Created by Laky64 on 30/08/2023.
 //
 
-#include "ntgcalls/io/shell_reader.hpp"
+#include <ntgcalls/io/shell_reader.hpp>
 
 #ifdef BOOST_ENABLED
 namespace ntgcalls {

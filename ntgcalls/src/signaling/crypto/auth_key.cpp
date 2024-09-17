@@ -2,12 +2,12 @@
 // Created by Laky64 on 08/03/2024.
 //
 
-#include "ntgcalls/signaling/crypto/auth_key.hpp"
+#include <ntgcalls/signaling/crypto/auth_key.hpp>
 
-#include "ntgcalls/signaling/crypto/mod_exp_first.hpp"
-#include "ntgcalls/exceptions.hpp"
-#include "wrtc/utils/bignum.hpp"
-#include "wrtc/utils/encryption.hpp"
+#include <ntgcalls/signaling/crypto/mod_exp_first.hpp>
+#include <ntgcalls/exceptions.hpp>
+#include <wrtc/utils/bignum.hpp>
+#include <wrtc/utils/encryption.hpp>
 
 namespace signaling {
     bytes::vector AuthKey::CreateAuthKey(const bytes::const_span firstBytes, const bytes::const_span random, const bytes::const_span primeBytes) {

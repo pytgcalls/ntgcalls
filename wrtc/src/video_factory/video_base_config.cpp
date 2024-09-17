@@ -2,7 +2,7 @@
 // Created by Laky64 on 18/08/2023.
 //
 
-#include "wrtc/video_factory/video_base_config.hpp"
+#include <wrtc/video_factory/video_base_config.hpp>
 
 #include <media/base/media_constants.h>
 #include <modules/video_coding/codecs/av1/av1_svc_config.h>

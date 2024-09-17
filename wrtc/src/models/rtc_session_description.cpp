@@ -2,8 +2,8 @@
 // Created by Laky64 on 08/08/2023.
 //
 
-#include "wrtc/models/rtc_session_description.hpp"
-#include "wrtc/exceptions.hpp"
+#include <wrtc/models/rtc_session_description.hpp>
+#include <wrtc/exceptions.hpp>
 
 namespace wrtc {
     Description::Description(const SdpType type, std::string sdp): _type(type), _sdp(std::move(sdp)) {}

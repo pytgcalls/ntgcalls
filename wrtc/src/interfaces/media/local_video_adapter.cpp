@@ -2,7 +2,7 @@
 // Created by Laky64 on 04/09/2024.
 //
 
-#include "wrtc/interfaces/media/local_video_adapter.hpp"
+#include <wrtc/interfaces/media/local_video_adapter.hpp>
 
 namespace wrtc {
     LocalVideoAdapter::LocalVideoAdapter(): _sink(std::nullopt){}
