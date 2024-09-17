@@ -24,7 +24,10 @@ namespace ntgcalls {
 
     public:
         AudioDeviceAlsaLinux(const AudioDescription* desc, const std::string& deviceId, int64_t bufferSize);
+
+        static bool isSupported();
     };
 
 } // wrtc
+
 #endif

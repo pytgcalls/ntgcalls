@@ -8,7 +8,7 @@
 
 namespace ntgcalls {
 
-    class AudioDevice: public BaseReader   {
+    class AudioDevice: public BaseReader {
         std::string deviceId;
 
     protected:

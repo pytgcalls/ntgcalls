@@ -49,11 +49,6 @@ set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20 C_STANDARD 20)
 
 target_link_libraries(ntgcalls PRIVATE wrtc nlohmann_json::nlohmann_json)
 
-if (LINUX)
-    find_package(ALSA REQUIRED)
-    target_link_libraries(ntgcalls PRIVATE ALSA::ALSA)
-endif ()
-
 if(BOOST_ENABLED)
     target_link_libraries(ntgcalls PRIVATE Boost::filesystem)
 endif ()

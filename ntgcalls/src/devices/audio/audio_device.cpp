@@ -14,9 +14,10 @@ namespace ntgcalls {
 
     std::unique_ptr<AudioDevice> AudioDevice::create(const AudioDescription* desc, const std::string& deviceId, int64_t bufferSize) {
 #ifdef IS_LINUX
-        return std::make_unique<AudioDeviceAlsaLinux>(desc, deviceId, bufferSize);
-#else
-        throw MediaDeviceError("Unsupported platform for audio device");
+        if (AudioDeviceAlsaLinux::isSupported()) {
+            return std::make_unique<AudioDeviceAlsaLinux>(desc, deviceId, bufferSize);
+        }
 #endif
+        throw MediaDeviceError("Unsupported platform for audio device");
     }
 } // wrtc
