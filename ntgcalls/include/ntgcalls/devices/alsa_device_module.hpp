@@ -18,12 +18,11 @@ namespace ntgcalls {
     public:
         AlsaDeviceModule(const AudioDescription* desc, bool isCapture);
 
-        ~AlsaDeviceModule() override;
-
-        [[nodiscard]] bytes::unique_binary read(int64_t size) const override;
+        [[nodiscard]] bytes::unique_binary read(int64_t size) override;
 
         static bool isSupported();
 
+        void close() override;
     };
 
 } // alsa

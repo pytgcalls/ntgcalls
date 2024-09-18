@@ -42,11 +42,7 @@ namespace ntgcalls {
         }
     }
 
-    AlsaDeviceModule::~AlsaDeviceModule() {
-        LATE(snd_pcm_close)(captureHandle);
-    }
-
-    bytes::unique_binary AlsaDeviceModule::read(const int64_t size) const {
+    bytes::unique_binary AlsaDeviceModule::read(const int64_t size) {
         auto device_data = bytes::make_unique_binary(size);
         if (const auto err = LATE(snd_pcm_readi)(captureHandle, device_data.get(), size / (channels * 2)); err < 0) {
             throw MediaDeviceError("cannot read from audio interface (" + std::string(LATE(snd_strerror)(static_cast<int>(err))) + ")");
@@ -56,6 +52,10 @@ namespace ntgcalls {
 
     bool AlsaDeviceModule::isSupported() {
         return GetAlsaSymbolTable()->Load();
+    }
+
+    void AlsaDeviceModule::close() {
+        LATE(snd_pcm_close)(captureHandle);
     }
 } // alsa
 
