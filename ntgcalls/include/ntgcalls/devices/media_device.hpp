@@ -9,8 +9,10 @@
 namespace ntgcalls {
 
     class MediaDevice {
+        static std::unique_ptr<BaseReader> CreateAudioInput(const AudioDescription* desc, int64_t bufferSize);
+
     public:
-        static std::unique_ptr<BaseReader> create(const BaseMediaDescription& desc, std::string deviceId, int64_t bufferSize);
+        static std::unique_ptr<BaseReader> CreateInput(const BaseMediaDescription& desc, int64_t bufferSize);
     };
 
 } // ntgcalls

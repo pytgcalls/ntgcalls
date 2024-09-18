@@ -41,7 +41,7 @@ namespace ntgcalls {
         }
 
         if ((desc.inputMode & (BaseMediaDescription::InputMode::Device | allowedFlags)) == desc.inputMode) {
-            return MediaDevice::create(desc, desc.input, bufferSize);
+            return MediaDevice::CreateInput(desc, desc.input, bufferSize);
         }
 
         if ((desc.inputMode & (BaseMediaDescription::InputMode::FFmpeg | allowedFlags)) == desc.inputMode) {
