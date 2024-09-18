@@ -13,13 +13,16 @@ namespace ntgcalls {
     protected:
         uint32_t rate = 0;
         uint8_t channels = 0;
+        std::string deviceId;
 
     public:
-        explicit BaseDeviceModule(const AudioDescription* desc) : rate(desc->sampleRate), channels(desc->channelCount) {}
+        explicit BaseDeviceModule(const AudioDescription* desc) : rate(desc->sampleRate), channels(desc->channelCount), deviceId(desc->input) {}
 
         virtual ~BaseDeviceModule() = default;
 
-        [[nodiscard]] virtual bytes::unique_binary read(int64_t size) const = 0;
+        [[nodiscard]] virtual bytes::unique_binary read(int64_t size) = 0;
+
+        virtual void close() = 0;
     };
 
 } // ntgcalls
