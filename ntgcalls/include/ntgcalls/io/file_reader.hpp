@@ -19,8 +19,6 @@ namespace ntgcalls {
     public:
         explicit FileReader(const std::string& path, int64_t bufferSize, bool noLatency);
 
-        ~FileReader() override;
-
         void close() override;
     };
 }

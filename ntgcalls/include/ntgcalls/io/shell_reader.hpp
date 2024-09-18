@@ -23,8 +23,6 @@ namespace ntgcalls {
     public:
         explicit ShellReader(const std::string& command, int64_t bufferSize, bool noLatency);
 
-        ~ShellReader() override;
-
         void close() override;
     };
 

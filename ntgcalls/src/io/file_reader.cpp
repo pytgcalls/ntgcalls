@@ -13,11 +13,6 @@ namespace ntgcalls {
         }
     }
 
-    FileReader::~FileReader() {
-        close();
-        source.clear();
-    }
-
     bytes::unique_binary FileReader::readInternal(const int64_t size) {
         if (!source || source.eof() || source.fail() || !source.is_open()) {
             RTC_LOG(LS_WARNING) << "Reached end of the file";
@@ -39,6 +34,7 @@ namespace ntgcalls {
         if (source.is_open()) {
             source.close();
         }
+        source.clear();
         RTC_LOG(LS_VERBOSE) << "FileReader closed";
     }
 }

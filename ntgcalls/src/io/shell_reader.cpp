@@ -14,11 +14,6 @@ namespace ntgcalls {
         }
     }
 
-    ShellReader::~ShellReader() {
-        close();
-        stdOut.clear();
-    }
-
     bytes::unique_binary ShellReader::readInternal(const int64_t size) {
         if (!stdOut || stdOut.eof() || stdOut.fail() || !stdOut.is_open()) {
             RTC_LOG(LS_WARNING) << "Reached end of the file";
@@ -37,6 +32,7 @@ namespace ntgcalls {
             shellProcess.detach();
         }
         RTC_LOG(LS_VERBOSE) << "ShellReader closed";
+        stdOut.clear();
     }
 } // ntgcalls
 #endif
