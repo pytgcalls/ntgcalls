@@ -7,14 +7,14 @@
 #ifdef IS_LINUX
 
 namespace ntgcalls {
-    InputDevice::InputDevice(const AudioDescription* desc, std::unique_ptr<BaseDeviceModule> adm, const int64_t bufferSize): BaseReader(bufferSize, true), adm(adm) {}
+    InputDevice::InputDevice(std::unique_ptr<BaseDeviceModule> adm, const int64_t bufferSize): BaseReader(bufferSize, true), adm(std::move(adm)) {}
 
     bytes::unique_binary InputDevice::readInternal(const int64_t size) {
         return std::move(adm->read(size));
     }
 
     void InputDevice::close() {
-        adm = nullptr;
+        adm->close();
     }
 } // alsa
 

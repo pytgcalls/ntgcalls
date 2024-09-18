@@ -20,7 +20,7 @@ namespace ntgcalls {
         void close() override;
 
     public:
-        InputDevice(const AudioDescription* desc, std::unique_ptr<BaseDeviceModule> adm, int64_t bufferSize);
+        InputDevice(std::unique_ptr<BaseDeviceModule> adm, int64_t bufferSize);
     };
 
 } // alsa
