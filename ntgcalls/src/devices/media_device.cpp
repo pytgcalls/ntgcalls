@@ -26,7 +26,7 @@ namespace ntgcalls {
         }
 #endif
         if (adm) {
-            return std::make_unique<InputDevice>(desc, std::move(adm), bufferSize);
+            return std::make_unique<InputDevice>(std::move(adm), bufferSize);
         }
         throw MediaDeviceError("Unsupported platform for audio device");
     }
