@@ -8,6 +8,7 @@
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/devices/alsa_device_module.hpp>
 #include <ntgcalls/devices/input_device.hpp>
+#include <ntgcalls/devices/pulse_device_module.hpp>
 
 namespace ntgcalls {
     std::unique_ptr<BaseReader> MediaDevice::CreateInput(const BaseMediaDescription& desc, const int64_t bufferSize) {
@@ -20,7 +21,10 @@ namespace ntgcalls {
     std::unique_ptr<BaseReader> MediaDevice::CreateAudioInput(const AudioDescription* desc, int64_t bufferSize) {
         std::unique_ptr<BaseDeviceModule> adm;
 #ifdef IS_LINUX
-        if (AlsaDeviceModule::isSupported()) {
+        if (PulseDeviceModule::isSupported()) {
+            RTC_LOG(LS_INFO) << "Using PulseAudio module for input";
+            adm = std::make_unique<PulseDeviceModule>(desc, true);
+        } else if (AlsaDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using ALSA module for input";
             adm = std::make_unique<AlsaDeviceModule>(desc, true);
         }
