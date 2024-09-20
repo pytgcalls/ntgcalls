@@ -4,8 +4,6 @@
 
 #include <ntgcalls/devices/input_device.hpp>
 
-#ifdef IS_LINUX
-
 namespace ntgcalls {
     InputDevice::InputDevice(std::unique_ptr<BaseDeviceModule> adm, const int64_t bufferSize): BaseReader(bufferSize, true), adm(std::move(adm)) {}
 
@@ -16,6 +14,4 @@ namespace ntgcalls {
     void InputDevice::close() {
         adm->close();
     }
-} // alsa
-
-#endif
+} // ntgcalls

@@ -4,9 +4,7 @@
 
 #pragma once
 
-#ifdef IS_LINUX
 #include <ntgcalls/io/base_reader.hpp>
-#include <ntgcalls/models/media_description.hpp>
 #include <ntgcalls/devices/base_device_module.hpp>
 
 namespace ntgcalls {
@@ -23,6 +21,4 @@ namespace ntgcalls {
         InputDevice(std::unique_ptr<BaseDeviceModule> adm, int64_t bufferSize);
     };
 
-} // alsa
-
-#endif
+} // ntgcalls
