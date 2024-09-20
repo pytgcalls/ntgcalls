@@ -6,9 +6,12 @@
 
 #include <utility>
 #include <ntgcalls/exceptions.hpp>
-#include <ntgcalls/devices/alsa_device_module.hpp>
 #include <ntgcalls/devices/input_device.hpp>
+
+#ifdef IS_LINUX
+#include <ntgcalls/devices/alsa_device_module.hpp>
 #include <ntgcalls/devices/pulse_device_module.hpp>
+#endif
 
 namespace ntgcalls {
     std::unique_ptr<BaseReader> MediaDevice::CreateInput(const BaseMediaDescription& desc, const int64_t bufferSize) {
