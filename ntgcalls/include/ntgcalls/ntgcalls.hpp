@@ -8,13 +8,13 @@
 
 #include "instances/call_interface.hpp"
 // ReSharper disable once CppUnusedIncludeDirective
-#include "models/auth_params.hpp"
-#include "models/dh_config.hpp"
-#include "models/protocol.hpp"
-#include "models/rtc_server.hpp"
-#include "utils/binding_utils.hpp"
-#include "utils/hardware_info.hpp"
-#include "utils/log_sink_impl.hpp"
+#include <ntgcalls/models/auth_params.hpp>
+#include <ntgcalls/models/dh_config.hpp>
+#include <ntgcalls/models/protocol.hpp>
+#include <ntgcalls/models/rtc_server.hpp>
+#include <ntgcalls/utils/binding_utils.hpp>
+#include <ntgcalls/utils/hardware_info.hpp>
+#include <ntgcalls/utils/log_sink_impl.hpp>
 
 #define CHECK_AND_THROW_IF_EXISTS(chatId) \
 if (exists(chatId)) { \
