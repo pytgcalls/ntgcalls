@@ -11,6 +11,8 @@
 #ifdef IS_LINUX
 #include <ntgcalls/devices/alsa_device_module.hpp>
 #include <ntgcalls/devices/pulse_device_module.hpp>
+#elif IS_WINDOWS
+#include <ntgcalls/devices/win_core_device_module.hpp>
 #endif
 
 namespace ntgcalls {
@@ -30,6 +32,11 @@ namespace ntgcalls {
         } else if (AlsaDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using ALSA module for input";
             adm = std::make_unique<AlsaDeviceModule>(desc, true);
+        }
+#elif IS_WINDOWS
+        if (WinCoreDeviceModule::isSupported()) {
+            RTC_LOG(LS_INFO) << "Using Windows Core Audio module for input";
+            adm = std::make_unique<WinCoreDeviceModule>(desc, true);
         }
 #endif
         if (adm) {
