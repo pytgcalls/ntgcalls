@@ -15,6 +15,8 @@ namespace ntgcalls {
         uint8_t channels = 0;
         std::string deviceId;
 
+        [[nodiscard]] std::vector<std::string> extractMetadata() const;
+
     public:
         explicit BaseDeviceModule(const AudioDescription* desc) : rate(desc->sampleRate), channels(desc->channelCount), deviceId(desc->input) {}
 
