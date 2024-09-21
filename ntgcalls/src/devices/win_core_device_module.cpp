@@ -23,14 +23,18 @@ namespace ntgcalls {
         RTC_DCHECK(restartEvent.IsValid());
         stopEvent.Set(CreateEvent(nullptr, false, false, nullptr));
         RTC_DCHECK(stopEvent.IsValid());
-
-        const auto metadata = extractMetadata();
-        if (metadata.empty() || metadata.size() < 3) {
+        auto isMicrophone = false;
+        try {
+            deviceIndex = deviceMetadata["index"];
+            deviceUID = deviceMetadata["uid"];
+            automaticRestart = deviceMetadata["automatic_restart"];
+            isMicrophone = deviceMetadata["is_microphone"];
+        } catch (...) {
             throw MediaDeviceError("Invalid device metadata");
         }
-        deviceUID = metadata[0];
-        deviceIndex = std::stoi(metadata[1]);
-        automaticRestart = metadata[2] == "true";
+        if (isMicrophone != isCapture) {
+            throw MediaDeviceError("Wrong device type");
+        }
         if (deviceIndex < 0) {
             throw MediaDeviceError("Invalid device index");
         }
