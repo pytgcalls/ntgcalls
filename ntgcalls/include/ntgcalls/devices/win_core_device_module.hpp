@@ -9,6 +9,7 @@
 #include <modules/audio_device/win/core_audio_utility_win.h>
 #include <rtc_base/win/scoped_com_initializer.h>
 #include <thread>
+#include <ntgcalls/devices/device_info.hpp>
 
 namespace ntgcalls {
     using Microsoft::WRL::ComPtr;
@@ -66,13 +67,14 @@ namespace ntgcalls {
 
         HRESULT OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) override;
 
-
     public:
         explicit WinCoreDeviceModule(const AudioDescription* desc, bool isCapture);
 
         [[nodiscard]] bytes::unique_binary read(int64_t size) override;
 
         static bool isSupported();
+
+        static std::vector<DeviceInfo> getDevices();
 
         void close() override;
     };

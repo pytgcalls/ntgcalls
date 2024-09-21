@@ -24,6 +24,12 @@ namespace ntgcalls {
     }
 
     std::vector<DeviceInfo> MediaDevice::GetAudioDevices() {
+#ifdef IS_LINUX
+#elif IS_WINDOWS
+        if (WinCoreDeviceModule::isSupported()) {
+            return WinCoreDeviceModule::getDevices();
+        }
+#endif
         return {};
     }
 

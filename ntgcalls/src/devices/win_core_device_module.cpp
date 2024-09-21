@@ -57,6 +57,31 @@ namespace ntgcalls {
         return core_audio_utility::IsMMCSSSupported();
     }
 
+    std::vector<DeviceInfo> WinCoreDeviceModule::getDevices() {
+        auto appendDevices = [](const webrtc::AudioDeviceNames& deviceNames, std::vector<DeviceInfo>& devices, const bool isMicrophone = false) {
+            int index = 0;
+            for (const auto& device : deviceNames) {
+                json metadata = {
+                    {"is_microphone", isMicrophone},
+                    {"index", index},
+                    {"uid", device.unique_id},
+                    {"automatic_restart", true}
+                };
+                devices.emplace_back(device.device_name, metadata.dump());
+                index++;
+            }
+        };
+        webrtc::ScopedCOMInitializer comInitializer(webrtc::ScopedCOMInitializer::kMTA);
+        webrtc::AudioDeviceNames deviceNames;
+        std::vector<DeviceInfo> devices;
+        core_audio_utility::GetInputDeviceNames(&deviceNames);
+        appendDevices(deviceNames, devices, true);
+        deviceNames.clear();
+        core_audio_utility::GetOutputDeviceNames(&deviceNames);
+        appendDevices(deviceNames, devices);
+        return devices;
+    }
+
     void WinCoreDeviceModule::close() {
         SetEvent(stopEvent.Get());
         if (thread.joinable()) {
@@ -361,10 +386,10 @@ namespace ntgcalls {
             newDeviceUID = isCapture ? core_audio_utility::GetCommunicationsInputDeviceID() : core_audio_utility::GetCommunicationsOutputDeviceID();
             break;
         default:
-            webrtc::AudioDeviceNames device_names;
-            if (isCapture ? core_audio_utility::GetInputDeviceNames(&device_names) : core_audio_utility::GetOutputDeviceNames(&device_names)) {
-                if (deviceIndex < device_names.size()) {
-                    newDeviceUID = device_names[deviceIndex].unique_id;
+            webrtc::AudioDeviceNames deviceNames;
+            if (isCapture ? core_audio_utility::GetInputDeviceNames(&deviceNames) : core_audio_utility::GetOutputDeviceNames(&deviceNames)) {
+                if (deviceIndex < deviceNames.size()) {
+                    newDeviceUID = deviceNames[deviceIndex].unique_id;
                 }
             }
         }
