@@ -38,6 +38,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
     wrapper.def_static("get_protocol", &ntgcalls::NTgCalls::getProtocol);
+    wrapper.def_static("get_media_devices", &ntgcalls::NTgCalls::getMediaDevices);
 
     py::enum_<ntgcalls::Stream::Type>(m, "StreamType")
             .value("AUDIO", ntgcalls::Stream::Type::Audio)
@@ -82,6 +83,14 @@ PYBIND11_MODULE(ntgcalls, m) {
             .def_readonly("muted", &ntgcalls::MediaState::muted)
             .def_readonly("video_stopped", &ntgcalls::MediaState::videoStopped)
             .def_readonly("video_paused", &ntgcalls::MediaState::videoPaused);
+
+    py::class_<ntgcalls::DeviceInfo>(m, "DeviceInfo")
+            .def_readonly("name", &ntgcalls::DeviceInfo::name)
+            .def_readonly("metadata", &ntgcalls::DeviceInfo::metadata);
+
+    py::class_<ntgcalls::MediaDevices>(m, "MediaDevices")
+            .def_readonly("audio", &ntgcalls::MediaDevices::audio)
+            .def_readonly("video", &ntgcalls::MediaDevices::video);
 
     py::class_<ntgcalls::BaseMediaDescription> mediaWrapper(m, "BaseMediaDescription");
     mediaWrapper.def_readwrite("input", &ntgcalls::BaseMediaDescription::input);
