@@ -23,6 +23,10 @@ namespace ntgcalls {
         throw MediaDeviceError("Unsupported media type");
     }
 
+    std::vector<DeviceInfo> MediaDevice::GetAudioDevices() {
+        return {};
+    }
+
     std::unique_ptr<BaseReader> MediaDevice::CreateAudioInput(const AudioDescription* desc, int64_t bufferSize) {
         std::unique_ptr<BaseDeviceModule> adm;
 #ifdef IS_LINUX

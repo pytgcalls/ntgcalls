@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/devices/media_device.hpp>
 #include <ntgcalls/instances/group_call.hpp>
 #include <ntgcalls/instances/p2p_call.hpp>
 #include <ntgcalls/models/dh_config.hpp>
@@ -212,6 +213,8 @@ namespace ntgcalls {
         END_ASYNC
     }
 
+
+
     void NTgCalls::remove(const int64_t chatId) {
         RTC_LOG(LS_INFO) << "Removing call " << chatId << ", Acquiring lock";
         std::lock_guard lock(mutex);
@@ -259,5 +262,11 @@ namespace ntgcalls {
 
     std::string NTgCalls::ping() {
         return "pong";
+    }
+
+    MediaDevices NTgCalls::getMediaDevices() {
+        return {
+            MediaDevice::GetAudioDevices(),
+        };
     }
 } // ntgcalls

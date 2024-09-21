@@ -15,6 +15,7 @@
 #include <ntgcalls/utils/binding_utils.hpp>
 #include <ntgcalls/utils/hardware_info.hpp>
 #include <ntgcalls/utils/log_sink_impl.hpp>
+#include <ntgcalls/devices/media_devices.hpp>
 
 #define CHECK_AND_THROW_IF_EXISTS(chatId) \
 if (exists(chatId)) { \
@@ -82,6 +83,8 @@ namespace ntgcalls {
         ASYNC_RETURN(double) cpuUsage() const;
 
         static std::string ping();
+
+        static MediaDevices getMediaDevices();
 
         static Protocol getProtocol();
 
