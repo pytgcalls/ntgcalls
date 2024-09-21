@@ -4,21 +4,21 @@
 
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <wrtc/utils/binary.hpp>
 #include <ntgcalls/models/media_description.hpp>
 
 namespace ntgcalls {
+    using nlohmann::json;
 
     class BaseDeviceModule {
     protected:
         uint32_t rate = 0;
         uint8_t channels = 0;
-        std::string deviceId;
-
-        [[nodiscard]] std::vector<std::string> extractMetadata() const;
+        json deviceMetadata;
 
     public:
-        explicit BaseDeviceModule(const AudioDescription* desc) : rate(desc->sampleRate), channels(desc->channelCount), deviceId(desc->input) {}
+        explicit BaseDeviceModule(const AudioDescription* desc);
 
         virtual ~BaseDeviceModule() = default;
 

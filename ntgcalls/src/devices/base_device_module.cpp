@@ -3,16 +3,15 @@
 //
 
 #include "ntgcalls/devices/base_device_module.hpp"
-#include <sstream>
+
+#include <ntgcalls/exceptions.hpp>
 
 namespace ntgcalls {
-    [[nodiscard]] std::vector<std::string> BaseDeviceModule::extractMetadata() const {
-        std::stringstream ss(deviceId);
-        std::string item;
-        std::vector<std::string> tokens;
-        while (std::getline(ss, item, ';')) {
-            tokens.push_back(item);
+    BaseDeviceModule::BaseDeviceModule(const AudioDescription* desc): rate(desc->sampleRate), channels(desc->channelCount) {
+        try {
+            deviceMetadata = json::parse(desc->input);
+        } catch (...) {
+            throw MediaDeviceError("Invalid device metadata");
         }
-        return tokens;
     }
 } // ntgcalls
