@@ -47,15 +47,15 @@ namespace ntgcalls {
             devices.emplace_back(desc, metadata.dump());
         };
         const auto pulseConnection = std::make_unique<PulseConnection>();
-        auto playDevices = pulseConnection->getPlayDevices();
         auto recordDevices = pulseConnection->getRecordDevices();
+        auto playDevices = pulseConnection->getPlayDevices();
         pulseConnection->disconnect();
         std::vector<DeviceInfo> devices;
-        for (const auto& [fst, snd]: playDevices) {
-            appendDevice(devices, fst, snd, false);
-        }
         for (const auto& [fst, snd]: recordDevices) {
             appendDevice(devices, fst, snd, true);
+        }
+        for (const auto& [fst, snd]: playDevices) {
+            appendDevice(devices, fst, snd, false);
         }
         return devices;
     }
