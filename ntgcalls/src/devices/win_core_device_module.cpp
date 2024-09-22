@@ -12,7 +12,7 @@
 namespace ntgcalls {
 
     WinCoreDeviceModule::WinCoreDeviceModule(const AudioDescription* desc, const bool isCapture):
-        BaseDeviceModule(desc), comInitializer(webrtc::ScopedCOMInitializer::kMTA), mmcssRegistration(L"Pro Audio"), isCapture(isCapture)
+        BaseDeviceModule(desc, isCapture), comInitializer(webrtc::ScopedCOMInitializer::kMTA), mmcssRegistration(L"Pro Audio")
     {
         RTC_DCHECK(comInitializer.Succeeded());
         RTC_DCHECK(mmcssRegistration.Succeeded());
@@ -23,17 +23,12 @@ namespace ntgcalls {
         RTC_DCHECK(restartEvent.IsValid());
         stopEvent.Set(CreateEvent(nullptr, false, false, nullptr));
         RTC_DCHECK(stopEvent.IsValid());
-        auto isMicrophone = false;
         try {
             deviceIndex = deviceMetadata["index"];
             deviceUID = deviceMetadata["uid"];
             automaticRestart = deviceMetadata["automatic_restart"];
-            isMicrophone = deviceMetadata["is_microphone"];
         } catch (...) {
             throw MediaDeviceError("Invalid device metadata");
-        }
-        if (isMicrophone != isCapture) {
-            throw MediaDeviceError("Wrong device type");
         }
         if (deviceIndex < 0) {
             throw MediaDeviceError("Invalid device index");

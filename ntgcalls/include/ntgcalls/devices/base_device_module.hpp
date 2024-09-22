@@ -16,9 +16,10 @@ namespace ntgcalls {
         uint32_t rate = 0;
         uint8_t channels = 0;
         json deviceMetadata;
+        bool isCapture;
 
     public:
-        explicit BaseDeviceModule(const AudioDescription* desc);
+        explicit BaseDeviceModule(const AudioDescription* desc, bool isCapture);
 
         virtual ~BaseDeviceModule() = default;
 

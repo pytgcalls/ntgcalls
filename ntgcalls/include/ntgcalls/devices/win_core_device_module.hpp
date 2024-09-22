@@ -26,7 +26,7 @@ namespace ntgcalls {
         webrtc::ScopedCOMInitializer comInitializer;
         ScopedMMCSSRegistration mmcssRegistration;
         std::thread thread;
-        bool isCapture, automaticRestart = false;
+        bool automaticRestart = false;
         int deviceIndex = -1;
         std::string deviceUID;
         ComPtr<IAudioCaptureClient> audioCaptureClient;
