@@ -27,7 +27,8 @@ namespace ntgcalls {
 #ifdef IS_LINUX
         if (PulseDeviceModule::isSupported()) {
             return PulseDeviceModule::getDevices();
-        } else if (AlsaDeviceModule::isSupported()) {
+        }
+        if (AlsaDeviceModule::isSupported()) {
             return AlsaDeviceModule::getDevices();
         }
 #elif IS_WINDOWS
