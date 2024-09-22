@@ -17,6 +17,8 @@ namespace ntgcalls {
         snd_pcm_hw_params_t *hwParams{};
         std::string deviceID;
 
+        static std::map<std::string, std::string> getDevices(_snd_pcm_stream stream);
+
     public:
         AlsaDeviceModule(const AudioDescription* desc, bool isCapture);
 

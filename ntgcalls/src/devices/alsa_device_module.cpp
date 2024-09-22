@@ -12,6 +12,21 @@
 #define LATE(sym) \
 LATESYM_GET(webrtc::adm_linux_alsa::AlsaSymbolTable, GetAlsaSymbolTable(), sym)
 
+#undef snd_ctl_card_info_alloca
+#define snd_ctl_card_info_alloca(ptr) \
+do { \
+*ptr = (snd_ctl_card_info_t*)__builtin_alloca( \
+LATE(snd_ctl_card_info_sizeof)()); \
+memset(*ptr, 0, LATE(snd_ctl_card_info_sizeof)()); \
+} while (0)
+
+#undef snd_pcm_info_alloca
+#define snd_pcm_info_alloca(pInfo) \
+do { \
+*pInfo = (snd_pcm_info_t*)__builtin_alloca(LATE(snd_pcm_info_sizeof)()); \
+memset(*pInfo, 0, LATE(snd_pcm_info_sizeof)()); \
+} while (0)
+
 namespace ntgcalls {
     AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool isCapture): BaseDeviceModule(desc, isCapture) {
         try {
@@ -59,8 +74,47 @@ namespace ntgcalls {
         return GetAlsaSymbolTable()->Load();
     }
 
-    std::vector<DeviceInfo> AlsaDeviceModule::getDevices() {
+    std::map<std::string, std::string> AlsaDeviceModule::getDevices(const _snd_pcm_stream stream) {
         int card = -1;
+        snd_ctl_t *handle;
+        snd_ctl_card_info_t *info;
+        snd_ctl_card_info_alloca(&info);
+        snd_pcm_info_t *pcmInfo;
+        snd_pcm_info_alloca(&pcmInfo);
+        std::map<std::string, std::string> devices;
+        while (!LATE(snd_card_next)(&card) && card >= 0) {
+            std::string cardName = "hw:" + std::to_string(card);
+            if (LATE(snd_ctl_open)(&handle, cardName.c_str(), 0) < 0 ) {
+                continue;
+            }
+            if (LATE(snd_ctl_card_info)(handle, info) < 0) {
+                LATE(snd_ctl_close)(handle);
+                continue;
+            }
+            auto dev = -1;
+            while (true) {
+                if (LATE(snd_ctl_pcm_next_device)(handle, &dev) < 0) {
+                    break;
+                }
+                if (dev < 0) {
+                    break;
+                }
+                LATE(snd_pcm_info_set_device)(pcmInfo, dev);
+                LATE(snd_pcm_info_set_subdevice)(pcmInfo, 0);
+                LATE(snd_pcm_info_set_stream)(pcmInfo, stream);
+                if (LATE(snd_ctl_pcm_info)(handle, pcmInfo) < 0) {
+                    continue;
+                }
+                const char *devName = LATE(snd_ctl_card_info_get_name)(info);
+                auto id = "hw:" + std::to_string(card) + "," + std::to_string(dev);
+                devices[id] = devName;
+            }
+            LATE(snd_ctl_close)(handle);
+        }
+        return devices;
+    }
+
+    std::vector<DeviceInfo> AlsaDeviceModule::getDevices() {
         auto appendDevice = [](std::vector<DeviceInfo>& devices, const char* name, const char* desc, const bool isCapture) {
             const json metadata = {
                 {"is_microphone", isCapture},
@@ -69,33 +123,13 @@ namespace ntgcalls {
             devices.emplace_back(desc, metadata.dump());
         };
         std::vector<DeviceInfo> devices;
-        while (!LATE(snd_card_next)(&card) && card >= 0) {
-            char **hints;
-            if (const auto err = LATE(snd_device_name_hint)(card, "pcm", reinterpret_cast<void***>(&hints)) < 0) {
-                throw MediaDeviceError("Error getting device hints (" + std::string(LATE(snd_strerror)(err)) + ")");
-            }
-            char **n = hints;
-            while (*n != nullptr) {
-                char *name = LATE(snd_device_name_get_hint)(*n, "NAME");
-                char *desc = LATE(snd_device_name_get_hint)(*n, "DESC");
-                char *io = LATE(snd_device_name_get_hint)(*n, "IOID");
-                if (name && desc) {
-                    if (io) {
-                        appendDevice(devices, name, desc, strcmp(io, "Input") == 0);
-                    } else {
-                        appendDevice(devices, name, desc, true);
-                        appendDevice(devices, name, desc, false);
-                    }
-                }
-                if (name)
-                    free(name);
-                if (desc)
-                    free(desc);
-                if (io)
-                    free(io);
-                n++;
-            }
-            LATE(snd_device_name_free_hint)(reinterpret_cast<void**>(hints));
+        auto captureDevices = getDevices(SND_PCM_STREAM_CAPTURE);
+        auto playbackDevices = getDevices(SND_PCM_STREAM_PLAYBACK);
+        for (const auto& [id, name]: captureDevices) {
+            appendDevice(devices, id.c_str(), name.c_str(), true);
+        }
+        for (const auto& [id, name]: playbackDevices) {
+            appendDevice(devices, id.c_str(), name.c_str(), false);
         }
         return devices;
     }
