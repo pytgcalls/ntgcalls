@@ -12,8 +12,8 @@ new File("$baseDir/version.properties").withInputStream {
 }
 
 android {
-    namespace = "org.pytgcalls.ntgcalls"
-    compileSdk = 34
+    namespace "org.pytgcalls.ntgcalls"
+    compileSdk 34
     testBuildType "release"
 
     compileOptions {
@@ -22,7 +22,8 @@ android {
     }
 
     defaultConfig {
-        minSdk = 21
+        minSdk 21
+        targetSdk 34
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         externalNativeBuild {
