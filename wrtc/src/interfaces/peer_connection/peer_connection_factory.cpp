@@ -134,7 +134,9 @@ namespace wrtc {
         std::lock_guard lock(_mutex);
         _references++;
         if (_references == 1) {
+#ifndef IS_ANDROID
             rtc::InitializeSSL();
+#endif
             _default = rtc::scoped_refptr<PeerConnectionFactory>(new rtc::RefCountedObject<PeerConnectionFactory>());
         }
         return _default;
