@@ -105,6 +105,9 @@ ntgcalls::BaseMediaDescription::InputMode parseInputMode(jint inputMode) {
     if (auto check = ntgcalls::BaseMediaDescription::InputMode::NoLatency;inputMode == check) {
         res |= check;
     }
+    if (auto check = ntgcalls::BaseMediaDescription::InputMode::Device;inputMode == check) {
+        res |= check;
+    }
     return res;
 }
 
@@ -148,10 +151,10 @@ bytes::vector parseByteArray(JNIEnv *env, jbyteArray byteArray) {
         return {};
     }
     jsize length = env->GetArrayLength(byteArray);
+    auto byteBuffer =  (uint8_t *) env->GetByteArrayElements(byteArray, nullptr);
     bytes::vector result(length);
-    jbyte *byteBuffer = env->GetByteArrayElements(byteArray, nullptr);
-    std::vector<uint8_t> byteVector(reinterpret_cast<uint8_t*>(byteBuffer),reinterpret_cast<uint8_t*>(byteBuffer) + length);
-    env->ReleaseByteArrayElements(byteArray, byteBuffer, JNI_ABORT);
+    memcpy(&result[0], byteBuffer, length);
+    env->ReleaseByteArrayElements(byteArray, (jbyte *) byteBuffer, JNI_ABORT);
     return result;
 }
 
@@ -166,9 +169,10 @@ bytes::binary parseBinary(JNIEnv *env, jbyteArray byteArray) {
         return {};
     }
     jsize length = env->GetArrayLength(byteArray);
-    jbyte *byteBuffer = env->GetByteArrayElements(byteArray, nullptr);
-    bytes::binary result(reinterpret_cast<uint8_t*>(byteBuffer),reinterpret_cast<uint8_t*>(byteBuffer) + length);
-    env->ReleaseByteArrayElements(byteArray, byteBuffer, JNI_ABORT);
+    auto byteBuffer =  (uint8_t *) env->GetByteArrayElements(byteArray, nullptr);
+    bytes::binary result(length);
+    memcpy(&result[0], byteBuffer, length);
+    env->ReleaseByteArrayElements(byteArray, (jbyte *) byteBuffer, JNI_ABORT);
     return result;
 }
 
@@ -393,6 +397,40 @@ jobject parseStreamStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::Stre
     env->DeleteLocalRef(mapClass);
     env->DeleteLocalRef(longClass);
     return hashMap;
+}
+
+jobject parseMediaDevices(JNIEnv *env, const ntgcalls::MediaDevices &devices) {
+    jclass mediaDevicesClass = env->FindClass("org/pytgcalls/ntgcalls/media/MediaDevices");
+    jmethodID constructor = env->GetMethodID(mediaDevicesClass, "<init>", "(Ljava/util/List;Ljava/util/List;)V");
+    jobject audio = parseDeviceInfoList(env, devices.audio);
+    jobject video = parseDeviceInfoList(env, devices.video);
+    jobject result = env->NewObject(mediaDevicesClass, constructor, audio, video);
+    env->DeleteLocalRef(mediaDevicesClass);
+    env->DeleteLocalRef(audio);
+    env->DeleteLocalRef(video);
+    return result;
+}
+
+jobject parseDeviceInfoList(JNIEnv *env, const std::vector<ntgcalls::DeviceInfo> &devices) {
+    jclass arrayListClass = env->FindClass("java/util/ArrayList");
+    jmethodID constructor = env->GetMethodID(arrayListClass, "<init>", "(I)V");
+    jobject result = env->NewObject(arrayListClass, constructor, static_cast<jint>(devices.size()));
+    jmethodID addMethod = env->GetMethodID(arrayListClass, "add", "(Ljava/lang/Object;)Z");
+    for (const auto &element : devices) {
+        auto device = parseDeviceInfo(env, element);
+        env->CallBooleanMethod(result, addMethod, device);
+        env->DeleteLocalRef(device);
+    }
+    env->DeleteLocalRef(arrayListClass);
+    return result;
+}
+
+jobject parseDeviceInfo(JNIEnv *env, const ntgcalls::DeviceInfo& device) {
+    jclass deviceInfoClass = env->FindClass("org/pytgcalls/ntgcalls/media/DeviceInfo");
+    jmethodID constructor = env->GetMethodID(deviceInfoClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jobject result = env->NewObject(deviceInfoClass, constructor, parseJString(env, device.name), parseJString(env, device.metadata));
+    env->DeleteLocalRef(deviceInfoClass);
+    return result;
 }
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message) {

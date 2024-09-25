@@ -80,12 +80,28 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_destroy(JNIEnv *env,
 }
 
 extern "C"
-JNIEXPORT jbyteArray JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_createP2PCall(JNIEnv *env, jobject thiz, jlong chatId, jobject dhConfig, jbyteArray g_a_hash, jobject media_description) {
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_createP2PCall(JNIEnv *env, jobject thiz, jlong chatId, jobject media_description) {
     try {
         auto instance = getInstance(env, thiz);
-        return parseJByteArray(env, instance ->createP2PCall(static_cast<long>(chatId), parseDhConfig(env, dhConfig), parseByteArray(env, g_a_hash), parseMediaDescription(env, media_description)));
+        instance ->createP2PCall(static_cast<long>(chatId), parseMediaDescription(env, media_description));
+    } HANDLE_EXCEPTIONS
+}
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_initExchange(JNIEnv *env, jobject thiz, jlong chatId, jobject dhConfig, jbyteArray g_a_hash) {
+    try {
+        auto instance = getInstance(env, thiz);
+        return parseJByteArray(env, instance ->initExchange(static_cast<long>(chatId), parseDhConfig(env, dhConfig), parseByteArray(env, g_a_hash)));
     } HANDLE_EXCEPTIONS
     return nullptr;
+}
+
+extern "C"
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_skipExchange(JNIEnv *env, jobject thiz, jlong chatId, jbyteArray encryptionKey, jboolean isOutgoing) {
+    try {
+        auto instance = getInstance(env, thiz);
+        instance ->skipExchange(static_cast<long>(chatId), parseByteArray(env, encryptionKey), isOutgoing);
+    } HANDLE_EXCEPTIONS
 }
 
 extern "C"
@@ -216,6 +232,11 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_sendSignalingData(JN
         auto instance = getInstance(env, thiz);
         instance->sendSignalingData(static_cast<long>(chat_id), parseBinary(env, data));
     } HANDLE_EXCEPTIONS
+}
+
+extern "C"
+JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_getMediaDevices(JNIEnv *env, jclass) {
+    return parseMediaDevices(env, ntgcalls::NTgCalls::getMediaDevices());
 }
 
 extern "C"

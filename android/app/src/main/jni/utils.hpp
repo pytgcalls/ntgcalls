@@ -5,7 +5,7 @@
 #pragma once
 
 #include <jni.h>
-#include "ntgcalls/ntgcalls.hpp"
+#include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
 
 struct JavaCallback {
@@ -29,6 +29,12 @@ ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescr
 ntgcalls::VideoDescription parseVideoDescription(JNIEnv *env, jobject videoDescription);
 
 ntgcalls::MediaDescription parseMediaDescription(JNIEnv *env, jobject mediaDescription);
+
+jobject parseMediaDevices(JNIEnv *env, const ntgcalls::MediaDevices& devices);
+
+jobject parseDeviceInfoList(JNIEnv *env, const std::vector<ntgcalls::DeviceInfo>& devices);
+
+jobject parseDeviceInfo(JNIEnv *env, const ntgcalls::DeviceInfo& device);
 
 ntgcalls::DhConfig parseDhConfig(JNIEnv *env, jobject dhConfig);
 
@@ -85,7 +91,8 @@ TRANSLATE_NTG_EXCEPTION(TelegramServerError) \
 TRANSLATE_NTG_EXCEPTION(RTMPNeeded) \
 TRANSLATE_NTG_EXCEPTION(CryptoError) \
 TRANSLATE_NTG_EXCEPTION(SignalingError) \
-TRANSLATE_NTG_EXCEPTION(SignalingUnsupported) \
+TRANSLATE_NTG_EXCEPTION(SignalingUnsupported)\
+TRANSLATE_NTG_EXCEPTION(MediaDeviceError) \
 catch (const ntgcalls::FileError& e) { \
 throwJavaException(env, "FileNotFoundException", e.what()); \
 } \

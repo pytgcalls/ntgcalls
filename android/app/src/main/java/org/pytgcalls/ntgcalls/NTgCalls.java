@@ -3,6 +3,7 @@ package org.pytgcalls.ntgcalls;
 import org.pytgcalls.ntgcalls.exceptions.ConnectionException;
 import org.pytgcalls.ntgcalls.exceptions.ConnectionNotFoundException;
 import org.pytgcalls.ntgcalls.media.MediaDescription;
+import org.pytgcalls.ntgcalls.media.MediaDevices;
 import org.pytgcalls.ntgcalls.media.MediaState;
 import org.pytgcalls.ntgcalls.media.StreamStatus;
 import org.pytgcalls.ntgcalls.p2p.AuthParams;
@@ -41,13 +42,17 @@ public class NTgCalls {
 
     private static native String pingNative();
 
-    public native byte[] createP2PCall(long chatId, DhConfig dhConfig, byte[] g_a_hash, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
+    public native void createP2PCall(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
 
-    public byte[] createP2PCall(long chatId, DhConfig dhConfig, byte[] g_a_hash) throws FileNotFoundException, ConnectionException {
-        return createP2PCall(chatId, dhConfig, g_a_hash, null);
+    public void createP2PCall(long chatId) throws FileNotFoundException, ConnectionException {
+        createP2PCall(chatId, null);
     }
 
+    public native byte[] initExchange(long chatId, DhConfig dhConfig, byte[] g_a_hash) throws ConnectionException;
+
     public native AuthParams exchangeKeys(long chatId, byte[] g_a_or_b, int keyFingerprint) throws ConnectionException;
+
+    public native void skipExchange(long chatId, byte[] encryptionKey, boolean isOutgoing) throws ConnectionException;
 
     public native void connectP2P(long chatId, List<RTCServer> rtcServers, List<String> versions, boolean p2pAllowed) throws ConnectionException;
 
@@ -76,6 +81,8 @@ public class NTgCalls {
     public native MediaState getState(long chatId) throws ConnectionNotFoundException;
 
     public static native Protocol getProtocol();
+
+    public static native MediaDevices getMediaDevices();
 
     public static long ping() {
         var startTime = System.currentTimeMillis();
