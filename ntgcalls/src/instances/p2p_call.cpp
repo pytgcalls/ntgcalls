@@ -21,12 +21,18 @@ namespace ntgcalls {
         signaling = nullptr;
     }
 
-    bytes::vector P2PCall::init(const DhConfig &dhConfig, const std::optional<bytes::vector> &g_a_hash, const MediaDescription &media) {
+    void P2PCall::init(const MediaDescription &media) {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);
+        stream->setAVStream(media);
+        RTC_LOG(LS_INFO) << "AVStream settings applied";
+    }
+
+    bytes::vector P2PCall::initExchange(const DhConfig& dhConfig, const std::optional<bytes::vector>& g_a_hash) {
+        std::lock_guard lock(mutex);
         if (g_a_or_b) {
-            RTC_LOG(LS_ERROR) << "Connection already made";
-            throw ConnectionError("Connection already made");
+            RTC_LOG(LS_ERROR) << "Exchange already initialized";
+            throw ConnectionError("Exchange already initialized");
         }
         auto first = signaling::ModExpFirst(dhConfig.g, dhConfig.p, dhConfig.random);
         if (first.modexp.empty()) {
@@ -40,8 +46,6 @@ namespace ntgcalls {
         }
         g_a_or_b = std::move(first.modexp);
         RTC_LOG(LS_INFO) << "P2P call initialized";
-        stream->setAVStream(media);
-        RTC_LOG(LS_INFO) << "AVStream settings applied";
         return g_a_hash ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
     }
 
@@ -93,6 +97,20 @@ namespace ntgcalls {
         };
     }
 
+    void P2PCall::skipExchange(bytes::vector encryptionKey, const bool isOutgoing) {
+        if (connection) {
+            RTC_LOG(LS_ERROR) << "Connection already made";
+            throw ConnectionError("Connection already made");
+        }
+        if (!skipExchangeKey.empty()) {
+            RTC_LOG(LS_ERROR) << "Key already exchanged";
+            throw ConnectionError("Key already exchanged");
+        }
+        skipExchangeKey = std::move(encryptionKey);
+        skipIsOutgoing = isOutgoing;
+        RTC_LOG(LS_INFO) << "Exchange skipped";
+    }
+
     void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
         RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2pAllowed ? "true" : "false");
         std::lock_guard lock(mutex);
@@ -100,12 +118,16 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        if (!g_a_or_b || !key) {
-            RTC_LOG(LS_ERROR) << "Connection not initialized";
-            throw ConnectionNotFound("Connection not initialized");
-        }
         auto encryptionKey = std::make_shared<std::array<uint8_t, signaling::EncryptionKey::kSize>>();
-        memcpy(encryptionKey->data(), key.value().data(), signaling::EncryptionKey::kSize);
+        if (skipExchangeKey.empty()) {
+            if (!g_a_or_b || !key) {
+                RTC_LOG(LS_ERROR) << "Connection not initialized";
+                throw ConnectionNotFound("Connection not initialized");
+            }
+            memcpy(encryptionKey->data(), key.value().data(), signaling::EncryptionKey::kSize);
+        } else {
+            memcpy(encryptionKey->data(), skipExchangeKey.data(), signaling::EncryptionKey::kSize);
+        }
         protocolVersion = signaling::Signaling::matchVersion(versions);
         if (protocolVersion & signaling::Signaling::Version::V2Full) {
             connection = std::make_unique<wrtc::PeerConnection>(
@@ -403,11 +425,15 @@ namespace ntgcalls {
     }
 
     CallInterface::Type P2PCall::type() const {
-        if (g_a_or_b) {
-            if (g_a_hash) {
-                return Type::Incoming;
+        if (skipExchangeKey.empty()) {
+            if (g_a_or_b) {
+                if (g_a_hash) {
+                    return Type::Incoming;
+                }
+                return Type::Outgoing;
             }
-            return Type::Outgoing;
+        } else {
+            return skipIsOutgoing ? Type::Outgoing : Type::Incoming;
         }
         return Type::P2P;
     }
