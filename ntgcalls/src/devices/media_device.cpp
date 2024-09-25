@@ -35,6 +35,17 @@ namespace ntgcalls {
         if (WinCoreDeviceModule::isSupported()) {
             return WinCoreDeviceModule::getDevices();
         }
+#elif IS_ANDROID
+        auto appendDevices = [](std::vector<DeviceInfo>& devices, const std::string& name, const bool& isCapture) {
+            json data = {
+                {"is_microphone", isCapture},
+            };
+            devices.emplace_back(name, data.dump());
+        };
+        std::vector<DeviceInfo> devices;
+        appendDevices(devices, "default", true);
+        appendDevices(devices, "default", false);
+        return devices;
 #endif
         return {};
     }

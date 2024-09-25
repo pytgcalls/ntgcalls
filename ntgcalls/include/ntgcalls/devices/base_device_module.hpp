@@ -15,7 +15,7 @@ namespace ntgcalls {
     protected:
         uint32_t rate = 0;
         uint8_t channels = 0;
-        json deviceMetadata;
+        json deviceMetadata = nullptr;
         bool isCapture;
 
     public:
