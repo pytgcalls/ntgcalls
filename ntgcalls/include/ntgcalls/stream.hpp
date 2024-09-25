@@ -7,11 +7,11 @@
 
 #include <shared_mutex>
 
-#include "models/media_state.hpp"
-#include "media/audio_streamer.hpp"
-#include "media/video_streamer.hpp"
-#include "models/media_description.hpp"
-#include "media/media_reader_factory.hpp"
+#include <ntgcalls/models/media_state.hpp>
+#include <ntgcalls/media/audio_streamer.hpp>
+#include <ntgcalls/media/video_streamer.hpp>
+#include <ntgcalls/models/media_description.hpp>
+#include <ntgcalls/media/media_reader_factory.hpp>
 
 namespace ntgcalls {
     class Stream {

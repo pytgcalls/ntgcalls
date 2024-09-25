@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-#include "instances/call_interface.hpp"
+#include <ntgcalls/instances/call_interface.hpp>
 // ReSharper disable once CppUnusedIncludeDirective
 #include <ntgcalls/models/auth_params.hpp>
 #include <ntgcalls/models/dh_config.hpp>

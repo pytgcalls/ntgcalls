@@ -2,7 +2,7 @@
 // Created by Laky64 on 18/09/24.
 //
 
-#include "ntgcalls/devices/pulse_device_module.hpp"
+#include <ntgcalls/devices/pulse_device_module.hpp>
 
 #ifdef IS_LINUX
 

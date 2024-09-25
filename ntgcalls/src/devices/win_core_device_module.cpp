@@ -2,7 +2,7 @@
 // Created by Laky64 on 20/09/2024.
 //
 
-#include "ntgcalls/devices/win_core_device_module.hpp"
+#include <ntgcalls/devices/win_core_device_module.hpp>
 
 #ifdef IS_WINDOWS
 
