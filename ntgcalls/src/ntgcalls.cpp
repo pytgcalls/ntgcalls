@@ -38,7 +38,7 @@ namespace ntgcalls {
     }
 
     void NTgCalls::setupListeners(const int64_t chatId) {
-        connections[chatId]->onStreamEnd([this, chatId](const Stream::Type &type) {
+        connections[chatId]->onStreamEnd([this, chatId](const StreamManager::Device &type) {
             WORKER("onStreamEnd", updateThread, this, chatId, type)
             THREAD_SAFE
             (void) onEof(chatId, type);
@@ -135,9 +135,9 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(void) NTgCalls::changeStream(const int64_t chatId, const MediaDescription& media) {
-        SMART_ASYNC(this, chatId, media)
-        safeConnection(chatId)->changeStream(media);
+    ASYNC_RETURN(void) NTgCalls::setStreamSources(const int64_t chatId, const StreamManager::Direction direction, const MediaDescription& media) {
+        SMART_ASYNC(this, chatId, direction, media)
+        safeConnection(chatId)->setStreamSources(direction, media);
         END_ASYNC
     }
 
@@ -171,7 +171,7 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    void NTgCalls::onStreamEnd(const std::function<void(int64_t, Stream::Type)>& callback) {
+    void NTgCalls::onStreamEnd(const std::function<void(int64_t, StreamManager::Device)>& callback) {
         std::lock_guard lock(mutex);
         onEof = callback;
     }
@@ -197,9 +197,9 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(uint64_t) NTgCalls::time(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        return safeConnection(chatId)->time();
+    ASYNC_RETURN(uint64_t) NTgCalls::time(const int64_t chatId, const StreamManager::Direction direction) {
+        SMART_ASYNC(this, chatId, direction)
+        return safeConnection(chatId)->time(direction);
         END_ASYNC
     }
 
@@ -215,18 +215,19 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(std::map<int64_t, Stream::Status>) NTgCalls::calls() {
+    ASYNC_RETURN(std::map<int64_t, StreamManager::MediaStatus>) NTgCalls::calls() {
         SMART_ASYNC(this)
-        std::map<int64_t, Stream::Status> statusList;
+        std::map<int64_t, StreamManager::MediaStatus> statusList;
         std::lock_guard lock(mutex);
         for (const auto& [fst, snd] : connections) {
-            statusList.emplace(fst, snd->status());
+            statusList.emplace(fst, StreamManager::MediaStatus{
+                snd->status(StreamManager::Direction::Output),
+                snd->status(StreamManager::Direction::Input)
+            });
         }
         return statusList;
         END_ASYNC
     }
-
-
 
     void NTgCalls::remove(const int64_t chatId) {
         RTC_LOG(LS_INFO) << "Removing call " << chatId << ", Acquiring lock";

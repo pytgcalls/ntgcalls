@@ -29,7 +29,7 @@ namespace ntgcalls {
 
     class NTgCalls {
         std::unordered_map<int64_t, std::shared_ptr<CallInterface>> connections;
-        wrtc::synchronized_callback<int64_t, Stream::Type> onEof;
+        wrtc::synchronized_callback<int64_t, StreamManager::Device> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> mediaStateCallback;
         wrtc::synchronized_callback<int64_t, CallInterface::ConnectionState> connectionChangeCallback;
         wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
@@ -68,7 +68,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) connect(int64_t chatId, const std::string& params);
 
-        ASYNC_RETURN(void) changeStream(int64_t chatId, const MediaDescription& media);
+        ASYNC_RETURN(void) setStreamSources(int64_t chatId, StreamManager::Direction direction, const MediaDescription& media);
 
         ASYNC_RETURN(bool) pause(int64_t chatId);
 
@@ -80,7 +80,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) stop(int64_t chatId);
 
-        ASYNC_RETURN(uint64_t) time(int64_t chatId);
+        ASYNC_RETURN(uint64_t) time(int64_t chatId, StreamManager::Direction direction);
 
         ASYNC_RETURN(MediaState) getState(int64_t chatId);
 
@@ -94,7 +94,7 @@ namespace ntgcalls {
 
         void onUpgrade(const std::function<void(int64_t, MediaState)>& callback);
 
-        void onStreamEnd(const std::function<void(int64_t, Stream::Type)>& callback);
+        void onStreamEnd(const std::function<void(int64_t, StreamManager::Device)>& callback);
 
         void onConnectionChange(const std::function<void(int64_t, CallInterface::ConnectionState)>& callback);
 
@@ -102,7 +102,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) sendSignalingData(int64_t chatId, const BYTES(bytes::binary) &msgKey);
 
-        ASYNC_RETURN(std::map<int64_t, Stream::Status>) calls();
+        ASYNC_RETURN(std::map<int64_t, StreamManager::MediaStatus>) calls();
     };
 
 } // ntgcalls

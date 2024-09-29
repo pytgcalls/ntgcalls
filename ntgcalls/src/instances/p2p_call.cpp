@@ -24,7 +24,7 @@ namespace ntgcalls {
     void P2PCall::init(const MediaDescription &media) {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);
-        stream->setAVStream(media);
+        streamManager->setStreamSources(StreamManager::Direction::Output, media);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
     }
 
@@ -180,11 +180,15 @@ namespace ntgcalls {
             signaling->send(message);
         });
         connection->onDataChannelOpened([this] {
-            sendMediaState(stream->getState());
+            sendMediaState(streamManager->getState());
             RTC_LOG(LS_INFO) << "Data channel opened";
         });
-        stream->addTracks(connection);
-        stream->onUpgrade([this] (const MediaState mediaState) {
+        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Microphone, connection);
+        // Not supported yet by Telegram
+        //streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Speaker, connection);
+        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Camera, connection);
+        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Screen, connection);
+        streamManager->onUpgrade([this] (const MediaState mediaState) {
             sendMediaState(mediaState);
         });
         if (type() == Type::Outgoing) {

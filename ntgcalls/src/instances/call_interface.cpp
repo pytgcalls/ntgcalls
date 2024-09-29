@@ -8,7 +8,7 @@ namespace ntgcalls {
     CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {
         networkThread = rtc::Thread::Create();
         networkThread->Start();
-        stream = std::make_unique<Stream>(updateThread);
+        streamManager = std::make_unique<StreamManager>(updateThread);
     }
 
     CallInterface::~CallInterface() {
@@ -16,7 +16,7 @@ namespace ntgcalls {
         isExiting = true;
         std::lock_guard lock(mutex);
         connectionChangeCallback = nullptr;
-        stream = nullptr;
+        streamManager = nullptr;
         if (connection) {
             connection->onConnectionChange(nullptr);
             connection = nullptr;
@@ -28,28 +28,28 @@ namespace ntgcalls {
     }
 
     bool CallInterface::pause() const {
-        return stream->pause();
+        return streamManager->pause();
     }
 
     bool CallInterface::resume() const {
-        return stream->resume();
+        return streamManager->resume();
     }
 
     bool CallInterface::mute() const {
-        return stream->mute();
+        return streamManager->mute();
     }
 
     bool CallInterface::unmute() const {
-        return stream->unmute();
+        return streamManager->unmute();
     }
 
-    void CallInterface::changeStream(const MediaDescription& config) const {
-        stream->setAVStream(config);
+    void CallInterface::setStreamSources(const StreamManager::Direction direction, const MediaDescription& config) const {
+        streamManager->setStreamSources(direction, config);
     }
 
-    void CallInterface::onStreamEnd(const std::function<void(Stream::Type)>& callback) {
+    void CallInterface::onStreamEnd(const std::function<void(StreamManager::Device)>& callback) {
         std::lock_guard lock(mutex);
-        stream->onStreamEnd(callback);
+        streamManager->onStreamEnd(callback);
     }
 
     void CallInterface::onConnectionChange(const std::function<void(ConnectionState)>& callback) {
@@ -57,16 +57,16 @@ namespace ntgcalls {
         connectionChangeCallback = callback;
     }
 
-    uint64_t CallInterface::time() const {
-        return stream->time();
+    uint64_t CallInterface::time(const StreamManager::Direction direction) const {
+        return streamManager->time(direction);
     }
 
     MediaState CallInterface::getState() const {
-        return stream->getState();
+        return streamManager->getState();
     }
 
-    Stream::Status CallInterface::status() const {
-        return stream->status();
+    StreamManager::Status CallInterface::status(const StreamManager::Direction direction) const {
+        return streamManager->status(direction);
     }
 
     void CallInterface::cancelNetworkListener() {
@@ -90,9 +90,9 @@ namespace ntgcalls {
                 break;
             case wrtc::ConnectionState::Connected:
                 RTC_LOG(LS_INFO) << "Connection established";
-                if (!connected && stream) {
+                if (!connected && streamManager) {
                     connected = true;
-                    stream->start();
+                    streamManager->start();
                     RTC_LOG(LS_INFO) << "Stream started";
                     (void) connectionChangeCallback(ConnectionState::Connected);
                 }

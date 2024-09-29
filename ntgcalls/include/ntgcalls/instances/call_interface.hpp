@@ -5,7 +5,7 @@
 #pragma once
 #include <memory>
 
-#include <ntgcalls/stream.hpp>
+#include <ntgcalls/stream_manager.hpp>
 
 namespace ntgcalls {
 
@@ -26,7 +26,7 @@ namespace ntgcalls {
     protected:
         std::mutex mutex;
         std::unique_ptr<wrtc::NetworkInterface> connection;
-        std::unique_ptr<Stream> stream;
+        std::unique_ptr<StreamManager> streamManager;
         wrtc::synchronized_callback<ConnectionState> connectionChangeCallback;
         rtc::Thread* updateThread;
         std::unique_ptr<rtc::Thread> networkThread;
@@ -53,17 +53,17 @@ namespace ntgcalls {
 
         bool unmute() const;
 
-        void changeStream(const MediaDescription& config) const;
+        void setStreamSources(StreamManager::Direction direction, const MediaDescription& config) const;
 
-        void onStreamEnd(const std::function<void(Stream::Type)> &callback);
+        void onStreamEnd(const std::function<void(StreamManager::Device)> &callback);
 
         void onConnectionChange(const std::function<void(ConnectionState)> &callback);
 
-        uint64_t time() const;
+        uint64_t time(StreamManager::Direction direction) const;
 
         MediaState getState() const;
 
-        Stream::Status status() const;
+        StreamManager::Status status(StreamManager::Direction direction) const;
 
         virtual Type type() const = 0;
 

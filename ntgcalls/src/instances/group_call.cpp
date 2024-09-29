@@ -22,7 +22,10 @@ namespace ntgcalls {
             throw ConnectionError("Connection already made");
         }
         connection = std::make_unique<wrtc::PeerConnection>();
-        stream->addTracks(connection);
+        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Microphone, connection);
+        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Speaker, connection);
+        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Camera, connection);
+        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Screen, connection);
         try {
             Safe<wrtc::PeerConnection>(connection)->setLocalDescription();
         } catch (wrtc::RTCException&) {
@@ -35,7 +38,7 @@ namespace ntgcalls {
         for (const auto &ssrc : payload.sourceGroups) {
             sourceGroups.push_back(ssrc);
         }
-        stream->setAVStream(config, true);
+        streamManager->setStreamSources(StreamManager::Direction::Output, config);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
         return static_cast<std::string>(payload);
     }
@@ -113,7 +116,7 @@ namespace ntgcalls {
 
     void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) {
         std::lock_guard lock(mutex);
-        stream->onUpgrade(callback);
+        streamManager->onUpgrade(callback);
     }
 
     CallInterface::Type GroupCall::type() const {
