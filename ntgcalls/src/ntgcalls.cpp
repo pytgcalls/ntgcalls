@@ -92,7 +92,7 @@ namespace ntgcalls {
     }
 
     ASYNC_RETURN(bytes::vector) NTgCalls::initExchange(const int64_t userId, const DhConfig& dhConfig, const std::optional<BYTES(bytes::vector)> &g_a_hash) {
-        SMART_ASYNC(this, userId, userId, dhConfig, g_a_hash = CPP_BYTES(g_a_hash, bytes::vector))
+        SMART_ASYNC(this, userId, dhConfig, g_a_hash = CPP_BYTES(g_a_hash, bytes::vector))
         std::lock_guard lock(mutex);
         const auto result = SafeCall<P2PCall>(safeConnection(userId))->initExchange(dhConfig, g_a_hash);
         THREAD_SAFE

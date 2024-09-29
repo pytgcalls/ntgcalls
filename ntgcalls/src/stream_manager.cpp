@@ -170,8 +170,8 @@ namespace ntgcalls {
         case Screen:
             return Video;
         default:
-            RTC_LOG(LS_ERROR) << "Invalid kind: " << device;
-            throw InvalidParams("Invalid kind: " + device);
+            RTC_LOG(LS_ERROR) << "Invalid device kind";
+            throw InvalidParams("Invalid device kind");
         }
     }
 
