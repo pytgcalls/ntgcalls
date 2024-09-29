@@ -15,14 +15,13 @@ namespace ntgcalls {
             File = 1 << 0,
             Shell = 1 << 1,
             FFmpeg = 1 << 2,
-            NoLatency = 1 << 3,
             Device = 1 << 4,
         };
 
         std::string input;
         InputMode inputMode;
 
-        BaseMediaDescription(std::string  input, const InputMode inputMode): input(std::move(input)), inputMode(inputMode) {}
+        BaseMediaDescription(std::string input, const InputMode inputMode): input(std::move(input)), inputMode(inputMode) {}
 
         virtual ~BaseMediaDescription() = default;
     };
@@ -52,17 +51,24 @@ namespace ntgcalls {
         return lhs == static_cast<int>(rhs);
     }
 
-
-    class AudioDescription: public BaseMediaDescription {
+    class AudioDescription final : public BaseMediaDescription {
     public:
         uint32_t sampleRate;
         uint8_t bitsPerSample, channelCount;
 
         AudioDescription(const InputMode inputMode, const uint32_t sampleRate, const uint8_t bitsPerSample, const uint8_t channelCount, const std::string& input):
-                BaseMediaDescription(input, inputMode), sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount) {};
+                BaseMediaDescription(input, inputMode), sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount) {}
     };
 
-    class VideoDescription: public BaseMediaDescription {
+    inline bool operator==(const AudioDescription& lhs, const AudioDescription& rhs) {
+        return lhs.sampleRate == rhs.sampleRate &&
+            lhs.bitsPerSample == rhs.bitsPerSample &&
+                lhs.channelCount == rhs.channelCount &&
+                    lhs.input == rhs.input &&
+                        lhs.inputMode == rhs.inputMode;
+    }
+
+    class VideoDescription final : public BaseMediaDescription {
     public:
         uint16_t width, height;
         uint8_t fps;
@@ -71,12 +77,24 @@ namespace ntgcalls {
                 BaseMediaDescription(input, inputMode), width(width), height(height), fps(fps) {}
     };
 
+    inline bool operator==(const VideoDescription& lhs, const VideoDescription& rhs) {
+        return lhs.width == rhs.width &&
+            lhs.height == rhs.height &&
+                lhs.fps == rhs.fps &&
+                    lhs.input == rhs.input &&
+                        lhs.inputMode == rhs.inputMode;
+    }
+
     class MediaDescription {
     public:
-        std::optional<AudioDescription> audio;
-        std::optional<VideoDescription> video;
+        std::optional<AudioDescription> microphone, speaker;
+        std::optional<VideoDescription> camera, screen;
 
-        MediaDescription(const std::optional<AudioDescription>& audio, const std::optional<VideoDescription>& video):
-                audio(audio), video(video) {}
+        MediaDescription(
+            const std::optional<AudioDescription>& microphone,
+            const std::optional<AudioDescription>& speaker,
+            const std::optional<VideoDescription>& camera,
+            const std::optional<VideoDescription>& screen
+        ): microphone(microphone), speaker(speaker), camera(camera), screen(screen) {}
     };
 } // ntgcalls
