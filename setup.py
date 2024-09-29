@@ -117,17 +117,16 @@ class SharedCommand(Command):
     def run(self):
         if sys.platform.startswith('linux'):
             install_cmake(CMAKE_VERSION)
-        cfg = 'RelWithDebInfo' if self.debug else 'Release'
         arch_outputs = [
             'auto',
         ]
         cmake_args = [
-            f'-DCMAKE_BUILD_TYPE={cfg}',
+            f'-DCMAKE_BUILD_TYPE=RelWithDebInfo',
             f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
             f'-DCMAKE_TOOLCHAIN_FILE={Path(Path.cwd(), "cmake", "Toolchain.cmake")}',
         ]
         build_args = [
-            '--config', cfg,
+            '--config', 'RelWithDebInfo',
             f'-j{multiprocessing.cpu_count()}',
         ]
         build_temp = Path('build_lib')
