@@ -7,21 +7,20 @@
 #ifdef BOOST_ENABLED
 #include <boost/process.hpp>
 
-#include "base_reader.hpp"
-#include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/io/threaded_reader.hpp>
 
 namespace bp = boost::process;
 
 namespace ntgcalls {
 
-    class ShellReader final: public BaseReader {
+    class ShellReader final: public ThreadedReader {
         bp::ipstream stdOut;
         bp::child shellProcess;
 
-        bytes::unique_binary readInternal(int64_t size) override;
+        bytes::unique_binary read(int64_t size) override;
 
     public:
-        explicit ShellReader(const std::string& command, int64_t bufferSize, bool noLatency);
+        explicit ShellReader(const std::string& command, BaseSink *sink);
 
         void close() override;
     };

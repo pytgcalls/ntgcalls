@@ -5,7 +5,7 @@
 #include <ntgcalls/io/file_reader.hpp>
 
 namespace ntgcalls {
-    FileReader::FileReader(const std::string& path, const int64_t bufferSize, const bool noLatency): BaseReader(bufferSize, noLatency) {
+    FileReader::FileReader(const std::string& path, BaseSink *sink): ThreadedReader(sink) {
         source = std::ifstream(path, std::ios::binary);
         if (!source) {
             RTC_LOG(LS_ERROR) << "Unable to open the file located at \"" << path << "\"";
@@ -13,7 +13,7 @@ namespace ntgcalls {
         }
     }
 
-    bytes::unique_binary FileReader::readInternal(const int64_t size) {
+    bytes::unique_binary FileReader::read(const int64_t size) {
         if (!source || source.eof() || source.fail() || !source.is_open()) {
             RTC_LOG(LS_WARNING) << "Reached end of the file";
             throw EOFError("Reached end of the file");
@@ -30,7 +30,7 @@ namespace ntgcalls {
     }
 
     void FileReader::close() {
-        BaseReader::close();
+        ThreadedReader::close();
         if (source.is_open()) {
             source.close();
         }

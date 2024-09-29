@@ -7,17 +7,17 @@
 #include <fstream>
 #include <string>
 
-#include "base_reader.hpp"
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/io/threaded_reader.hpp>
 
 namespace ntgcalls {
-    class FileReader final: public BaseReader {
+    class FileReader final: public ThreadedReader {
         std::ifstream source;
 
-        bytes::unique_binary readInternal(int64_t size) override;
+        bytes::unique_binary read(int64_t size) override;
 
     public:
-        explicit FileReader(const std::string& path, int64_t bufferSize, bool noLatency);
+        explicit FileReader(const std::string& path, BaseSink *sink);
 
         void close() override;
     };
