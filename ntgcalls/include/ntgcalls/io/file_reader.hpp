@@ -19,6 +19,6 @@ namespace ntgcalls {
     public:
         explicit FileReader(const std::string& path, BaseSink *sink);
 
-        void close() override;
+        ~FileReader() override;
     };
 }

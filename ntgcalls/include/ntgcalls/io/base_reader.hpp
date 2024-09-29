@@ -18,11 +18,9 @@ namespace ntgcalls {
     public:
         explicit BaseReader(BaseSink *sink);
 
-        virtual ~BaseReader() = default;
+        virtual ~BaseReader();
 
         virtual void open() = 0;
-
-        virtual void close() = 0;
 
         void onEof(const std::function<void()> &callback);
 

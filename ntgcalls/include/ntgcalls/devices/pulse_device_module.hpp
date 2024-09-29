@@ -18,13 +18,13 @@ namespace ntgcalls {
     public:
         PulseDeviceModule(const AudioDescription* desc, bool isCapture, BaseSink *sink);
 
+        ~PulseDeviceModule() override;
+
         static bool isSupported();
 
         static std::vector<DeviceInfo> getDevices();
 
         void open() override;
-
-        void close() override;
     };
 
 } // pulse

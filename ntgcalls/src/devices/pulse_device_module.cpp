@@ -30,6 +30,10 @@ namespace ntgcalls {
         pulseConnection->setupStream(sampleSpec, deviceID, isCapture);
     }
 
+    PulseDeviceModule::~PulseDeviceModule() {
+        pulseConnection->disconnect();
+    }
+
     bool PulseDeviceModule::isSupported() {
         return GetPulseSymbolTable()->Load();
     }
@@ -61,10 +65,6 @@ namespace ntgcalls {
         pulseConnection->onData([this](bytes::unique_binary data) {
             dataCallback(std::move(data));
         });
-    }
-
-    void PulseDeviceModule::close() {
-        pulseConnection->disconnect();
     }
 } // pulse
 

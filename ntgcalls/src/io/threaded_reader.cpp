@@ -10,6 +10,14 @@ namespace ntgcalls {
         bufferThreads.reserve(bufferCount);
     }
 
+    ThreadedReader::~ThreadedReader() {
+        running = false;
+        cv.notify_all();
+        for (auto& thread : bufferThreads) {
+            thread.Finalize();
+        }
+    }
+
     void ThreadedReader::open() {
         const size_t bufferCount = bufferThreads.capacity();
         running = true;
@@ -43,14 +51,6 @@ namespace ntgcalls {
                     rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
                 )
             );
-        }
-    }
-
-    void ThreadedReader::close() {
-        running = false;
-        cv.notify_all();
-        for (auto& thread : bufferThreads) {
-            thread.Finalize();
         }
     }
 } // ntgcalls

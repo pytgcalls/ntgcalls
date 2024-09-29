@@ -22,7 +22,7 @@ namespace ntgcalls {
     public:
         explicit ShellReader(const std::string& command, BaseSink *sink);
 
-        void close() override;
+        ~ShellReader() override;
     };
 
 } // ntgcalls

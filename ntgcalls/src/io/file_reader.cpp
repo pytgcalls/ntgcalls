@@ -13,6 +13,14 @@ namespace ntgcalls {
         }
     }
 
+    FileReader::~FileReader() {
+        if (source.is_open()) {
+            source.close();
+        }
+        source.clear();
+        RTC_LOG(LS_VERBOSE) << "FileReader closed";
+    }
+
     bytes::unique_binary FileReader::read(const int64_t size) {
         if (!source || source.eof() || source.fail() || !source.is_open()) {
             RTC_LOG(LS_WARNING) << "Reached end of the file";
@@ -27,14 +35,5 @@ namespace ntgcalls {
             throw FileError("Error while reading the file");
         }
         return std::move(file_data);
-    }
-
-    void FileReader::close() {
-        ThreadedReader::close();
-        if (source.is_open()) {
-            source.close();
-        }
-        source.clear();
-        RTC_LOG(LS_VERBOSE) << "FileReader closed";
     }
 }

@@ -22,8 +22,6 @@ namespace ntgcalls {
         explicit BaseDeviceModule(const AudioDescription* desc, bool isCapture);
 
         virtual ~BaseDeviceModule() = default;
-
-        virtual void close() = 0;
     };
 
 } // ntgcalls

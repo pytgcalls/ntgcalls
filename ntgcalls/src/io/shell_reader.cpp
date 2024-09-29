@@ -15,6 +15,16 @@ namespace ntgcalls {
         }
     }
 
+    ShellReader::~ShellReader() {
+        if (shellProcess) {
+            shellProcess.terminate();
+            shellProcess.wait();
+            shellProcess.detach();
+        }
+        RTC_LOG(LS_VERBOSE) << "ShellReader closed";
+        stdOut.clear();
+    }
+
     bytes::unique_binary ShellReader::read(const int64_t size) {
         if (!stdOut || stdOut.eof() || stdOut.fail() || !stdOut.is_open()) {
             RTC_LOG(LS_WARNING) << "Reached end of the file";
@@ -23,17 +33,6 @@ namespace ntgcalls {
         auto file_data = bytes::make_unique_binary(size);
         stdOut.read(reinterpret_cast<char*>(file_data.get()), size);
         return std::move(file_data);
-    }
-
-    void ShellReader::close() {
-        ThreadedReader::close();
-        if (shellProcess) {
-            shellProcess.terminate();
-            shellProcess.wait();
-            shellProcess.detach();
-        }
-        RTC_LOG(LS_VERBOSE) << "ShellReader closed";
-        stdOut.clear();
     }
 } // ntgcalls
 #endif

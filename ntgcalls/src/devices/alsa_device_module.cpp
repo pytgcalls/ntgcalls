@@ -62,6 +62,10 @@ namespace ntgcalls {
         }
     }
 
+    AlsaDeviceModule::~AlsaDeviceModule() {
+        LATE(snd_pcm_close)(captureHandle);
+    }
+
     bytes::unique_binary AlsaDeviceModule::read(const int64_t size) {
         auto device_data = bytes::make_unique_binary(size);
         if (const auto err = LATE(snd_pcm_readi)(captureHandle, device_data.get(), size / (channels * 2)); err < 0) {
@@ -132,11 +136,6 @@ namespace ntgcalls {
             appendDevice(devices, id.c_str(), name.c_str(), false);
         }
         return devices;
-    }
-
-    void AlsaDeviceModule::close() {
-        ThreadedReader::close();
-        LATE(snd_pcm_close)(captureHandle);
     }
 } // alsa
 

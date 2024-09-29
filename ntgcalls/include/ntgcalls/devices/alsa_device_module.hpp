@@ -25,11 +25,11 @@ namespace ntgcalls {
     public:
         AlsaDeviceModule(const AudioDescription* desc, bool isCapture, BaseSink *sink);
 
+        ~AlsaDeviceModule() override;
+
         static bool isSupported();
 
         static std::vector<DeviceInfo> getDevices();
-
-        void close() override;
     };
 
 } // alsa

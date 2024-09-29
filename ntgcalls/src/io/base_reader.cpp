@@ -7,6 +7,10 @@
 namespace ntgcalls {
     BaseReader::BaseReader(BaseSink *sink): sink(sink) {}
 
+    BaseReader::~BaseReader() {
+        sink = nullptr;
+    }
+
     void BaseReader::onEof(const std::function<void()>& callback) {
         eofCallback = callback;
     }
