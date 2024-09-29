@@ -21,15 +21,17 @@ namespace ntgcalls {
     void ThreadedReader::open() {
         const size_t bufferCount = bufferThreads.capacity();
         running = true;
+        auto frameSize = sink->frameSize();
+        auto frameTime = sink->frameTime();
         for (size_t i = 0; i < bufferCount; ++i) {
             bufferThreads.push_back(
                 rtc::PlatformThread::SpawnJoinable(
-                    [this, i] {
+                    [this, i, frameSize, frameTime] {
                         activeBufferCount++;
                         while (running) {
                             std::unique_lock lock(mtx);
                             try {
-                                dataCallback(std::move(read(sink->frameSize())));
+                                dataCallback(std::move(read(frameSize)));
                             } catch (...) {
                                 break;
                             }
@@ -40,7 +42,7 @@ namespace ntgcalls {
                             activeBuffer = (activeBuffer + 1) % bufferThreads.size();
                             lock.unlock();
                             cv.notify_all();
-                            std::this_thread::sleep_for(sink->frameTime());
+                            std::this_thread::sleep_for(frameTime);
                         }
                         activeBufferCount--;
                         if (activeBufferCount == 0) {
