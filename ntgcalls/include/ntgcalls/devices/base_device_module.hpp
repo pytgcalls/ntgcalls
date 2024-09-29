@@ -23,8 +23,6 @@ namespace ntgcalls {
 
         virtual ~BaseDeviceModule() = default;
 
-        [[nodiscard]] virtual bytes::unique_binary read(int64_t size) = 0;
-
         virtual void close() = 0;
     };
 

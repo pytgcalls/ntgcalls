@@ -10,10 +10,10 @@
 namespace ntgcalls {
 
     class MediaDevice {
-        static std::unique_ptr<BaseReader> CreateAudioInput(const AudioDescription* desc, int64_t bufferSize);
+        static std::unique_ptr<BaseReader> CreateAudioInput(const AudioDescription* desc, BaseSink *sink);
 
     public:
-        static std::unique_ptr<BaseReader> CreateInput(const BaseMediaDescription& desc, int64_t bufferSize);
+        static std::unique_ptr<BaseReader> CreateInput(const BaseMediaDescription& desc, BaseSink *sink);
 
         static std::vector<DeviceInfo> GetAudioDevices();
     };

@@ -161,6 +161,10 @@ namespace ntgcalls {
         return recordDevices;
     }
 
+    void PulseConnection::onData(const std::function<void(bytes::unique_binary)>& callback) {
+        dataCallback = callback;
+    }
+
     void PulseConnection::paStreamStateCallback(pa_stream*, void* pThis) {
         LATE(pa_threaded_mainloop_signal)(static_cast<PulseConnection*>(pThis)->paMainloop, 0);
     }
@@ -179,8 +183,9 @@ namespace ntgcalls {
                 LATE(pa_stream_drop)(thiz->stream);
                 return;
             }
-            thiz -> buffer = bytes::make_unique_binary(nBytes);
-            memcpy(thiz->buffer.get(), audio_data, count);
+            auto buffer = bytes::make_unique_binary(nBytes);
+            memcpy(buffer.get(), audio_data, count);
+            thiz->dataCallback(std::move(buffer));
             if(result != 0) {
                 return;
             }
@@ -223,32 +228,28 @@ namespace ntgcalls {
         }
     }
 
-    bytes::unique_binary PulseConnection::read(const int64_t size) {
-        if (!recording) {
-            if (deviceID.empty()) {
-                throw MediaDeviceError("No device selected");
-            }
-            paLock();
-            pa_buffer_attr buffer_attr;
-            buffer_attr.maxlength = -1;
-            buffer_attr.tlength = -1;
-            buffer_attr.prebuf = -1;
-            buffer_attr.minreq = -1;
-            buffer_attr.fragsize = size;
-            if (LATE(pa_stream_connect_record)(stream, deviceID.c_str(), &buffer_attr, PA_STREAM_NOFLAGS) != PA_OK) {
-                throw MediaDeviceError("cannot connect to stream");
-            }
-            RTC_LOG(LS_VERBOSE) << "Connecting stream";
-            while (LATE(pa_stream_get_state)(stream) != PA_STREAM_READY) {
-                LATE(pa_threaded_mainloop_wait)(paMainloop);
-            }
-            RTC_LOG(LS_VERBOSE) << "Connected stream";
-            enableReadCallback();
-            paUnLock();
-            recording = true;
-            return {};
+    void PulseConnection::start(const int64_t bufferSize) {
+        if (deviceID.empty()) {
+            throw MediaDeviceError("No device selected");
         }
-        return std::move(buffer);
+        paLock();
+        pa_buffer_attr buffer_attr;
+        buffer_attr.maxlength = -1;
+        buffer_attr.tlength = -1;
+        buffer_attr.prebuf = -1;
+        buffer_attr.minreq = -1;
+        buffer_attr.fragsize = bufferSize;
+        if (LATE(pa_stream_connect_record)(stream, deviceID.c_str(), &buffer_attr, PA_STREAM_NOFLAGS) != PA_OK) {
+            throw MediaDeviceError("cannot connect to stream");
+        }
+        RTC_LOG(LS_VERBOSE) << "Connecting stream";
+        while (LATE(pa_stream_get_state)(stream) != PA_STREAM_READY) {
+            LATE(pa_threaded_mainloop_wait)(paMainloop);
+        }
+        RTC_LOG(LS_VERBOSE) << "Connected stream";
+        enableReadCallback();
+        paUnLock();
+        recording = true;
     }
 } // ntgcalls
 

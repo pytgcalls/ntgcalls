@@ -28,7 +28,7 @@ memset(*pInfo, 0, LATE(snd_pcm_info_sizeof)()); \
 } while (0)
 
 namespace ntgcalls {
-    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool isCapture): BaseDeviceModule(desc, isCapture) {
+    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink *sink): BaseDeviceModule(desc, isCapture), ThreadedReader(sink) {
         try {
             deviceID = deviceMetadata["id"];
         } catch (...) {
@@ -135,6 +135,7 @@ namespace ntgcalls {
     }
 
     void AlsaDeviceModule::close() {
+        ThreadedReader::close();
         LATE(snd_pcm_close)(captureHandle);
     }
 } // alsa

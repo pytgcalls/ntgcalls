@@ -5,23 +5,24 @@
 #pragma once
 
 #ifdef IS_LINUX
+#include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/devices/device_info.hpp>
 #include <ntgcalls/devices/base_device_module.hpp>
 #include <ntgcalls/utils/pulse_connection.hpp>
 
 namespace ntgcalls {
 
-    class PulseDeviceModule final: public BaseDeviceModule {
+    class PulseDeviceModule final: public BaseDeviceModule, public BaseReader {
         std::unique_ptr<PulseConnection> pulseConnection;
 
     public:
-        PulseDeviceModule(const AudioDescription* desc, bool isCapture);
-
-        [[nodiscard]] bytes::unique_binary read(int64_t size) override;
+        PulseDeviceModule(const AudioDescription* desc, bool isCapture, BaseSink *sink);
 
         static bool isSupported();
 
         static std::vector<DeviceInfo> getDevices();
+
+        void open() override;
 
         void close() override;
     };

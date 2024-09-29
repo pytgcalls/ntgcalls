@@ -13,7 +13,7 @@
 LATESYM_GET(webrtc::adm_linux_pulse::PulseAudioSymbolTable, GetPulseSymbolTable(), sym)
 
 namespace ntgcalls {
-    PulseDeviceModule::PulseDeviceModule(const AudioDescription* desc, const bool isCapture): BaseDeviceModule(desc, isCapture) {
+    PulseDeviceModule::PulseDeviceModule(const AudioDescription* desc, bool isCapture, BaseSink *sink): BaseDeviceModule(desc, isCapture), BaseReader(sink) {
         pulseConnection = std::make_unique<PulseConnection>();
         RTC_LOG(LS_VERBOSE) << "PulseAudio version: " << pulseConnection->getVersion();
 
@@ -28,10 +28,6 @@ namespace ntgcalls {
             throw MediaDeviceError("Invalid device metadata");
         }
         pulseConnection->setupStream(sampleSpec, deviceID, isCapture);
-    }
-
-    bytes::unique_binary PulseDeviceModule::read(const int64_t size) {
-        return std::move(pulseConnection->read(size));
     }
 
     bool PulseDeviceModule::isSupported() {
@@ -58,6 +54,13 @@ namespace ntgcalls {
             appendDevice(devices, fst, snd, false);
         }
         return devices;
+    }
+
+    void PulseDeviceModule::open() {
+        pulseConnection->start(sink->frameSize());
+        pulseConnection->onData([this](bytes::unique_binary data) {
+            dataCallback(std::move(data));
+        });
     }
 
     void PulseDeviceModule::close() {

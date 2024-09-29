@@ -6,7 +6,6 @@
 
 #include <utility>
 #include <ntgcalls/exceptions.hpp>
-#include <ntgcalls/devices/input_device.hpp>
 
 #ifdef IS_LINUX
 #include <ntgcalls/devices/alsa_device_module.hpp>
@@ -16,9 +15,9 @@
 #endif
 
 namespace ntgcalls {
-    std::unique_ptr<BaseReader> MediaDevice::CreateInput(const BaseMediaDescription& desc, const int64_t bufferSize) {
+    std::unique_ptr<BaseReader> MediaDevice::CreateInput(const BaseMediaDescription& desc, BaseSink *sink) {
         if (auto* audio = dynamic_cast<const AudioDescription*>(&desc)) {
-            return CreateAudioInput(audio, bufferSize);
+            return CreateAudioInput(audio, sink);
         }
         throw MediaDeviceError("Unsupported media type");
     }
@@ -50,15 +49,15 @@ namespace ntgcalls {
         return {};
     }
 
-    std::unique_ptr<BaseReader> MediaDevice::CreateAudioInput(const AudioDescription* desc, int64_t bufferSize) {
-        std::unique_ptr<BaseDeviceModule> adm;
+    std::unique_ptr<BaseReader> MediaDevice::CreateAudioInput(const AudioDescription* desc, BaseSink *sink) {
 #ifdef IS_LINUX
         if (PulseDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using PulseAudio module for input";
-            adm = std::make_unique<PulseDeviceModule>(desc, true);
-        } else if (AlsaDeviceModule::isSupported()) {
+            return std::make_unique<PulseDeviceModule>(desc, true, sink);
+        }
+        if (AlsaDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using ALSA module for input";
-            adm = std::make_unique<AlsaDeviceModule>(desc, true);
+            return std::make_unique<AlsaDeviceModule>(desc, true, sink);
         }
 #elif IS_WINDOWS
         if (WinCoreDeviceModule::isSupported()) {

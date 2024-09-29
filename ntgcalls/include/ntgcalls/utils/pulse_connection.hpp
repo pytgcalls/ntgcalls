@@ -5,6 +5,7 @@
 #pragma once
 #include <atomic>
 #include <map>
+#include <wrtc/utils/syncronized_callback.hpp>
 
 
 #ifdef IS_LINUX
@@ -21,9 +22,9 @@ namespace ntgcalls {
         char paServerVersion[32]{};
         std::atomic_bool versionReceived, recording, paStateChanged = false;
         pa_stream* stream{};
-        bytes::unique_binary buffer;
         std::string deviceID;
         std::map<std::string, std::string> playDevices, recordDevices;
+        wrtc::synchronized_callback<bytes::unique_binary> dataCallback;
 
         void paLock() const;
 
@@ -56,11 +57,13 @@ namespace ntgcalls {
 
         void setupStream(const pa_sample_spec& sampleSpec, std::string deviceId, bool isCapture);
 
-        bytes::unique_binary read(int64_t size);
+        void start(int64_t bufferSize);
 
         std::map<std::string, std::string> getPlayDevices();
 
         std::map<std::string, std::string> getRecordDevices();
+
+        void onData(const std::function<void(bytes::unique_binary)> &callback);
     };
 
 } // ntgcalls
