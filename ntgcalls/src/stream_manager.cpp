@@ -19,9 +19,9 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
         onEOF = nullptr;
         idling = false;
+        readers.clear();
         streams.clear();
         tracks.clear();
-        readers.clear();
         workerThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
