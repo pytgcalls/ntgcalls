@@ -47,6 +47,11 @@ PYBIND11_MODULE(ntgcalls, m) {
             .value("VIDEO", ntgcalls::StreamManager::Type::Video)
             .export_values();
 
+    py::enum_<ntgcalls::StreamManager::Direction>(m, "StreamDirection")
+            .value("INPUT", ntgcalls::StreamManager::Direction::Input)
+            .value("OUTPUT", ntgcalls::StreamManager::Direction::Output)
+            .export_values();
+
     py::enum_<ntgcalls::StreamManager::Status>(m, "StreamStatus")
             .value("ACTIVE", ntgcalls::StreamManager::Status::Active)
             .value("PAUSED", ntgcalls::StreamManager::Status::Paused)
