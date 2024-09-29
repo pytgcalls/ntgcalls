@@ -4,34 +4,21 @@
 
 #pragma once
 
-// PCM16L AUDIO CODEC SPECIFICATION
-// Frame Time: 10ms
-// Max SampleRate: 48000
-// Max BitsPerSample: 16
-// Max Channels: 2
-// FrameSize: ((48000 * 16) / 8 / 100)) * 2
-
-#include "base_streamer.hpp"
+#include <wrtc/wrtc.hpp>
+#include <ntgcalls/media/audio_sink.hpp>
+#include <ntgcalls/media/base_streamer.hpp>
 
 namespace ntgcalls {
-    class AudioStreamer final : public BaseStreamer {
+    class AudioStreamer final : public AudioSink, public BaseStreamer {
         std::unique_ptr<wrtc::RTCAudioSource> audio;
-        uint8_t bps = 0, channels = 0;
-        uint32_t rate = 0;
-
-        std::chrono::nanoseconds frameTime() override;
 
     public:
         AudioStreamer();
 
-        ~AudioStreamer();
+        ~AudioStreamer() override;
 
         rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() override;
 
         void sendData(uint8_t* sample, int64_t absolute_capture_timestamp_ms) override;
-
-        int64_t frameSize() override;
-
-        void setConfig(uint32_t sampleRate, uint8_t bitsPerSample, uint8_t channelCount);
     };
 }
