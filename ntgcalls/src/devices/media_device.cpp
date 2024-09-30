@@ -12,6 +12,9 @@
 #include <ntgcalls/devices/pulse_device_module.hpp>
 #elif IS_WINDOWS
 #include <ntgcalls/devices/win_core_device_module.hpp>
+#elif IS_ANDROID
+#include <wrtc/utils/java_context.hpp>
+#include <ntgcalls/devices/open_sles_device_module.hpp>
 #endif
 
 namespace ntgcalls {
@@ -63,6 +66,12 @@ namespace ntgcalls {
         if (WinCoreDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using Windows Core Audio module for input";
             return std::make_unique<WinCoreDeviceModule>(desc, true, sink);
+        }
+#elif IS_ANDROID
+        auto jniEnv = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
+        if (OpenSLESDeviceModule::isSupported(jniEnv, true)) {
+            RTC_LOG(LS_INFO) << "Using OpenSLES module for input";
+            return std::make_unique<OpenSLESDeviceModule>(desc, true, sink);
         }
 #endif
         throw MediaDeviceError("Unsupported platform for audio device");
