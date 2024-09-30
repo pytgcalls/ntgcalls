@@ -12,6 +12,7 @@ import org.pytgcalls.ntgcalls.exceptions.TelegramServerException;
 import org.pytgcalls.ntgcalls.media.AudioDescription;
 import org.pytgcalls.ntgcalls.media.InputMode;
 import org.pytgcalls.ntgcalls.media.MediaDescription;
+import org.pytgcalls.ntgcalls.media.MediaDevices;
 
 import java.io.FileNotFoundException;
 
@@ -37,7 +38,10 @@ public class NTgCallsTests {
                                     48000,
                                     16,
                                     2
-                            )
+                            ),
+                            null,
+                            null,
+                            null
                     )
             );
             fail("Expected an FileNotFoundException to be thrown");
@@ -76,6 +80,43 @@ public class NTgCallsTests {
             fail("Unexpected TelegramServerException");
         } catch (ConnectionException e) {
             fail("Unexpected ConnectionException");
+        }
+    }
+
+    @Test
+    public void createAudioDevice() {
+        //MTProtoTelegramClient client = MTProtoTelegramClient.create(
+        NTgCalls instance = new NTgCalls();
+        MediaDevices mediaDevices = NTgCalls.getMediaDevices();
+        Thread t = new Thread(() -> {
+            try {
+                Log.d("NTGCALLS", instance.createCall(
+                        CHAT_ID,
+                        new MediaDescription(
+                                new AudioDescription(
+                                        InputMode.FILE,
+                                        mediaDevices.audio.get(0).metadata,
+                                        48000,
+                                        16,
+                                        2
+                                ),
+                                null,
+                                null,
+                                null
+                        )
+                ));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (ConnectionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        t.start();
+        try {
+            t.join();
+            t.wait();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 }
