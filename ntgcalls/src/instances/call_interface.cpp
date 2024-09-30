@@ -43,8 +43,8 @@ namespace ntgcalls {
         return streamManager->unmute();
     }
 
-    void CallInterface::setStreamSources(const StreamManager::Direction direction, const MediaDescription& config) const {
-        streamManager->setStreamSources(direction, config);
+    void CallInterface::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
+        streamManager->setStreamSources(mode, config);
     }
 
     void CallInterface::onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)>& callback) {
@@ -57,16 +57,16 @@ namespace ntgcalls {
         connectionChangeCallback = callback;
     }
 
-    uint64_t CallInterface::time(const StreamManager::Direction direction) const {
-        return streamManager->time(direction);
+    uint64_t CallInterface::time(const StreamManager::Mode mode) const {
+        return streamManager->time(mode);
     }
 
     MediaState CallInterface::getState() const {
         return streamManager->getState();
     }
 
-    StreamManager::Status CallInterface::status(const StreamManager::Direction direction) const {
-        return streamManager->status(direction);
+    StreamManager::Status CallInterface::status(const StreamManager::Mode mode) const {
+        return streamManager->status(mode);
     }
 
     void CallInterface::cancelNetworkListener() {

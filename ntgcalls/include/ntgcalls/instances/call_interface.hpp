@@ -53,17 +53,17 @@ namespace ntgcalls {
 
         bool unmute() const;
 
-        void setStreamSources(StreamManager::Direction direction, const MediaDescription& config) const;
+        void setStreamSources(StreamManager::Mode mode, const MediaDescription& config) const;
 
         void onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)> &callback);
 
         void onConnectionChange(const std::function<void(ConnectionState)> &callback);
 
-        uint64_t time(StreamManager::Direction direction) const;
+        uint64_t time(StreamManager::Mode mode) const;
 
         MediaState getState() const;
 
-        StreamManager::Status status(StreamManager::Direction direction) const;
+        StreamManager::Status status(StreamManager::Mode mode) const;
 
         virtual Type type() const = 0;
 

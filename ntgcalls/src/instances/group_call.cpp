@@ -22,10 +22,10 @@ namespace ntgcalls {
             throw ConnectionError("Connection already made");
         }
         connection = std::make_unique<wrtc::PeerConnection>();
-        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Microphone, connection);
-        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Speaker, connection);
-        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Camera, connection);
-        streamManager->addTrack(StreamManager::Direction::Output, StreamManager::Device::Screen, connection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Speaker, connection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, connection);
         try {
             Safe<wrtc::PeerConnection>(connection)->setLocalDescription();
         } catch (wrtc::RTCException&) {
@@ -38,7 +38,7 @@ namespace ntgcalls {
         for (const auto &ssrc : payload.sourceGroups) {
             sourceGroups.push_back(ssrc);
         }
-        streamManager->setStreamSources(StreamManager::Direction::Output, config);
+        streamManager->setStreamSources(StreamManager::Mode::Playback, config);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
         return static_cast<std::string>(payload);
     }

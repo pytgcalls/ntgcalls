@@ -47,9 +47,9 @@ PYBIND11_MODULE(ntgcalls, m) {
             .value("VIDEO", ntgcalls::StreamManager::Type::Video)
             .export_values();
 
-    py::enum_<ntgcalls::StreamManager::Direction>(m, "StreamDirection")
-            .value("INPUT", ntgcalls::StreamManager::Direction::Input)
-            .value("OUTPUT", ntgcalls::StreamManager::Direction::Output)
+    py::enum_<ntgcalls::StreamManager::Mode>(m, "StreamMode")
+            .value("RECORDING", ntgcalls::StreamManager::Mode::Recording)
+            .value("PLAYBACK", ntgcalls::StreamManager::Mode::Playback)
             .export_values();
 
     py::enum_<ntgcalls::StreamManager::Device>(m, "StreamDevice")

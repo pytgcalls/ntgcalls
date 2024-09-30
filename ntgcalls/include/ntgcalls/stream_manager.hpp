@@ -30,9 +30,9 @@ namespace ntgcalls {
             Status playback, recording;
         };
 
-        enum Direction {
-            Input,
-            Output,
+        enum Mode {
+            Recording,
+            Playback,
         };
 
         enum Device {
@@ -46,7 +46,7 @@ namespace ntgcalls {
 
         ~StreamManager();
 
-        void setStreamSources(Direction direction, const MediaDescription& desc);
+        void setStreamSources(Mode mode, const MediaDescription& desc);
 
         MediaState getState();
 
@@ -58,30 +58,30 @@ namespace ntgcalls {
 
         bool unmute();
 
-        uint64_t time(Direction direction);
+        uint64_t time(Mode mode);
 
-        Status status(Direction direction);
+        Status status(Mode mode);
 
         void onStreamEnd(const std::function<void(Type, Device)> &callback);
 
         void onUpgrade(const std::function<void(MediaState)> &callback);
 
-        void addTrack(Direction direction, Device device, const std::unique_ptr<wrtc::NetworkInterface> &pc);
+        void addTrack(Mode mode, Device device, const std::unique_ptr<wrtc::NetworkInterface> &pc);
 
         void start();
 
     private:
         rtc::Thread* workerThread;
         bool idling = false, initialized = false, hasVideo = false;
-        std::map<std::pair<Direction, Device>, std::unique_ptr<BaseSink>> streams;
-        std::map<std::pair<Direction, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
+        std::map<std::pair<Mode, Device>, std::unique_ptr<BaseSink>> streams;
+        std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
 
         template<typename SinkType, typename DescriptionType>
-        void setConfig(Direction direction, Device device, const std::optional<DescriptionType>& desc);
+        void setConfig(Mode mode, Device device, const std::optional<DescriptionType>& desc);
 
         void checkUpgrade();
 

@@ -131,9 +131,9 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(void) NTgCalls::setStreamSources(const int64_t chatId, const StreamManager::Direction direction, const MediaDescription& media) {
-        SMART_ASYNC(this, chatId, direction, media)
-        safeConnection(chatId)->setStreamSources(direction, media);
+    ASYNC_RETURN(void) NTgCalls::setStreamSources(const int64_t chatId, const StreamManager::Mode mode, const MediaDescription& media) {
+        SMART_ASYNC(this, chatId, mode, media)
+        safeConnection(chatId)->setStreamSources(mode, media);
         END_ASYNC
     }
 
@@ -193,9 +193,9 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(uint64_t) NTgCalls::time(const int64_t chatId, const StreamManager::Direction direction) {
-        SMART_ASYNC(this, chatId, direction)
-        return safeConnection(chatId)->time(direction);
+    ASYNC_RETURN(uint64_t) NTgCalls::time(const int64_t chatId, const StreamManager::Mode mode) {
+        SMART_ASYNC(this, chatId, mode)
+        return safeConnection(chatId)->time(mode);
         END_ASYNC
     }
 
@@ -217,8 +217,8 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         for (const auto& [fst, snd] : connections) {
             statusList.emplace(fst, StreamManager::MediaStatus{
-                snd->status(StreamManager::Direction::Output),
-                snd->status(StreamManager::Direction::Input)
+                snd->status(StreamManager::Mode::Playback),
+                snd->status(StreamManager::Mode::Recording)
             });
         }
         return statusList;

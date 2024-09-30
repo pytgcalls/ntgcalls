@@ -68,7 +68,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) connect(int64_t chatId, const std::string& params);
 
-        ASYNC_RETURN(void) setStreamSources(int64_t chatId, StreamManager::Direction direction, const MediaDescription& media);
+        ASYNC_RETURN(void) setStreamSources(int64_t chatId, StreamManager::Mode mode, const MediaDescription& media);
 
         ASYNC_RETURN(bool) pause(int64_t chatId);
 
@@ -80,7 +80,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) stop(int64_t chatId);
 
-        ASYNC_RETURN(uint64_t) time(int64_t chatId, StreamManager::Direction direction);
+        ASYNC_RETURN(uint64_t) time(int64_t chatId, StreamManager::Mode mode);
 
         ASYNC_RETURN(MediaState) getState(int64_t chatId);
 
