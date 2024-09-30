@@ -39,16 +39,18 @@ namespace ntgcalls {
             return WinCoreDeviceModule::getDevices();
         }
 #elif IS_ANDROID
-        auto appendDevices = [](std::vector<DeviceInfo>& devices, const std::string& name, const bool& isCapture) {
-            json data = {
-                {"is_microphone", isCapture},
+        if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), true) || JavaAudioDeviceModule::isSupported()) {
+            auto appendDevices = [](std::vector<DeviceInfo>& devices, const std::string& name, const bool& isCapture) {
+                json data = {
+                    {"is_microphone", isCapture},
+                };
+                devices.emplace_back(name, data.dump());
             };
-            devices.emplace_back(name, data.dump());
-        };
-        std::vector<DeviceInfo> devices;
-        appendDevices(devices, "default", true);
-        appendDevices(devices, "default", false);
-        return devices;
+            std::vector<DeviceInfo> devices;
+            appendDevices(devices, "default", true);
+            appendDevices(devices, "default", false);
+            return devices;
+        }
 #endif
         return {};
     }
@@ -73,8 +75,10 @@ namespace ntgcalls {
             RTC_LOG(LS_INFO) << "Using OpenSLES module for input";
             return std::make_unique<OpenSLESDeviceModule>(desc, true, sink);
         }
-        RTC_LOG(LS_ERROR) << "Using JavaAudio module for input";
-        return std::make_unique<JavaAudioDeviceModule>(desc, true, sink);
+        if (JavaAudioDeviceModule::isSupported()) {
+            RTC_LOG(LS_INFO) << "Using Java Audio module for input";
+            return std::make_unique<JavaAudioDeviceModule>(desc, true, sink);
+        }
 #endif
         throw MediaDeviceError("Unsupported platform for audio device");
     }

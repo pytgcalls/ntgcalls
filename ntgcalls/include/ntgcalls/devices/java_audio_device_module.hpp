@@ -22,6 +22,8 @@ namespace ntgcalls {
 
         void open() override;
 
+        static bool isSupported();
+
         void onRecordedData(bytes::unique_binary data) const;
     };
 

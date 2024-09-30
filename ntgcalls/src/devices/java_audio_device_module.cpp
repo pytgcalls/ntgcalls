@@ -48,6 +48,10 @@ namespace ntgcalls {
         env->CallVoidMethod(javaModule, env->GetMethodID(javaModuleClass, "open", "()V"));
         env->DeleteLocalRef(javaModuleClass);
     }
+
+    bool JavaAudioDeviceModule::isSupported() {
+        return android_get_device_api_level() >= __ANDROID_API_J_MR2__;
+    }
 } // ntgcalls
 
 #endif
