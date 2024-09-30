@@ -123,17 +123,7 @@ namespace ntgcalls {
     }
 
     void StreamManager::addTrack(Direction direction, Device device, const std::unique_ptr<wrtc::NetworkInterface>& pc) {
-        const auto streamType = getStreamType(device);
         const std::pair id(direction, device);
-        if (direction == Output) {
-            if (streamType == Audio) {
-                streams[id] = std::make_unique<AudioStreamer>();
-            } else {
-                streams[id] = std::make_unique<VideoStreamer>();
-            }
-        } else {
-            throw InvalidParams("Output streams are not yet supported");
-        }
         tracks[id] = pc->addTrack(streams[id]->createTrack());
     }
 
@@ -185,6 +175,20 @@ namespace ntgcalls {
     template <typename SinkType, typename DescriptionType>
     void StreamManager::setConfig(Direction direction, Device device, const std::optional<DescriptionType>& desc) {
         const std::pair id(direction, device);
+        const auto streamType = getStreamType(device);
+
+        if (!streams.contains(id)) {
+            if (direction == Output) {
+                if (streamType == Audio) {
+                    streams[id] = std::make_unique<AudioStreamer>();
+                } else {
+                    streams[id] = std::make_unique<VideoStreamer>();
+                }
+            } else {
+                throw InvalidParams("Output streams are not yet supported");
+            }
+        }
+
         if (desc) {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc)) {
