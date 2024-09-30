@@ -114,7 +114,7 @@ namespace ntgcalls {
         return Idling;
     }
 
-    void StreamManager::onStreamEnd(const std::function<void(Device)>& callback) {
+    void StreamManager::onStreamEnd(const std::function<void(Type, Device)>& callback) {
         onEOF = callback;
     }
 

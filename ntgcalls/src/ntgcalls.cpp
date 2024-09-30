@@ -35,10 +35,10 @@ namespace ntgcalls {
     }
 
     void NTgCalls::setupListeners(const int64_t chatId) {
-        connections[chatId]->onStreamEnd([this, chatId](const StreamManager::Device &type) {
-            WORKER("onStreamEnd", updateThread, this, chatId, type)
+        connections[chatId]->onStreamEnd([this, chatId](const StreamManager::Type &type, const StreamManager::Device &device) {
+            WORKER("onStreamEnd", updateThread, this, chatId, type, device)
             THREAD_SAFE
-            (void) onEof(chatId, type);
+            (void) onEof(chatId, type, device);
             END_THREAD_SAFE
             END_WORKER
         });
@@ -167,7 +167,7 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    void NTgCalls::onStreamEnd(const std::function<void(int64_t, StreamManager::Device)>& callback) {
+    void NTgCalls::onStreamEnd(const std::function<void(int64_t, StreamManager::Type, StreamManager::Device)>& callback) {
         std::lock_guard lock(mutex);
         onEof = callback;
     }

@@ -62,7 +62,7 @@ namespace ntgcalls {
 
         Status status(Direction direction);
 
-        void onStreamEnd(const std::function<void(Device)> &callback);
+        void onStreamEnd(const std::function<void(Type, Device)> &callback);
 
         void onUpgrade(const std::function<void(MediaState)> &callback);
 
@@ -77,7 +77,7 @@ namespace ntgcalls {
         std::map<std::pair<Direction, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;
         std::shared_mutex mutex;
-        wrtc::synchronized_callback<Device> onEOF;
+        wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
 
         template<typename SinkType, typename DescriptionType>

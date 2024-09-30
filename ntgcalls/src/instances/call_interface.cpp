@@ -47,7 +47,7 @@ namespace ntgcalls {
         streamManager->setStreamSources(direction, config);
     }
 
-    void CallInterface::onStreamEnd(const std::function<void(StreamManager::Device)>& callback) {
+    void CallInterface::onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)>& callback) {
         std::lock_guard lock(mutex);
         streamManager->onStreamEnd(callback);
     }

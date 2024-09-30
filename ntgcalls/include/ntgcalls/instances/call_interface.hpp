@@ -55,7 +55,7 @@ namespace ntgcalls {
 
         void setStreamSources(StreamManager::Direction direction, const MediaDescription& config) const;
 
-        void onStreamEnd(const std::function<void(StreamManager::Device)> &callback);
+        void onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)> &callback);
 
         void onConnectionChange(const std::function<void(ConnectionState)> &callback);
 
