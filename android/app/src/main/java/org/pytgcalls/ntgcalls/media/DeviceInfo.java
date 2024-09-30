@@ -1,8 +1,8 @@
 package org.pytgcalls.ntgcalls.media;
 
 public class DeviceInfo {
-    public String name;
-    public String metadata;
+    public final String name;
+    public final String metadata;
 
     public DeviceInfo(String name, String metadata) {
         this.name = name;
