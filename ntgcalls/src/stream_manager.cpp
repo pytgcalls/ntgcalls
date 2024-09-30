@@ -198,9 +198,11 @@ namespace ntgcalls {
                         dynamic_cast<BaseStreamer*>(streams[id].get())->sendData(data.get(), rtc::TimeMillis());
                     });
                     readers[device]->onEof([this, id] {
-                        (void) onEOF(id.second);
-                        std::lock_guard lock(mutex);
-                        readers.erase(id.second);
+                        workerThread->PostTask([this, id] {
+                            (void) onEOF(getStreamType(id.second), id.second);
+                            std::lock_guard lock(mutex);
+                            readers.erase(id.second);
+                        });
                     });
                 } else {
                     throw InvalidParams("Output streams are not yet supported");
