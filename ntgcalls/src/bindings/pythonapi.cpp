@@ -52,6 +52,13 @@ PYBIND11_MODULE(ntgcalls, m) {
             .value("OUTPUT", ntgcalls::StreamManager::Direction::Output)
             .export_values();
 
+    py::enum_<ntgcalls::StreamManager::Device>(m, "StreamDevice")
+            .value("MICROPHONE", ntgcalls::StreamManager::Device::Microphone)
+            .value("SPEAKER", ntgcalls::StreamManager::Device::Speaker)
+            .value("CAMERA", ntgcalls::StreamManager::Device::Camera)
+            .value("SCREEN", ntgcalls::StreamManager::Device::Screen)
+            .export_values();
+
     py::enum_<ntgcalls::StreamManager::Status>(m, "StreamStatus")
             .value("ACTIVE", ntgcalls::StreamManager::Status::Active)
             .value("PAUSED", ntgcalls::StreamManager::Status::Paused)
