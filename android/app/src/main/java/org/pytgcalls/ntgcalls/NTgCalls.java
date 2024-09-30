@@ -1,5 +1,7 @@
 package org.pytgcalls.ntgcalls;
 
+import androidx.annotation.RequiresPermission;
+
 import org.pytgcalls.ntgcalls.exceptions.ConnectionException;
 import org.pytgcalls.ntgcalls.exceptions.ConnectionNotFoundException;
 import org.pytgcalls.ntgcalls.media.MediaDescription;
@@ -43,8 +45,10 @@ public class NTgCalls {
 
     private static native String pingNative();
 
+    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     public native void createP2PCall(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
 
+    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     public void createP2PCall(long chatId) throws FileNotFoundException, ConnectionException {
         createP2PCall(chatId, null);
     }
@@ -57,14 +61,17 @@ public class NTgCalls {
 
     public native void connectP2P(long chatId, List<RTCServer> rtcServers, List<String> versions, boolean p2pAllowed) throws ConnectionException;
 
+    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     public native String createCall(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
 
+    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     public String createCall(long chatId) throws FileNotFoundException, ConnectionException {
         return createCall(chatId, null);
     }
 
     public native void connect(long chatId, String params) throws ConnectionException;
 
+    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     public native void setStreamSources(long chatId, StreamMode mode, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionNotFoundException;
 
     public native boolean pause(long chatId) throws ConnectionNotFoundException;
