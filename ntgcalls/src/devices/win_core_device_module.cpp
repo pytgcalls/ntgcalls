@@ -79,11 +79,8 @@ namespace ntgcalls {
     }
 
     void WinCoreDeviceModule::open() {
-        if (!firstRead) {
-            init();
-            thread = std::thread(&WinCoreDeviceModule::runDataListener, this);
-            firstRead = true;
-        }
+        init();
+        thread = std::thread(&WinCoreDeviceModule::runDataListener, this);
     }
 
     void WinCoreDeviceModule::init() {
