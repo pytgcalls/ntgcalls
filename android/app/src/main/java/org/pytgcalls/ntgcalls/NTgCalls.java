@@ -5,7 +5,8 @@ import org.pytgcalls.ntgcalls.exceptions.ConnectionNotFoundException;
 import org.pytgcalls.ntgcalls.media.MediaDescription;
 import org.pytgcalls.ntgcalls.media.MediaDevices;
 import org.pytgcalls.ntgcalls.media.MediaState;
-import org.pytgcalls.ntgcalls.media.StreamStatus;
+import org.pytgcalls.ntgcalls.media.MediaStatus;
+import org.pytgcalls.ntgcalls.media.StreamMode;
 import org.pytgcalls.ntgcalls.p2p.AuthParams;
 import org.pytgcalls.ntgcalls.p2p.DhConfig;
 import org.pytgcalls.ntgcalls.p2p.Protocol;
@@ -64,7 +65,7 @@ public class NTgCalls {
 
     public native void connect(long chatId, String params) throws ConnectionException;
 
-    public native void changeStream(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionNotFoundException;
+    public native void setStreamSources(long chatId, StreamMode mode, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionNotFoundException;
 
     public native boolean pause(long chatId) throws ConnectionNotFoundException;
 
@@ -76,7 +77,7 @@ public class NTgCalls {
 
     public native void stop(long chatId) throws ConnectionNotFoundException;
 
-    public native long time(long chatId) throws ConnectionNotFoundException;
+    public native long time(long chatId, StreamMode mode) throws ConnectionNotFoundException;
 
     public native MediaState getState(long chatId) throws ConnectionNotFoundException;
 
@@ -100,5 +101,5 @@ public class NTgCalls {
 
     public native void sendSignalingData(long chatId, byte[] data) throws ConnectionNotFoundException;
 
-    public native Map<Long, StreamStatus> calls();
+    public native Map<Long, MediaStatus> calls();
 }

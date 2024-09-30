@@ -1,19 +1,13 @@
 package org.pytgcalls.ntgcalls.media;
 
 public class MediaDescription {
-    public AudioDescription audio;
-    public VideoDescription video;
+    public final AudioDescription microphone, speaker;
+    public final VideoDescription camera, screen;
 
-    public MediaDescription(AudioDescription audio, VideoDescription video) {
-        this.audio = audio;
-        this.video = video;
-    }
-
-    public MediaDescription(AudioDescription audio) {
-        this.audio = audio;
-    }
-
-    public MediaDescription(VideoDescription video) {
-        this.video = video;
+    public MediaDescription(AudioDescription microphone, AudioDescription speaker, VideoDescription camera, VideoDescription screen) {
+        this.microphone = microphone;
+        this.speaker = speaker;
+        this.camera = camera;
+        this.screen = screen;
     }
 }

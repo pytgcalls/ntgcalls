@@ -24,13 +24,13 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseMediaState(env, mediaState));
     });
 
-    instance->onStreamEnd([instancePtr](int64_t chatId, ntgcalls::Stream::Type type) {
+    instance->onStreamEnd([instancePtr](int64_t chatId, ntgcalls::StreamManager::Type type, ntgcalls::StreamManager::Device device) {
         auto callback = callbacksInstances[instancePtr].onStreamEndCallback;
         if (!callback) {
             return;
         }
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
-        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseStreamType(env, type));
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseStreamType(env, type), parseJDevice(env, device));
     });
 
     instance->onConnectionChange([instancePtr](int64_t chatId, ntgcalls::CallInterface::ConnectionState state) {
@@ -139,10 +139,10 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_connect(JNIEnv *env,
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_changeStream(JNIEnv *env, jobject thiz, jlong chatId, jobject mediaDescription) {
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_setStreamSources(JNIEnv *env, jobject thiz, jlong chatId, jobject mode, jobject mediaDescription) {
     try {
         auto instance = getInstance(env, thiz);
-        instance->changeStream(static_cast<long>(chatId), parseMediaDescription(env, mediaDescription));
+        instance->setStreamSources(static_cast<long>(chatId), parseStreamMode(env, mode), parseMediaDescription(env, mediaDescription));
     } HANDLE_EXCEPTIONS
 }
 
@@ -191,10 +191,10 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_stop(JNIEnv *env, jo
 }
 
 extern "C"
-JNIEXPORT jlong JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_time(JNIEnv *env, jobject thiz, jlong chatId) {
+JNIEXPORT jlong JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_time(JNIEnv *env, jobject thiz, jlong chatId, jobject mode) {
     try {
         auto instance = getInstance(env, thiz);
-        return static_cast<jlong>(instance->time(static_cast<long>(chatId)));
+        return static_cast<jlong>(instance->time(static_cast<long>(chatId), parseStreamMode(env, mode)));
     } HANDLE_EXCEPTIONS
     return static_cast<jlong>(0);
 }
@@ -242,5 +242,5 @@ JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_getMediaDevices(J
 extern "C"
 JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_calls(JNIEnv *env, jobject thiz) {
     auto instance = getInstance(env, thiz);
-    return parseStreamStatusMap(env, instance->calls());
+    return parseMediaStatusMap(env, instance->calls());
 }

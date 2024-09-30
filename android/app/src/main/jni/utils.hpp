@@ -66,13 +66,19 @@ jobject parseMediaState(JNIEnv *env, ntgcalls::MediaState mediaState);
 
 jobject parseProtocol(JNIEnv *env, const ntgcalls::Protocol& protocol);
 
-jobject parseStreamType(JNIEnv *env, ntgcalls::Stream::Type type);
+jobject parseStreamType(JNIEnv *env, ntgcalls::StreamManager::Type type);
 
 jobject parseConnectionState(JNIEnv *env, ntgcalls::CallInterface::ConnectionState state);
 
-jobject parseStreamStatus(JNIEnv *env, ntgcalls::Stream::Status status);
+jobject parseStreamStatus(JNIEnv *env, ntgcalls::StreamManager::Status status);
 
-jobject parseStreamStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::Stream::Status>& calls);
+jobject parseMediaStatus(JNIEnv *env, const ntgcalls::StreamManager::MediaStatus& status);
+
+jobject parseMediaStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::StreamManager::MediaStatus>& calls);
+
+ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject mode);
+
+jobject parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device);
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 

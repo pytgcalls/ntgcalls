@@ -71,23 +71,33 @@ ntgcalls::MediaDescription parseMediaDescription(JNIEnv *env, jobject mediaDescr
     if (mediaDescription == nullptr) {
         return {
             std::nullopt,
+            std::nullopt,
+            std::nullopt,
             std::nullopt
         };
     }
     jclass mediaDescriptionClass = env->GetObjectClass(mediaDescription);
-    jfieldID audioField = env->GetFieldID(mediaDescriptionClass, "audio", "Lorg/pytgcalls/ntgcalls/media/AudioDescription;");
-    jfieldID videoField = env->GetFieldID(mediaDescriptionClass, "video", "Lorg/pytgcalls/ntgcalls/media/VideoDescription;");
+    jfieldID micField = env->GetFieldID(mediaDescriptionClass, "microphone", "Lorg/pytgcalls/ntgcalls/media/AudioDescription;");
+    jfieldID speakerField = env->GetFieldID(mediaDescriptionClass, "speaker", "Lorg/pytgcalls/ntgcalls/media/AudioDescription;");
+    jfieldID cameraField = env->GetFieldID(mediaDescriptionClass, "camera", "Lorg/pytgcalls/ntgcalls/media/VideoDescription;");
+    jfieldID screenField = env->GetFieldID(mediaDescriptionClass, "screen", "Lorg/pytgcalls/ntgcalls/media/VideoDescription;");
 
-    auto audio = env->GetObjectField(mediaDescription, audioField);
-    auto video = env->GetObjectField(mediaDescription, videoField);
+    auto microphone = env->GetObjectField(mediaDescription, micField);
+    auto speaker = env->GetObjectField(mediaDescription, speakerField);
+    auto camera = env->GetObjectField(mediaDescription, cameraField);
+    auto screen = env->GetObjectField(mediaDescription, screenField);
 
     ntgcalls::MediaDescription result = {
-        audio != nullptr ? std::optional(parseAudioDescription(env, audio)) : std::nullopt,
-        video != nullptr ? std::optional(parseVideoDescription(env, video)) : std::nullopt
+        microphone != nullptr ? std::optional(parseAudioDescription(env, microphone)) : std::nullopt,
+        speaker != nullptr ? std::optional(parseAudioDescription(env, speaker)) : std::nullopt,
+        camera != nullptr ? std::optional(parseVideoDescription(env, camera)) : std::nullopt,
+        screen != nullptr ? std::optional(parseVideoDescription(env, screen)) : std::nullopt
     };
     env->DeleteLocalRef(mediaDescriptionClass);
-    env->DeleteLocalRef(audio);
-    env->DeleteLocalRef(video);
+    env->DeleteLocalRef(microphone);
+    env->DeleteLocalRef(speaker);
+    env->DeleteLocalRef(camera);
+    env->DeleteLocalRef(screen);
     return result;
 }
 
@@ -100,9 +110,6 @@ ntgcalls::BaseMediaDescription::InputMode parseInputMode(jint inputMode) {
         res |= check;
     }
     if (auto check = ntgcalls::BaseMediaDescription::InputMode::FFmpeg;inputMode == check) {
-        res |= check;
-    }
-    if (auto check = ntgcalls::BaseMediaDescription::InputMode::NoLatency;inputMode == check) {
         res |= check;
     }
     if (auto check = ntgcalls::BaseMediaDescription::InputMode::Device;inputMode == check) {
@@ -309,17 +316,17 @@ jobject parseProtocol(JNIEnv *env, const ntgcalls::Protocol &protocol) {
     return result;
 }
 
-jobject parseStreamType(JNIEnv *env, ntgcalls::Stream::Type type) {
+jobject parseStreamType(JNIEnv *env, ntgcalls::StreamManager::Type type) {
     jclass streamTypeClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamType");
     jfieldID audioField = env->GetStaticFieldID(streamTypeClass, "AUDIO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
     jfieldID videoField = env->GetStaticFieldID(streamTypeClass, "VIDEO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
 
     jobject result;
     switch (type) {
-        case ntgcalls::Stream::Type::Audio:
+        case ntgcalls::StreamManager::Type::Audio:
             result = env->GetStaticObjectField(streamTypeClass, audioField);
             break;
-        case ntgcalls::Stream::Type::Video:
+        case ntgcalls::StreamManager::Type::Video:
             result = env->GetStaticObjectField(streamTypeClass, videoField);
             break;
     }
@@ -357,21 +364,21 @@ jobject parseConnectionState(JNIEnv *env, ntgcalls::CallInterface::ConnectionSta
     return result;
 }
 
-jobject parseStreamStatus(JNIEnv *env, ntgcalls::Stream::Status status) {
+jobject parseStreamStatus(JNIEnv *env, ntgcalls::StreamManager::Status status) {
     jclass streamStatusClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamStatus");
-    jfieldID playingField = env->GetStaticFieldID(streamStatusClass, "PLAYING", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
+    jfieldID playingField = env->GetStaticFieldID(streamStatusClass, "ACTIVE", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
     jfieldID pausedField = env->GetStaticFieldID(streamStatusClass, "PAUSED", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
     jfieldID idlingField = env->GetStaticFieldID(streamStatusClass, "IDLING", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
 
     jobject result;
     switch (status) {
-        case ntgcalls::Stream::Status::Playing:
+        case ntgcalls::StreamManager::Status::Active:
             result = env->GetStaticObjectField(streamStatusClass, playingField);
             break;
-        case ntgcalls::Stream::Status::Paused:
+        case ntgcalls::StreamManager::Status::Paused:
             result = env->GetStaticObjectField(streamStatusClass, pausedField);
             break;
-        case ntgcalls::Stream::Status::Idling:
+        case ntgcalls::StreamManager::Status::Idling:
             result = env->GetStaticObjectField(streamStatusClass, idlingField);
             break;
     }
@@ -379,7 +386,19 @@ jobject parseStreamStatus(JNIEnv *env, ntgcalls::Stream::Status status) {
     return result;
 }
 
-jobject parseStreamStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::Stream::Status> &calls) {
+jobject parseMediaStatus(JNIEnv *env, const ntgcalls::StreamManager::MediaStatus &status) {
+    jclass mediaStatusClass = env->FindClass("org/pytgcalls/ntgcalls/media/MediaStatus");
+    jmethodID constructor = env->GetMethodID(mediaStatusClass, "<init>", "(Lorg/pytgcalls/ntgcalls/media/StreamStatus;Lorg/pytgcalls/ntgcalls/media/StreamStatus;)V");
+    jobject capture = parseStreamStatus(env, status.capture);
+    jobject playback = parseStreamStatus(env, status.playback);
+    jobject result = env->NewObject(mediaStatusClass, constructor, capture, playback);
+    env->DeleteLocalRef(mediaStatusClass);
+    env->DeleteLocalRef(capture);
+    env->DeleteLocalRef(playback);
+    return result;
+}
+
+jobject parseMediaStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::StreamManager::MediaStatus> &calls) {
     jclass mapClass = env->FindClass("java/util/HashMap");
     jmethodID mapConstructor = env->GetMethodID(mapClass, "<init>", "()V");
     jobject hashMap = env->NewObject(mapClass, mapConstructor);
@@ -389,7 +408,7 @@ jobject parseStreamStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::Stre
     jmethodID longConstructor = env->GetMethodID(longClass, "<init>", "(J)V");
     for (auto const& [key, val] : calls) {
         jobject longKey = env->NewObject(longClass, longConstructor, static_cast<jlong>(key));
-        jobject status = parseStreamStatus(env, val);
+        jobject status = parseMediaStatus(env, val);
         env->CallObjectMethod(hashMap, putMethod, longKey, status);
         env->DeleteLocalRef(longKey);
         env->DeleteLocalRef(status);
@@ -430,6 +449,52 @@ jobject parseDeviceInfo(JNIEnv *env, const ntgcalls::DeviceInfo& device) {
     jmethodID constructor = env->GetMethodID(deviceInfoClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
     jobject result = env->NewObject(deviceInfoClass, constructor, parseJString(env, device.name), parseJString(env, device.metadata));
     env->DeleteLocalRef(deviceInfoClass);
+    return result;
+}
+
+ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject device) {
+    jclass streamDeviceClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamMode");
+    jfieldID captureField = env->GetStaticFieldID(streamDeviceClass, "CAPTURE", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
+    jfieldID playbackField = env->GetStaticFieldID(streamDeviceClass, "PLAYBACK", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
+    jobject playback = env->GetStaticObjectField(streamDeviceClass, playbackField);
+    jobject capture = env->GetStaticObjectField(streamDeviceClass, captureField);
+
+    ntgcalls::StreamManager::Mode result = ntgcalls::StreamManager::Mode::Capture;
+    if (env->IsSameObject(device, capture)) {
+        result = ntgcalls::StreamManager::Mode::Capture;
+    } else if (env->IsSameObject(device, playback)) {
+        result = ntgcalls::StreamManager::Mode::Playback;
+    }
+
+    env->DeleteLocalRef(streamDeviceClass);
+    env->DeleteLocalRef(playback);
+    env->DeleteLocalRef(capture);
+    return result;
+}
+
+jobject parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device) {
+    jclass streamDeviceClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamDevice");
+    jfieldID microphoneField = env->GetStaticFieldID(streamDeviceClass, "MICROPHONE", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+    jfieldID speakerField = env->GetStaticFieldID(streamDeviceClass, "SPEAKER", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+    jfieldID cameraField = env->GetStaticFieldID(streamDeviceClass, "CAMERA", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+    jfieldID screenField = env->GetStaticFieldID(streamDeviceClass, "SCREEN", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+
+    jobject result;
+    switch (device) {
+        case ntgcalls::StreamManager::Device::Microphone:
+            result = env->GetStaticObjectField(streamDeviceClass, microphoneField);
+            break;
+        case ntgcalls::StreamManager::Device::Speaker:
+            result = env->GetStaticObjectField(streamDeviceClass, speakerField);
+            break;
+        case ntgcalls::StreamManager::Device::Camera:
+            result = env->GetStaticObjectField(streamDeviceClass, cameraField);
+            break;
+        case ntgcalls::StreamManager::Device::Screen:
+            result = env->GetStaticObjectField(streamDeviceClass, screenField);
+            break;
+    }
+    env->DeleteLocalRef(streamDeviceClass);
     return result;
 }
 
