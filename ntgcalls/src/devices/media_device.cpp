@@ -65,9 +65,6 @@ namespace ntgcalls {
             adm = std::make_unique<WinCoreDeviceModule>(desc, true);
         }
 #endif
-        if (adm) {
-            return std::make_unique<InputDevice>(std::move(adm), bufferSize);
-        }
         throw MediaDeviceError("Unsupported platform for audio device");
     }
 } // ntgcalls
