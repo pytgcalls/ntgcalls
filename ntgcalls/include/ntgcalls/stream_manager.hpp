@@ -27,11 +27,11 @@ namespace ntgcalls {
         };
 
         struct MediaStatus {
-            Status playback, recording;
+            Status playback, capture;
         };
 
         enum Mode {
-            Recording,
+            Capture,
             Playback,
         };
 

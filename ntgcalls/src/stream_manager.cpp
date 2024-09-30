@@ -185,7 +185,7 @@ namespace ntgcalls {
                     streams[id] = std::make_unique<VideoStreamer>();
                 }
             } else {
-                throw InvalidParams("Recording streams are not yet supported");
+                throw InvalidParams("Capture streams are not yet supported");
             }
         }
 
@@ -205,7 +205,7 @@ namespace ntgcalls {
                         });
                     });
                 } else {
-                    throw InvalidParams("Recording streams are not yet supported");
+                    throw InvalidParams("Capture streams are not yet supported");
                 }
             }
         } else if (mode == Playback) {

@@ -48,7 +48,7 @@ PYBIND11_MODULE(ntgcalls, m) {
             .export_values();
 
     py::enum_<ntgcalls::StreamManager::Mode>(m, "StreamMode")
-            .value("RECORDING", ntgcalls::StreamManager::Mode::Recording)
+            .value("CAPTURE", ntgcalls::StreamManager::Mode::Capture)
             .value("PLAYBACK", ntgcalls::StreamManager::Mode::Playback)
             .export_values();
 
@@ -99,7 +99,7 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::StreamManager::MediaStatus>(m, "MediaStatus")
             .def_readonly("playback", &ntgcalls::StreamManager::MediaStatus::playback)
-            .def_readonly("recording", &ntgcalls::StreamManager::MediaStatus::recording);
+            .def_readonly("capture", &ntgcalls::StreamManager::MediaStatus::capture);
 
     py::class_<ntgcalls::DeviceInfo>(m, "DeviceInfo")
             .def_readonly("name", &ntgcalls::DeviceInfo::name)

@@ -218,7 +218,7 @@ namespace ntgcalls {
         for (const auto& [fst, snd] : connections) {
             statusList.emplace(fst, StreamManager::MediaStatus{
                 snd->status(StreamManager::Mode::Playback),
-                snd->status(StreamManager::Mode::Recording)
+                snd->status(StreamManager::Mode::Capture)
             });
         }
         return statusList;
