@@ -11,8 +11,11 @@
 
 namespace ntgcalls {
 
-    WinCoreDeviceModule::WinCoreDeviceModule(const AudioDescription* desc, const bool isCapture):
-        BaseDeviceModule(desc, isCapture), comInitializer(webrtc::ScopedCOMInitializer::kMTA), mmcssRegistration(L"Pro Audio")
+    WinCoreDeviceModule::WinCoreDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink *sink):
+        BaseDeviceModule(desc, isCapture),
+        BaseReader(sink),
+        comInitializer(webrtc::ScopedCOMInitializer::kMTA),
+        mmcssRegistration(L"Pro Audio")
     {
         RTC_DCHECK(comInitializer.Succeeded());
         RTC_DCHECK(mmcssRegistration.Succeeded());
@@ -35,17 +38,15 @@ namespace ntgcalls {
         }
     }
 
-    bytes::unique_binary WinCoreDeviceModule::read(int64_t size) {
-        if (!firstRead) {
-            init();
-            thread = std::thread(&WinCoreDeviceModule::runDataListener, this);
-            firstRead = true;
-            return {};
+    WinCoreDeviceModule::~WinCoreDeviceModule() {
+        SetEvent(stopEvent.Get());
+        if (thread.joinable()) {
+            thread.join();
         }
-        if (!buffer) {
-            return {};
-        }
-        return std::move(buffer);
+        ResetEvent(stopEvent.Get());
+        ResetEvent(restartEvent.Get());
+        ResetEvent(audioSamplesEvent.Get());
+        stop();
     }
 
     bool WinCoreDeviceModule::isSupported() {
@@ -77,15 +78,12 @@ namespace ntgcalls {
         return devices;
     }
 
-    void WinCoreDeviceModule::close() {
-        SetEvent(stopEvent.Get());
-        if (thread.joinable()) {
-            thread.join();
+    void WinCoreDeviceModule::open() {
+        if (!firstRead) {
+            init();
+            thread = std::thread(&WinCoreDeviceModule::runDataListener, this);
+            firstRead = true;
         }
-        ResetEvent(stopEvent.Get());
-        ResetEvent(restartEvent.Get());
-        ResetEvent(audioSamplesEvent.Get());
-        stop();
     }
 
     void WinCoreDeviceModule::init() {
@@ -301,7 +299,7 @@ namespace ntgcalls {
     }
 
     // ReSharper disable once CppDFAUnreachableFunctionCall
-    bool WinCoreDeviceModule::handleDataEvent() {
+    bool WinCoreDeviceModule::handleDataEvent() const {
         if (!isInitialized) {
             return false;
         }
@@ -330,8 +328,9 @@ namespace ntgcalls {
                 rtc::ExplicitZeroMemory(audioData, format.Format.nBlockAlign * numFramesToRead);
                 RTC_DLOG(LS_WARNING) << "Captured audio is replaced by silence";
             } else {
-                buffer = bytes::make_unique_binary(format.Format.nBlockAlign * numFramesToRead);
+                auto buffer = bytes::make_unique_binary(format.Format.nBlockAlign * numFramesToRead);
                 memcpy(buffer.get(), audioData, format.Format.nBlockAlign * numFramesToRead);
+                dataCallback(std::move(buffer));
             }
             error = audioCaptureClient->ReleaseBuffer(numFramesToRead);
             if (FAILED(error.Error())) {

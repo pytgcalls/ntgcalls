@@ -62,7 +62,7 @@ namespace ntgcalls {
 #elif IS_WINDOWS
         if (WinCoreDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using Windows Core Audio module for input";
-            adm = std::make_unique<WinCoreDeviceModule>(desc, true);
+            return std::make_unique<WinCoreDeviceModule>(desc, true, sink);
         }
 #endif
         throw MediaDeviceError("Unsupported platform for audio device");

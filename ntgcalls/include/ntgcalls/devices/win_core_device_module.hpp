@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <ntgcalls/io/base_reader.hpp>
 
 #ifdef IS_WINDOWS
 #include <ntgcalls/devices/base_device_module.hpp>
@@ -15,7 +16,7 @@ namespace ntgcalls {
     using Microsoft::WRL::ComPtr;
     using namespace webrtc::webrtc_win;
 
-    class WinCoreDeviceModule final: public BaseDeviceModule, public IAudioSessionEvents {
+    class WinCoreDeviceModule final: public BaseDeviceModule, public BaseReader, public IAudioSessionEvents {
         ScopedHandle audioSamplesEvent, restartEvent, stopEvent;
         WAVEFORMATEXTENSIBLE format = {};
         uint32_t endpointBufferSizeFrames = 0;
@@ -31,7 +32,6 @@ namespace ntgcalls {
         std::string deviceUID;
         ComPtr<IAudioCaptureClient> audioCaptureClient;
         ComPtr<IAudioRenderClient> audioRenderClient;
-        bytes::unique_binary buffer = nullptr;
 
         void init();
 
@@ -45,7 +45,7 @@ namespace ntgcalls {
 
         void switchDevice();
 
-        bool handleDataEvent();
+        bool handleDataEvent() const;
 
         HRESULT QueryInterface(const IID& riid, void** ppvObject) override;
 
@@ -68,15 +68,15 @@ namespace ntgcalls {
         HRESULT OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) override;
 
     public:
-        explicit WinCoreDeviceModule(const AudioDescription* desc, bool isCapture);
+        explicit WinCoreDeviceModule(const AudioDescription* desc, bool isCapture, BaseSink *sink);
 
-        [[nodiscard]] bytes::unique_binary read(int64_t size) override;
+        ~WinCoreDeviceModule() override;
 
         static bool isSupported();
 
         static std::vector<DeviceInfo> getDevices();
 
-        void close() override;
+        void open() override;
     };
 
 } // ntgcalls
