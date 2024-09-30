@@ -244,3 +244,9 @@ JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_calls(JNIEnv *env
     auto instance = getInstance(env, thiz);
     return parseMediaStatusMap(env, instance->calls());
 }
+
+extern "C"
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaAudioDeviceModule_onRecordedData(JNIEnv *env, jobject thiz, jbyteArray data) {
+    auto instance = getInstanceAudioCapture(env, thiz);
+    instance->onRecordedData(std::move(parseUniqueBinary(env, data)));
+}

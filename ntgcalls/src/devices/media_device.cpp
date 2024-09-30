@@ -15,6 +15,7 @@
 #elif IS_ANDROID
 #include <wrtc/utils/java_context.hpp>
 #include <ntgcalls/devices/open_sles_device_module.hpp>
+#include <ntgcalls/devices/java_audio_device_module.hpp>
 #endif
 
 namespace ntgcalls {
@@ -68,11 +69,12 @@ namespace ntgcalls {
             return std::make_unique<WinCoreDeviceModule>(desc, true, sink);
         }
 #elif IS_ANDROID
-        auto jniEnv = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        if (OpenSLESDeviceModule::isSupported(jniEnv, true)) {
+        if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), true)) {
             RTC_LOG(LS_INFO) << "Using OpenSLES module for input";
             return std::make_unique<OpenSLESDeviceModule>(desc, true, sink);
         }
+        RTC_LOG(LS_ERROR) << "Using JavaAudio module for input";
+        return std::make_unique<JavaAudioDeviceModule>(desc, true, sink);
 #endif
         throw MediaDeviceError("Unsupported platform for audio device");
     }

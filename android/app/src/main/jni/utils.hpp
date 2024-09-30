@@ -7,6 +7,7 @@
 #include <jni.h>
 #include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/devices/java_audio_device_module.hpp>
 
 struct JavaCallback {
     jobject callback;
@@ -21,6 +22,8 @@ struct InstanceCallbacks {
 };
 
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj);
+
+ntgcalls::JavaAudioDeviceModule* getInstanceAudioCapture(JNIEnv *env, jobject obj);
 
 jlong getInstancePtr(JNIEnv *env, jobject obj);
 
@@ -45,6 +48,8 @@ jstring parseJString(JNIEnv *env, const std::string& string);
 bytes::vector parseByteArray(JNIEnv *env, jbyteArray byteArray);
 
 jbyteArray parseJByteArray(JNIEnv *env, const bytes::vector& byteArray);
+
+bytes::unique_binary parseUniqueBinary(JNIEnv *env, jbyteArray byteArray);
 
 bytes::binary parseBinary(JNIEnv *env, jbyteArray byteArray);
 

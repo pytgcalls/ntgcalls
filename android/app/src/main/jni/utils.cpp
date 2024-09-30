@@ -8,6 +8,14 @@ ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj) {
     return nullptr;
 }
 
+ntgcalls::JavaAudioDeviceModule* getInstanceAudioCapture(JNIEnv *env, jobject obj) {
+    auto ptr = getInstancePtr(env, obj);
+    if (ptr != 0) {
+        return reinterpret_cast<ntgcalls::JavaAudioDeviceModule*>(ptr);
+    }
+    return nullptr;
+}
+
 jlong getInstancePtr(JNIEnv *env, jobject obj) {
     jclass clazz = env->GetObjectClass(obj);
     jlong ptr = env->GetLongField(obj,  env->GetFieldID(clazz, "nativePointer", "J"));
@@ -186,6 +194,18 @@ bytes::binary parseBinary(JNIEnv *env, jbyteArray byteArray) {
 jbyteArray parseJBinary(JNIEnv *env, const bytes::binary& binary) {
     jbyteArray result = env->NewByteArray( static_cast<jsize>(binary.size()));
     env->SetByteArrayRegion(result, 0,  static_cast<jsize>(binary.size()), reinterpret_cast<const jbyte*>(binary.data()));
+    return result;
+}
+
+bytes::unique_binary parseUniqueBinary(JNIEnv *env, jbyteArray byteArray) {
+    if (byteArray == nullptr) {
+        return {};
+    }
+    jsize length = env->GetArrayLength(byteArray);
+    auto byteBuffer =  (uint8_t *) env->GetByteArrayElements(byteArray, nullptr);
+    auto result = bytes::make_unique_binary(length);
+    memcpy(result.get(), byteBuffer, length);
+    env->ReleaseByteArrayElements(byteArray, (jbyte *) byteBuffer, JNI_ABORT);
     return result;
 }
 
