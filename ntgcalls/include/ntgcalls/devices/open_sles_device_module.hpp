@@ -3,15 +3,14 @@
 //
 
 #pragma once
-#include <ntgcalls/io/base_reader.hpp>
-
 
 #ifdef IS_ANDROID
 #include <jni.h>
 #include <SLES/OpenSLES_Android.h>
 #include <api/scoped_refptr.h>
-#include <sdk/android/src/jni/audio_device/opensles_common.h>
+#include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/devices/base_device_module.hpp>
+#include <sdk/android/src/jni/audio_device/opensles_common.h>
 
 namespace ntgcalls {
     using namespace webrtc::jni;
@@ -21,6 +20,12 @@ namespace ntgcalls {
         int bufferIndex = 0;
         std::unique_ptr<bytes::unique_binary[]> audioBuffers;
         std::mutex mutex;
+        SLEngineItf engine = nullptr;
+        rtc::scoped_refptr<OpenSLEngineManager> engineManager;
+        SLDataFormat_PCM pcmFormat{};
+        ScopedSLObjectItf recorderObject;
+        SLRecordItf recorder = nullptr;
+        SLAndroidSimpleBufferQueueItf simpleBufferQueue = nullptr;
 
         void initRecording();
 
@@ -31,13 +36,6 @@ namespace ntgcalls {
         void enqueueBuffer();
 
     public:
-        SLEngineItf engine = nullptr;
-        rtc::scoped_refptr<OpenSLEngineManager> engineManager;
-        SLDataFormat_PCM pcmFormat{};
-        ScopedSLObjectItf recorderObject;
-        SLRecordItf recorder = nullptr;
-        SLAndroidSimpleBufferQueueItf simpleBufferQueue = nullptr;
-
         OpenSLESDeviceModule(const AudioDescription* desc, bool isCapture, BaseSink* sink);
 
         ~OpenSLESDeviceModule() override;
