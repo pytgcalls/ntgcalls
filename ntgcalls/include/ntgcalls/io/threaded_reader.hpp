@@ -18,6 +18,7 @@ namespace ntgcalls {
         size_t activeBufferCount = 0;
         std::condition_variable cv;
         std::mutex mtx;
+        std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
 
     public:
         explicit ThreadedReader(BaseSink *sink, size_t bufferCount = 2);

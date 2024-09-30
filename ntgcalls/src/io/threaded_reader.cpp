@@ -30,8 +30,9 @@ namespace ntgcalls {
                         activeBufferCount++;
                         while (running) {
                             std::unique_lock lock(mtx);
+                            bytes::unique_binary data;
                             try {
-                                dataCallback(std::move(read(frameSize)));
+                                data = std::move(read(frameSize));
                             } catch (...) {
                                 break;
                             }
@@ -39,10 +40,14 @@ namespace ntgcalls {
                                 return !running || activeBuffer == i;
                             });
                             if (!running) break;
+                            if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
+                                std::this_thread::sleep_for(waitTime);
+                            }
+                            dataCallback(std::move(data));
+                            lastTime = std::chrono::high_resolution_clock::now();
                             activeBuffer = (activeBuffer + 1) % bufferThreads.size();
                             lock.unlock();
                             cv.notify_all();
-                            std::this_thread::sleep_for(frameTime);
                         }
                         activeBufferCount--;
                         if (activeBufferCount == 0) {
