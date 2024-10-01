@@ -46,6 +46,8 @@ namespace ntgcalls {
 
         ~StreamManager();
 
+        void enableVideoSimulcast(bool enable);
+
         void setStreamSources(Mode mode, const MediaDescription& desc);
 
         MediaState getState();
@@ -70,9 +72,11 @@ namespace ntgcalls {
 
         void start();
 
+        bool hasDevice(Mode mode, Device device) const;
+
     private:
         rtc::Thread* workerThread;
-        bool initialized = false, hasVideo = false, mixVideoSource = false;
+        bool initialized = false, videoSimulcast = true;
         std::map<std::pair<Mode, Device>, std::unique_ptr<BaseSink>> streams;
         std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;

@@ -25,6 +25,10 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
 
+    void StreamManager::enableVideoSimulcast(const bool enable) {
+       videoSimulcast = enable;
+    }
+
     void StreamManager::setStreamSources(const Mode mode, const MediaDescription& desc) {
         RTC_LOG(LS_INFO) << "Setting Configuration, Acquiring lock";
         std::lock_guard lock(mutex);
@@ -35,17 +39,17 @@ namespace ntgcalls {
         setConfig<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
         setConfig<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
 
-        const bool wasVideo = hasVideo;
-        if (mode == Playback) hasVideo = desc.camera || desc.screen;
+        const bool wasCamera = hasDevice(mode, Camera);
+        const bool wasScreen = hasDevice(mode, Screen);
 
-        if (mixVideoSource && desc.camera && desc.screen) {
+        if (!videoSimulcast && desc.camera && desc.screen) {
             throw InvalidParams("Cannot mix camera and screen sources");
         }
 
         setConfig<VideoSink, VideoDescription>(mode, Camera, desc.camera);
         setConfig<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
-        if (mode == Playback && (wasVideo != hasVideo || wasIdling) && initialized) {
+        if (mode == Playback && (wasCamera != hasDevice(mode, Camera) || wasScreen != hasDevice(mode, Screen) || wasIdling) && initialized) {
             checkUpgrade();
         }
 
@@ -66,10 +70,12 @@ namespace ntgcalls {
                 break;
             }
         }
+        const auto paused = isPaused();
         return MediaState{
             muted,
-            isPaused() || muted,
-            !hasVideo
+            (paused || muted),
+            !hasDevice(Playback, Camera) && !hasDevice(Playback, Screen),
+            (paused || muted),
         };
     }
 
@@ -128,6 +134,13 @@ namespace ntgcalls {
         for (const auto& [key, reader] : readers) {
             reader->open();
         }
+    }
+
+    bool StreamManager::hasDevice(const Mode mode, const Device device) const {
+        if (mode == Playback) {
+            return readers.contains(device);
+        }
+        return false;
     }
 
     bool StreamManager::updateMute(const bool isMuted) {
@@ -215,8 +228,12 @@ namespace ntgcalls {
             if (sink && sink->setConfig(desc)) {
                 if (mode == Playback) {
                     readers[device] = MediaReaderFactory::fromInput(desc.value(), streams[id].get());
-                    readers[device]->onData([this, id](const bytes::unique_binary& data) {
-                        dynamic_cast<BaseStreamer*>(streams[id].get())->sendData(data.get(), rtc::TimeMillis());
+                    std::pair streamId(mode, device);
+                    if (!videoSimulcast && (device == Camera || device == Screen)) {
+                        streamId = std::make_pair(mode, Camera);
+                    }
+                    readers[device]->onData([this, streamId](const bytes::unique_binary& data) {
+                        dynamic_cast<BaseStreamer*>(streams[streamId].get())->sendData(data.get(), rtc::TimeMillis());
                     });
                     readers[device]->onEof([this, id] {
                         workerThread->PostTask([this, id] {
