@@ -164,6 +164,7 @@ namespace ntgcalls {
     bool StreamManager::updatePause(const bool isPaused) {
         std::lock_guard lock(mutex);
         auto res = false;
+        // ReSharper disable once CppUseElementsView
         for (const auto& [key, reader] : readers) {
             if (reader->set_enabled(!isPaused)) {
                 res = true;
@@ -176,8 +177,8 @@ namespace ntgcalls {
     }
 
     bool StreamManager::isPaused() {
-        std::lock_guard lock(mutex);
         auto res = false;
+        // ReSharper disable once CppUseElementsView
         for (const auto& [key, reader] : readers) {
             if (!reader->is_enabled()) {
                 res = true;
@@ -208,7 +209,10 @@ namespace ntgcalls {
 
     template <typename SinkType, typename DescriptionType>
     void StreamManager::setConfig(Mode mode, Device device, const std::optional<DescriptionType>& desc) {
-        const std::pair id(mode, device);
+        std::pair id(mode, device);
+        if (!videoSimulcast && (device == Camera || device == Screen)) {
+            id = std::make_pair(mode, Camera);
+        }
         const auto streamType = getStreamType(device);
 
         if (!streams.contains(id)) {
@@ -228,18 +232,14 @@ namespace ntgcalls {
             if (sink && sink->setConfig(desc)) {
                 if (mode == Playback) {
                     readers[device] = MediaReaderFactory::fromInput(desc.value(), streams[id].get());
-                    std::pair streamId(mode, device);
-                    if (!videoSimulcast && (device == Camera || device == Screen)) {
-                        streamId = std::make_pair(mode, Camera);
-                    }
-                    readers[device]->onData([this, streamId](const bytes::unique_binary& data) {
-                        dynamic_cast<BaseStreamer*>(streams[streamId].get())->sendData(data.get(), rtc::TimeMillis());
+                    readers[device]->onData([this, id](const bytes::unique_binary& data) {
+                        dynamic_cast<BaseStreamer*>(streams[id].get())->sendData(data.get(), rtc::TimeMillis());
                     });
-                    readers[device]->onEof([this, id] {
-                        workerThread->PostTask([this, id] {
-                            (void) onEOF(getStreamType(id.second), id.second);
+                    readers[device]->onEof([this, device] {
+                        workerThread->PostTask([this, device] {
+                            (void) onEOF(getStreamType(device), device);
                             std::lock_guard lock(mutex);
-                            readers.erase(id.second);
+                            readers.erase(device);
                         });
                     });
                 } else {
