@@ -18,7 +18,6 @@ namespace ntgcalls {
     StreamManager::~StreamManager() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
         onEOF = nullptr;
-        idling = false;
         readers.clear();
         streams.clear();
         tracks.clear();
@@ -31,14 +30,17 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         RTC_LOG(LS_INFO) << "Setting Configuration, Lock acquired";
 
-        const bool wasIdling = idling;
-        if (mode == Playback) idling = false;
+        const bool wasIdling = isPaused();
 
         setConfig<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
         setConfig<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
 
         const bool wasVideo = hasVideo;
         if (mode == Playback) hasVideo = desc.camera || desc.screen;
+
+        if (mixVideoSource && desc.camera && desc.screen) {
+            throw InvalidParams("Cannot mix camera and screen sources");
+        }
 
         setConfig<VideoSink, VideoDescription>(mode, Camera, desc.camera);
         setConfig<VideoSink, VideoDescription>(mode, Screen, desc.screen);
@@ -66,23 +68,17 @@ namespace ntgcalls {
         }
         return MediaState{
             muted,
-            idling || muted,
+            isPaused() || muted,
             !hasVideo
         };
     }
 
     bool StreamManager::pause() {
-        std::lock_guard lock(mutex);
-        const auto res = std::exchange(idling, true);
-        checkUpgrade();
-        return !res;
+        return updatePause(true);
     }
 
     bool StreamManager::resume() {
-        std::lock_guard lock(mutex);
-        const auto res = std::exchange(idling, false);
-        checkUpgrade();
-        return res;
+        return updatePause(false);
     }
 
     bool StreamManager::mute() {
@@ -108,7 +104,7 @@ namespace ntgcalls {
     StreamManager::Status StreamManager::status(const Mode mode) {
         std::shared_lock lock(mutex);
         if (mode == Playback) {
-            return readers.empty() ? Idling : idling ? Paused : Active;
+            return readers.empty() ? Idling : isPaused() ? Paused : Active;
         }
         // TODO: Implement input status
         return Idling;
@@ -150,6 +146,31 @@ namespace ntgcalls {
             checkUpgrade();
         }
         return changed;
+    }
+
+    bool StreamManager::updatePause(const bool isPaused) {
+        std::lock_guard lock(mutex);
+        auto res = false;
+        for (const auto& [key, reader] : readers) {
+            if (reader->set_enabled(!isPaused)) {
+                res = true;
+            }
+        }
+        if (res) {
+            checkUpgrade();
+        }
+        return res;
+    }
+
+    bool StreamManager::isPaused() {
+        std::lock_guard lock(mutex);
+        auto res = false;
+        for (const auto& [key, reader] : readers) {
+            if (!reader->is_enabled()) {
+                res = true;
+            }
+        }
+        return res;
     }
 
     StreamManager::Type StreamManager::getStreamType(const Device device) {

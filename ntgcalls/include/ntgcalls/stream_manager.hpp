@@ -72,7 +72,7 @@ namespace ntgcalls {
 
     private:
         rtc::Thread* workerThread;
-        bool idling = false, initialized = false, hasVideo = false;
+        bool initialized = false, hasVideo = false, mixVideoSource = false;
         std::map<std::pair<Mode, Device>, std::unique_ptr<BaseSink>> streams;
         std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;
@@ -86,6 +86,10 @@ namespace ntgcalls {
         void checkUpgrade();
 
         bool updateMute(bool isMuted);
+
+        bool updatePause(bool isPaused);
+
+        bool isPaused();
 
         static Type getStreamType(Device device);
     };

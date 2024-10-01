@@ -18,4 +18,12 @@ namespace ntgcalls {
     void BaseReader::onData(const std::function<void(bytes::unique_binary)>& callback) {
         dataCallback = callback;
     }
+
+    bool BaseReader::set_enabled(const bool status) {
+        return !std::exchange(enabled, status);
+    }
+
+    bool BaseReader::is_enabled() const {
+        return enabled;
+    }
 } // ntgcalls

@@ -37,7 +37,7 @@ namespace ntgcalls {
                                 break;
                             }
                             cv.wait(lock, [this, i] {
-                                return !running || activeBuffer == i;
+                                return (!running || activeBuffer == i) && enabled;
                             });
                             if (!running) break;
                             if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
@@ -59,5 +59,11 @@ namespace ntgcalls {
                 )
             );
         }
+    }
+
+    bool ThreadedReader::set_enabled(const bool status) {
+        const auto res = BaseReader::set_enabled(status);
+        cv.notify_all();
+        return res;
     }
 } // ntgcalls

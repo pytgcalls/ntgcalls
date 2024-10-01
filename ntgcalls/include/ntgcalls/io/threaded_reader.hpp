@@ -32,6 +32,8 @@ namespace ntgcalls {
 
     public:
         void open() override;
+
+        bool set_enabled(bool status) override;
     };
 
 } // ntgcalls
