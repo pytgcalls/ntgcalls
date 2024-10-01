@@ -24,7 +24,7 @@ namespace ntgcalls {
     void P2PCall::init(const MediaDescription &media) {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);
-        streamManager->setVideoMix(true);
+        streamManager->enableVideoSimulcast(false);
         streamManager->setStreamSources(StreamManager::Mode::Playback, media);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
     }
