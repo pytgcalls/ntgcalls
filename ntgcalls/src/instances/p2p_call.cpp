@@ -361,13 +361,23 @@ namespace ntgcalls {
         }
         signaling::MediaStateMessage message;
         message.isMuted = mediaState.muted;
-        if (mediaState.videoStopped) {
+
+        if (!streamManager->hasDevice(StreamManager::Playback, StreamManager::Camera)) {
             message.videoState = signaling::MediaStateMessage::VideoState::Inactive;
         } else if (mediaState.videoPaused) {
             message.videoState = signaling::MediaStateMessage::VideoState::Suspended;
         } else {
             message.videoState = signaling::MediaStateMessage::VideoState::Active;
         }
+
+        if (!streamManager->hasDevice(StreamManager::Playback, StreamManager::Screen)) {
+            message.screencastState = signaling::MediaStateMessage::VideoState::Inactive;
+        } else if (mediaState.screencastPaused) {
+            message.screencastState = signaling::MediaStateMessage::VideoState::Suspended;
+        } else {
+            message.screencastState = signaling::MediaStateMessage::VideoState::Active;
+        }
+
         RTC_LOG(LS_INFO) << "Sending media state: " << bytes::to_string(message.serialize());
         connection->sendDataChannelMessage(message.serialize());
     }
