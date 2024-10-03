@@ -107,7 +107,7 @@ PYBIND11_MODULE(ntgcalls, m) {
         .def_readonly("muted", &ntgcalls::MediaState::muted)
         .def_readonly("video_stopped", &ntgcalls::MediaState::videoStopped)
         .def_readonly("video_paused", &ntgcalls::MediaState::videoPaused)
-        .def_readonly("screencast_paused", &ntgcalls::MediaState::screencastPaused);
+        .def_readonly("presentation_paused", &ntgcalls::MediaState::presentationPaused);
 
     py::class_<ntgcalls::StreamManager::MediaStatus>(m, "MediaStatus")
         .def_readonly("playback", &ntgcalls::StreamManager::MediaStatus::playback)

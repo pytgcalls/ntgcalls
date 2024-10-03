@@ -372,7 +372,7 @@ namespace ntgcalls {
 
         if (!streamManager->hasDevice(StreamManager::Playback, StreamManager::Screen)) {
             message.screencastState = signaling::MediaStateMessage::VideoState::Inactive;
-        } else if (mediaState.screencastPaused) {
+        } else if (mediaState.presentationPaused) {
             message.screencastState = signaling::MediaStateMessage::VideoState::Suspended;
         } else {
             message.screencastState = signaling::MediaStateMessage::VideoState::Active;

@@ -10,7 +10,7 @@ namespace ntgcalls {
         bool muted;
         bool videoPaused;
         bool videoStopped;
-        bool screencastPaused;
+        bool presentationPaused;
     };
 
 } // ntgcalls
