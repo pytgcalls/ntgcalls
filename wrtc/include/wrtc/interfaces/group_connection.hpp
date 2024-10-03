@@ -9,7 +9,6 @@
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/models/response_payload.hpp>
-#include <wrtc/models/simulcast_layer.hpp>
 
 namespace wrtc {
     using nlohmann::json;

@@ -6,6 +6,7 @@
 #include <p2p/client/basic_port_allocator.h>
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
+#include <wrtc/models/simulcast_layer.hpp>
 
 namespace wrtc {
     GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation) {
