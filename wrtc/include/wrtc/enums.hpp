@@ -4,12 +4,7 @@
 
 #pragma once
 
-#include <cstdint>
-
 namespace wrtc {
-    typedef uint32_t SSRC;
-    typedef int32_t TgSSRC;
-
     enum class IceState: int {
         Unknown,
         New,
