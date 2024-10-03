@@ -28,6 +28,10 @@ namespace wrtc {
         using BaseRTCException::BaseRTCException;
     };
 
+    class TransportParseException final : public BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     RTCException wrapRTCError(const webrtc::RTCError &error);
 
     SdpParseException wrapSdpParseError(const webrtc::SdpParseError &error);
