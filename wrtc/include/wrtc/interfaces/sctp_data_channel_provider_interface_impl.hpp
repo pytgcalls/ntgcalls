@@ -23,6 +23,7 @@ namespace wrtc {
         bool isSctpTransportStarted = false;
 
         synchronized_callback<bool> onStateChangedCallback;
+        synchronized_callback<void> onClosedCallback;
 
     public:
         SctpDataChannelProviderInterfaceImpl(
@@ -59,9 +60,11 @@ namespace wrtc {
         void OnChannelClosing(int channel_id) override {}
         void OnChannelClosed(int channel_id) override{}
         void OnChannelStateChanged(webrtc::SctpDataChannel* data_channel, webrtc::DataChannelInterface::DataState state) override{}
-        void OnTransportClosed(webrtc::RTCError error) override{}
+        void OnTransportClosed(webrtc::RTCError) override;
 
         void onStateChanged(const std::function<void(bool)>& callback);
+
+        void onClosed(const std::function<void()>& callback);
 
         void OnBufferedAmountLow(int channel_id) override {}
         size_t buffered_amount(webrtc::StreamId sid) const override { return 0; }
