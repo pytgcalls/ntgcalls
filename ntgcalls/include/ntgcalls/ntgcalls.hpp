@@ -66,6 +66,8 @@ namespace ntgcalls {
 
         ASYNC_RETURN(std::string) createCall(int64_t chatId, const MediaDescription& media);
 
+        ASYNC_RETURN(std::string) initPresentation(int64_t chatId);
+
         ASYNC_RETURN(void) connect(int64_t chatId, const std::string& params, bool isPresentation);
 
         ASYNC_RETURN(void) setStreamSources(int64_t chatId, StreamManager::Mode mode, const MediaDescription& media);

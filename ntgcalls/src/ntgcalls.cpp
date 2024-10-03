@@ -127,6 +127,12 @@ namespace ntgcalls {
         END_ASYNC
     }
 
+    ASYNC_RETURN(std::string) NTgCalls::initPresentation(const int64_t chatId) {
+        SMART_ASYNC(this, chatId)
+        return SafeCall<GroupCall>(safeConnection(chatId))->initPresentation();
+        END_ASYNC
+    }
+
     ASYNC_RETURN(void) NTgCalls::connect(const int64_t chatId, const std::string& params, bool isPresentation) {
         SMART_ASYNC(this, chatId, params, isPresentation)
         SafeCall<GroupCall>(safeConnection(chatId))->connect(params, isPresentation);
