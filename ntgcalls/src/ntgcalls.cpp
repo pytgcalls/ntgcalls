@@ -177,7 +177,7 @@ namespace ntgcalls {
 
     ASYNC_RETURN(void) NTgCalls::stopPresentation(int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        SafeCall<GroupCall>(safeConnection(chatId))->stopPresentation();
+        SafeCall<GroupCall>(safeConnection(chatId))->stopPresentation(true);
         END_ASYNC
     }
 

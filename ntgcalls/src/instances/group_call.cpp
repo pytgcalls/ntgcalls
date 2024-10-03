@@ -71,10 +71,15 @@ namespace ntgcalls {
         setConnectionObserver(isPresentation ? CallNetworkState::Kind::Presentation : CallNetworkState::Kind::Normal);
     }
 
-    void GroupCall::stopPresentation() {
+    void GroupCall::stopPresentation(const bool force) {
+        if (!force && !presentationConnection) {
+            return;
+        }
         if (presentationConnection) {
             presentationConnection->close();
             presentationConnection = nullptr;
+        } else {
+            throw ConnectionError("Presentation not initialized");
         }
     }
 

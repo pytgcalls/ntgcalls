@@ -19,7 +19,7 @@ namespace ntgcalls {
 
         void connect(const std::string& jsonData, bool isPresentation);
 
-        void stopPresentation();
+        void stopPresentation(bool force = false);
 
         Type type() const override;
 
