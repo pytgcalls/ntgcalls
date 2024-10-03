@@ -51,17 +51,19 @@ namespace ntgcalls {
                 END_WORKER
             });
         }
-        connections[chatId]->onConnectionChange([this, chatId](const CallInterface::ConnectionState &state) {
+        connections[chatId]->onConnectionChange([this, chatId](const CallNetworkState &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
             THREAD_SAFE
-            switch (state) {
-                case CallInterface::ConnectionState::Closed:
-                case CallInterface::ConnectionState::Failed:
-                case CallInterface::ConnectionState::Timeout:
-                    remove(chatId);
-                    break;
-                default:
-                    break;
+            if (state.kind == CallNetworkState::Kind::Normal) {
+                switch (state.connectionState) {
+                    case CallNetworkState::ConnectionState::Closed:
+                    case CallNetworkState::ConnectionState::Failed:
+                    case CallNetworkState::ConnectionState::Timeout:
+                        remove(chatId);
+                        break;
+                    default:
+                        break;
+                }
             }
             (void) connectionChangeCallback(chatId, state);
             END_THREAD_SAFE
@@ -177,7 +179,7 @@ namespace ntgcalls {
         mediaStateCallback = callback;
     }
 
-    void NTgCalls::onConnectionChange(const std::function<void(int64_t, CallInterface::ConnectionState)>& callback) {
+    void NTgCalls::onConnectionChange(const std::function<void(int64_t, CallNetworkState)>& callback) {
        std::lock_guard lock(mutex);
        connectionChangeCallback = callback;
     }

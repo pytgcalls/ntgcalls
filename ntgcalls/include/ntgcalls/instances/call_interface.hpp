@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <ntgcalls/stream_manager.hpp>
+#include <ntgcalls/models/call_network_state.hpp>
 
 namespace ntgcalls {
 
@@ -15,23 +16,15 @@ namespace ntgcalls {
 
         void cancelNetworkListener();
 
-    public:
-        enum class ConnectionState {
-            Connecting = 1 << 0,
-            Connected = 1 << 1,
-            Failed = 1 << 2,
-            Timeout = 1 << 3,
-            Closed = 1 << 4
-        };
     protected:
         std::mutex mutex;
         std::unique_ptr<wrtc::NetworkInterface> connection;
         std::unique_ptr<StreamManager> streamManager;
-        wrtc::synchronized_callback<ConnectionState> connectionChangeCallback;
+        wrtc::synchronized_callback<CallNetworkState> connectionChangeCallback;
         rtc::Thread* updateThread;
         std::unique_ptr<rtc::Thread> networkThread;
 
-        void setConnectionObserver();
+        void setConnectionObserver(CallNetworkState::Kind kind = CallNetworkState::Kind::Normal);
 
     public:
         explicit CallInterface(rtc::Thread* updateThread);
@@ -57,7 +50,7 @@ namespace ntgcalls {
 
         void onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)> &callback);
 
-        void onConnectionChange(const std::function<void(ConnectionState)> &callback);
+        void onConnectionChange(const std::function<void(CallNetworkState)> &callback);
 
         uint64_t time(StreamManager::Mode mode) const;
 
