@@ -27,7 +27,7 @@ namespace wrtc {
             cricket::MediaConfig(),
             std::to_string(_ssrc),
             false,
-            NativeConnection::getDefaultCryptoOptions(),
+            NativeNetworkInterface::getDefaultCryptoOptions(),
             audioOptions
         );
         networkThread->BlockingCall([&] {
