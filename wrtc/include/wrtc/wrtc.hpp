@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include "exceptions.hpp"
-#include "enums.hpp"
-#include "interfaces/peer_connection.hpp"
-#include "sdp_builder.hpp"
+#include <wrtc/exceptions.hpp>
+#include <wrtc/enums.hpp>
+#include <wrtc/interfaces/peer_connection.hpp>
 #include <wrtc/interfaces/media/rtc_audio_source.hpp>
 #include <wrtc/interfaces/media/rtc_video_source.hpp>
 #include <wrtc/utils/binary.hpp>
