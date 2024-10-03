@@ -23,6 +23,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("connect_p2p", &ntgcalls::NTgCalls::connectP2P, py::arg("user_id"), py::arg("servers"), py::arg("versions"), py::arg("p2p_allowed"));
     wrapper.def("send_signaling", &ntgcalls::NTgCalls::sendSignalingData, py::arg("chat_id"), py::arg("msg_key"));
     wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
+    wrapper.def("init_presentation", &ntgcalls::NTgCalls::initPresentation, py::arg("chat_id"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"), py::arg("is_presentation"));
     wrapper.def("set_stream_sources", &ntgcalls::NTgCalls::setStreamSources, py::arg("chat_id"), py::arg("direction"), py::arg("media"));
     wrapper.def("pause", &ntgcalls::NTgCalls::pause, py::arg("chat_id"));
