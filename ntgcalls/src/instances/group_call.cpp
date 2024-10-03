@@ -7,11 +7,12 @@
 #include <future>
 
 #include <ntgcalls/exceptions.hpp>
-#include <ntgcalls/models/call_payload.hpp>
+#include <wrtc/interfaces/group_connection.hpp>
+#include <wrtc/models/response_payload.hpp>
 
 namespace ntgcalls {
     GroupCall::~GroupCall() {
-        sourceGroups.clear();
+        stopPresentation();
     }
 
     std::string GroupCall::init(const MediaDescription& config) {
@@ -21,97 +22,60 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        connection = std::make_unique<wrtc::PeerConnection>();
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Speaker, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, connection);
-        try {
-            Safe<wrtc::PeerConnection>(connection)->setLocalDescription();
-        } catch (wrtc::RTCException&) {
-            RTC_LOG(LS_ERROR) << "Failed to set local description";
-            throw ConnectionError("Failed to set local description");
-        }
+        connection = std::make_unique<wrtc::GroupConnection>(false);
         RTC_LOG(LS_INFO) << "Group call initialized";
-        const auto payload = CallPayload(Safe<wrtc::PeerConnection>(connection)->localDescription().value());
-        audioSource = payload.audioSource;
-        for (const auto &ssrc : payload.sourceGroups) {
-            sourceGroups.push_back(ssrc);
-        }
         streamManager->setStreamSources(StreamManager::Mode::Playback, config);
+
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
-        return static_cast<std::string>(payload);
+        return Safe<wrtc::GroupConnection>(connection)->getJoinPayload();
     }
 
-    void GroupCall::connect(const std::string& jsonData) {
+    std::string GroupCall::initPresentation() {
+        RTC_LOG(LS_INFO) << "Initializing screen sharing";
+        std::lock_guard lock(mutex);
+        if (presentationConnection) {
+            RTC_LOG(LS_ERROR) << "Screen sharing already initialized";
+            throw ConnectionError("Screen sharing already initialized");
+        }
+        presentationConnection = std::make_unique<wrtc::GroupConnection>(true);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Speaker, presentationConnection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, presentationConnection);
+        RTC_LOG(LS_INFO) << "Screen sharing initialized";
+        return Safe<wrtc::GroupConnection>(presentationConnection)->getJoinPayload();
+    }
+
+    void GroupCall::connect(const std::string& jsonData, bool isPresentation) {
         RTC_LOG(LS_INFO) << "Connecting to group call";
         std::lock_guard lock(mutex);
-        if (!connection) {
+        const auto &conn = isPresentation ? presentationConnection : connection;
+        if (!conn) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionError("Connection not initialized");
         }
-        json data;
-        try {
-            data = json::parse(jsonData);
-        } catch (std::exception& e) {
-            RTC_LOG(LS_ERROR) << "Invalid JSON: " << e.what();
-            throw InvalidParams("Invalid JSON");
-        }
-        if (!data["rtmp"].is_null()) {
-            RTC_LOG(LS_ERROR) << "RTMP connection needed";
-            throw RTMPNeeded("Needed rtmp connection");
-        }
-        if (data["transport"].is_null()) {
-            RTC_LOG(LS_ERROR) << "Transport not found";
-            throw InvalidParams("Transport not found");
-        }
-        data = data["transport"];
-        wrtc::Conference conference;
-        try {
-            conference = {
-                {
-                    data["ufrag"],
-                    data["pwd"]
-                },
-                audioSource,
-                sourceGroups
-            };
-            for (const auto& item : data["fingerprints"].items()) {
-                conference.transport.fingerprints.push_back({
-                    item.value()["hash"],
-                    item.value()["fingerprint"],
-                });
+        wrtc::ResponsePayload payload(jsonData);
+        Safe<wrtc::GroupConnection>(conn)->setConnectionMode(payload.isRtmp ? wrtc::GroupConnection::Mode::Rtmp : wrtc::GroupConnection::Mode::Rtc);
+        if (!payload.isRtmp) {
+            Safe<wrtc::GroupConnection>(conn)->setRemoteParams(payload.remoteIceParameters, std::move(payload.fingerprint));
+            for (const auto& rawCandidate : payload.candidates) {
+                webrtc::JsepIceCandidate iceCandidate{std::string(), 0, rawCandidate};
+                conn->addIceCandidate(wrtc::IceCandidate(&iceCandidate));
             }
-            for (const auto& item : data["candidates"].items()) {
-                conference.transport.candidates.push_back({
-                    item.value()["generation"],
-                    item.value()["component"],
-                    item.value()["protocol"],
-                    item.value()["port"],
-                    item.value()["ip"],
-                    item.value()["foundation"],
-                    item.value()["id"],
-                    item.value()["priority"],
-                    item.value()["type"],
-                    item.value()["network"]
-                });
-            }
-        } catch (...) {
-            throw InvalidParams("Invalid transport");
+            Safe<wrtc::GroupConnection>(conn)->createChannels(payload.media);
+            RTC_LOG(LS_INFO) << "Remote parameters set";
+        } else {
+            RTC_LOG(LS_ERROR) << "RTMP connection not supported";
+            throw RTMPNeeded("RTMP connection not supported");
         }
-        RTC_LOG(LS_INFO) << "Setting remote description";
-        try {
-            Safe<wrtc::PeerConnection>(connection)->setRemoteDescription(
-                wrtc::Description(
-                    wrtc::Description::SdpType::Answer,
-                    wrtc::SdpBuilder::fromConference(conference)
-                )
-            );
-        } catch (wrtc::RTCException&) {
-            throw TelegramServerError("Telegram Server is having some internal problems");
+        setConnectionObserver(isPresentation ? CallNetworkState::Kind::Presentation : CallNetworkState::Kind::Normal);
+    }
+
+    void GroupCall::stopPresentation() {
+        if (presentationConnection) {
+            presentationConnection->close();
+            presentationConnection = nullptr;
         }
-        RTC_LOG(LS_INFO) << "Remote description set";
-        setConnectionObserver();
     }
 
     void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) {

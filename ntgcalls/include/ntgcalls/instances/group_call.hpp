@@ -2,14 +2,12 @@
 // Created by Laky64 on 15/03/2024.
 //
 #pragma once
-#include "call_interface.hpp"
-#include <wrtc/enums.hpp>
+#include <ntgcalls/instances/call_interface.hpp>
 
 namespace ntgcalls {
-
     class GroupCall final : public CallInterface {
-        wrtc::SSRC audioSource = 0;
-        std::vector<wrtc::SSRC> sourceGroups = {};
+        std::unique_ptr<wrtc::NetworkInterface> presentationConnection;
+
     public:
         explicit GroupCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
 
@@ -17,7 +15,11 @@ namespace ntgcalls {
 
         std::string init(const MediaDescription& config);
 
-        void connect(const std::string& jsonData);
+        std::string initPresentation();
+
+        void connect(const std::string& jsonData, bool isPresentation);
+
+        void stopPresentation();
 
         Type type() const override;
 
