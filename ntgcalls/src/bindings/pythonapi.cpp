@@ -23,13 +23,14 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("connect_p2p", &ntgcalls::NTgCalls::connectP2P, py::arg("user_id"), py::arg("servers"), py::arg("versions"), py::arg("p2p_allowed"));
     wrapper.def("send_signaling", &ntgcalls::NTgCalls::sendSignalingData, py::arg("chat_id"), py::arg("msg_key"));
     wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
-    wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"));
+    wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"), py::arg("is_presentation"));
     wrapper.def("set_stream_sources", &ntgcalls::NTgCalls::setStreamSources, py::arg("chat_id"), py::arg("direction"), py::arg("media"));
     wrapper.def("pause", &ntgcalls::NTgCalls::pause, py::arg("chat_id"));
     wrapper.def("resume", &ntgcalls::NTgCalls::resume, py::arg("chat_id"));
     wrapper.def("mute", &ntgcalls::NTgCalls::mute, py::arg("chat_id"));
     wrapper.def("unmute", &ntgcalls::NTgCalls::unmute, py::arg("chat_id"));
     wrapper.def("stop", &ntgcalls::NTgCalls::stop, py::arg("chat_id"));
+    wrapper.def("stop_presentation", &ntgcalls::NTgCalls::stopPresentation, py::arg("chat_id"));
     wrapper.def("time", &ntgcalls::NTgCalls::time, py::arg("chat_id"), py::arg("direction"));
     wrapper.def("get_state", &ntgcalls::NTgCalls::getState, py::arg("chat_id"));
     wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade);
@@ -43,97 +44,107 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def_static("get_media_devices", &ntgcalls::NTgCalls::getMediaDevices);
 
     py::enum_<ntgcalls::StreamManager::Type>(m, "StreamType")
-            .value("AUDIO", ntgcalls::StreamManager::Type::Audio)
-            .value("VIDEO", ntgcalls::StreamManager::Type::Video)
-            .export_values();
+        .value("AUDIO", ntgcalls::StreamManager::Type::Audio)
+        .value("VIDEO", ntgcalls::StreamManager::Type::Video)
+        .export_values();
 
     py::enum_<ntgcalls::StreamManager::Mode>(m, "StreamMode")
-            .value("CAPTURE", ntgcalls::StreamManager::Mode::Capture)
-            .value("PLAYBACK", ntgcalls::StreamManager::Mode::Playback)
-            .export_values();
+        .value("CAPTURE", ntgcalls::StreamManager::Mode::Capture)
+        .value("PLAYBACK", ntgcalls::StreamManager::Mode::Playback)
+        .export_values();
 
     py::enum_<ntgcalls::StreamManager::Device>(m, "StreamDevice")
-            .value("MICROPHONE", ntgcalls::StreamManager::Device::Microphone)
-            .value("SPEAKER", ntgcalls::StreamManager::Device::Speaker)
-            .value("CAMERA", ntgcalls::StreamManager::Device::Camera)
-            .value("SCREEN", ntgcalls::StreamManager::Device::Screen)
-            .export_values();
+        .value("MICROPHONE", ntgcalls::StreamManager::Device::Microphone)
+        .value("SPEAKER", ntgcalls::StreamManager::Device::Speaker)
+        .value("CAMERA", ntgcalls::StreamManager::Device::Camera)
+        .value("SCREEN", ntgcalls::StreamManager::Device::Screen)
+        .export_values();
 
     py::enum_<ntgcalls::StreamManager::Status>(m, "StreamStatus")
-            .value("ACTIVE", ntgcalls::StreamManager::Status::Active)
-            .value("PAUSED", ntgcalls::StreamManager::Status::Paused)
-            .value("IDLING", ntgcalls::StreamManager::Status::Idling)
-            .export_values();
+        .value("ACTIVE", ntgcalls::StreamManager::Status::Active)
+        .value("PAUSED", ntgcalls::StreamManager::Status::Paused)
+        .value("IDLING", ntgcalls::StreamManager::Status::Idling)
+        .export_values();
 
-    py::enum_<ntgcalls::CallInterface::ConnectionState>(m, "ConnectionState")
-            .value("CONNECTING", ntgcalls::CallInterface::ConnectionState::Connecting)
-            .value("CONNECTED", ntgcalls::CallInterface::ConnectionState::Connected)
-            .value("FAILED", ntgcalls::CallInterface::ConnectionState::Failed)
-            .value("TIMEOUT", ntgcalls::CallInterface::ConnectionState::Timeout)
-            .value("CLOSED", ntgcalls::CallInterface::ConnectionState::Closed)
-            .export_values();
+    py::class_<ntgcalls::CallNetworkState>(m, "CallNetworkState")
+        .def_readonly("connection_state", &ntgcalls::CallNetworkState::connectionState)
+        .def_readonly("kind", &ntgcalls::CallNetworkState::kind);
+
+
+    py::enum_<ntgcalls::CallNetworkState::ConnectionState>(m, "ConnectionState")
+        .value("CONNECTING", ntgcalls::CallNetworkState::ConnectionState::Connecting)
+        .value("CONNECTED", ntgcalls::CallNetworkState::ConnectionState::Connected)
+        .value("FAILED", ntgcalls::CallNetworkState::ConnectionState::Failed)
+        .value("TIMEOUT", ntgcalls::CallNetworkState::ConnectionState::Timeout)
+        .value("CLOSED", ntgcalls::CallNetworkState::ConnectionState::Closed)
+        .export_values();
+
+    py::enum_<ntgcalls::CallNetworkState::Kind>(m, "ConnectionKind")
+        .value("NORMAL", ntgcalls::CallNetworkState::Kind::Normal)
+        .value("PRESENTATION", ntgcalls::CallNetworkState::Kind::Presentation)
+        .export_values();
 
     py::enum_<ntgcalls::BaseMediaDescription::InputMode>(m, "InputMode")
-            .value("FILE", ntgcalls::BaseMediaDescription::InputMode::File)
-            .value("SHELL", ntgcalls::BaseMediaDescription::InputMode::Shell)
-            .value("FFMPEG", ntgcalls::BaseMediaDescription::InputMode::FFmpeg)
-            .value("DEVICE", ntgcalls::BaseMediaDescription::InputMode::Device)
-            .export_values()
-            .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
-                return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
-            })
-            .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
-                return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
-            })
-            .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
-                return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
-            })
-            .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
-                return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
-            });
+        .value("FILE", ntgcalls::BaseMediaDescription::InputMode::File)
+        .value("SHELL", ntgcalls::BaseMediaDescription::InputMode::Shell)
+        .value("FFMPEG", ntgcalls::BaseMediaDescription::InputMode::FFmpeg)
+        .value("DEVICE", ntgcalls::BaseMediaDescription::InputMode::Device)
+        .export_values()
+        .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
+            return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
+        })
+        .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
+            return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
+        })
+        .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
+            return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
+        })
+        .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
+            return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
+        });
 
     py::class_<ntgcalls::MediaState>(m, "MediaState")
-            .def_readonly("muted", &ntgcalls::MediaState::muted)
-            .def_readonly("video_stopped", &ntgcalls::MediaState::videoStopped)
-            .def_readonly("video_paused", &ntgcalls::MediaState::videoPaused)
-            .def_readonly("screencast_paused", &ntgcalls::MediaState::screencastPaused);
+        .def_readonly("muted", &ntgcalls::MediaState::muted)
+        .def_readonly("video_stopped", &ntgcalls::MediaState::videoStopped)
+        .def_readonly("video_paused", &ntgcalls::MediaState::videoPaused)
+        .def_readonly("screencast_paused", &ntgcalls::MediaState::screencastPaused);
 
     py::class_<ntgcalls::StreamManager::MediaStatus>(m, "MediaStatus")
-            .def_readonly("playback", &ntgcalls::StreamManager::MediaStatus::playback)
-            .def_readonly("capture", &ntgcalls::StreamManager::MediaStatus::capture);
+        .def_readonly("playback", &ntgcalls::StreamManager::MediaStatus::playback)
+        .def_readonly("capture", &ntgcalls::StreamManager::MediaStatus::capture);
 
     py::class_<ntgcalls::DeviceInfo>(m, "DeviceInfo")
-            .def_readonly("name", &ntgcalls::DeviceInfo::name)
-            .def_readonly("metadata", &ntgcalls::DeviceInfo::metadata);
+        .def_readonly("name", &ntgcalls::DeviceInfo::name)
+        .def_readonly("metadata", &ntgcalls::DeviceInfo::metadata);
 
     py::class_<ntgcalls::MediaDevices>(m, "MediaDevices")
-            .def_readonly("audio", &ntgcalls::MediaDevices::audio)
-            .def_readonly("video", &ntgcalls::MediaDevices::video);
+        .def_readonly("audio", &ntgcalls::MediaDevices::audio)
+        .def_readonly("video", &ntgcalls::MediaDevices::video);
 
     py::class_<ntgcalls::BaseMediaDescription> mediaWrapper(m, "BaseMediaDescription");
     mediaWrapper.def_readwrite("input", &ntgcalls::BaseMediaDescription::input);
 
     py::class_<ntgcalls::AudioDescription> audioWrapper(m, "AudioDescription", mediaWrapper);
     audioWrapper.def(
-            py::init<ntgcalls::BaseMediaDescription::InputMode, uint32_t, uint8_t, uint8_t, std::string>(),
-            py::arg("input_mode"),
-            py::arg("sample_rate"),
-            py::arg("bits_per_sample"),
-            py::arg("channel_count"),
-            py::arg("input")
+        py::init<ntgcalls::BaseMediaDescription::InputMode, uint32_t, uint8_t, uint8_t, std::string>(),
+        py::arg("input_mode"),
+        py::arg("sample_rate"),
+        py::arg("bits_per_sample"),
+        py::arg("channel_count"),
+        py::arg("input")
     );
-    audioWrapper.def_readwrite("sampleRate", &ntgcalls::AudioDescription::sampleRate);
-    audioWrapper.def_readwrite("bitsPerSample", &ntgcalls::AudioDescription::bitsPerSample);
-    audioWrapper.def_readwrite("channelCount", &ntgcalls::AudioDescription::channelCount);
+    audioWrapper.def_readwrite("sample_rate", &ntgcalls::AudioDescription::sampleRate);
+    audioWrapper.def_readwrite("bits_per_sample", &ntgcalls::AudioDescription::bitsPerSample);
+    audioWrapper.def_readwrite("channel_count", &ntgcalls::AudioDescription::channelCount);
 
     py::class_<ntgcalls::VideoDescription> videoWrapper(m, "VideoDescription", mediaWrapper);
     videoWrapper.def(
-            py::init<ntgcalls::BaseMediaDescription::InputMode, uint16_t, uint16_t, uint8_t, std::string>(),
-            py::arg("input_mode"),
-            py::arg("width"),
-            py::arg("height"),
-            py::arg("fps"),
-            py::arg("input")
+        py::init<ntgcalls::BaseMediaDescription::InputMode, uint16_t, uint16_t, uint8_t, std::string>(),
+        py::arg("input_mode"),
+        py::arg("width"),
+        py::arg("height"),
+        py::arg("fps"),
+        py::arg("input")
     );
     videoWrapper.def_readwrite("width", &ntgcalls::VideoDescription::width);
     videoWrapper.def_readwrite("height", &ntgcalls::VideoDescription::height);
@@ -141,11 +152,11 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::MediaDescription> mediaDescWrapper(m, "MediaDescription");
     mediaDescWrapper.def(
-            py::init<std::optional<ntgcalls::AudioDescription>, std::optional<ntgcalls::AudioDescription>, std::optional<ntgcalls::VideoDescription>, std::optional<ntgcalls::VideoDescription>>(),
-            py::arg_v("microphone", std::nullopt, "None"),
-            py::arg_v("speaker", std::nullopt, "None"),
-            py::arg_v("camera", std::nullopt, "None"),
-            py::arg_v("screen", std::nullopt, "None")
+        py::init<std::optional<ntgcalls::AudioDescription>, std::optional<ntgcalls::AudioDescription>, std::optional<ntgcalls::VideoDescription>, std::optional<ntgcalls::VideoDescription>>(),
+        py::arg_v("microphone", std::nullopt, "None"),
+        py::arg_v("speaker", std::nullopt, "None"),
+        py::arg_v("camera", std::nullopt, "None"),
+        py::arg_v("screen", std::nullopt, "None")
     );
     mediaDescWrapper.def_readwrite("microphone", &ntgcalls::MediaDescription::microphone);
     mediaDescWrapper.def_readwrite("speaker", &ntgcalls::MediaDescription::speaker);
@@ -189,6 +200,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
     pybind11::register_exception<wrtc::SdpParseException>(m, "SdpParseException", baseExc);
     pybind11::register_exception<wrtc::RTCException>(m, "RTCException", baseExc);
+    pybind11::register_exception<wrtc::TransportParseException>(m, "TransportParseException", baseExc);
     pybind11::register_exception<ntgcalls::ConnectionError>(m, "ConnectionError", baseExc);
     pybind11::register_exception<ntgcalls::TelegramServerError>(m, "TelegramServerError", baseExc);
     pybind11::register_exception<ntgcalls::ConnectionNotFound>(m, "ConnectionNotFound", baseExc);
