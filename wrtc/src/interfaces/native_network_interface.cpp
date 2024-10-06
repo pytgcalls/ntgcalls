@@ -40,12 +40,14 @@ namespace wrtc {
             });
             dtlsSrtpTransport->SubscribeRtcpPacketReceived(this, [this](const rtc::CopyOnWriteBuffer* packet, int64_t) {
                workerThread()->PostTask([this, packet = *packet] {
-                   call->Receiver()->DeliverRtcpPacket(packet);
+                   if (call) call->Receiver()->DeliverRtcpPacket(packet);
                });
             });
             if (supportsPacketSending()) {
-                dtlsSrtpTransport->SubscribeSentPacket(this, [this](const rtc::SentPacket &packet) {
-                    call->OnSentPacket(packet);
+                dtlsSrtpTransport->SubscribeSentPacket(this, [this](const rtc::SentPacket& packet) {
+                    workerThread()->PostTask([this, packet] {
+                        if (call) call->OnSentPacket(packet);
+                    });
                 });
             }
             resetDtlsSrtpTransport();
@@ -173,13 +175,14 @@ namespace wrtc {
     }
 
     void NativeNetworkInterface::close() {
+        audioChannel = nullptr;
+        videoChannel = nullptr;
+        incomingAudioChannels.clear();
         channelManager = nullptr;
         if (factory) {
             workerThread()->BlockingCall([&] {
                 call = nullptr;
             });
-        }
-        if (factory) {
             networkThread()->BlockingCall([&] {
                 if (transportChannel) {
                     transportChannel->SignalCandidateGathered.disconnect(this);

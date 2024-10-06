@@ -283,8 +283,6 @@ namespace wrtc {
 
     void NativeConnection::close() {
         isExiting = true;
-        audioChannel = nullptr;
-        videoChannel = nullptr;
         contentNegotiationContext = nullptr;
         NativeNetworkInterface::close();
     }
