@@ -14,9 +14,9 @@ namespace wrtc {
     public:
         ~AudioTrackSource() override;
 
-        SourceState state() const override;
+        [[nodiscard]] SourceState state() const override;
 
-        bool remote() const override;
+        [[nodiscard]] bool remote() const override;
 
         void AddSink(webrtc::AudioTrackSinkInterface *sink) override;
 
