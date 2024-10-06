@@ -9,6 +9,7 @@
 #include <rtc_base/crypto_random.h>
 #include <rtc_base/rtc_certificate_generator.h>
 #include <wrtc/interfaces/native_network_interface.hpp>
+#include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
 
 namespace wrtc {
     NativeNetworkInterface::NativeNetworkInterface() {
@@ -23,7 +24,15 @@ namespace wrtc {
                 absl::nullopt
             );
             asyncResolverFactory = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
-            dtlsSrtpTransport = std::make_unique<webrtc::DtlsSrtpTransport>(true, factory->fieldTrials());
+            dtlsSrtpTransport = std::make_unique<WrappedDtlsSrtpTransport>(
+                true,
+                factory->fieldTrials(),
+                [this](const webrtc::RtpPacketReceived& packet) {
+                    workerThread()->PostTask([this, packet] {
+                        RtpPacketReceived(packet);
+                    });
+                }
+            );
             dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
             dtlsSrtpTransport->SetActiveResetSrtpParams(false);
             dtlsSrtpTransport->SubscribeReadyToSend(this, [this](const bool readyToSend) {

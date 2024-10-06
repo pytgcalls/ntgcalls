@@ -81,6 +81,8 @@ namespace wrtc {
 
         virtual void start() = 0;
 
+        virtual void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) = 0;
+
         void close() override;
 
     public:
