@@ -12,6 +12,7 @@
 #include <api/audio_codecs/builtin_audio_decoder_factory.h>
 #include <pc/media_factory.h>
 #include <system_wrappers/include/field_trial.h>
+#include <wrtc/interfaces/media/audio_device_module.hpp>
 #include <wrtc/utils/java_context.hpp>
 
 #include <wrtc/video_factory/video_factory_config.hpp>
@@ -51,7 +52,7 @@ namespace wrtc {
         jniEnv = GetJNIEnv();
         dependencies.adm = worker_thread_->BlockingCall([&] {
             if (!_audioDeviceModule)
-                _audioDeviceModule = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kDummyAudio, dependencies.task_queue_factory.get());
+                _audioDeviceModule = rtc::make_ref_counted<AudioDeviceModule>();
             return _audioDeviceModule;
         });
         auto config = VideoFactoryConfig(jniEnv);
