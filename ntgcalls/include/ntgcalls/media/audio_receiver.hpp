@@ -16,7 +16,7 @@ namespace ntgcalls {
         std::unique_ptr<wrtc::RemoteAudioSink> sink;
         std::unique_ptr<webrtc::Resampler> resampler;
 
-        bytes::unique_binary adaptFrame(bytes::unique_binary data, size_t size, uint8_t channels, size_t *newSize) const;
+        bytes::shared_binary resampleFrame(bytes::unique_binary data, size_t size, uint8_t channels, uint16_t sampleRate);
 
         static bytes::unique_binary stereoToMono(const bytes::unique_binary& data, size_t size, size_t *newSize);
 
