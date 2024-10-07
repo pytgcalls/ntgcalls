@@ -33,7 +33,7 @@ namespace wrtc {
 
         void setRemoteDescription(const Description &description) const;
 
-        std::unique_ptr<MediaTrackInterface> addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
+        std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
 
         void addIceCandidate(const IceCandidate& rawCandidate) const override;
 

@@ -8,6 +8,7 @@
 #include <pc/media_factory.h>
 #include <rtc_base/crypto_random.h>
 #include <rtc_base/rtc_certificate_generator.h>
+#include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
 
@@ -204,6 +205,26 @@ namespace wrtc {
             });
         }
         NetworkInterface::close();
+    }
+
+    std::unique_ptr<MediaTrackInterface> NativeNetworkInterface::addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
+        if (const auto audioTrack = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
+            audioTrack->AddSink(&audioSink);
+            return std::make_unique<MediaTrackInterface>([this](const bool enable) {
+                if (audioChannel != nullptr) {
+                    audioChannel->set_enabled(enable);
+                }
+            });
+        }
+        if (const auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
+            videoTrack->AddOrUpdateSink(&videoSink, rtc::VideoSinkWants());
+            return std::make_unique<MediaTrackInterface>([this](const bool enable) {
+                if (videoChannel != nullptr) {
+                    videoChannel->set_enabled(enable);
+                }
+            });
+        }
+        throw RTCException("Unsupported track type");
     }
 
     PeerIceParameters NativeNetworkInterface::localIceParameters() {

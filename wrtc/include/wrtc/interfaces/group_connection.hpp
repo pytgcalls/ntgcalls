@@ -25,8 +25,6 @@ namespace wrtc {
 
         ~GroupConnection() override;
 
-        std::unique_ptr<MediaTrackInterface> addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
-
         std::string getJoinPayload();
 
         void addIceCandidate(const IceCandidate& rawCandidate) const override;

@@ -7,7 +7,6 @@
 
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
-#include <wrtc/interfaces/media/local_video_adapter.hpp>
 #include <wrtc/interfaces/media/channels/outgoing_audio_channel.hpp>
 #include <wrtc/models/content_negotiation_context.hpp>
 #include <wrtc/models/rtc_server.hpp>
@@ -90,7 +89,7 @@ namespace wrtc {
 
         std::unique_ptr<ContentNegotiationContext::NegotiationContents> setPendingAnswer(std::unique_ptr<ContentNegotiationContext::NegotiationContents> answer) const;
 
-        std::unique_ptr<MediaTrackInterface> addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
+        std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
     };
 
 } // wrtc

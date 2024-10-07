@@ -15,7 +15,6 @@
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 #include <wrtc/interfaces/sctp_data_channel_provider_interface_impl.hpp>
-
 #include <wrtc/interfaces/media/channels/outgoing_audio_channel.hpp>
 #include <wrtc/interfaces/media/channels/outgoing_video_channel.hpp>
 
@@ -41,8 +40,8 @@ namespace wrtc {
 
     protected:
         std::unique_ptr<webrtc::Call> call;
-        LocalVideoAdapter videoSink;
         webrtc::LocalAudioSinkAdapter audioSink;
+        LocalVideoAdapter videoSink;
         std::unique_ptr<ChannelManager> channelManager;
         std::unique_ptr<OutgoingAudioChannel> audioChannel;
         std::unique_ptr<OutgoingVideoChannel> videoChannel;
@@ -84,6 +83,8 @@ namespace wrtc {
         virtual void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) = 0;
 
         void close() override;
+
+        std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
 
     public:
         NativeNetworkInterface();

@@ -17,26 +17,6 @@ namespace wrtc {
         close();
     }
 
-    std::unique_ptr<MediaTrackInterface> GroupConnection::addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
-        if (const auto audioTrack = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
-            audioTrack->AddSink(&audioSink);
-            return std::make_unique<MediaTrackInterface>([this](const bool enable) {
-                if (audioChannel != nullptr) {
-                    audioChannel->set_enabled(enable);
-                }
-            });
-        }
-        if (const auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
-            videoTrack->AddOrUpdateSink(&videoSink, rtc::VideoSinkWants());
-            return std::make_unique<MediaTrackInterface>([this](const bool enable) {
-                if (videoChannel != nullptr) {
-                    videoChannel->set_enabled(enable);
-                }
-            });
-        }
-        throw RTCException("Unsupported track type");
-    }
-
     void GroupConnection::generateSsrcs() {
         auto generator = std::mt19937(std::random_device()());
         auto distribution = std::uniform_int_distribution<uint32_t>();

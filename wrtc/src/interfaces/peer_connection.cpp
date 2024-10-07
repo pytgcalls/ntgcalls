@@ -119,7 +119,7 @@ namespace wrtc {
         peerConnection->AddIceCandidate(parseIceCandidate(rawCandidate));
     }
 
-    std::unique_ptr<MediaTrackInterface> PeerConnection::addTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
+    std::unique_ptr<MediaTrackInterface> PeerConnection::addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
         if (!peerConnection) {
             throw RTCException("Cannot add track; PeerConnection is closed");
         }
