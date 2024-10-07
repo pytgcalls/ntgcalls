@@ -242,6 +242,9 @@ namespace ntgcalls {
                             readers.erase(device);
                         });
                     });
+                    if (initialized) {
+                        readers[device]->open();
+                    }
                 } else {
                     throw InvalidParams("Capture streams are not yet supported");
                 }
