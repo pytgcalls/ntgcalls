@@ -4,8 +4,10 @@
 
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/stream_manager.hpp>
+#include <ntgcalls/media/audio_receiver.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
 #include <ntgcalls/media/audio_streamer.hpp>
+#include <ntgcalls/media/base_receiver.hpp>
 #include <ntgcalls/media/media_source_factory.hpp>
 #include <ntgcalls/media/video_sink.hpp>
 #include <ntgcalls/media/video_streamer.hpp>
@@ -126,13 +128,20 @@ namespace ntgcalls {
 
     void StreamManager::addTrack(Mode mode, Device device, const std::unique_ptr<wrtc::NetworkInterface>& pc) {
         const std::pair id(mode, device);
-        tracks[id] = pc->addTrack(streams[id]->createTrack());
+        if (mode == Playback) {
+            tracks[id] = pc->addOutgoingTrack(dynamic_cast<BaseStreamer*>(streams[id].get())->createTrack());
+        } else {
+            pc->addIncomingTrack(dynamic_cast<BaseReceiver*>(streams[id].get())->remoteSink());
+        }
     }
 
     void StreamManager::start() {
         // ReSharper disable once CppUseElementsView
         for (const auto& [key, reader] : readers) {
             reader->open();
+        }
+        for (const auto& [key, writer] : writers) {
+            writer->open();
         }
     }
 
@@ -246,7 +255,23 @@ namespace ntgcalls {
                         readers[device]->open();
                     }
                 } else {
-                    throw InvalidParams("Capture streams are not yet supported");
+                    if (streamType == Audio) {
+                        writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
+                        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, device](const std::map<uint32_t, bytes::shared_binary>& frames) {
+                            dynamic_cast<AudioWriter*>(writers[device].get())->sendFrames(frames);
+                        });
+                    } else {
+                        throw InvalidParams("Video input is not yet supported");
+                    }
+                    writers[device]->onEof([this, device] {
+                        workerThread->PostTask([this, device] {
+                            std::lock_guard lock(mutex);
+                            writers.erase(device);
+                        });
+                    });
+                    if (initialized) {
+                        writers[device]->open();
+                    }
                 }
             }
         } else if (mode == Playback) {

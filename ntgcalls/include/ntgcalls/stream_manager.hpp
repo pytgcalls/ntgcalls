@@ -7,6 +7,7 @@
 #include <shared_mutex>
 #include <wrtc/wrtc.hpp>
 #include <ntgcalls/io/base_reader.hpp>
+#include <ntgcalls/io/base_writer.hpp>
 #include <ntgcalls/media/base_sink.hpp>
 #include <ntgcalls/models/media_description.hpp>
 #include <ntgcalls/models/media_state.hpp>
@@ -80,6 +81,7 @@ namespace ntgcalls {
         std::map<std::pair<Mode, Device>, std::unique_ptr<BaseSink>> streams;
         std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;
+        std::map<Device, std::unique_ptr<BaseWriter>> writers;
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
