@@ -41,11 +41,12 @@ namespace wrtc {
         int64_t lastNetworkActivityMs = 0;
         uint32_t outgoingAudioSsrc = 0, outgoingVideoSsrc = 0;
         std::vector<SsrcGroup> outgoingVideoSsrcGroups;
-
+        std::atomic_bool isExiting;
         bool isPresentation = false;
         bool isRtcConnected = false, isRtmpConnected = false;
         bool lastEffectivelyConnected = false;
         Mode connectionMode = Mode::None;
+        ResponsePayload::Media mediaConfig;
 
         bool supportsPacketSending() const override;
 
@@ -80,6 +81,14 @@ namespace wrtc {
         int candidatePoolSize() const override;
 
         void updateIsConnected();
+
+        void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) override;
+
+        void addIncomingSsrc(uint32_t ssrc);
+
+        void removeIncomingSsrc(uint32_t ssrc);
+
+        void beginAudioChannelCleanupTimer();
     };
 
 } // wrtc

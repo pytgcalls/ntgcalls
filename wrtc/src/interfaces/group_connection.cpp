@@ -11,6 +11,7 @@
 namespace wrtc {
     GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation) {
         generateSsrcs();
+        beginAudioChannelCleanupTimer();
     }
 
     GroupConnection::~GroupConnection() {
@@ -192,7 +193,18 @@ namespace wrtc {
         }
     }
 
+    void GroupConnection::RtpPacketReceived(const webrtc::RtpPacketReceived& packet) {
+        if (packet.PayloadType() == 111) {
+            if (!incomingAudioChannels.contains(packet.Ssrc())) {
+                addIncomingSsrc(packet.Ssrc());
+            } else {
+                incomingAudioChannels[packet.Ssrc()]->updateActivity();
+            }
+        }
+    }
+
     void GroupConnection::createChannels(const ResponsePayload::Media& media) {
+        mediaConfig = media;
         if (audioChannel && audioChannel->ssrc() != outgoingAudioSsrc) {
             audioChannel = nullptr;
         }
@@ -236,7 +248,75 @@ namespace wrtc {
         }
     }
 
+    void GroupConnection::addIncomingSsrc(const uint32_t ssrc) {
+        if (incomingAudioChannels.contains(ssrc)) {
+            return;
+        }
+        if (incomingAudioChannels.size() > 10) {
+            int64_t minActivity = INT64_MAX;
+            const auto timestamp = rtc::TimeMillis();
+            uint32_t minActivityChannelId = 0;
+            for (const auto& [channelId, channel] : incomingAudioChannels) {
+                if (const auto activity = channel->getActivity(); activity < minActivity && activity < timestamp - 1000) {
+                    minActivity = activity;
+                    minActivityChannelId = channelId;
+                }
+            }
+            if (minActivityChannelId != 0) {
+                removeIncomingSsrc(minActivityChannelId);
+            }
+            if (incomingAudioChannels.size() > 10) {
+                RTC_LOG(LS_WARNING) << "Too many incoming audio channels";
+                return;
+            }
+        }
+        MediaContent audioContent;
+        audioContent.ssrc = ssrc;
+        audioContent.rtpExtensions = mediaConfig.audioRtpExtensions;
+        audioContent.payloadTypes = mediaConfig.audioPayloadTypes;
+
+        RTC_LOG(LS_INFO) << "Adding incoming audio channel with ssrc " << ssrc;
+        auto channel = std::make_unique<IncomingAudioChannel>(
+            call.get(),
+            channelManager.get(),
+            dtlsSrtpTransport.get(),
+            audioContent,
+            workerThread(),
+            networkThread(),
+            remoteAudioSink
+        );
+        if (remoteAudioSink) remoteAudioSink->addSource();
+        incomingAudioChannels.insert(std::make_pair(ssrc, std::move(channel)));
+    }
+
+    void GroupConnection::removeIncomingSsrc(const uint32_t ssrc) {
+        if (!incomingAudioChannels.contains(ssrc)) {
+            return;
+        }
+        RTC_LOG(LS_INFO) << "Removing incoming audio channel with ssrc " << ssrc;
+        incomingAudioChannels.erase(ssrc);
+        if (remoteAudioSink) remoteAudioSink->removeSource();
+    }
+
+    void GroupConnection::beginAudioChannelCleanupTimer() {
+        workerThread()->PostDelayedTask([this] {
+            if (isExiting) return;
+            const auto timestamp = rtc::TimeMillis();
+            std::vector<uint32_t> removeChannels;
+            for (const auto& [channelId, channel] : incomingAudioChannels) {
+                if (channel->getActivity() < timestamp - 1000) {
+                    removeChannels.push_back(channelId);
+                }
+            }
+            for (const auto &channelId : removeChannels) {
+                removeIncomingSsrc(channelId);
+            }
+            beginAudioChannelCleanupTimer();
+        }, webrtc::TimeDelta::Millis(500));
+    }
+
     void GroupConnection::close() {
+        isExiting = true;
         outgoingVideoSsrcGroups.clear();
         NativeNetworkInterface::close();
     }
