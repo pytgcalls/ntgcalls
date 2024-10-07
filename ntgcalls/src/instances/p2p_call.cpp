@@ -26,6 +26,7 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         streamManager->enableVideoSimulcast(false);
         streamManager->setStreamSources(StreamManager::Mode::Playback, media);
+        streamManager->setStreamSources(StreamManager::Mode::Capture, MediaDescription());
         RTC_LOG(LS_INFO) << "AVStream settings applied";
     }
 
@@ -186,6 +187,7 @@ namespace ntgcalls {
         });
         streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
         streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection);
         streamManager->onUpgrade([this] (const MediaState mediaState) {
             sendMediaState(mediaState);
         });
