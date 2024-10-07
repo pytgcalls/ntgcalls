@@ -6,7 +6,7 @@
 #include <ntgcalls/stream_manager.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
 #include <ntgcalls/media/audio_streamer.hpp>
-#include <ntgcalls/media/media_reader_factory.hpp>
+#include <ntgcalls/media/media_source_factory.hpp>
 #include <ntgcalls/media/video_sink.hpp>
 #include <ntgcalls/media/video_streamer.hpp>
 #include <rtc_base/logging.h>
@@ -231,7 +231,7 @@ namespace ntgcalls {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc)) {
                 if (mode == Playback) {
-                    readers[device] = MediaReaderFactory::fromInput(desc.value(), streams[id].get());
+                    readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id](const bytes::unique_binary& data) {
                         dynamic_cast<BaseStreamer*>(streams[id].get())->sendData(data.get(), rtc::TimeMillis());
                     });
