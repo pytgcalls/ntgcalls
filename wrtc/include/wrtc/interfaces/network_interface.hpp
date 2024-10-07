@@ -9,6 +9,7 @@
 #include <wrtc/models/ice_candidate.hpp>
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/interfaces/media/remote_media_interface.hpp>
 
 namespace wrtc {
 
@@ -48,6 +49,8 @@ namespace wrtc {
         virtual void addIceCandidate(const IceCandidate& rawCandidate) const = 0;
 
         virtual std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) = 0;
+
+        virtual void addIncomingTrack(RemoteMediaInterface* remoteSink) = 0;
 
         bool isDataChannelOpen() const;
     };

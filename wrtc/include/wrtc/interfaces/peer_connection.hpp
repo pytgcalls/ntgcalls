@@ -57,6 +57,8 @@ namespace wrtc {
 
         void onDataChannelMessage(const std::function<void(bytes::binary)> &callback);
 
+        void addIncomingTrack(RemoteMediaInterface* remoteSink) override;
+
     private:
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection;
         rtc::scoped_refptr<webrtc::DataChannelInterface> dataChannel;

@@ -3,7 +3,7 @@
 //
 
 #include <wrtc/interfaces/native_network_interface.hpp>
-#include <wrtc/interfaces/media/rtc_audio_sink.hpp>
+#include <wrtc/interfaces/media/raw_audio_sink.hpp>
 #include <wrtc/interfaces/media/channels/incoming_audio_channel.hpp>
 
 namespace wrtc {
@@ -14,7 +14,7 @@ namespace wrtc {
         const MediaContent& mediaContent,
         rtc::Thread *workerThread,
         rtc::Thread* networkThread,
-        const std::function<void(const webrtc::AudioSinkInterface::Data&)>& dataCallback
+        RemoteAudioSink* remoteAudioSink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread) {
         const auto streamId = std::to_string(_ssrc);
 
@@ -77,8 +77,9 @@ namespace wrtc {
         });
         channel->Enable(true);
         workerThread->BlockingCall([&] {
-            auto sink = std::make_unique<RTCAudioSink>(dataCallback);
-            channel->receive_channel()->SetRawAudioSink(_ssrc, std::move(sink));
+            auto rawSink = std::make_unique<RawAudioSink>();
+            rawSink->setRemoteAudioSink(_ssrc, remoteAudioSink);
+            channel->receive_channel()->SetRawAudioSink(_ssrc, std::move(rawSink));
         });
     }
 

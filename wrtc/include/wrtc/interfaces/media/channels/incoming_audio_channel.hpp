@@ -8,6 +8,7 @@
 
 #include <wrtc/models/media_content.hpp>
 #include <wrtc/interfaces/media/channel_manager.hpp>
+#include <wrtc/interfaces/media/remote_audio_sink.hpp>
 
 namespace wrtc {
 
@@ -26,7 +27,7 @@ namespace wrtc {
             const MediaContent& mediaContent,
             rtc::Thread *workerThread,
             rtc::Thread* networkThread,
-            const std::function<void(const webrtc::AudioSinkInterface::Data&)>& dataCallback
+            RemoteAudioSink* remoteAudioSink
         );
 
         ~IncomingAudioChannel() override;

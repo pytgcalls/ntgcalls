@@ -196,6 +196,10 @@ namespace wrtc {
         dataChannelMessageCallback = callback;
     }
 
+    void PeerConnection::addIncomingTrack(RemoteMediaInterface* remoteSink) {
+        throw RTCException("Cannot add incoming track; PeerConnection does not support receiving tracks");
+    }
+
     void PeerConnection::OnSignalingChange(const webrtc::PeerConnectionInterface::SignalingState new_state) {
         (void) signalingStateChangeCallback(parseSignalingState(new_state));
     }
