@@ -91,10 +91,10 @@ namespace ntgcalls {
         std::optional<VideoDescription> camera, screen;
 
         MediaDescription(
-            const std::optional<AudioDescription>& microphone,
-            const std::optional<AudioDescription>& speaker,
-            const std::optional<VideoDescription>& camera,
-            const std::optional<VideoDescription>& screen
+            const std::optional<AudioDescription>& microphone = std::nullopt,
+            const std::optional<AudioDescription>& speaker = std::nullopt,
+            const std::optional<VideoDescription>& camera = std::nullopt,
+            const std::optional<VideoDescription>& screen = std::nullopt
         ): microphone(microphone), speaker(speaker), camera(camera), screen(screen) {}
     };
 } // ntgcalls
