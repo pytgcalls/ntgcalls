@@ -2,6 +2,7 @@
 // Created by Laky64 on 28/09/24.
 //
 
+#include <utility>
 #include <ntgcalls/io/base_reader.hpp>
 
 namespace ntgcalls {
