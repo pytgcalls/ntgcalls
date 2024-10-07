@@ -85,23 +85,23 @@ PYBIND11_MODULE(ntgcalls, m) {
         .value("PRESENTATION", ntgcalls::CallNetworkState::Kind::Presentation)
         .export_values();
 
-    py::enum_<ntgcalls::BaseMediaDescription::InputMode>(m, "InputMode")
-        .value("FILE", ntgcalls::BaseMediaDescription::InputMode::File)
-        .value("SHELL", ntgcalls::BaseMediaDescription::InputMode::Shell)
-        .value("FFMPEG", ntgcalls::BaseMediaDescription::InputMode::FFmpeg)
-        .value("DEVICE", ntgcalls::BaseMediaDescription::InputMode::Device)
+    py::enum_<ntgcalls::BaseMediaDescription::MediaSource>(m, "MediaSource")
+        .value("FILE", ntgcalls::BaseMediaDescription::MediaSource::File)
+        .value("SHELL", ntgcalls::BaseMediaDescription::MediaSource::Shell)
+        .value("FFMPEG", ntgcalls::BaseMediaDescription::MediaSource::FFmpeg)
+        .value("DEVICE", ntgcalls::BaseMediaDescription::MediaSource::Device)
         .export_values()
-        .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
-            return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
+        .def("__and__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const ntgcalls::BaseMediaDescription::MediaSource& rhs) {
+            return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs & rhs);
         })
-        .def("__and__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
-            return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs & rhs);
+        .def("__and__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const int rhs) {
+            return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs & rhs);
         })
-        .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const ntgcalls::BaseMediaDescription::InputMode& rhs) {
-            return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
+        .def("__or__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const ntgcalls::BaseMediaDescription::MediaSource& rhs) {
+            return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs | rhs);
         })
-        .def("__or__",[](const ntgcalls::BaseMediaDescription::InputMode& lhs, const int rhs) {
-            return static_cast<ntgcalls::BaseMediaDescription::InputMode>(lhs | rhs);
+        .def("__or__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const int rhs) {
+            return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs | rhs);
         });
 
     py::class_<ntgcalls::MediaState>(m, "MediaState")
@@ -127,8 +127,8 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::AudioDescription> audioWrapper(m, "AudioDescription", mediaWrapper);
     audioWrapper.def(
-        py::init<ntgcalls::BaseMediaDescription::InputMode, uint32_t, uint8_t, uint8_t, std::string>(),
-        py::arg("input_mode"),
+        py::init<ntgcalls::BaseMediaDescription::MediaSource, uint32_t, uint8_t, uint8_t, std::string>(),
+        py::arg("media_source"),
         py::arg("sample_rate"),
         py::arg("bits_per_sample"),
         py::arg("channel_count"),
@@ -140,8 +140,8 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::VideoDescription> videoWrapper(m, "VideoDescription", mediaWrapper);
     videoWrapper.def(
-        py::init<ntgcalls::BaseMediaDescription::InputMode, uint16_t, uint16_t, uint8_t, std::string>(),
-        py::arg("input_mode"),
+        py::init<ntgcalls::BaseMediaDescription::MediaSource, uint16_t, uint16_t, uint8_t, std::string>(),
+        py::arg("media_source"),
         py::arg("width"),
         py::arg("height"),
         py::arg("fps"),

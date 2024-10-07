@@ -12,11 +12,11 @@ namespace ntgcalls {
 
     std::unique_ptr<BaseReader> MediaReaderFactory::fromInput(const BaseMediaDescription& desc, BaseSink *sink) {
         // SUPPORTED INPUT MODES
-        switch (desc.inputMode) {
-        case BaseMediaDescription::InputMode::File:
+        switch (desc.mediaSource) {
+        case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file reader for " << desc.input;
             return std::make_unique<FileReader>(desc.input, sink);
-        case BaseMediaDescription::InputMode::Shell:
+        case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell reader for " << desc.input;
             return std::make_unique<ShellReader>(desc.input, sink);
@@ -24,9 +24,9 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Shell execution is not yet supported on your OS/Architecture";
             throw ShellError("Shell execution is not yet supported on your OS/Architecture");
 #endif
-        case BaseMediaDescription::InputMode::Device:
+        case BaseMediaDescription::MediaSource::Device:
             return MediaDevice::CreateInput(desc, sink);
-        case BaseMediaDescription::InputMode::FFmpeg:
+        case BaseMediaDescription::MediaSource::FFmpeg:
             RTC_LOG(LS_ERROR) << "FFmpeg encoder is not yet supported";
             throw FFmpegError("FFmpeg encoder is not yet supported");
         default:

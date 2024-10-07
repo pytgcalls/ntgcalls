@@ -10,7 +10,7 @@
 namespace ntgcalls {
     class BaseMediaDescription {
     public:
-        enum class InputMode {
+        enum class MediaSource {
             Unknown = 0,
             File = 1 << 0,
             Shell = 1 << 1,
@@ -19,35 +19,35 @@ namespace ntgcalls {
         };
 
         std::string input;
-        InputMode inputMode;
+        MediaSource mediaSource;
 
-        BaseMediaDescription(std::string input, const InputMode inputMode): input(std::move(input)), inputMode(inputMode) {}
+        BaseMediaDescription(std::string input, const MediaSource mediaSource): input(std::move(input)), mediaSource(mediaSource) {}
 
         virtual ~BaseMediaDescription() = default;
     };
 
-    inline int operator&(const BaseMediaDescription::InputMode lhs, const int rhs) {
+    inline int operator&(const BaseMediaDescription::MediaSource lhs, const int rhs) {
         return static_cast<int>(lhs) & rhs;
     }
 
-    inline int operator|(const BaseMediaDescription::InputMode lhs, const BaseMediaDescription::InputMode rhs) {
+    inline int operator|(const BaseMediaDescription::MediaSource lhs, const BaseMediaDescription::MediaSource rhs) {
         return static_cast<int>(lhs) | static_cast<int>(rhs);
     }
 
-    inline int operator|(const BaseMediaDescription::InputMode lhs, const int rhs) {
+    inline int operator|(const BaseMediaDescription::MediaSource lhs, const int rhs) {
         return static_cast<int>(lhs) | rhs;
     }
 
-    inline BaseMediaDescription::InputMode operator|=(BaseMediaDescription::InputMode &lhs, BaseMediaDescription::InputMode rhs) {
-        lhs = static_cast<BaseMediaDescription::InputMode>(static_cast<int>(lhs) | static_cast<int>(rhs));
+    inline BaseMediaDescription::MediaSource operator|=(BaseMediaDescription::MediaSource &lhs, BaseMediaDescription::MediaSource rhs) {
+        lhs = static_cast<BaseMediaDescription::MediaSource>(static_cast<int>(lhs) | static_cast<int>(rhs));
         return lhs;
     }
 
-    inline int operator&(const BaseMediaDescription::InputMode& lhs, const BaseMediaDescription::InputMode rhs){
+    inline int operator&(const BaseMediaDescription::MediaSource& lhs, const BaseMediaDescription::MediaSource rhs){
         return static_cast<int>(lhs) & static_cast<int>(rhs);
     }
 
-    inline int operator==(const int lhs, const BaseMediaDescription::InputMode& rhs){
+    inline int operator==(const int lhs, const BaseMediaDescription::MediaSource& rhs){
         return lhs == static_cast<int>(rhs);
     }
 
@@ -56,8 +56,8 @@ namespace ntgcalls {
         uint32_t sampleRate;
         uint8_t bitsPerSample, channelCount;
 
-        AudioDescription(const InputMode inputMode, const uint32_t sampleRate, const uint8_t bitsPerSample, const uint8_t channelCount, const std::string& input):
-                BaseMediaDescription(input, inputMode), sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount) {}
+        AudioDescription(const MediaSource mediaSource, const uint32_t sampleRate, const uint8_t bitsPerSample, const uint8_t channelCount, const std::string& input):
+                BaseMediaDescription(input, mediaSource), sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount) {}
     };
 
     inline bool operator==(const AudioDescription& lhs, const AudioDescription& rhs) {
@@ -65,7 +65,7 @@ namespace ntgcalls {
             lhs.bitsPerSample == rhs.bitsPerSample &&
                 lhs.channelCount == rhs.channelCount &&
                     lhs.input == rhs.input &&
-                        lhs.inputMode == rhs.inputMode;
+                        lhs.mediaSource == rhs.mediaSource;
     }
 
     class VideoDescription final : public BaseMediaDescription {
@@ -73,8 +73,8 @@ namespace ntgcalls {
         uint16_t width, height;
         uint8_t fps;
 
-        VideoDescription(const InputMode inputMode, const uint16_t width, const uint16_t height, const uint8_t fps, const std::string& input):
-                BaseMediaDescription(input, inputMode), width(width), height(height), fps(fps) {}
+        VideoDescription(const MediaSource mediaSource, const uint16_t width, const uint16_t height, const uint8_t fps, const std::string& input):
+                BaseMediaDescription(input, mediaSource), width(width), height(height), fps(fps) {}
     };
 
     inline bool operator==(const VideoDescription& lhs, const VideoDescription& rhs) {
@@ -82,7 +82,7 @@ namespace ntgcalls {
             lhs.height == rhs.height &&
                 lhs.fps == rhs.fps &&
                     lhs.input == rhs.input &&
-                        lhs.inputMode == rhs.inputMode;
+                        lhs.mediaSource == rhs.mediaSource;
     }
 
     class MediaDescription {
