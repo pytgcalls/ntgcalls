@@ -4,8 +4,6 @@
 
 #pragma once
 #include <chrono>
-#include <api/media_stream_interface.h>
-#include <api/scoped_refptr.h>
 
 namespace ntgcalls {
 
@@ -18,8 +16,6 @@ namespace ntgcalls {
 
     public:
         virtual ~BaseSink();
-
-        virtual rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() = 0;
 
         uint64_t time();
 
