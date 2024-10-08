@@ -40,7 +40,7 @@ namespace ntgcalls {
                             cv.wait(lock, [this, i] {
                                 return (!running || activeBuffer == i) && enabled;
                             });
-                            if (!running) break;
+                            if (!running) return;
                             if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
                                 std::this_thread::sleep_for(waitTime);
                             }
