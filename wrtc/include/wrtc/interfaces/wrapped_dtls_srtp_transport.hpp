@@ -11,6 +11,7 @@ namespace wrtc {
     class WrappedDtlsSrtpTransport final : public webrtc::DtlsSrtpTransport {
         webrtc::RtpHeaderExtensionMap headerExtensionMap;
         synchronized_callback<webrtc::RtpPacketReceived> rtpPacketCallback;
+        int decryptionFailureCount = 0;
 
     public:
         WrappedDtlsSrtpTransport(
