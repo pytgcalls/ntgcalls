@@ -5,9 +5,13 @@
 #include <ntgcalls/devices/media_device.hpp>
 #include <ntgcalls/io/file_reader.hpp>
 #include <ntgcalls/io/audio_file_writer.hpp>
+#include <ntgcalls/io/audio_shell_writer.hpp>
 #include <ntgcalls/io/shell_reader.hpp>
 #include <ntgcalls/media/media_source_factory.hpp>
 #include <rtc_base/logging.h>
+
+#define BOOST_THROW RTC_LOG(LS_ERROR) << "Shell execution is not yet supported on your OS/Architecture"; \
+    throw ShellError("Shell execution is not yet supported on your OS/Architecture");
 
 namespace ntgcalls {
 
@@ -22,8 +26,7 @@ namespace ntgcalls {
             RTC_LOG(LS_INFO) << "Using shell reader for " << desc.input;
             return std::make_unique<ShellReader>(desc.input, sink);
 #else
-            RTC_LOG(LS_ERROR) << "Shell execution is not yet supported on your OS/Architecture";
-            throw ShellError("Shell execution is not yet supported on your OS/Architecture");
+            BOOST_THROW
 #endif
         case BaseMediaDescription::MediaSource::Device:
             return MediaDevice::CreateInput(desc, sink);
@@ -42,6 +45,13 @@ namespace ntgcalls {
         case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file writer for " << desc.input;
             return std::make_unique<AudioFileWriter>(desc.input, sink);
+        case BaseMediaDescription::MediaSource::Shell:
+#ifdef BOOST_ENABLED
+            RTC_LOG(LS_INFO) << "Using shell writer for " << desc.input;
+            return std::make_unique<AudioShellWriter>(desc.input, sink);
+#else
+            BOOST_THROW
+#endif
         default:
             RTC_LOG(LS_ERROR) << "Invalid input mode";
             throw InvalidParams("Invalid input mode");
