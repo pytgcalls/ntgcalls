@@ -16,20 +16,20 @@ namespace ntgcalls {
         std::fill_n(reinterpret_cast<int16_t*>(mixedOutput.get()), sink->frameSize() / sizeof(int16_t), 0);
 
         const auto numSources = frames.size();
-        for (size_t i = 0; i < sink->frameSize() / sizeof(int16_t); ++i) {
-            int32_t mixed_sample = 0;
+        for (size_t i = 0; i < sink->frameSize() / sizeof(int16_t); i++) {
+            int32_t mixedSample = 0;
             // ReSharper disable once CppUseElementsView
             for (const auto& [fst, snd] : frames) {
-                const auto source_samples = reinterpret_cast<const int16_t*>(snd.get());
-                mixed_sample += source_samples[i];
+                const auto sourceSamples = reinterpret_cast<const int16_t*>(snd.get());
+                mixedSample += sourceSamples[i];
             }
 
             // Audio normalization
-            mixed_sample /= numSources;
+            mixedSample /= static_cast<int32_t>(numSources);
 
             // Clipping to 16-bit signed integer range
             const auto mixedOutputSamples = reinterpret_cast<int16_t*>(mixedOutput.get());
-            mixedOutputSamples[i] = static_cast<int16_t>(std::clamp(mixed_sample, INT16_MIN, INT16_MAX));
+            mixedOutputSamples[i] = static_cast<int16_t>(std::clamp(mixedSample, INT16_MIN, INT16_MAX));
         }
 
         onData(std::move(mixedOutput));
