@@ -31,6 +31,7 @@ namespace ntgcalls {
     }
 
     PulseDeviceModule::~PulseDeviceModule() {
+        running = false;
         pulseConnection->disconnect();
     }
 
@@ -61,6 +62,8 @@ namespace ntgcalls {
     }
 
     void PulseDeviceModule::open() {
+        if (running) return;
+        running = true;
         pulseConnection->start(sink->frameSize());
         pulseConnection->onData([this](bytes::unique_binary data) {
             dataCallback(std::move(data));

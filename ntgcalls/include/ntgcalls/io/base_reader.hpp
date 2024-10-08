@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <atomic>
 #include <ntgcalls/media/base_sink.hpp>
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/syncronized_callback.hpp>
@@ -15,6 +16,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<bytes::unique_binary> dataCallback;
         BaseSink *sink;
         bool enabled = true;
+        std::atomic_bool running;
 
     public:
         explicit BaseReader(BaseSink *sink);

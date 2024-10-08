@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <atomic>
 #include <condition_variable>
 #include <ntgcalls/io/base_reader.hpp>
 #include <rtc_base/platform_thread.h>
@@ -13,7 +12,7 @@ namespace ntgcalls {
 
     class ThreadedReader: public BaseReader {
         std::vector<rtc::PlatformThread> bufferThreads;
-        std::atomic_bool running, eof = false;
+        std::atomic_bool eof = false;
         size_t activeBuffer = 0;
         size_t activeBufferCount = 0;
         std::condition_variable cv;

@@ -19,6 +19,7 @@ namespace ntgcalls {
     }
 
     void ThreadedReader::open() {
+        if (running) return;
         const size_t bufferCount = bufferThreads.capacity();
         running = true;
         auto frameSize = sink->frameSize();

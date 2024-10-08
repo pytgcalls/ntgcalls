@@ -3,12 +3,14 @@
 //
 
 #pragma once
+#include <atomic>
 #include <wrtc/utils/syncronized_callback.hpp>
 
 namespace ntgcalls {
 
     class BaseWriter {
     protected:
+        std::atomic_bool running;
         wrtc::synchronized_callback<void> eofCallback;
 
     public:

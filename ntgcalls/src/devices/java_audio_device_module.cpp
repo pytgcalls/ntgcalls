@@ -29,6 +29,7 @@ namespace ntgcalls {
     }
 
     JavaAudioDeviceModule::~JavaAudioDeviceModule() {
+        running = false;
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
         // ReSharper disable once CppLocalVariableMayBeConst
         jclass javaModuleClass = env->GetObjectClass(javaModule);
@@ -42,6 +43,8 @@ namespace ntgcalls {
     }
 
     void JavaAudioDeviceModule::open() {
+        if (running) return;
+        running = true;
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
         // ReSharper disable once CppLocalVariableMayBeConst
         jclass javaModuleClass = env->GetObjectClass(javaModule);

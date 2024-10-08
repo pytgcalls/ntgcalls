@@ -23,7 +23,7 @@ namespace ntgcalls {
         ComPtr<IAudioClient> audioClient;
         ComPtr<IAudioSessionControl> audioSessionControl;
         LONG refCount = 1;
-        std::atomic_bool isRestarting, isInitialized = false;
+        std::atomic_bool isRestarting = false;
         webrtc::ScopedCOMInitializer comInitializer;
         ScopedMMCSSRegistration mmcssRegistration;
         std::thread thread;

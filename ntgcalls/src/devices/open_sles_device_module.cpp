@@ -42,6 +42,7 @@ namespace ntgcalls {
     }
 
     OpenSLESDeviceModule::~OpenSLESDeviceModule() {
+        running = false;
         (*recorder)->SetRecordState(recorder, SL_RECORDSTATE_STOPPED);
         (*simpleBufferQueue)->Clear(simpleBufferQueue);
         (*simpleBufferQueue)->RegisterCallback(simpleBufferQueue, nullptr, nullptr);
@@ -139,6 +140,8 @@ namespace ntgcalls {
     }
 
     void OpenSLESDeviceModule::open() {
+        if (running) return;
+        running = true;
         audioBuffers = std::make_unique<bytes::unique_binary[]>(kNumOfOpenSLESBuffers);
         for (int i = 0; i < kNumOfOpenSLESBuffers; i++) {
             audioBuffers[i] = bytes::make_unique_binary(sink->frameSize());

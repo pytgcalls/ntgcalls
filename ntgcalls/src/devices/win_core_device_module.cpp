@@ -84,8 +84,8 @@ namespace ntgcalls {
     }
 
     void WinCoreDeviceModule::init() {
-        if (isInitialized) return;
-        isInitialized = true;
+        if (running) return;
+        running = true;
         const auto dataFlow = isCapture ? eCapture:eRender;
         std::string deviceId = webrtc::AudioDeviceName::kDefaultDeviceId;
         auto role = ERole();
@@ -297,7 +297,7 @@ namespace ntgcalls {
 
     // ReSharper disable once CppDFAUnreachableFunctionCall
     bool WinCoreDeviceModule::handleDataEvent() const {
-        if (!isInitialized) {
+        if (!running) {
             return false;
         }
         UINT32 numFramesInNextPacket = 0;
@@ -342,8 +342,8 @@ namespace ntgcalls {
     }
 
     void WinCoreDeviceModule::stop() {
-        if (!isInitialized) return;
-        isInitialized = false;
+        if (!running) return;
+        running = false;
         if (FAILED(static_cast<_com_error>(audioClient->Stop()).Error())) {
             throw MediaDeviceError("Failed to stop audio client");
         }
