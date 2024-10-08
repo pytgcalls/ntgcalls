@@ -21,6 +21,7 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
         onEOF = nullptr;
         readers.clear();
+        writers.clear();
         streams.clear();
         tracks.clear();
         workerThread = nullptr;
@@ -242,7 +243,9 @@ namespace ntgcalls {
                 if (mode == Playback) {
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id](const bytes::unique_binary& data) {
-                        dynamic_cast<BaseStreamer*>(streams[id].get())->sendData(data.get(), rtc::TimeMillis());
+                        if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
+                            stream->sendData(data.get(), rtc::TimeMillis());
+                        }
                     });
                     readers[device]->onEof([this, device] {
                         workerThread->PostTask([this, device] {
@@ -258,7 +261,9 @@ namespace ntgcalls {
                     if (streamType == Audio) {
                         writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
                         dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, device](const std::map<uint32_t, bytes::unique_binary>& frames) {
-                            dynamic_cast<AudioWriter*>(writers[device].get())->sendFrames(frames);
+                            if (const auto audioWriter = dynamic_cast<AudioWriter*>(writers[device].get())) {
+                                audioWriter->sendFrames(frames);
+                            }
                         });
                     } else {
                         throw InvalidParams("Video input is not yet supported");
