@@ -19,13 +19,6 @@
 #endif
 
 namespace ntgcalls {
-    std::unique_ptr<BaseReader> MediaDevice::CreateInput(const BaseMediaDescription& desc, BaseSink *sink) {
-        if (auto* audio = dynamic_cast<const AudioDescription*>(&desc)) {
-            return CreateAudioInput(audio, sink);
-        }
-        throw MediaDeviceError("Unsupported media type");
-    }
-
     std::vector<DeviceInfo> MediaDevice::GetAudioDevices() {
 #ifdef IS_LINUX
         if (PulseDeviceModule::isSupported()) {
@@ -55,29 +48,29 @@ namespace ntgcalls {
         return {};
     }
 
-    std::unique_ptr<BaseReader> MediaDevice::CreateAudioInput(const AudioDescription* desc, BaseSink *sink) {
+    std::unique_ptr<BaseIO> MediaDevice::CreateAudioDevice(const AudioDescription* desc, BaseSink *sink, const bool isCapture) {
 #ifdef IS_LINUX
         if (PulseDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using PulseAudio module for input";
-            return std::make_unique<PulseDeviceModule>(desc, true, sink);
+            return std::make_unique<PulseDeviceModule>(desc, isCapture, sink);
         }
         if (AlsaDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using ALSA module for input";
-            return std::make_unique<AlsaDeviceModule>(desc, true, sink);
+            return std::make_unique<AlsaDeviceModule>(desc, isCapture, sink);
         }
 #elif IS_WINDOWS
         if (WinCoreDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using Windows Core Audio module for input";
-            return std::make_unique<WinCoreDeviceModule>(desc, true, sink);
+            return std::make_unique<WinCoreDeviceModule>(desc, isCapture, sink);
         }
 #elif IS_ANDROID
         if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), true)) {
             RTC_LOG(LS_INFO) << "Using OpenSLES module for input";
-            return std::make_unique<OpenSLESDeviceModule>(desc, true, sink);
+            return std::make_unique<OpenSLESDeviceModule>(desc, isCapture, sink);
         }
         if (JavaAudioDeviceModule::isSupported()) {
             RTC_LOG(LS_INFO) << "Using Java Audio module for input";
-            return std::make_unique<JavaAudioDeviceModule>(desc, true, sink);
+            return std::make_unique<JavaAudioDeviceModule>(desc, isCapture, sink);
         }
 #endif
         throw MediaDeviceError("Unsupported platform for audio device");

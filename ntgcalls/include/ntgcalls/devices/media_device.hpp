@@ -3,17 +3,25 @@
 //
 
 #pragma once
-#include <ntgcalls/io/base_reader.hpp>
+#include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/devices/device_info.hpp>
+#include <ntgcalls/io/base_writer.hpp>
 #include <ntgcalls/models/media_description.hpp>
 
 namespace ntgcalls {
 
     class MediaDevice {
-        static std::unique_ptr<BaseReader> CreateAudioInput(const AudioDescription* desc, BaseSink *sink);
+        static std::unique_ptr<BaseIO> CreateAudioDevice(const AudioDescription* desc, BaseSink *sink, bool isCapture);
 
     public:
-        static std::unique_ptr<BaseReader> CreateInput(const BaseMediaDescription& desc, BaseSink *sink);
+        template <typename T>
+        static std::unique_ptr<T> CreateDevice(const BaseMediaDescription& desc, BaseSink* sink, const bool isCapture) {
+            if (auto* audio = dynamic_cast<const AudioDescription*>(&desc)) {
+                auto ioDevice = CreateAudioDevice(audio, sink, isCapture);
+                return std::unique_ptr<T>(dynamic_cast<T*>(ioDevice.release()));
+            }
+            throw MediaDeviceError("Unsupported media type");
+        }
 
         static std::vector<DeviceInfo> GetAudioDevices();
     };

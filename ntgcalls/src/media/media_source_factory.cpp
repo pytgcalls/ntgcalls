@@ -29,7 +29,7 @@ namespace ntgcalls {
             BOOST_THROW
 #endif
         case BaseMediaDescription::MediaSource::Device:
-            return MediaDevice::CreateInput(desc, sink);
+            return MediaDevice::CreateDevice<BaseReader>(desc, sink, true);
         case BaseMediaDescription::MediaSource::FFmpeg:
             RTC_LOG(LS_ERROR) << "FFmpeg encoder is not yet supported";
             throw FFmpegError("FFmpeg encoder is not yet supported");
