@@ -22,6 +22,9 @@ namespace ntgcalls {
                     const auto ok = cv.wait_for(lock, sink->frameTime() + std::chrono::milliseconds(20), [this] {
                         return !queue.empty() || !running;
                     });
+                    if (!running) {
+                        break;
+                    }
                     try {
                         if (ok) {
                             write(queue.front());
