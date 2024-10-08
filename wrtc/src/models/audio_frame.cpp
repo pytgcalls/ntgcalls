@@ -6,8 +6,4 @@
 
 namespace wrtc {
     AudioFrame::AudioFrame(const uint32_t ssrc): ssrc(ssrc) {}
-
-    AudioFrame::~AudioFrame() {
-        data = nullptr;
-    }
 } // wrtc
