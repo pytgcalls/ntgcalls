@@ -20,11 +20,12 @@ namespace ntgcalls {
         pa_mainloop_api* paMainloopApi;
         pa_context* paContext;
         char paServerVersion[32]{};
-        std::atomic_bool versionReceived, recording, paStateChanged = false;
+        std::atomic_bool versionReceived, running, paStateChanged = false;
         pa_stream* stream{};
         std::string deviceID;
         std::map<std::string, std::string> playDevices, recordDevices;
         wrtc::synchronized_callback<bytes::unique_binary> dataCallback;
+        bool isCapture = false;
 
         void paLock() const;
 
@@ -64,6 +65,8 @@ namespace ntgcalls {
         std::map<std::string, std::string> getRecordDevices();
 
         void onData(const std::function<void(bytes::unique_binary)> &callback);
+
+        void writeData(const bytes::unique_binary& data, size_t size) const;
     };
 
 } // ntgcalls

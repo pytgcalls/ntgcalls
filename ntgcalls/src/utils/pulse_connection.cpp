@@ -165,6 +165,14 @@ namespace ntgcalls {
         dataCallback = callback;
     }
 
+    void PulseConnection::writeData(const bytes::unique_binary& data, const size_t size) const {
+        paLock();
+        if (LATE(pa_stream_write)(stream, data.get(), size, nullptr, static_cast<int64_t>(0), PA_SEEK_RELATIVE) != PA_OK) {
+            throw MediaDeviceError("Failed to write data to stream, err=" + std::to_string(LATE(pa_context_errno)(paContext)));
+        }
+        paUnLock();
+    }
+
     void PulseConnection::paStreamStateCallback(pa_stream*, void* pThis) {
         LATE(pa_threaded_mainloop_signal)(static_cast<PulseConnection*>(pThis)->paMainloop, 0);
     }
@@ -196,9 +204,9 @@ namespace ntgcalls {
 
     void PulseConnection::disconnect() {
         paLock();
-        if (recording) {
-            disableReadCallback();
-            recording = false;
+        if (running) {
+            if (isCapture) disableReadCallback();
+            running = false;
         }
         if (stream) {
             if (LATE(pa_stream_get_state)(stream) != PA_STREAM_UNCONNECTED) {
@@ -223,9 +231,8 @@ namespace ntgcalls {
             throw MediaDeviceError("Cannot create stream, err=" + std::to_string(LATE(pa_context_errno)(paContext)));
         }
         this->deviceID = std::move(deviceId);
-        if (isCapture) {
-            LATE(pa_stream_set_state_callback)(stream, paStreamStateCallback, this);
-        }
+        this->isCapture = isCapture;
+        LATE(pa_stream_set_state_callback)(stream, paStreamStateCallback, this);
     }
 
     void PulseConnection::start(const int64_t bufferSize) {
@@ -239,17 +246,26 @@ namespace ntgcalls {
         buffer_attr.prebuf = -1;
         buffer_attr.minreq = -1;
         buffer_attr.fragsize = bufferSize;
-        if (LATE(pa_stream_connect_record)(stream, deviceID.c_str(), &buffer_attr, PA_STREAM_NOFLAGS) != PA_OK) {
-            throw MediaDeviceError("cannot connect to stream");
+        if (isCapture) {
+            if (LATE(pa_stream_connect_record)(stream, deviceID.c_str(), &buffer_attr, PA_STREAM_NOFLAGS) != PA_OK) {
+                throw MediaDeviceError("cannot connect to stream");
+            }
+        } else {
+            if (LATE(pa_stream_connect_playback)(stream, deviceID.c_str(), &buffer_attr, PA_STREAM_NOFLAGS, nullptr, nullptr) != PA_OK) {
+                throw MediaDeviceError("cannot connect to stream");
+            }
         }
+
         RTC_LOG(LS_VERBOSE) << "Connecting stream";
         while (LATE(pa_stream_get_state)(stream) != PA_STREAM_READY) {
             LATE(pa_threaded_mainloop_wait)(paMainloop);
         }
         RTC_LOG(LS_VERBOSE) << "Connected stream";
-        enableReadCallback();
+        if (isCapture) {
+            enableReadCallback();
+        }
         paUnLock();
-        recording = true;
+        running = true;
     }
 } // ntgcalls
 
