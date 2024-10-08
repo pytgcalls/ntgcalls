@@ -3,20 +3,13 @@
 //
 
 #pragma once
-#include <atomic>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <ntgcalls/io/base_io.hpp>
 
 namespace ntgcalls {
 
-    class BaseWriter {
-    protected:
-        std::atomic_bool running;
-        wrtc::synchronized_callback<void> eofCallback;
-
+    class BaseWriter: public virtual BaseIO {
     public:
-        virtual ~BaseWriter() = default;
-
-        void onEof(const std::function<void()> &callback);
+        explicit BaseWriter(BaseSink* sink): BaseIO(sink) {}
 
         virtual void open() = 0;
     };

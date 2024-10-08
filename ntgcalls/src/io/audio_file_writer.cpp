@@ -7,7 +7,7 @@
 #include <rtc_base/logging.h>
 
 namespace ntgcalls {
-    AudioFileWriter::AudioFileWriter(const std::string& path, BaseSink* sink): ThreadedAudioMixer(sink) {
+    AudioFileWriter::AudioFileWriter(const std::string& path, BaseSink* sink): BaseIO(sink), ThreadedAudioMixer(sink) {
         source = std::ofstream(path, std::ios::binary);
         if (!source) {
             RTC_LOG(LS_ERROR) << "Unable to open the file located at \"" << path << "\"";

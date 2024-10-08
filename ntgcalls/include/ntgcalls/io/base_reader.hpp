@@ -3,29 +3,21 @@
 //
 
 #pragma once
-#include <atomic>
-#include <ntgcalls/media/base_sink.hpp>
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/syncronized_callback.hpp>
+#include <ntgcalls/io/base_io.hpp>
 
 namespace ntgcalls {
 
-    class BaseReader {
+    class BaseReader: public virtual BaseIO {
     protected:
-        wrtc::synchronized_callback<void> eofCallback;
         wrtc::synchronized_callback<bytes::unique_binary> dataCallback;
-        BaseSink *sink;
         bool enabled = true;
-        std::atomic_bool running;
 
     public:
         explicit BaseReader(BaseSink *sink);
 
-        virtual ~BaseReader();
-
         virtual void open() = 0;
-
-        void onEof(const std::function<void()> &callback);
 
         void onData(const std::function<void(bytes::unique_binary)> &callback);
 

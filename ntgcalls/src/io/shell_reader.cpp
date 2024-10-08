@@ -7,7 +7,7 @@
 
 #ifdef BOOST_ENABLED
 namespace ntgcalls {
-    ShellReader::ShellReader(const std::string &command, BaseSink *sink): ThreadedReader(sink) {
+    ShellReader::ShellReader(const std::string &command, BaseSink *sink): BaseIO(sink), ThreadedReader(sink) {
         try {
             shellProcess = bp::child(command, bp::std_out > stdOut, bp::std_in.close());
         } catch (std::runtime_error &e) {

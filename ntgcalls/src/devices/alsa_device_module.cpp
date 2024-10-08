@@ -28,7 +28,7 @@ memset(*pInfo, 0, LATE(snd_pcm_info_sizeof)()); \
 } while (0)
 
 namespace ntgcalls {
-    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink *sink): BaseDeviceModule(desc, isCapture), ThreadedReader(sink) {
+    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink *sink): BaseIO(sink), BaseDeviceModule(desc, isCapture), ThreadedReader(sink) {
         try {
             deviceID = deviceMetadata["id"];
         } catch (...) {

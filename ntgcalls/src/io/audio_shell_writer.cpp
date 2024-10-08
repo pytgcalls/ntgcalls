@@ -8,7 +8,7 @@
 #ifdef BOOST_ENABLED
 
 namespace ntgcalls {
-    AudioShellWriter::AudioShellWriter(const std::string &command, BaseSink* sink): ThreadedAudioMixer(sink) {
+    AudioShellWriter::AudioShellWriter(const std::string &command, BaseSink* sink): BaseIO(sink), ThreadedAudioMixer(sink) {
         try {
             shellProcess = bp::child(command, bp::std_out.close(), bp::std_in < stdIn);
         } catch (std::runtime_error &e) {

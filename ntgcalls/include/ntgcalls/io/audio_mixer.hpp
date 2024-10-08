@@ -11,8 +11,6 @@ namespace ntgcalls {
 
     class AudioMixer: public AudioWriter {
     protected:
-        BaseSink* sink;
-
         virtual void onData(bytes::unique_binary data) = 0;
 
     public:

@@ -5,7 +5,7 @@
 #include <ntgcalls/io/audio_mixer.hpp>
 
 namespace ntgcalls {
-    AudioMixer::AudioMixer(BaseSink* sink): sink(sink) {}
+    AudioMixer::AudioMixer(BaseSink* sink): AudioWriter(sink) {}
 
     AudioMixer::~AudioMixer() {
         sink = nullptr;

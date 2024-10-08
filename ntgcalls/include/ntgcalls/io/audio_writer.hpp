@@ -12,6 +12,8 @@ namespace ntgcalls {
 
     class AudioWriter: public BaseWriter {
     public:
+        explicit AudioWriter(BaseSink* sink): BaseWriter(sink) {}
+
         virtual void sendFrames(const std::map<uint32_t, bytes::unique_binary>& frames) = 0;
     };
 

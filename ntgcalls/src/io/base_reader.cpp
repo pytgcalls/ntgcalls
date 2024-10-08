@@ -6,15 +6,7 @@
 #include <ntgcalls/io/base_reader.hpp>
 
 namespace ntgcalls {
-    BaseReader::BaseReader(BaseSink *sink): sink(sink) {}
-
-    BaseReader::~BaseReader() {
-        sink = nullptr;
-    }
-
-    void BaseReader::onEof(const std::function<void()>& callback) {
-        eofCallback = callback;
-    }
+    BaseReader::BaseReader(BaseSink *sink): BaseIO(sink) {}
 
     void BaseReader::onData(const std::function<void(bytes::unique_binary)>& callback) {
         dataCallback = callback;
