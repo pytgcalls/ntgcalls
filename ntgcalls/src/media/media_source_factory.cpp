@@ -52,6 +52,11 @@ namespace ntgcalls {
 #else
             BOOST_THROW
 #endif
+        case BaseMediaDescription::MediaSource::Device:
+            return MediaDevice::CreateDevice<AudioWriter>(desc, sink, false);
+        case BaseMediaDescription::MediaSource::FFmpeg:
+            RTC_LOG(LS_ERROR) << "FFmpeg encoder is not yet supported";
+            throw FFmpegError("FFmpeg encoder is not yet supported");
         default:
             RTC_LOG(LS_ERROR) << "Invalid input mode";
             throw InvalidParams("Invalid input mode");
