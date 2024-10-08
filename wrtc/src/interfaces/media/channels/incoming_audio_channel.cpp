@@ -16,6 +16,8 @@ namespace wrtc {
         rtc::Thread* networkThread,
         RemoteAudioSink* remoteAudioSink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread) {
+        updateActivity();
+
         const auto streamId = std::to_string(_ssrc);
 
         cricket::AudioOptions audioOptions;
