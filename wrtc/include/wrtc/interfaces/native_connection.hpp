@@ -63,8 +63,6 @@ namespace wrtc {
 
         std::optional<rtc::SSLRole> dtlsRole() const override;
 
-        bool supportsPacketSending() const override;
-
         bool supportsRenomination() const override;
 
         void stateUpdated(bool isConnected) override;

@@ -13,8 +13,8 @@
 #include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
 
 namespace wrtc {
-    NativeNetworkInterface::NativeNetworkInterface() {
-        networkThread()->PostTask([this] {
+    NativeNetworkInterface::NativeNetworkInterface(bool supportsPacketSending) {
+        networkThread()->PostTask([this, supportsPacketSending] {
             localParameters = PeerIceParameters(
                 rtc::CreateRandomString(cricket::ICE_UFRAG_LENGTH),
                 rtc::CreateRandomString(cricket::ICE_PWD_LENGTH),
@@ -44,7 +44,7 @@ namespace wrtc {
                    if (call) call->Receiver()->DeliverRtcpPacket(packet);
                });
             });
-            if (supportsPacketSending()) {
+            if (supportsPacketSending) {
                 dtlsSrtpTransport->SubscribeSentPacket(this, [this](const rtc::SentPacket& packet) {
                     workerThread()->PostTask([this, packet] {
                         if (call) call->OnSentPacket(packet);

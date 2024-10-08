@@ -16,7 +16,8 @@ namespace wrtc {
     isOutgoing(isOutgoing),
     enableP2P(enableP2P),
     rtcServers(std::move(rtcServers)),
-    eventLog(std::make_unique<webrtc::RtcEventLogNull>()) {
+    eventLog(std::make_unique<webrtc::RtcEventLogNull>()),
+    NativeNetworkInterface(false) {
         contentNegotiationContext = std::make_unique<ContentNegotiationContext>(factory->fieldTrials(), isOutgoing, factory->mediaEngine(), factory->ssrcGenerator());
         contentNegotiationContext->copyCodecsFromChannelManager(factory->mediaEngine(), false);
         networkThread()->PostTask([this] {
@@ -105,10 +106,6 @@ namespace wrtc {
 
     std::optional<rtc::SSLRole> NativeConnection::dtlsRole() const {
         return std::nullopt;
-    }
-
-    bool NativeConnection::supportsPacketSending() const {
-        return false;
     }
 
     bool NativeConnection::supportsRenomination() const {

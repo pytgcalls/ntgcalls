@@ -48,8 +48,6 @@ namespace wrtc {
         Mode connectionMode = Mode::None;
         ResponsePayload::Media mediaConfig;
 
-        bool supportsPacketSending() const override;
-
         bool supportsRenomination() const override;
 
         cricket::IceRole iceRole() const override;

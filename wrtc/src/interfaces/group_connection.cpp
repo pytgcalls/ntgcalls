@@ -9,7 +9,7 @@
 #include <wrtc/models/simulcast_layer.hpp>
 
 namespace wrtc {
-    GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation) {
+    GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation), NativeNetworkInterface(true) {
         generateSsrcs();
         beginAudioChannelCleanupTimer();
     }
@@ -319,10 +319,6 @@ namespace wrtc {
         isExiting = true;
         outgoingVideoSsrcGroups.clear();
         NativeNetworkInterface::close();
-    }
-
-    bool GroupConnection::supportsPacketSending() const {
-        return true;
     }
 
     bool GroupConnection::supportsRenomination() const {

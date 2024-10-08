@@ -54,8 +54,6 @@ namespace wrtc {
         std::unique_ptr<SctpDataChannelProviderInterfaceImpl> dataChannelInterface;
         bool connected = false, failed = false;
 
-        virtual bool supportsPacketSending() const = 0;
-
         virtual std::pair<cricket::ServerAddresses, std::vector<cricket::RelayServerConfig>> getStunAndTurnServers() = 0;
 
         virtual cricket::RelayPortFactoryInterface* getRelayPortFactory() = 0;
@@ -91,7 +89,7 @@ namespace wrtc {
         void addIncomingTrack(RemoteMediaInterface* remoteSink) override;
 
     public:
-        NativeNetworkInterface();
+        explicit NativeNetworkInterface(bool supportsPacketSending);
 
         PeerIceParameters localIceParameters();
 
