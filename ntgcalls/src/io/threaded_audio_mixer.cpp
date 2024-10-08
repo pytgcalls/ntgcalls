@@ -19,7 +19,7 @@ namespace ntgcalls {
         [this] {
                 while (running) {
                     std::unique_lock lock(mtx);
-                    const auto ok = cv.wait_for(lock, sink->frameTime() + std::chrono::milliseconds(5), [this] {
+                    const auto ok = cv.wait_for(lock, sink->frameTime() + std::chrono::milliseconds(20), [this] {
                         return !queue.empty() || !running;
                     });
                     try {
