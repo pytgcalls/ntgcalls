@@ -41,7 +41,7 @@ namespace ntgcalls {
                 }
                 (void) eofCallback();
             },
-            "ThreadedAudioMixer",
+            "ThreadedMixer",
             rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
         );
     }

@@ -15,7 +15,7 @@ namespace ntgcalls {
             File = 1 << 0,
             Shell = 1 << 1,
             FFmpeg = 1 << 2,
-            Device = 1 << 4,
+            Device = 1 << 3,
         };
 
         std::string input;
@@ -90,7 +90,7 @@ namespace ntgcalls {
         std::optional<AudioDescription> microphone, speaker;
         std::optional<VideoDescription> camera, screen;
 
-        MediaDescription(
+        explicit MediaDescription(
             const std::optional<AudioDescription>& microphone = std::nullopt,
             const std::optional<AudioDescription>& speaker = std::nullopt,
             const std::optional<VideoDescription>& camera = std::nullopt,
