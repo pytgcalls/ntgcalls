@@ -7,7 +7,11 @@
 namespace ntgcalls {
     AudioMixer::AudioMixer(BaseSink* sink): sink(sink) {}
 
-    void AudioMixer::sendFrames(const std::map<uint32_t, bytes::shared_binary>& frames) {
+    AudioMixer::~AudioMixer() {
+        sink = nullptr;
+    }
+
+    void AudioMixer::sendFrames(const std::map<uint32_t, bytes::unique_binary>& frames) {
         bytes::unique_binary mixedOutput = bytes::make_unique_binary(sink->frameSize());
         std::fill_n(reinterpret_cast<int16_t*>(mixedOutput.get()), sink->frameSize() / sizeof(int16_t), 0);
 

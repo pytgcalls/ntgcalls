@@ -14,15 +14,15 @@ namespace wrtc {
 
     class RemoteAudioSink final: public RemoteMediaInterface {
         std::atomic<uint32_t> numSources;
-        std::vector<std::shared_ptr<AudioFrame>> audioFrames;
-        synchronized_callback<std::vector<std::shared_ptr<AudioFrame>>> framesCallback;
+        std::vector<std::unique_ptr<AudioFrame>> audioFrames;
+        synchronized_callback<const std::vector<std::unique_ptr<AudioFrame>>&> framesCallback;
 
     public:
-        explicit RemoteAudioSink(const std::function<void(const std::vector<std::shared_ptr<AudioFrame>>&)>& callback);
+        explicit RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<AudioFrame>>&)>& callback);
 
         ~RemoteAudioSink() override;
 
-        void sendData(const std::shared_ptr<AudioFrame>& frame);
+        void sendData(std::unique_ptr<AudioFrame> frame);
 
         void addSource();
 

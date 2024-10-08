@@ -5,7 +5,7 @@
 #include <wrtc/interfaces/media/remote_audio_sink.hpp>
 
 namespace wrtc {
-    RemoteAudioSink::RemoteAudioSink(const std::function<void(const std::vector<std::shared_ptr<AudioFrame>>&)>& callback): numSources(0) {
+    RemoteAudioSink::RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<AudioFrame>>&)>& callback): numSources(0) {
         framesCallback = callback;
     }
 
@@ -13,8 +13,8 @@ namespace wrtc {
         audioFrames.clear();
     }
 
-    void RemoteAudioSink::sendData(const std::shared_ptr<AudioFrame>& frame) {
-        audioFrames.push_back(frame);
+    void RemoteAudioSink::sendData(std::unique_ptr<AudioFrame> frame) {
+        audioFrames.push_back(std::move(frame));
         if (audioFrames.size() >= numSources) {
             (void) framesCallback(audioFrames);
             audioFrames.clear();

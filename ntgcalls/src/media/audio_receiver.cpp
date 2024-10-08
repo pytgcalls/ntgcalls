@@ -9,18 +9,23 @@
 namespace ntgcalls {
     AudioReceiver::AudioReceiver() {
         resampler = std::make_unique<webrtc::Resampler>();
-        sink = std::make_unique<wrtc::RemoteAudioSink>([this](const std::vector<std::shared_ptr<wrtc::AudioFrame>>& frames) {
+        sink = std::make_unique<wrtc::RemoteAudioSink>([this](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& frames) {
             if (!description) {
                 return;
             }
-            std::map<uint32_t, bytes::shared_binary> processedFrames;
+            std::map<uint32_t, bytes::unique_binary> processedFrames;
             for (const auto& frame: frames) {
                 try {
-                    processedFrames[frame->ssrc] = resampleFrame(
-                        std::move(frame->data),
-                        frame->size,
-                        frame->channels,
-                        frame->sampleRate
+                    bytes::unique_binary data = bytes::make_unique_binary(frame->size);
+                    memcpy(data.get(), frame->data, frame->size);
+                    processedFrames.emplace(
+                        frame->ssrc,
+                        resampleFrame(
+                            std::move(data),
+                            frame->size,
+                            frame->channels,
+                            frame->sampleRate
+                        )
                     );
                 } catch (const InvalidParams& e) {
                     RTC_LOG(LS_ERROR) << "Failed to adapt audio frame: " << e.what();
@@ -30,36 +35,37 @@ namespace ntgcalls {
         });
     }
 
-    bytes::shared_binary AudioReceiver::resampleFrame(bytes::unique_binary data, const size_t size, const uint8_t channels, const uint16_t sampleRate) {
+    bytes::unique_binary AudioReceiver::resampleFrame(bytes::unique_binary data, const size_t size, const uint8_t channels, const uint16_t sampleRate) {
         bytes::unique_binary convertedData;
-        size_t newSize;
+        size_t preSampleSize;
         if (channels != description->channelCount) {
             switch (channels){
             case 1:
-                convertedData = monoToStereo(data, size, &newSize);
+                convertedData = monoToStereo(data, size, &preSampleSize);
                 break;
             case 2:
-                convertedData = stereoToMono(data, size, &newSize);
+                convertedData = stereoToMono(data, size, &preSampleSize);
                 break;
             default:
                 RTC_LOG(LS_ERROR) << "Unsupported audio channels count: " << std::to_string(channels);
                 throw InvalidParams("Unsupported audio channels count: " + std::to_string(channels));
             }
         } else {
-            newSize = size;
+            preSampleSize = size;
             convertedData = std::move(data);
         }
-        const auto newFrame = bytes::make_shared_binary(frameSize());
+        const size_t newSize = frameSize();
+        auto newFrame = bytes::make_unique_binary(newSize);
         if (description->sampleRate == sampleRate) {
-            memcpy(newFrame.get(), convertedData.get(), newSize);
+            memcpy(newFrame.get(), convertedData.get(), preSampleSize);
         } else {
-            resampler->ResetIfNeeded(sampleRate, description->sampleRate, channels);
+            resampler->ResetIfNeeded(sampleRate, static_cast<int>(description->sampleRate), channels);
             size_t newFrameSize = 0;
             const auto resampled = resampler->Push(
                 reinterpret_cast<const int16_t*>(convertedData.get()),
-                newSize,
+                preSampleSize,
                 reinterpret_cast<int16_t*>(newFrame.get()),
-                frameSize(),
+                newSize,
                 newFrameSize
             );
             if (resampled != 0) {
@@ -67,7 +73,7 @@ namespace ntgcalls {
                 throw InvalidParams("Failed to resample audio frame");
             }
         }
-        return newFrame;
+        return std::move(newFrame);
     }
 
     bytes::unique_binary AudioReceiver::stereoToMono(const bytes::unique_binary& data, const size_t size, size_t *newSize) {
@@ -92,7 +98,7 @@ namespace ntgcalls {
         return std::move(stereoData);
     }
 
-    void AudioReceiver::onFrames(const std::function<void(std::map<uint32_t, bytes::shared_binary>)>& callback) {
+    void AudioReceiver::onFrames(const std::function<void(const std::map<uint32_t, bytes::unique_binary>&)>& callback) {
         framesCallback = callback;
     }
 
