@@ -26,7 +26,7 @@ namespace ntgcalls {
     }
 
     void AudioShellWriter::write(const bytes::unique_binary& data) {
-        if (!stdIn || stdIn.eof() || stdIn.fail() || !stdIn.pipe().is_open()) {
+        if (!stdIn || stdIn.eof() || stdIn.fail() || !stdIn.pipe().is_open() || !shellProcess.running()) {
             throw EOFError("Reached end of the stream");
         }
         stdIn << reinterpret_cast<const char*>(data.get());

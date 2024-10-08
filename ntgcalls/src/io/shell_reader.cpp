@@ -26,7 +26,7 @@ namespace ntgcalls {
     }
 
     bytes::unique_binary ShellReader::read(const int64_t size) {
-        if (!stdOut || stdOut.eof() || stdOut.fail() || !stdOut.is_open()) {
+        if (!stdOut || stdOut.eof() || stdOut.fail() || !stdOut.is_open() || !shellProcess.running()) {
             RTC_LOG(LS_WARNING) << "Reached end of the file";
             throw EOFError("Reached end of the stream");
         }
