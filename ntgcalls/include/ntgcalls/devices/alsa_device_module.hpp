@@ -9,18 +9,21 @@
 #include <ntgcalls/io/threaded_reader.hpp>
 #include <ntgcalls/devices/base_device_module.hpp>
 #include <ntgcalls/devices/device_info.hpp>
+#include <ntgcalls/io/audio_mixer.hpp>
 
 namespace ntgcalls {
 
-    class AlsaDeviceModule final: public BaseDeviceModule, public ThreadedReader {
+    class AlsaDeviceModule final: public BaseDeviceModule, public ThreadedReader, public AudioMixer {
         snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;
-        snd_pcm_t *captureHandle{};
+        snd_pcm_t *alsaHandle{};
         snd_pcm_hw_params_t *hwParams{};
         std::string deviceID;
 
         static std::map<std::string, std::string> getDevices(_snd_pcm_stream stream);
 
         bytes::unique_binary read(int64_t size) override;
+
+        void onData(bytes::unique_binary data) override;
 
     public:
         AlsaDeviceModule(const AudioDescription* desc, bool isCapture, BaseSink *sink);
@@ -30,6 +33,8 @@ namespace ntgcalls {
         static bool isSupported();
 
         static std::vector<DeviceInfo> getDevices();
+
+        void open() override;
     };
 
 } // alsa

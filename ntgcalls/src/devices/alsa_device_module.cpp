@@ -28,50 +28,54 @@ memset(*pInfo, 0, LATE(snd_pcm_info_sizeof)()); \
 } while (0)
 
 namespace ntgcalls {
-    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink *sink): BaseIO(sink), BaseDeviceModule(desc, isCapture), ThreadedReader(sink) {
+    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink *sink): BaseIO(sink), BaseDeviceModule(desc, isCapture), ThreadedReader(sink), AudioMixer(sink) {
         try {
             deviceID = deviceMetadata["id"];
         } catch (...) {
             throw MediaDeviceError("Invalid device metadata");
         }
-        if (const auto err = LATE(snd_pcm_open)(&captureHandle, deviceID.c_str(), isCapture ? SND_PCM_STREAM_CAPTURE:SND_PCM_STREAM_PLAYBACK, 0); err < 0) {
+        if (const auto err = LATE(snd_pcm_open)(&alsaHandle, deviceID.c_str(), isCapture ? SND_PCM_STREAM_CAPTURE:SND_PCM_STREAM_PLAYBACK, 0); err < 0) {
             throw MediaDeviceError("cannot open audio device " + deviceID + " (" + LATE(snd_strerror)(err) + ")");
         }
         LATE(snd_pcm_hw_params_malloc)(&hwParams);
-        if (const auto err = LATE(snd_pcm_hw_params_any)(captureHandle, hwParams); err < 0) {
+        if (const auto err = LATE(snd_pcm_hw_params_any)(alsaHandle, hwParams); err < 0) {
             throw MediaDeviceError("cannot initialize hardware parameter structure (" + std::string(LATE(snd_strerror)(err)) + ")");
         }
-        if (const auto err = LATE(snd_pcm_hw_params_set_access)(captureHandle, hwParams, SND_PCM_ACCESS_RW_INTERLEAVED); err < 0) {
+        if (const auto err = LATE(snd_pcm_hw_params_set_access)(alsaHandle, hwParams, SND_PCM_ACCESS_RW_INTERLEAVED); err < 0) {
             throw MediaDeviceError("cannot set access type (" + std::string(LATE(snd_strerror)(err)) + ")");
         }
-        if (const auto err = LATE(snd_pcm_hw_params_set_format)(captureHandle, hwParams, format); err < 0) {
+        if (const auto err = LATE(snd_pcm_hw_params_set_format)(alsaHandle, hwParams, format); err < 0) {
             throw MediaDeviceError("cannot set sample format (" + std::string(LATE(snd_strerror)(err)) + ")");
         }
-        if (const auto err = LATE(snd_pcm_hw_params_set_rate_near)(captureHandle, hwParams, &rate, nullptr); err < 0) {
+        if (const auto err = LATE(snd_pcm_hw_params_set_rate_near)(alsaHandle, hwParams, &rate, nullptr); err < 0) {
             throw MediaDeviceError("cannot set sample rate (" + std::string(LATE(snd_strerror)(err)) + ")");
         }
-        if (const auto err = LATE(snd_pcm_hw_params_set_channels)(captureHandle, hwParams, channels); err < 0) {
+        if (const auto err = LATE(snd_pcm_hw_params_set_channels)(alsaHandle, hwParams, channels); err < 0) {
             throw MediaDeviceError("cannot set channel count (" + std::string(LATE(snd_strerror)(err)) + ")");
         }
-        if (const auto err = LATE(snd_pcm_hw_params)(captureHandle, hwParams); err < 0) {
+        if (const auto err = LATE(snd_pcm_hw_params)(alsaHandle, hwParams); err < 0) {
             throw MediaDeviceError("cannot set parameters (" + std::string(LATE(snd_strerror)(err)) + ")");
         }
         LATE(snd_pcm_hw_params_free)(hwParams);
-        if (const auto err = LATE(snd_pcm_prepare)(captureHandle); err < 0) {
+        if (const auto err = LATE(snd_pcm_prepare)(alsaHandle); err < 0) {
             throw MediaDeviceError("cannot prepare audio interface for use (" + deviceID + " " + std::string(LATE(snd_strerror)(err)) + ")");
         }
     }
 
     AlsaDeviceModule::~AlsaDeviceModule() {
-        LATE(snd_pcm_close)(captureHandle);
+        LATE(snd_pcm_close)(alsaHandle);
     }
 
     bytes::unique_binary AlsaDeviceModule::read(const int64_t size) {
         auto device_data = bytes::make_unique_binary(size);
-        if (const auto err = LATE(snd_pcm_readi)(captureHandle, device_data.get(), size / (channels * 2)); err < 0) {
+        if (const auto err = LATE(snd_pcm_readi)(alsaHandle, device_data.get(), size / (channels * sizeof(int16_t))); err < 0) {
             throw MediaDeviceError("cannot read from audio interface (" + std::string(LATE(snd_strerror)(static_cast<int>(err))) + ")");
         }
         return std::move(device_data);
+    }
+
+    void AlsaDeviceModule::onData(const bytes::unique_binary data) {
+        LATE(snd_pcm_writei)(alsaHandle, data.get(), sink->frameSize() / (channels * sizeof(int16_t)));
     }
 
     bool AlsaDeviceModule::isSupported() {
@@ -136,6 +140,12 @@ namespace ntgcalls {
             appendDevice(devices, id.c_str(), name.c_str(), false);
         }
         return devices;
+    }
+
+    void AlsaDeviceModule::open() {
+        if (isCapture) {
+            ThreadedReader::open();
+        }
     }
 } // alsa
 
