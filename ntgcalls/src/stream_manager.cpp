@@ -232,7 +232,11 @@ namespace ntgcalls {
                     streams[id] = std::make_unique<VideoStreamer>();
                 }
             } else {
-                throw InvalidParams("Capture streams are not yet supported");
+                if (streamType == Audio) {
+                    streams[id] = std::make_unique<AudioReceiver>();
+                } else {
+                    // TODO: Implement video receiver
+                }
             }
         }
 
