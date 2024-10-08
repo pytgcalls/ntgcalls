@@ -59,13 +59,13 @@ namespace ntgcalls {
         if (description->sampleRate == sampleRate) {
             memcpy(newFrame.get(), convertedData.get(), preSampleSize);
         } else {
-            resampler->ResetIfNeeded(sampleRate, static_cast<int>(description->sampleRate), channels);
+            resampler->ResetIfNeeded(sampleRate, static_cast<int>(description->sampleRate), description->channelCount);
             size_t newFrameSize = 0;
             const auto resampled = resampler->Push(
                 reinterpret_cast<const int16_t*>(convertedData.get()),
-                preSampleSize,
+                preSampleSize / sizeof(int16_t),
                 reinterpret_cast<int16_t*>(newFrame.get()),
-                newSize,
+                newSize / sizeof(int16_t),
                 newFrameSize
             );
             if (resampled != 0) {
