@@ -14,23 +14,26 @@ namespace ntgcalls {
     }
 
     void ThreadedAudioMixer::open() {
+        if (running) return;
         running = true;
+        auto frameSize = sink->frameSize();
+        auto frameTime = sink->frameTime();
         thread = rtc::PlatformThread::SpawnJoinable(
-        [this] {
+        [this, frameSize, frameTime] {
                 while (running) {
                     std::unique_lock lock(mtx);
-                    const auto ok = cv.wait_for(lock, sink->frameTime() + std::chrono::milliseconds(20), [this] {
+                    const auto ok = cv.wait_for(lock, frameTime + std::chrono::milliseconds(20), [this] {
                         return !queue.empty() || !running;
                     });
                     if (!running) {
-                        break;
+                        return;
                     }
                     try {
                         if (ok) {
                             write(queue.front());
                             queue.pop();
                         } else {
-                            write(bytes::make_unique_binary(sink->frameSize()));
+                            write(bytes::make_unique_binary(frameSize));
                         }
                     } catch (...) {
                         break;
