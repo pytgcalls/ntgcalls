@@ -9,7 +9,7 @@
 #include <wrtc/models/simulcast_layer.hpp>
 
 namespace wrtc {
-    GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation), NativeNetworkInterface(true) {
+    GroupConnection::GroupConnection(const bool isPresentation): NativeNetworkInterface(true), isPresentation(isPresentation) {
         generateSsrcs();
         beginAudioChannelCleanupTimer();
     }
