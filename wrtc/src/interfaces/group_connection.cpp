@@ -282,6 +282,7 @@ namespace wrtc {
         audioContent.payloadTypes = mediaConfig.audioPayloadTypes;
 
         RTC_LOG(LS_INFO) << "Adding incoming audio channel with ssrc " << ssrc;
+        if (remoteAudioSink) remoteAudioSink->addSource();
         auto channel = std::make_unique<IncomingAudioChannel>(
             call.get(),
             channelManager.get(),
@@ -291,7 +292,6 @@ namespace wrtc {
             networkThread(),
             remoteAudioSink
         );
-        if (remoteAudioSink) remoteAudioSink->addSource();
         incomingAudioChannels.insert(std::make_pair(ssrc, std::move(channel)));
     }
 
