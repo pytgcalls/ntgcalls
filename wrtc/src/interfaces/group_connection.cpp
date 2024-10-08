@@ -194,6 +194,12 @@ namespace wrtc {
     }
 
     void GroupConnection::RtpPacketReceived(const webrtc::RtpPacketReceived& packet) {
+        if (packet.HasExtension(webrtc::kRtpExtensionAudioLevel)) {
+            webrtc::AudioLevel audioLevel;
+            if (packet.GetExtension<webrtc::AudioLevelExtension>(&audioLevel)) {
+                if (incomingAudioChannels.contains(packet.Ssrc())) incomingAudioChannels[packet.Ssrc()]->updateActivity();
+            }
+        }
         if (packet.PayloadType() == 111) {
             if (!incomingAudioChannels.contains(packet.Ssrc())) {
                 addIncomingSsrc(packet.Ssrc());
