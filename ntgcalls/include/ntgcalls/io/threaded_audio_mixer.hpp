@@ -21,7 +21,7 @@ namespace ntgcalls {
         void onData(bytes::unique_binary data) override;
 
     protected:
-        virtual void write(const bytes::unique_binary& data);
+        virtual void write(const bytes::unique_binary& data) = 0;
 
     public:
         explicit ThreadedAudioMixer(BaseSink* sink);
