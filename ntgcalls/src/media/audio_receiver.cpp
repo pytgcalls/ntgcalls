@@ -79,10 +79,11 @@ namespace ntgcalls {
     bytes::unique_binary AudioReceiver::stereoToMono(const bytes::unique_binary& data, const size_t size, size_t *newSize) {
         *newSize = size / 2;
         auto monoData = bytes::make_unique_binary(*newSize);
-        for (size_t i = 0; i < size; i += 4) {
+        for (size_t i = 0; i < size / sizeof(int16_t); i += 2) {
             const auto left = reinterpret_cast<int16_t*>(data.get())[i];
-            const auto right = reinterpret_cast<int16_t*>(data.get())[i + 2];
-            reinterpret_cast<int16_t*>(monoData.get())[i / 2] = (left + right) / 2;
+            const auto right = reinterpret_cast<int16_t*>(data.get())[i + 1];
+            const auto sum = static_cast<int32_t>(left) + static_cast<int32_t>(right);
+            reinterpret_cast<int16_t*>(monoData.get())[i / 2] = static_cast<int16_t>(sum / 2);
         }
         return std::move(monoData);
     }
@@ -90,10 +91,10 @@ namespace ntgcalls {
     bytes::unique_binary AudioReceiver::monoToStereo(const bytes::unique_binary& data, const size_t size, size_t *newSize) {
         *newSize = size * 2;
         auto stereoData = bytes::make_unique_binary(*newSize);
-        for (size_t i = 0; i < size; i += 2) {
+        for (size_t i = 0; i < size / sizeof(int16_t); i++) {
             const auto sample = reinterpret_cast<int16_t*>(data.get())[i];
             reinterpret_cast<int16_t*>(stereoData.get())[i * 2] = sample;
-            reinterpret_cast<int16_t*>(stereoData.get())[i * 2 + 2] = sample;
+            reinterpret_cast<int16_t*>(stereoData.get())[i * 2 + 1] = sample;
         }
         return std::move(stereoData);
     }
