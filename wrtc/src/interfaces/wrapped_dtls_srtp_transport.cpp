@@ -17,7 +17,7 @@ namespace wrtc {
     };
     template struct tag_bind_pfn<tag_SrtpTransport_UnprotectRtp, &webrtc::SrtpTransport::UnprotectRtp>;
 
-    inline static constexpr auto c_pfn_SrtpTransport_UnprotectRtp = pfn_of(tag_SrtpTransport_UnprotectRtp{});
+    inline static auto c_pfn_SrtpTransport_UnprotectRtp = pfn_of(tag_SrtpTransport_UnprotectRtp{});
 
     WrappedDtlsSrtpTransport::WrappedDtlsSrtpTransport(
         const bool rtcpMuxEnabled,
