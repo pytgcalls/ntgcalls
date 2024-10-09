@@ -27,7 +27,7 @@ namespace ntgcalls {
 
             // Clipping to 16-bit signed integer range
             const auto mixedOutputSamples = reinterpret_cast<int16_t*>(mixedOutput.get());
-            mixedOutputSamples[i] = static_cast<int16_t>(std::clamp(mixedSample, INT16_MIN, static_cast<int32_t>(INT16_MAX)));
+            mixedOutputSamples[i] = static_cast<int16_t>(std::clamp(mixedSample, -32768, 32767));
         }
 
         onData(std::move(mixedOutput));
