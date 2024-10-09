@@ -25,8 +25,8 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);
         streamManager->enableVideoSimulcast(false);
-        streamManager->setStreamSources(StreamManager::Mode::Playback, media);
-        streamManager->setStreamSources(StreamManager::Mode::Capture, MediaDescription());
+        streamManager->setStreamSources(StreamManager::Mode::Capture, media);
+        streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
         RTC_LOG(LS_INFO) << "AVStream settings applied";
     }
 
@@ -185,9 +185,9 @@ namespace ntgcalls {
             sendMediaState(streamManager->getState());
             RTC_LOG(LS_INFO) << "Data channel opened";
         });
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection);
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
         streamManager->onUpgrade([this] (const MediaState mediaState) {
             sendMediaState(mediaState);
         });

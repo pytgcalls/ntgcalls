@@ -52,11 +52,11 @@ namespace ntgcalls {
         setConfig<VideoSink, VideoDescription>(mode, Camera, desc.camera);
         setConfig<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
-        if (mode == Playback && (wasCamera != hasDevice(mode, Camera) || wasScreen != hasDevice(mode, Screen) || wasIdling) && initialized) {
+        if (mode == Capture && (wasCamera != hasDevice(mode, Camera) || wasScreen != hasDevice(mode, Screen) || wasIdling) && initialized) {
             checkUpgrade();
         }
 
-        if (!initialized && mode == Playback) {
+        if (!initialized && mode == Capture) {
             initialized = true;
         }
     }
@@ -65,7 +65,7 @@ namespace ntgcalls {
         std::shared_lock lock(mutex);
         bool muted = false;
         for (const auto& [key, track] : tracks) {
-            if (key.first != Playback) {
+            if (key.first != Capture) {
                 continue;
             }
             if (!track->enabled()) {
@@ -77,7 +77,7 @@ namespace ntgcalls {
         return MediaState{
             muted,
             (paused || muted),
-            !hasDevice(Playback, Camera) && !hasDevice(Playback, Screen),
+            !hasDevice(Capture, Camera) && !hasDevice(Capture, Screen),
             (paused || muted),
         };
     }
@@ -112,7 +112,7 @@ namespace ntgcalls {
 
     StreamManager::Status StreamManager::status(const Mode mode) {
         std::shared_lock lock(mutex);
-        if (mode == Playback) {
+        if (mode == Capture) {
             return readers.empty() ? Idling : isPaused() ? Paused : Active;
         }
         // TODO: Implement input status
@@ -129,7 +129,7 @@ namespace ntgcalls {
 
     void StreamManager::addTrack(Mode mode, Device device, const std::unique_ptr<wrtc::NetworkInterface>& pc) {
         const std::pair id(mode, device);
-        if (mode == Playback) {
+        if (mode == Capture) {
             tracks[id] = pc->addOutgoingTrack(dynamic_cast<BaseStreamer*>(streams[id].get())->createTrack());
         } else {
             pc->addIncomingTrack(dynamic_cast<BaseReceiver*>(streams[id].get())->remoteSink());
@@ -148,7 +148,7 @@ namespace ntgcalls {
     }
 
     bool StreamManager::hasDevice(const Mode mode, const Device device) const {
-        if (mode == Playback) {
+        if (mode == Capture) {
             return readers.contains(device);
         }
         return false;
@@ -158,7 +158,7 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         bool changed = false;
         for (const auto& [key, track] : tracks) {
-            if (key.first != Playback) {
+            if (key.first != Capture) {
                 continue;
             }
             if (!track->enabled() != isMuted) {
@@ -227,7 +227,7 @@ namespace ntgcalls {
         const auto streamType = getStreamType(device);
 
         if (!streams.contains(id)) {
-            if (mode == Playback) {
+            if (mode == Capture) {
                 if (streamType == Audio) {
                     streams[id] = std::make_unique<AudioStreamer>();
                 } else {
@@ -245,7 +245,7 @@ namespace ntgcalls {
         if (desc) {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc)) {
-                if (mode == Playback) {
+                if (mode == Capture) {
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id](const bytes::unique_binary& data) {
                         if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
@@ -284,7 +284,7 @@ namespace ntgcalls {
                     }
                 }
             }
-        } else if (mode == Playback) {
+        } else if (mode == Capture) {
             readers.erase(device);
         }
     }

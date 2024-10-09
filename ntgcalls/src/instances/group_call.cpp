@@ -24,12 +24,12 @@ namespace ntgcalls {
         }
         connection = std::make_unique<wrtc::GroupConnection>(false);
         RTC_LOG(LS_INFO) << "Group call initialized";
-        streamManager->setStreamSources(StreamManager::Mode::Playback, config);
-        streamManager->setStreamSources(StreamManager::Mode::Capture, MediaDescription());
+        streamManager->setStreamSources(StreamManager::Mode::Capture, config);
+        streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
 
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection);
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
         return Safe<wrtc::GroupConnection>(connection)->getJoinPayload();
     }
@@ -42,9 +42,9 @@ namespace ntgcalls {
             throw ConnectionError("Screen sharing already initialized");
         }
         presentationConnection = std::make_unique<wrtc::GroupConnection>(true);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Speaker, presentationConnection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, presentationConnection);
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, connection);
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection);
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Screen, presentationConnection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Speaker, connection);
         RTC_LOG(LS_INFO) << "Screen sharing initialized";
         return Safe<wrtc::GroupConnection>(presentationConnection)->getJoinPayload();
     }

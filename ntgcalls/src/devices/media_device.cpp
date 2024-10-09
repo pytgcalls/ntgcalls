@@ -4,7 +4,6 @@
 
 #include <ntgcalls/devices/media_device.hpp>
 
-#include <utility>
 #include <ntgcalls/exceptions.hpp>
 
 #ifdef IS_LINUX
