@@ -26,4 +26,7 @@ namespace ntgcalls {
         return changed;
     }
 
+    std::optional<VideoDescription> VideoSink::getConfig() {
+        return description;
+    }
 } // ntgcalls

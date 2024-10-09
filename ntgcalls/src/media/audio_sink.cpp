@@ -24,4 +24,8 @@ namespace ntgcalls {
         }
         return changed;
     }
+
+    std::optional<AudioDescription> AudioSink::getConfig() {
+        return description;
+    }
 } // ntgcalls

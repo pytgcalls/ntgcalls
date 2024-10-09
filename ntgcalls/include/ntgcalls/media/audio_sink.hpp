@@ -23,6 +23,8 @@ namespace ntgcalls {
     public:
         bool setConfig(const std::optional<AudioDescription>& desc);
 
+        std::optional<AudioDescription> getConfig();
+
         std::chrono::nanoseconds frameTime() override;
 
         int64_t frameSize() override;

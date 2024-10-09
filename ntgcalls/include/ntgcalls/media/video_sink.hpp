@@ -24,6 +24,8 @@ namespace ntgcalls {
     public:
         bool setConfig(const std::optional<VideoDescription>& desc);
 
+        std::optional<VideoDescription> getConfig();
+
         std::chrono::nanoseconds frameTime() override;
 
         int64_t frameSize() override;
