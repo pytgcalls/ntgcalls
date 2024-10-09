@@ -3,20 +3,22 @@
 //
 
 #pragma once
-#include <ntgcalls/io/base_reader.hpp>
+#include <queue>
 
 #ifdef IS_WINDOWS
+#include <ntgcalls/io/audio_mixer.hpp>
+#include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/devices/base_device_module.hpp>
 #include <modules/audio_device/win/core_audio_utility_win.h>
 #include <rtc_base/win/scoped_com_initializer.h>
-#include <thread>
 #include <ntgcalls/devices/device_info.hpp>
+#include <rtc_base/platform_thread.h>
 
 namespace ntgcalls {
     using Microsoft::WRL::ComPtr;
     using namespace webrtc::webrtc_win;
 
-    class WinCoreDeviceModule final: public BaseDeviceModule, public BaseReader, public IAudioSessionEvents {
+    class WinCoreDeviceModule final: public BaseDeviceModule, public BaseReader, public AudioMixer, public IAudioSessionEvents {
         ScopedHandle audioSamplesEvent, restartEvent, stopEvent;
         WAVEFORMATEXTENSIBLE format = {};
         uint32_t endpointBufferSizeFrames = 0;
@@ -26,12 +28,13 @@ namespace ntgcalls {
         std::atomic_bool isRestarting = false;
         webrtc::ScopedCOMInitializer comInitializer;
         ScopedMMCSSRegistration mmcssRegistration;
-        std::thread thread;
+        rtc::PlatformThread thread;
         bool automaticRestart = false;
         int deviceIndex = -1;
         std::string deviceUID;
         ComPtr<IAudioCaptureClient> audioCaptureClient;
         ComPtr<IAudioRenderClient> audioRenderClient;
+        std::queue<bytes::unique_binary> queue;
 
         void init();
 
@@ -45,7 +48,9 @@ namespace ntgcalls {
 
         void switchDevice();
 
-        bool handleDataEvent() const;
+        bool handleDataRecord() const;
+
+        bool handleDataPlayback();
 
         HRESULT QueryInterface(const IID& riid, void** ppvObject) override;
 
@@ -77,6 +82,8 @@ namespace ntgcalls {
         static std::vector<DeviceInfo> getDevices();
 
         void open() override;
+
+        void onData(bytes::unique_binary data) override;
     };
 
 } // ntgcalls
