@@ -137,9 +137,11 @@ namespace ntgcalls {
     }
 
     void StreamManager::start() {
+        // ReSharper disable once CppUseElementsView
         for (const auto& [key, reader] : readers) {
             reader->open();
         }
+        // ReSharper disable once CppUseElementsView
         for (const auto& [key, writer] : writers) {
             writer->open();
         }
