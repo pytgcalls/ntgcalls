@@ -69,7 +69,7 @@ public class NTgCalls {
         return createCall(chatId, null);
     }
 
-    public native void connect(long chatId, String params) throws ConnectionException;
+    public native void connect(long chatId, String params, boolean isPresentation) throws ConnectionException;
 
     @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     public native void setStreamSources(long chatId, StreamMode mode, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionNotFoundException;

@@ -26,24 +26,24 @@ jlong getInstancePtr(JNIEnv *env, jobject obj) {
 ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescription) {
     jclass audioDescriptionClass = env->GetObjectClass(audioDescription);
     jfieldID inputField = env->GetFieldID(audioDescriptionClass, "input", "Ljava/lang/String;");
-    jfieldID inputModeField = env->GetFieldID(audioDescriptionClass, "inputMode", "I");
+    jfieldID mediaSourceField = env->GetFieldID(audioDescriptionClass, "mediaSource", "I");
     jfieldID sampleRateField = env->GetFieldID(audioDescriptionClass, "sampleRate", "I");
     jfieldID bitsPerSampleField = env->GetFieldID(audioDescriptionClass, "bitsPerSample", "I");
     jfieldID channelCountField = env->GetFieldID(audioDescriptionClass, "channelCount", "I");
 
     auto input = (jstring) env->GetObjectField(audioDescription, inputField);
-    auto inputMode = env->GetIntField(audioDescription, inputModeField);
+    auto mediaSource = env->GetIntField(audioDescription, mediaSourceField);
     auto sampleRate = static_cast<uint32_t>(env->GetIntField(audioDescription, sampleRateField));
     auto bitsPerSample = static_cast<uint8_t>(env->GetIntField(audioDescription, bitsPerSampleField));
     auto channelCount = static_cast<uint8_t>(env->GetIntField(audioDescription, channelCountField));
 
-    ntgcalls::AudioDescription result = {
-        parseInputMode(inputMode),
+    ntgcalls::AudioDescription result(
+        parseMediaSource(mediaSource),
         sampleRate,
         bitsPerSample,
         channelCount,
         parseString(env, input)
-    };
+    );
     env->DeleteLocalRef(audioDescriptionClass);
     env->DeleteLocalRef(input);
     return result;
@@ -52,24 +52,24 @@ ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescr
 ntgcalls::VideoDescription parseVideoDescription(JNIEnv *env, jobject videoDescription) {
     jclass videoDescriptionClass = env->GetObjectClass(videoDescription);
     jfieldID inputField = env->GetFieldID(videoDescriptionClass, "input", "Ljava/lang/String;");
-    jfieldID inputModeField = env->GetFieldID(videoDescriptionClass, "inputMode", "I");
+    jfieldID mediaSourceField = env->GetFieldID(videoDescriptionClass, "mediaSource", "I");
     jfieldID widthField = env->GetFieldID(videoDescriptionClass, "width", "I");
     jfieldID heightField = env->GetFieldID(videoDescriptionClass, "height", "I");
     jfieldID fpsField = env->GetFieldID(videoDescriptionClass, "fps", "I");
 
     auto input = (jstring) env->GetObjectField(videoDescription, inputField);
-    auto inputMode = env->GetIntField(videoDescription, inputModeField);
+    auto mediaSource = env->GetIntField(videoDescription, mediaSourceField);
     auto width = static_cast<uint16_t>(env->GetIntField(videoDescription, widthField));
     auto height = static_cast<uint16_t>(env->GetIntField(videoDescription, heightField));
     auto fps = static_cast<uint8_t>(env->GetIntField(videoDescription, fpsField));
 
-    ntgcalls::VideoDescription result = {
-        parseInputMode(inputMode),
+    ntgcalls::VideoDescription result(
+        parseMediaSource(mediaSource),
         width,
         height,
         fps,
         parseString(env, input)
-    };
+    );
     env->DeleteLocalRef(videoDescriptionClass);
     env->DeleteLocalRef(input);
     return result;
@@ -77,12 +77,7 @@ ntgcalls::VideoDescription parseVideoDescription(JNIEnv *env, jobject videoDescr
 
 ntgcalls::MediaDescription parseMediaDescription(JNIEnv *env, jobject mediaDescription) {
     if (mediaDescription == nullptr) {
-        return {
-            std::nullopt,
-            std::nullopt,
-            std::nullopt,
-            std::nullopt
-        };
+        return ntgcalls::MediaDescription();
     }
     jclass mediaDescriptionClass = env->GetObjectClass(mediaDescription);
     jfieldID micField = env->GetFieldID(mediaDescriptionClass, "microphone", "Lorg/pytgcalls/ntgcalls/media/AudioDescription;");
@@ -95,12 +90,12 @@ ntgcalls::MediaDescription parseMediaDescription(JNIEnv *env, jobject mediaDescr
     auto camera = env->GetObjectField(mediaDescription, cameraField);
     auto screen = env->GetObjectField(mediaDescription, screenField);
 
-    ntgcalls::MediaDescription result = {
+    ntgcalls::MediaDescription result(
         microphone != nullptr ? std::optional(parseAudioDescription(env, microphone)) : std::nullopt,
         speaker != nullptr ? std::optional(parseAudioDescription(env, speaker)) : std::nullopt,
         camera != nullptr ? std::optional(parseVideoDescription(env, camera)) : std::nullopt,
         screen != nullptr ? std::optional(parseVideoDescription(env, screen)) : std::nullopt
-    };
+    );
     env->DeleteLocalRef(mediaDescriptionClass);
     env->DeleteLocalRef(microphone);
     env->DeleteLocalRef(speaker);
@@ -109,18 +104,18 @@ ntgcalls::MediaDescription parseMediaDescription(JNIEnv *env, jobject mediaDescr
     return result;
 }
 
-ntgcalls::BaseMediaDescription::InputMode parseInputMode(jint inputMode) {
-    ntgcalls::BaseMediaDescription::InputMode res = ntgcalls::BaseMediaDescription::InputMode::Unknown;
-    if (auto check = ntgcalls::BaseMediaDescription::InputMode::File;inputMode == check) {
+ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(jint mediaSource) {
+    ntgcalls::BaseMediaDescription::MediaSource res = ntgcalls::BaseMediaDescription::MediaSource::Unknown;
+    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::File;mediaSource == check) {
         res |= check;
     }
-    if (auto check = ntgcalls::BaseMediaDescription::InputMode::Shell;inputMode == check) {
+    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::Shell;mediaSource == check) {
         res |= check;
     }
-    if (auto check = ntgcalls::BaseMediaDescription::InputMode::FFmpeg;inputMode == check) {
+    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::FFmpeg;mediaSource == check) {
         res |= check;
     }
-    if (auto check = ntgcalls::BaseMediaDescription::InputMode::Device;inputMode == check) {
+    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::Device;mediaSource == check) {
         res |= check;
     }
     return res;
@@ -354,33 +349,63 @@ jobject parseStreamType(JNIEnv *env, ntgcalls::StreamManager::Type type) {
     return result;
 }
 
-jobject parseConnectionState(JNIEnv *env, ntgcalls::CallInterface::ConnectionState state) {
-    jclass connectionStateClass = env->FindClass("org/pytgcalls/ntgcalls/ConnectionState");
-    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass, "CONNECTING", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
-    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass, "CONNECTED", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
-    jfieldID failedField = env->GetStaticFieldID(connectionStateClass, "FAILED", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
-    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass, "TIMEOUT", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
-    jfieldID closedField = env->GetStaticFieldID(connectionStateClass, "CLOSED", "Lorg/pytgcalls/ntgcalls/ConnectionState;");
+jobject parseConnectionState(JNIEnv *env, ntgcalls::CallNetworkState::ConnectionState state) {
+    jclass connectionStateClass = env->FindClass("org/pytgcalls/ntgcalls/CallNetworkState$State");
+    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass, "CONNECTING", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass, "CONNECTED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    jfieldID failedField = env->GetStaticFieldID(connectionStateClass, "FAILED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass, "TIMEOUT", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    jfieldID closedField = env->GetStaticFieldID(connectionStateClass, "CLOSED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
 
     jobject result;
     switch (state) {
-        case ntgcalls::CallInterface::ConnectionState::Connecting:
+        case ntgcalls::CallNetworkState::ConnectionState::Connecting:
             result = env->GetStaticObjectField(connectionStateClass, connectingField);
             break;
-        case ntgcalls::CallInterface::ConnectionState::Connected:
+        case ntgcalls::CallNetworkState::ConnectionState::Connected:
             result = env->GetStaticObjectField(connectionStateClass, connectedField);
             break;
-        case ntgcalls::CallInterface::ConnectionState::Failed:
+        case ntgcalls::CallNetworkState::ConnectionState::Failed:
             result = env->GetStaticObjectField(connectionStateClass, failedField);
             break;
-        case ntgcalls::CallInterface::ConnectionState::Timeout:
+        case ntgcalls::CallNetworkState::ConnectionState::Timeout:
             result = env->GetStaticObjectField(connectionStateClass, timeoutField);
             break;
-        case ntgcalls::CallInterface::ConnectionState::Closed:
+        case ntgcalls::CallNetworkState::ConnectionState::Closed:
             result = env->GetStaticObjectField(connectionStateClass, closedField);
             break;
     }
     env->DeleteLocalRef(connectionStateClass);
+    return result;
+}
+
+jobject parseCallNetworkState(JNIEnv *env, ntgcalls::CallNetworkState state) {
+    jclass callNetworkStateClass = env->FindClass("org/pytgcalls/ntgcalls/CallNetworkState");
+    jmethodID constructor = env->GetMethodID(callNetworkStateClass, "<init>", "(Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;Lorg/pytgcalls/ntgcalls/CallNetworkState$State;)V");
+    jobject kind = parseCallNetworkStateKind(env, state.kind);
+    jobject connectionState = parseConnectionState(env, state.connectionState);
+    jobject result = env->NewObject(callNetworkStateClass, constructor, kind, connectionState);
+    env->DeleteLocalRef(callNetworkStateClass);
+    env->DeleteLocalRef(kind);
+    env->DeleteLocalRef(connectionState);
+    return result;
+}
+
+jobject parseCallNetworkStateKind(JNIEnv *env, ntgcalls::CallNetworkState::Kind kind) {
+    jclass kindClass = env->FindClass("org/pytgcalls/ntgcalls/CallNetworkState$Kind");
+    jfieldID normalField = env->GetStaticFieldID(kindClass, "NORMAL", "Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;");
+    jfieldID presentationField = env->GetStaticFieldID(kindClass, "PRESENTATION", "Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;");
+
+    jobject result;
+    switch (kind) {
+        case ntgcalls::CallNetworkState::Kind::Normal:
+            result = env->GetStaticObjectField(kindClass, normalField);
+            break;
+        case ntgcalls::CallNetworkState::Kind::Presentation:
+            result = env->GetStaticObjectField(kindClass, presentationField);
+            break;
+    }
+    env->DeleteLocalRef(kindClass);
     return result;
 }
 

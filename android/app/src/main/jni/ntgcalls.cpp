@@ -33,13 +33,13 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseStreamType(env, type), parseJDevice(env, device));
     });
 
-    instance->onConnectionChange([instancePtr](int64_t chatId, ntgcalls::CallInterface::ConnectionState state) {
+    instance->onConnectionChange([instancePtr](int64_t chatId, ntgcalls::CallNetworkState state) {
         auto callback = callbacksInstances[instancePtr].onConnectionChangeCallback;
         if (!callback) {
             return;
         }
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
-        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseConnectionState(env, state));
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseCallNetworkState(env, state));
     });
 
     instance->onSignalingData([instancePtr](int64_t chatId, const bytes::binary& data) {
@@ -131,10 +131,10 @@ JNIEXPORT jstring JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_createCall(JNIEnv
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_connect(JNIEnv *env, jobject thiz, jlong chatId, jstring params) {
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_connect(JNIEnv *env, jobject thiz, jlong chatId, jstring params, jboolean isPresentation) {
     try {
         auto instance = getInstance(env, thiz);
-        instance->connect(static_cast<long>(chatId), parseString(env, params));
+        instance->connect(static_cast<long>(chatId), parseString(env, params), isPresentation);
     } HANDLE_EXCEPTIONS
 }
 

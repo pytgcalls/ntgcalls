@@ -1,11 +1,11 @@
 package org.pytgcalls.ntgcalls.media;
 
 public class BaseMediaDescription {
-    public final @InputMode int inputMode;
+    public final @MediaSource int mediaSource;
     public final String input;
 
-    public BaseMediaDescription(@InputMode int inputMode, String input) {
-        this.inputMode = inputMode;
+    public BaseMediaDescription(@MediaSource int inputMode, String input) {
+        this.mediaSource = inputMode;
         this.input = input;
     }
 }

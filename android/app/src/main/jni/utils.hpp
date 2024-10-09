@@ -65,7 +65,7 @@ ntgcalls::RTCServer parseRTCServer(JNIEnv *env, jobject rtcServer);
 
 std::vector<ntgcalls::RTCServer> parseRTCServerList(JNIEnv *env, jobject list);
 
-ntgcalls::BaseMediaDescription::InputMode parseInputMode(jint inputMode);
+ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(jint inputMode);
 
 jobject parseMediaState(JNIEnv *env, ntgcalls::MediaState mediaState);
 
@@ -73,7 +73,11 @@ jobject parseProtocol(JNIEnv *env, const ntgcalls::Protocol& protocol);
 
 jobject parseStreamType(JNIEnv *env, ntgcalls::StreamManager::Type type);
 
-jobject parseConnectionState(JNIEnv *env, ntgcalls::CallInterface::ConnectionState state);
+jobject parseCallNetworkState(JNIEnv *env, ntgcalls::CallNetworkState state);
+
+jobject parseConnectionState(JNIEnv *env, ntgcalls::CallNetworkState::ConnectionState state);
+
+jobject parseCallNetworkStateKind(JNIEnv *env, ntgcalls::CallNetworkState::Kind kind);
 
 jobject parseStreamStatus(JNIEnv *env, ntgcalls::StreamManager::Status status);
 
