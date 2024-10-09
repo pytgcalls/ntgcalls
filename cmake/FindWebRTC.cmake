@@ -55,10 +55,6 @@ if(NOT TARGET WebRTC::webrtc)
     endif ()
     set(FILE_NAME ${FILE_NAME}${ARCHIVE_FORMAT})
 
-    if (NOT EXISTS ${WEBRTC_SRC})
-        set(ALLOW_PATCH ON)
-    endif ()
-
     DownloadProject(
         URL ${WEBRTC_GIT}/releases/download/${WEBRTC_REVISION}/${FILE_NAME}
         DOWNLOAD_DIR ${WEBRTC_DIR}/download
@@ -94,17 +90,6 @@ if(NOT TARGET WebRTC::webrtc)
     set(LIBCXX_ABI_COMMIT ${CMAKE_MATCH_1})
     string(REGEX MATCH "WEBRTC_SRC_BUILDTOOLS_COMMIT=([^ \n]+)" matched "${WEBRTC_DATA}")
     set(BUILDTOOLS_COMMIT ${CMAKE_MATCH_1})
-
-    if (ALLOW_PATCH)
-        execute_process(
-                COMMAND git apply "${deps_loc}/libwebrtc.patch"
-                ERROR_VARIABLE PATCH_ERROR
-                WORKING_DIRECTORY ${deps_loc}/../
-        )
-        if (PATCH_ERROR)
-            message(FATAL_ERROR "Failed to apply patch: ${PATCH_ERROR}")
-        endif ()
-    endif ()
 
     if (ANDROID)
         set(WEBRTC_LD_FLAGS ${WEBRTC_LIB_DIR}/webrtc.ldflags)

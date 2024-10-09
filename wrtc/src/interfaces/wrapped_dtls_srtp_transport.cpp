@@ -12,39 +12,22 @@ namespace wrtc {
         const std::function<void(webrtc::RtpPacketReceived)>& callback
     ): DtlsSrtpTransport(rtcpMuxEnabled, field_trials) {
         rtpPacketCallback = callback;
-    }
 
-    void WrappedDtlsSrtpTransport::OnRtpPacketReceived(const rtc::ReceivedPacket& packet) {
-        if (!IsSrtpActive()) {
-            RTC_LOG(LS_WARNING) << "Inactive SRTP transport received an RTP packet. Drop it.";
-            return;
-        }
+        SubscribeReadyToSend(this, [this](const bool readyToSend) {
+            if (readyToSend) {
+                rtp_packet_transport()->RegisterReceivedPacketCallback(this, [this](rtc::PacketTransportInternal*, const rtc::ReceivedPacket& packet) {
+                    const rtc::CopyOnWriteBuffer payload(packet.payload());
 
-        rtc::CopyOnWriteBuffer payload(packet.payload());
-        char* data = payload.MutableData<char>();
-        int len = rtc::checked_cast<int>(payload.size());
-        if (!UnprotectRtp(data, len, &len)) {
-            if (decryptionFailureCount % 100 == 0) {
-                RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << len
-                                  << ", seqnum=" << webrtc::ParseRtpSequenceNumber(payload)
-                                  << ", SSRC=" << webrtc::ParseRtpSsrc(payload)
-                                  << ", previous failure count: "
-                                  << decryptionFailureCount;
+                    webrtc::RtpPacketReceived parsedPacket(&headerExtensionMap);
+                    parsedPacket.set_arrival_time(packet.arrival_time().value_or(webrtc::Timestamp::MinusInfinity()));
+                    parsedPacket.set_ecn(packet.ecn());
+
+                    if (parsedPacket.Parse(payload)) {
+                        (void) rtpPacketCallback(parsedPacket);
+                    }
+                });
             }
-            ++decryptionFailureCount;
-            return;
-        }
-        payload.SetSize(len);
-
-        webrtc::RtpPacketReceived parsedPacket(&headerExtensionMap);
-        parsedPacket.set_arrival_time(packet.arrival_time().value_or(webrtc::Timestamp::MinusInfinity()));
-        parsedPacket.set_ecn(packet.ecn());
-
-        if (parsedPacket.Parse(payload)) {
-            (void) rtpPacketCallback(parsedPacket);
-        }
-
-        DemuxPacket(payload, packet.arrival_time().value_or(webrtc::Timestamp::MinusInfinity()), packet.ecn());
+        });
     }
 
     void WrappedDtlsSrtpTransport::UpdateRtpHeaderExtensionMap(const cricket::RtpHeaderExtensions& headerExtensions) {
