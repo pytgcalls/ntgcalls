@@ -3,6 +3,7 @@
 //
 
 #include <ntgcalls/devices/win_core_device_module.hpp>
+#include <ntgcalls/media/audio_sink.hpp>
 
 #ifdef IS_WINDOWS
 
@@ -128,7 +129,7 @@ namespace ntgcalls {
         }
 
         webrtc::AudioParameters params;
-        if (FAILED(core_audio_utility::GetPreferredAudioParameters(audioClient.Get(), &params, rate))) {
+        if (FAILED(core_audio_utility::GetPreferredAudioParameters(audioClient.Get(), &params))) {
             throw MediaDeviceError("Failed to get preferred audio parameters");
         }
 
@@ -143,6 +144,17 @@ namespace ntgcalls {
         format.Samples.wValidBitsPerSample = rtc::dchecked_cast<WORD>(params.bits_per_sample());
         format.dwChannelMask = f->nChannels == 1 ? KSAUDIO_SPEAKER_MONO : KSAUDIO_SPEAKER_STEREO;
         format.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+
+        rate = params.sample_rate();
+        channels = params.channels();
+
+        const auto audioSink = dynamic_cast<AudioSink*>(sink);
+        if (auto config = audioSink->getConfig(); config->channelCount != channels || config->sampleRate != rate) {
+            RTC_LOG(LS_INFO) << "Updating Audio Configuration...";
+            config->channelCount = channels;
+            config->sampleRate = rate;
+            dynamic_cast<AudioSink*>(sink) -> setConfig(config);
+        }
 
         // TODO: Low latency mode is not supported yet
         if (FAILED(core_audio_utility::SharedModeInitialize(audioClient.Get(), &format, audioSamplesEvent, 0, true, &endpointBufferSizeFrames))) {
