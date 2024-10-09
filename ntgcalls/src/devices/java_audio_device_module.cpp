@@ -9,6 +9,7 @@
 
 namespace ntgcalls {
     JavaAudioDeviceModule::JavaAudioDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink* sink):
+        BaseIO(sink),
         BaseDeviceModule(desc, isCapture),
         BaseReader(sink)
     {
