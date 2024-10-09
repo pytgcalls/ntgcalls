@@ -5,7 +5,6 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include <wrtc/utils/binary.hpp>
 #include <ntgcalls/models/media_description.hpp>
 
 namespace ntgcalls {
