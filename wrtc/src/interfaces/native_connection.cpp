@@ -16,8 +16,8 @@ namespace wrtc {
     isOutgoing(isOutgoing),
     enableP2P(enableP2P),
     rtcServers(std::move(rtcServers)),
-    eventLog(std::make_unique<webrtc::RtcEventLogNull>()),
-    NativeNetworkInterface(false) {
+    eventLog(std::make_unique<webrtc::RtcEventLogNull>()) {
+        initConnection();
         contentNegotiationContext = std::make_unique<ContentNegotiationContext>(factory->fieldTrials(), isOutgoing, factory->mediaEngine(), factory->ssrcGenerator());
         contentNegotiationContext->copyCodecsFromChannelManager(factory->mediaEngine(), false);
         networkThread()->PostTask([this] {

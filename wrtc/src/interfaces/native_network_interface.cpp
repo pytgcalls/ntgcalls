@@ -13,7 +13,7 @@
 #include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
 
 namespace wrtc {
-    NativeNetworkInterface::NativeNetworkInterface(bool supportsPacketSending) {
+    void NativeNetworkInterface::initConnection(bool supportsPacketSending) {
         networkThread()->PostTask([this, supportsPacketSending] {
             localParameters = PeerIceParameters(
                 rtc::CreateRandomString(cricket::ICE_UFRAG_LENGTH),

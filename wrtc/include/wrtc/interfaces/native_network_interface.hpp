@@ -88,9 +88,9 @@ namespace wrtc {
 
         void addIncomingTrack(RemoteMediaInterface* remoteSink) override;
 
-    public:
-        explicit NativeNetworkInterface(bool supportsPacketSending);
+        void initConnection(bool supportsPacketSending = false);
 
+    public:
         PeerIceParameters localIceParameters();
 
         std::unique_ptr<rtc::SSLFingerprint> localFingerprint() const;
