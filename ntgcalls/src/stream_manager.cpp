@@ -101,13 +101,15 @@ namespace ntgcalls {
     uint64_t StreamManager::time(const Mode mode) {
         std::shared_lock lock(mutex);
         uint64_t averageTime = 0;
+        int count = 0;
         for (const auto& [key, stream] : streams) {
             if (stream->time() == 0 || key.first != mode) {
                 continue;
             }
             averageTime += stream->time();
+            count++;
         }
-        return averageTime / streams.size();
+        return averageTime / count;
     }
 
     StreamManager::Status StreamManager::status(const Mode mode) {
