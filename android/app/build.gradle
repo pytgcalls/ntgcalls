@@ -33,7 +33,7 @@ android {
                         "-DANDROID_NATIVE_API_LEVEL=${versionProps.getProperty('version.sdk_compile')}",
                         "-DANDROID_PLATFORM=${versionProps.getProperty('version.sdk_compile')}",
                         "-DANDROID_CPP_FEATURES=exceptions rtti",
-                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
                         "-DLIBCXX_INCLUDE_DIR=$depsDir/libcxx/include",
                         "-DCMAKE_TOOLCHAIN_FILE=$ndkDir/build/cmake/android.toolchain.cmake",
                         "-DANDROID_NDK=$ndkDir",
@@ -62,6 +62,9 @@ android {
         release {
             minifyEnabled false
             testCoverageEnabled true
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
         }
     }
 }
