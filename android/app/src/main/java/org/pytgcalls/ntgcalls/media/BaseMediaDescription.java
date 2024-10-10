@@ -4,8 +4,8 @@ public class BaseMediaDescription {
     public final @MediaSource int mediaSource;
     public final String input;
 
-    public BaseMediaDescription(@MediaSource int inputMode, String input) {
-        this.mediaSource = inputMode;
+    public BaseMediaDescription(@MediaSource int mediaSource, String input) {
+        this.mediaSource = mediaSource;
         this.input = input;
     }
 }
