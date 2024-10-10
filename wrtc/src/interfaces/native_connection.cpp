@@ -197,6 +197,28 @@ namespace wrtc {
                 }
             }
         }
+
+        for (const auto &content : coordinatedState->incomingContents) {
+            switch (content.type) {
+            case MediaContent::Type::Audio:
+                incomingAudioChannels.clear();
+                incomingAudioChannels[content.ssrc] = std::make_unique<IncomingAudioChannel>(
+                    call.get(),
+                    channelManager.get(),
+                    dtlsSrtpTransport.get(),
+                    content,
+                    workerThread(),
+                    networkThread(),
+                    remoteAudioSink
+                );
+                break;
+            case MediaContent::Type::Video:
+                // TODO: implement video channel
+                break;
+            default:
+                RTC_LOG(LS_WARNING) << "NativeNetworkingImpl unsupported incoming content type";
+            }
+        }
     }
 
     NativeConnection::~NativeConnection() {
