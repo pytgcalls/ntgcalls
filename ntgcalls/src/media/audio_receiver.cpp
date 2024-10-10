@@ -9,12 +9,12 @@
 namespace ntgcalls {
     AudioReceiver::AudioReceiver() {
         resampler = std::make_unique<webrtc::Resampler>();
-        sink = std::make_unique<wrtc::RemoteAudioSink>([this](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& frames) {
+        sink = std::make_unique<wrtc::RemoteAudioSink>([this](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& samples) {
             if (!description) {
                 return;
             }
             std::map<uint32_t, bytes::unique_binary> processedFrames;
-            for (const auto& frame: frames) {
+            for (const auto& frame: samples) {
                 try {
                     bytes::unique_binary data = bytes::make_unique_binary(frame->size);
                     memcpy(data.get(), frame->data, frame->size);
@@ -31,6 +31,7 @@ namespace ntgcalls {
                     RTC_LOG(LS_ERROR) << "Failed to adapt audio frame: " << e.what();
                 }
             }
+            frames++;
             (void) framesCallback(processedFrames);
         });
     }
