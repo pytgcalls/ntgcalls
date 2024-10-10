@@ -73,6 +73,7 @@ namespace ntgcalls {
     }
 
     void PulseDeviceModule::onData(const bytes::unique_binary data) {
+        if (!running) return;
         pulseConnection->writeData(data, sink->frameSize());
     }
 } // pulse

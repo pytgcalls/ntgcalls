@@ -24,6 +24,8 @@ namespace ntgcalls {
         virtual int64_t frameSize() = 0;
 
         virtual std::chrono::nanoseconds frameTime() = 0;
+
+        virtual void open() = 0;
     };
 
 } // ntgcalls

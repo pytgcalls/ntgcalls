@@ -176,10 +176,12 @@ namespace wrtc {
     }
 
     void NativeNetworkInterface::close() {
-        audioChannel = nullptr;
-        videoChannel = nullptr;
-        remoteAudioSink = nullptr;
-        incomingAudioChannels.clear();
+        workerThread()->BlockingCall([&] {
+            audioChannel = nullptr;
+            videoChannel = nullptr;
+            incomingAudioChannels.clear();
+            remoteAudioSink = nullptr;
+        });
         channelManager = nullptr;
         if (factory) {
             workerThread()->BlockingCall([&] {

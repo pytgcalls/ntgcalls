@@ -80,7 +80,9 @@ namespace wrtc {
         channel->Enable(true);
         workerThread->BlockingCall([&] {
             auto rawSink = std::make_unique<RawAudioSink>();
-            rawSink->setRemoteAudioSink(_ssrc, remoteAudioSink);
+            rawSink->setRemoteAudioSink(_ssrc, [remoteAudioSink](std::unique_ptr<AudioFrame> frame) {
+                if (remoteAudioSink) remoteAudioSink->sendData(std::move(frame));
+            });
             channel->receive_channel()->SetRawAudioSink(_ssrc, std::move(rawSink));
         });
     }

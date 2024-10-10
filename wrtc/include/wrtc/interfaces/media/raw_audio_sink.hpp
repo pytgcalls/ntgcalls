@@ -9,15 +9,13 @@
 namespace wrtc {
 
     class RawAudioSink final : public webrtc::AudioSinkInterface  {
-        RemoteAudioSink* remoteAudioSink = nullptr;
+         std::function<void(std::unique_ptr<AudioFrame>)> callbackData;
         uint32_t ssrc = 0;
 
     public:
         void OnData(const Data& audio) override;
 
-        ~RawAudioSink() override;
-
-        void setRemoteAudioSink(uint32_t ssrc, RemoteAudioSink* sink);
+        void setRemoteAudioSink(uint32_t ssrc, std::function<void(std::unique_ptr<AudioFrame>)> callback);
     };
 
 } // wrtc

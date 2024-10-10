@@ -16,7 +16,7 @@ namespace wrtc {
     void RemoteAudioSink::sendData(std::unique_ptr<AudioFrame> frame) {
         audioFrames.push_back(std::move(frame));
         if (audioFrames.size() >= numSources) {
-            (void) framesCallback(audioFrames);
+            framesCallback(audioFrames);
             audioFrames.clear();
         }
     }

@@ -229,17 +229,18 @@ namespace ntgcalls {
         if (!streams.contains(id)) {
             if (mode == Capture) {
                 if (streamType == Audio) {
-                    streams[id] = std::make_unique<AudioStreamer>();
+                    streams[id] = std::make_shared<AudioStreamer>();
                 } else {
-                    streams[id] = std::make_unique<VideoStreamer>();
+                    streams[id] = std::make_shared<VideoStreamer>();
                 }
             } else {
                 if (streamType == Audio) {
-                    streams[id] = std::make_unique<AudioReceiver>();
+                    streams[id] = std::make_shared<AudioReceiver>();
                 } else {
                     // TODO: Implement video receiver
                 }
             }
+            streams[id]->open();
         }
 
         if (desc) {
@@ -248,8 +249,10 @@ namespace ntgcalls {
                 if (mode == Capture) {
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id](const bytes::unique_binary& data) {
-                        if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
-                            stream->sendData(data.get(), rtc::TimeMillis());
+                        if (streams.contains(id)) {
+                            if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
+                                stream->sendData(data.get(), rtc::TimeMillis());
+                            }
                         }
                     });
                     readers[device]->onEof([this, device] {
@@ -273,6 +276,7 @@ namespace ntgcalls {
                             }
                         });
                     } else {
+                        // TODO: Implement video writer
                         throw InvalidParams("Video input is not yet supported");
                     }
                     writers[device]->onEof([this, device] {

@@ -15,7 +15,7 @@ namespace wrtc {
     class RemoteAudioSink final: public RemoteMediaInterface {
         std::atomic<uint32_t> numSources;
         std::vector<std::unique_ptr<AudioFrame>> audioFrames;
-        synchronized_callback<const std::vector<std::unique_ptr<AudioFrame>>&> framesCallback;
+        std::function<void(const std::vector<std::unique_ptr<AudioFrame>>&)> framesCallback;
 
     public:
         explicit RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<AudioFrame>>&)>& callback);

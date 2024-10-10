@@ -166,6 +166,7 @@ namespace ntgcalls {
     }
 
     void PulseConnection::writeData(const bytes::unique_binary& data, const size_t size) const {
+        if (!running) return;
         paLock();
         if (LATE(pa_stream_write)(stream, data.get(), size, nullptr, static_cast<int64_t>(0), PA_SEEK_RELATIVE) != PA_OK) {
             throw MediaDeviceError("Failed to write data to stream, err=" + std::to_string(LATE(pa_context_errno)(paContext)));
