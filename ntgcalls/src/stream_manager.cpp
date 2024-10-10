@@ -266,8 +266,10 @@ namespace ntgcalls {
                     if (streamType == Audio) {
                         writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
                         dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, device](const std::map<uint32_t, bytes::unique_binary>& frames) {
-                            if (const auto audioWriter = dynamic_cast<AudioWriter*>(writers[device].get())) {
-                                audioWriter->sendFrames(frames);
+                            if (writers.contains(device)) {
+                                if (const auto audioWriter = dynamic_cast<AudioWriter*>(writers[device].get())) {
+                                    audioWriter->sendFrames(frames);
+                                }
                             }
                         });
                     } else {
