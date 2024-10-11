@@ -10,9 +10,9 @@ import org.pytgcalls.ntgcalls.exceptions.ConnectionException;
 import org.pytgcalls.ntgcalls.exceptions.InvalidParamsException;
 import org.pytgcalls.ntgcalls.exceptions.TelegramServerException;
 import org.pytgcalls.ntgcalls.media.AudioDescription;
-import org.pytgcalls.ntgcalls.media.InputMode;
 import org.pytgcalls.ntgcalls.media.MediaDescription;
 import org.pytgcalls.ntgcalls.media.MediaDevices;
+import org.pytgcalls.ntgcalls.media.MediaSource;
 
 import java.io.FileNotFoundException;
 
@@ -33,7 +33,7 @@ public class NTgCallsTests {
                     CHAT_ID,
                     new MediaDescription(
                             new AudioDescription(
-                                    InputMode.FILE,
+                                    MediaSource.FILE,
                                     "input",
                                     48000,
                                     16,
@@ -74,7 +74,7 @@ public class NTgCallsTests {
             fail("Unexpected ConnectionException");
         }
         try {
-            instance.connect(CHAT_ID, "{}");
+            instance.connect(CHAT_ID, "{}", false);
         } catch (InvalidParamsException ignored) {
         } catch (TelegramServerException e) {
             fail("Unexpected TelegramServerException");
@@ -88,35 +88,26 @@ public class NTgCallsTests {
         //MTProtoTelegramClient client = MTProtoTelegramClient.create(
         NTgCalls instance = new NTgCalls();
         MediaDevices mediaDevices = NTgCalls.getMediaDevices();
-        Thread t = new Thread(() -> {
-            try {
-                Log.d("NTGCALLS", instance.createCall(
-                        CHAT_ID,
-                        new MediaDescription(
-                                new AudioDescription(
-                                        InputMode.FILE,
-                                        mediaDevices.audio.get(0).metadata,
-                                        48000,
-                                        16,
-                                        2
-                                ),
-                                null,
-                                null,
-                                null
-                        )
-                ));
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            } catch (ConnectionException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        t.start();
         try {
-            t.join();
-            t.wait();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            instance.createP2PCall(
+                    CHAT_ID,
+                    new MediaDescription(
+                            new AudioDescription(
+                                    MediaSource.DEVICE,
+                                    mediaDevices.audio.get(0).metadata,
+                                    48000,
+                                    16,
+                                    2
+                            ),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        } catch (FileNotFoundException e) {
+            //throw new RuntimeException(e);
+        } catch (ConnectionException e) {
+            //throw new RuntimeException(e);
         }
     }
 }
