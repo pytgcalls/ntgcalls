@@ -12,6 +12,8 @@ namespace ntgcalls {
         virtual ~BaseReceiver() = default;
 
         virtual wrtc::RemoteMediaInterface* remoteSink() = 0;
+
+        virtual void open() = 0;
     };
 
 } // ntgcalls

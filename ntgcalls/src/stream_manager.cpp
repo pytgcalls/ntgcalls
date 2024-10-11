@@ -241,8 +241,8 @@ namespace ntgcalls {
                 } else {
                     // TODO: Implement video receiver
                 }
+                dynamic_cast<BaseReceiver*>(streams[id].get())->open();
             }
-            streams[id]->open();
         }
 
         if (desc) {
