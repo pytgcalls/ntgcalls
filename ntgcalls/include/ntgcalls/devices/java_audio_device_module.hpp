@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <queue>
+#include <ntgcalls/io/audio_mixer.hpp>
 
 #ifdef IS_ANDROID
 #include <jni.h>
@@ -12,8 +14,11 @@
 
 namespace ntgcalls {
 
-    class JavaAudioDeviceModule final: public BaseDeviceModule, public BaseReader {
+    class JavaAudioDeviceModule final: public BaseDeviceModule, public BaseReader, public AudioMixer {
         jobject javaModule;
+        std::queue<bytes::unique_binary> queue;
+
+        void onData(bytes::unique_binary data) override;
 
     public:
         JavaAudioDeviceModule(const AudioDescription* desc, bool isCapture, BaseSink* sink);
@@ -25,6 +30,8 @@ namespace ntgcalls {
         static bool isSupported();
 
         void onRecordedData(bytes::unique_binary data) const;
+
+        void getPlaybackData();
     };
 
 } // ntgcalls

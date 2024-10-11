@@ -250,3 +250,9 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaAudioDeviceModule
     auto instance = getInstanceAudioCapture(env, thiz);
     instance->onRecordedData(std::move(parseUniqueBinary(env, data)));
 }
+
+extern "C"
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaAudioDeviceModule_getPlaybackData(JNIEnv *env, jobject thiz) {
+    auto instance = getInstanceAudioCapture(env, thiz);
+    instance->getPlaybackData();
+}

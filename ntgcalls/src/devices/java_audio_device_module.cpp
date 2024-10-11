@@ -11,7 +11,8 @@ namespace ntgcalls {
     JavaAudioDeviceModule::JavaAudioDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink* sink):
         BaseIO(sink),
         BaseDeviceModule(desc, isCapture),
-        BaseReader(sink)
+        BaseReader(sink),
+        AudioMixer(sink)
     {
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
         const auto audioRecordClass = env->FindClass("org/pytgcalls/ntgcalls/devices/JavaAudioDeviceModule");
@@ -39,8 +40,39 @@ namespace ntgcalls {
         env->DeleteLocalRef(javaModuleClass);
     }
 
+    void JavaAudioDeviceModule::onData(bytes::unique_binary data) {
+        queue.push(std::move(data));
+    }
+
     void JavaAudioDeviceModule::onRecordedData(bytes::unique_binary data) const {
         dataCallback(std::move(data));
+    }
+
+    void JavaAudioDeviceModule::getPlaybackData() {
+        auto frameSize = sink->frameSize();
+        if (queue.empty()) return;
+        const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
+        // ReSharper disable once CppLocalVariableMayBeConst
+        jclass javaModuleClass = env->GetObjectClass(javaModule);
+        // ReSharper disable once CppLocalVariableMayBeConst
+        jfieldID byteBufferFieldID = env->GetFieldID(javaModuleClass, "byteBuffer", "Ljava/nio/ByteBuffer;");
+         // ReSharper disable once CppLocalVariableMayBeConst
+        jobject byteBufferObject = env->GetObjectField(javaModule, byteBufferFieldID);
+
+        auto* buffer = static_cast<uint8_t*>(env->GetDirectBufferAddress(byteBufferObject));
+        if (buffer == nullptr) {
+            env->DeleteLocalRef(byteBufferObject);
+            env->DeleteLocalRef(javaModuleClass);
+            return;
+        }
+        if (!queue.empty()) {
+            memcpy(buffer, queue.front().get(), frameSize);
+            queue.pop();
+        } else {
+            memset(buffer, 0, frameSize);
+        }
+        env->DeleteLocalRef(byteBufferObject);
+        env->DeleteLocalRef(javaModuleClass);
     }
 
     void JavaAudioDeviceModule::open() {
@@ -54,7 +86,7 @@ namespace ntgcalls {
     }
 
     bool JavaAudioDeviceModule::isSupported() {
-        return android_get_device_api_level() >= __ANDROID_API_J_MR2__;
+        return android_get_device_api_level() >= __ANDROID_API_L__;
     }
 } // ntgcalls
 

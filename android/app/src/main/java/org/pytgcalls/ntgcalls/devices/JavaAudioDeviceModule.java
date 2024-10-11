@@ -1,8 +1,10 @@
 package org.pytgcalls.ntgcalls.devices;
 
 import android.annotation.TargetApi;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Process;
@@ -15,6 +17,7 @@ import org.pytgcalls.ntgcalls.exceptions.MediaDeviceException;
 import java.nio.ByteBuffer;
 
 @SuppressWarnings("unused")
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 class JavaAudioDeviceModule {
     protected ByteBuffer byteBuffer;
     protected static final int CALLBACK_BUFFER_SIZE_MS = 10;
@@ -23,6 +26,7 @@ class JavaAudioDeviceModule {
     protected static final int DEFAULT_AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
 
     private AudioRecord audioRecord;
+    private AudioTrack audioTrack;
     private AudioEffects effects = new AudioEffects();
     private AudioThread audioThread;
     private final boolean isCapture;
@@ -30,7 +34,6 @@ class JavaAudioDeviceModule {
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final long nativePointer;
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     public JavaAudioDeviceModule(boolean isCapture, int sampleRate, int channels, long nativePointer) {
         final int bytesPerFrame = channels * DEFAULT_AUDIO_FORMAT;
@@ -38,25 +41,32 @@ class JavaAudioDeviceModule {
         this.isCapture = isCapture;
         this.nativePointer = nativePointer;
         byteBuffer = ByteBuffer.allocateDirect(bytesPerFrame * framesPerBuffer);
-
+        final int channelConfig = channelCountToConfiguration(channels);
         if (isCapture) {
-            final int channelConfig = channelCountToConfiguration(channels);
             int minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, DEFAULT_AUDIO_FORMAT);
             int bufferSizeInBytes = Math.max(BUFFER_SIZE_FACTOR * minBufferSize, byteBuffer.capacity());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                this.audioRecord = createAudioRecordOnMOrHigher(
+                audioRecord = createAudioRecordOnMOrHigher(
                         sampleRate,
                         channelConfig,
                         bufferSizeInBytes
                 );
             } else {
-                this.audioRecord = createAudioRecordOnLowerThanM(
+                audioRecord = createAudioRecordOnLowerThanM(
                         sampleRate,
                         channelConfig,
                         bufferSizeInBytes
                 );
             }
             effects.enable(audioRecord.getAudioSessionId());
+        } else {
+            final int minBufferSizeInBytes = AudioTrack.getMinBufferSize(sampleRate, channelConfig, DEFAULT_AUDIO_FORMAT);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioTrack = createAudioTrackOnOreoOrHigher(sampleRate, channelConfig, minBufferSizeInBytes);
+            } else {
+                audioTrack = createAudioTrackBeforeOreo(sampleRate, channelConfig, minBufferSizeInBytes);
+            }
         }
     }
 
@@ -76,8 +86,43 @@ class JavaAudioDeviceModule {
             audioRecord.release();
             audioRecord = null;
         }
+        if (audioTrack != null) {
+            audioTrack.release();
+            audioTrack = null;
+        }
         effects.release();
         effects = null;
+    }
+
+    @TargetApi(26)
+    private static AudioTrack createAudioTrackOnOreoOrHigher(int sampleRateInHz, int channelConfig, int bufferSizeInBytes) {
+        return new AudioTrack.Builder()
+                .setAudioAttributes(getAudioAttributes())
+                .setAudioFormat(new AudioFormat.Builder()
+                        .setEncoding(DEFAULT_AUDIO_FORMAT)
+                        .setSampleRate(sampleRateInHz)
+                        .setChannelMask(channelConfig)
+                        .build())
+                .setBufferSizeInBytes(bufferSizeInBytes)
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .build();
+    }
+
+    private static AudioTrack createAudioTrackBeforeOreo(int sampleRateInHz, int channelConfig, int bufferSizeInBytes) {
+        return new AudioTrack(
+                getAudioAttributes(),
+                (new AudioFormat.Builder()).setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(sampleRateInHz).setChannelMask(channelConfig).build(),
+                bufferSizeInBytes,
+                1,
+                0
+        );
+    }
+
+    private static AudioAttributes getAudioAttributes() {
+        return new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build();
     }
 
     @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
@@ -101,23 +146,27 @@ class JavaAudioDeviceModule {
 
     public void open() {
         if (isCapture) {
-            try {
-                audioRecord.startRecording();
-            } catch (IllegalStateException e) {
-                throw new MediaDeviceException("Failed to start recording: " + e.getMessage());
-            }
-            audioThread = new AudioThread("AudioRecordJavaThread");
-            audioThread.start();
+            audioRecord.startRecording();
+        } else {
+            audioTrack.play();
         }
+        audioThread = new AudioThread("AudioRecordJavaThread");
+        audioThread.start();
     }
 
     private native void onRecordedData(byte[] data);
 
+    private native void getPlaybackData();
+
     protected class AudioThread extends Thread {
         public volatile boolean keepAlive = true;
+        private LowLatencyAudioBufferManager bufferManager;
 
         public AudioThread(String name) {
             super(name);
+            if (!isCapture) {
+                bufferManager = new LowLatencyAudioBufferManager();
+            }
         }
 
         @Override
@@ -135,6 +184,13 @@ class JavaAudioDeviceModule {
                             audioThread.stopThread();
                         }
                     }
+                } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        bufferManager.maybeAdjustBufferSize(audioTrack);
+                    }
+                    getPlaybackData();
+                    audioTrack.write(byteBuffer, byteBuffer.capacity(), AudioTrack.WRITE_BLOCKING);
+                    byteBuffer.rewind();
                 }
             }
             if (isCapture) {
