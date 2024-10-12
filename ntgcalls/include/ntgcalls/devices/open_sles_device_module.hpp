@@ -25,6 +25,7 @@ namespace ntgcalls {
         rtc::scoped_refptr<OpenSLEngineManager> engineManager;
         SLDataFormat_PCM pcmFormat{};
         ScopedSLObjectItf deviceObject;
+        std::mutex queueMutex;
         std::queue<bytes::unique_binary> queue;
 
         SLRecordItf recorder = nullptr;

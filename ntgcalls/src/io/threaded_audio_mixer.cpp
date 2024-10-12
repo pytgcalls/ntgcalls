@@ -8,6 +8,7 @@ namespace ntgcalls {
     ThreadedAudioMixer::ThreadedAudioMixer(BaseSink* sink): AudioMixer(sink) {}
 
     ThreadedAudioMixer::~ThreadedAudioMixer() {
+        std::lock_guard queueLock(queueMutex);
         running = false;
         cv.notify_one();
         thread.Finalize();
@@ -23,6 +24,7 @@ namespace ntgcalls {
                 while (running) {
                     std::unique_lock lock(mtx);
                     const auto ok = cv.wait_for(lock, frameTime + std::chrono::milliseconds(20), [this] {
+                        std::lock_guard queueLock(queueMutex);
                         return !queue.empty() || !running;
                     });
                     if (!running) {
@@ -30,6 +32,7 @@ namespace ntgcalls {
                     }
                     try {
                         if (ok) {
+                            std::lock_guard queueLock(queueMutex);
                             write(queue.front());
                             queue.pop();
                         } else {
@@ -47,6 +50,7 @@ namespace ntgcalls {
     }
 
     void ThreadedAudioMixer::onData(bytes::unique_binary data) {
+        std::lock_guard queueLock(queueMutex);
         queue.push(std::move(data));
         cv.notify_one();
     }

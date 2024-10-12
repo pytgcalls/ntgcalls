@@ -34,6 +34,7 @@ namespace ntgcalls {
         std::string deviceUID;
         ComPtr<IAudioCaptureClient> audioCaptureClient;
         ComPtr<IAudioRenderClient> audioRenderClient;
+        std::mutex queueMutex;
         std::queue<bytes::unique_binary> queue;
 
         void init();

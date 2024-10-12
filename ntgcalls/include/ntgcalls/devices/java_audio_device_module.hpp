@@ -16,6 +16,7 @@ namespace ntgcalls {
 
     class JavaAudioDeviceModule final: public BaseDeviceModule, public BaseReader, public AudioMixer {
         jobject javaModule;
+        std::mutex queueMutex;
         std::queue<bytes::unique_binary> queue;
 
         void onData(bytes::unique_binary data) override;

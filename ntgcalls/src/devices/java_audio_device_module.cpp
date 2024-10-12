@@ -31,6 +31,7 @@ namespace ntgcalls {
     }
 
     JavaAudioDeviceModule::~JavaAudioDeviceModule() {
+        std::lock_guard queueLock(queueMutex);
         running = false;
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
         // ReSharper disable once CppLocalVariableMayBeConst
@@ -41,6 +42,7 @@ namespace ntgcalls {
     }
 
     void JavaAudioDeviceModule::onData(bytes::unique_binary data) {
+        std::lock_guard lock(queueMutex);
         queue.push(std::move(data));
     }
 
@@ -65,6 +67,7 @@ namespace ntgcalls {
             env->DeleteLocalRef(javaModuleClass);
             return;
         }
+        std::lock_guard lock(queueMutex);
         if (!queue.empty()) {
             memcpy(buffer, queue.front().get(), frameSize);
             queue.pop();

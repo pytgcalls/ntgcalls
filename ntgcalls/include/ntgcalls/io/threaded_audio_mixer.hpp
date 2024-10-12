@@ -12,6 +12,7 @@
 namespace ntgcalls {
 
     class ThreadedAudioMixer: public AudioMixer {
+        std::mutex queueMutex;
         std::queue<bytes::unique_binary> queue;
         std::mutex mtx;
         std::condition_variable cv;

@@ -42,6 +42,7 @@ namespace ntgcalls {
     }
 
     WinCoreDeviceModule::~WinCoreDeviceModule() {
+        std::lock_guard queueLock(queueMutex);
         SetEvent(stopEvent.Get());
         if (isCapture) {
             thread.Finalize();
@@ -399,6 +400,7 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "IAudioRenderClient::GetBuffer failed: " << core_audio_utility::ErrorToString(error);
             return false;
         }
+        std::lock_guard queueLock(queueMutex);
         if (!queue.empty()) {
             memcpy(audioData, queue.front().get(), numRequestedFrames * format.Format.nBlockAlign);
             queue.pop();
@@ -411,6 +413,7 @@ namespace ntgcalls {
     }
 
     void WinCoreDeviceModule::onData(bytes::unique_binary data) {
+        std::lock_guard queueLock(queueMutex);
         queue.emplace(std::move(data));
     }
 

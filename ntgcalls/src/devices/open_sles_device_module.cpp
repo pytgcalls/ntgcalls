@@ -44,6 +44,7 @@ namespace ntgcalls {
     }
 
     OpenSLESDeviceModule::~OpenSLESDeviceModule() {
+        std::lock_guard queueLock(queueMutex);
         running = false;
         (*simpleBufferQueue)->Clear(simpleBufferQueue);
         (*simpleBufferQueue)->RegisterCallback(simpleBufferQueue, nullptr, nullptr);
@@ -187,6 +188,7 @@ namespace ntgcalls {
                 return;
             }
             auto* audioPtr8 = reinterpret_cast<SLint8*>(thiz->audioBuffers[thiz->bufferIndex].get());
+            std::lock_guard lock(thiz->queueMutex);
             if (!thiz->queue.empty()) {
                 memcpy(audioPtr8, thiz->queue.front().get(), frameSize);
                 thiz->queue.pop();
@@ -215,6 +217,7 @@ namespace ntgcalls {
     }
 
     void OpenSLESDeviceModule::onData(bytes::unique_binary data) {
+        std::lock_guard lock(queueMutex);
         queue.push(std::move(data));
     }
 
