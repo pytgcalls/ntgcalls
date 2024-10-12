@@ -12,8 +12,6 @@ import android.os.Process;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 
-import org.pytgcalls.ntgcalls.exceptions.MediaDeviceException;
-
 import java.nio.ByteBuffer;
 
 @SuppressWarnings("unused")
