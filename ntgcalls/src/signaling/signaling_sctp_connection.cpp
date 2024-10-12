@@ -20,7 +20,7 @@ namespace signaling {
             packetTransport = std::make_unique<SignalingPacketTransport>(onEmitData);
             sctpTransportFactory = std::make_unique<cricket::SctpTransportFactory>(networkThread);
             sctpTransport = sctpTransportFactory->CreateSctpTransport(env, packetTransport.get());
-            sctpTransport->OpenStream(0);
+            sctpTransport->OpenStream(0, webrtc::PriorityValue(webrtc::Priority::kVeryLow));
             sctpTransport->SetDataChannelSink(this);
             sctpTransport->Start(5000, 5000, 262144);
         });

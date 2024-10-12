@@ -48,7 +48,7 @@ namespace wrtc {
 
         webrtc::RTCError SendData(webrtc::StreamId sid, const webrtc::SendDataParams& params, const rtc::CopyOnWriteBuffer& payload) override;
 
-        void AddSctpDataStream(webrtc::StreamId sid) override;
+        void AddSctpDataStream(webrtc::StreamId sid, webrtc::PriorityValue priority) override;
 
         void RemoveSctpDataStream(webrtc::StreamId sid) override;
 

@@ -62,7 +62,7 @@ namespace wrtc {
         workerThread()->BlockingCall([&] {
             webrtc::CallConfig callConfig(factory->environment(), networkThread());
             callConfig.audio_state = factory->mediaEngine()->voice().GetAudioState();
-            call = factory->mediaFactory()->CreateCall(callConfig);
+            call = factory->mediaFactory()->CreateCall(std::move(callConfig));
         });
     }
 

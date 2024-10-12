@@ -7,6 +7,7 @@
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
 #include <wrtc/models/simulcast_layer.hpp>
+#include <modules/rtp_rtcp/source/rtp_header_extensions.h>
 
 namespace wrtc {
     GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation) {

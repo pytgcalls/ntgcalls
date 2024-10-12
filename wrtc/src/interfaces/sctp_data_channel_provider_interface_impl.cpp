@@ -35,7 +35,7 @@ namespace wrtc {
             return;
         }
         dataChannel->RegisterObserver(this);
-        AddSctpDataStream(webrtc::StreamId(0));
+        AddSctpDataStream(webrtc::StreamId(0), webrtc::PriorityValue(webrtc::Priority::kVeryLow));
     }
 
     SctpDataChannelProviderInterfaceImpl::~SctpDataChannelProviderInterfaceImpl() {
@@ -80,9 +80,9 @@ namespace wrtc {
         return sctpTransport->SendData(sid.stream_id_int(), params, payload);
     }
 
-    void SctpDataChannelProviderInterfaceImpl::AddSctpDataStream(const webrtc::StreamId sid) {
+    void SctpDataChannelProviderInterfaceImpl::AddSctpDataStream(const webrtc::StreamId sid, const webrtc::PriorityValue priority) {
         assert(networkThread->IsCurrent());
-        sctpTransport->OpenStream(sid.stream_id_int());
+        sctpTransport->OpenStream(sid.stream_id_int(), priority);
     }
 
     void SctpDataChannelProviderInterfaceImpl::RemoveSctpDataStream(webrtc::StreamId sid) {
