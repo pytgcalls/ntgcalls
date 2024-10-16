@@ -33,6 +33,11 @@ namespace ntgcalls {
         case BaseMediaDescription::MediaSource::FFmpeg:
             RTC_LOG(LS_ERROR) << "FFmpeg encoder is not yet supported";
             throw FFmpegError("FFmpeg encoder is not yet supported");
+        case BaseMediaDescription::MediaSource::Desktop:
+            if (const auto* video = dynamic_cast<const VideoDescription*>(&desc)) {
+                return MediaDevice::CreateDesktopCapture(*video, sink);
+            }
+            throw InvalidParams("Invalid media type");
         default:
             RTC_LOG(LS_ERROR) << "Invalid input mode";
             throw InvalidParams("Invalid input mode");

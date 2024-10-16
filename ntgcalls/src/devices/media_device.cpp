@@ -3,7 +3,7 @@
 //
 
 #include <ntgcalls/devices/media_device.hpp>
-
+#include <ntgcalls/devices/desktop_capturer_module.hpp>
 #include <ntgcalls/exceptions.hpp>
 
 #ifdef IS_LINUX
@@ -45,6 +45,25 @@ namespace ntgcalls {
         }
 #endif
         return {};
+    }
+
+    std::vector<DeviceInfo> MediaDevice::GetScreenDevices() {
+#ifndef IS_ANDROID
+        if (DesktopCapturerModule::IsSupported()) {
+            return DesktopCapturerModule::GetSources();
+        }
+#endif
+        return {};
+    }
+
+    std::unique_ptr<BaseReader> MediaDevice::CreateDesktopCapture(const VideoDescription& desc, BaseSink* sink) {
+#ifndef IS_ANDROID
+        if (DesktopCapturerModule::IsSupported()) {
+            RTC_LOG(LS_INFO) << "Using DesktopCapturer module for input";
+            return std::make_unique<DesktopCapturerModule>(desc, sink);
+        }
+#endif
+        throw MediaDeviceError("Unsupported platform for desktop capture");
     }
 
     std::unique_ptr<BaseIO> MediaDevice::CreateAudioDevice(const AudioDescription* desc, BaseSink *sink, const bool isCapture) {

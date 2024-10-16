@@ -10,6 +10,7 @@ namespace ntgcalls {
     struct MediaDevices {
         std::vector<DeviceInfo> audio{};
         std::vector<DeviceInfo> video{};
+        std::vector<DeviceInfo> screen{};
     };
 
 } // ntgcalls

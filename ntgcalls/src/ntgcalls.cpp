@@ -296,6 +296,8 @@ namespace ntgcalls {
     MediaDevices NTgCalls::getMediaDevices() {
         return {
             MediaDevice::GetAudioDevices(),
+            {},
+            MediaDevice::GetScreenDevices()
         };
     }
 } // ntgcalls

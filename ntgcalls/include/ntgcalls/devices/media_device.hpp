@@ -5,7 +5,7 @@
 #pragma once
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/devices/device_info.hpp>
-#include <ntgcalls/io/base_writer.hpp>
+#include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/models/media_description.hpp>
 
 namespace ntgcalls {
@@ -24,6 +24,10 @@ namespace ntgcalls {
         }
 
         static std::vector<DeviceInfo> GetAudioDevices();
+
+        static std::vector<DeviceInfo> GetScreenDevices();
+
+        static std::unique_ptr<BaseReader> CreateDesktopCapture(const VideoDescription& desc, BaseSink* sink);
     };
 
 } // ntgcalls
