@@ -8,6 +8,7 @@
 #include <ntgcalls/instances/group_call.hpp>
 #include <ntgcalls/instances/p2p_call.hpp>
 #include <ntgcalls/models/dh_config.hpp>
+#include <ntgcalls/utils/g_lib_loop_manager.hpp>
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
@@ -271,6 +272,10 @@ namespace ntgcalls {
             true,
             signaling::Signaling::SupportedVersions(),
         };
+    }
+
+    void NTgCalls::enableGlibLoop(const bool enable) {
+        GLibLoopManager::EnableEventLoop(enable);
     }
 
     template<typename DestCallType, typename BaseCallType>

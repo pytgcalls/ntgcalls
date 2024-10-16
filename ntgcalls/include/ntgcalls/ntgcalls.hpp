@@ -96,6 +96,8 @@ namespace ntgcalls {
 
         static Protocol getProtocol();
 
+        static void enableGlibLoop(bool enable);
+
         void onUpgrade(const std::function<void(int64_t, MediaState)>& callback);
 
         void onStreamEnd(const std::function<void(int64_t, StreamManager::Type, StreamManager::Device)>& callback);
