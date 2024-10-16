@@ -6,6 +6,7 @@
 
 #include <ntgcalls/signaling/external_signaling_connection.hpp>
 #include <ntgcalls/signaling/signaling_sctp_connection.hpp>
+#include <ntgcalls/utils/version_parser.hpp>
 
 
 namespace signaling {
@@ -62,7 +63,7 @@ namespace signaling {
             throw ntgcalls::SignalingError("No versions provided");
         }
         std::ranges::sort(versions, [](const std::string& a, const std::string& b) {
-            return versionToTuple(b) < versionToTuple(a);
+            return ntgcalls::VersionParser::Parse(b) < ntgcalls::VersionParser::Parse(a);
         });
         auto supported = SupportedVersions();
         for (const auto& version : versions) {
@@ -74,22 +75,5 @@ namespace signaling {
             }
         }
         throw ntgcalls::SignalingUnsupported("No supported version found");
-    }
-
-    std::tuple<int, int, int> Signaling::versionToTuple(const std::string& version) {
-        try {
-            std::vector<std::string> parts;
-            std::istringstream stream(version);
-            std::string part;
-            while (std::getline(stream, part, '.')) {
-                parts.push_back(part);
-            }
-            if (parts.size() != 3) {
-                return std::make_tuple(0, 0, 0);
-            }
-            return std::make_tuple(std::stoi(parts[0]), std::stoi(parts[1]), std::stoi(parts[2]));
-        } catch (const std::invalid_argument&) {
-            return std::make_tuple(0, 0, 0);
-        }
     }
 } // signaling

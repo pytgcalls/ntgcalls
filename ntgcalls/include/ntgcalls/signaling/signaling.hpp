@@ -36,8 +36,6 @@ namespace signaling {
         static constexpr char defaultVersion[] = "8.0.0";
 
         static std::string bestMatch(std::vector<std::string> versions);
-
-        static std::tuple<int, int, int> versionToTuple(const std::string& version);
     };
 
     inline bool operator&(const Signaling::Version lhs, Signaling::Version rhs) {
