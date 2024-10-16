@@ -1,6 +1,6 @@
 string(REGEX MATCH "m[0-9]+\\.([0-9]+)" WEBRTC_BRANCH "${WEBRTC_REVISION}")
 set(WEBRTC_BRANCH branch-heads/${CMAKE_MATCH_1})
-set(WEBRTC_GIT https://github.com/shiguredo-webrtc-build/webrtc-build)
+set(WEBRTC_GIT https://github.com/pytgcalls/webrtc-build)
 set(WEBRTC_DIR ${deps_loc}/libwebrtc)
 set(WEBRTC_SRC ${WEBRTC_DIR}/src)
 set(WEBRTC_INCLUDE ${WEBRTC_SRC}/include)
