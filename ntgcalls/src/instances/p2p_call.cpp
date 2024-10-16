@@ -364,7 +364,7 @@ namespace ntgcalls {
         signaling::MediaStateMessage message;
         message.isMuted = mediaState.muted;
 
-        if (!streamManager->hasDevice(StreamManager::Playback, StreamManager::Camera)) {
+        if (!streamManager->hasDevice(StreamManager::Capture, StreamManager::Camera)) {
             message.videoState = signaling::MediaStateMessage::VideoState::Inactive;
         } else if (mediaState.videoPaused) {
             message.videoState = signaling::MediaStateMessage::VideoState::Suspended;
@@ -372,7 +372,7 @@ namespace ntgcalls {
             message.videoState = signaling::MediaStateMessage::VideoState::Active;
         }
 
-        if (!streamManager->hasDevice(StreamManager::Playback, StreamManager::Screen)) {
+        if (!streamManager->hasDevice(StreamManager::Capture, StreamManager::Screen)) {
             message.screencastState = signaling::MediaStateMessage::VideoState::Inactive;
         } else if (mediaState.presentationPaused) {
             message.screencastState = signaling::MediaStateMessage::VideoState::Suspended;
