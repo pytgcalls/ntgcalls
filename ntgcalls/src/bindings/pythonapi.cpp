@@ -43,6 +43,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
     wrapper.def_static("get_protocol", &ntgcalls::NTgCalls::getProtocol);
     wrapper.def_static("get_media_devices", &ntgcalls::NTgCalls::getMediaDevices);
+    wrapper.def_static("enable_glib_loop", &ntgcalls::NTgCalls::enableGlibLoop, py::arg("enable"));
 
     py::enum_<ntgcalls::StreamManager::Type>(m, "StreamType")
         .value("AUDIO", ntgcalls::StreamManager::Type::Audio)
@@ -90,6 +91,7 @@ PYBIND11_MODULE(ntgcalls, m) {
         .value("SHELL", ntgcalls::BaseMediaDescription::MediaSource::Shell)
         .value("FFMPEG", ntgcalls::BaseMediaDescription::MediaSource::FFmpeg)
         .value("DEVICE", ntgcalls::BaseMediaDescription::MediaSource::Device)
+        .value("DESKTOP", ntgcalls::BaseMediaDescription::MediaSource::Desktop)
         .export_values()
         .def("__and__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const ntgcalls::BaseMediaDescription::MediaSource& rhs) {
             return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs & rhs);
@@ -120,7 +122,8 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::MediaDevices>(m, "MediaDevices")
         .def_readonly("audio", &ntgcalls::MediaDevices::audio)
-        .def_readonly("video", &ntgcalls::MediaDevices::video);
+        .def_readonly("video", &ntgcalls::MediaDevices::video)
+        .def_readonly("screen", &ntgcalls::MediaDevices::screen);
 
     py::class_<ntgcalls::BaseMediaDescription> mediaWrapper(m, "BaseMediaDescription");
     mediaWrapper.def_readwrite("input", &ntgcalls::BaseMediaDescription::input);
