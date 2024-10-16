@@ -19,7 +19,7 @@ namespace ntgcalls {
 
     class VideoSink: public BaseSink {
     protected:
-        std::optional<VideoDescription> description;
+        std::optional<VideoDescription> description = std::nullopt;
 
     public:
         bool setConfig(const std::optional<VideoDescription>& desc);
