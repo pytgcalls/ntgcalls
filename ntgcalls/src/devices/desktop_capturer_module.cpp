@@ -58,25 +58,33 @@ namespace ntgcalls {
 
             const auto yScaledSize = desc.width * desc.height;
             const auto uvScaledSize = yScaledSize / 4;
-            const auto yScaledPlane = std::make_unique<uint8_t[]>(yScaledSize);
-            const auto uScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
-            const auto vScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
-            I420Scale(
-                yPlane.get(), width,
-                uPlane.get(), width / 2,
-                vPlane.get(), width / 2,
-                width, height,
-                yScaledPlane.get(), desc.width,
-                uScaledPlane.get(), desc.width / 2,
-                vScaledPlane.get(), desc.width / 2,
-                desc.width, desc.height,
-                libyuv::kFilterBox
-            );
-
             auto yuv = bytes::make_unique_binary(yScaledSize + uvScaledSize * 2);
-            memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
-            memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
-            memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
+
+            if (desc.width == width && desc.height == height) {
+                memcpy(yuv.get(), yPlane.get(), ySize);
+                memcpy(yuv.get() + ySize, uPlane.get(), uvSize);
+                memcpy(yuv.get() + ySize + uvSize, vPlane.get(), uvSize);
+            } else {
+                const auto yScaledPlane = std::make_unique<uint8_t[]>(yScaledSize);
+                const auto uScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
+                const auto vScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
+
+                I420Scale(
+                    yPlane.get(), width,
+                    uPlane.get(), width / 2,
+                    vPlane.get(), width / 2,
+                    width, height,
+                    yScaledPlane.get(), desc.width,
+                    uScaledPlane.get(), desc.width / 2,
+                    vScaledPlane.get(), desc.width / 2,
+                    desc.width, desc.height,
+                    libyuv::kFilterBox
+                );
+
+                memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
+                memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
+                memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
+            }
 
             (void) dataCallback(std::move(yuv));
         } else if (result == webrtc::DesktopCapturer::Result::ERROR_PERMANENT) {
