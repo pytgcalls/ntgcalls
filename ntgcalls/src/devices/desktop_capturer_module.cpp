@@ -31,7 +31,11 @@ namespace ntgcalls {
     std::unique_ptr<webrtc::DesktopCapturer> DesktopCapturerModule::CreateCapturer() {
         auto options = webrtc::DesktopCaptureOptions::CreateDefault();
         options.set_detect_updated_region(true);
-#ifdef IS_LINUX
+#ifdef IS_WINDOWS
+        options.set_allow_directx_capturer(true);
+#elif defined IS_MACOS
+        options.set_allow_iosurface(true);
+#elif defined IS_LINUX
         options.set_allow_pipewire(true);
 #endif
         return webrtc::DesktopCapturer::CreateGenericCapturer(options);
