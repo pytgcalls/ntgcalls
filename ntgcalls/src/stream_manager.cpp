@@ -117,8 +117,7 @@ namespace ntgcalls {
         if (mode == Capture) {
             return readers.empty() ? Idling : isPaused() ? Paused : Active;
         }
-        // TODO: Implement input status
-        return Idling;
+        return writers.empty() ? Idling : Active;
     }
 
     void StreamManager::onStreamEnd(const std::function<void(Type, Device)>& callback) {
