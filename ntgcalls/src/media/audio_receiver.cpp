@@ -85,12 +85,7 @@ namespace ntgcalls {
     }
 
     void AudioReceiver::open() {
-        std::weak_ptr weakThis(shared_from_this());
-        sink = std::make_unique<wrtc::RemoteAudioSink>([this, weakThis](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& samples) {
-            const std::shared_ptr<AudioReceiver> self = weakThis.lock();
-            if (!self) {
-                return;
-            }
+        sink = std::make_shared<wrtc::RemoteAudioSink>([this](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& samples) {
             if (!description) {
                 return;
             }
@@ -101,7 +96,7 @@ namespace ntgcalls {
                     memcpy(data.get(), frame->data, frame->size);
                     processedFrames.emplace(
                         frame->ssrc,
-                        self->resampleFrame(
+                        resampleFrame(
                             std::move(data),
                             frame->size,
                             frame->channels,
@@ -112,12 +107,12 @@ namespace ntgcalls {
                     RTC_LOG(LS_ERROR) << "Failed to adapt audio frame: " << e.what();
                 }
             }
-            self->frames++;
-            (void) self->framesCallback(processedFrames);
+            frames++;
+            (void) framesCallback(processedFrames);
         });
     }
 
-    wrtc::RemoteMediaInterface* AudioReceiver::remoteSink() {
-        return sink.get();
+    std::weak_ptr<wrtc::RemoteMediaInterface> AudioReceiver::remoteSink() {
+        return sink;
     }
 } // ntgcalls

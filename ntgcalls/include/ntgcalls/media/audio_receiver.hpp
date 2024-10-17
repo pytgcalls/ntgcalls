@@ -8,12 +8,13 @@
 #include <ntgcalls/media/base_receiver.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
 #include <common_audio/resampler/include/resampler.h>
+#include <wrtc/utils/syncronized_callback.hpp>
 
 namespace ntgcalls {
 
-    class AudioReceiver final: public AudioSink, public BaseReceiver, public std::enable_shared_from_this<AudioReceiver> {
+    class AudioReceiver final: public AudioSink, public BaseReceiver {
         wrtc::synchronized_callback<const std::map<uint32_t, bytes::unique_binary>&> framesCallback;
-        std::unique_ptr<wrtc::RemoteAudioSink> sink;
+        std::shared_ptr<wrtc::RemoteAudioSink> sink;
         std::unique_ptr<webrtc::Resampler> resampler;
 
         bytes::unique_binary resampleFrame(bytes::unique_binary data, size_t size, uint8_t channels, uint16_t sampleRate);
@@ -27,7 +28,7 @@ namespace ntgcalls {
 
         ~AudioReceiver() override;
 
-        wrtc::RemoteMediaInterface* remoteSink() override;
+        std::weak_ptr<wrtc::RemoteMediaInterface> remoteSink() override;
 
         void onFrames(const std::function<void(const std::map<uint32_t, bytes::unique_binary>&)>& callback);
 

@@ -284,7 +284,7 @@ namespace wrtc {
         audioContent.payloadTypes = mediaConfig.audioPayloadTypes;
 
         RTC_LOG(LS_INFO) << "Adding incoming audio channel with ssrc " << ssrc;
-        if (remoteAudioSink) remoteAudioSink->addSource();
+        if (const auto sink = remoteAudioSink.lock()) sink->addSource();
         auto channel = std::make_unique<IncomingAudioChannel>(
             call.get(),
             channelManager.get(),
@@ -303,7 +303,7 @@ namespace wrtc {
         }
         RTC_LOG(LS_INFO) << "Removing incoming audio channel with ssrc " << ssrc;
         incomingAudioChannels.erase(ssrc);
-        if (remoteAudioSink) remoteAudioSink->removeSource();
+        if (const auto sink = remoteAudioSink.lock()) sink->removeSource();
     }
 
     void GroupConnection::beginAudioChannelCleanupTimer() {

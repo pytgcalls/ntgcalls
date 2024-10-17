@@ -27,7 +27,7 @@ namespace wrtc {
             const MediaContent& mediaContent,
             rtc::Thread *workerThread,
             rtc::Thread* networkThread,
-            RemoteAudioSink* remoteAudioSink
+            std::weak_ptr<RemoteAudioSink> remoteAudioSink
         );
 
         ~IncomingAudioChannel() override;

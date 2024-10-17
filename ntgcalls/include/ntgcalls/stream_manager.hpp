@@ -78,7 +78,7 @@ namespace ntgcalls {
     private:
         rtc::Thread* workerThread;
         bool initialized = false, videoSimulcast = true;
-        std::map<std::pair<Mode, Device>, std::shared_ptr<BaseSink>> streams;
+        std::map<std::pair<Mode, Device>, std::unique_ptr<BaseSink>> streams;
         std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;
         std::map<Device, std::unique_ptr<BaseWriter>> writers;

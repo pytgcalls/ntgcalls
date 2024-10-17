@@ -18,7 +18,7 @@ namespace ntgcalls {
 
     class AudioSink: public BaseSink {
     protected:
-        std::optional<AudioDescription> description = std::nullopt;
+        std::optional<AudioDescription> description;
 
     public:
         bool setConfig(const std::optional<AudioDescription>& desc);

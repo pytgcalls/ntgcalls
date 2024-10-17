@@ -180,7 +180,6 @@ namespace wrtc {
             audioChannel = nullptr;
             videoChannel = nullptr;
             incomingAudioChannels.clear();
-            remoteAudioSink = nullptr;
         });
         channelManager = nullptr;
         if (factory) {
@@ -210,8 +209,8 @@ namespace wrtc {
         NetworkInterface::close();
     }
 
-    void NativeNetworkInterface::addIncomingTrack(RemoteMediaInterface* remoteSink) {
-        if (const auto audioSink = dynamic_cast<RemoteAudioSink*>(remoteSink)) {
+    void NativeNetworkInterface::addIncomingTrack(const std::weak_ptr<RemoteMediaInterface> remoteSink) {
+        if (const auto audioSink = std::dynamic_pointer_cast<RemoteAudioSink>(remoteSink.lock())) {
             remoteAudioSink = audioSink;
         } else {
             throw RTCException("Unsupported remote sink type");

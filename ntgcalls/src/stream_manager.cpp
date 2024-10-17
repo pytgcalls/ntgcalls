@@ -231,13 +231,13 @@ namespace ntgcalls {
         if (!streams.contains(id)) {
             if (mode == Capture) {
                 if (streamType == Audio) {
-                    streams[id] = std::make_shared<AudioStreamer>();
+                    streams[id] = std::make_unique<AudioStreamer>();
                 } else {
-                    streams[id] = std::make_shared<VideoStreamer>();
+                    streams[id] = std::make_unique<VideoStreamer>();
                 }
             } else {
                 if (streamType == Audio) {
-                    streams[id] = std::make_shared<AudioReceiver>();
+                    streams[id] = std::make_unique<AudioReceiver>();
                 } else {
                     // TODO: Implement video receiver
                 }

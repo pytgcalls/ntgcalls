@@ -11,7 +11,7 @@ namespace ntgcalls {
     public:
         virtual ~BaseReceiver() = default;
 
-        virtual wrtc::RemoteMediaInterface* remoteSink() = 0;
+        virtual std::weak_ptr<wrtc::RemoteMediaInterface> remoteSink() = 0;
 
         virtual void open() = 0;
     };

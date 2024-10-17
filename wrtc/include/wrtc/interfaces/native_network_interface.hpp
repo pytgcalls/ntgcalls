@@ -42,7 +42,7 @@ namespace wrtc {
         std::unique_ptr<webrtc::Call> call;
         webrtc::LocalAudioSinkAdapter audioSink;
         LocalVideoAdapter videoSink;
-        RemoteAudioSink* remoteAudioSink = nullptr;
+        std::weak_ptr<RemoteAudioSink> remoteAudioSink;
         std::unique_ptr<ChannelManager> channelManager;
         std::unique_ptr<OutgoingAudioChannel> audioChannel;
         std::unique_ptr<OutgoingVideoChannel> videoChannel;
@@ -86,7 +86,7 @@ namespace wrtc {
 
         std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
 
-        void addIncomingTrack(RemoteMediaInterface* remoteSink) override;
+        void addIncomingTrack(std::weak_ptr<RemoteMediaInterface> remoteSink) override;
 
         void initConnection(bool supportsPacketSending = false);
 

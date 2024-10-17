@@ -50,7 +50,7 @@ namespace wrtc {
 
         virtual std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) = 0;
 
-        virtual void addIncomingTrack(RemoteMediaInterface* remoteSink) = 0;
+        virtual void addIncomingTrack(std::weak_ptr<RemoteMediaInterface> remoteSink) = 0;
 
         bool isDataChannelOpen() const;
     };

@@ -14,7 +14,7 @@ namespace wrtc {
         const MediaContent& mediaContent,
         rtc::Thread *workerThread,
         rtc::Thread* networkThread,
-        RemoteAudioSink* remoteAudioSink
+        std::weak_ptr<RemoteAudioSink> remoteAudioSink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread) {
         updateActivity();
 
@@ -81,7 +81,9 @@ namespace wrtc {
         workerThread->BlockingCall([&] {
             auto rawSink = std::make_unique<RawAudioSink>();
             rawSink->setRemoteAudioSink(_ssrc, [remoteAudioSink](std::unique_ptr<AudioFrame> frame) {
-                if (remoteAudioSink) remoteAudioSink->sendData(std::move(frame));
+                if (const auto remoteAudio = remoteAudioSink.lock()) {
+                    remoteAudio->sendData(std::move(frame));
+                }
             });
             channel->receive_channel()->SetRawAudioSink(_ssrc, std::move(rawSink));
         });
