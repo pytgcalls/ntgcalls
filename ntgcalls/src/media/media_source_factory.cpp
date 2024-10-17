@@ -29,6 +29,9 @@ namespace ntgcalls {
             BOOST_THROW
 #endif
         case BaseMediaDescription::MediaSource::Device:
+            if (const auto* video = dynamic_cast<const VideoDescription*>(&desc)) {
+                return MediaDevice::CreateCameraCapture(*video, sink);
+            }
             return MediaDevice::CreateDevice<BaseReader>(desc, sink, true);
         case BaseMediaDescription::MediaSource::FFmpeg:
             RTC_LOG(LS_ERROR) << "FFmpeg encoder is not yet supported";

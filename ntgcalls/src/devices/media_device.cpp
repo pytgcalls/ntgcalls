@@ -5,6 +5,7 @@
 #include <ntgcalls/devices/media_device.hpp>
 #include <ntgcalls/devices/desktop_capturer_module.hpp>
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/devices/camera_capturer_module.hpp>
 
 #ifdef IS_LINUX
 #include <ntgcalls/devices/alsa_device_module.hpp>
@@ -56,6 +57,14 @@ namespace ntgcalls {
         return {};
     }
 
+    std::vector<DeviceInfo> MediaDevice::GetCameraDevices() {
+#ifndef IS_ANDROID
+        return CameraCapturerModule::GetSources();
+#else
+        return {};
+#endif
+    }
+
     std::unique_ptr<BaseReader> MediaDevice::CreateDesktopCapture(const VideoDescription& desc, BaseSink* sink) {
 #ifndef IS_ANDROID
         if (DesktopCapturerModule::IsSupported()) {
@@ -64,6 +73,14 @@ namespace ntgcalls {
         }
 #endif
         throw MediaDeviceError("Unsupported platform for desktop capture");
+    }
+
+    std::unique_ptr<BaseReader> MediaDevice::CreateCameraCapture(const VideoDescription& desc, BaseSink* sink) {
+#ifndef IS_ANDROID
+        return std::make_unique<CameraCapturerModule>(desc, sink);
+#else
+        throw MediaDeviceError("Unsupported platform for camera capture");
+#endif
     }
 
     std::unique_ptr<BaseIO> MediaDevice::CreateAudioDevice(const AudioDescription* desc, BaseSink *sink, const bool isCapture) {

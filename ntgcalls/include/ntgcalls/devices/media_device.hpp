@@ -27,7 +27,11 @@ namespace ntgcalls {
 
         static std::vector<DeviceInfo> GetScreenDevices();
 
+        static std::vector<DeviceInfo> GetCameraDevices();
+
         static std::unique_ptr<BaseReader> CreateDesktopCapture(const VideoDescription& desc, BaseSink* sink);
+
+        static std::unique_ptr<BaseReader> CreateCameraCapture(const VideoDescription& desc, BaseSink* sink);
     };
 
 } // ntgcalls
