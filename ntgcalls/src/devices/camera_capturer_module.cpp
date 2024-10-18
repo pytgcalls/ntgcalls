@@ -2,8 +2,11 @@
 // Created by Laky64 on 17/10/24.
 //
 
-#include <libyuv/scale.h>
+
 #include <ntgcalls/devices/camera_capturer_module.hpp>
+
+#if !defined(IS_ANDROID) && !defined(IS_MACOS)
+#include <libyuv/scale.h>
 #include <ntgcalls/exceptions.hpp>
 
 #ifdef IS_LINUX
@@ -132,3 +135,5 @@ namespace ntgcalls {
         }
     }
 } // ntgcalls
+
+#endif

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#ifndef IS_ANDROID
+#if !defined(IS_ANDROID) && !defined(IS_MACOS)
 #include <nlohmann/json.hpp>
 #include <rtc_base/platform_thread.h>
 #include <ntgcalls/io/base_reader.hpp>

@@ -49,7 +49,7 @@ namespace ntgcalls {
     }
 
     std::vector<DeviceInfo> MediaDevice::GetScreenDevices() {
-#ifndef IS_ANDROID
+#if !defined(IS_ANDROID) && !defined(IS_MACOS)
         if (DesktopCapturerModule::IsSupported()) {
             return DesktopCapturerModule::GetSources();
         }
@@ -58,7 +58,7 @@ namespace ntgcalls {
     }
 
     std::vector<DeviceInfo> MediaDevice::GetCameraDevices() {
-#ifndef IS_ANDROID
+#if !defined(IS_ANDROID) && !defined(IS_MACOS)
         return CameraCapturerModule::GetSources();
 #else
         return {};
@@ -66,7 +66,7 @@ namespace ntgcalls {
     }
 
     std::unique_ptr<BaseReader> MediaDevice::CreateDesktopCapture(const VideoDescription& desc, BaseSink* sink) {
-#ifndef IS_ANDROID
+#if !defined(IS_ANDROID) && !defined(IS_MACOS)
         if (DesktopCapturerModule::IsSupported()) {
             RTC_LOG(LS_INFO) << "Using DesktopCapturer module for input";
             return std::make_unique<DesktopCapturerModule>(desc, sink);
@@ -76,7 +76,7 @@ namespace ntgcalls {
     }
 
     std::unique_ptr<BaseReader> MediaDevice::CreateCameraCapture(const VideoDescription& desc, BaseSink* sink) {
-#ifndef IS_ANDROID
+#if !defined(IS_ANDROID) && !defined(IS_MACOS)
         return std::make_unique<CameraCapturerModule>(desc, sink);
 #else
         throw MediaDeviceError("Unsupported platform for camera capture");

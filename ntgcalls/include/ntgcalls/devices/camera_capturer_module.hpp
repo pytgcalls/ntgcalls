@@ -4,6 +4,7 @@
 
 #pragma once
 
+#if !defined(IS_ANDROID) && !defined(IS_MACOS)
 #include <api/video/video_frame.h>
 #include <api/video/video_sink_interface.h>
 #include <nlohmann/json.hpp>
@@ -37,3 +38,5 @@ namespace ntgcalls {
     };
 
 } // ntgcalls
+
+#endif
