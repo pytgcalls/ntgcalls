@@ -137,6 +137,8 @@ class SharedCommand(Command):
             arch_outputs = [
                 'arm64-v8a',
                 'armeabi-v7a',
+                'x86',
+                'x86_64',
             ]
         for arch in arch_outputs:
             new_cmake_args = cmake_args.copy()
