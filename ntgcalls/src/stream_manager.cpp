@@ -294,6 +294,8 @@ namespace ntgcalls {
             }
         } else if (mode == Capture) {
             readers.erase(device);
+        } else {
+            writers.erase(device);
         }
     }
 } // ntgcalls
