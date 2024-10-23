@@ -206,6 +206,9 @@ namespace ntgcalls {
     }
 
     void P2PCall::processSignalingData(const bytes::binary& buffer) {
+        if (signaling == nullptr) {
+            throw ConnectionError("Connection not initialized");
+        }
         RTC_LOG(LS_INFO) << "processSignalingData: " << std::string(buffer.begin(), buffer.end());
         try {
             switch (signaling::Message::type(buffer)) {
