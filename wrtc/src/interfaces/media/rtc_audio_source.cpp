@@ -21,7 +21,7 @@ namespace wrtc {
         return factory->factory()->CreateAudioTrack(rtc::CreateRandomUuid(), source.get());
     }
 
-    void RTCAudioSource::OnData(const RTCOnDataEvent &data, const int64_t absolute_capture_timestamp_ms) const {
-        source->PushData(data, absolute_capture_timestamp_ms);
+    void RTCAudioSource::OnData(const RTCOnDataEvent &data, const FrameData additionalData) const {
+        source->PushData(data, additionalData.absoluteCaptureTimestampMs);
     }
 } // wrtc

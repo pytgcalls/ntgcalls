@@ -44,7 +44,7 @@ namespace ntgcalls {
                             if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
                                 std::this_thread::sleep_for(waitTime);
                             }
-                            dataCallback(std::move(data));
+                            dataCallback(std::move(data), {});
                             lastTime = std::chrono::high_resolution_clock::now();
                             activeBuffer = (activeBuffer + 1) % bufferThreads.size();
                             lock.unlock();

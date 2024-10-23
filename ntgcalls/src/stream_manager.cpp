@@ -249,10 +249,11 @@ namespace ntgcalls {
             if (sink && sink->setConfig(desc)) {
                 if (mode == Capture) {
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
-                    readers[device]->onData([this, id](const bytes::unique_binary& data) {
+                    readers[device]->onData([this, id](const bytes::unique_binary& data, wrtc::FrameData frameData) {
                         if (streams.contains(id)) {
                             if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
-                                stream->sendData(data.get(), rtc::TimeMillis());
+                                frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
+                                stream->sendData(data.get(), frameData);
                             }
                         }
                     });

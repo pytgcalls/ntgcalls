@@ -47,7 +47,7 @@ namespace ntgcalls {
     }
 
     void JavaAudioDeviceModule::onRecordedData(bytes::unique_binary data) const {
-        dataCallback(std::move(data));
+        dataCallback(std::move(data), {});
     }
 
     void JavaAudioDeviceModule::getPlaybackData() {
@@ -58,7 +58,7 @@ namespace ntgcalls {
         jclass javaModuleClass = env->GetObjectClass(javaModule);
         // ReSharper disable once CppLocalVariableMayBeConst
         jfieldID byteBufferFieldID = env->GetFieldID(javaModuleClass, "byteBuffer", "Ljava/nio/ByteBuffer;");
-         // ReSharper disable once CppLocalVariableMayBeConst
+        // ReSharper disable once CppLocalVariableMayBeConst
         jobject byteBufferObject = env->GetObjectField(javaModule, byteBufferFieldID);
 
         auto* buffer = static_cast<uint8_t*>(env->GetDirectBufferAddress(byteBufferObject));

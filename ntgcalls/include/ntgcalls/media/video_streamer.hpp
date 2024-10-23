@@ -19,7 +19,7 @@ namespace ntgcalls {
 
         rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() override;
 
-        void sendData(uint8_t* sample, int64_t absolute_capture_timestamp_ms) override;
+        void sendData(uint8_t* sample, wrtc::FrameData additionalData) override;
     };
 }
 

@@ -360,7 +360,7 @@ namespace ntgcalls {
             } else {
                 auto buffer = bytes::make_unique_binary(format.Format.nBlockAlign * numFramesToRead);
                 memcpy(buffer.get(), audioData, format.Format.nBlockAlign * numFramesToRead);
-                dataCallback(std::move(buffer));
+                dataCallback(std::move(buffer), {});
             }
             error = audioCaptureClient->ReleaseBuffer(numFramesToRead);
             if (FAILED(error.Error())) {

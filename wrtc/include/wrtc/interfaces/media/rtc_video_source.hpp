@@ -7,6 +7,7 @@
 #include "tracks/video_track_source.hpp"
 #include <wrtc/models/i420_image_data.hpp>
 #include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
+#include <wrtc/models/frame_data.hpp>
 
 namespace wrtc {
 
@@ -18,7 +19,7 @@ namespace wrtc {
 
         [[nodiscard]] rtc::scoped_refptr<webrtc::VideoTrackInterface> createTrack() const;
 
-        void OnFrame(const i420ImageData& data, int64_t absolute_capture_timestamp_ms) const;
+        void OnFrame(const i420ImageData& data, FrameData additionalData) const;
 
     private:
         rtc::scoped_refptr<VideoTrackSource> source;

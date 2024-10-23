@@ -33,9 +33,9 @@ namespace ntgcalls {
         options.set_detect_updated_region(true);
 #ifdef IS_WINDOWS
         options.set_allow_directx_capturer(true);
-#elif defined IS_MACOS
+#elif IS_MACOS
         options.set_allow_iosurface(true);
-#elif defined IS_LINUX
+#elif IS_LINUX
         options.set_allow_pipewire(true);
 #endif
         return webrtc::DesktopCapturer::CreateGenericCapturer(options);
@@ -90,7 +90,7 @@ namespace ntgcalls {
                 memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
             }
 
-            (void) dataCallback(std::move(yuv));
+            (void) dataCallback(std::move(yuv), {});
         } else if (result == webrtc::DesktopCapturer::Result::ERROR_PERMANENT) {
             (void) eofCallback();
         }

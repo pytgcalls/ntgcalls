@@ -67,7 +67,7 @@ namespace ntgcalls {
         pulseConnection->start(sink->frameSize());
         if (isCapture) {
             pulseConnection->onData([this](bytes::unique_binary data) {
-                dataCallback(std::move(data));
+                dataCallback(std::move(data), {});
             });
         }
     }

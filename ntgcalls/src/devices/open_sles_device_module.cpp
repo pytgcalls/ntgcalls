@@ -182,7 +182,7 @@ namespace ntgcalls {
             }
             auto result = bytes::make_unique_binary(frameSize);
             memcpy(result.get(), thiz->audioBuffers[thiz->bufferIndex].get(), frameSize);
-            thiz->dataCallback(std::move(result));
+            thiz->dataCallback(std::move(result), {});
         } else {
             if (thiz->GetPlayState() != SL_PLAYSTATE_PLAYING) {
                 return;

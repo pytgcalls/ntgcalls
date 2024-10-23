@@ -2,11 +2,9 @@
 // Created by Laky64 on 17/10/24.
 //
 
-
-#include <ntgcalls/devices/camera_capturer_module.hpp>
-
 #if !defined(IS_ANDROID) && !defined(IS_MACOS)
 #include <libyuv/scale.h>
+#include <ntgcalls/devices/camera_capturer_module.hpp>
 #include <ntgcalls/exceptions.hpp>
 
 #ifdef IS_LINUX
@@ -102,31 +100,29 @@ namespace ntgcalls {
         const auto buffer = frame.video_frame_buffer()->ToI420();
 
         const auto width = buffer->width();
-        if (const auto height = buffer->height(); desc.width == width && desc.height == height) {
-            memcpy(yuv.get(), buffer->DataY(), buffer->StrideY());
-            memcpy(yuv.get() + buffer->StrideY(), buffer->DataU(), buffer->StrideU());
-            memcpy(yuv.get() + buffer->StrideY() + buffer->StrideU(), buffer->DataV(), buffer->StrideV());
-        } else {
-            const auto yScaledPlane = std::make_unique<uint8_t[]>(yScaledSize);
-            const auto uScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
-            const auto vScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
-            I420Scale(
-                buffer->DataY(), buffer->StrideY(),
-                buffer->DataU(), buffer->StrideU(),
-                buffer->DataV(), buffer->StrideV(),
-                width, height,
-                yScaledPlane.get(), desc.width,
-                uScaledPlane.get(), desc.width / 2,
-                vScaledPlane.get(), desc.width / 2,
-                desc.width, desc.height,
-                libyuv::kFilterBox
-            );
-            memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
-            memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
-            memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
-        }
+        const auto height = buffer->height();
+        const auto yScaledPlane = std::make_unique<uint8_t[]>(yScaledSize);
+        const auto uScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
+        const auto vScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
 
-        (void) dataCallback(std::move(yuv));
+        I420Scale(
+            buffer->DataY(), buffer->StrideY(),
+            buffer->DataU(), buffer->StrideU(),
+            buffer->DataV(), buffer->StrideV(),
+            width, height,
+            yScaledPlane.get(), desc.width,
+            uScaledPlane.get(), desc.width / 2,
+            vScaledPlane.get(), desc.width / 2,
+            desc.width, desc.height,
+            libyuv::kFilterBox
+        );
+        memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
+        memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
+        memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
+
+        (void) dataCallback(std::move(yuv), {
+            .rotation = frame.rotation()
+        });
     }
 
     void CameraCapturerModule::open() {

@@ -21,12 +21,12 @@ namespace wrtc {
         return factory->factory()->CreateVideoTrack(source, rtc::CreateRandomUuid());
     }
 
-    void RTCVideoSource::OnFrame(const i420ImageData& data, const int64_t absolute_capture_timestamp_ms) const {
+    void RTCVideoSource::OnFrame(const i420ImageData& data, const FrameData additionalData) const {
         source->PushFrame(webrtc::VideoFrame::Builder()
             .set_video_frame_buffer(data.buffer())
             .set_timestamp_rtp(0)
-            .set_timestamp_ms(absolute_capture_timestamp_ms)
-            .set_rotation(webrtc::kVideoRotation_0)
+            .set_timestamp_ms(additionalData.absoluteCaptureTimestampMs)
+            .set_rotation(additionalData.rotation)
             .build()
         );
     }

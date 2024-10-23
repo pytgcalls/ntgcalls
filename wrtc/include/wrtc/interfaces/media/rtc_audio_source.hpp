@@ -6,6 +6,7 @@
 
 #include <wrtc/interfaces/media/tracks/audio_track_source.hpp>
 #include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
+#include <wrtc/models/frame_data.hpp>
 #include <wrtc/models/rtc_on_data_event.hpp>
 
 namespace wrtc {
@@ -18,7 +19,7 @@ namespace wrtc {
 
         [[nodiscard]] rtc::scoped_refptr<webrtc::AudioTrackInterface> createTrack() const;
 
-        void OnData(const RTCOnDataEvent &, int64_t absolute_capture_timestamp_ms) const;
+        void OnData(const RTCOnDataEvent &, FrameData additionalData) const;
 
     private:
         rtc::scoped_refptr<AudioTrackSource> source;

@@ -17,7 +17,7 @@ namespace ntgcalls {
         return video->createTrack();
     }
 
-    void VideoStreamer::sendData(uint8_t* sample, const int64_t absolute_capture_timestamp_ms) {
+    void VideoStreamer::sendData(uint8_t* sample, const wrtc::FrameData additionalData) {
         frames++;
         video->OnFrame(
             wrtc::i420ImageData(
@@ -25,7 +25,7 @@ namespace ntgcalls {
                 description->height,
                 sample
             ),
-            absolute_capture_timestamp_ms
+            additionalData
         );
     }
 }

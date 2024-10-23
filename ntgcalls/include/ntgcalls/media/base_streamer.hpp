@@ -5,6 +5,7 @@
 #pragma once
 
 #include <api/media_stream_interface.h>
+#include <wrtc/models/frame_data.hpp>
 
 namespace ntgcalls {
 
@@ -12,7 +13,7 @@ namespace ntgcalls {
     public:
         virtual ~BaseStreamer() = default;
 
-        virtual void sendData(uint8_t* sample, int64_t absolute_capture_timestamp_ms) = 0;
+        virtual void sendData(uint8_t* sample, wrtc::FrameData additionalData) = 0;
 
         virtual rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() = 0;
     };
