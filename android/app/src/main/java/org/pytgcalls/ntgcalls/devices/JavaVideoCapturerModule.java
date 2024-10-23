@@ -150,7 +150,6 @@ public class JavaVideoCapturerModule {
                     if (videoCapturerSurfaceTextureHelper == null || nativePointer == 0) {
                         return;
                     }
-                    Log.e("VideoCapturerModule", videoFrame.getRotation() + " " + videoFrame.getBuffer().getWidth() + " " + videoFrame.getBuffer().getHeight());
                     nativeOnFrame(videoFrame);
                 }
             }
@@ -194,7 +193,7 @@ public class JavaVideoCapturerModule {
         }
     }
 
-    private static EglBase.Context getSharedEGLContext() {
+    public static EglBase.Context getSharedEGLContext() {
         if (eglBase == null) {
             eglBase = EglBase.create(null, EglBase.CONFIG_PLAIN);
         }
