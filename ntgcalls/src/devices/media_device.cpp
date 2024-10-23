@@ -16,6 +16,7 @@
 #include <wrtc/utils/java_context.hpp>
 #include <ntgcalls/devices/open_sles_device_module.hpp>
 #include <ntgcalls/devices/java_audio_device_module.hpp>
+#include <ntgcalls/devices/java_video_capturer_module.hpp>
 #endif
 
 namespace ntgcalls {
@@ -53,6 +54,13 @@ namespace ntgcalls {
         if (DesktopCapturerModule::IsSupported()) {
             return DesktopCapturerModule::GetSources();
         }
+#elif IS_ANDROID
+        if (JavaVideoCapturerModule::IsSupported(true)) {
+            const json metadata = {
+                {"id", "screen"},
+            };
+            return {DeviceInfo("Device Screen", metadata.dump())};
+        }
 #endif
         return {};
     }
@@ -61,6 +69,9 @@ namespace ntgcalls {
 #if !defined(IS_ANDROID) && !defined(IS_MACOS)
         return CameraCapturerModule::GetSources();
 #else
+        if (JavaVideoCapturerModule::IsSupported(false)) {
+            return JavaVideoCapturerModule::getDevices();
+        }
         return {};
 #endif
     }
@@ -71,13 +82,25 @@ namespace ntgcalls {
             RTC_LOG(LS_INFO) << "Using DesktopCapturer module for input";
             return std::make_unique<DesktopCapturerModule>(desc, sink);
         }
+#elif IS_ANDROID
+        if (JavaVideoCapturerModule::IsSupported(true)) {
+            RTC_LOG(LS_INFO) << "Using AndroidVideoCapturer module for input";
+            return std::make_unique<JavaVideoCapturerModule>(true, desc, sink);
+        }
 #endif
         throw MediaDeviceError("Unsupported platform for desktop capture");
     }
 
     std::unique_ptr<BaseReader> MediaDevice::CreateCameraCapture(const VideoDescription& desc, BaseSink* sink) {
 #if !defined(IS_ANDROID) && !defined(IS_MACOS)
+        RTC_LOG(LS_INFO) << "Using CameraCapturer module for input";
         return std::make_unique<CameraCapturerModule>(desc, sink);
+#elif IS_ANDROID
+        if (JavaVideoCapturerModule::IsSupported(false)) {
+            RTC_LOG(LS_INFO) << "Using AndroidVideoCapturer module for input";
+            return std::make_unique<JavaVideoCapturerModule>(false, desc, sink);
+        }
+        throw MediaDeviceError("Unsupported platform for camera capture");
 #else
         throw MediaDeviceError("Unsupported platform for camera capture");
 #endif

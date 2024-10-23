@@ -8,6 +8,7 @@
 #include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/devices/java_audio_device_module.hpp>
+#include <ntgcalls/devices/java_video_capturer_module.hpp>
 
 struct JavaCallback {
     jobject callback;
@@ -24,6 +25,8 @@ struct InstanceCallbacks {
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj);
 
 ntgcalls::JavaAudioDeviceModule* getInstanceAudioCapture(JNIEnv *env, jobject obj);
+
+ntgcalls::JavaVideoCapturerModule* getInstanceVideoCapture(JNIEnv *env, jobject obj);
 
 jlong getInstancePtr(JNIEnv *env, jobject obj);
 

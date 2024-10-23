@@ -16,6 +16,14 @@ ntgcalls::JavaAudioDeviceModule* getInstanceAudioCapture(JNIEnv *env, jobject ob
     return nullptr;
 }
 
+ntgcalls::JavaVideoCapturerModule* getInstanceVideoCapture(JNIEnv *env, jobject obj) {
+    auto ptr = getInstancePtr(env, obj);
+    if (ptr != 0) {
+        return reinterpret_cast<ntgcalls::JavaVideoCapturerModule*>(ptr);
+    }
+    return nullptr;
+}
+
 jlong getInstancePtr(JNIEnv *env, jobject obj) {
     jclass clazz = env->GetObjectClass(obj);
     jlong ptr = env->GetLongField(obj,  env->GetFieldID(clazz, "nativePointer", "J"));

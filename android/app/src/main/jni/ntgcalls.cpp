@@ -1,6 +1,7 @@
 #include "utils.hpp"
 #include <string>
 #include <wrtc/utils/java_context.hpp>
+#include <sdk/android/src/jni/video_frame.h>
 
 std::map<jlong, InstanceCallbacks> callbacksInstances;
 
@@ -255,4 +256,17 @@ extern "C"
 JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaAudioDeviceModule_getPlaybackData(JNIEnv *env, jobject thiz) {
     auto instance = getInstanceAudioCapture(env, thiz);
     instance->getPlaybackData();
+}
+
+extern "C"
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaVideoCapturerModule_nativeCapturerStopped(JNIEnv *env, jobject thiz) {
+    auto instance = getInstanceVideoCapture(env, thiz);
+    instance->onCapturerStopped();
+}
+
+extern "C"
+JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaVideoCapturerModule_nativeOnFrame(JNIEnv *env, jobject thiz, jobject jFrame) {
+    auto instance = getInstanceVideoCapture(env, thiz);
+    webrtc::ScopedJavaLocalRef<jobject> frame(env, jFrame);
+    instance->onFrame(webrtc::jni::JavaToNativeFrame(env, frame, 0));
 }
