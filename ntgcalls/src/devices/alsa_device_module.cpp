@@ -2,10 +2,8 @@
 // Created by Laky64 on 18/09/24.
 //
 
-#include <ntgcalls/devices/alsa_device_module.hpp>
-
 #ifdef IS_LINUX
-
+#include <ntgcalls/devices/alsa_device_module.hpp>
 #include <ntgcalls/exceptions.hpp>
 #include <modules/audio_device/linux/audio_device_alsa_linux.h>
 

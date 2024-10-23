@@ -34,7 +34,7 @@ namespace ntgcalls {
 #elif IS_ANDROID
         if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), true) || JavaAudioDeviceModule::isSupported()) {
             auto appendDevices = [](std::vector<DeviceInfo>& devices, const std::string& name, const bool& isCapture) {
-                json data = {
+                const json data = {
                     {"is_microphone", isCapture},
                 };
                 devices.emplace_back(name, data.dump());
@@ -99,7 +99,7 @@ namespace ntgcalls {
             return std::make_unique<WinCoreDeviceModule>(desc, isCapture, sink);
         }
 #elif IS_ANDROID
-        if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), true)) {
+        if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), isCapture)) {
             RTC_LOG(LS_INFO) << "Using OpenSLES module for input";
             return std::make_unique<OpenSLESDeviceModule>(desc, isCapture, sink);
         }

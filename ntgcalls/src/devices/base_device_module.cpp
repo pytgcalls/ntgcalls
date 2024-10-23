@@ -16,7 +16,7 @@ namespace ntgcalls {
             throw MediaDeviceError("Invalid device metadata");
         }
         if (isMicrophone != isCapture) {
-            throw MediaDeviceError("Wrong device type");
+            throw MediaDeviceError("Using microphone as speaker or vice versa");
         }
     }
 } // ntgcalls
