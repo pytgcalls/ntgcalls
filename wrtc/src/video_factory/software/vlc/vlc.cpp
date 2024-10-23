@@ -2,8 +2,8 @@
 // Created by Laky64 on 18/08/2023.
 //
 
+#ifndef IS_ANDROID
 #include <wrtc/video_factory/software/vlc/vlc.hpp>
-
 #include <api/environment/environment_factory.h>
 
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
@@ -36,3 +36,5 @@ namespace vlc {
     }
 
 } // vlc
+
+#endif

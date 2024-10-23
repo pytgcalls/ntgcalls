@@ -4,6 +4,7 @@
 
 #pragma once
 
+#ifndef IS_ANDROID
 #include <wrtc/video_factory/video_encoder_config.hpp>
 #include <wrtc/video_factory/video_decoder_config.hpp>
 
@@ -14,3 +15,4 @@ namespace vlc {
     void addDecoders(std::vector<wrtc::VideoDecoderConfig> &decoders);
 
 } // vlc
+#endif

@@ -2,6 +2,8 @@
 // Created by Laky64 on 18/08/2023.
 //
 
+#ifndef IS_ANDROID
+
 #include <wrtc/video_factory/software/google/google.hpp>
 
 #include <api/environment/environment_factory.h>
@@ -41,3 +43,5 @@ namespace google {
     }
 
 } // google
+
+#endif

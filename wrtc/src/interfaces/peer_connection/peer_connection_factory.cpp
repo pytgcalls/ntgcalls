@@ -16,6 +16,7 @@
 #include <wrtc/utils/java_context.hpp>
 
 #include <wrtc/video_factory/video_factory_config.hpp>
+#include <wrtc/video_factory/hardware/android/video_factory.hpp>
 
 namespace wrtc {
     std::mutex PeerConnectionFactory::_mutex{};
@@ -55,11 +56,16 @@ namespace wrtc {
                 _audioDeviceModule = rtc::make_ref_counted<AudioDeviceModule>();
             return _audioDeviceModule;
         });
-        auto config = VideoFactoryConfig(jniEnv);
         dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
         dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
+#ifdef IS_ANDROID
+        dependencies.video_encoder_factory = android::CreateVideoEncoderFactory(static_cast<JNIEnv*>(jniEnv));
+        dependencies.video_decoder_factory = android::CreateVideoDecoderFactory(static_cast<JNIEnv*>(jniEnv));
+#else
+        auto config = VideoFactoryConfig(jniEnv);
         dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
         dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
+#endif
         dependencies.audio_mixer = nullptr;
         dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
 

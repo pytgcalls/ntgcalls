@@ -10,37 +10,29 @@
 
 namespace android {
     std::unique_ptr<webrtc::VideoEncoderFactory> CreateVideoEncoderFactory(JNIEnv* env) {
-        const webrtc::ScopedJavaLocalRef<jclass> videoEncoderFactory = webrtc::GetClass(env, "org/webrtc/DefaultVideoEncoderFactory");
-        return webrtc::JavaToNativeVideoEncoderFactory(
-            env,
-            env->NewObject(
-                videoEncoderFactory.obj(),
-                env->GetMethodID(
-                    videoEncoderFactory.obj(),
-                    "<init>",
-                    "(Lorg/webrtc/EglBase$Context;ZZ)V"
-                ),
-                nullptr,
-                true,
-                false
-            )
-        );
+        const webrtc::ScopedJavaLocalRef<jclass> javaVideoCapturerModule = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/devices/JavaVideoCapturerModule");
+        // ReSharper disable once CppLocalVariableMayBeConst
+        jmethodID getEglContext = env->GetStaticMethodID(javaVideoCapturerModule.obj(), "getSharedEGLContext", "()Lorg/webrtc/EglBase$Context;");
+        const auto eglContext = env->CallStaticObjectMethod(javaVideoCapturerModule.obj(), getEglContext);
+
+        const webrtc::ScopedJavaLocalRef<jclass> factoryClass = webrtc::GetClass(env, "org/webrtc/DefaultVideoEncoderFactory");
+        // ReSharper disable once CppLocalVariableMayBeConst
+        jmethodID factoryConstructor = env->GetMethodID(factoryClass.obj(), "<init>", "(Lorg/webrtc/EglBase$Context;ZZ)V");
+        const webrtc::ScopedJavaLocalRef factoryObject(env, env->NewObject(factoryClass.obj(), factoryConstructor, eglContext, false, true));
+        return webrtc::JavaToNativeVideoEncoderFactory(env, factoryObject.obj());
     }
 
     std::unique_ptr<webrtc::VideoDecoderFactory> CreateVideoDecoderFactory(JNIEnv* env) {
-        const webrtc::ScopedJavaLocalRef<jclass> videoDecoderFactory = webrtc::GetClass(env, "org/webrtc/DefaultVideoDecoderFactory");
-        return webrtc::JavaToNativeVideoDecoderFactory(
-            env,
-            env->NewObject(
-                videoDecoderFactory.obj(),
-                env->GetMethodID(
-                    videoDecoderFactory.obj(),
-                    "<init>",
-                    "(Lorg/webrtc/EglBase$Context;)V"
-                ),
-                nullptr
-            )
-        );
+        const webrtc::ScopedJavaLocalRef<jclass> javaVideoCapturerModule = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/devices/JavaVideoCapturerModule");
+        // ReSharper disable once CppLocalVariableMayBeConst
+        jmethodID getEglContext = env->GetStaticMethodID(javaVideoCapturerModule.obj(), "getSharedEGLContext", "()Lorg/webrtc/EglBase$Context;");
+        const auto eglContext = env->CallStaticObjectMethod(javaVideoCapturerModule.obj(), getEglContext);
+
+        const webrtc::ScopedJavaLocalRef<jclass> factoryClass = webrtc::GetClass(env, "org/webrtc/DefaultVideoDecoderFactory");
+        // ReSharper disable once CppLocalVariableMayBeConst
+        jmethodID factoryConstructor = env->GetMethodID(factoryClass.obj(), "<init>", "(Lorg/webrtc/EglBase$Context;)V");
+        const webrtc::ScopedJavaLocalRef factoryObject(env, env->NewObject(factoryClass.obj(), factoryConstructor, eglContext));
+        return webrtc::JavaToNativeVideoDecoderFactory(env, factoryObject.obj());
     }
 } // android
 #endif
