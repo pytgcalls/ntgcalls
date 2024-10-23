@@ -465,13 +465,15 @@ jobject parseMediaStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::Strea
 
 jobject parseMediaDevices(JNIEnv *env, const ntgcalls::MediaDevices &devices) {
     jclass mediaDevicesClass = env->FindClass("org/pytgcalls/ntgcalls/media/MediaDevices");
-    jmethodID constructor = env->GetMethodID(mediaDevicesClass, "<init>", "(Ljava/util/List;Ljava/util/List;)V");
+    jmethodID constructor = env->GetMethodID(mediaDevicesClass, "<init>", "(Ljava/util/List;Ljava/util/List;Ljava/util/List;)V");
     jobject audio = parseDeviceInfoList(env, devices.audio);
     jobject video = parseDeviceInfoList(env, devices.video);
-    jobject result = env->NewObject(mediaDevicesClass, constructor, audio, video);
+    jobject screen = parseDeviceInfoList(env, devices.screen);
+    jobject result = env->NewObject(mediaDevicesClass, constructor, audio, video, screen);
     env->DeleteLocalRef(mediaDevicesClass);
     env->DeleteLocalRef(audio);
     env->DeleteLocalRef(video);
+    env->DeleteLocalRef(screen);
     return result;
 }
 
