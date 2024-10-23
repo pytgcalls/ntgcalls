@@ -246,7 +246,7 @@ namespace ntgcalls {
 
         if (desc) {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
-            if (sink && sink->setConfig(desc)) {
+            if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device)) {
                 if (mode == Capture) {
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id](const bytes::unique_binary& data, wrtc::FrameData frameData) {
