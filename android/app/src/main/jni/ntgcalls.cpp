@@ -51,6 +51,19 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), parseJBinary(env, data));
     });
+
+    instance->onFrame([instancePtr](int64_t chatId, int64_t streamId, ntgcalls::StreamManager::Mode mode, ntgcalls::StreamManager::Device device, const bytes::binary& data, wrtc::FrameData frameData) {
+        auto callback = callbacksInstances[instancePtr].onFrameCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), static_cast<jlong>(streamId), parseJStreamMode(env, mode), parseJDevice(env, device), parseJBinary(env, data), parseJFrameData(env, frameData));
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+    });
 }
 
 extern "C"
@@ -226,6 +239,8 @@ REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLorg/pytgcalls/ntgcalls/
 REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLorg/pytgcalls/ntgcalls/ConnectionState;)V")
 
 REGISTER_CALLBACK(setSignalingDataCallback, onSignalingData, "(J[B)V")
+
+REGISTER_CALLBACK(setFrameCallback, onFrame, "(JJLorg/pytgcalls/ntgcalls/media/StreamMode;Lorg/pytgcalls/ntgcalls/media/StreamDevice;[BLorg/pytgcalls/ntgcalls/media/FrameData;)V")
 
 extern "C"
 JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_sendSignalingData(JNIEnv *env, jobject thiz, jlong chat_id, jbyteArray data) {

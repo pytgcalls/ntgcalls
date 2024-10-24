@@ -1,4 +1,6 @@
 #include "utils.hpp"
+#include <sdk/android/native_api/jni/class_loader.h>
+#include <sdk/android/native_api/jni/scoped_java_ref.h>
 
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj) {
     auto ptr = getInstancePtr(env, obj);
@@ -511,6 +513,22 @@ ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject device) {
     return result;
 }
 
+jobject parseJStreamMode(JNIEnv *env, ntgcalls::StreamManager::Mode mode) {
+    const webrtc::ScopedJavaLocalRef<jclass> streamModeClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/StreamMode");
+    jfieldID captureField = env->GetStaticFieldID(streamModeClass.obj(), "CAPTURE", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
+    jfieldID playbackField = env->GetStaticFieldID(streamModeClass.obj(), "PLAYBACK", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
+    jobject result;
+    switch (mode) {
+        case ntgcalls::StreamManager::Mode::Capture:
+            result = env->GetStaticObjectField(streamModeClass.obj(), captureField);
+            break;
+        case ntgcalls::StreamManager::Mode::Playback:
+            result = env->GetStaticObjectField(streamModeClass.obj(), playbackField);
+            break;
+    }
+    return result;
+}
+
 jobject parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device) {
     const webrtc::ScopedJavaLocalRef<jclass> streamDeviceClass = webrtc::GetClass(env,"org/pytgcalls/ntgcalls/media/StreamDevice");
     jfieldID microphoneField = env->GetStaticFieldID(streamDeviceClass.obj(), "MICROPHONE", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
@@ -535,6 +553,12 @@ jobject parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device) {
     }
     return result;
 }
+
+
+jobject parseJFrameData(JNIEnv *env, const wrtc::FrameData& frameData) {
+    const webrtc::ScopedJavaLocalRef<jclass> frameDataClass = webrtc::GetClass(env,"org/pytgcalls/ntgcalls/media/FrameData");
+    jmethodID constructor = env->GetMethodID(frameDataClass.obj(), "<init>", "(JI)V");
+    jobject result = env->NewObject(frameDataClass.obj(), constructor, frameData.absoluteCaptureTimestampMs, static_cast<jint>(frameData.rotation));
     return result;
 }
 
@@ -551,9 +575,8 @@ void throwJavaException(JNIEnv *env, std::string name, const std::string& messag
         }
         name = "org/pytgcalls/ntgcalls/exceptions/" + name + "Exception";
     }
-    jclass exceptionClass = env->FindClass(name.c_str());
-    if (exceptionClass != nullptr) {
-        env->ThrowNew(exceptionClass, message.c_str());
-        env->DeleteLocalRef(exceptionClass);
+    const webrtc::ScopedJavaLocalRef<jclass> exceptionClass = webrtc::GetClass(env, name.c_str());
+    if (!exceptionClass.is_null()) {
+        env->ThrowNew(exceptionClass.obj(), message.c_str());
     }
 }

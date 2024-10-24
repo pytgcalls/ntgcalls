@@ -20,6 +20,7 @@ struct InstanceCallbacks {
     std::optional<JavaCallback> onStreamEndCallback;
     std::optional<JavaCallback> onConnectionChangeCallback;
     std::optional<JavaCallback> onSignalingDataCallback;
+    std::optional<JavaCallback> onFrameCallback;
 };
 
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj);
@@ -90,7 +91,11 @@ jobject parseMediaStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::Strea
 
 ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject mode);
 
+jobject parseJStreamMode(JNIEnv *env, ntgcalls::StreamManager::Mode mode);
+
 jobject parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device);
+
+jobject parseJFrameData(JNIEnv *env, const wrtc::FrameData& frameData);
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 
