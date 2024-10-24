@@ -213,11 +213,10 @@ bytes::unique_binary parseUniqueBinary(JNIEnv *env, jbyteArray byteArray) {
 }
 
 jobject parseAuthParams(JNIEnv *env, const ntgcalls::AuthParams& authParams) {
-    jclass authParamsClass = env->FindClass("org/pytgcalls/ntgcalls/p2p/AuthParams");
-    jmethodID constructor = env->GetMethodID(authParamsClass, "<init>", "([BJ)V");
+    const webrtc::ScopedJavaLocalRef<jclass> authParamsClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/p2p/AuthParams");
+    jmethodID constructor = env->GetMethodID(authParamsClass.obj(), "<init>", "([BJ)V");
     jbyteArray g_a_or_b = parseJByteArray(env, authParams.g_a_or_b);
-    jobject authParamsObject = env->NewObject(authParamsClass, constructor, g_a_or_b, authParams.key_fingerprint);
-    env->DeleteLocalRef(authParamsClass);
+    jobject authParamsObject = env->NewObject(authParamsClass.obj(), constructor, g_a_or_b, authParams.key_fingerprint);
     env->DeleteLocalRef(g_a_or_b);
     return authParamsObject;
 }
@@ -241,16 +240,15 @@ std::vector<std::string> parseStringList(JNIEnv *env, jobject list) {
 }
 
 jobject parseJStringList(JNIEnv *env, const std::vector<std::string> &list) {
-    jclass arrayListClass = env->FindClass("java/util/ArrayList");
-    jmethodID constructor = env->GetMethodID(arrayListClass, "<init>", "(I)V");
-    jobject result = env->NewObject(arrayListClass, constructor, static_cast<jint>(list.size()));
-    jmethodID addMethod = env->GetMethodID(arrayListClass, "add", "(Ljava/lang/Object;)Z");
+    const webrtc::ScopedJavaLocalRef<jclass> arrayListClass = webrtc::GetClass(env, "java/util/ArrayList");
+    jmethodID constructor = env->GetMethodID(arrayListClass.obj(), "<init>", "(I)V");
+    jobject result = env->NewObject(arrayListClass.obj(), constructor, static_cast<jint>(list.size()));
+    jmethodID addMethod = env->GetMethodID(arrayListClass.obj(), "add", "(Ljava/lang/Object;)Z");
     for (const auto &element : list) {
         auto string = parseJString(env, element);
         env->CallBooleanMethod(result, addMethod, string);
         env->DeleteLocalRef(string);
     }
-    env->DeleteLocalRef(arrayListClass);
     return result;
 }
 
@@ -323,162 +321,152 @@ std::vector<ntgcalls::RTCServer> parseRTCServerList(JNIEnv *env, jobject list) {
 }
 
 jobject parseMediaState(JNIEnv *env, ntgcalls::MediaState mediaState) {
-    jclass mediaStateClass = env->FindClass("org/pytgcalls/ntgcalls/media/MediaState");
-    jmethodID constructor = env->GetMethodID(mediaStateClass, "<init>", "(ZZZ)V");
-    jobject result = env->NewObject(mediaStateClass, constructor, mediaState.muted, mediaState.videoPaused, mediaState.videoStopped);
-    env->DeleteLocalRef(mediaStateClass);
+    const webrtc::ScopedJavaLocalRef<jclass> mediaStateClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/MediaState");
+    jmethodID constructor = env->GetMethodID(mediaStateClass.obj(), "<init>", "(ZZZ)V");
+    jobject result = env->NewObject(mediaStateClass.obj(), constructor, mediaState.muted, mediaState.videoPaused, mediaState.videoStopped);
     return result;
 }
 
 jobject parseProtocol(JNIEnv *env, const ntgcalls::Protocol &protocol) {
-    jclass protocolClass = env->FindClass("org/pytgcalls/ntgcalls/p2p/Protocol");
-    jmethodID constructor = env->GetMethodID(protocolClass, "<init>", "(IIZZLjava/util/List;)V");
+    const webrtc::ScopedJavaLocalRef<jclass> protocolClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/p2p/Protocol");
+    jmethodID constructor = env->GetMethodID(protocolClass.obj(), "<init>", "(IIZZLjava/util/List;)V");
     jobject libraryVersions = parseJStringList(env, protocol.library_versions);
-    jobject result = env->NewObject(protocolClass, constructor, protocol.min_layer, protocol.max_layer, protocol.udp_p2p, protocol.udp_reflector, libraryVersions);
-    env->DeleteLocalRef(protocolClass);
+    jobject result = env->NewObject(protocolClass.obj(), constructor, protocol.min_layer, protocol.max_layer, protocol.udp_p2p, protocol.udp_reflector, libraryVersions);
     return result;
 }
 
 jobject parseStreamType(JNIEnv *env, ntgcalls::StreamManager::Type type) {
-    jclass streamTypeClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamType");
-    jfieldID audioField = env->GetStaticFieldID(streamTypeClass, "AUDIO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
-    jfieldID videoField = env->GetStaticFieldID(streamTypeClass, "VIDEO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
+    const webrtc::ScopedJavaLocalRef<jclass> streamTypeClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/StreamType");
+    jfieldID audioField = env->GetStaticFieldID(streamTypeClass.obj(), "AUDIO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
+    jfieldID videoField = env->GetStaticFieldID(streamTypeClass.obj(), "VIDEO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
 
     jobject result;
     switch (type) {
         case ntgcalls::StreamManager::Type::Audio:
-            result = env->GetStaticObjectField(streamTypeClass, audioField);
+            result = env->GetStaticObjectField(streamTypeClass.obj(), audioField);
             break;
         case ntgcalls::StreamManager::Type::Video:
-            result = env->GetStaticObjectField(streamTypeClass, videoField);
+            result = env->GetStaticObjectField(streamTypeClass.obj(), videoField);
             break;
     }
-    env->DeleteLocalRef(streamTypeClass);
     return result;
 }
 
 jobject parseConnectionState(JNIEnv *env, ntgcalls::CallNetworkState::ConnectionState state) {
-    jclass connectionStateClass = env->FindClass("org/pytgcalls/ntgcalls/CallNetworkState$State");
-    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass, "CONNECTING", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
-    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass, "CONNECTED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
-    jfieldID failedField = env->GetStaticFieldID(connectionStateClass, "FAILED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
-    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass, "TIMEOUT", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
-    jfieldID closedField = env->GetStaticFieldID(connectionStateClass, "CLOSED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    const webrtc::ScopedJavaLocalRef<jclass> connectionStateClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/CallNetworkState$State");
+    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTING", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    jfieldID failedField = env->GetStaticFieldID(connectionStateClass.obj(), "FAILED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass.obj(), "TIMEOUT", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    jfieldID closedField = env->GetStaticFieldID(connectionStateClass.obj(), "CLOSED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
 
     jobject result;
     switch (state) {
         case ntgcalls::CallNetworkState::ConnectionState::Connecting:
-            result = env->GetStaticObjectField(connectionStateClass, connectingField);
+            result = env->GetStaticObjectField(connectionStateClass.obj(), connectingField);
             break;
         case ntgcalls::CallNetworkState::ConnectionState::Connected:
-            result = env->GetStaticObjectField(connectionStateClass, connectedField);
+            result = env->GetStaticObjectField(connectionStateClass.obj(), connectedField);
             break;
         case ntgcalls::CallNetworkState::ConnectionState::Failed:
-            result = env->GetStaticObjectField(connectionStateClass, failedField);
+            result = env->GetStaticObjectField(connectionStateClass.obj(), failedField);
             break;
         case ntgcalls::CallNetworkState::ConnectionState::Timeout:
-            result = env->GetStaticObjectField(connectionStateClass, timeoutField);
+            result = env->GetStaticObjectField(connectionStateClass.obj(), timeoutField);
             break;
         case ntgcalls::CallNetworkState::ConnectionState::Closed:
-            result = env->GetStaticObjectField(connectionStateClass, closedField);
+            result = env->GetStaticObjectField(connectionStateClass.obj(), closedField);
             break;
     }
-    env->DeleteLocalRef(connectionStateClass);
     return result;
 }
 
 jobject parseCallNetworkState(JNIEnv *env, ntgcalls::CallNetworkState state) {
-    jclass callNetworkStateClass = env->FindClass("org/pytgcalls/ntgcalls/CallNetworkState");
-    jmethodID constructor = env->GetMethodID(callNetworkStateClass, "<init>", "(Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;Lorg/pytgcalls/ntgcalls/CallNetworkState$State;)V");
+    const webrtc::ScopedJavaLocalRef<jclass> callNetworkStateClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/CallNetworkState");
+    jmethodID constructor = env->GetMethodID(callNetworkStateClass.obj(), "<init>", "(Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;Lorg/pytgcalls/ntgcalls/CallNetworkState$State;)V");
     jobject kind = parseCallNetworkStateKind(env, state.kind);
     jobject connectionState = parseConnectionState(env, state.connectionState);
-    jobject result = env->NewObject(callNetworkStateClass, constructor, kind, connectionState);
-    env->DeleteLocalRef(callNetworkStateClass);
+    jobject result = env->NewObject(callNetworkStateClass.obj(), constructor, kind, connectionState);
     env->DeleteLocalRef(kind);
     env->DeleteLocalRef(connectionState);
     return result;
 }
 
 jobject parseCallNetworkStateKind(JNIEnv *env, ntgcalls::CallNetworkState::Kind kind) {
-    jclass kindClass = env->FindClass("org/pytgcalls/ntgcalls/CallNetworkState$Kind");
-    jfieldID normalField = env->GetStaticFieldID(kindClass, "NORMAL", "Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;");
-    jfieldID presentationField = env->GetStaticFieldID(kindClass, "PRESENTATION", "Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;");
+    const webrtc::ScopedJavaLocalRef<jclass> kindClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/CallNetworkState$Kind");
+    jfieldID normalField = env->GetStaticFieldID(kindClass.obj(), "NORMAL", "Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;");
+    jfieldID presentationField = env->GetStaticFieldID(kindClass.obj(), "PRESENTATION", "Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;");
 
     jobject result;
     switch (kind) {
         case ntgcalls::CallNetworkState::Kind::Normal:
-            result = env->GetStaticObjectField(kindClass, normalField);
+            result = env->GetStaticObjectField(kindClass.obj(), normalField);
             break;
         case ntgcalls::CallNetworkState::Kind::Presentation:
-            result = env->GetStaticObjectField(kindClass, presentationField);
+            result = env->GetStaticObjectField(kindClass.obj(), presentationField);
             break;
     }
-    env->DeleteLocalRef(kindClass);
     return result;
 }
 
 jobject parseStreamStatus(JNIEnv *env, ntgcalls::StreamManager::Status status) {
-    jclass streamStatusClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamStatus");
-    jfieldID playingField = env->GetStaticFieldID(streamStatusClass, "ACTIVE", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
-    jfieldID pausedField = env->GetStaticFieldID(streamStatusClass, "PAUSED", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
-    jfieldID idlingField = env->GetStaticFieldID(streamStatusClass, "IDLING", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
+    const webrtc::ScopedJavaLocalRef<jclass> streamStatusClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/StreamStatus");
+    jfieldID playingField = env->GetStaticFieldID(streamStatusClass.obj(), "ACTIVE", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
+    jfieldID pausedField = env->GetStaticFieldID(streamStatusClass.obj(), "PAUSED", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
+    jfieldID idlingField = env->GetStaticFieldID(streamStatusClass.obj(), "IDLING", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
 
     jobject result;
     switch (status) {
         case ntgcalls::StreamManager::Status::Active:
-            result = env->GetStaticObjectField(streamStatusClass, playingField);
+            result = env->GetStaticObjectField(streamStatusClass.obj(), playingField);
             break;
         case ntgcalls::StreamManager::Status::Paused:
-            result = env->GetStaticObjectField(streamStatusClass, pausedField);
+            result = env->GetStaticObjectField(streamStatusClass.obj(), pausedField);
             break;
         case ntgcalls::StreamManager::Status::Idling:
-            result = env->GetStaticObjectField(streamStatusClass, idlingField);
+            result = env->GetStaticObjectField(streamStatusClass.obj(), idlingField);
             break;
     }
-    env->DeleteLocalRef(streamStatusClass);
     return result;
 }
 
 jobject parseMediaStatus(JNIEnv *env, const ntgcalls::StreamManager::MediaStatus &status) {
-    jclass mediaStatusClass = env->FindClass("org/pytgcalls/ntgcalls/media/MediaStatus");
-    jmethodID constructor = env->GetMethodID(mediaStatusClass, "<init>", "(Lorg/pytgcalls/ntgcalls/media/StreamStatus;Lorg/pytgcalls/ntgcalls/media/StreamStatus;)V");
+    const webrtc::ScopedJavaLocalRef<jclass> mediaStatusClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/MediaStatus");
+
+    jmethodID constructor = env->GetMethodID(mediaStatusClass.obj(), "<init>", "(Lorg/pytgcalls/ntgcalls/media/StreamStatus;Lorg/pytgcalls/ntgcalls/media/StreamStatus;)V");
     jobject capture = parseStreamStatus(env, status.capture);
     jobject playback = parseStreamStatus(env, status.playback);
-    jobject result = env->NewObject(mediaStatusClass, constructor, capture, playback);
-    env->DeleteLocalRef(mediaStatusClass);
+    jobject result = env->NewObject(mediaStatusClass.obj(), constructor, capture, playback);
     env->DeleteLocalRef(capture);
     env->DeleteLocalRef(playback);
     return result;
 }
 
 jobject parseMediaStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::StreamManager::MediaStatus> &calls) {
-    jclass mapClass = env->FindClass("java/util/HashMap");
-    jmethodID mapConstructor = env->GetMethodID(mapClass, "<init>", "()V");
-    jobject hashMap = env->NewObject(mapClass, mapConstructor);
-    jmethodID putMethod = env->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    const webrtc::ScopedJavaLocalRef<jclass> mapClass = webrtc::GetClass(env, "java/util/HashMap");
+    jmethodID mapConstructor = env->GetMethodID(mapClass.obj(), "<init>", "()V");
+    jobject hashMap = env->NewObject(mapClass.obj(), mapConstructor);
+    jmethodID putMethod = env->GetMethodID(mapClass.obj(), "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
-    jclass longClass = env->FindClass("java/lang/Long");
-    jmethodID longConstructor = env->GetMethodID(longClass, "<init>", "(J)V");
+    const webrtc::ScopedJavaLocalRef<jclass> longClass = webrtc::GetClass(env, "java/lang/Long");
+    jmethodID longConstructor = env->GetMethodID(longClass.obj(), "<init>", "(J)V");
     for (auto const& [key, val] : calls) {
-        jobject longKey = env->NewObject(longClass, longConstructor, static_cast<jlong>(key));
+        jobject longKey = env->NewObject(longClass.obj(), longConstructor, static_cast<jlong>(key));
         jobject status = parseMediaStatus(env, val);
         env->CallObjectMethod(hashMap, putMethod, longKey, status);
         env->DeleteLocalRef(longKey);
         env->DeleteLocalRef(status);
     }
-    env->DeleteLocalRef(mapClass);
-    env->DeleteLocalRef(longClass);
     return hashMap;
 }
 
 jobject parseMediaDevices(JNIEnv *env, const ntgcalls::MediaDevices &devices) {
-    jclass mediaDevicesClass = env->FindClass("org/pytgcalls/ntgcalls/media/MediaDevices");
-    jmethodID constructor = env->GetMethodID(mediaDevicesClass, "<init>", "(Ljava/util/List;Ljava/util/List;Ljava/util/List;)V");
+    const webrtc::ScopedJavaLocalRef<jclass> mediaDevicesClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/MediaDevices");
+    jmethodID constructor = env->GetMethodID(mediaDevicesClass.obj(), "<init>", "(Ljava/util/List;Ljava/util/List;Ljava/util/List;)V");
     jobject audio = parseDeviceInfoList(env, devices.audio);
     jobject video = parseDeviceInfoList(env, devices.video);
     jobject screen = parseDeviceInfoList(env, devices.screen);
-    jobject result = env->NewObject(mediaDevicesClass, constructor, audio, video, screen);
-    env->DeleteLocalRef(mediaDevicesClass);
+    jobject result = env->NewObject(mediaDevicesClass.obj(), constructor, audio, video, screen);
     env->DeleteLocalRef(audio);
     env->DeleteLocalRef(video);
     env->DeleteLocalRef(screen);
@@ -486,33 +474,31 @@ jobject parseMediaDevices(JNIEnv *env, const ntgcalls::MediaDevices &devices) {
 }
 
 jobject parseDeviceInfoList(JNIEnv *env, const std::vector<ntgcalls::DeviceInfo> &devices) {
-    jclass arrayListClass = env->FindClass("java/util/ArrayList");
-    jmethodID constructor = env->GetMethodID(arrayListClass, "<init>", "(I)V");
-    jobject result = env->NewObject(arrayListClass, constructor, static_cast<jint>(devices.size()));
-    jmethodID addMethod = env->GetMethodID(arrayListClass, "add", "(Ljava/lang/Object;)Z");
+    const webrtc::ScopedJavaLocalRef<jclass> arrayListClass = webrtc::GetClass(env, "java/util/ArrayList");
+    jmethodID constructor = env->GetMethodID(arrayListClass.obj(), "<init>", "(I)V");
+    jobject result = env->NewObject(arrayListClass.obj(), constructor, static_cast<jint>(devices.size()));
+    jmethodID addMethod = env->GetMethodID(arrayListClass.obj(), "add", "(Ljava/lang/Object;)Z");
     for (const auto &element : devices) {
         auto device = parseDeviceInfo(env, element);
         env->CallBooleanMethod(result, addMethod, device);
         env->DeleteLocalRef(device);
     }
-    env->DeleteLocalRef(arrayListClass);
     return result;
 }
 
 jobject parseDeviceInfo(JNIEnv *env, const ntgcalls::DeviceInfo& device) {
-    jclass deviceInfoClass = env->FindClass("org/pytgcalls/ntgcalls/media/DeviceInfo");
-    jmethodID constructor = env->GetMethodID(deviceInfoClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
-    jobject result = env->NewObject(deviceInfoClass, constructor, parseJString(env, device.name), parseJString(env, device.metadata));
-    env->DeleteLocalRef(deviceInfoClass);
+    const webrtc::ScopedJavaLocalRef<jclass> deviceInfoClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/DeviceInfo");
+    jmethodID constructor = env->GetMethodID(deviceInfoClass.obj(), "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jobject result = env->NewObject(deviceInfoClass.obj(), constructor, parseJString(env, device.name), parseJString(env, device.metadata));
     return result;
 }
 
 ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject device) {
-    jclass streamDeviceClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamMode");
-    jfieldID captureField = env->GetStaticFieldID(streamDeviceClass, "CAPTURE", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
-    jfieldID playbackField = env->GetStaticFieldID(streamDeviceClass, "PLAYBACK", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
-    jobject playback = env->GetStaticObjectField(streamDeviceClass, playbackField);
-    jobject capture = env->GetStaticObjectField(streamDeviceClass, captureField);
+    const webrtc::ScopedJavaLocalRef<jclass> streamModeClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/StreamMode");
+    jfieldID captureField = env->GetStaticFieldID(streamModeClass.obj(), "CAPTURE", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
+    jfieldID playbackField = env->GetStaticFieldID(streamModeClass.obj(), "PLAYBACK", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
+    jobject playback = env->GetStaticObjectField(streamModeClass.obj(), playbackField);
+    jobject capture = env->GetStaticObjectField(streamModeClass.obj(), captureField);
 
     ntgcalls::StreamManager::Mode result = ntgcalls::StreamManager::Mode::Capture;
     if (env->IsSameObject(device, capture)) {
@@ -520,36 +506,35 @@ ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject device) {
     } else if (env->IsSameObject(device, playback)) {
         result = ntgcalls::StreamManager::Mode::Playback;
     }
-
-    env->DeleteLocalRef(streamDeviceClass);
     env->DeleteLocalRef(playback);
     env->DeleteLocalRef(capture);
     return result;
 }
 
 jobject parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device) {
-    jclass streamDeviceClass = env->FindClass("org/pytgcalls/ntgcalls/media/StreamDevice");
-    jfieldID microphoneField = env->GetStaticFieldID(streamDeviceClass, "MICROPHONE", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
-    jfieldID speakerField = env->GetStaticFieldID(streamDeviceClass, "SPEAKER", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
-    jfieldID cameraField = env->GetStaticFieldID(streamDeviceClass, "CAMERA", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
-    jfieldID screenField = env->GetStaticFieldID(streamDeviceClass, "SCREEN", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+    const webrtc::ScopedJavaLocalRef<jclass> streamDeviceClass = webrtc::GetClass(env,"org/pytgcalls/ntgcalls/media/StreamDevice");
+    jfieldID microphoneField = env->GetStaticFieldID(streamDeviceClass.obj(), "MICROPHONE", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+    jfieldID speakerField = env->GetStaticFieldID(streamDeviceClass.obj(), "SPEAKER", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+    jfieldID cameraField = env->GetStaticFieldID(streamDeviceClass.obj(), "CAMERA", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+    jfieldID screenField = env->GetStaticFieldID(streamDeviceClass.obj(), "SCREEN", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
 
     jobject result;
     switch (device) {
         case ntgcalls::StreamManager::Device::Microphone:
-            result = env->GetStaticObjectField(streamDeviceClass, microphoneField);
+            result = env->GetStaticObjectField(streamDeviceClass.obj(), microphoneField);
             break;
         case ntgcalls::StreamManager::Device::Speaker:
-            result = env->GetStaticObjectField(streamDeviceClass, speakerField);
+            result = env->GetStaticObjectField(streamDeviceClass.obj(), speakerField);
             break;
         case ntgcalls::StreamManager::Device::Camera:
-            result = env->GetStaticObjectField(streamDeviceClass, cameraField);
+            result = env->GetStaticObjectField(streamDeviceClass.obj(), cameraField);
             break;
         case ntgcalls::StreamManager::Device::Screen:
-            result = env->GetStaticObjectField(streamDeviceClass, screenField);
+            result = env->GetStaticObjectField(streamDeviceClass.obj(), screenField);
             break;
     }
-    env->DeleteLocalRef(streamDeviceClass);
+    return result;
+}
     return result;
 }
 
