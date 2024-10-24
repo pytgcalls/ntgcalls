@@ -70,6 +70,9 @@ namespace ntgcalls {
             END_THREAD_SAFE
             END_WORKER
         });
+        connections[chatId]->onFrame([this, chatId] (int64_t sourceId, StreamManager::Mode mode, StreamManager::Device device, const BYTES(bytes::binary)& data, wrtc::FrameData frameData) {
+            (void) frameCallback(chatId, sourceId, mode, device, CAST_BYTES(data), frameData);
+        });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
             SafeCall<P2PCall>(connections[chatId].get())->onSignalingData([this, chatId](const bytes::binary& data) {
                 WORKER("onSignalingData", updateThread, this, chatId, data)
@@ -176,7 +179,7 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(void) NTgCalls::stopPresentation(int64_t chatId) {
+    ASYNC_RETURN(void) NTgCalls::stopPresentation(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
         SafeCall<GroupCall>(safeConnection(chatId))->stopPresentation(true);
         END_ASYNC
@@ -195,6 +198,11 @@ namespace ntgcalls {
     void NTgCalls::onConnectionChange(const std::function<void(int64_t, CallNetworkState)>& callback) {
        std::lock_guard lock(mutex);
        connectionChangeCallback = callback;
+    }
+
+    void NTgCalls::onFrame(const std::function<void(int64_t, int64_t, StreamManager::Mode, StreamManager::Device, const BYTES(bytes::binary)&, wrtc::FrameData)>& callback) {
+        std::lock_guard lock(mutex);
+        frameCallback = callback;
     }
 
     void NTgCalls::onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback) {

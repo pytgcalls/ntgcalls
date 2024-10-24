@@ -75,6 +75,8 @@ namespace ntgcalls {
 
         bool hasDevice(Mode mode, Device device) const;
 
+        void onFrame(const std::function<void(int64_t, Mode, Device, const bytes::binary&, wrtc::FrameData)>& callback);
+
     private:
         rtc::Thread* workerThread;
         bool initialized = false, videoSimulcast = true;
@@ -85,6 +87,7 @@ namespace ntgcalls {
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
+        wrtc::synchronized_callback<int64_t, Mode, Device, bytes::binary, wrtc::FrameData> frameCallback;
 
         template<typename SinkType, typename DescriptionType>
         void setConfig(Mode mode, Device device, const std::optional<DescriptionType>& desc);

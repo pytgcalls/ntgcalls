@@ -155,6 +155,10 @@ namespace ntgcalls {
         return false;
     }
 
+    void StreamManager::onFrame(const std::function<void(int64_t, Mode, Device, const bytes::binary&, wrtc::FrameData)>& callback) {
+        frameCallback = callback;
+    }
+
     bool StreamManager::updateMute(const bool isMuted) {
         std::lock_guard lock(mutex);
         bool changed = false;

@@ -52,6 +52,8 @@ namespace ntgcalls {
 
         void onConnectionChange(const std::function<void(CallNetworkState)> &callback);
 
+        void onFrame(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const bytes::binary&, wrtc::FrameData frameData)>& callback);
+
         uint64_t time(StreamManager::Mode mode) const;
 
         MediaState getState() const;
