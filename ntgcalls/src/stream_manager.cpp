@@ -253,10 +253,19 @@ namespace ntgcalls {
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device)) {
                 if (mode == Capture) {
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
-                    readers[device]->onData([this, id](const bytes::unique_binary& data, wrtc::FrameData frameData) {
+                    readers[device]->onData([this, id, streamType](const bytes::unique_binary& data, wrtc::FrameData frameData) {
                         if (streams.contains(id)) {
                             if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
                                 frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
+                                if (streamType == Video) {
+                                    (void) frameCallback(
+                                        0,
+                                        id.first,
+                                        id.second,
+                                        std::vector<uint8_t>(data.get(), data.get() + streams[id]->frameSize()),
+                                        frameData
+                                    );
+                                }
                                 stream->sendData(data.get(), frameData);
                             }
                         }
