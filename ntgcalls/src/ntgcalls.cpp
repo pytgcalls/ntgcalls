@@ -70,7 +70,7 @@ namespace ntgcalls {
             END_THREAD_SAFE
             END_WORKER
         });
-        connections[chatId]->onFrame([this, chatId] (int64_t sourceId, StreamManager::Mode mode, StreamManager::Device device, const BYTES(bytes::binary)& data, wrtc::FrameData frameData) {
+        connections[chatId]->onFrame([this, chatId] (const int64_t sourceId, const StreamManager::Mode mode, const StreamManager::Device device, const bytes::binary& data, const wrtc::FrameData frameData) {
             (void) frameCallback(chatId, sourceId, mode, device, CAST_BYTES(data), frameData);
         });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
