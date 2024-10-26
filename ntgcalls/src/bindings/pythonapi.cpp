@@ -39,7 +39,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_connection_change", &ntgcalls::NTgCalls::onConnectionChange);
     wrapper.def("on_signaling", &ntgcalls::NTgCalls::onSignalingData, py::arg("callback"));
     wrapper.def("on_frame", &ntgcalls::NTgCalls::onFrame, py::arg("callback"));
-    wrapper.def("on_remote_source", &ntgcalls::NTgCalls::onRemoteSource, py::arg("callback"));
+    wrapper.def("on_remote_source_change", &ntgcalls::NTgCalls::onRemoteSourceChange, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);

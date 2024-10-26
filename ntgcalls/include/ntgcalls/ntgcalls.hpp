@@ -111,7 +111,7 @@ namespace ntgcalls {
 
         void onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
 
-        void onRemoteSource(const std::function<void(int64_t, RemoteSource)>& callback);
+        void onRemoteSourceChange(const std::function<void(int64_t, RemoteSource)>& callback);
 
         ASYNC_RETURN(void) sendSignalingData(int64_t chatId, const BYTES(bytes::binary) &msgKey);
 

@@ -62,7 +62,7 @@ namespace ntgcalls {
         streamManager->onFrame(callback);
     }
 
-    void CallInterface::onRemoteSource(const std::function<void(RemoteSource)>& callback) {
+    void CallInterface::onRemoteSourceChange(const std::function<void(RemoteSource)>& callback) {
         std::lock_guard lock(mutex);
         remoteSourceCallback = callback;
     }
