@@ -252,17 +252,18 @@ namespace ntgcalls {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device)) {
                 if (mode == Capture) {
+                    const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device || desc.value().mediaSource == DescriptionType::MediaSource::Desktop;
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
-                    readers[device]->onData([this, id, streamType](const bytes::unique_binary& data, wrtc::FrameData frameData) {
+                    readers[device]->onData([this, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
                         if (streams.contains(id)) {
                             if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
                                 frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
-                                if (streamType == Video) {
+                                if (streamType == Video && isShared) {
                                     (void) frameCallback(
                                         0,
                                         id.first,
                                         id.second,
-                                        std::vector<uint8_t>(data.get(), data.get() + streams[id]->frameSize()),
+                                        {data.get(), data.get() + streams[id]->frameSize()},
                                         frameData
                                     );
                                 }
