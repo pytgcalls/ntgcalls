@@ -11,6 +11,7 @@ import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.pytgcalls.ntgcalls.AndroidUtils;
 import org.pytgcalls.ntgcalls.media.DeviceInfo;
 import org.webrtc.Camera1Enumerator;
 import org.webrtc.Camera2Enumerator;
@@ -29,7 +30,6 @@ import java.util.List;
 public class JavaVideoCapturerModule {
     private static final JavaVideoCapturerModule[] instance = new JavaVideoCapturerModule[2];
     public static EglBase eglBase;
-    private static Handler appHandler;
     private HandlerThread thread;
     private Handler handler;
     private VideoCapturer videoCapturer;
@@ -45,13 +45,10 @@ public class JavaVideoCapturerModule {
 
     public JavaVideoCapturerModule(boolean isScreencast, String deviceName, int width, int height, int fps, long nativePointer) {
         this.nativePointer = nativePointer;
-        if (appHandler == null) {
-            appHandler = new Handler(getApplicationContext().getMainLooper());
-        }
         this.width = width;
         this.height = height;
         this.fps = fps;
-        appHandler.post(() -> {
+        AndroidUtils.runOnUIThread(() -> {
             if (eglBase == null) {
                 eglBase = EglBase.create(null, EglBase.CONFIG_PLAIN);
             }
@@ -122,7 +119,7 @@ public class JavaVideoCapturerModule {
     }
 
     private void open() {
-        appHandler.post(() -> handler.post(() -> {
+        AndroidUtils.runOnUIThread(() -> handler.post(() -> {
             if (videoCapturer != null) {
                 videoCapturer.startCapture(width, height, fps);
             }
@@ -162,7 +159,7 @@ public class JavaVideoCapturerModule {
             if (Build.VERSION.SDK_INT < 18) {
                 return;
             }
-            appHandler.post(() -> {
+            AndroidUtils.runOnUIThread(() -> {
                 for (int a = 0; a < instance.length; a++) {
                     if (instance[a] == this) {
                         instance[a] = null;
