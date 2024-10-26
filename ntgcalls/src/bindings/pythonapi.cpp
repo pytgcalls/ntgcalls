@@ -39,6 +39,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_connection_change", &ntgcalls::NTgCalls::onConnectionChange);
     wrapper.def("on_signaling", &ntgcalls::NTgCalls::onSignalingData, py::arg("callback"));
     wrapper.def("on_frame", &ntgcalls::NTgCalls::onFrame, py::arg("callback"));
+    wrapper.def("on_remote_source_state", &ntgcalls::NTgCalls::onRemoteSourceState, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
@@ -206,6 +207,18 @@ PYBIND11_MODULE(ntgcalls, m) {
     frameDataWrapper.def(py::init<>());
     frameDataWrapper.def_readonly("rotation", &wrtc::FrameData::rotation);
     frameDataWrapper.def_readonly("absolute_capture_timestamp_ms", &wrtc::FrameData::absoluteCaptureTimestampMs);
+
+    py::class_<ntgcalls::RemoteSourceState> remoteSourceStateWrapper(m, "RemoteSourceState");
+    remoteSourceStateWrapper.def(py::init<>());
+    remoteSourceStateWrapper.def_readonly("ssrc", &ntgcalls::RemoteSourceState::ssrc);
+    remoteSourceStateWrapper.def_readonly("state", &ntgcalls::RemoteSourceState::state);
+    remoteSourceStateWrapper.def_readonly("device", &ntgcalls::RemoteSourceState::device);
+
+    py::enum_<ntgcalls::RemoteSourceState::State>(m, "RemoteSourceStateState")
+       .value("INACTIVE", ntgcalls::RemoteSourceState::State::Inactive)
+       .value("SUSPENDED", ntgcalls::RemoteSourceState::State::Suspended)
+       .value("ACTIVE", ntgcalls::RemoteSourceState::State::Active)
+       .export_values();
 
     // Exceptions
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
