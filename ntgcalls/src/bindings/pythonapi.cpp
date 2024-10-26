@@ -38,6 +38,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd);
     wrapper.def("on_connection_change", &ntgcalls::NTgCalls::onConnectionChange);
     wrapper.def("on_signaling", &ntgcalls::NTgCalls::onSignalingData, py::arg("callback"));
+    wrapper.def("on_frame", &ntgcalls::NTgCalls::onFrame, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
@@ -92,6 +93,7 @@ PYBIND11_MODULE(ntgcalls, m) {
         .value("FFMPEG", ntgcalls::BaseMediaDescription::MediaSource::FFmpeg)
         .value("DEVICE", ntgcalls::BaseMediaDescription::MediaSource::Device)
         .value("DESKTOP", ntgcalls::BaseMediaDescription::MediaSource::Desktop)
+        .value("EXTERNAL", ntgcalls::BaseMediaDescription::MediaSource::External)
         .export_values()
         .def("__and__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const ntgcalls::BaseMediaDescription::MediaSource& rhs) {
             return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs & rhs);
@@ -199,6 +201,11 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::DhConfig> dhConfigWrapper(m, "DhConfig");
     dhConfigWrapper.def(py::init<int32_t, py::bytes, py::bytes>(), py::arg("g"), py::arg("p"), py::arg("random"));
+
+    py::class_<wrtc::FrameData> frameDataWrapper(m, "FrameData");
+    frameDataWrapper.def(py::init<>());
+    frameDataWrapper.def_readonly("rotation", &wrtc::FrameData::rotation);
+    frameDataWrapper.def_readonly("absolute_capture_timestamp_ms", &wrtc::FrameData::absoluteCaptureTimestampMs);
 
     // Exceptions
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
