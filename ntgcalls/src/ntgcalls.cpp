@@ -71,7 +71,9 @@ namespace ntgcalls {
             END_WORKER
         });
         connections[chatId]->onFrame([this, chatId] (const int64_t sourceId, const StreamManager::Mode mode, const StreamManager::Device device, const bytes::binary& data, const wrtc::FrameData frameData) {
+            THREAD_SAFE
             (void) frameCallback(chatId, sourceId, mode, device, CAST_BYTES(data), frameData);
+            END_THREAD_SAFE
         });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
             SafeCall<P2PCall>(connections[chatId].get())->onSignalingData([this, chatId](const bytes::binary& data) {
