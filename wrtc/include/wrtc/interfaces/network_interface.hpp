@@ -19,6 +19,7 @@ namespace wrtc {
         synchronized_callback<void> dataChannelOpenedCallback;
         synchronized_callback<IceCandidate> iceCandidateCallback;
         synchronized_callback<ConnectionState> connectionChangeCallback;
+        synchronized_callback<bytes::binary> dataChannelMessageCallback;
         bool dataChannelOpen = false;
 
         static webrtc::IceCandidateInterface* parseIceCandidate(const IceCandidate& rawCandidate);
@@ -41,6 +42,8 @@ namespace wrtc {
         void onIceCandidate(const std::function<void(const IceCandidate& candidate)>& callback);
 
         void onConnectionChange(const std::function<void(ConnectionState state)> &callback);
+
+        void onDataChannelMessage(const std::function<void(const bytes::binary& data)>& callback);
 
         virtual void close();
 

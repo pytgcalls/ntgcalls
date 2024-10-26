@@ -24,6 +24,7 @@ namespace wrtc {
 
         synchronized_callback<bool> onStateChangedCallback;
         synchronized_callback<void> onClosedCallback;
+        synchronized_callback<bytes::binary> onMessageReceivedCallback;
 
     public:
         SctpDataChannelProviderInterfaceImpl(
@@ -56,16 +57,18 @@ namespace wrtc {
 
         void sendDataChannelMessage(const bytes::binary& data) const;
 
-        // Unused
-        void OnChannelClosing(int channel_id) override {}
-        void OnChannelClosed(int channel_id) override{}
-        void OnChannelStateChanged(webrtc::SctpDataChannel* data_channel, webrtc::DataChannelInterface::DataState state) override{}
         void OnTransportClosed(webrtc::RTCError) override;
 
         void onStateChanged(const std::function<void(bool)>& callback);
 
         void onClosed(const std::function<void()>& callback);
 
+        void onMessageReceived(const std::function<void(const bytes::binary&)>& callback);
+
+        // Unused
+        void OnChannelClosing(int channel_id) override {}
+        void OnChannelClosed(int channel_id) override{}
+        void OnChannelStateChanged(webrtc::SctpDataChannel* data_channel, webrtc::DataChannelInterface::DataState state) override{}
         void OnBufferedAmountLow(int channel_id) override {}
         size_t buffered_amount(webrtc::StreamId sid) const override { return 0; }
         size_t buffered_amount_low_threshold(webrtc::StreamId sid) const override { return 0;}

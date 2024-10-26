@@ -75,6 +75,13 @@ namespace ntgcalls {
             (void) frameCallback(chatId, sourceId, mode, device, CAST_BYTES(data), frameData);
             END_THREAD_SAFE
         });
+        connections[chatId]->onRemoteSourceState([this, chatId](const RemoteSourceState &state) {
+            WORKER("onRemoteSourceState", updateThread, this, chatId, state)
+            THREAD_SAFE
+            (void) remoteSourceStateCallback(chatId, state);
+            END_THREAD_SAFE
+            END_WORKER
+        });
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
             SafeCall<P2PCall>(connections[chatId].get())->onSignalingData([this, chatId](const bytes::binary& data) {
                 WORKER("onSignalingData", updateThread, this, chatId, data)
@@ -210,6 +217,11 @@ namespace ntgcalls {
     void NTgCalls::onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback) {
         std::lock_guard lock(mutex);
         emitCallback = callback;
+    }
+
+    void NTgCalls::onRemoteSourceState(const std::function<void(int64_t, RemoteSourceState)>& callback) {
+        std::lock_guard lock(mutex);
+        remoteSourceStateCallback = callback;
     }
 
     ASYNC_RETURN(void) NTgCalls::sendSignalingData(const int64_t chatId, const BYTES(bytes::binary) &msgKey) {

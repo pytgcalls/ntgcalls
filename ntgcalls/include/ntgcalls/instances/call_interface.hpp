@@ -7,6 +7,8 @@
 
 #include <ntgcalls/stream_manager.hpp>
 #include <ntgcalls/models/call_network_state.hpp>
+#include <ntgcalls/models/remote_source_state.hpp>
+#include <ntgcalls/signaling/messages/media_state_message.hpp>
 
 namespace ntgcalls {
 
@@ -21,10 +23,16 @@ namespace ntgcalls {
         std::unique_ptr<wrtc::NetworkInterface> connection;
         std::unique_ptr<StreamManager> streamManager;
         wrtc::synchronized_callback<CallNetworkState> connectionChangeCallback;
+        wrtc::synchronized_callback<RemoteSourceState> remoteSourceStateCallback;
         rtc::Thread* updateThread;
         std::unique_ptr<rtc::Thread> networkThread;
+        RemoteSourceState::State lastCameraState = RemoteSourceState::State::Inactive;
+        RemoteSourceState::State lastScreenState = RemoteSourceState::State::Inactive;
+        RemoteSourceState::State lastMicState = RemoteSourceState::State::Inactive;
 
         void setConnectionObserver(CallNetworkState::Kind kind = CallNetworkState::Kind::Normal);
+
+        static RemoteSourceState::State parseVideoState(signaling::MediaStateMessage::VideoState state);
 
     public:
         explicit CallInterface(rtc::Thread* updateThread);
@@ -53,6 +61,8 @@ namespace ntgcalls {
         void onConnectionChange(const std::function<void(CallNetworkState)> &callback);
 
         void onFrame(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const bytes::binary&, wrtc::FrameData frameData)>& callback);
+
+        void onRemoteSourceState(const std::function<void(RemoteSourceState)>& callback);
 
         uint64_t time(StreamManager::Mode mode) const;
 

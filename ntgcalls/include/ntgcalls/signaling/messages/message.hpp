@@ -20,6 +20,7 @@ namespace signaling {
             InitialSetup,
             Candidates,
             NegotiateChannels,
+            MediaState,
             Unknown
         };
 

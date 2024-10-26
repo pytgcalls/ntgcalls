@@ -49,6 +49,10 @@ namespace wrtc {
         connectionChangeCallback = callback;
     }
 
+    void NetworkInterface::onDataChannelMessage(const std::function<void(const bytes::binary& data)>& callback) {
+        dataChannelMessageCallback = callback;
+    }
+
     void NetworkInterface::close() {
         if (factory) {
             PeerConnectionFactory::UnRef();

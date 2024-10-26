@@ -16,6 +16,7 @@
 #include <ntgcalls/utils/hardware_info.hpp>
 #include <ntgcalls/utils/log_sink_impl.hpp>
 #include <ntgcalls/devices/media_devices.hpp>
+#include <ntgcalls/models/remote_source_state.hpp>
 
 #define CHECK_AND_THROW_IF_EXISTS(chatId) \
 if (exists(chatId)) { \
@@ -33,6 +34,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, MediaState> mediaStateCallback;
         wrtc::synchronized_callback<int64_t, CallNetworkState> connectionChangeCallback;
         wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
+        wrtc::synchronized_callback<int64_t, RemoteSourceState> remoteSourceStateCallback;
         wrtc::synchronized_callback<int64_t, int64_t, StreamManager::Mode, StreamManager::Device, BYTES(bytes::binary), wrtc::FrameData> frameCallback;
         std::unique_ptr<rtc::Thread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
@@ -108,6 +110,8 @@ namespace ntgcalls {
         void onFrame(const std::function<void(int64_t, int64_t, StreamManager::Mode, StreamManager::Device, const BYTES(bytes::binary)&, wrtc::FrameData)>& callback);
 
         void onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
+
+        void onRemoteSourceState(const std::function<void(int64_t, RemoteSourceState)>& callback);
 
         ASYNC_RETURN(void) sendSignalingData(int64_t chatId, const BYTES(bytes::binary) &msgKey);
 

@@ -73,6 +73,7 @@ namespace wrtc {
 
     void SctpDataChannelProviderInterfaceImpl::OnMessage(const webrtc::DataBuffer& buffer) {
         assert(networkThread->IsCurrent());
+        (void) onMessageReceivedCallback(bytes::binary(buffer.data.data(), buffer.data.data() + buffer.data.size()));
     }
 
     webrtc::RTCError SctpDataChannelProviderInterfaceImpl::SendData(const webrtc::StreamId sid, const webrtc::SendDataParams& params, const rtc::CopyOnWriteBuffer& payload) {
@@ -123,5 +124,9 @@ namespace wrtc {
 
     void SctpDataChannelProviderInterfaceImpl::onClosed(const std::function<void()>& callback) {
         onClosedCallback = callback;
+    }
+
+    void SctpDataChannelProviderInterfaceImpl::onMessageReceived(const std::function<void(const bytes::binary&)>& callback) {
+        onMessageReceivedCallback = callback;
     }
 } // wrtc

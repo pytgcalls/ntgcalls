@@ -27,6 +27,9 @@ namespace signaling {
             if (type == "NegotiateChannels") {
                 return Type::NegotiateChannels;
             }
+            if (type == "MediaState") {
+                return Type::MediaState;
+            }
         }
         return Type::Unknown;
     }

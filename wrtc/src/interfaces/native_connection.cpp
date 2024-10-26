@@ -297,6 +297,9 @@ namespace wrtc {
             networkThread(),
             signalingThread()
         );
+        dataChannelInterface->onMessageReceived([this](const bytes::binary &data) {
+            (void) dataChannelMessageCallback(data);
+        });
         dataChannelInterface->onStateChanged([this](const bool isOpen) {
             if (!dataChannelOpen && isOpen) {
                 dataChannelOpen = true;

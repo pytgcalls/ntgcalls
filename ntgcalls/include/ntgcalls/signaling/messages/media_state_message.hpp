@@ -30,8 +30,12 @@ namespace signaling {
 
         [[nodiscard]] bytes::binary serialize() const override;
 
+        static std::unique_ptr<MediaStateMessage> deserialize(const bytes::binary& data);
+
     private:
         static std::string parseVideoState(VideoState state);
+
+        static VideoState parseVideoState(const std::string& state);
     };
 
 } // signaling
