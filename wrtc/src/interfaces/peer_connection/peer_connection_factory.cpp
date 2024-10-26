@@ -62,7 +62,7 @@ namespace wrtc {
         dependencies.video_encoder_factory = android::CreateVideoEncoderFactory(static_cast<JNIEnv*>(jniEnv));
         dependencies.video_decoder_factory = android::CreateVideoDecoderFactory(static_cast<JNIEnv*>(jniEnv));
 #else
-        auto config = VideoFactoryConfig(jniEnv);
+        auto config = VideoFactoryConfig();
         dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
         dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
 #endif
