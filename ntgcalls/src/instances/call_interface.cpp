@@ -62,9 +62,9 @@ namespace ntgcalls {
         streamManager->onFrame(callback);
     }
 
-    void CallInterface::onRemoteSourceState(const std::function<void(RemoteSourceState)>& callback) {
+    void CallInterface::onRemoteSource(const std::function<void(RemoteSource)>& callback) {
         std::lock_guard lock(mutex);
-        remoteSourceStateCallback = callback;
+        remoteSourceCallback = callback;
     }
 
     uint64_t CallInterface::time(const StreamManager::Mode mode) const {
@@ -136,16 +136,16 @@ namespace ntgcalls {
         }, webrtc::TimeDelta::Seconds(20));
     }
 
-    RemoteSourceState::State CallInterface::parseVideoState(signaling::MediaStateMessage::VideoState state)
+    RemoteSource::State CallInterface::parseVideoState(signaling::MediaStateMessage::VideoState state)
     {
         switch (state){
         case signaling::MediaStateMessage::VideoState::Active:
-            return RemoteSourceState::State::Active;
+            return RemoteSource::State::Active;
         case signaling::MediaStateMessage::VideoState::Inactive:
-            return RemoteSourceState::State::Inactive;
+            return RemoteSource::State::Inactive;
         case signaling::MediaStateMessage::VideoState::Suspended:
-            return RemoteSourceState::State::Suspended;
+            return RemoteSource::State::Suspended;
         }
-        return RemoteSourceState::State::Inactive;
+        return RemoteSource::State::Inactive;
     }
 } // ntgcalls

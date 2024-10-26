@@ -7,7 +7,7 @@
 
 namespace ntgcalls {
 
-    struct RemoteSourceState {
+    struct RemoteSource {
         enum class State {
             Inactive,
             Suspended,

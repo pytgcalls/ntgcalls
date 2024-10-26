@@ -305,20 +305,20 @@ namespace ntgcalls {
             }
             case signaling::Message::Type::MediaState: {
                 const auto message = signaling::MediaStateMessage::deserialize(buffer);
-                auto cameraState = parseVideoState(message->videoState);
-                auto screenState = parseVideoState(message->screencastState);
-                auto micState = message->isMuted ? RemoteSourceState::State::Inactive : RemoteSourceState::State::Active;
+                const auto cameraState = parseVideoState(message->videoState);
+                const auto screenState = parseVideoState(message->screencastState);
+                const auto micState = message->isMuted ? RemoteSource::State::Inactive : RemoteSource::State::Active;
                 if (lastCameraState != cameraState) {
                     lastCameraState = cameraState;
-                    (void) remoteSourceStateCallback({0, cameraState, StreamManager::Device::Camera});
+                    (void) remoteSourceCallback({0, cameraState, StreamManager::Device::Camera});
                 }
                 if (lastScreenState != screenState) {
                     lastScreenState = screenState;
-                    (void) remoteSourceStateCallback({0, screenState, StreamManager::Device::Screen});
+                    (void) remoteSourceCallback({0, screenState, StreamManager::Device::Screen});
                 }
                 if (lastMicState != micState) {
                     lastMicState = micState;
-                    (void) remoteSourceStateCallback({0, micState, StreamManager::Device::Microphone});
+                    (void) remoteSourceCallback({0, micState, StreamManager::Device::Microphone});
                 }
                 break;
             }

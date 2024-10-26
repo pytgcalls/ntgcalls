@@ -75,10 +75,10 @@ namespace ntgcalls {
             (void) frameCallback(chatId, sourceId, mode, device, CAST_BYTES(data), frameData);
             END_THREAD_SAFE
         });
-        connections[chatId]->onRemoteSourceState([this, chatId](const RemoteSourceState &state) {
-            WORKER("onRemoteSourceState", updateThread, this, chatId, state)
+        connections[chatId]->onRemoteSource([this, chatId](const RemoteSource &state) {
+            WORKER("onRemoteSource", updateThread, this, chatId, state)
             THREAD_SAFE
-            (void) remoteSourceStateCallback(chatId, state);
+            (void) remoteSourceCallback(chatId, state);
             END_THREAD_SAFE
             END_WORKER
         });
@@ -219,9 +219,9 @@ namespace ntgcalls {
         emitCallback = callback;
     }
 
-    void NTgCalls::onRemoteSourceState(const std::function<void(int64_t, RemoteSourceState)>& callback) {
+    void NTgCalls::onRemoteSource(const std::function<void(int64_t, RemoteSource)>& callback) {
         std::lock_guard lock(mutex);
-        remoteSourceStateCallback = callback;
+        remoteSourceCallback = callback;
     }
 
     ASYNC_RETURN(void) NTgCalls::sendSignalingData(const int64_t chatId, const BYTES(bytes::binary) &msgKey) {
