@@ -16,7 +16,8 @@ namespace ntgcalls {
             Shell = 1 << 1,
             FFmpeg = 1 << 2,
             Device = 1 << 3,
-            Desktop = 1 << 4
+            Desktop = 1 << 4,
+            External = 1 << 5
         };
 
         std::string input;

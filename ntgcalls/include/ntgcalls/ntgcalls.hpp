@@ -33,7 +33,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, MediaState> mediaStateCallback;
         wrtc::synchronized_callback<int64_t, CallNetworkState> connectionChangeCallback;
         wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
-        wrtc::synchronized_callback<int64_t, int64_t, StreamManager::Mode, StreamManager::Device, const BYTES(bytes::binary)&, wrtc::FrameData> frameCallback;
+        wrtc::synchronized_callback<int64_t, int64_t, StreamManager::Mode, StreamManager::Device, BYTES(bytes::binary), wrtc::FrameData> frameCallback;
         std::unique_ptr<rtc::Thread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;

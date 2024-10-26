@@ -188,6 +188,7 @@ namespace ntgcalls {
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection);
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection);
         streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
         streamManager->onUpgrade([this] (const MediaState mediaState) {
             sendMediaState(mediaState);
         });

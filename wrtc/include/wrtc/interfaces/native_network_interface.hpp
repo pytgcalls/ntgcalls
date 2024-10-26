@@ -18,6 +18,7 @@
 #include <wrtc/interfaces/media/channels/outgoing_audio_channel.hpp>
 #include <wrtc/interfaces/media/channels/outgoing_video_channel.hpp>
 #include <wrtc/interfaces/media/channels/incoming_audio_channel.hpp>
+#include <wrtc/interfaces/media/channels/incoming_video_channel.hpp>
 
 namespace wrtc {
 
@@ -43,10 +44,12 @@ namespace wrtc {
         webrtc::LocalAudioSinkAdapter audioSink;
         LocalVideoAdapter videoSink;
         std::weak_ptr<RemoteAudioSink> remoteAudioSink;
+        std::weak_ptr<RemoteVideoSink> remoteVideoSink;
         std::unique_ptr<ChannelManager> channelManager;
         std::unique_ptr<OutgoingAudioChannel> audioChannel;
         std::unique_ptr<OutgoingVideoChannel> videoChannel;
         std::map<uint32_t, std::unique_ptr<IncomingAudioChannel>> incomingAudioChannels;
+        std::map<uint32_t, std::unique_ptr<IncomingVideoChannel>> incomingVideoChannels;
         PeerIceParameters localParameters, remoteParameters;
         std::unique_ptr<cricket::DtlsTransport> dtlsTransport;
         std::unique_ptr<webrtc::DtlsSrtpTransport> dtlsSrtpTransport;

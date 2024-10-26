@@ -84,6 +84,7 @@ namespace ntgcalls {
         std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;
         std::map<Device, std::unique_ptr<BaseWriter>> writers;
+        std::set<Device> externalWriters;
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;

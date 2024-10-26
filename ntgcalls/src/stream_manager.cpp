@@ -9,6 +9,7 @@
 #include <ntgcalls/media/audio_streamer.hpp>
 #include <ntgcalls/media/base_receiver.hpp>
 #include <ntgcalls/media/media_source_factory.hpp>
+#include <ntgcalls/media/video_receiver.hpp>
 #include <ntgcalls/media/video_sink.hpp>
 #include <ntgcalls/media/video_streamer.hpp>
 #include <rtc_base/logging.h>
@@ -242,7 +243,7 @@ namespace ntgcalls {
                 if (streamType == Audio) {
                     streams[id] = std::make_unique<AudioReceiver>();
                 } else {
-                    // TODO: Implement video receiver
+                    streams[id] = std::make_unique<VideoReceiver>();
                 }
                 dynamic_cast<BaseReceiver*>(streams[id].get())->open();
             }
@@ -250,7 +251,7 @@ namespace ntgcalls {
 
         if (desc) {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
-            if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device)) {
+            if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
                 if (mode == Capture) {
                     const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device || desc.value().mediaSource == DescriptionType::MediaSource::Desktop;
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
@@ -282,27 +283,60 @@ namespace ntgcalls {
                         readers[device]->open();
                     }
                 } else {
+                    const bool isExternal = desc.value().mediaSource == DescriptionType::MediaSource::External;
+                    if (isExternal) {
+                        externalWriters.insert(device);
+                    }
                     if (streamType == Audio) {
-                        writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
-                        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, device](const std::map<uint32_t, bytes::unique_binary>& frames) {
-                            if (writers.contains(device)) {
-                                if (const auto audioWriter = dynamic_cast<AudioWriter*>(writers[device].get())) {
-                                    audioWriter->sendFrames(frames);
+                        if (!isExternal) {
+                            writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
+                        }
+                        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, id, isExternal](const std::map<uint32_t, bytes::unique_binary>& frames) {
+                            if (isExternal) {
+                                for (const auto& [ssrc, data] : frames) {
+                                    if (externalWriters.contains(id.second)) {
+                                        (void) frameCallback(
+                                            ssrc,
+                                            id.first,
+                                            id.second,
+                                            {data.get(), data.get() + streams[id]->frameSize()},
+                                            {}
+                                        );
+                                    }
+                                }
+                            } else {
+                                if (writers.contains(id.second)) {
+                                    if (const auto audioWriter = dynamic_cast<AudioWriter*>(writers[id.second].get())) {
+                                        audioWriter->sendFrames(frames);
+                                    }
                                 }
                             }
                         });
-                    } else {
-                        // TODO: Implement video writer
-                        throw InvalidParams("Video input is not yet supported");
-                    }
-                    writers[device]->onEof([this, device] {
-                        workerThread->PostTask([this, device] {
-                            std::lock_guard lock(mutex);
-                            writers.erase(device);
+                    } else if (isExternal) {
+                        dynamic_cast<VideoReceiver*>(streams[id].get())->onFrame([this, id](const uint32_t ssrc, const bytes::unique_binary& frame, const wrtc::FrameData frameData) {
+                            if (externalWriters.contains(id.second)) {
+                                (void) frameCallback(
+                                    ssrc,
+                                    id.first,
+                                    id.second,
+                                    {frame.get(), frame.get() + streams[id]->frameSize()},
+                                    frameData
+                                );
+                            }
                         });
-                    });
-                    if (initialized) {
-                        writers[device]->open();
+                    } else {
+                        throw InvalidParams("Invalid input mode");
+                    }
+                    if (!isExternal) {
+                        writers[device]->onEof([this, device] {
+                            workerThread->PostTask([this, device] {
+                                std::lock_guard lock(mutex);
+                                writers.erase(device);
+                            });
+                        });
+                        if (initialized) {
+                            writers[device]->open();
+                        }
                     }
                 }
             }

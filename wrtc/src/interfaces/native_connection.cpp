@@ -213,7 +213,16 @@ namespace wrtc {
                 );
                 break;
             case MediaContent::Type::Video:
-                // TODO: implement video channel
+                incomingVideoChannels.clear();
+                incomingVideoChannels[content.ssrc] = std::make_unique<IncomingVideoChannel>(
+                    call.get(),
+                    channelManager.get(),
+                    dtlsSrtpTransport.get(),
+                    content,
+                    workerThread(),
+                    networkThread(),
+                    remoteVideoSink
+                );
                 break;
             default:
                 RTC_LOG(LS_WARNING) << "NativeNetworkingImpl unsupported incoming content type";
