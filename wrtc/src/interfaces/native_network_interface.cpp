@@ -206,6 +206,7 @@ namespace wrtc {
                 transportChannel = nullptr;
                 portAllocator = nullptr;
             });
+            signalingThread()->BlockingCall([] {});
         }
         NetworkInterface::close();
     }
