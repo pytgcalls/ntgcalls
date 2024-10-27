@@ -16,11 +16,13 @@ namespace signaling {
     SignalingEncryption::SignalingEncryption(EncryptionKey key): _key(std::move(key)) {}
 
     SignalingEncryption::~SignalingEncryption() {
+        std::lock_guard lock(mutex);
         counter = 0;
         largestIncomingCounters.clear();
     }
 
-    bytes::binary SignalingEncryption::encryptPrepared(const rtc::CopyOnWriteBuffer &buffer) const {
+    bytes::binary SignalingEncryption::encryptPrepared(const rtc::CopyOnWriteBuffer &buffer) {
+        std::lock_guard lock(mutex);
         bytes::binary encrypted(16 + buffer.size());
         const auto x = (_key.isOutgoing ? 0 : 8) + 128;
         const auto key = _key.value->data();
