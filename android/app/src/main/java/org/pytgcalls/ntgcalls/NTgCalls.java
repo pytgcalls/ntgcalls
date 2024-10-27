@@ -111,6 +111,8 @@ public class NTgCalls {
 
     public native void setFrameCallback(FrameCallback callback);
 
+    public native void setRemoteSourceChangeCallback(RemoteSourceChangeCallback callback);
+
     public native void sendSignalingData(long chatId, byte[] data) throws ConnectionNotFoundException;
 
     public void setScreenMediaProjectionResult(Intent data) {

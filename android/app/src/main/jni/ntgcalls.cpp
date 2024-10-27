@@ -78,6 +78,17 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
             env->ExceptionClear();
         }
     });
+
+    instance->onRemoteSourceChange([instancePtr](int64_t chatId, ntgcalls::RemoteSource remoteSource) {
+        std::lock_guard lock(callbacksMutex);
+        auto callback = callbacksInstances[instancePtr].onRemoteSourceChangeCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        auto jRemoteSource = parseJRemoteSource(env, remoteSource);
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jRemoteSource.obj());
+    });
 }
 
 extern "C"
@@ -105,6 +116,9 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_destroy(JNIEnv *env,
         env->DeleteGlobalRef(callback->callback);
     }
     if (auto callback = callbackInfo.onFrameCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onRemoteSourceChangeCallback) {
         env->DeleteGlobalRef(callback->callback);
     }
     callbacksInstances.erase(ptr);
@@ -258,6 +272,8 @@ REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLorg/pytgc
 REGISTER_CALLBACK(setSignalingDataCallback, onSignalingData, "(J[B)V")
 
 REGISTER_CALLBACK(setFrameCallback, onFrame, "(JJLorg/pytgcalls/ntgcalls/media/StreamMode;Lorg/pytgcalls/ntgcalls/media/StreamDevice;[BLorg/pytgcalls/ntgcalls/media/FrameData;)V")
+
+REGISTER_CALLBACK(setRemoteSourceChangeCallback, onRemoteSourceChange, "(JLorg/pytgcalls/ntgcalls/media/RemoteSource;)V")
 
 extern "C"
 JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_sendSignalingData(JNIEnv *env, jobject thiz, jlong chat_id, jbyteArray data) {
