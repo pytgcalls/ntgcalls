@@ -1,7 +1,5 @@
 package org.pytgcalls.ntgcalls;
 
-import android.content.Intent;
-
 import androidx.annotation.RequiresPermission;
 
 import org.pytgcalls.ntgcalls.exceptions.ConnectionException;
@@ -15,7 +13,6 @@ import org.pytgcalls.ntgcalls.p2p.AuthParams;
 import org.pytgcalls.ntgcalls.p2p.DhConfig;
 import org.pytgcalls.ntgcalls.p2p.Protocol;
 import org.pytgcalls.ntgcalls.p2p.RTCServer;
-import org.pytgcalls.ntgcalls.devices.JavaVideoCapturerModule;
 
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -114,10 +111,6 @@ public class NTgCalls {
     public native void setRemoteSourceChangeCallback(RemoteSourceChangeCallback callback);
 
     public native void sendSignalingData(long chatId, byte[] data) throws ConnectionNotFoundException;
-
-    public void setScreenMediaProjectionResult(Intent data) {
-        JavaVideoCapturerModule.mediaProjectionPermissionResultData = data;
-    }
 
     public native Map<Long, MediaStatus> calls();
 }
