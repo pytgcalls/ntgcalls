@@ -7,7 +7,9 @@
 
 namespace ntgcalls {
     VideoReceiver::~VideoReceiver() {
+        std::lock_guard lock(mutex);
         sink = nullptr;
+        frameCallback = nullptr;
     }
 
     std::weak_ptr<wrtc::RemoteVideoSink> VideoReceiver::remoteSink() {
@@ -19,10 +21,15 @@ namespace ntgcalls {
     }
 
     void VideoReceiver::open() {
-        sink = std::make_shared<wrtc::RemoteVideoSink>([this](uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) {
+        std::weak_ptr weakSink = sink;
+        sink = std::make_shared<wrtc::RemoteVideoSink>([this, weakSink](const uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) {
             if (!description) {
                 return;
             }
+            if (const auto sink = weakSink.lock(); !sink) {
+                return;
+            }
+            std::lock_guard lock(mutex);
             const auto yScaledSize = description->width * description->height;
             const auto uvScaledSize = yScaledSize / 4;
             auto yuv = bytes::make_unique_binary(yScaledSize + uvScaledSize * 2);

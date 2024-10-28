@@ -12,8 +12,10 @@ namespace ntgcalls {
     }
 
     AudioReceiver::~AudioReceiver() {
+        std::weak_ptr weakSink = sink;
         sink = nullptr;
         resampler = nullptr;
+        framesCallback = nullptr;
     }
 
     bytes::unique_binary AudioReceiver::resampleFrame(bytes::unique_binary data, const size_t size, const uint8_t channels, const uint16_t sampleRate) {
@@ -85,10 +87,15 @@ namespace ntgcalls {
     }
 
     void AudioReceiver::open() {
-        sink = std::make_shared<wrtc::RemoteAudioSink>([this](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& samples) {
+        std::weak_ptr weakSink = sink;
+        sink = std::make_shared<wrtc::RemoteAudioSink>([this, weakSink](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& samples) {
             if (!description) {
                 return;
             }
+            if (const auto sink = weakSink.lock(); !sink) {
+                return;
+            }
+            std::lock_guard lock(mutex);
             std::map<uint32_t, bytes::unique_binary> processedFrames;
             for (const auto& frame: samples) {
                 try {

@@ -7,6 +7,8 @@
 namespace ntgcalls {
 
     class BaseReceiver {
+    protected:
+        std::mutex mutex;
     public:
         virtual ~BaseReceiver() = default;
 
