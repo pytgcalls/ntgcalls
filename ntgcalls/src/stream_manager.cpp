@@ -259,6 +259,7 @@ namespace ntgcalls {
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
                 if (mode == Capture) {
                     const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device || desc.value().mediaSource == DescriptionType::MediaSource::Desktop;
+                    readers.erase(device);
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
                         if (streams.contains(id)) {
@@ -294,6 +295,7 @@ namespace ntgcalls {
                     }
                     if (streamType == Audio) {
                         if (!isExternal) {
+                            writers.erase(device);
                             writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
                         }
                         dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, id, isExternal](const std::map<uint32_t, bytes::unique_binary>& frames) {
