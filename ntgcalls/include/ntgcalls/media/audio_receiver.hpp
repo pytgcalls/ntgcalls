@@ -13,7 +13,7 @@
 namespace ntgcalls {
 
     class AudioReceiver final: public AudioSink, public BaseReceiver {
-        wrtc::synchronized_callback<const std::map<uint32_t, bytes::unique_binary>&> framesCallback;
+        wrtc::synchronized_callback<const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>&> framesCallback;
         std::shared_ptr<wrtc::RemoteAudioSink> sink;
         std::unique_ptr<webrtc::Resampler> resampler;
 
@@ -30,7 +30,7 @@ namespace ntgcalls {
 
         std::weak_ptr<wrtc::RemoteAudioSink> remoteSink();
 
-        void onFrames(const std::function<void(const std::map<uint32_t, bytes::unique_binary>&)>& callback);
+        void onFrames(const std::function<void(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>&)>& callback);
 
         void open() override;
     };

@@ -165,7 +165,12 @@ namespace ntgcalls {
                 }
             }
         );
-        connection->onIceCandidate([this](const wrtc::IceCandidate& candidate) {
+        std::weak_ptr weakSignaling = signaling;
+        connection->onIceCandidate([this, weakSignaling](const wrtc::IceCandidate& candidate) {
+            const auto signaling = weakSignaling.lock();
+            if (!signaling) {
+                return;
+            }
             bytes::binary message;
             if (protocolVersion & signaling::Signaling::Version::V2Full) {
                 signaling::CandidateMessage candMess;

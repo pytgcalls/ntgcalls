@@ -20,6 +20,7 @@ namespace ntgcalls {
 
     StreamManager::~StreamManager() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
+        std::lock_guard lock(mutex);
         onEOF = nullptr;
         readers.clear();
         writers.clear();
@@ -169,7 +170,7 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         bool changed = false;
         for (const auto& [key, track] : tracks) {
-            if (key.first != Capture) {
+            if (key.first == Playback || key.second == Camera || key.second == Screen) {
                 continue;
             }
             if (!track->enabled() != isMuted) {
@@ -279,10 +280,10 @@ namespace ntgcalls {
                         }
                     });
                     readers[device]->onEof([this, device] {
+                        std::lock_guard lock(mutex);
+                        readers.erase(device);
                         workerThread->PostTask([this, device] {
                             (void) onEOF(getStreamType(device), device);
-                            std::lock_guard lock(mutex);
-                            readers.erase(device);
                         });
                     });
                     if (initialized) {
@@ -298,7 +299,7 @@ namespace ntgcalls {
                             writers.erase(device);
                             writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
                         }
-                        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, id, isExternal](const std::map<uint32_t, bytes::unique_binary>& frames) {
+                        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, id, isExternal](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
                             if (isExternal) {
                                 for (const auto& [ssrc, data] : frames) {
                                     if (externalWriters.contains(id.second)) {
@@ -306,7 +307,7 @@ namespace ntgcalls {
                                             ssrc,
                                             id.first,
                                             id.second,
-                                            {data.get(), data.get() + streams[id]->frameSize()},
+                                            {data.first.get(), data.first.get() + data.second},
                                             {}
                                         );
                                     }
@@ -320,13 +321,13 @@ namespace ntgcalls {
                             }
                         });
                     } else if (isExternal) {
-                        dynamic_cast<VideoReceiver*>(streams[id].get())->onFrame([this, id](const uint32_t ssrc, const bytes::unique_binary& frame, const wrtc::FrameData frameData) {
+                        dynamic_cast<VideoReceiver*>(streams[id].get())->onFrame([this, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::FrameData frameData) {
                             if (externalWriters.contains(id.second)) {
                                 (void) frameCallback(
                                     ssrc,
                                     id.first,
                                     id.second,
-                                    {frame.get(), frame.get() + streams[id]->frameSize()},
+                                    {frame.get(), frame.get() + size},
                                     frameData
                                 );
                             }

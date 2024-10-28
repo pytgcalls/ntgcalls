@@ -16,13 +16,12 @@ namespace ntgcalls {
         return sink;
     }
 
-    void VideoReceiver::onFrame(const std::function<void(uint32_t, bytes::unique_binary, wrtc::FrameData)>& callback) {
+    void VideoReceiver::onFrame(const std::function<void(uint32_t, bytes::unique_binary, size_t, wrtc::FrameData)>& callback) {
         frameCallback = callback;
     }
 
     void VideoReceiver::open() {
-        std::weak_ptr weakSink = sink;
-        sink = std::make_shared<wrtc::RemoteVideoSink>([this, weakSink](const uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) {
+        sink = std::make_shared<wrtc::RemoteVideoSink>([this](const uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) {
             if (!description) {
                 return;
             }
@@ -32,7 +31,8 @@ namespace ntgcalls {
             std::lock_guard lock(mutex);
             const auto yScaledSize = description->width * description->height;
             const auto uvScaledSize = yScaledSize / 4;
-            auto yuv = bytes::make_unique_binary(yScaledSize + uvScaledSize * 2);
+            const auto totalSize = yScaledSize + uvScaledSize * 2;
+            auto yuv = bytes::make_unique_binary(totalSize);
             const auto buffer = frame->video_frame_buffer()->ToI420();
             const auto width = buffer->width();
             const auto height = buffer->height();
@@ -56,9 +56,10 @@ namespace ntgcalls {
             memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
             memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
 
-            (void) frameCallback(ssrc, std::move(yuv), {
+            (void) frameCallback(ssrc, std::move(yuv), totalSize, {
                 .rotation = frame->rotation()
             });
         });
+        weakSink = sink;
     }
 } // ntgcalls

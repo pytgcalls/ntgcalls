@@ -8,7 +8,7 @@
 namespace ntgcalls {
     AudioMixer::AudioMixer(BaseSink* sink): AudioWriter(sink) {}
 
-    void AudioMixer::sendFrames(const std::map<uint32_t, bytes::unique_binary>& frames) {
+    void AudioMixer::sendFrames(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
         if (!sink) return;
         const auto frameSize = sink->frameSize();
         bytes::unique_binary mixedOutput = bytes::make_unique_binary(frameSize);
@@ -19,7 +19,7 @@ namespace ntgcalls {
             int32_t mixedSample = 0;
             // ReSharper disable once CppUseElementsView
             for (const auto& [fst, snd] : frames) {
-                const auto sourceSamples = reinterpret_cast<const int16_t*>(snd.get());
+                const auto sourceSamples = reinterpret_cast<const int16_t*>(snd.first.get());
                 mixedSample += sourceSamples[i];
             }
 

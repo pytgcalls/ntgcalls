@@ -6,7 +6,6 @@
 
 #include <atomic>
 #include <functional>
-#include <memory>
 #include <wrtc/models/audio_frame.hpp>
 #include <wrtc/interfaces/media/remote_media_interface.hpp>
 

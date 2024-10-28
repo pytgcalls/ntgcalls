@@ -16,7 +16,7 @@ namespace ntgcalls {
     public:
         explicit AudioMixer(BaseSink* sink);
 
-        void sendFrames(const std::map<uint32_t, bytes::unique_binary>& frames) override;
+        void sendFrames(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) override;
     };
 
 } // ntgcalls

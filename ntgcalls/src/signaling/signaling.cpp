@@ -10,7 +10,7 @@
 
 
 namespace signaling {
-    std::unique_ptr<SignalingInterface> Signaling::Create(
+    std::shared_ptr<SignalingInterface> Signaling::Create(
         const Version version,
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
@@ -25,11 +25,11 @@ namespace signaling {
         }
         if (version & Version::V2) {
             RTC_LOG(LS_INFO) << "Using signaling V2 Legacy";
-            return std::make_unique<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
+            return std::make_shared<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
         }
         if (version & Version::V2Full) {
             RTC_LOG(LS_INFO) << "Using signaling V2 Full";
-            return std::make_unique<SignalingSctpConnection>(networkThread, signalingThread, env, key, onEmitData, onSignalData, true);
+            return std::make_shared<SignalingSctpConnection>(networkThread, signalingThread, env, key, onEmitData, onSignalData, true);
         }
         throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
     }

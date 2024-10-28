@@ -18,7 +18,7 @@ namespace signaling {
             V2Full = 1 << 2
         };
 
-        static std::unique_ptr<SignalingInterface> Create(
+        static std::shared_ptr<SignalingInterface> Create(
             Version version,
             rtc::Thread* networkThread,
             rtc::Thread* signalingThread,

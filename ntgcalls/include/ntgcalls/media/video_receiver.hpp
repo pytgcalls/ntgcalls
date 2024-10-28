@@ -14,12 +14,12 @@ namespace ntgcalls {
 
     class VideoReceiver final: public VideoSink, public BaseReceiver {
         std::shared_ptr<wrtc::RemoteVideoSink> sink;
-        wrtc::synchronized_callback<uint32_t, bytes::unique_binary, wrtc::FrameData> frameCallback;
+        wrtc::synchronized_callback<uint32_t, bytes::unique_binary, size_t, wrtc::FrameData> frameCallback;
 
     public:
         ~VideoReceiver() override;
 
-        void onFrame(const std::function<void(uint32_t, bytes::unique_binary, wrtc::FrameData)>& callback);
+        void onFrame(const std::function<void(uint32_t, bytes::unique_binary, size_t, wrtc::FrameData)>& callback);
 
         std::weak_ptr<wrtc::RemoteVideoSink> remoteSink();
 

@@ -12,7 +12,7 @@ namespace ntgcalls {
     }
 
     AudioReceiver::~AudioReceiver() {
-        std::weak_ptr weakSink = sink;
+        std::lock_guard lock(mutex);
         sink = nullptr;
         resampler = nullptr;
         framesCallback = nullptr;
@@ -82,33 +82,35 @@ namespace ntgcalls {
         return std::move(stereoData);
     }
 
-    void AudioReceiver::onFrames(const std::function<void(const std::map<uint32_t, bytes::unique_binary>&)>& callback) {
+    void AudioReceiver::onFrames(const std::function<void(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>&)>& callback) {
         framesCallback = callback;
     }
 
     void AudioReceiver::open() {
-        std::weak_ptr weakSink = sink;
-        sink = std::make_shared<wrtc::RemoteAudioSink>([this, weakSink](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& samples) {
+        sink = std::make_shared<wrtc::RemoteAudioSink>([this](const std::vector<std::unique_ptr<wrtc::AudioFrame>>& samples) {
             if (!description) {
                 return;
             }
-            if (const auto sink = weakSink.lock(); !sink) {
+            if (!weakSink.lock()) {
                 return;
             }
             std::lock_guard lock(mutex);
-            std::map<uint32_t, bytes::unique_binary> processedFrames;
+            std::map<uint32_t, std::pair<bytes::unique_binary, size_t>> processedFrames;
             for (const auto& frame: samples) {
                 try {
                     bytes::unique_binary data = bytes::make_unique_binary(frame->size);
                     memcpy(data.get(), frame->data, frame->size);
                     processedFrames.emplace(
                         frame->ssrc,
-                        resampleFrame(
-                            std::move(data),
-                            frame->size,
-                            frame->channels,
-                            frame->sampleRate
-                        )
+                        std::pair{
+                            resampleFrame(
+                                std::move(data),
+                                frame->size,
+                                frame->channels,
+                                frame->sampleRate
+                            ),
+                            frameSize()
+                        }
                     );
                 } catch (const InvalidParams& e) {
                     RTC_LOG(LS_ERROR) << "Failed to adapt audio frame: " << e.what();
@@ -117,6 +119,7 @@ namespace ntgcalls {
             frames++;
             (void) framesCallback(processedFrames);
         });
+        weakSink = sink;
     }
 
     std::weak_ptr<wrtc::RemoteAudioSink> AudioReceiver::remoteSink() {
