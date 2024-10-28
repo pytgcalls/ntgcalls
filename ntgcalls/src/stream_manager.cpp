@@ -143,6 +143,7 @@ namespace ntgcalls {
     }
 
     void StreamManager::start() {
+        std::lock_guard lock(mutex);
         // ReSharper disable once CppUseElementsView
         for (const auto& [key, reader] : readers) {
             reader->open();
