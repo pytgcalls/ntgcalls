@@ -28,7 +28,7 @@ namespace ntgcalls {
 
         ~AudioReceiver() override;
 
-        std::weak_ptr<wrtc::RemoteMediaInterface> remoteSink() override;
+        std::weak_ptr<wrtc::RemoteAudioSink> remoteSink();
 
         void onFrames(const std::function<void(const std::map<uint32_t, bytes::unique_binary>&)>& callback);
 

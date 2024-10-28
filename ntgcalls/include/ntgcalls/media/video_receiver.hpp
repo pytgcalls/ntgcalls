@@ -21,7 +21,7 @@ namespace ntgcalls {
 
         void onFrame(const std::function<void(uint32_t, bytes::unique_binary, wrtc::FrameData)>& callback);
 
-        std::weak_ptr<wrtc::RemoteMediaInterface> remoteSink() override;
+        std::weak_ptr<wrtc::RemoteVideoSink> remoteSink();
 
         void open() override;
     };

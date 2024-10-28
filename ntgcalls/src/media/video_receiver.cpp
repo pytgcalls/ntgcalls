@@ -10,7 +10,7 @@ namespace ntgcalls {
         sink = nullptr;
     }
 
-    std::weak_ptr<wrtc::RemoteMediaInterface> VideoReceiver::remoteSink() {
+    std::weak_ptr<wrtc::RemoteVideoSink> VideoReceiver::remoteSink() {
         return sink;
     }
 

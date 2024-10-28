@@ -3,15 +3,12 @@
 //
 
 #pragma once
-#include <wrtc/interfaces/media/remote_media_interface.hpp>
 
 namespace ntgcalls {
 
     class BaseReceiver {
     public:
         virtual ~BaseReceiver() = default;
-
-        virtual std::weak_ptr<wrtc::RemoteMediaInterface> remoteSink() = 0;
 
         virtual void open() = 0;
     };

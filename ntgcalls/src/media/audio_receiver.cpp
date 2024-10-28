@@ -112,7 +112,7 @@ namespace ntgcalls {
         });
     }
 
-    std::weak_ptr<wrtc::RemoteMediaInterface> AudioReceiver::remoteSink() {
+    std::weak_ptr<wrtc::RemoteAudioSink> AudioReceiver::remoteSink() {
         return sink;
     }
 } // ntgcalls

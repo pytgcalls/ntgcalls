@@ -89,7 +89,9 @@ namespace wrtc {
 
         std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
 
-        void addIncomingTrack(std::weak_ptr<RemoteMediaInterface> remoteSink) override;
+        void addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) override;
+
+        void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink) override;
 
         void initConnection(bool supportsPacketSending = false);
 

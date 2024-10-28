@@ -211,12 +211,12 @@ namespace wrtc {
         NetworkInterface::close();
     }
 
-    void NativeNetworkInterface::addIncomingTrack(const std::weak_ptr<RemoteMediaInterface> remoteSink) {
-        if (const auto audioSink = std::dynamic_pointer_cast<RemoteAudioSink>(remoteSink.lock())) {
-            remoteAudioSink = audioSink;
-        } else if (const auto videoSink = std::dynamic_pointer_cast<RemoteVideoSink>(remoteSink.lock())) {
-            remoteVideoSink = videoSink;
-        }
+    void NativeNetworkInterface::addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) {
+        remoteAudioSink = sink;
+    }
+
+    void NativeNetworkInterface::addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink) {
+        remoteVideoSink = sink;
     }
 
     std::unique_ptr<MediaTrackInterface> NativeNetworkInterface::addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {

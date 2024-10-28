@@ -134,7 +134,11 @@ namespace ntgcalls {
         if (mode == Capture) {
             tracks[id] = pc->addOutgoingTrack(dynamic_cast<BaseStreamer*>(streams[id].get())->createTrack());
         } else {
-            pc->addIncomingTrack(dynamic_cast<BaseReceiver*>(streams[id].get())->remoteSink());
+            if (id.second == Microphone || id.second == Speaker) {
+                pc->addIncomingAudioTrack(dynamic_cast<AudioReceiver*>(streams[id].get())->remoteSink());
+            } else {
+                pc->addIncomingVideoTrack(dynamic_cast<VideoReceiver*>(streams[id].get())->remoteSink());
+            }
         }
     }
 
