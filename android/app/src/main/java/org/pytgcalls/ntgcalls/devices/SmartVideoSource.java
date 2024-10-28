@@ -66,6 +66,9 @@ class SmartVideoSource {
             if (Build.VERSION.SDK_INT < 21) {
                 return;
             }
+            if (videoCapturer != null) {
+                return;
+            }
             videoCapturer = new ScreenCapturerAndroid(mediaProjectionPermissionResultData, new MediaProjection.Callback() {});
             videoCapturerSurfaceTextureHelper = SurfaceTextureHelper.create("ScreenCapturerThread", eglBase.getEglBaseContext());
             handler.post(() -> {
@@ -201,23 +204,25 @@ class SmartVideoSource {
             if (Build.VERSION.SDK_INT < 18) {
                 return;
             }
-            if (videoCapturer != null) {
-                try {
-                    videoCapturer.stopCapture();
-                } catch (InterruptedException e) {
-                    Log.e("VideoCapturerModule", "release", e);
+            handler.post(() -> {
+                if (videoCapturer != null) {
+                    try {
+                        videoCapturer.stopCapture();
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "release", e);
+                    }
+                    videoCapturer.dispose();
+                    videoCapturer = null;
                 }
-                videoCapturer.dispose();
-                videoCapturer = null;
-            }
-            if (videoCapturerSurfaceTextureHelper != null) {
-                videoCapturerSurfaceTextureHelper.dispose();
-                videoCapturerSurfaceTextureHelper = null;
-            }
+                if (videoCapturerSurfaceTextureHelper != null) {
+                    videoCapturerSurfaceTextureHelper.dispose();
+                    videoCapturerSurfaceTextureHelper = null;
+                }
+            });
             try {
                 thread.quitSafely();
             } catch (Exception e) {
-                Log.e("VideoCapturerModule", "release", e);
+                Log.e(TAG, "release", e);
             }
             instance[id] = null;
         }
