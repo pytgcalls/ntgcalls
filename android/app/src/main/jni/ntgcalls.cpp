@@ -267,7 +267,7 @@ REGISTER_CALLBACK(setUpgradeCallback, onUpgrade, "(JLorg/pytgcalls/ntgcalls/medi
 
 REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLorg/pytgcalls/ntgcalls/media/StreamType;)V")
 
-REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLorg/pytgcalls/ntgcalls/ConnectionState;)V")
+REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLorg/pytgcalls/ntgcalls/CallNetworkState;)V")
 
 REGISTER_CALLBACK(setSignalingDataCallback, onSignalingData, "(J[B)V")
 
