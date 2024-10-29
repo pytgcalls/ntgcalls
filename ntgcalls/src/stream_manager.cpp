@@ -259,7 +259,7 @@ namespace ntgcalls {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
                 if (mode == Capture) {
-                    const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device || desc.value().mediaSource == DescriptionType::MediaSource::Desktop;
+                    const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device;
                     readers.erase(device);
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
