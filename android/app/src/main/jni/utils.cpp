@@ -64,8 +64,8 @@ ntgcalls::VideoDescription parseVideoDescription(JNIEnv *env, jobject videoDescr
 
     webrtc::ScopedJavaLocalRef<jstring> input{env, reinterpret_cast<jstring>(env->GetObjectField(videoDescription, inputField))};
     auto mediaSource = env->GetIntField(videoDescription, mediaSourceField);
-    auto width = static_cast<uint16_t>(env->GetIntField(videoDescription, widthField));
-    auto height = static_cast<uint16_t>(env->GetIntField(videoDescription, heightField));
+    auto width = static_cast<int16_t>(env->GetIntField(videoDescription, widthField));
+    auto height = static_cast<int16_t>(env->GetIntField(videoDescription, heightField));
     auto fps = static_cast<uint8_t>(env->GetIntField(videoDescription, fpsField));
 
     return {
@@ -487,8 +487,8 @@ webrtc::ScopedJavaLocalRef<jobject> parseJDevice(JNIEnv *env, ntgcalls::StreamMa
 
 webrtc::ScopedJavaLocalRef<jobject> parseJFrameData(JNIEnv *env, const wrtc::FrameData& frameData) {
     const webrtc::ScopedJavaLocalRef<jclass> frameDataClass = webrtc::GetClass(env,"org/pytgcalls/ntgcalls/media/FrameData");
-    jmethodID constructor = env->GetMethodID(frameDataClass.obj(), "<init>", "(JI)V");
-    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(frameDataClass.obj(), constructor, frameData.absoluteCaptureTimestampMs, static_cast<jint>(frameData.rotation))};
+    jmethodID constructor = env->GetMethodID(frameDataClass.obj(), "<init>", "(JIII)V");
+    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(frameDataClass.obj(), constructor, frameData.absoluteCaptureTimestampMs, static_cast<jint>(frameData.width), static_cast<jint>(frameData.height), static_cast<jint>(frameData.rotation))};
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJRemoteSource(JNIEnv *env, const ntgcalls::RemoteSource& source) {
