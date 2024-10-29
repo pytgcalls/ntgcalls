@@ -29,7 +29,18 @@ namespace ntgcalls {
                 return;
             }
             std::lock_guard lock(mutex);
-            const auto yScaledSize = description->width * description->height;
+            uint16_t newWidth, newHeight;
+            if (description->width <= 0) {
+                newWidth = static_cast<int16_t>(frame->width());
+            } else {
+                newWidth = description->width;
+            }
+            if (description->height <= 0) {
+                newHeight = static_cast<int16_t>(frame->height());
+            } else {
+                newHeight = description->height;
+            }
+            const auto yScaledSize = newWidth * newHeight;
             const auto uvScaledSize = yScaledSize / 4;
             const auto totalSize = yScaledSize + uvScaledSize * 2;
             auto yuv = bytes::make_unique_binary(totalSize);
@@ -45,10 +56,10 @@ namespace ntgcalls {
                 buffer->DataU(), buffer->StrideU(),
                 buffer->DataV(), buffer->StrideV(),
                 width, height,
-                yScaledPlane.get(), description->width,
-                uScaledPlane.get(), description->width / 2,
-                vScaledPlane.get(), description->width / 2,
-                description->width, description->height,
+                yScaledPlane.get(), newWidth,
+                uScaledPlane.get(), newWidth / 2,
+                vScaledPlane.get(), newWidth / 2,
+                newWidth, newHeight,
                 libyuv::kFilterBox
             );
 
@@ -57,7 +68,9 @@ namespace ntgcalls {
             memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
 
             (void) frameCallback(ssrc, std::move(yuv), totalSize, {
-                .rotation = frame->rotation()
+                .rotation = frame->rotation(),
+                .width = newWidth,
+                .height = newHeight
             });
         });
         weakSink = sink;

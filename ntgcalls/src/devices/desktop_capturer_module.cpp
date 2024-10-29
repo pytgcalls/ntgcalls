@@ -90,7 +90,10 @@ namespace ntgcalls {
                 memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
             }
 
-            (void) dataCallback(std::move(yuv), {});
+            (void) dataCallback(std::move(yuv), {
+                .width = static_cast<uint16_t>(desc.width),
+                .height = static_cast<uint16_t>(desc.height),
+            });
         } else if (result == webrtc::DesktopCapturer::Result::ERROR_PERMANENT) {
             (void) eofCallback();
         }

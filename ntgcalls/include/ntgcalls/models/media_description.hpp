@@ -72,10 +72,10 @@ namespace ntgcalls {
 
     class VideoDescription final : public BaseMediaDescription {
     public:
-        uint16_t width, height;
+        int16_t width, height;
         uint8_t fps;
 
-        VideoDescription(const MediaSource mediaSource, const uint16_t width, const uint16_t height, const uint8_t fps, const std::string& input):
+        VideoDescription(const MediaSource mediaSource, const int16_t width, const int16_t height, const uint8_t fps, const std::string& input):
                 BaseMediaDescription(input, mediaSource), width(width), height(height), fps(fps) {}
     };
 

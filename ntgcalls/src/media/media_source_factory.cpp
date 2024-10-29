@@ -16,6 +16,12 @@
 namespace ntgcalls {
 
     std::unique_ptr<BaseReader> MediaSourceFactory::fromInput(const BaseMediaDescription& desc, BaseSink *sink) {
+        if (const auto* video = dynamic_cast<const VideoDescription*>(&desc)) {
+            if (video->width <= 0 || video->height <= 0 || video->fps == 0) {
+                RTC_LOG(LS_ERROR) << "Invalid video resolution or fps";
+                throw InvalidParams("Invalid video resolution or fps");
+            }
+        }
         // SUPPORTED INPUT MODES
         switch (desc.mediaSource) {
         case BaseMediaDescription::MediaSource::File:
