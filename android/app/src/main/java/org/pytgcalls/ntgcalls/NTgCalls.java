@@ -45,10 +45,10 @@ public class NTgCalls {
 
     private static native String pingNative();
 
-    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
+    @RequiresPermission(allOf = {android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.CAMERA})
     public native void createP2PCall(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
 
-    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
+    @RequiresPermission(allOf = {android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.CAMERA})
     public void createP2PCall(long chatId) throws FileNotFoundException, ConnectionException {
         createP2PCall(chatId, null);
     }
@@ -61,10 +61,10 @@ public class NTgCalls {
 
     public native void connectP2P(long chatId, List<RTCServer> rtcServers, List<String> versions, boolean p2pAllowed) throws ConnectionException;
 
-    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
+    @RequiresPermission(allOf = {android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.CAMERA})
     public native String createCall(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
 
-    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
+    @RequiresPermission(allOf = {android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.CAMERA})
     public String createCall(long chatId) throws FileNotFoundException, ConnectionException {
         return createCall(chatId, null);
     }
