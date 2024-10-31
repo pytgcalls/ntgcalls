@@ -6,7 +6,7 @@
 #include <future>
 #include <nlohmann/json.hpp>
 
-#include "call_interface.hpp"
+#include <ntgcalls/instances/call_interface.hpp>
 #include <ntgcalls/models/auth_params.hpp>
 #include <ntgcalls/signaling/signaling.hpp>
 #include <ntgcalls/models/rtc_server.hpp>

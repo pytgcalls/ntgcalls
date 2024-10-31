@@ -6,8 +6,7 @@
 
 #include <mutex>
 #include <api/peer_connection_interface.h>
-
-#include "peer_connection_factory_with_context.hpp"
+#include <wrtc/interfaces/peer_connection/peer_connection_factory_with_context.hpp>
 
 namespace wrtc {
 

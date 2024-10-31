@@ -5,7 +5,7 @@
 #include <wrtc/interfaces/media/channels/outgoing_video_channel.hpp>
 
 #include <wrtc/interfaces/native_connection.hpp>
-#include "api/video/builtin_video_bitrate_allocator_factory.h"
+#include <api/video/builtin_video_bitrate_allocator_factory.h>
 
 namespace wrtc {
     OutgoingVideoChannel::OutgoingVideoChannel(

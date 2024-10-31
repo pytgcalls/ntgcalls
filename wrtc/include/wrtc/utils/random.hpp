@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "binary.hpp"
+#include <wrtc/utils/binary.hpp>
 
 namespace bytes {
     void RandomFill(span data);

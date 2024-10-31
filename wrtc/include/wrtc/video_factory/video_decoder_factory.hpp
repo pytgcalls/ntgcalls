@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "video_decoder_config.hpp"
+#include <wrtc/video_factory/video_decoder_config.hpp>
 
 namespace wrtc {
 

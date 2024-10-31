@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include "message.hpp"
 #include <wrtc/models/media_content.hpp>
+#include <ntgcalls/signaling/messages/message.hpp>
 
 namespace signaling {
     class NegotiateChannelsMessage final: public Message {

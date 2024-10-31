@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "binary.hpp"
+#include <wrtc/utils/binary.hpp>
 #include <openssl/sha.h>
 #include <array>
 

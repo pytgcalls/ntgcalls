@@ -3,10 +3,8 @@
 //
 
 #pragma once
-#include <string>
 #include <nlohmann/json.hpp>
-
-#include "media_content.hpp"
+#include <wrtc/models/media_content.hpp>
 
 namespace wrtc {
     using nlohmann::json;

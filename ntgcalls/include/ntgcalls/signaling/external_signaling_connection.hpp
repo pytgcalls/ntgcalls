@@ -5,7 +5,7 @@
 #pragma once
 #include <rtc_base/third_party/sigslot/sigslot.h>
 
-#include "signaling_interface.hpp"
+#include <ntgcalls/signaling/signaling_interface.hpp>
 
 namespace signaling {
     class ExternalSignalingConnection final : public sigslot::has_slots<>, public SignalingInterface {

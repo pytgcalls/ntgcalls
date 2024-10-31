@@ -9,7 +9,7 @@
 #include <api/video_codecs/video_encoder.h>
 #include <api/video_codecs/video_encoder_factory.h>
 
-#include "video_base_config.hpp"
+#include <wrtc/video_factory/video_base_config.hpp>
 
 namespace wrtc {
 

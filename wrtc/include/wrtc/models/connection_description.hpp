@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "candidate_description.hpp"
+#include <wrtc/models/candidate_description.hpp>
 
 namespace wrtc {
     struct ConnectionDescription {

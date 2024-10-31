@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "message.hpp"
+#include <ntgcalls/signaling/messages/message.hpp>
 
 namespace signaling {
     class CandidatesMessage final : public Message {

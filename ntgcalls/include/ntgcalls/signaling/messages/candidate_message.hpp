@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "message.hpp"
+#include <ntgcalls/signaling/messages/message.hpp>
 
 namespace signaling {
 

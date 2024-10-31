@@ -5,7 +5,7 @@
 #pragma once
 #include <optional>
 
-#include "binary.hpp"
+#include <wrtc/utils/binary.hpp>
 
 namespace bytes {
 

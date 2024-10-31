@@ -6,10 +6,7 @@
 #include <p2p/base/transport_description_factory.h>
 #include <rtc_base/unique_id_generator.h>
 #include <pc/media_session.h>
-
-#include <utility>
-
-#include "media_content.hpp"
+#include <wrtc/models/media_content.hpp>
 
 namespace wrtc {
 

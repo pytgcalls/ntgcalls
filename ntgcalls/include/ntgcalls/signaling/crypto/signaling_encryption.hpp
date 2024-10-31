@@ -8,9 +8,9 @@
 #include <rtc_base/copy_on_write_buffer.h>
 
 
-#include "auth_key.hpp"
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/syncronized_callback.hpp>
+#include <ntgcalls/signaling/crypto/auth_key.hpp>
 
 namespace signaling {
 

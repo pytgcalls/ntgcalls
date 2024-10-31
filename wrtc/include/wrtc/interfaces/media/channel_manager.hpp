@@ -3,10 +3,8 @@
 //
 
 #pragma once
-#include <media/base/media_engine.h>
-#include <rtc_base/thread.h>
 #include <pc/channel.h>
-#include "api/video/video_bitrate_allocator_factory.h"
+#include <media/base/media_engine.h>
 
 namespace wrtc {
     class ChannelManager {

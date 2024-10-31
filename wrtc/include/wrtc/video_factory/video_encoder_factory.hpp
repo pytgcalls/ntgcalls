@@ -5,8 +5,7 @@
 #pragma once
 
 #include <api/video_codecs/video_encoder_factory.h>
-
-#include "video_encoder_config.hpp"
+#include <wrtc/video_factory/video_encoder_config.hpp>
 
 namespace wrtc {
 

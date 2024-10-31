@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "device_info.hpp"
+#include <ntgcalls/devices/device_info.hpp>
 
 namespace ntgcalls {
 

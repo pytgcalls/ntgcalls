@@ -5,9 +5,7 @@
 #pragma once
 #include <vector>
 #include <rtc_base/thread.h>
-
-#include "crypto/signaling_encryption.hpp"
-#include "crypto/auth_key.hpp"
+#include <ntgcalls/signaling/crypto/signaling_encryption.hpp>
 
 namespace signaling {
     using DataEmitter = std::function<void(const bytes::binary&)>;

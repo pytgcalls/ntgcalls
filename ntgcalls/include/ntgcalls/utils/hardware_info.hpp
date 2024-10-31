@@ -10,7 +10,7 @@
 #elif __APPLE__
 #include <sys/sysctl.h>
 #else
-#include "sys/times.h"
+#include <sys/times.h>
 #include <unistd.h>
 #endif
 

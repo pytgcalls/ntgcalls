@@ -5,7 +5,7 @@
 #pragma once
 
 #include <openssl/bn.h>
-#include "binary.hpp"
+#include <wrtc/utils/binary.hpp>
 
 namespace openssl {
     class Context {
