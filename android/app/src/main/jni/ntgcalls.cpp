@@ -25,6 +25,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
         auto jMediaState = parseJMediaState(env, mediaState);
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jMediaState.obj());
+        CAPTURE_JAVA_EXCEPTION
     });
 
     instance->onStreamEnd([instancePtr](int64_t chatId, ntgcalls::StreamManager::Type type, ntgcalls::StreamManager::Device device) {
@@ -37,6 +38,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         auto jStreamType = parseJStreamType(env, type);
         auto jDevice = parseJDevice(env, device);
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jStreamType.obj(), jDevice.obj());
+        CAPTURE_JAVA_EXCEPTION
     });
 
     instance->onConnectionChange([instancePtr](int64_t chatId, ntgcalls::CallNetworkState state) {
@@ -48,6 +50,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
         auto networkState = parseJCallNetworkState(env, state);
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), networkState.obj());
+        CAPTURE_JAVA_EXCEPTION
     });
 
     instance->onSignalingData([instancePtr](int64_t chatId, const bytes::binary& data) {
@@ -59,6 +62,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
         auto jData = parseJBinary(env, data);
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jData.obj());
+        CAPTURE_JAVA_EXCEPTION
     });
 
     instance->onFrame([instancePtr](int64_t chatId, int64_t streamId, ntgcalls::StreamManager::Mode mode, ntgcalls::StreamManager::Device device, const bytes::binary& data, wrtc::FrameData frameData) {
@@ -73,10 +77,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         auto jData = parseJBinary(env, data);
         auto jFrameData = parseJFrameData(env, frameData);
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), static_cast<jlong>(streamId), jStreamMode.obj(), jDevice.obj(), jData.obj(), jFrameData.obj());
-        if (env->ExceptionCheck()) {
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-        }
+        CAPTURE_JAVA_EXCEPTION
     });
 
     instance->onRemoteSourceChange([instancePtr](int64_t chatId, ntgcalls::RemoteSource remoteSource) {
@@ -88,6 +89,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
         auto jRemoteSource = parseJRemoteSource(env, remoteSource);
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jRemoteSource.obj());
+        CAPTURE_JAVA_EXCEPTION
     });
 }
 

@@ -148,3 +148,8 @@ env->GetMethodID(callbackClass, #method, data_class) \
 }; \
 env->DeleteLocalRef(callbackClass);\
 }
+
+#define CAPTURE_JAVA_EXCEPTION if (env->ExceptionCheck()) { \
+env->ExceptionDescribe(); \
+env->ExceptionClear(); \
+}
