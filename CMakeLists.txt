@@ -18,6 +18,11 @@ if(DEFINED PY_VERSION_INFO)
     set(IS_PYTHON TRUE)
 endif()
 
+add_custom_target(clean_objects
+    COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/CleanObjects.cmake"
+    COMMENT "Removing all object (.o) files"
+)
+
 project(ntgcalls VERSION 1.3.0.1 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 

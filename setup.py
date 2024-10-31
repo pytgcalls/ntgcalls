@@ -90,6 +90,9 @@ class CMakeBuild(build_ext):
             [cmake_bin(), ext.sourcedir, *cmake_args], cwd=build_temp, check=True
         )
         subprocess.run(
+            [cmake_bin(), '--build', '.', '--target', 'clean_objects'], cwd=build_temp, check=True
+        )
+        subprocess.run(
             [cmake_bin(), '--build', '.', *build_args], cwd=build_temp, check=True
         )
 
@@ -153,6 +156,9 @@ class SharedCommand(Command):
 
             subprocess.run(
                 [cmake_bin(), source_dir, *new_cmake_args], cwd=build_temp, check=True
+            )
+            subprocess.run(
+                [cmake_bin(), '--build', '.', '--target', 'clean_objects'], cwd=build_temp, check=True
             )
             subprocess.run(
                 [cmake_bin(), '--build', '.', *build_args], cwd=build_temp, check=True

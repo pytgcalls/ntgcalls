@@ -1,0 +1,11 @@
+file(GLOB_RECURSE OBJECT_FILES "${CMAKE_BINARY_DIR}/*.o")
+
+if(OBJECT_FILES)
+    message(STATUS "Removing object files:")
+    foreach(OBJECT_FILE ${OBJECT_FILES})
+        message(STATUS "Removing ${OBJECT_FILE}")
+        file(REMOVE "${OBJECT_FILE}")
+    endforeach()
+else()
+    message(STATUS "No object files found to remove.")
+endif()
