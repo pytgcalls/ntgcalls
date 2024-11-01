@@ -5,14 +5,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import static org.junit.Assert.fail;
 import org.junit.runner.RunWith;
-import org.pytgcalls.ntgcalls.NTgCalls;
-import org.pytgcalls.ntgcalls.exceptions.ConnectionException;
-import org.pytgcalls.ntgcalls.exceptions.InvalidParamsException;
-import org.pytgcalls.ntgcalls.exceptions.TelegramServerException;
-import org.pytgcalls.ntgcalls.media.AudioDescription;
-import org.pytgcalls.ntgcalls.media.MediaDescription;
-import org.pytgcalls.ntgcalls.media.MediaDevices;
-import org.pytgcalls.ntgcalls.media.MediaSource;
+import io.github.pytgcalls.NTgCalls;
+import io.github.pytgcalls.exceptions.ConnectionException;
+import io.github.pytgcalls.exceptions.InvalidParamsException;
+import io.github.pytgcalls.exceptions.TelegramServerException;
+import io.github.pytgcalls.media.AudioDescription;
+import io.github.pytgcalls.media.MediaDescription;
+import io.github.pytgcalls.media.MediaDevices;
+import io.github.pytgcalls.media.MediaSource;
 
 import java.io.FileNotFoundException;
 

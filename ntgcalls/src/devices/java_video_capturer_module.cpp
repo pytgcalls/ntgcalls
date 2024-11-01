@@ -24,7 +24,7 @@ namespace ntgcalls {
             throw MediaDeviceError("Wrong device type");
         }
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        const webrtc::ScopedJavaLocalRef<jclass> videoCapturerClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/devices/JavaVideoCapturerModule");
+        const webrtc::ScopedJavaLocalRef<jclass> videoCapturerClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
         webrtc::ScopedJavaLocalRef localJavaModule{env, env->NewObject(
             videoCapturerClass.obj(),
             env->GetMethodID(videoCapturerClass.obj(), "<init>", "(ZLjava/lang/String;IIIJ)V"),
@@ -56,7 +56,7 @@ namespace ntgcalls {
 
     std::vector<DeviceInfo> JavaVideoCapturerModule::getDevices() {
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        const webrtc::ScopedJavaLocalRef<jclass> videoCapturerClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/devices/JavaVideoCapturerModule");
+        const webrtc::ScopedJavaLocalRef<jclass> videoCapturerClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
         // ReSharper disable once CppLocalVariableMayBeConst
         jmethodID getDevicesMethod = env->GetStaticMethodID(videoCapturerClass.obj(), "getDevices", "()Ljava/util/List;");
         const webrtc::ScopedJavaLocalRef deviceList(env, env->CallStaticObjectMethod(videoCapturerClass.obj(), getDevicesMethod));

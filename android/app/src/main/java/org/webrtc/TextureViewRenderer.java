@@ -10,7 +10,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import org.pytgcalls.ntgcalls.AndroidUtils;
+import io.github.pytgcalls.AndroidUtils;
 
 public class TextureViewRenderer extends TextureView implements TextureView.SurfaceTextureListener, VideoSink, RendererCommon.RendererEvents {
     private static final String TAG = "TextureViewRenderer";

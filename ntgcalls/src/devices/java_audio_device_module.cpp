@@ -17,7 +17,7 @@ namespace ntgcalls {
         AudioMixer(sink)
     {
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        const webrtc::ScopedJavaLocalRef<jclass> audioRecordClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/devices/JavaAudioDeviceModule");
+        const webrtc::ScopedJavaLocalRef<jclass> audioRecordClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaAudioDeviceModule");
         webrtc::ScopedJavaLocalRef localJavaModule{env, env->NewObject(
             audioRecordClass.obj(),
             env->GetMethodID(audioRecordClass.obj(), "<init>", "(ZIIJ)V"),

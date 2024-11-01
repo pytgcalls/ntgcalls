@@ -82,10 +82,10 @@ ntgcalls::MediaDescription parseMediaDescription(JNIEnv *env, jobject mediaDescr
         return ntgcalls::MediaDescription();
     }
     webrtc::ScopedJavaLocalRef<jclass> mediaDescriptionClass{env, env->GetObjectClass(mediaDescription)};
-    jfieldID micField = env->GetFieldID(mediaDescriptionClass.obj(), "microphone", "Lorg/pytgcalls/ntgcalls/media/AudioDescription;");
-    jfieldID speakerField = env->GetFieldID(mediaDescriptionClass.obj(), "speaker", "Lorg/pytgcalls/ntgcalls/media/AudioDescription;");
-    jfieldID cameraField = env->GetFieldID(mediaDescriptionClass.obj(), "camera", "Lorg/pytgcalls/ntgcalls/media/VideoDescription;");
-    jfieldID screenField = env->GetFieldID(mediaDescriptionClass.obj(), "screen", "Lorg/pytgcalls/ntgcalls/media/VideoDescription;");
+    jfieldID micField = env->GetFieldID(mediaDescriptionClass.obj(), "microphone", "Lio/github/pytgcalls/media/AudioDescription;");
+    jfieldID speakerField = env->GetFieldID(mediaDescriptionClass.obj(), "speaker", "Lio/github/pytgcalls/media/AudioDescription;");
+    jfieldID cameraField = env->GetFieldID(mediaDescriptionClass.obj(), "camera", "Lio/github/pytgcalls/media/VideoDescription;");
+    jfieldID screenField = env->GetFieldID(mediaDescriptionClass.obj(), "screen", "Lio/github/pytgcalls/media/VideoDescription;");
 
     webrtc::ScopedJavaLocalRef<jobject> microphone{env, env->GetObjectField(mediaDescription, micField)};
     webrtc::ScopedJavaLocalRef<jobject> speaker{env, env->GetObjectField(mediaDescription, speakerField)};
@@ -206,7 +206,7 @@ bytes::unique_binary parseUniqueBinary(JNIEnv *env, jbyteArray byteArray) {
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseAuthParams(JNIEnv *env, const ntgcalls::AuthParams& authParams) {
-    const webrtc::ScopedJavaLocalRef<jclass> authParamsClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/p2p/AuthParams");
+    const webrtc::ScopedJavaLocalRef<jclass> authParamsClass = webrtc::GetClass(env, "io/github/pytgcalls/p2p/AuthParams");
     jmethodID constructor = env->GetMethodID(authParamsClass.obj(), "<init>", "([BJ)V");
     auto g_a_or_b = parseJByteArray(env, authParams.g_a_or_b);
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(authParamsClass.obj(), constructor, g_a_or_b.obj(), authParams.key_fingerprint)};
@@ -294,22 +294,22 @@ std::vector<ntgcalls::RTCServer> parseRTCServerList(JNIEnv *env, jobject list) {
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJMediaState(JNIEnv *env, ntgcalls::MediaState mediaState) {
-    const webrtc::ScopedJavaLocalRef<jclass> mediaStateClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/MediaState");
+    const webrtc::ScopedJavaLocalRef<jclass> mediaStateClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaState");
     jmethodID constructor = env->GetMethodID(mediaStateClass.obj(), "<init>", "(ZZZ)V");
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(mediaStateClass.obj(), constructor, mediaState.muted, mediaState.videoPaused, mediaState.videoStopped)};
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJProtocol(JNIEnv *env, const ntgcalls::Protocol &protocol) {
-    const webrtc::ScopedJavaLocalRef<jclass> protocolClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/p2p/Protocol");
+    const webrtc::ScopedJavaLocalRef<jclass> protocolClass = webrtc::GetClass(env, "io/github/pytgcalls/p2p/Protocol");
     jmethodID constructor = env->GetMethodID(protocolClass.obj(), "<init>", "(IIZZLjava/util/List;)V");
     auto libraryVersions = parseJStringList(env, protocol.library_versions);
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(protocolClass.obj(), constructor, protocol.min_layer, protocol.max_layer, protocol.udp_p2p, protocol.udp_reflector, libraryVersions.obj())};
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJStreamType(JNIEnv *env, ntgcalls::StreamManager::Type type) {
-    const webrtc::ScopedJavaLocalRef<jclass> streamTypeClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/StreamType");
-    jfieldID audioField = env->GetStaticFieldID(streamTypeClass.obj(), "AUDIO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
-    jfieldID videoField = env->GetStaticFieldID(streamTypeClass.obj(), "VIDEO", "Lorg/pytgcalls/ntgcalls/media/StreamType;");
+    const webrtc::ScopedJavaLocalRef<jclass> streamTypeClass = webrtc::GetClass(env, "io/github/pytgcalls/media/StreamType");
+    jfieldID audioField = env->GetStaticFieldID(streamTypeClass.obj(), "AUDIO", "Lio/github/pytgcalls/media/StreamType;");
+    jfieldID videoField = env->GetStaticFieldID(streamTypeClass.obj(), "VIDEO", "Lio/github/pytgcalls/media/StreamType;");
 
     switch (type) {
         case ntgcalls::StreamManager::Type::Audio:
@@ -321,12 +321,12 @@ webrtc::ScopedJavaLocalRef<jobject> parseJStreamType(JNIEnv *env, ntgcalls::Stre
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJConnectionState(JNIEnv *env, ntgcalls::CallNetworkState::ConnectionState state) {
-    const webrtc::ScopedJavaLocalRef<jclass> connectionStateClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/CallNetworkState$State");
-    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTING", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
-    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
-    jfieldID failedField = env->GetStaticFieldID(connectionStateClass.obj(), "FAILED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
-    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass.obj(), "TIMEOUT", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
-    jfieldID closedField = env->GetStaticFieldID(connectionStateClass.obj(), "CLOSED", "Lorg/pytgcalls/ntgcalls/CallNetworkState$State;");
+    const webrtc::ScopedJavaLocalRef<jclass> connectionStateClass = webrtc::GetClass(env, "io/github/pytgcalls/CallNetworkState$State");
+    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTING", "Lio/github/pytgcalls/CallNetworkState$State;");
+    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTED", "Lio/github/pytgcalls/CallNetworkState$State;");
+    jfieldID failedField = env->GetStaticFieldID(connectionStateClass.obj(), "FAILED", "Lio/github/pytgcalls/CallNetworkState$State;");
+    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass.obj(), "TIMEOUT", "Lio/github/pytgcalls/CallNetworkState$State;");
+    jfieldID closedField = env->GetStaticFieldID(connectionStateClass.obj(), "CLOSED", "Lio/github/pytgcalls/CallNetworkState$State;");
 
     switch (state) {
         case ntgcalls::CallNetworkState::ConnectionState::Connecting:
@@ -344,17 +344,17 @@ webrtc::ScopedJavaLocalRef<jobject> parseJConnectionState(JNIEnv *env, ntgcalls:
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJCallNetworkState(JNIEnv *env, ntgcalls::CallNetworkState state) {
-    const webrtc::ScopedJavaLocalRef<jclass> callNetworkStateClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/CallNetworkState");
-    jmethodID constructor = env->GetMethodID(callNetworkStateClass.obj(), "<init>", "(Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;Lorg/pytgcalls/ntgcalls/CallNetworkState$State;)V");
+    const webrtc::ScopedJavaLocalRef<jclass> callNetworkStateClass = webrtc::GetClass(env, "io/github/pytgcalls/CallNetworkState");
+    jmethodID constructor = env->GetMethodID(callNetworkStateClass.obj(), "<init>", "(Lio/github/pytgcalls/CallNetworkState$Kind;Lio/github/pytgcalls/CallNetworkState$State;)V");
     auto kind = parseJCallNetworkStateKind(env, state.kind);
     auto connectionState = parseJConnectionState(env, state.connectionState);
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(callNetworkStateClass.obj(), constructor, kind.obj(), connectionState.obj())};
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJCallNetworkStateKind(JNIEnv *env, ntgcalls::CallNetworkState::Kind kind) {
-    const webrtc::ScopedJavaLocalRef<jclass> kindClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/CallNetworkState$Kind");
-    jfieldID normalField = env->GetStaticFieldID(kindClass.obj(), "NORMAL", "Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;");
-    jfieldID presentationField = env->GetStaticFieldID(kindClass.obj(), "PRESENTATION", "Lorg/pytgcalls/ntgcalls/CallNetworkState$Kind;");
+    const webrtc::ScopedJavaLocalRef<jclass> kindClass = webrtc::GetClass(env, "io/github/pytgcalls/CallNetworkState$Kind");
+    jfieldID normalField = env->GetStaticFieldID(kindClass.obj(), "NORMAL", "Lio/github/pytgcalls/CallNetworkState$Kind;");
+    jfieldID presentationField = env->GetStaticFieldID(kindClass.obj(), "PRESENTATION", "Lio/github/pytgcalls/CallNetworkState$Kind;");
 
     switch (kind) {
         case ntgcalls::CallNetworkState::Kind::Normal:
@@ -366,10 +366,10 @@ webrtc::ScopedJavaLocalRef<jobject> parseJCallNetworkStateKind(JNIEnv *env, ntgc
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJStreamStatus(JNIEnv *env, ntgcalls::StreamManager::Status status) {
-    const webrtc::ScopedJavaLocalRef<jclass> streamStatusClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/StreamStatus");
-    jfieldID playingField = env->GetStaticFieldID(streamStatusClass.obj(), "ACTIVE", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
-    jfieldID pausedField = env->GetStaticFieldID(streamStatusClass.obj(), "PAUSED", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
-    jfieldID idlingField = env->GetStaticFieldID(streamStatusClass.obj(), "IDLING", "Lorg/pytgcalls/ntgcalls/media/StreamStatus;");
+    const webrtc::ScopedJavaLocalRef<jclass> streamStatusClass = webrtc::GetClass(env, "io/github/pytgcalls/media/StreamStatus");
+    jfieldID playingField = env->GetStaticFieldID(streamStatusClass.obj(), "ACTIVE", "Lio/github/pytgcalls/media/StreamStatus;");
+    jfieldID pausedField = env->GetStaticFieldID(streamStatusClass.obj(), "PAUSED", "Lio/github/pytgcalls/media/StreamStatus;");
+    jfieldID idlingField = env->GetStaticFieldID(streamStatusClass.obj(), "IDLING", "Lio/github/pytgcalls/media/StreamStatus;");
 
     switch (status) {
         case ntgcalls::StreamManager::Status::Active:
@@ -383,9 +383,9 @@ webrtc::ScopedJavaLocalRef<jobject> parseJStreamStatus(JNIEnv *env, ntgcalls::St
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJMediaStatus(JNIEnv *env, const ntgcalls::StreamManager::MediaStatus &status) {
-    const webrtc::ScopedJavaLocalRef<jclass> mediaStatusClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/MediaStatus");
+    const webrtc::ScopedJavaLocalRef<jclass> mediaStatusClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaStatus");
 
-    jmethodID constructor = env->GetMethodID(mediaStatusClass.obj(), "<init>", "(Lorg/pytgcalls/ntgcalls/media/StreamStatus;Lorg/pytgcalls/ntgcalls/media/StreamStatus;)V");
+    jmethodID constructor = env->GetMethodID(mediaStatusClass.obj(), "<init>", "(Lio/github/pytgcalls/media/StreamStatus;Lio/github/pytgcalls/media/StreamStatus;)V");
     auto capture = parseJStreamStatus(env, status.capture);
     auto playback = parseJStreamStatus(env, status.playback);
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(mediaStatusClass.obj(), constructor, capture.obj(), playback.obj())};
@@ -408,7 +408,7 @@ webrtc::ScopedJavaLocalRef<jobject> parseJMediaStatusMap(JNIEnv *env, const std:
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJMediaDevices(JNIEnv *env, const ntgcalls::MediaDevices &devices) {
-    const webrtc::ScopedJavaLocalRef<jclass> mediaDevicesClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/MediaDevices");
+    const webrtc::ScopedJavaLocalRef<jclass> mediaDevicesClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaDevices");
     jmethodID constructor = env->GetMethodID(mediaDevicesClass.obj(), "<init>", "(Ljava/util/List;Ljava/util/List;Ljava/util/List;)V");
     auto audio = parseJDeviceInfoList(env, devices.audio);
     auto video = parseJDeviceInfoList(env, devices.video);
@@ -429,7 +429,7 @@ webrtc::ScopedJavaLocalRef<jobject> parseJDeviceInfoList(JNIEnv *env, const std:
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJDeviceInfo(JNIEnv *env, const ntgcalls::DeviceInfo& device) {
-    const webrtc::ScopedJavaLocalRef<jclass> deviceInfoClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/DeviceInfo");
+    const webrtc::ScopedJavaLocalRef<jclass> deviceInfoClass = webrtc::GetClass(env, "io/github/pytgcalls/media/DeviceInfo");
     jmethodID constructor = env->GetMethodID(deviceInfoClass.obj(), "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
     auto deviceName = parseJString(env, device.name);
     auto metadata = parseJString(env, device.metadata);
@@ -437,9 +437,9 @@ webrtc::ScopedJavaLocalRef<jobject> parseJDeviceInfo(JNIEnv *env, const ntgcalls
 }
 
 ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject device) {
-    const webrtc::ScopedJavaLocalRef<jclass> streamModeClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/StreamMode");
-    jfieldID captureField = env->GetStaticFieldID(streamModeClass.obj(), "CAPTURE", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
-    jfieldID playbackField = env->GetStaticFieldID(streamModeClass.obj(), "PLAYBACK", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
+    const webrtc::ScopedJavaLocalRef<jclass> streamModeClass = webrtc::GetClass(env, "io/github/pytgcalls/media/StreamMode");
+    jfieldID captureField = env->GetStaticFieldID(streamModeClass.obj(), "CAPTURE", "Lio/github/pytgcalls/media/StreamMode;");
+    jfieldID playbackField = env->GetStaticFieldID(streamModeClass.obj(), "PLAYBACK", "Lio/github/pytgcalls/media/StreamMode;");
     const webrtc::ScopedJavaLocalRef<jobject> playback{env, env->GetStaticObjectField(streamModeClass.obj(), playbackField)};
     const webrtc::ScopedJavaLocalRef<jobject> capture{env, env->GetStaticObjectField(streamModeClass.obj(), captureField)};
 
@@ -452,9 +452,9 @@ ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject device) {
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJStreamMode(JNIEnv *env, ntgcalls::StreamManager::Mode mode) {
-    const webrtc::ScopedJavaLocalRef<jclass> streamModeClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/StreamMode");
-    jfieldID captureField = env->GetStaticFieldID(streamModeClass.obj(), "CAPTURE", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
-    jfieldID playbackField = env->GetStaticFieldID(streamModeClass.obj(), "PLAYBACK", "Lorg/pytgcalls/ntgcalls/media/StreamMode;");
+    const webrtc::ScopedJavaLocalRef<jclass> streamModeClass = webrtc::GetClass(env, "io/github/pytgcalls/media/StreamMode");
+    jfieldID captureField = env->GetStaticFieldID(streamModeClass.obj(), "CAPTURE", "Lio/github/pytgcalls/media/StreamMode;");
+    jfieldID playbackField = env->GetStaticFieldID(streamModeClass.obj(), "PLAYBACK", "Lio/github/pytgcalls/media/StreamMode;");
     switch (mode) {
         case ntgcalls::StreamManager::Mode::Capture:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(streamModeClass.obj(), captureField)};
@@ -465,11 +465,11 @@ webrtc::ScopedJavaLocalRef<jobject> parseJStreamMode(JNIEnv *env, ntgcalls::Stre
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device) {
-    const webrtc::ScopedJavaLocalRef<jclass> streamDeviceClass = webrtc::GetClass(env,"org/pytgcalls/ntgcalls/media/StreamDevice");
-    jfieldID microphoneField = env->GetStaticFieldID(streamDeviceClass.obj(), "MICROPHONE", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
-    jfieldID speakerField = env->GetStaticFieldID(streamDeviceClass.obj(), "SPEAKER", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
-    jfieldID cameraField = env->GetStaticFieldID(streamDeviceClass.obj(), "CAMERA", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
-    jfieldID screenField = env->GetStaticFieldID(streamDeviceClass.obj(), "SCREEN", "Lorg/pytgcalls/ntgcalls/media/StreamDevice;");
+    const webrtc::ScopedJavaLocalRef<jclass> streamDeviceClass = webrtc::GetClass(env,"io/github/pytgcalls/media/StreamDevice");
+    jfieldID microphoneField = env->GetStaticFieldID(streamDeviceClass.obj(), "MICROPHONE", "Lio/github/pytgcalls/media/StreamDevice;");
+    jfieldID speakerField = env->GetStaticFieldID(streamDeviceClass.obj(), "SPEAKER", "Lio/github/pytgcalls/media/StreamDevice;");
+    jfieldID cameraField = env->GetStaticFieldID(streamDeviceClass.obj(), "CAMERA", "Lio/github/pytgcalls/media/StreamDevice;");
+    jfieldID screenField = env->GetStaticFieldID(streamDeviceClass.obj(), "SCREEN", "Lio/github/pytgcalls/media/StreamDevice;");
 
     switch (device) {
         case ntgcalls::StreamManager::Device::Microphone:
@@ -486,25 +486,25 @@ webrtc::ScopedJavaLocalRef<jobject> parseJDevice(JNIEnv *env, ntgcalls::StreamMa
 
 
 webrtc::ScopedJavaLocalRef<jobject> parseJFrameData(JNIEnv *env, const wrtc::FrameData& frameData) {
-    const webrtc::ScopedJavaLocalRef<jclass> frameDataClass = webrtc::GetClass(env,"org/pytgcalls/ntgcalls/media/FrameData");
+    const webrtc::ScopedJavaLocalRef<jclass> frameDataClass = webrtc::GetClass(env,"io/github/pytgcalls/media/FrameData");
     jmethodID constructor = env->GetMethodID(frameDataClass.obj(), "<init>", "(JIII)V");
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(frameDataClass.obj(), constructor, frameData.absoluteCaptureTimestampMs, static_cast<jint>(frameData.width), static_cast<jint>(frameData.height), static_cast<jint>(frameData.rotation))};
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJRemoteSource(JNIEnv *env, const ntgcalls::RemoteSource& source) {
-    const webrtc::ScopedJavaLocalRef<jclass> remoteSourceClass = webrtc::GetClass(env,"org/pytgcalls/ntgcalls/media/RemoteSource");
-    jmethodID constructor = env->GetMethodID(remoteSourceClass.obj(), "<init>", "(ILorg/pytgcalls/ntgcalls/media/SourceState;Lorg/pytgcalls/ntgcalls/media/StreamDevice;)V");
-    const webrtc::ScopedJavaLocalRef<jclass> sourceStateClass = webrtc::GetClass(env, "org/pytgcalls/ntgcalls/media/SourceState");
+    const webrtc::ScopedJavaLocalRef<jclass> remoteSourceClass = webrtc::GetClass(env,"io/github/pytgcalls/media/RemoteSource");
+    jmethodID constructor = env->GetMethodID(remoteSourceClass.obj(), "<init>", "(ILio/github/pytgcalls/media/SourceState;Lio/github/pytgcalls/media/StreamDevice;)V");
+    const webrtc::ScopedJavaLocalRef<jclass> sourceStateClass = webrtc::GetClass(env, "io/github/pytgcalls/media/SourceState");
     webrtc::ScopedJavaLocalRef<jobject> state;
     switch (source.state) {
         case ntgcalls::RemoteSource::State::Active:
-            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "ACTIVE", "Lorg/pytgcalls/ntgcalls/media/SourceState;"))};
+            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "ACTIVE", "Lio/github/pytgcalls/media/SourceState;"))};
             break;
         case ntgcalls::RemoteSource::State::Suspended:
-            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "SUSPENDED", "Lorg/pytgcalls/ntgcalls/media/SourceState;"))};
+            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "SUSPENDED", "Lio/github/pytgcalls/media/SourceState;"))};
             break;
         case ntgcalls::RemoteSource::State::Inactive:
-            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "INACTIVE", "Lorg/pytgcalls/ntgcalls/media/SourceState;"))};
+            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "INACTIVE", "Lio/github/pytgcalls/media/SourceState;"))};
             break;
     }
     auto device = parseJDevice(env, source.device);
@@ -522,7 +522,7 @@ void throwJavaException(JNIEnv *env, std::string name, const std::string& messag
         if (start_pos != std::string::npos) {
             name.replace(start_pos, from.length(), "");
         }
-        name = "org/pytgcalls/ntgcalls/exceptions/" + name + "Exception";
+        name = "io/github/pytgcalls/exceptions/" + name + "Exception";
     }
     const webrtc::ScopedJavaLocalRef<jclass> exceptionClass = webrtc::GetClass(env, name.c_str());
     if (!exceptionClass.is_null()) {

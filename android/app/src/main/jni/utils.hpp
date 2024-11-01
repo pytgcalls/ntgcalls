@@ -132,7 +132,7 @@ throwJavaException(env, "RuntimeException", "Unknown error"); \
 
 #define REGISTER_CALLBACK(name, method, data_class) \
 extern "C" \
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_##name(JNIEnv *env, jobject thiz, jobject callback) { \
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_##name(JNIEnv *env, jobject thiz, jobject callback) { \
 std::lock_guard lock(callbacksMutex); \
 auto instancePtr = getInstancePtr(env, thiz); \
 if (auto checkCallback = callbacksInstances[instancePtr].method##Callback) { \

@@ -7,7 +7,7 @@ std::map<jlong, InstanceCallbacks> callbacksInstances;
 std::mutex callbacksMutex;
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jobject thiz) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_init(JNIEnv *env, jobject thiz) {
     webrtc::ScopedJavaLocalRef<jclass> clazz(env, env->GetObjectClass(thiz));
     jfieldID fid = env->GetFieldID(clazz.obj(), "nativePointer", "J");
     env->SetLongField(thiz, fid, reinterpret_cast<jlong>(new ntgcalls::NTgCalls()));
@@ -94,7 +94,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_init(JNIEnv *env, jo
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_destroy(JNIEnv *env, jobject thiz) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_destroy(JNIEnv *env, jobject thiz) {
     std::lock_guard lock(callbacksMutex);
     webrtc::ScopedJavaLocalRef<jclass> clazz(env, env->GetObjectClass(thiz));
     jfieldID fid = env->GetFieldID(clazz.obj(), "nativePointer", "J");
@@ -127,7 +127,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_destroy(JNIEnv *env,
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_createP2PCall(JNIEnv *env, jobject thiz, jlong chatId, jobject media_description) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_createP2PCall(JNIEnv *env, jobject thiz, jlong chatId, jobject media_description) {
     try {
         auto instance = getInstance(env, thiz);
         instance ->createP2PCall(static_cast<long>(chatId), parseMediaDescription(env, media_description));
@@ -135,7 +135,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_createP2PCall(JNIEnv
 }
 
 extern "C"
-JNIEXPORT jbyteArray JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_initExchange(JNIEnv *env, jobject thiz, jlong chatId, jobject dhConfig, jbyteArray g_a_hash) {
+JNIEXPORT jbyteArray JNICALL Java_io_github_pytgcalls_NTgCalls_initExchange(JNIEnv *env, jobject thiz, jlong chatId, jobject dhConfig, jbyteArray g_a_hash) {
     try {
         auto instance = getInstance(env, thiz);
         return parseJByteArray(env, instance ->initExchange(static_cast<long>(chatId), parseDhConfig(env, dhConfig), parseByteArray(env, g_a_hash))).Release();
@@ -144,7 +144,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_initExchange(J
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_skipExchange(JNIEnv *env, jobject thiz, jlong chatId, jbyteArray encryptionKey, jboolean isOutgoing) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_skipExchange(JNIEnv *env, jobject thiz, jlong chatId, jbyteArray encryptionKey, jboolean isOutgoing) {
     try {
         auto instance = getInstance(env, thiz);
         instance ->skipExchange(static_cast<long>(chatId), parseByteArray(env, encryptionKey), isOutgoing);
@@ -152,7 +152,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_skipExchange(JNIEnv 
 }
 
 extern "C"
-JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_exchangeKeys(JNIEnv *env, jobject thiz, jlong chat_id, jbyteArray g_a_or_b, jint key_fingerprint) {
+JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_exchangeKeys(JNIEnv *env, jobject thiz, jlong chat_id, jbyteArray g_a_or_b, jint key_fingerprint) {
     try {
         auto instance = getInstance(env, thiz);
         return parseAuthParams(env, instance->exchangeKeys(static_cast<long>(chat_id), parseByteArray(env, g_a_or_b), static_cast<int64_t>(key_fingerprint))).Release();
@@ -161,7 +161,7 @@ JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_exchangeKeys(JNIE
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_connectP2P(JNIEnv *env, jobject thiz, jlong chat_id, jobject rtc_servers, jobject versions, jboolean p2p_allowed) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_connectP2P(JNIEnv *env, jobject thiz, jlong chat_id, jobject rtc_servers, jobject versions, jboolean p2p_allowed) {
     try {
         auto instance = getInstance(env, thiz);
         instance->connectP2P(static_cast<long>(chat_id), parseRTCServerList(env, rtc_servers), parseStringList(env, versions), static_cast<bool>(p2p_allowed));
@@ -169,7 +169,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_connectP2P(JNIEnv *e
 }
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_createCall(JNIEnv *env, jobject thiz, jlong chatId, jobject mediaDescription) {
+JNIEXPORT jstring JNICALL Java_io_github_pytgcalls_NTgCalls_createCall(JNIEnv *env, jobject thiz, jlong chatId, jobject mediaDescription) {
     try {
         auto instance = getInstance(env, thiz);
         return parseJString(env, instance->createCall(static_cast<long>(chatId),parseMediaDescription(env, mediaDescription))).Release();
@@ -178,7 +178,7 @@ JNIEXPORT jstring JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_createCall(JNIEnv
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_connect(JNIEnv *env, jobject thiz, jlong chatId, jstring params, jboolean isPresentation) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_connect(JNIEnv *env, jobject thiz, jlong chatId, jstring params, jboolean isPresentation) {
     try {
         auto instance = getInstance(env, thiz);
         instance->connect(static_cast<long>(chatId), parseString(env, params), isPresentation);
@@ -186,7 +186,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_connect(JNIEnv *env,
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_setStreamSources(JNIEnv *env, jobject thiz, jlong chatId, jobject mode, jobject mediaDescription) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_setStreamSources(JNIEnv *env, jobject thiz, jlong chatId, jobject mode, jobject mediaDescription) {
     try {
         auto instance = getInstance(env, thiz);
         instance->setStreamSources(static_cast<long>(chatId), parseStreamMode(env, mode), parseMediaDescription(env, mediaDescription));
@@ -194,7 +194,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_setStreamSources(JNI
 }
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_pause(JNIEnv *env, jobject thiz, jlong chatId) {
+JNIEXPORT jboolean JNICALL Java_io_github_pytgcalls_NTgCalls_pause(JNIEnv *env, jobject thiz, jlong chatId) {
     try {
         auto instance = getInstance(env, thiz);
         return static_cast<jboolean>(instance->pause(static_cast<long>(chatId)));
@@ -203,7 +203,7 @@ JNIEXPORT jboolean JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_pause(JNIEnv *en
 }
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_resume(JNIEnv *env, jobject thiz, jlong chatId) {
+JNIEXPORT jboolean JNICALL Java_io_github_pytgcalls_NTgCalls_resume(JNIEnv *env, jobject thiz, jlong chatId) {
     try {
         auto instance = getInstance(env, thiz);
         return static_cast<jboolean>(instance->resume(static_cast<long>(chatId)));
@@ -212,7 +212,7 @@ JNIEXPORT jboolean JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_resume(JNIEnv *e
 }
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_mute(JNIEnv *env, jobject thiz, jlong chatId) {
+JNIEXPORT jboolean JNICALL Java_io_github_pytgcalls_NTgCalls_mute(JNIEnv *env, jobject thiz, jlong chatId) {
     try {
         auto instance = getInstance(env, thiz);
         return static_cast<jboolean>(instance->mute(static_cast<long>(chatId)));
@@ -221,7 +221,7 @@ JNIEXPORT jboolean JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_mute(JNIEnv *env
 }
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_unmute(JNIEnv *env, jobject thiz, jlong chatId) {
+JNIEXPORT jboolean JNICALL Java_io_github_pytgcalls_NTgCalls_unmute(JNIEnv *env, jobject thiz, jlong chatId) {
     try {
         auto instance = getInstance(env, thiz);
         return static_cast<jboolean>(instance->unmute(static_cast<long>(chatId)));
@@ -230,7 +230,7 @@ JNIEXPORT jboolean JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_unmute(JNIEnv *e
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_stop(JNIEnv *env, jobject thiz, jlong chatId) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_stop(JNIEnv *env, jobject thiz, jlong chatId) {
     try {
         auto instance = getInstance(env, thiz);
         instance->stop(static_cast<long>(chatId));
@@ -238,7 +238,7 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_stop(JNIEnv *env, jo
 }
 
 extern "C"
-JNIEXPORT jlong JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_time(JNIEnv *env, jobject thiz, jlong chatId, jobject mode) {
+JNIEXPORT jlong JNICALL Java_io_github_pytgcalls_NTgCalls_time(JNIEnv *env, jobject thiz, jlong chatId, jobject mode) {
     try {
         auto instance = getInstance(env, thiz);
         return static_cast<jlong>(instance->time(static_cast<long>(chatId), parseStreamMode(env, mode)));
@@ -247,7 +247,7 @@ JNIEXPORT jlong JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_time(JNIEnv *env, j
 }
 
 extern "C"
-JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_getState(JNIEnv *env, jobject thiz, jlong chat_id) {
+JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_getState(JNIEnv *env, jobject thiz, jlong chat_id) {
     try {
         auto instance = getInstance(env, thiz);
         return parseJMediaState(env, instance->getState(static_cast<long>(chat_id))).Release();
@@ -256,29 +256,29 @@ JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_getState(JNIEnv *
 }
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_pingNative(JNIEnv* env, jclass) {
+JNIEXPORT jstring JNICALL Java_io_github_pytgcalls_NTgCalls_pingNative(JNIEnv* env, jclass) {
     return env->NewStringUTF(ntgcalls::NTgCalls::ping().c_str());
 }
 
 extern "C"
-JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_getProtocol(JNIEnv* env, jclass) {
+JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_getProtocol(JNIEnv* env, jclass) {
     return parseJProtocol(env, ntgcalls::NTgCalls::getProtocol()).Release();
 }
 
-REGISTER_CALLBACK(setUpgradeCallback, onUpgrade, "(JLorg/pytgcalls/ntgcalls/media/MediaState;)V")
+REGISTER_CALLBACK(setUpgradeCallback, onUpgrade, "(JLio/github/pytgcalls/media/MediaState;)V")
 
-REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLorg/pytgcalls/ntgcalls/media/StreamType;)V")
+REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLio/github/pytgcalls/media/StreamType;)V")
 
-REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLorg/pytgcalls/ntgcalls/CallNetworkState;)V")
+REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLio/github/pytgcalls/CallNetworkState;)V")
 
 REGISTER_CALLBACK(setSignalingDataCallback, onSignalingData, "(J[B)V")
 
-REGISTER_CALLBACK(setFrameCallback, onFrame, "(JJLorg/pytgcalls/ntgcalls/media/StreamMode;Lorg/pytgcalls/ntgcalls/media/StreamDevice;[BLorg/pytgcalls/ntgcalls/media/FrameData;)V")
+REGISTER_CALLBACK(setFrameCallback, onFrame, "(JJLio/github/pytgcalls/media/StreamMode;Lio/github/pytgcalls/media/StreamDevice;[BLio/github/pytgcalls/media/FrameData;)V")
 
-REGISTER_CALLBACK(setRemoteSourceChangeCallback, onRemoteSourceChange, "(JLorg/pytgcalls/ntgcalls/media/RemoteSource;)V")
+REGISTER_CALLBACK(setRemoteSourceChangeCallback, onRemoteSourceChange, "(JLio/github/pytgcalls/media/RemoteSource;)V")
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_sendSignalingData(JNIEnv *env, jobject thiz, jlong chat_id, jbyteArray data) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_sendSignalingData(JNIEnv *env, jobject thiz, jlong chat_id, jbyteArray data) {
     try {
         auto instance = getInstance(env, thiz);
         instance->sendSignalingData(static_cast<long>(chat_id), parseBinary(env, data));
@@ -286,36 +286,36 @@ JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_sendSignalingData(JN
 }
 
 extern "C"
-JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_getMediaDevices(JNIEnv *env, jclass) {
+JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_getMediaDevices(JNIEnv *env, jclass) {
     return parseJMediaDevices(env, ntgcalls::NTgCalls::getMediaDevices()).Release();
 }
 
 extern "C"
-JNIEXPORT jobject JNICALL Java_org_pytgcalls_ntgcalls_NTgCalls_calls(JNIEnv *env, jobject thiz) {
+JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_calls(JNIEnv *env, jobject thiz) {
     auto instance = getInstance(env, thiz);
     return parseJMediaStatusMap(env, instance->calls()).Release();
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaAudioDeviceModule_onRecordedData(JNIEnv *env, jobject thiz, jbyteArray data) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaAudioDeviceModule_onRecordedData(JNIEnv *env, jobject thiz, jbyteArray data) {
     auto instance = getInstanceAudioCapture(env, thiz);
     instance->onRecordedData(std::move(parseUniqueBinary(env, data)));
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaAudioDeviceModule_getPlaybackData(JNIEnv *env, jobject thiz) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaAudioDeviceModule_getPlaybackData(JNIEnv *env, jobject thiz) {
     auto instance = getInstanceAudioCapture(env, thiz);
     instance->getPlaybackData();
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaVideoCapturerModule_nativeCapturerStopped(JNIEnv *env, jobject thiz) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaVideoCapturerModule_nativeCapturerStopped(JNIEnv *env, jobject thiz) {
     auto instance = getInstanceVideoCapture(env, thiz);
     instance->onCapturerStopped();
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_org_pytgcalls_ntgcalls_devices_JavaVideoCapturerModule_nativeOnFrame(JNIEnv *env, jobject thiz, jobject jFrame) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaVideoCapturerModule_nativeOnFrame(JNIEnv *env, jobject thiz, jobject jFrame) {
     auto instance = getInstanceVideoCapture(env, thiz);
     webrtc::ScopedJavaLocalRef<jobject> frame(env, jFrame);
     instance->onFrame(webrtc::jni::JavaToNativeFrame(env, frame, 0));
