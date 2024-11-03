@@ -9,9 +9,12 @@ namespace ntgcalls {
 
     ThreadedAudioMixer::~ThreadedAudioMixer() {
         std::lock_guard queueLock(queueMutex);
-        running = false;
-        cv.notify_one();
-        thread.Finalize();
+        const bool wasRunning = running;
+        if (running) {
+            running = false;
+            cv.notify_one();
+        }
+        if (wasRunning) thread.Finalize();
     }
 
     void ThreadedAudioMixer::open() {
@@ -39,6 +42,7 @@ namespace ntgcalls {
                             write(bytes::make_unique_binary(frameSize));
                         }
                     } catch (...) {
+                        running = false;
                         break;
                     }
                 }

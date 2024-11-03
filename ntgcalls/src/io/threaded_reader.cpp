@@ -11,10 +11,15 @@ namespace ntgcalls {
     }
 
     ThreadedReader::~ThreadedReader() {
-        running = false;
-        cv.notify_all();
-        for (auto& thread : bufferThreads) {
-            thread.Finalize();
+        const bool wasRunning = running;
+        if (running) {
+            running = false;
+            cv.notify_all();
+        }
+        if (wasRunning) {
+            for (auto& thread : bufferThreads) {
+                thread.Finalize();
+            }
         }
     }
 
@@ -35,6 +40,7 @@ namespace ntgcalls {
                             try {
                                 data = std::move(read(frameSize));
                             } catch (...) {
+                                running = false;
                                 break;
                             }
                             cv.wait(lock, [this, i] {
