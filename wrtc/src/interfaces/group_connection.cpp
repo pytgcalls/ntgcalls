@@ -43,16 +43,16 @@ namespace wrtc {
 
         if (simulcastGroupSsrcs.size() > 1) {
             SsrcGroup simulcastGroup;
-            simulcastGroup.ssrcs = simulcastGroupSsrcs;
             simulcastGroup.semantics = "SIM";
+            simulcastGroup.ssrcs = simulcastGroupSsrcs;
             outgoingVideoSsrcGroups.push_back(simulcastGroup);
         }
 
         for (const auto& fidGroup : fidGroups) {
-            SsrcGroup simulcastGroup;
-            simulcastGroup.ssrcs = fidGroup.ssrcs;
-            simulcastGroup.semantics = "FID";
-            outgoingVideoSsrcGroups.push_back(simulcastGroup);
+            SsrcGroup payloadFidGroup;
+            payloadFidGroup.semantics = "FID";
+            payloadFidGroup.ssrcs = fidGroup.ssrcs;
+            outgoingVideoSsrcGroups.push_back(payloadFidGroup);
         }
     }
 
@@ -120,12 +120,17 @@ namespace wrtc {
                         }
                     }
                 },
-                {"ssrc", outgoingAudioSsrc},
+                {"ssrc", *reinterpret_cast<const int32_t *>(&outgoingAudioSsrc)},
                 {"ssrc-groups", {}}
             };
-            for (const auto& [ssrcs, semantics] : outgoingVideoSsrcGroups) {
+            for (const auto& [sources, semantics] : outgoingVideoSsrcGroups) {
+                std::vector<int32_t> signedSources;
+                signedSources.reserve(sources.size());
+                for (const auto source : sources) {
+                    signedSources.push_back(*reinterpret_cast<const int32_t *>(&source));
+                }
                 jsonRes["ssrc-groups"].push_back({
-                    {"ssrcs", ssrcs},
+                    {"sources", signedSources},
                     {"semantics", semantics}
                 });
             }
@@ -243,7 +248,7 @@ namespace wrtc {
         videoContent.rtpExtensions = media.videoRtpExtensions;
         videoContent.payloadTypes = media.videoPayloadTypes;
 
-        if (videoChannel) {
+        if (!videoChannel) {
             videoChannel = std::make_unique<OutgoingVideoChannel>(
                 call.get(),
                 channelManager.get(),
