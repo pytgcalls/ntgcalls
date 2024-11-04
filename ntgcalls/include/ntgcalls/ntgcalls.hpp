@@ -17,6 +17,7 @@
 #include <ntgcalls/utils/log_sink_impl.hpp>
 #include <ntgcalls/devices/media_devices.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
+#include <wrtc/models/media_content.hpp>
 
 #define CHECK_AND_THROW_IF_EXISTS(chatId) \
 if (exists(chatId)) { \
@@ -72,6 +73,10 @@ namespace ntgcalls {
         ASYNC_RETURN(std::string) initPresentation(int64_t chatId);
 
         ASYNC_RETURN(void) connect(int64_t chatId, const std::string& params, bool isPresentation);
+
+        ASYNC_RETURN(uint32_t) addIncomingVideo(int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup);
+
+        ASYNC_RETURN(bool) removeIncomingVideo(int64_t chatId, const std::string& endpoint);
 
         ASYNC_RETURN(void) setStreamSources(int64_t chatId, StreamManager::Mode mode, const MediaDescription& media);
 

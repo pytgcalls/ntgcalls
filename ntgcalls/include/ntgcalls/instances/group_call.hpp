@@ -3,10 +3,16 @@
 //
 #pragma once
 #include <ntgcalls/instances/call_interface.hpp>
+#include <wrtc/models/media_content.hpp>
+#include <nlohmann/json.hpp>
 
 namespace ntgcalls {
+    using json = nlohmann::json;
+
     class GroupCall final : public CallInterface {
         std::unique_ptr<wrtc::NetworkInterface> presentationConnection;
+
+        void updateRemoteVideoConstraints() const;
 
     public:
         explicit GroupCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
@@ -18,6 +24,10 @@ namespace ntgcalls {
         std::string initPresentation();
 
         void connect(const std::string& jsonData, bool isPresentation);
+
+        uint32_t addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const;
+
+        bool removeIncomingVideo(const std::string& endpoint) const;
 
         void stopPresentation(bool force = false);
 

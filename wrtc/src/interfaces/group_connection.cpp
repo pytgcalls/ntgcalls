@@ -86,6 +86,10 @@ namespace wrtc {
             signalingThread()
         );
 
+        dataChannelInterface->onMessageReceived([this](const bytes::binary &data) {
+           (void) dataChannelMessageCallback(data);
+        });
+
         dataChannelInterface->onStateChanged([this](const bool isOpen) {
             if (!dataChannelOpen && isOpen) {
                 dataChannelOpen = true;
@@ -259,6 +263,43 @@ namespace wrtc {
                 &videoSink
             );
         }
+    }
+
+    uint32_t GroupConnection::addIncomingVideo(const std::string& endpoint, const std::vector<SsrcGroup>& ssrcGroups) {
+        if (incomingVideoChannels.contains(endpoint)) {
+            return 0;
+        }
+
+        bool isScreenCast = false;
+        for (const auto& [ssrcs, semantics] : ssrcGroups) {
+            if (semantics == "SIM" && ssrcs.size() == 2) {
+                isScreenCast = true;
+                break;
+            }
+        }
+
+        incomingVideoChannels[endpoint] = std::make_unique<IncomingVideoChannel>(
+            call.get(),
+            channelManager.get(),
+            dtlsSrtpTransport.get(),
+            ssrcGroups,
+            factory->ssrcGenerator(),
+            availableVideoFormats,
+            workerThread(),
+            networkThread(),
+            isScreenCast ? remoteScreenCastSink : remoteVideoSink
+        );
+        const auto ssrc = incomingVideoChannels[endpoint]->ssrc();
+        RTC_LOG(LS_INFO) << "Incoming video channel added with ssrc " << ssrc;
+        return ssrc;
+    }
+
+    bool GroupConnection::removeIncomingVideo(const std::string& endpoint) {
+        if (!incomingVideoChannels.contains(endpoint)) {
+            return false;
+        }
+        incomingVideoChannels.erase(endpoint);
+        return true;
     }
 
     void GroupConnection::addIncomingSsrc(const uint32_t ssrc) {

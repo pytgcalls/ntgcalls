@@ -152,6 +152,18 @@ namespace ntgcalls {
         END_ASYNC
     }
 
+     ASYNC_RETURN(uint32_t) NTgCalls::addIncomingVideo(int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) {
+        SMART_ASYNC(this, chatId, endpoint, ssrcGroup)
+        return SafeCall<GroupCall>(safeConnection(chatId))->addIncomingVideo(endpoint, ssrcGroup);
+        END_ASYNC
+    }
+
+     ASYNC_RETURN(bool) NTgCalls::removeIncomingVideo(int64_t chatId, const std::string& endpoint) {
+        SMART_ASYNC(this, chatId, endpoint)
+        return SafeCall<GroupCall>(safeConnection(chatId))->removeIncomingVideo(endpoint);
+        END_ASYNC
+     }
+
     ASYNC_RETURN(void) NTgCalls::setStreamSources(const int64_t chatId, const StreamManager::Mode mode, const MediaDescription& media) {
         SMART_ASYNC(this, chatId, mode, media)
         safeConnection(chatId)->setStreamSources(mode, media);

@@ -35,6 +35,10 @@ namespace wrtc {
 
         void createChannels(const ResponsePayload::Media& media);
 
+        uint32_t addIncomingVideo(const std::string& endpoint, const std::vector<SsrcGroup>& ssrcGroups);
+
+        bool removeIncomingVideo(const std::string& endpoint);
+
         void close() override;
 
     private:
