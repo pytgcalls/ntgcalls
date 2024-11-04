@@ -11,55 +11,6 @@
 #include <wrtc/models/response_payload.hpp>
 
 namespace wrtc {
-    std::vector<webrtc::RtpExtension> ResponsePayload::parseRtpExtensions(const json& data) {
-        std::vector<webrtc::RtpExtension> result;
-        for (const auto& item : data["rtp-hdrexts"].items()) {
-            auto extension = item.value();
-            webrtc::RtpExtension rtpExtension;
-            rtpExtension.id =extension["id"].get<int>();
-            rtpExtension.uri = extension["uri"].get<std::string>();
-            result.push_back(rtpExtension);
-        }
-        return result;
-    }
-
-    std::vector<PayloadType> ResponsePayload::parsePayloadTypes(const json& data) {
-        std::vector<PayloadType> result;
-        for (const auto& item : data["payload-types"].items()) {
-            auto payload = item.value();
-            PayloadType payloadType;
-            payloadType.id = payload["id"].get<int>();
-            payloadType.name = payload["name"].get<std::string>();
-            payloadType.clockrate = payload["clockrate"].get<int>();
-            if (!payload["channels"].is_null()) {
-                payloadType.channels = payload["channels"].get<int>();
-            }
-            if (!payload["parameters"].is_null()) {
-                for (const auto& parameter : payload["parameters"].items()) {
-                    std::string value;
-                    if (parameter.value().is_string()) {
-                        value = parameter.value().get<std::string>();
-                    } else {
-                        value = std::to_string(parameter.value().get<int>());
-                    }
-                    payloadType.parameters.emplace_back(parameter.key(), value);
-                }
-            }
-            if (!payload["rtcp-fbs"].is_null()) {
-                for (const auto& feedbackType : payload["rtcp-fbs"].items()) {
-                    auto feedback = feedbackType.value();
-                    std::string subType;
-                    if (!feedback["subtype"].is_null()) {
-                        subType = feedback["subtype"].get<std::string>();
-                    }
-                    payloadType.feedbackTypes.push_back({feedback["type"].get<std::string>(), subType});
-                }
-            }
-            result.push_back(payloadType);
-        }
-        return result;
-    }
-
     ResponsePayload::ResponsePayload(const std::string& payload) {
         json data;
         try {
@@ -126,6 +77,54 @@ namespace wrtc {
             RTC_LOG(LS_ERROR) << "Invalid JSON: " << e.what();
             throw TransportParseException("Invalid JSON: " + std::string(e.what()));
         }
+    }
 
+    std::vector<webrtc::RtpExtension> ResponsePayload::parseRtpExtensions(const json& data) {
+        std::vector<webrtc::RtpExtension> result;
+        for (const auto& item : data["rtp-hdrexts"].items()) {
+            auto extension = item.value();
+            webrtc::RtpExtension rtpExtension;
+            rtpExtension.id =extension["id"].get<int>();
+            rtpExtension.uri = extension["uri"].get<std::string>();
+            result.push_back(rtpExtension);
+        }
+        return result;
+    }
+
+    std::vector<PayloadType> ResponsePayload::parsePayloadTypes(const json& data) {
+        std::vector<PayloadType> result;
+        for (const auto& item : data["payload-types"].items()) {
+            auto payload = item.value();
+            PayloadType payloadType;
+            payloadType.id = payload["id"].get<int>();
+            payloadType.name = payload["name"].get<std::string>();
+            payloadType.clockrate = payload["clockrate"].get<int>();
+            if (!payload["channels"].is_null()) {
+                payloadType.channels = payload["channels"].get<int>();
+            }
+            if (!payload["parameters"].is_null()) {
+                for (const auto& parameter : payload["parameters"].items()) {
+                    std::string value;
+                    if (parameter.value().is_string()) {
+                        value = parameter.value().get<std::string>();
+                    } else {
+                        value = std::to_string(parameter.value().get<int>());
+                    }
+                    payloadType.parameters.emplace_back(parameter.key(), value);
+                }
+            }
+            if (!payload["rtcp-fbs"].is_null()) {
+                for (const auto& feedbackType : payload["rtcp-fbs"].items()) {
+                    auto feedback = feedbackType.value();
+                    std::string subType;
+                    if (!feedback["subtype"].is_null()) {
+                        subType = feedback["subtype"].get<std::string>();
+                    }
+                    payloadType.feedbackTypes.push_back({feedback["type"].get<std::string>(), subType});
+                }
+            }
+            result.push_back(payloadType);
+        }
+        return result;
     }
 } // wrtc
