@@ -23,6 +23,12 @@
 namespace wrtc {
 
     class NativeNetworkInterface:  public sigslot::has_slots<>, public NetworkInterface {
+        struct H264FormatParameters {
+            std::string profileLevelId;
+            std::string packetizationMode;
+            std::string levelAssymetryAllowed;
+        };
+
         std::unique_ptr<cricket::BasicPortAllocator> portAllocator;
         rtc::scoped_refptr<rtc::RTCCertificate> localCertificate;
         std::unique_ptr<webrtc::AsyncDnsResolverFactoryInterface> asyncResolverFactory;
@@ -39,6 +45,16 @@ namespace wrtc {
 
         void transportStateChanged(cricket::IceTransportInternal *transport);
 
+        static std::vector<webrtc::SdpVideoFormat> filterSupportedVideoFormats(std::vector<webrtc::SdpVideoFormat> const &formats);
+
+        static H264FormatParameters parseH264FormatParameters(webrtc::SdpVideoFormat const &format);
+
+        static int getH264ProfileLevelIdPriority(std::string const &profileLevelId);
+
+        static int getH264PacketizationModePriority(std::string const &packetizationMode);
+
+        static int getH264LevelAssymetryAllowedPriority(std::string const &levelAssymetryAllowed);
+
     protected:
         std::unique_ptr<webrtc::Call> call;
         webrtc::LocalAudioSinkAdapter audioSink;
@@ -54,6 +70,7 @@ namespace wrtc {
         std::unique_ptr<cricket::DtlsTransport> dtlsTransport;
         std::unique_ptr<webrtc::DtlsSrtpTransport> dtlsSrtpTransport;
         std::unique_ptr<cricket::P2PTransportChannel> transportChannel;
+        std::vector<webrtc::SdpVideoFormat> availableVideoFormats;
         std::unique_ptr<SctpDataChannelProviderInterfaceImpl> dataChannelInterface;
         bool connected = false, failed = false;
 

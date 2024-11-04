@@ -68,7 +68,7 @@ namespace wrtc {
 #endif
         dependencies.audio_mixer = nullptr;
         dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
-
+        supportedVideoFormats = dependencies.video_encoder_factory->GetSupportedFormats();
         EnableMedia(dependencies);
         if (!factory_) {
             factory_ = CreateModularPeerConnectionFactoryWithContext(std::move(dependencies), connection_context_);
@@ -135,6 +135,10 @@ namespace wrtc {
 
     webrtc::MediaFactory* PeerConnectionFactory::mediaFactory() const {
         return connection_context_->call_factory();
+    }
+
+    std::vector<webrtc::SdpVideoFormat> PeerConnectionFactory::getSupportedVideoFormats() const {
+        return supportedVideoFormats;
     }
 
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {

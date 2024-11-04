@@ -41,6 +41,9 @@ namespace wrtc {
         [[nodiscard]] const webrtc::Environment& environment() const;
 
         [[nodiscard]] webrtc::MediaFactory* mediaFactory() const;
+
+        [[nodiscard]] std::vector<webrtc::SdpVideoFormat> getSupportedVideoFormats() const;
+
     private:
         static std::mutex _mutex;
         static int _references;
@@ -54,6 +57,8 @@ namespace wrtc {
 
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;
         rtc::scoped_refptr<webrtc::AudioDeviceModule> _audioDeviceModule;
+
+        std::vector<webrtc::SdpVideoFormat> supportedVideoFormats;
     };
 
 } // wrtc

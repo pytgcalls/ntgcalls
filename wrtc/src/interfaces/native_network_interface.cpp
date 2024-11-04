@@ -64,6 +64,7 @@ namespace wrtc {
             callConfig.audio_state = factory->mediaEngine()->voice().GetAudioState();
             call = factory->mediaFactory()->CreateCall(std::move(callConfig));
         });
+        availableVideoFormats = filterSupportedVideoFormats(factory->getSupportedVideoFormats());
     }
 
     void NativeNetworkInterface::DtlsReadyToSend(const bool isReadyToSend) {
@@ -249,5 +250,123 @@ namespace wrtc {
                 dataChannelInterface->sendDataChannelMessage(data);
             }
         });
+    }
+
+    std::vector<webrtc::SdpVideoFormat> NativeNetworkInterface::filterSupportedVideoFormats(std::vector<webrtc::SdpVideoFormat> const& formats) {
+        std::vector<webrtc::SdpVideoFormat> filteredFormats;
+
+        std::vector<std::string> filterCodecNames = {
+            cricket::kVp8CodecName,
+            cricket::kVp9CodecName,
+            cricket::kH264CodecName
+        };
+
+        std::vector<webrtc::SdpVideoFormat> vp9Formats;
+        std::vector<webrtc::SdpVideoFormat> h264Formats;
+
+        for (const auto &format : formats) {
+            if (std::ranges::find(filterCodecNames, format.name) == filterCodecNames.end()) {
+                continue;
+            }
+
+            if (format.name == cricket::kVp9CodecName) {
+                vp9Formats.push_back(format);
+            } else if (format.name == cricket::kH264CodecName) {
+                //h264Formats.push_back(format);
+            } else {
+                filteredFormats.push_back(format);
+            }
+        }
+
+        if (!vp9Formats.empty()) {
+            bool added = false;
+            for (const auto &format : vp9Formats) {
+                if (added) {
+                    break;
+                }
+                for (const auto & [fst, snd] : format.parameters) {
+                    if (fst == "profile-id") {
+                        if (snd == "0") {
+                            filteredFormats.push_back(format);
+                            added = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!added) {
+                filteredFormats.push_back(vp9Formats[0]);
+            }
+        }
+
+        if (!h264Formats.empty()) {
+            std::ranges::sort(h264Formats, [](const webrtc::SdpVideoFormat &lhs, const webrtc::SdpVideoFormat &rhs) {
+                auto [lProfileLevelId, lPacketizationMode, lLevelAssymetryAllowed] = parseH264FormatParameters(lhs);
+                auto [rProfileLevelId, rPacketizationMode, rLevelAssymetryAllowed] = parseH264FormatParameters(rhs);
+
+                const int lhsLevelIdPriority = getH264ProfileLevelIdPriority(lProfileLevelId);
+                const int lhsPacketizationModePriority = getH264PacketizationModePriority(lPacketizationMode);
+                const int lhsLevelAssymetryAllowedPriority = getH264LevelAssymetryAllowedPriority(lLevelAssymetryAllowed);
+
+                const int rhsLevelIdPriority = getH264ProfileLevelIdPriority(rProfileLevelId);
+                const int rhsPacketizationModePriority = getH264PacketizationModePriority(rPacketizationMode);
+                const int rhsLevelAssymetryAllowedPriority = getH264LevelAssymetryAllowedPriority(rLevelAssymetryAllowed);
+
+                if (lhsLevelIdPriority != rhsLevelIdPriority) {
+                    return lhsLevelIdPriority < rhsLevelIdPriority;
+                }
+                if (lhsPacketizationModePriority != rhsPacketizationModePriority) {
+                    return lhsPacketizationModePriority < rhsPacketizationModePriority;
+                }
+                if (lhsLevelAssymetryAllowedPriority != rhsLevelAssymetryAllowedPriority) {
+                    return lhsLevelAssymetryAllowedPriority < rhsLevelAssymetryAllowedPriority;
+                }
+
+                return false;
+            });
+
+            filteredFormats.push_back(h264Formats[0]);
+        }
+
+        return filteredFormats;
+    }
+
+    NativeNetworkInterface::H264FormatParameters NativeNetworkInterface::parseH264FormatParameters(webrtc::SdpVideoFormat const& format) {
+        H264FormatParameters result;
+        for (const auto & [fst, snd] : format.parameters) {
+            if (fst == "profile-level-id") {
+                result.profileLevelId = snd;
+            } else if (fst == "packetization-mode") {
+                result.packetizationMode = snd;
+            } else if (fst == "level-asymmetry-allowed") {
+                result.levelAssymetryAllowed = snd;
+            }
+        }
+        return result;
+    }
+
+    int NativeNetworkInterface::getH264ProfileLevelIdPriority(std::string const& profileLevelId) {
+        if (profileLevelId == cricket::kH264ProfileLevelConstrainedHigh) {
+            return 0;
+        }
+        if (profileLevelId == cricket::kH264ProfileLevelConstrainedBaseline) {
+            return 1;
+        }
+        return 2;
+    }
+
+    int NativeNetworkInterface::getH264PacketizationModePriority(std::string const& packetizationMode) {
+        if (packetizationMode == "1") {
+            return 0;
+        }
+        return 1;
+    }
+
+    int NativeNetworkInterface::getH264LevelAssymetryAllowedPriority(std::string const& levelAssymetryAllowed) {
+        if (levelAssymetryAllowed == "1") {
+            return 0;
+        }
+        return 1;
     }
 } // wrtc

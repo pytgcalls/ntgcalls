@@ -26,13 +26,17 @@ namespace wrtc {
             webrtc::Call* call,
             ChannelManager *channelManager,
             webrtc::RtpTransport* rtpTransport,
-            const MediaContent& mediaContent,
+            std::vector<SsrcGroup> ssrcGroups,
+            rtc::UniqueRandomIdGenerator *randomIdGenerator,
+            const std::vector<webrtc::SdpVideoFormat>& availableVideoFormats,
             rtc::Thread *workerThread,
             rtc::Thread* networkThread,
             std::weak_ptr<RemoteVideoSink> remoteVideoSink
         );
 
         ~IncomingVideoChannel() override;
+
+        [[nodiscard]] uint32_t ssrc() const;
     };
 
 } // wrtc

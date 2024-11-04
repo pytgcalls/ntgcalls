@@ -218,7 +218,9 @@ namespace wrtc {
                     call.get(),
                     channelManager.get(),
                     dtlsSrtpTransport.get(),
-                    content,
+                    content.ssrcGroups,
+                    factory->ssrcGenerator(),
+                    availableVideoFormats,
                     workerThread(),
                     networkThread(),
                     remoteVideoSink
