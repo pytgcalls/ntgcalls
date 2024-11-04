@@ -121,6 +121,8 @@ namespace wrtc {
         void sendDataChannelMessage(const bytes::binary& data) const override;
 
         static webrtc::CryptoOptions getDefaultCryptoOptions();
+
+        std::vector<std::string> getEndpoints() const;
     };
 
 } // wrtc

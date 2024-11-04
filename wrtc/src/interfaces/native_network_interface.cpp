@@ -158,6 +158,16 @@ namespace wrtc {
         return options;
     }
 
+    std::vector<std::string> NativeNetworkInterface::getEndpoints() const {
+        std::vector<std::string> endpoints;
+        endpoints.reserve(incomingVideoChannels.size());
+        // ReSharper disable once CppUseElementsView
+        for (const auto &[endpoint, _] : incomingVideoChannels) {
+            endpoints.push_back(endpoint);
+        }
+        return endpoints;
+    }
+
     void NativeNetworkInterface::OnTransportWritableState_n(rtc::PacketTransportInternal*) {
         assert(networkThread()->IsCurrent());
         UpdateAggregateStates_n();
