@@ -26,6 +26,8 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("init_presentation", &ntgcalls::NTgCalls::initPresentation, py::arg("chat_id"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"), py::arg("is_presentation"));
     wrapper.def("set_stream_sources", &ntgcalls::NTgCalls::setStreamSources, py::arg("chat_id"), py::arg("direction"), py::arg("media"));
+    wrapper.def("add_incoming_video", &ntgcalls::NTgCalls::addIncomingVideo, py::arg("chat_id"), py::arg("endpoint"), py::arg("ssrc_group"));
+    wrapper.def("remove_incoming_video", &ntgcalls::NTgCalls::removeIncomingVideo, py::arg("chat_id"), py::arg("endpoint"));
     wrapper.def("pause", &ntgcalls::NTgCalls::pause, py::arg("chat_id"));
     wrapper.def("resume", &ntgcalls::NTgCalls::resume, py::arg("chat_id"));
     wrapper.def("mute", &ntgcalls::NTgCalls::mute, py::arg("chat_id"));
@@ -219,6 +221,11 @@ PYBIND11_MODULE(ntgcalls, m) {
        .value("SUSPENDED", ntgcalls::RemoteSource::State::Suspended)
        .value("ACTIVE", ntgcalls::RemoteSource::State::Active)
        .export_values();
+
+    py::class_<wrtc::SsrcGroup> ssrcGroupWrapper(m, "SsrcGroup");
+    ssrcGroupWrapper.def(py::init<std::vector<uint32_t>, std::string>(), py::arg("ssrcs"), py::arg("semantics"));
+    ssrcGroupWrapper.def_readonly("semantics", &wrtc::SsrcGroup::semantics);
+    ssrcGroupWrapper.def_readonly("ssrcs", &wrtc::SsrcGroup::ssrcs);
 
     // Exceptions
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
