@@ -59,7 +59,7 @@ namespace wrtc {
 
 
         void addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) override {}
-        void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink) override {}
+        void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink, bool isScreenCast) override {}
 
     private:
         rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection;

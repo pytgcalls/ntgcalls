@@ -61,11 +61,12 @@ namespace wrtc {
         LocalVideoAdapter videoSink;
         std::weak_ptr<RemoteAudioSink> remoteAudioSink;
         std::weak_ptr<RemoteVideoSink> remoteVideoSink;
+        std::weak_ptr<RemoteVideoSink> remoteScreenCastSink;
         std::unique_ptr<ChannelManager> channelManager;
         std::unique_ptr<OutgoingAudioChannel> audioChannel;
         std::unique_ptr<OutgoingVideoChannel> videoChannel;
         std::map<uint32_t, std::unique_ptr<IncomingAudioChannel>> incomingAudioChannels;
-        std::map<uint32_t, std::unique_ptr<IncomingVideoChannel>> incomingVideoChannels;
+        std::map<std::string, std::unique_ptr<IncomingVideoChannel>> incomingVideoChannels;
         PeerIceParameters localParameters, remoteParameters;
         std::unique_ptr<cricket::DtlsTransport> dtlsTransport;
         std::unique_ptr<webrtc::DtlsSrtpTransport> dtlsSrtpTransport;
@@ -108,7 +109,7 @@ namespace wrtc {
 
         void addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) override;
 
-        void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink) override;
+        void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink, bool isScreenCast) override;
 
         void initConnection(bool supportsPacketSending = false);
 

@@ -56,7 +56,7 @@ namespace wrtc {
 
         virtual void addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) = 0;
 
-        virtual void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink) = 0;
+        virtual void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink, bool isScreenCast) = 0;
 
         bool isDataChannelOpen() const;
     };

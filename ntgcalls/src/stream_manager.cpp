@@ -138,7 +138,7 @@ namespace ntgcalls {
             if (id.second == Microphone || id.second == Speaker) {
                 pc->addIncomingAudioTrack(dynamic_cast<AudioReceiver*>(streams[id].get())->remoteSink());
             } else {
-                pc->addIncomingVideoTrack(dynamic_cast<VideoReceiver*>(streams[id].get())->remoteSink());
+                pc->addIncomingVideoTrack(dynamic_cast<VideoReceiver*>(streams[id].get())->remoteSink(), id.second == Screen);
             }
         }
     }

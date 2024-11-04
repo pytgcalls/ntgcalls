@@ -214,7 +214,7 @@ namespace wrtc {
                 break;
             case MediaContent::Type::Video:
                 incomingVideoChannels.clear();
-                incomingVideoChannels[content.ssrc] = std::make_unique<IncomingVideoChannel>(
+                incomingVideoChannels[{std::to_string(content.ssrc), false}] = std::make_unique<IncomingVideoChannel>(
                     call.get(),
                     channelManager.get(),
                     dtlsSrtpTransport.get(),

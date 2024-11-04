@@ -216,8 +216,12 @@ namespace wrtc {
         remoteAudioSink = sink;
     }
 
-    void NativeNetworkInterface::addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink) {
-        remoteVideoSink = sink;
+    void NativeNetworkInterface::addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink, const bool isScreenCast) {
+        if (isScreenCast) {
+            remoteScreenCastSink = sink;
+        } else {
+            remoteVideoSink = sink;
+        }
     }
 
     std::unique_ptr<MediaTrackInterface> NativeNetworkInterface::addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
