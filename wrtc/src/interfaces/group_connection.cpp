@@ -121,7 +121,7 @@ namespace wrtc {
                     }
                 },
                 {"ssrc", *reinterpret_cast<const int32_t *>(&outgoingAudioSsrc)},
-                {"ssrc-groups", {}}
+                {"ssrc-groups", json::array()}
             };
             for (const auto& [sources, semantics] : outgoingVideoSsrcGroups) {
                 std::vector<int32_t> signedSources;
