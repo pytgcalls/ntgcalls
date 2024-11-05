@@ -6,7 +6,7 @@ set(OPENH264_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}openh264${CMAKE_STATIC_LIBRARY_SU
 
 if(NOT TARGET cisco::OpenH264)
     GetProperty("version.openh264" OPENH264_VERSION)
-    message(STATUS "openh264 ${OPENH264_VERSION}")
+    message(STATUS "openh264 v${OPENH264_VERSION}")
 
     if (LINUX_ARM64)
         set(PLATFORM linux)
@@ -32,7 +32,7 @@ if(NOT TARGET cisco::OpenH264)
     set(FILE_NAME openh264.${PLATFORM}-${ARCH}${ARCHIVE_FORMAT})
 
     DownloadProject(
-        URL ${OPENH264_GIT}/releases/download/${OPENH264_VERSION}/${FILE_NAME}
+        URL ${OPENH264_GIT}/releases/download/v${OPENH264_VERSION}/${FILE_NAME}
         DOWNLOAD_DIR ${OPENH264_DIR}/download
         SOURCE_DIR ${OPENH264_SRC}
     )

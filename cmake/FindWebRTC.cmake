@@ -1,4 +1,5 @@
-string(REGEX MATCH "m[0-9]+\\.([0-9]+)" WEBRTC_BRANCH "${WEBRTC_REVISION}")
+GetProperty("version.webrtc" WEBRTC_REVISION)
+string(REGEX MATCH "[0-9]+\\.([0-9]+)" WEBRTC_BRANCH "${WEBRTC_REVISION}")
 set(WEBRTC_BRANCH branch-heads/${CMAKE_MATCH_1})
 set(WEBRTC_GIT https://github.com/pytgcalls/webrtc-build)
 set(WEBRTC_DIR ${deps_loc}/libwebrtc)
@@ -13,7 +14,7 @@ set(WEBRTC_PATCH_FILE modules/audio_device/include/test_audio_device.cc)
 set(WEBRTC_PATCH_URL https://webrtc.googlesource.com/src.git/+/refs/${WEBRTC_BRANCH}/${WEBRTC_PATCH_FILE})
 
 if(NOT TARGET WebRTC::webrtc)
-    message(STATUS "libwebrtc ${WEBRTC_REVISION}")
+    message(STATUS "libwebrtc m${WEBRTC_REVISION}")
     if (WINDOWS)
         set(PLATFORM windows)
         set(ARCHIVE_FORMAT .zip)
@@ -56,7 +57,7 @@ if(NOT TARGET WebRTC::webrtc)
     set(FILE_NAME ${FILE_NAME}${ARCHIVE_FORMAT})
 
     DownloadProject(
-        URL ${WEBRTC_GIT}/releases/download/${WEBRTC_REVISION}/${FILE_NAME}
+        URL ${WEBRTC_GIT}/releases/download/m${WEBRTC_REVISION}/${FILE_NAME}
         DOWNLOAD_DIR ${WEBRTC_DIR}/download
         SOURCE_DIR ${WEBRTC_SRC}
     )
