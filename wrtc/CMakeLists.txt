@@ -9,6 +9,10 @@ target_sources(wrtc PRIVATE ${MODULE_SRC})
 target_link_libraries(wrtc PUBLIC WebRTC::webrtc)
 target_link_libraries(wrtc PRIVATE nlohmann_json::nlohmann_json)
 
+if (NOT ANDROID)
+    target_link_libraries(wrtc PRIVATE cisco::OpenH264)
+endif ()
+
 setup_platform_libs(wrtc)
 
 if (ANDROID)
