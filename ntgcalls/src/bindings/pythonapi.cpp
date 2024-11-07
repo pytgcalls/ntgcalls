@@ -223,7 +223,7 @@ PYBIND11_MODULE(ntgcalls, m) {
        .export_values();
 
     py::class_<wrtc::SsrcGroup> ssrcGroupWrapper(m, "SsrcGroup");
-    ssrcGroupWrapper.def(py::init<std::vector<uint32_t>, std::string>(), py::arg("ssrcs"), py::arg("semantics"));
+    ssrcGroupWrapper.def(py::init<std::string, std::vector<uint32_t>>(), py::arg("semantics"), py::arg("ssrcs"));
     ssrcGroupWrapper.def_readonly("semantics", &wrtc::SsrcGroup::semantics);
     ssrcGroupWrapper.def_readonly("ssrcs", &wrtc::SsrcGroup::ssrcs);
 
