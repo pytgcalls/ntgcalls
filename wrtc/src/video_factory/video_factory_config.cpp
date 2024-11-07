@@ -6,6 +6,7 @@
 #include <wrtc/video_factory/video_factory_config.hpp>
 #include <wrtc/video_factory/software/google/google.hpp>
 #include <wrtc/video_factory/software/vlc/vlc.hpp>
+#include <wrtc/video_factory/software/openh264/openh264.hpp>
 
 namespace wrtc {
 
@@ -17,6 +18,10 @@ namespace wrtc {
         // VLC (Software, AV1)
         vlc::addEncoders(encoders);
         vlc::addDecoders(decoders);
+
+        // OpenH264 (Software, H264)
+        openh264::addEncoders(encoders);
+        openh264::addDecoders(decoders);
 
         // NVCODEC (Hardware, VP8, VP9, H264)
         // TODO: @Laky-64 Add NVCODEC encoder-decoder when available

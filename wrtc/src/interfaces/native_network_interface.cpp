@@ -286,7 +286,7 @@ namespace wrtc {
             if (format.name == cricket::kVp9CodecName) {
                 vp9Formats.push_back(format);
             } else if (format.name == cricket::kH264CodecName) {
-                //h264Formats.push_back(format);
+                h264Formats.push_back(format);
             } else {
                 filteredFormats.push_back(format);
             }
