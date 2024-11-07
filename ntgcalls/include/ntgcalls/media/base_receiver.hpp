@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <mutex>
+#include <memory>
 #include <wrtc/interfaces/media/remote_media_interface.hpp>
 
 namespace ntgcalls {
