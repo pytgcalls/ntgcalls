@@ -68,10 +68,12 @@ namespace ntgcalls {
     std::vector<DeviceInfo> MediaDevice::GetCameraDevices() {
 #if !defined(IS_ANDROID) && !defined(IS_MACOS)
         return CameraCapturerModule::GetSources();
-#else
+#elif IS_ANDROID
         if (JavaVideoCapturerModule::IsSupported(false)) {
             return JavaVideoCapturerModule::getDevices();
         }
+        return {};
+#else
         return {};
 #endif
     }
