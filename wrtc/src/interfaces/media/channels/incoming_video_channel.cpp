@@ -59,7 +59,7 @@ namespace wrtc {
 
         std::vector<uint32_t> allSsrcs;
         cricket::StreamParams videoRecvStreamParams;
-        for (const auto & [ssrcs, semantics] : ssrcGroups) {
+        for (const auto & [semantics, ssrcs] : ssrcGroups) {
             for (auto ssrc : ssrcs) {
                 if (std::ranges::find(allSsrcs, ssrc) == allSsrcs.end()) {
                     allSsrcs.push_back(ssrc);

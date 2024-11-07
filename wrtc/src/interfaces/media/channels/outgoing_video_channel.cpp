@@ -70,7 +70,7 @@ namespace wrtc {
         outgoingVideoDescription->set_codecs(codecs);
         outgoingVideoDescription->set_bandwidth(-1);
         cricket::StreamParams videoSendStreamParams;
-        for (const auto &[ssrcs, semantics] : mediaContent.ssrcGroups) {
+        for (const auto &[semantics, ssrcs] : mediaContent.ssrcGroups) {
             for (auto ssrc : ssrcs) {
                 if (!videoSendStreamParams.has_ssrc(ssrc)) {
                     videoSendStreamParams.ssrcs.push_back(ssrc);

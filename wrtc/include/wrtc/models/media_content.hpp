@@ -10,8 +10,8 @@
 
 namespace wrtc {
     struct SsrcGroup {
-        std::vector<uint32_t> ssrcs;
         std::string semantics;
+        std::vector<uint32_t> ssrcs;
 
         bool operator==(SsrcGroup const &rhs) const {
             if (ssrcs != rhs.ssrcs) {

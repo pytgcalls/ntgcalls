@@ -271,7 +271,7 @@ namespace wrtc {
         }
 
         bool isScreenCast = false;
-        for (const auto& [ssrcs, semantics] : ssrcGroups) {
+        for (const auto& [semantics, ssrcs] : ssrcGroups) {
             if (semantics == "SIM" && ssrcs.size() == 2) {
                 isScreenCast = true;
                 break;

@@ -359,7 +359,7 @@ namespace wrtc {
         streamParams.id = contentId;
         streamParams.set_stream_ids({ contentId });
         streamParams.add_ssrc(content.ssrc);
-        for (const auto &[ssrcs, semantics] : content.ssrcGroups) {
+        for (const auto &[semantics, ssrcs] : content.ssrcGroups) {
             streamParams.ssrc_groups.emplace_back(semantics, ssrcs);
             for (const auto &ssrc : ssrcs) {
                 if (!streamParams.has_ssrc(ssrc)) {
