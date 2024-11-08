@@ -22,6 +22,7 @@ namespace wrtc {
         synchronized_callback<ConnectionState> connectionChangeCallback;
         synchronized_callback<bytes::binary> dataChannelMessageCallback;
         bool dataChannelOpen = false;
+        bool audioIncoming = false, cameraIncoming = false, screenIncoming = false;
 
         static webrtc::IceCandidateInterface* parseIceCandidate(const IceCandidate& rawCandidate);
 
@@ -59,6 +60,10 @@ namespace wrtc {
         virtual void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink, bool isScreenCast) = 0;
 
         bool isDataChannelOpen() const;
+
+        virtual void enableAudioIncoming(bool enable);
+
+        virtual void enableVideoIncoming(bool enable, bool isScreenCast);
     };
 
 } // wrtc

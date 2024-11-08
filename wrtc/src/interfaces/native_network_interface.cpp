@@ -67,6 +67,93 @@ namespace wrtc {
         availableVideoFormats = filterSupportedVideoFormats(factory->getSupportedVideoFormats());
     }
 
+    void NativeNetworkInterface::addIncomingSmartSource(const std::string& endpoint, const MediaContent& mediaContent, const bool force) {
+        if (pendingContent.contains(endpoint) && !force) {
+            return;
+        }
+        bool isAddable = false;
+        switch (mediaContent.type) {
+        case MediaContent::Type::Audio:
+            isAddable = audioIncoming;
+            break;
+        case MediaContent::Type::Video:
+            if (mediaContent.isScreenCast()) {
+                isAddable = screenIncoming;
+            } else {
+                isAddable = cameraIncoming;
+            }
+            break;
+        }
+        if (isAddable && mediaContent.type == MediaContent::Type::Audio) {
+            if (incomingAudioChannels.size() > 10) {
+                int64_t minActivity = INT64_MAX;
+                const auto timestamp = rtc::TimeMillis();
+                std::string minActivityChannelId;
+                for (const auto& [channelId, channel] : incomingAudioChannels) {
+                    if (const auto activity = channel->getActivity(); activity < minActivity && activity < timestamp - 1000) {
+                        minActivity = activity;
+                        minActivityChannelId = channelId;
+                    }
+                }
+                if (!minActivityChannelId.empty()) {
+                    removeIncomingAudio(minActivityChannelId);
+                }
+                if (incomingAudioChannels.size() > 10) {
+                    RTC_LOG(LS_WARNING) << "Too many incoming audio channels, unable to add " << endpoint << " ssrc";
+                    return;
+                }
+            }
+            RTC_LOG(LS_INFO) << "Adding incoming audio channel with ssrc " << mediaContent.mainSsrc();
+            if (const auto sink = remoteAudioSink.lock()) sink->addSource();
+            incomingAudioChannels[endpoint] = std::make_unique<IncomingAudioChannel>(
+                call.get(),
+                channelManager.get(),
+                dtlsSrtpTransport.get(),
+                mediaContent,
+                workerThread(),
+                networkThread(),
+                remoteAudioSink
+            );
+        } else if (isAddable && mediaContent.type == MediaContent::Type::Video) {
+            RTC_LOG(LS_INFO) << "Adding incoming video channel with ssrc " << mediaContent.mainSsrc();
+            incomingVideoChannels[endpoint] = std::make_unique<IncomingVideoChannel>(
+                call.get(),
+                channelManager.get(),
+                dtlsSrtpTransport.get(),
+                mediaContent.ssrcGroups,
+                factory->ssrcGenerator(),
+                availableVideoFormats,
+                workerThread(),
+                networkThread(),
+                mediaContent.isScreenCast() ? remoteScreenCastSink : remoteVideoSink
+            );
+        }
+        if (pendingContent.contains(endpoint)) {
+            return;
+        }
+        int audioChannelsCount = 0;
+        // ReSharper disable once CppUseElementsView
+        for (const auto& [endpoint, content] : pendingContent) {
+            if (content.type == MediaContent::Type::Audio) {
+                audioChannelsCount++;
+            }
+        }
+        if (audioChannelsCount >= 10) {
+            return;
+        }
+        pendingContent[endpoint] = mediaContent;
+    }
+
+    void NativeNetworkInterface::removeIncomingAudio(const std::string& endpoint) {
+        if (!pendingContent.contains(endpoint)) {
+            return;
+        }
+        RTC_LOG(LS_INFO) << "Removing incoming audio channel with ssrc " << endpoint;
+        if (incomingAudioChannels.contains(endpoint)) incomingAudioChannels.erase(endpoint);
+        pendingContent.erase(endpoint);
+        if (const auto sink = remoteAudioSink.lock()) sink->removeSource();
+    }
+
     void NativeNetworkInterface::DtlsReadyToSend(const bool isReadyToSend) {
         UpdateAggregateStates_n();
 
@@ -166,6 +253,52 @@ namespace wrtc {
             endpoints.push_back(endpoint);
         }
         return endpoints;
+    }
+
+    void NativeNetworkInterface::enableAudioIncoming(const bool enable) {
+        if (audioIncoming == enable) {
+            return;
+        }
+        NetworkInterface::enableAudioIncoming(enable);
+        workerThread()->BlockingCall([&] {
+            if (enable) {
+                for (const auto& [endpoint, mediaContent] : pendingContent) {
+                    if (mediaContent.type == MediaContent::Type::Audio) {
+                        addIncomingSmartSource(endpoint, mediaContent, true);
+                    }
+                }
+            } else {
+                incomingAudioChannels.clear();
+            }
+        });
+    }
+
+    void NativeNetworkInterface::enableVideoIncoming(const bool enable, const bool isScreenCast) {
+        if (isScreenCast) {
+            if (cameraIncoming == enable) {
+                return;
+            }
+        } else {
+            if (screenIncoming == enable) {
+                return;
+            }
+        }
+        NetworkInterface::enableVideoIncoming(enable, isScreenCast);
+        workerThread()->BlockingCall([&] {
+            if (enable) {
+                for (const auto& [endpoint, mediaContent] : pendingContent) {
+                    if (mediaContent.type == MediaContent::Type::Video && mediaContent.isScreenCast() == isScreenCast) {
+                        addIncomingSmartSource(endpoint, mediaContent, true);
+                    }
+                }
+            } else {
+                for (const auto& [endpoint, mediaContent] : pendingContent) {
+                    if (mediaContent.type == MediaContent::Type::Video && mediaContent.isScreenCast() == isScreenCast) {
+                        incomingVideoChannels.erase(endpoint);
+                    }
+                }
+            }
+        });
     }
 
     void NativeNetworkInterface::OnTransportWritableState_n(rtc::PacketTransportInternal*) {

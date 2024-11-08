@@ -113,5 +113,23 @@ namespace wrtc {
 
             return true;
         }
+
+        [[nodiscard]] bool isScreenCast() const {
+            return std::ranges::any_of(ssrcGroups, [](const auto& group) {
+                return group.semantics == "SIM" && group.ssrcs.size() == 2;
+            });
+        }
+
+        [[nodiscard]] uint32_t mainSsrc() const {
+            if (ssrcGroups.empty()) {
+                return ssrc;
+            }
+            for (const auto& [semantics, ssrcs] : ssrcGroups) {
+                if (semantics == "SIM") {
+                    return ssrcs[0];
+                }
+            }
+            return 0;
+        }
     };
 } // wrtc

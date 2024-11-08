@@ -198,33 +198,16 @@ namespace wrtc {
             }
         }
 
+        pendingContent.clear();
         for (const auto &content : coordinatedState->incomingContents) {
             switch (content.type) {
             case MediaContent::Type::Audio:
                 incomingAudioChannels.clear();
-                incomingAudioChannels[content.ssrc] = std::make_unique<IncomingAudioChannel>(
-                    call.get(),
-                    channelManager.get(),
-                    dtlsSrtpTransport.get(),
-                    content,
-                    workerThread(),
-                    networkThread(),
-                    remoteAudioSink
-                );
+                addIncomingSmartSource(std::to_string(content.ssrc), content);
                 break;
             case MediaContent::Type::Video:
                 incomingVideoChannels.clear();
-                incomingVideoChannels[{std::to_string(content.ssrc), false}] = std::make_unique<IncomingVideoChannel>(
-                    call.get(),
-                    channelManager.get(),
-                    dtlsSrtpTransport.get(),
-                    content.ssrcGroups,
-                    factory->ssrcGenerator(),
-                    availableVideoFormats,
-                    workerThread(),
-                    networkThread(),
-                    remoteVideoSink
-                );
+                addIncomingSmartSource(std::to_string(content.ssrc), content);
                 break;
             default:
                 RTC_LOG(LS_WARNING) << "NativeNetworkingImpl unsupported incoming content type";

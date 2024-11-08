@@ -65,14 +65,15 @@ namespace wrtc {
         std::unique_ptr<ChannelManager> channelManager;
         std::unique_ptr<OutgoingAudioChannel> audioChannel;
         std::unique_ptr<OutgoingVideoChannel> videoChannel;
-        std::map<uint32_t, std::unique_ptr<IncomingAudioChannel>> incomingAudioChannels;
-        std::map<std::string, std::unique_ptr<IncomingVideoChannel>> incomingVideoChannels;
         PeerIceParameters localParameters, remoteParameters;
         std::unique_ptr<cricket::DtlsTransport> dtlsTransport;
         std::unique_ptr<webrtc::DtlsSrtpTransport> dtlsSrtpTransport;
         std::unique_ptr<cricket::P2PTransportChannel> transportChannel;
         std::vector<webrtc::SdpVideoFormat> availableVideoFormats;
         std::unique_ptr<SctpDataChannelProviderInterfaceImpl> dataChannelInterface;
+        std::map<std::string, std::unique_ptr<IncomingAudioChannel>> incomingAudioChannels;
+        std::map<std::string, std::unique_ptr<IncomingVideoChannel>> incomingVideoChannels;
+        std::map<std::string, MediaContent> pendingContent;
         bool connected = false, failed = false;
 
         virtual std::pair<cricket::ServerAddresses, std::vector<cricket::RelayServerConfig>> getStunAndTurnServers() = 0;
@@ -113,6 +114,10 @@ namespace wrtc {
 
         void initConnection(bool supportsPacketSending = false);
 
+        void addIncomingSmartSource(const std::string& endpoint, const MediaContent& mediaContent, bool force = false);
+
+        void removeIncomingAudio(const std::string& endpoint);
+
     public:
         PeerIceParameters localIceParameters();
 
@@ -123,6 +128,10 @@ namespace wrtc {
         static webrtc::CryptoOptions getDefaultCryptoOptions();
 
         std::vector<std::string> getEndpoints() const;
+
+        void enableAudioIncoming(bool enable) override;
+
+        void enableVideoIncoming(bool enable, bool isScreenCast) override;
     };
 
 } // wrtc

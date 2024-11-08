@@ -49,7 +49,7 @@ namespace ntgcalls {
 
         void enableVideoSimulcast(bool enable);
 
-        void setStreamSources(Mode mode, const MediaDescription& desc);
+        void setStreamSources(Mode mode, const MediaDescription& desc, const std::unique_ptr<wrtc::NetworkInterface>& pc);
 
         MediaState getState();
 

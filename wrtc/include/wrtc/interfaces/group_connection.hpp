@@ -86,9 +86,7 @@ namespace wrtc {
 
         void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) override;
 
-        void addIncomingSsrc(uint32_t ssrc);
-
-        void removeIncomingSsrc(uint32_t ssrc);
+        void addIncomingAudio(uint32_t ssrc, const std::string& endpoint);
 
         void beginAudioChannelCleanupTimer();
     };

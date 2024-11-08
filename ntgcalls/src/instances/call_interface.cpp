@@ -44,7 +44,7 @@ namespace ntgcalls {
     }
 
     void CallInterface::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
-        streamManager->setStreamSources(mode, config);
+        streamManager->setStreamSources(mode, config, connection);
     }
 
     void CallInterface::onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)>& callback) {

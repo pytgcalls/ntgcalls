@@ -63,4 +63,16 @@ namespace wrtc {
     bool NetworkInterface::isDataChannelOpen() const {
         return dataChannelOpen;
     }
+
+    void NetworkInterface::enableAudioIncoming(const bool enable) {
+        audioIncoming = enable;
+    }
+
+    void NetworkInterface::enableVideoIncoming(const bool enable, const bool isScreenCast) {
+        if (isScreenCast) {
+            screenIncoming = enable;
+        } else {
+            cameraIncoming = enable;
+        }
+    }
 } // wrtc
