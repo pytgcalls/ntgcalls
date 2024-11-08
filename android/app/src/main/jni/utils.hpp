@@ -95,11 +95,19 @@ ntgcalls::StreamManager::Mode parseStreamMode(JNIEnv *env, jobject mode);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJStreamMode(JNIEnv *env, ntgcalls::StreamManager::Mode mode);
 
+ntgcalls::StreamManager::Device parseDevice(JNIEnv *env, jobject device);
+
 webrtc::ScopedJavaLocalRef<jobject> parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device);
+
+wrtc::FrameData parseFrameData(JNIEnv *env, jobject frameData);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJFrameData(JNIEnv *env, const wrtc::FrameData& frameData);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJRemoteSource(JNIEnv *env, const ntgcalls::RemoteSource& source);
+
+wrtc::SsrcGroup parseSsrcGroup(JNIEnv *env, jobject ssrcGroup);
+
+std::vector<wrtc::SsrcGroup> parseSsrcGroupList(JNIEnv *env, jobject list);
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 

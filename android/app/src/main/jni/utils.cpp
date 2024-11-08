@@ -253,7 +253,7 @@ ntgcalls::RTCServer parseRTCServer(JNIEnv *env, jobject rtcServer) {
     jfieldID tcpFieldID = env->GetFieldID(dhRTCServerClass.obj(), "tcp", "Z");
     jfieldID peerTagFieldID = env->GetFieldID(dhRTCServerClass.obj(), "peerTag", "[B");
 
-    const auto id =  static_cast<uint64_t>(env->GetLongField(rtcServer, idFieldID));
+    const auto id = static_cast<uint64_t>(env->GetLongField(rtcServer, idFieldID));
     const webrtc::ScopedJavaLocalRef<jstring> ipv4{env, reinterpret_cast<jstring>(env->GetObjectField(rtcServer, ipv4FieldID))};
     const webrtc::ScopedJavaLocalRef<jstring> ipv6{env, reinterpret_cast<jstring>(env->GetObjectField(rtcServer, ipv6FieldID))};
     const auto port = static_cast<uint16_t>(env->GetIntField(rtcServer, portFieldID));
@@ -464,6 +464,29 @@ webrtc::ScopedJavaLocalRef<jobject> parseJStreamMode(JNIEnv *env, ntgcalls::Stre
     return nullptr;
 }
 
+ntgcalls::StreamManager::Device parseDevice(JNIEnv *env, jobject device) {
+    const webrtc::ScopedJavaLocalRef<jclass> streamDeviceClass = webrtc::GetClass(env,"io/github/pytgcalls/media/StreamDevice");
+    jfieldID microphoneField = env->GetStaticFieldID(streamDeviceClass.obj(), "MICROPHONE", "Lio/github/pytgcalls/media/StreamDevice;");
+    jfieldID speakerField = env->GetStaticFieldID(streamDeviceClass.obj(), "SPEAKER", "Lio/github/pytgcalls/media/StreamDevice;");
+    jfieldID cameraField = env->GetStaticFieldID(streamDeviceClass.obj(), "CAMERA", "Lio/github/pytgcalls/media/StreamDevice;");
+    jfieldID screenField = env->GetStaticFieldID(streamDeviceClass.obj(), "SCREEN", "Lio/github/pytgcalls/media/StreamDevice;");
+    const webrtc::ScopedJavaLocalRef<jobject> microphone{env, env->GetStaticObjectField(streamDeviceClass.obj(), microphoneField)};
+    const webrtc::ScopedJavaLocalRef<jobject> speaker{env, env->GetStaticObjectField(streamDeviceClass.obj(), speakerField)};
+    const webrtc::ScopedJavaLocalRef<jobject> camera{env, env->GetStaticObjectField(streamDeviceClass.obj(), cameraField)};
+    const webrtc::ScopedJavaLocalRef<jobject> screen{env, env->GetStaticObjectField(streamDeviceClass.obj(), screenField)};
+
+    if (env->IsSameObject(device, microphone.obj())) {
+        return ntgcalls::StreamManager::Device::Microphone;
+    } else if (env->IsSameObject(device, speaker.obj())) {
+        return ntgcalls::StreamManager::Device::Speaker;
+    } else if (env->IsSameObject(device, camera.obj())) {
+        return ntgcalls::StreamManager::Device::Camera;
+    } else if (env->IsSameObject(device, screen.obj())) {
+        return ntgcalls::StreamManager::Device::Screen;
+    }
+    return ntgcalls::StreamManager::Device::Microphone;
+}
+
 webrtc::ScopedJavaLocalRef<jobject> parseJDevice(JNIEnv *env, ntgcalls::StreamManager::Device device) {
     const webrtc::ScopedJavaLocalRef<jclass> streamDeviceClass = webrtc::GetClass(env,"io/github/pytgcalls/media/StreamDevice");
     jfieldID microphoneField = env->GetStaticFieldID(streamDeviceClass.obj(), "MICROPHONE", "Lio/github/pytgcalls/media/StreamDevice;");
@@ -484,6 +507,18 @@ webrtc::ScopedJavaLocalRef<jobject> parseJDevice(JNIEnv *env, ntgcalls::StreamMa
     return nullptr;
 }
 
+wrtc::FrameData parseFrameData(JNIEnv *env, jobject frameData) {
+    const webrtc::ScopedJavaLocalRef<jclass> frameDataClass{env, env->GetObjectClass(frameData)};
+    jfieldID absoluteCaptureTimestampMsField = env->GetFieldID(frameDataClass.obj(), "absoluteCaptureTimestampMs", "J");
+    jfieldID widthField = env->GetFieldID(frameDataClass.obj(), "width", "I");
+    jfieldID heightField = env->GetFieldID(frameDataClass.obj(), "height", "I");
+    jfieldID rotationField = env->GetFieldID(frameDataClass.obj(), "rotation", "I");
+    const auto absoluteCaptureTimestampMs = static_cast<int64_t>(env->GetLongField(frameData, absoluteCaptureTimestampMsField));
+    const auto width = static_cast<uint16_t>(env->GetIntField(frameData, widthField));
+    const auto height = static_cast<uint16_t>(env->GetIntField(frameData, heightField));
+    const auto rotation = static_cast<uint8_t>(env->GetIntField(frameData, rotationField));
+    return wrtc::FrameData(absoluteCaptureTimestampMs, (webrtc::VideoRotation) rotation, width, height);
+}
 
 webrtc::ScopedJavaLocalRef<jobject> parseJFrameData(JNIEnv *env, const wrtc::FrameData& frameData) {
     const webrtc::ScopedJavaLocalRef<jclass> frameDataClass = webrtc::GetClass(env,"io/github/pytgcalls/media/FrameData");
@@ -509,6 +544,39 @@ webrtc::ScopedJavaLocalRef<jobject> parseJRemoteSource(JNIEnv *env, const ntgcal
     }
     auto device = parseJDevice(env, source.device);
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(remoteSourceClass.obj(), constructor, source.ssrc, state.obj(), device.obj())};
+}
+
+wrtc::SsrcGroup parseSsrcGroup(JNIEnv *env, jobject ssrcGroup) {
+    const webrtc::ScopedJavaLocalRef<jclass> ssrcGroupClass{env, env->GetObjectClass(ssrcGroup)};
+    jfieldID semanticsField = env->GetFieldID(ssrcGroupClass.obj(), "semantics", "Ljava/lang/String;");
+    jfieldID ssrcGroupsField = env->GetFieldID(ssrcGroupClass.obj(), "ssrcGroups", "Ljava/util/List;");
+
+    webrtc::ScopedJavaLocalRef<jstring> semantics{env, reinterpret_cast<jstring>(env->GetObjectField(ssrcGroup, semanticsField))};
+    webrtc::ScopedJavaLocalRef<jobject> ssrcGroups{env, env->GetObjectField(ssrcGroup, ssrcGroupsField)};
+    const webrtc::ScopedJavaLocalRef<jclass> listClass{env, env->GetObjectClass(ssrcGroups.obj())};
+    jmethodID sizeMethod = env->GetMethodID(listClass.obj(), "size", "()I");
+    jmethodID getMethod = env->GetMethodID(listClass.obj(), "get", "(I)Ljava/lang/Object;");
+    std::vector<uint32_t> result;
+    for (int i = 0; i < env->CallIntMethod(ssrcGroups.obj(), sizeMethod); i++) {
+        const webrtc::ScopedJavaLocalRef<jobject> element{env, env->CallObjectMethod(ssrcGroups.obj(), getMethod, i)};
+        result.push_back(static_cast<uint32_t>((jint) element.obj()));
+    }
+    return {parseString(env, semantics.obj()), result};
+}
+
+std::vector<wrtc::SsrcGroup> parseSsrcGroupList(JNIEnv *env, jobject list) {
+    if (list == nullptr) {
+        return {};
+    }
+    const webrtc::ScopedJavaLocalRef<jclass> listClass{env, env->GetObjectClass(list)};
+    jmethodID sizeMethod = env->GetMethodID(listClass.obj(), "size", "()I");
+    jmethodID getMethod = env->GetMethodID(listClass.obj(), "get", "(I)Ljava/lang/Object;");
+    std::vector<wrtc::SsrcGroup> result;
+    for (int i = 0; i < env->CallIntMethod(list, sizeMethod); i++) {
+        const webrtc::ScopedJavaLocalRef<jobject> element{env, env->CallObjectMethod(list, getMethod, i)};
+        result.push_back(parseSsrcGroup(env, element.obj()));
+    }
+    return result;
 }
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message) {

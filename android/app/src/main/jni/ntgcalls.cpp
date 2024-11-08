@@ -286,6 +286,30 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_sendSignalingData(JNIEn
 }
 
 extern "C"
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_sendExternalFrame(JNIEnv *env, jobject thiz, jlong chat_id, jobject device, jbyteArray data, jobject frame_data) {
+    try {
+        auto instance = getInstance(env, thiz);
+        instance->sendExternalFrame(static_cast<long>(chat_id), parseDevice(env, device), parseBinary(env, data), parseFrameData(env, frame_data));
+    } HANDLE_EXCEPTIONS
+}
+
+extern "C"
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_addIncomingVideo(JNIEnv *env, jobject thiz, jlong chat_id, jstring endpoint, jobject ssrc_group) {
+    try {
+        auto instance = getInstance(env, thiz);
+        instance->addIncomingVideo(static_cast<long>(chat_id), parseString(env, endpoint), parseSsrcGroupList(env, ssrc_group));
+    } HANDLE_EXCEPTIONS
+}
+
+extern "C"
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_removeIncomingVideo(JNIEnv *env, jobject thiz, jlong chat_id, jstring endpoint) {
+    try {
+        auto instance = getInstance(env, thiz);
+        instance->removeIncomingVideo(static_cast<long>(chat_id), parseString(env, endpoint));
+    } HANDLE_EXCEPTIONS
+}
+
+extern "C"
 JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_getMediaDevices(JNIEnv *env, jclass) {
     return parseJMediaDevices(env, ntgcalls::NTgCalls::getMediaDevices()).Release();
 }

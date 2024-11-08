@@ -4,10 +4,13 @@ import androidx.annotation.RequiresPermission;
 
 import io.github.pytgcalls.exceptions.ConnectionException;
 import io.github.pytgcalls.exceptions.ConnectionNotFoundException;
+import io.github.pytgcalls.media.FrameData;
 import io.github.pytgcalls.media.MediaDescription;
 import io.github.pytgcalls.media.MediaDevices;
 import io.github.pytgcalls.media.MediaState;
 import io.github.pytgcalls.media.MediaStatus;
+import io.github.pytgcalls.media.SsrcGroup;
+import io.github.pytgcalls.media.StreamDevice;
 import io.github.pytgcalls.media.StreamMode;
 import io.github.pytgcalls.p2p.AuthParams;
 import io.github.pytgcalls.p2p.DhConfig;
@@ -111,6 +114,12 @@ public class NTgCalls {
     public native void setRemoteSourceChangeCallback(RemoteSourceChangeCallback callback);
 
     public native void sendSignalingData(long chatId, byte[] data) throws ConnectionNotFoundException;
+
+    public native void sendExternalFrame(long chatId, StreamDevice device, byte[] data, FrameData frameData);
+
+    public native void addIncomingVideo(long chatId, String endpoint, List<SsrcGroup> ssrcGroups);
+
+    public native void removeIncomingVideo(long chatId, String endpoint);
 
     public native Map<Long, MediaStatus> calls();
 }
