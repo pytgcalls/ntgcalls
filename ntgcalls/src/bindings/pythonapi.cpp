@@ -44,6 +44,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_remote_source_change", &ntgcalls::NTgCalls::onRemoteSourceChange, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
+    wrapper.def("send_external_frame", &ntgcalls::NTgCalls::sendExternalFrame, py::arg("chat_id"), py::arg("device"), py::arg("frame"), py::arg("frame_data"));
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
     wrapper.def_static("get_protocol", &ntgcalls::NTgCalls::getProtocol);
     wrapper.def_static("get_media_devices", &ntgcalls::NTgCalls::getMediaDevices);
