@@ -74,7 +74,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) connect(int64_t chatId, const std::string& params, bool isPresentation);
 
-        ASYNC_RETURN(uint32_t) addIncomingVideo(int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup);
+        ASYNC_RETURN(uint32_t) addIncomingVideo(int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroups);
 
         ASYNC_RETURN(bool) removeIncomingVideo(int64_t chatId, const std::string& endpoint);
 

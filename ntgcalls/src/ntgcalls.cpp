@@ -146,19 +146,19 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(void) NTgCalls::connect(const int64_t chatId, const std::string& params, bool isPresentation) {
+    ASYNC_RETURN(void) NTgCalls::connect(const int64_t chatId, const std::string& params, const bool isPresentation) {
         SMART_ASYNC(this, chatId, params, isPresentation)
         SafeCall<GroupCall>(safeConnection(chatId))->connect(params, isPresentation);
         END_ASYNC
     }
 
-     ASYNC_RETURN(uint32_t) NTgCalls::addIncomingVideo(int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) {
-        SMART_ASYNC(this, chatId, endpoint, ssrcGroup)
-        return SafeCall<GroupCall>(safeConnection(chatId))->addIncomingVideo(endpoint, ssrcGroup);
+     ASYNC_RETURN(uint32_t) NTgCalls::addIncomingVideo(const int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroups) {
+        SMART_ASYNC(this, chatId, endpoint, ssrcGroups)
+        return SafeCall<GroupCall>(safeConnection(chatId))->addIncomingVideo(endpoint, ssrcGroups);
         END_ASYNC
     }
 
-     ASYNC_RETURN(bool) NTgCalls::removeIncomingVideo(int64_t chatId, const std::string& endpoint) {
+     ASYNC_RETURN(bool) NTgCalls::removeIncomingVideo(const int64_t chatId, const std::string& endpoint) {
         SMART_ASYNC(this, chatId, endpoint)
         return SafeCall<GroupCall>(safeConnection(chatId))->removeIncomingVideo(endpoint);
         END_ASYNC
@@ -242,7 +242,7 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(void) NTgCalls::sendExternalFrame(int64_t chatId, StreamManager::Device device, const BYTES(bytes::binary) &data, const wrtc::FrameData frameData) {
+    ASYNC_RETURN(void) NTgCalls::sendExternalFrame(const int64_t chatId, const StreamManager::Device device, const BYTES(bytes::binary) &data, const wrtc::FrameData frameData) {
         SMART_ASYNC(this, chatId, device, data = CPP_BYTES(data, bytes::binary), frameData)
         safeConnection(chatId)->sendExternalFrame(device, data, frameData);
         END_ASYNC
