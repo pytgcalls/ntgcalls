@@ -72,6 +72,8 @@ namespace ntgcalls {
 
         virtual Type type() const = 0;
 
+        void sendExternalFrame(StreamManager::Device device, const bytes::binary& data, wrtc::FrameData frameData) const;
+
         template<typename DestCallType, typename BaseCallType>
         static DestCallType* Safe(const std::unique_ptr<BaseCallType>& call) {
             if (!call) {

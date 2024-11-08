@@ -79,6 +79,10 @@ namespace ntgcalls {
         return streamManager->status(mode);
     }
 
+    void CallInterface::sendExternalFrame(const StreamManager::Device device, const bytes::binary& data, const wrtc::FrameData frameData) const {
+        streamManager->sendExternalFrame(device, data, frameData);
+    }
+
     void CallInterface::cancelNetworkListener() {
         if (networkThread) {
             networkThread->Stop();

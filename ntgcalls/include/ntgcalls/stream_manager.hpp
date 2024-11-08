@@ -77,6 +77,8 @@ namespace ntgcalls {
 
         void onFrame(const std::function<void(int64_t, Mode, Device, const bytes::binary&, wrtc::FrameData)>& callback);
 
+        void sendExternalFrame(Device device, const bytes::binary& data, wrtc::FrameData frameData);
+
     private:
         rtc::Thread* workerThread;
         bool initialized = false, videoSimulcast = true;
@@ -85,6 +87,7 @@ namespace ntgcalls {
         std::map<Device, std::unique_ptr<BaseReader>> readers;
         std::map<Device, std::unique_ptr<BaseWriter>> writers;
         std::set<Device> externalWriters;
+        std::set<Device> externalReaders;
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;

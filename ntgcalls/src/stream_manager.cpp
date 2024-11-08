@@ -172,6 +172,18 @@ namespace ntgcalls {
         frameCallback = callback;
     }
 
+    void StreamManager::sendExternalFrame(Device device, const bytes::binary& data, const wrtc::FrameData frameData) {
+        const std::pair id(Capture, device);
+        if (!externalReaders.contains(device) || !streams.contains(id)) {
+            throw InvalidParams("External source not initialized");
+        }
+        if (const auto stream = dynamic_cast<VideoStreamer*>(streams[id].get())) {
+            const auto uniqueData = bytes::make_unique_binary(data.size());
+            memcpy(uniqueData.get(), data.data(), data.size());
+            stream->sendData(uniqueData.get(), frameData);
+        }
+    }
+
     bool StreamManager::updateMute(const bool isMuted) {
         std::lock_guard lock(mutex);
         bool changed = false;
@@ -267,6 +279,10 @@ namespace ntgcalls {
                 if (mode == Capture) {
                     const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device;
                     readers.erase(device);
+                    if (desc.value().mediaSource == DescriptionType::MediaSource::External) {
+                        externalReaders.insert(device);
+                        return;
+                    }
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
                         if (streams.contains(id)) {
@@ -356,8 +372,10 @@ namespace ntgcalls {
             }
         } else if (mode == Capture) {
             readers.erase(device);
+            externalReaders.erase(device);
         } else {
             writers.erase(device);
+            externalWriters.erase(device);
         }
     }
 } // ntgcalls
