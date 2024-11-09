@@ -14,9 +14,9 @@ namespace ntgcalls {
             Active
         };
 
-        int32_t ssrc;
+        int32_t ssrc = 0;
         State state = State::Inactive;
-        StreamManager::Device device;
+        StreamManager::Device device{};
     };
 
 } // ntgcalls
