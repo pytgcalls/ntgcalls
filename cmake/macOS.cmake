@@ -1,9 +1,4 @@
 enable_language(OBJCXX)
-
-target_sources(${target_name} PRIVATE
-    # ${CMAKE_SOURCE_DIR}/wrtc/mac/mac_video_factory.mm
-)
-
 target_compile_options(${target_name} PRIVATE -fconstant-string-class=NSConstantString)
 target_link_options(${target_name} PUBLIC -ObjC)
 set_target_properties(${target_name} PROPERTIES CXX_VISIBILITY_PRESET hidden)
@@ -27,4 +22,5 @@ target_link_libraries(${target_name} PUBLIC
     "-framework OpenGL"
     "-framework IOSurface"
     "-framework ScreenCaptureKit"
+    "iconv"
 )
