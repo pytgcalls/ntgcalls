@@ -127,8 +127,8 @@ PYBIND11_MODULE(ntgcalls, m) {
         .def_readonly("metadata", &ntgcalls::DeviceInfo::metadata);
 
     py::class_<ntgcalls::MediaDevices>(m, "MediaDevices")
-        .def_readonly("audio", &ntgcalls::MediaDevices::audio)
-        .def_readonly("video", &ntgcalls::MediaDevices::video)
+        .def_readonly("microphone", &ntgcalls::MediaDevices::microphone)
+        .def_readonly("camera", &ntgcalls::MediaDevices::camera)
         .def_readonly("screen", &ntgcalls::MediaDevices::screen);
 
     py::class_<ntgcalls::BaseMediaDescription> mediaWrapper(m, "BaseMediaDescription");
