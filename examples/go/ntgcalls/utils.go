@@ -85,10 +85,14 @@ func parseStringVectorC(data []string) (**C.char, C.int) {
 }
 
 func parseErrorCode(futureResult *Future) error {
-	if *futureResult.errCode != 0 {
+	errorCode := int32(*futureResult.errCode)
+	if errorCode < 0 {
 		var message string
 		if *futureResult.errMessage != nil {
 			message = C.GoString(*futureResult.errMessage)
+		}
+		if len(message) == 0 {
+			message = fmt.Sprintf("Error code: %d", errorCode)
 		}
 		return fmt.Errorf("%s", message)
 	}
