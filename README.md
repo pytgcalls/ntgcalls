@@ -27,7 +27,7 @@
     </a>
 </p>
 
-# NativeTgCalls [![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/) [![Downloads](https://pepy.tech/badge/ntgcalls)](https://pepy.tech/project/ntgcalls)
+# NativeTgCalls [![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/) [![Downloads](https://img.shields.io/pepy/dt/ntgcalls?logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)](https://pepy.tech/project/ntgcalls)
 
 Welcome to NativeTgCalls, an innovative open-source project. NativeTgCalls represents the next evolution in Telegram calling, building on the foundation laid by PyTgCalls.
 
