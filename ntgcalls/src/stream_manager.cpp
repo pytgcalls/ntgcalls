@@ -34,7 +34,7 @@ namespace ntgcalls {
        videoSimulcast = enable;
     }
 
-    void StreamManager::setStreamSources(const Mode mode, const MediaDescription& desc, const std::unique_ptr<wrtc::NetworkInterface>& pc) {
+    void StreamManager::setStreamSources(const Mode mode, const MediaDescription& desc) {
         RTC_LOG(LS_INFO) << "Setting Configuration, Acquiring lock";
         std::lock_guard lock(mutex);
         RTC_LOG(LS_INFO) << "Setting Configuration, Lock acquired";
@@ -54,12 +54,6 @@ namespace ntgcalls {
         setConfig<VideoSink, VideoDescription>(mode, Camera, desc.camera);
         setConfig<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
-        if (mode == Playback) {
-            pc->enableAudioIncoming(writers.contains(Microphone) || externalWriters.contains(Microphone));
-            pc->enableVideoIncoming(writers.contains(Camera) || externalWriters.contains(Camera), false);
-            pc->enableVideoIncoming(writers.contains(Screen) || externalWriters.contains(Screen), true);
-        }
-
         if (mode == Capture && (wasCamera != hasDevice(mode, Camera) || wasScreen != hasDevice(mode, Screen) || wasIdling) && initialized) {
             checkUpgrade();
         }
@@ -67,6 +61,12 @@ namespace ntgcalls {
         if (!initialized && mode == Capture) {
             initialized = true;
         }
+    }
+
+    void StreamManager::optimizeSources(const std::unique_ptr<wrtc::NetworkInterface>& pc) const {
+        pc->enableAudioIncoming(writers.contains(Microphone) || externalWriters.contains(Microphone));
+        pc->enableVideoIncoming(writers.contains(Camera) || externalWriters.contains(Camera), false);
+        pc->enableVideoIncoming(writers.contains(Screen) || externalWriters.contains(Screen), true);
     }
 
     MediaState StreamManager::getState() {

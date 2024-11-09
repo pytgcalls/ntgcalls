@@ -25,8 +25,8 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         std::lock_guard lock(mutex);
         streamManager->enableVideoSimulcast(false);
-        streamManager->setStreamSources(StreamManager::Mode::Capture, media, connection);
-        streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription(), connection);
+        streamManager->setStreamSources(StreamManager::Mode::Capture, media);
+        streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
         RTC_LOG(LS_INFO) << "AVStream settings applied";
     }
 
@@ -133,10 +133,10 @@ namespace ntgcalls {
         protocolVersion = signaling::Signaling::matchVersion(versions);
         if (protocolVersion & signaling::Signaling::Version::V2Full) {
             connection = std::make_unique<wrtc::PeerConnection>(
-            RTCServer::toIceServers(servers),
-            true,
+                RTCServer::toIceServers(servers),
+                true,
             p2pAllowed
-        );
+            );
             Safe<wrtc::PeerConnection>(connection)->onRenegotiationNeeded([this] {
                 if (makingNegotation) {
                     RTC_LOG(LS_INFO) << "Renegotiation needed";
@@ -150,6 +150,7 @@ namespace ntgcalls {
                 type() == Type::Outgoing
             );
         }
+        streamManager->optimizeSources(connection);
         signaling = signaling::Signaling::Create(
             protocolVersion,
             connection->networkThread(),

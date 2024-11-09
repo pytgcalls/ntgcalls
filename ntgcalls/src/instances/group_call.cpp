@@ -24,8 +24,9 @@ namespace ntgcalls {
         }
         connection = std::make_unique<wrtc::GroupConnection>(false);
         RTC_LOG(LS_INFO) << "Group call initialized";
-        streamManager->setStreamSources(StreamManager::Mode::Capture, config, connection);
-        streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription(), connection);
+        streamManager->setStreamSources(StreamManager::Mode::Capture, config);
+        streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
+        streamManager->optimizeSources(connection);
 
         connection->onDataChannelOpened([this] {
             RTC_LOG(LS_INFO) << "Data channel opened";
