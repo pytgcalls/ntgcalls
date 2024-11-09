@@ -314,18 +314,18 @@ ntgcalls::MediaDescription parseMediaDescription(const ntg_media_description_str
 ntg_stream_mode_enum parseCStreamMode(const ntgcalls::StreamManager::Mode mode) {
     switch (mode) {
     case ntgcalls::StreamManager::Mode::Capture:
-        return NTG_STREAM_MODE_CAPTURE;
+        return NTG_STREAM_CAPTURE;
     case ntgcalls::StreamManager::Mode::Playback:
-        return NTG_STREAM_MODE_PLAYBACK;
+        return NTG_STREAM_PLAYBACK;
     }
     return {};
 }
 
 ntgcalls::StreamManager::Mode parseStreamMode(const ntg_stream_mode_enum mode) {
     switch (mode) {
-    case NTG_STREAM_MODE_CAPTURE:
+    case NTG_STREAM_CAPTURE:
         return ntgcalls::StreamManager::Mode::Capture;
-    case NTG_STREAM_MODE_PLAYBACK:
+    case NTG_STREAM_PLAYBACK:
         return ntgcalls::StreamManager::Mode::Playback;
     }
     return {};
@@ -405,7 +405,7 @@ std::vector<wrtc::SsrcGroup> parseSsrcGroups(ntg_ssrc_group_struct* ssrcGroups, 
         auto [semantics, ssrcs, sizeSsrcs] = ssrcGroups[i];
         groups.emplace_back(
             std::string(semantics),
-            std::vector<uint32_t>(ssrcs, ssrcs + sizeSsrcs)
+            std::vector(ssrcs, ssrcs + sizeSsrcs)
         );
     }
     return groups;
@@ -561,7 +561,7 @@ int ntg_set_stream_sources(const uintptr_t ptr, const int64_t chatID, const ntg_
     PREPARE_ASYNC_END
 }
 
-int ntg_pause(const uintptr_t ptr, const int64_t chatID, uint32_t* buffer, ntg_async_struct future) {
+int ntg_pause(const uintptr_t ptr, const int64_t chatID, ntg_async_struct future) {
     PREPARE_ASYNC(pause, chatID)
     [future](const bool success) {
         *future.errorCode = !success;

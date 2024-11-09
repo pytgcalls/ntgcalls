@@ -68,8 +68,8 @@ typedef enum {
 } ntg_stream_device_enum;
 
 typedef enum {
-    NTG_STREAM_MODE_CAPTURE,
-    NTG_STREAM_MODE_PLAYBACK,
+    NTG_STREAM_CAPTURE,
+    NTG_STREAM_PLAYBACK,
 } ntg_stream_mode_enum;
 
 typedef enum {
@@ -179,20 +179,20 @@ typedef struct {
 } ntg_frame_data_struct;
 
 typedef enum {
-    NTG_REMOTE_INACTIVE,
+    NTG_REMOTE_ACTIVE,
     NTG_REMOTE_SUSPENDED,
-    NTG_REMOTE_ACTIVE
+    NTG_REMOTE_INACTIVE
 } ntg_remote_source_state_enum;
 
 typedef struct {
-    int32_t ssrc;
+    uint32_t ssrc;
     ntg_remote_source_state_enum state;
     ntg_stream_device_enum device;
 } ntg_remote_source_struct;
 
 typedef struct {
     char* semantics;
-    int32_t* ssrcs;
+    uint32_t* ssrcs;
     int sizeSsrcs;
 } ntg_ssrc_group_struct;
 
