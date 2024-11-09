@@ -461,7 +461,8 @@ int ntg_remove_incoming_video(const uintptr_t ptr, const int64_t chatId, char* e
     PREPARE_ASYNC_END
 }
 
-int ntg_create_p2p(const uintptr_t ptr, const int64_t userId, const ntg_media_description_struct& desc, ntg_async_struct future) {
+// ReSharper disable once CppPassValueParameterByConstReference
+int ntg_create_p2p(const uintptr_t ptr, const int64_t userId, ntg_media_description_struct desc, ntg_async_struct future) {
     PREPARE_ASYNC(createP2PCall, userId, parseMediaDescription(desc))
     [future] {
         *future.errorCode = 0;
@@ -531,7 +532,8 @@ int ntg_get_protocol(ntg_protocol_struct* buffer) {
     return 0;
 }
 
-int ntg_create(const uintptr_t ptr, const int64_t chatID, const ntg_media_description_struct& desc, char* buffer, const int size, ntg_async_struct future) {
+// ReSharper disable once CppPassValueParameterByConstReference
+int ntg_create(const uintptr_t ptr, const int64_t chatID, ntg_media_description_struct desc, char* buffer, const int size, ntg_async_struct future) {
     PREPARE_ASYNC(createCall, chatID, parseMediaDescription(desc))
     [future, buffer, size](const std::string& s) {
         *future.errorCode = copyAndReturn(s, buffer, size);
@@ -549,7 +551,8 @@ int ntg_connect(const uintptr_t ptr, const int64_t chatID, char* params, const b
     PREPARE_ASYNC_END
 }
 
-int ntg_set_stream_sources(const uintptr_t ptr, const int64_t chatID, const ntg_stream_mode_enum streamMode, const ntg_media_description_struct& desc, ntg_async_struct future) {
+// ReSharper disable once CppPassValueParameterByConstReference
+int ntg_set_stream_sources(const uintptr_t ptr, const int64_t chatID, const ntg_stream_mode_enum streamMode, ntg_media_description_struct desc, ntg_async_struct future) {
     PREPARE_ASYNC(setStreamSources, chatID, parseStreamMode(streamMode), parseMediaDescription(desc))
     [future] {
         *future.errorCode = 0;

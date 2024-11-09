@@ -260,7 +260,7 @@ NTG_C_EXPORT uintptr_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uintptr_t ptr);
 
-NTG_C_EXPORT int ntg_create_p2p(uintptr_t ptr, int64_t userId, const ntg_media_description_struct& desc, ntg_async_struct future);
+NTG_C_EXPORT int ntg_create_p2p(uintptr_t ptr, int64_t userId, ntg_media_description_struct desc, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_init_presentation(uintptr_t ptr, int64_t chatId, char* buffer, int size, ntg_async_struct future);
 
@@ -282,11 +282,11 @@ NTG_C_EXPORT int ntg_send_signaling_data(uintptr_t ptr, int64_t userId, uint8_t*
 
 NTG_C_EXPORT int ntg_get_protocol(ntg_protocol_struct *buffer);
 
-NTG_C_EXPORT int ntg_create(uintptr_t ptr, int64_t chatID, const ntg_media_description_struct& desc, char* buffer, int size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_create(uintptr_t ptr, int64_t chatID, ntg_media_description_struct desc, char* buffer, int size, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_connect(uintptr_t ptr, int64_t chatID, char* params, bool isPresentation, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_set_stream_sources(uintptr_t ptr, int64_t chatID, ntg_stream_mode_enum streamMode, const ntg_media_description_struct& desc, ntg_async_struct future);
+NTG_C_EXPORT int ntg_set_stream_sources(uintptr_t ptr, int64_t chatID, ntg_stream_mode_enum streamMode, ntg_media_description_struct desc, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_pause(uintptr_t ptr, int64_t chatID, ntg_async_struct future);
 
