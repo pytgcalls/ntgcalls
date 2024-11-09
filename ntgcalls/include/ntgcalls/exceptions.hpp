@@ -55,7 +55,7 @@ namespace ntgcalls {
         using BaseRTCException::BaseRTCException;
     };
 
-    class InvalidUUID final : public wrtc::BaseRTCException {
+    class NullPointer final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };
 

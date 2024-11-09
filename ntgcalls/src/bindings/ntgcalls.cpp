@@ -4,19 +4,60 @@
 
 #include <ntgcalls/ntgcalls.hpp>
 #include "ntgcalls.h"
-
 #include <ntgcalls/exceptions.hpp>
 
-std::map<uint32_t, std::shared_ptr<ntgcalls::NTgCalls>> clients;
-uint32_t uidGenerator;
-std::mutex mutex;
+constexpr uint16_t SUPPORTED_INPUTS = NTG_FILE | NTG_SHELL | NTG_DEVICE | NTG_DESKTOP | NTG_EXTERNAL;
+
+#define REGISTER_EXCEPTION(x, y) \
+} catch (const x& msg) { \
+    *future.errorCode = NTG_ERROR_##y; \
+    *future.errorMessage = strdup(msg.what());
+
+#define HANDLE_EXCEPTIONS [future](const std::exception_ptr& e) {\
+try { \
+std::rethrow_exception(e); \
+REGISTER_EXCEPTION(ntgcalls::ConnectionNotFound, CONNECTION_NOT_FOUND) \
+REGISTER_EXCEPTION(ntgcalls::ConnectionError, CONNECTION) \
+REGISTER_EXCEPTION(ntgcalls::TelegramServerError, TELEGRAM_SERVER) \
+REGISTER_EXCEPTION(ntgcalls::SignalingUnsupported, SIGNALING_UNSUPPORTED) \
+REGISTER_EXCEPTION(ntgcalls::SignalingError, SIGNALING) \
+REGISTER_EXCEPTION(ntgcalls::InvalidParams, INVALID_PARAMS) \
+REGISTER_EXCEPTION(ntgcalls::CryptoError, CRYPTO) \
+REGISTER_EXCEPTION(ntgcalls::RTMPNeeded, RTMP_NEEDED) \
+REGISTER_EXCEPTION(ntgcalls::FileError, FILE) \
+REGISTER_EXCEPTION(ntgcalls::FFmpegError, FFMPEG) \
+REGISTER_EXCEPTION(ntgcalls::ShellError, SHELL) \
+REGISTER_EXCEPTION(ntgcalls::MediaDeviceError, MEDIA_DEVICE) \
+REGISTER_EXCEPTION(wrtc::RTCException, WEBRTC) \
+REGISTER_EXCEPTION(wrtc::SdpParseException, PARSE_SDP) \
+REGISTER_EXCEPTION(wrtc::TransportParseException, PARSE_TRANSPORT) \
+} catch (...) { \
+*future.errorCode = NTG_ERROR_UNKNOWN; \
+} \
+future.promise(future.userData);\
+}\
+
+#define PREPARE_ASYNC(method, ...) \
+*future.errorCode = NTG_ERROR_ASYNC_NOT_READY;\
+try {\
+getInstance(ptr)->method(__VA_ARGS__).then(\
+
+#define PREPARE_ASYNC_END \
+, HANDLE_EXCEPTIONS \
+);\
+} catch (ntgcalls::NullPointer&) {\
+return NTG_ERROR_NULL_POINTER;\
+} catch (...) {\
+return NTG_ERROR_UNKNOWN;\
+}\
+return 0;
 
 int copyAndReturn(const std::vector<std::byte>& b, uint8_t *buffer, const int size) {
     if (!buffer)
         return static_cast<int>(b.size());
 
     if (size < static_cast<int>(b.size()))
-        return NTG_ERR_TOO_SMALL;
+        return NTG_ERROR_TOO_SMALL;
     const auto *bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
 #ifndef IS_MACOS
     std::copy_n(bufferTemp, b.size(), buffer);
@@ -42,7 +83,7 @@ int copyAndReturn(std::string s, char *buffer, const int size) {
         return static_cast<int>(s.size() + 1);
 
     if (size < static_cast<int>(s.size() + 1))
-        return NTG_ERR_TOO_SMALL;
+        return NTG_ERROR_TOO_SMALL;
 
 #ifndef IS_MACOS
     std::ranges::copy(s, buffer);
@@ -54,77 +95,66 @@ int copyAndReturn(std::string s, char *buffer, const int size) {
     return static_cast<int>(s.size() + 1);
 }
 
-#define PREPARE_ASYNC(method, ...) \
-*future.errorCode = NTG_ASYNC_NOT_READY;\
-try {\
-safeUID(uid)->method(__VA_ARGS__).then(\
-
-#define PREPARE_ASYNC_END \
-);\
-} catch (ntgcalls::InvalidUUID&) {\
-return NTG_INVALID_UID;\
-} catch (...) {\
-return  NTG_UNKNOWN_EXCEPTION;\
-}\
-return 0;
-
 template <typename T>
 int copyAndReturn(std::vector<T> b, T *buffer, const int size) {
     if (!buffer)
         return static_cast<int>(b.size());
 
     if (size < static_cast<int>(b.size()))
-        return NTG_ERR_TOO_SMALL;
+        return NTG_ERROR_TOO_SMALL;
     std::copy(b.begin(), b.end(), buffer);
     return static_cast<int>(b.size());
 }
 
-std::shared_ptr<ntgcalls::NTgCalls> safeUID(const uint32_t uid) {
-    std::lock_guard lock(mutex);
-    if (!clients.contains(uid)) {
-        throw ntgcalls::InvalidUUID("UUID " + std::to_string(uid) + " not found");
+ntgcalls::NTgCalls* getInstance(const uintptr_t ptr) {
+    const auto instance = reinterpret_cast<ntgcalls::NTgCalls*>(ptr);
+    if (!instance) {
+        throw ntgcalls::NullPointer("NullPointer exception for " + std::to_string(ptr));
     }
-    return clients[uid];
+    return instance;
 }
 
-ntgcalls::BaseMediaDescription::InputMode parseInputMode(const ntg_input_mode_enum mode) {
-    auto result = ntgcalls::BaseMediaDescription::InputMode::Unknown;
-    if (mode & NTG_FILE) {
-        result |= ntgcalls::BaseMediaDescription::InputMode::File;
+ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(const ntg_media_source_enum mode) {
+    switch (mode) {
+        case NTG_FILE:
+            return ntgcalls::BaseMediaDescription::MediaSource::File;
+        case NTG_SHELL:
+            return ntgcalls::BaseMediaDescription::MediaSource::Shell;
+        case NTG_FFMPEG:
+            return ntgcalls::BaseMediaDescription::MediaSource::FFmpeg;
+        case NTG_DEVICE:
+            return ntgcalls::BaseMediaDescription::MediaSource::Device;
+        case NTG_DESKTOP:
+            return ntgcalls::BaseMediaDescription::MediaSource::Desktop;
+        case NTG_EXTERNAL:
+            return ntgcalls::BaseMediaDescription::MediaSource::External;
+        default:
+            return ntgcalls::BaseMediaDescription::MediaSource::Unknown;
     }
-    if (mode & NTG_SHELL) {
-        result |= ntgcalls::BaseMediaDescription::InputMode::Shell;
-    }
-    if (mode & NTG_FFMPEG) {
-        result |= ntgcalls::BaseMediaDescription::InputMode::FFmpeg;
-    }
-    if (mode & NTG_NO_LATENCY) {
-        result |= ntgcalls::BaseMediaDescription::InputMode::NoLatency;
-    }
-    return result;
 }
 
-ntg_media_state_struct parseMediaState(const ntgcalls::MediaState state) {
+ntg_media_state_struct parseCMediaState(const ntgcalls::MediaState state) {
     return ntg_media_state_struct{
-            state.muted,
-            state.videoPaused,
-            state.videoStopped,
+        state.muted,
+        state.videoPaused,
+        state.videoStopped,
+        state.presentationPaused
     };
 }
 
-ntg_stream_status_enum parseStatus(const ntgcalls::Stream::Status status) {
+ntg_stream_status_enum parseCStatus(const ntgcalls::StreamManager::Status status) {
     switch (status) {
-        case ntgcalls::Stream::Playing:
-            return NTG_PLAYING;
-        case ntgcalls::Stream::Paused:
-            return NTG_PAUSED;
-        case ntgcalls::Stream::Idling:
-            return NTG_IDLING;
+    case ntgcalls::StreamManager::Status::Active:
+        return NTG_ACTIVE;
+    case ntgcalls::StreamManager::Status::Paused:
+        return NTG_PAUSED;
+    case ntgcalls::StreamManager::Status::Idling:
+        return NTG_IDLING;
     }
     return {};
 }
 
-ntg_log_level_enum parseLevel(const ntgcalls::LogSink::Level level) {
+ntg_log_level_enum parseCLevel(const ntgcalls::LogSink::Level level) {
     switch (level) {
         case ntgcalls::LogSink::Level::Debug:
             return NTG_LOG_DEBUG;
@@ -139,20 +169,27 @@ ntg_log_level_enum parseLevel(const ntgcalls::LogSink::Level level) {
     }
 }
 
-ntg_connection_state_enum parseConnectionState(const ntgcalls::CallInterface::ConnectionState state) {
+ntg_connection_state_enum parseCConnectionState(const ntgcalls::CallNetworkState::ConnectionState state) {
     switch (state) {
-        case ntgcalls::CallInterface::ConnectionState::Connecting:
+        case ntgcalls::CallNetworkState::ConnectionState::Connecting:
             return NTG_STATE_CONNECTING;
-        case ntgcalls::CallInterface::ConnectionState::Connected:
+        case ntgcalls::CallNetworkState::ConnectionState::Connected:
             return NTG_STATE_CONNECTED;
-        case ntgcalls::CallInterface::ConnectionState::Timeout:
+        case ntgcalls::CallNetworkState::ConnectionState::Timeout:
             return NTG_STATE_TIMEOUT;
-        case ntgcalls::CallInterface::ConnectionState::Failed:
+        case ntgcalls::CallNetworkState::ConnectionState::Failed:
             return NTG_STATE_FAILED;
-        case ntgcalls::CallInterface::ConnectionState::Closed:
+        case ntgcalls::CallNetworkState::ConnectionState::Closed:
             return NTG_STATE_CLOSED;
     }
     return {};
+}
+
+ntg_call_network_state_struct parseCCallNetworkState(const ntgcalls::CallNetworkState state) {
+    return {
+        state.kind == ntgcalls::CallNetworkState::Kind::Normal? NTG_KIND_NORMAL : NTG_KIND_PRESENTATION,
+        parseCConnectionState(state.connectionState),
+    };
 }
 
 ntgcalls::DhConfig parseDhConfig(ntg_dh_config_struct* config) {
@@ -163,7 +200,7 @@ ntgcalls::DhConfig parseDhConfig(ntg_dh_config_struct* config) {
     };
 }
 
-ntg_log_source_enum parseSource(const ntgcalls::LogSink::Source source) {
+ntg_log_source_enum parseCSource(const ntgcalls::LogSink::Source source) {
     switch (source) {
         case ntgcalls::LogSink::Source::WebRTC:
             return NTG_LOG_WEBRTC;
@@ -209,84 +246,238 @@ std::pair<char**, int> copyAndReturn(const std::vector<std::string>& versions) {
     return {versionsCpp, static_cast<int>(versions.size())};
 }
 
+std::pair<ntg_device_info_struct*, int> copyAndReturn(const std::vector<ntgcalls::DeviceInfo>& devices) {
+    auto cDevices = new ntg_device_info_struct[devices.size()];
+    for (int i = 0; i < devices.size(); i++) {
+        ntg_device_info_struct result{};
+        result.name = new char[devices[i].name.size() + 1];
+        copyAndReturn(devices[i].name, result.name, static_cast<int>(devices[i].name.size() + 1));
+        result.metadata = new char[devices[i].metadata.size() + 1];
+        copyAndReturn(devices[i].metadata, result.metadata, static_cast<int>(devices[i].metadata.size() + 1));
+        cDevices[i] = result;
+    }
+    return {cDevices, static_cast<int>(devices.size())};
+}
+
+ntgcalls::AudioDescription parseAudioDescription(const ntg_audio_description_struct& desc) {
+    if (desc.mediaSource & SUPPORTED_INPUTS) {
+        return {
+            parseMediaSource(desc.mediaSource),
+            desc.sampleRate,
+            desc.channelCount,
+            std::string(desc.input)
+        };
+    }
+    throw ntgcalls::FFmpegError("Not supported");
+}
+
+ntgcalls::VideoDescription parseVideoDescription(const ntg_video_description_struct& desc) {
+    if (desc.mediaSource & SUPPORTED_INPUTS) {
+        return {
+            parseMediaSource(desc.mediaSource),
+            desc.width,
+            desc.height,
+            desc.fps,
+            std::string(desc.input)
+        };
+    }
+    throw ntgcalls::FFmpegError("Not supported");
+}
+
 ntgcalls::MediaDescription parseMediaDescription(const ntg_media_description_struct& desc) {
-    std::optional<ntgcalls::AudioDescription> audio;
-    std::optional<ntgcalls::VideoDescription> video;
-    if (desc.audio) {
-        if (desc.audio->inputMode & (NTG_FILE | NTG_SHELL)) {
-            audio = ntgcalls::AudioDescription(
-                parseInputMode(desc.audio->inputMode),
-                desc.audio->sampleRate,
-                desc.audio->bitsPerSample,
-                desc.audio->channelCount,
-                std::string(desc.audio->input)
-            );
-        } else {
-            throw ntgcalls::FFmpegError("Not supported");
-        }
+    std::optional<ntgcalls::AudioDescription> microphone;
+    std::optional<ntgcalls::AudioDescription> speaker;
+    std::optional<ntgcalls::VideoDescription> camera;
+    std::optional<ntgcalls::VideoDescription> screen;
+    if (desc.microphone) {
+        microphone = parseAudioDescription(*desc.microphone);
     }
-    if (desc.video) {
-        if (desc.video->inputMode & (NTG_FILE | NTG_SHELL)) {
-            video = ntgcalls::VideoDescription(
-                parseInputMode(desc.video->inputMode),
-                desc.video->width,
-                desc.video->height,
-                desc.video->fps,
-                std::string(desc.video->input)
-            );
-        } else {
-            throw ntgcalls::FFmpegError("Not supported");
-        }
+    if (desc.speaker) {
+        speaker = parseAudioDescription(*desc.speaker);
     }
+    if (desc.camera) {
+        camera = parseVideoDescription(*desc.camera);
+    }
+    if (desc.screen) {
+        screen = parseVideoDescription(*desc.screen);
+    }
+    return ntgcalls::MediaDescription(
+        microphone,
+        speaker,
+        camera,
+        screen
+    );
+}
+
+ntg_stream_mode_enum parseCStreamMode(const ntgcalls::StreamManager::Mode mode) {
+    switch (mode) {
+    case ntgcalls::StreamManager::Mode::Capture:
+        return NTG_STREAM_MODE_CAPTURE;
+    case ntgcalls::StreamManager::Mode::Playback:
+        return NTG_STREAM_MODE_PLAYBACK;
+    }
+    return {};
+}
+
+ntgcalls::StreamManager::Mode parseStreamMode(const ntg_stream_mode_enum mode) {
+    switch (mode) {
+    case NTG_STREAM_MODE_CAPTURE:
+        return ntgcalls::StreamManager::Mode::Capture;
+    case NTG_STREAM_MODE_PLAYBACK:
+        return ntgcalls::StreamManager::Mode::Playback;
+    }
+    return {};
+}
+
+ntg_stream_device_enum parseCStreamDevice(const ntgcalls::StreamManager::Device device) {
+    switch (device) {
+    case ntgcalls::StreamManager::Device::Microphone:
+        return NTG_STREAM_MICROPHONE;
+    case ntgcalls::StreamManager::Device::Speaker:
+        return NTG_STREAM_SPEAKER;
+    case ntgcalls::StreamManager::Device::Camera:
+        return NTG_STREAM_CAMERA;
+    case ntgcalls::StreamManager::Device::Screen:
+        return NTG_STREAM_SCREEN;
+    }
+    return {};
+}
+
+ntgcalls::StreamManager::Device parseStreamDevice(const ntg_stream_device_enum device) {
+    switch (device) {
+    case NTG_STREAM_MICROPHONE:
+        return ntgcalls::StreamManager::Device::Microphone;
+    case NTG_STREAM_SPEAKER:
+        return ntgcalls::StreamManager::Device::Speaker;
+    case NTG_STREAM_CAMERA:
+        return ntgcalls::StreamManager::Device::Camera;
+    case NTG_STREAM_SCREEN:
+        return ntgcalls::StreamManager::Device::Screen;
+    }
+    return {};
+}
+
+ntg_stream_type_enum parseCStreamType(const ntgcalls::StreamManager::Type type) {
+    switch (type) {
+    case ntgcalls::StreamManager::Type::Audio:
+        return NTG_STREAM_AUDIO;
+    case ntgcalls::StreamManager::Type::Video:
+        return NTG_STREAM_VIDEO;
+    }
+    return {};
+}
+
+ntg_frame_data_struct parseCFrameData(const wrtc::FrameData data) {
     return {
-        audio,
-        video
+        data.absoluteCaptureTimestampMs,
+        data.width,
+        data.height,
+        static_cast<uint16_t>(data.rotation)
     };
 }
 
-uint32_t ntg_init() {
-    std::lock_guard lock(mutex);
-    const uint32_t uid = uidGenerator++;
-    clients[uid] = std::make_shared<ntgcalls::NTgCalls>();
-    return uid;
+wrtc::FrameData parseFrameData(const ntg_frame_data_struct data) {
+    return {
+        data.absoluteCaptureTimestampMs,
+        static_cast<webrtc::VideoRotation>(data.rotation),
+        data.height,
+        data.width
+    };
 }
 
-int ntg_destroy(const uint32_t uid) {
-    std::lock_guard lock(mutex);
-    if (clients.contains(uid)) {
-        clients.erase(clients.find(uid));
-        return 0;
+ntg_remote_source_state_enum parseCRemoteSourceState(const ntgcalls::RemoteSource::State state) {
+    switch (state) {
+    case ntgcalls::RemoteSource::State::Inactive:
+        return NTG_REMOTE_INACTIVE;
+    case ntgcalls::RemoteSource::State::Suspended:
+        return NTG_REMOTE_SUSPENDED;
+    case ntgcalls::RemoteSource::State::Active:
+        return NTG_REMOTE_ACTIVE;
     }
-    return NTG_INVALID_UID;
+    return {};
 }
 
+std::vector<wrtc::SsrcGroup> parseSsrcGroups(ntg_ssrc_group_struct* ssrcGroups, const int size) {
+    std::vector<wrtc::SsrcGroup> groups;
+    for (int i = 0; i < size; i++) {
+        auto [semantics, ssrcs, sizeSsrcs] = ssrcGroups[i];
+        groups.emplace_back(
+            std::string(semantics),
+            std::vector<uint32_t>(ssrcs, ssrcs + sizeSsrcs)
+        );
+    }
+    return groups;
+}
 
-int ntg_create_p2p(const uint32_t uid, const int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, const int sizeGAHash, const ntg_media_description_struct desc, uint8_t* buffer, const int size, ntg_async_struct future) {
-    PREPARE_ASYNC(createP2PCall, userId, parseDhConfig(dhConfig), sizeGAHash ? std::optional(copyAndReturn(g_a_hash, sizeGAHash)) : std::nullopt, parseMediaDescription(desc))
-    [future, buffer, size] (const bytes::vector& s) {
+uintptr_t ntg_init() {
+    return reinterpret_cast<uintptr_t>(new ntgcalls::NTgCalls());
+}
+
+int ntg_destroy(const uintptr_t ptr) {
+    try {
+        delete getInstance(ptr);
+        return 0;
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+}
+
+int ntg_init_presentation(const uintptr_t ptr, const int64_t chatId, char* buffer, const int size, ntg_async_struct future) {
+    PREPARE_ASYNC(initPresentation, chatId)
+    [future, buffer, size] (const std::string& s) {
         *future.errorCode = copyAndReturn(s, buffer, size);
-        future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::ConnectionError&) {
-            *future.errorCode = NTG_CONNECTION_ALREADY_EXISTS;
-        } catch (ntgcalls::FileError&) {
-            *future.errorCode = NTG_FILE_NOT_FOUND;
-        } catch (ntgcalls::FFmpegError&) {
-            *future.errorCode = NTG_FFMPEG_NOT_FOUND;
-        } catch (ntgcalls::ShellError&) {
-            *future.errorCode = NTG_SHELL_ERROR;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
         future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct *buffer, ntg_async_struct future) {
+int ntg_stop_presentation(const uintptr_t ptr, const int64_t chatId, ntg_async_struct future) {
+    PREPARE_ASYNC(stopPresentation, chatId)
+    [future] {
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_add_incoming_video(const uintptr_t ptr, const int64_t chatId, char* endpoint, ntg_ssrc_group_struct* ssrcGroups, const int size, uint32_t* buffer, ntg_async_struct future) {
+    PREPARE_ASYNC(addIncomingVideo, chatId, std::string(endpoint), parseSsrcGroups(ssrcGroups, size))
+    [future, buffer](const uint32_t ssrc) {
+        *future.errorCode = ssrc ? 0 : 1;
+        *buffer = ssrc;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_remove_incoming_video(const uintptr_t ptr, const int64_t chatId, char* endpoint, ntg_async_struct future) {
+    PREPARE_ASYNC(removeIncomingVideo, chatId, std::string(endpoint))
+    [future](const bool success) {
+        *future.errorCode = !success;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_create_p2p(const uintptr_t ptr, const int64_t userId, const ntg_media_description_struct& desc, ntg_async_struct future) {
+    PREPARE_ASYNC(createP2PCall, userId, parseMediaDescription(desc))
+    [future] {
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_init_exchange(const uintptr_t ptr, const int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, const int sizeGAHash, uint8_t* buffer, const int size, ntg_async_struct future) {
+    PREPARE_ASYNC(initExchange, userId, parseDhConfig(dhConfig), sizeGAHash ? std::optional(copyAndReturn(g_a_hash, sizeGAHash)) : std::nullopt)
+    [future, buffer, size] (const bytes::vector& s){
+        *future.errorCode = copyAndReturn(s, buffer, size);
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_exchange_keys(const uintptr_t ptr, const int64_t userId, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct *buffer, ntg_async_struct future) {
     PREPARE_ASYNC(exchangeKeys, userId, copyAndReturn(g_a_or_b, sizeGAB), fingerprint)
     [future, buffer](const ntgcalls::AuthParams& params) {
         buffer->key_fingerprint = params.key_fingerprint;
@@ -295,412 +486,276 @@ int ntg_exchange_keys(const uint32_t uid, const int64_t userId, const uint8_t* g
         copyAndReturn(params.g_a_or_b, buffer->g_a_or_b, buffer->sizeGAB);
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::ConnectionError&) {
-            *future.errorCode = NTG_CONNECTION_ALREADY_EXISTS;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (ntgcalls::CryptoError&) {
-            *future.errorCode = NTG_CRYPTO_ERROR;
-        } catch (ntgcalls::InvalidParams&) {
-            *future.errorCode = NTG_MISSING_FINGERPRINT;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_skip_exchange(const uintptr_t ptr, const int64_t userId, const uint8_t* encryptionKey, const int size, const bool isOutgoing, ntg_async_struct future) {
+    PREPARE_ASYNC(skipExchange, userId, copyAndReturn(encryptionKey, size), isOutgoing)
+    [future] {
+        *future.errorCode = 0;
         future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-
-int ntg_connect_p2p(const uint32_t uid, const int64_t userId, ntg_rtc_server_struct* servers, const int serversSize, char** versions, const int versionsSize, const bool p2pAllowed, ntg_async_struct future) {
+int ntg_connect_p2p(const uintptr_t ptr, const int64_t userId, ntg_rtc_server_struct* servers, const int serversSize, char** versions, const int versionsSize, const bool p2pAllowed, ntg_async_struct future) {
     PREPARE_ASYNC(connectP2P, userId, parseRTCServers(servers, serversSize), copyAndReturn(versions, versionsSize), p2pAllowed)
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::ConnectionError&) {
-            *future.errorCode = NTG_CONNECTION_ALREADY_EXISTS;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (ntgcalls::CryptoError&) {
-            *future.errorCode = NTG_CRYPTO_ERROR;
-        } catch (ntgcalls::SignalingError&) {
-            *future.errorCode = NTG_SIGNALING_ERROR;
-        } catch (ntgcalls::SignalingUnsupported&) {
-            *future.errorCode = NTG_SIGNALING_UNSUPPORTED;
-        } catch (ntgcalls::InvalidParams&) {
-            *future.errorCode = NTG_INVALID_TRANSPORT;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_send_signaling_data(const uint32_t uid, const int64_t userId, uint8_t* buffer, const int size, ntg_async_struct future) {
+int ntg_send_signaling_data(const uintptr_t ptr, const int64_t userId, uint8_t* buffer, const int size, ntg_async_struct future) {
     PREPARE_ASYNC(sendSignalingData, userId, bytes::binary(buffer, buffer + size))
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_get_protocol(const uint32_t uid, ntg_protocol_struct* protocol) {
-    try {
-        const auto [min_layer, max_layer, udp_p2p, udp_reflector, library_versions] = safeUID(uid)->getProtocol();
-        protocol->minLayer = min_layer;
-        protocol->maxLayer = max_layer;
-        protocol->udpP2P = udp_p2p;
-        protocol->udpReflector = udp_reflector;
-        auto [libraryVersions, libraryVersionsSize] = copyAndReturn(library_versions);
-        protocol->libraryVersionsSize = libraryVersionsSize;
-        protocol->libraryVersions = libraryVersions;
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
-    }
+int ntg_get_protocol(ntg_protocol_struct* buffer) {
+    const auto [min_layer, max_layer, udp_p2p, udp_reflector, library_versions] = ntgcalls::NTgCalls::getProtocol();
+    buffer->minLayer = min_layer;
+    buffer->maxLayer = max_layer;
+    buffer->udpP2P = udp_p2p;
+    buffer->udpReflector = udp_reflector;
+    auto [libraryVersions, libraryVersionsSize] = copyAndReturn(library_versions);
+    buffer->libraryVersionsSize = libraryVersionsSize;
+    buffer->libraryVersions = libraryVersions;
     return 0;
 }
 
-int ntg_create(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc, char* buffer, const int size, ntg_async_struct future) {
+int ntg_create(const uintptr_t ptr, const int64_t chatID, const ntg_media_description_struct& desc, char* buffer, const int size, ntg_async_struct future) {
     PREPARE_ASYNC(createCall, chatID, parseMediaDescription(desc))
     [future, buffer, size](const std::string& s) {
         *future.errorCode = copyAndReturn(s, buffer, size);
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::ConnectionError&) {
-            *future.errorCode = NTG_CONNECTION_ALREADY_EXISTS;
-        } catch (ntgcalls::FileError&) {
-            *future.errorCode = NTG_FILE_NOT_FOUND;
-        } catch (ntgcalls::InvalidParams&) {
-            *future.errorCode = NTG_ENCODER_NOT_FOUND;
-        } catch (ntgcalls::FFmpegError&) {
-            *future.errorCode = NTG_FFMPEG_NOT_FOUND;
-        } catch (ntgcalls::ShellError&) {
-            *future.errorCode = NTG_SHELL_ERROR;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_connect(const uint32_t uid, const int64_t chatID, char* params, ntg_async_struct future) {
-    PREPARE_ASYNC(connect, chatID, std::string(params))
+int ntg_connect(const uintptr_t ptr, const int64_t chatID, char* params, const bool isPresentation, ntg_async_struct future) {
+    PREPARE_ASYNC(connect, chatID, std::string(params), isPresentation)
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::RTMPNeeded&) {
-            *future.errorCode = NTG_RTMP_NEEDED;
-        } catch (ntgcalls::InvalidParams&) {
-            *future.errorCode = NTG_INVALID_TRANSPORT;
-        } catch (ntgcalls::ConnectionError&) {
-            *future.errorCode = NTG_CONNECTION_FAILED;
-        } catch(ntgcalls::TelegramServerError&) {
-            *future.errorCode = NTG_CONNECTION_FAILED;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_change_stream(const uint32_t uid, const int64_t chatID, const ntg_media_description_struct desc, ntg_async_struct future) {
-    PREPARE_ASYNC(changeStream, chatID, parseMediaDescription(desc))
+int ntg_set_stream_sources(const uintptr_t ptr, const int64_t chatID, const ntg_stream_mode_enum streamMode, const ntg_media_description_struct& desc, ntg_async_struct future) {
+    PREPARE_ASYNC(setStreamSources, chatID, parseStreamMode(streamMode), parseMediaDescription(desc))
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_pause(const uint32_t uid, const int64_t chatID, ntg_async_struct future) {
+int ntg_pause(const uintptr_t ptr, const int64_t chatID, uint32_t* buffer, ntg_async_struct future) {
     PREPARE_ASYNC(pause, chatID)
     [future](const bool success) {
         *future.errorCode = !success;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::InvalidUUID&) {
-            *future.errorCode = NTG_INVALID_UID;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_resume(const uint32_t uid, const int64_t chatID, ntg_async_struct future) {
+int ntg_resume(const uintptr_t ptr, const int64_t chatID, ntg_async_struct future) {
     PREPARE_ASYNC(resume, chatID)
     [future](const bool success) {
         *future.errorCode = !success;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::InvalidUUID&) {
-            *future.errorCode = NTG_INVALID_UID;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_mute(const uint32_t uid, const int64_t chatID, ntg_async_struct future) {
+int ntg_mute(const uintptr_t ptr, const int64_t chatID, ntg_async_struct future) {
     PREPARE_ASYNC(mute, chatID)
     [future](const bool success) {
         *future.errorCode = !success;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::InvalidUUID&) {
-            *future.errorCode = NTG_INVALID_UID;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_unmute(const uint32_t uid, const int64_t chatID, ntg_async_struct future) {
+int ntg_unmute(const uintptr_t ptr, const int64_t chatID, ntg_async_struct future) {
     PREPARE_ASYNC(unmute, chatID)
     [future](const bool success) {
         *future.errorCode = !success;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::InvalidUUID&) {
-            *future.errorCode = NTG_INVALID_UID;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_stop(const uint32_t uid, const int64_t chatID, ntg_async_struct future) {
+int ntg_stop(const uintptr_t ptr, const int64_t chatID, ntg_async_struct future) {
     PREPARE_ASYNC(stop, chatID)
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::InvalidUUID&) {
-            *future.errorCode = NTG_INVALID_UID;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_time(const uint32_t uid, const int64_t chatID, int64_t* time, ntg_async_struct future) {
-    PREPARE_ASYNC(time, chatID)
+int ntg_time(const uintptr_t ptr, const int64_t chatID, const ntg_stream_mode_enum streamMode, int64_t* time, ntg_async_struct future) {
+    PREPARE_ASYNC(time, chatID, parseStreamMode(streamMode))
     [future, time](const int64_t t) {
         *time = t;
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::InvalidUUID&) {
-            *future.errorCode = NTG_INVALID_UID;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_get_state(const uint32_t uid, const int64_t chatID, ntg_media_state_struct* mediaState, ntg_async_struct future) {
+int ntg_get_state(const uintptr_t ptr, const int64_t chatID, ntg_media_state_struct* mediaState, ntg_async_struct future) {
     PREPARE_ASYNC(getState, chatID)
     [future, mediaState](const ntgcalls::MediaState state) {
-        *mediaState = parseMediaState(state);
+        *mediaState = parseCMediaState(state);
         *future.errorCode = 0;
-        future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::InvalidUUID&) {
-            *future.errorCode = NTG_INVALID_UID;
-        } catch (ntgcalls::ConnectionNotFound&) {
-            *future.errorCode = NTG_CONNECTION_NOT_FOUND;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
         future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_calls(const uint32_t uid, ntg_call_struct *buffer, const uint64_t size, ntg_async_struct future) {
+int ntg_send_external_frame(const uintptr_t ptr, const int64_t chatID, const ntg_stream_device_enum device, uint8_t* frame, const int frameSize, const ntg_frame_data_struct frameData, ntg_async_struct future) {
+    PREPARE_ASYNC(sendExternalFrame, chatID, parseStreamDevice(device), bytes::binary(frame, frame + frameSize), parseFrameData(frameData))
+    [future] {
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_get_media_devices(ntg_media_devices_struct* buffer) {
+    auto [microphone, camera, screen] = ntgcalls::NTgCalls::getMediaDevices();
+    auto [microphoneList, microphoneSize] = copyAndReturn(microphone);
+    buffer->microphone = microphoneList;
+    buffer->sizeMicrophone = microphoneSize;
+    auto [cameraList, cameraSize] = copyAndReturn(camera);
+    buffer->camera = cameraList;
+    buffer->sizeCamera = cameraSize;
+    auto [screenList, screenSize] = copyAndReturn(screen);
+    buffer->screen = screenList;
+    buffer->sizeScreen = screenSize;
+    return 0;
+}
+
+int ntg_calls(const uintptr_t ptr, ntg_call_struct *buffer, const uint64_t size, ntg_async_struct future) {
     PREPARE_ASYNC(calls)
     [future, buffer, size](const auto callsCpp) {
         std::vector<ntg_call_struct> groupCalls;
         for (const auto [fst, snd] : callsCpp) {
             groupCalls.push_back(ntg_call_struct{
                 fst,
-                parseStatus(snd),
+                parseCStatus(snd),
             });
         }
         *future.errorCode = copyAndReturn(groupCalls, buffer, static_cast<int>(size));
-        future.promise(future.userData);
-    },
-    [future](const std::exception_ptr& e) {
-        try {
-            std::rethrow_exception(e);
-        } catch (ntgcalls::InvalidUUID&) {
-            *future.errorCode = NTG_INVALID_UID;
-        } catch (...) {
-            *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        }
         future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_calls_count(const uint32_t uid, uint64_t* size, ntg_async_struct future) {
+int ntg_calls_count(const uintptr_t ptr, uint64_t* size, ntg_async_struct future) {
     PREPARE_ASYNC(calls)
     [future, size](const auto callsCpp) {
         *size = callsCpp.size();
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr&) {
-        *future.errorCode = NTG_UNKNOWN_EXCEPTION;
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_cpu_usage(const uint32_t uid, double *buffer, ntg_async_struct future) {
+int ntg_cpu_usage(const uintptr_t ptr, double *buffer, ntg_async_struct future) {
     PREPARE_ASYNC(cpuUsage)
     [future, buffer](const double usage) {
         *buffer = usage;
         *future.errorCode = 0;
         future.promise(future.userData);
-    },
-    [future](const std::exception_ptr&) {
-        *future.errorCode = NTG_UNKNOWN_EXCEPTION;
-        future.promise(future.userData);
     }
     PREPARE_ASYNC_END
 }
 
-int ntg_on_stream_end(const uint32_t uid, ntg_stream_callback callback, void* userData) {
+int ntg_on_stream_end(const uintptr_t ptr, ntg_stream_callback callback, void* userData) {
     try {
-        safeUID(uid)->onStreamEnd([uid, callback, userData](const int64_t chatId, const ntgcalls::Stream::Type type) {
-            callback(uid, chatId, type == ntgcalls::Stream::Type::Audio ? NTG_STREAM_AUDIO : NTG_STREAM_VIDEO, userData);
+        getInstance(ptr)->onStreamEnd([ptr, callback, userData](const int64_t chatId, const ntgcalls::StreamManager::Type type, const ntgcalls::StreamManager::Device device) {
+            callback(
+                ptr,
+                chatId,
+                parseCStreamType(type),
+                parseCStreamDevice(device),
+                userData
+            );
         });
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
-    } catch (...) {
-        return NTG_UNKNOWN_EXCEPTION;
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
     }
     return 0;
 }
 
-int ntg_on_upgrade(const uint32_t uid, ntg_upgrade_callback callback, void* userData) {
+int ntg_on_upgrade(const uintptr_t ptr, ntg_upgrade_callback callback, void* userData) {
     try {
-        safeUID(uid)->onUpgrade([uid, callback, userData](const int64_t chatId, const ntgcalls::MediaState state) {
-            callback(uid, chatId, parseMediaState(state), userData);
+        getInstance(ptr)->onUpgrade([ptr, callback, userData](const int64_t chatId, const ntgcalls::MediaState state) {
+            callback(ptr, chatId, parseCMediaState(state), userData);
         });
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
     }
     return 0;
 }
 
-int ntg_on_connection_change(const uint32_t uid, ntg_connection_callback callback, void* userData) {
+int ntg_on_connection_change(const uintptr_t ptr, ntg_connection_callback callback, void* userData) {
     try {
-        safeUID(uid)->onConnectionChange([uid, callback, userData](const int64_t chatId, const ntgcalls::CallInterface::ConnectionState state) {
-            callback(uid, chatId, parseConnectionState(state), userData);
+        getInstance(ptr)->onConnectionChange([ptr, callback, userData](const int64_t chatId, const ntgcalls::CallNetworkState state) {
+            callback(ptr, chatId, parseCCallNetworkState(state), userData);
         });
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
     }
     return 0;
 }
 
-int ntg_on_signaling_data(uint32_t uid, ntg_signaling_callback callback, void* userData) {
+int ntg_on_signaling_data(uintptr_t ptr, ntg_signaling_callback callback, void* userData) {
     try {
-        safeUID(uid)->onSignalingData([uid, callback, userData](const int64_t userId, const bytes::binary& data) {
+        getInstance(ptr)->onSignalingData([ptr, callback, userData](const int64_t userId, const bytes::binary& data) {
             auto* buffer = new uint8_t[data.size()];
             const auto bufferSize = copyAndReturn(data, buffer, static_cast<int>(data.size()));
-            callback(uid, userId, buffer, bufferSize, userData);
+            callback(ptr, userId, buffer, bufferSize, userData);
         });
-    } catch (ntgcalls::InvalidUUID&) {
-        return NTG_INVALID_UID;
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+    return 0;
+}
+
+int ntg_on_frame(uintptr_t ptr, ntg_frame_callback callback, void* userData) {
+    try {
+        getInstance(ptr)->onFrame([ptr, callback, userData](const int64_t chatId, const int64_t sourceId, const ntgcalls::StreamManager::Mode mode, const ntgcalls::StreamManager::Device device, const bytes::binary& data, const wrtc::FrameData frameData) {
+            auto* buffer = new uint8_t[data.size()];
+            const auto bufferSize = copyAndReturn(data, buffer, static_cast<int>(data.size()));
+            callback(ptr, chatId, sourceId, parseCStreamMode(mode), parseCStreamDevice(device), buffer, bufferSize, parseCFrameData(frameData), userData);
+        });
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+    return 0;
+}
+
+int ntg_on_remote_source_change(uintptr_t ptr, ntg_remote_source_callback callback, void* userData) {
+    try {
+        getInstance(ptr)->onRemoteSourceChange([ptr, callback, userData](const int64_t chatId, const ntgcalls::RemoteSource state) {
+            callback(ptr, chatId, {
+                state.ssrc,
+                static_cast<ntg_remote_source_state_enum>(state.state),
+                parseCStreamDevice(state.device),
+            }, userData);
+        });
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
     }
     return 0;
 }
@@ -716,11 +771,13 @@ void ntg_register_logger(ntg_log_message_callback callback) {
         auto* messageContent = new char[message.message.size()];
         copyAndReturn(message.message, messageContent, static_cast<int>(message.message.size()));
         callback({
-            parseLevel(message.level),
-            parseSource(message.source),
+            parseCLevel(message.level),
+            parseCSource(message.source),
             fileName,
             message.line,
             messageContent
         });
+        delete[] fileName;
+        delete[] messageContent;
     });
 }
