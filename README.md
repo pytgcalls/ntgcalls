@@ -88,7 +88,7 @@ For developers looking to use NativeTgCalls with C and C++, we provide C Binding
 1. Ensure you are in the root directory of the NativeTgCalls project.
 2. Run the following command to generate the shared libs:
    ```shell
-   python3 setup.py build_shared
+   python3 setup.py build_lib --shared
    ```
 3. Upon successful execution, a shared library will be generated in the "shared-output" directory. 
    You can now use this library to develop applications with NativeTgCalls.
