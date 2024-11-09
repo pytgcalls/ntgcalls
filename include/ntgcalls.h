@@ -130,7 +130,8 @@ typedef struct {
 
 typedef struct {
     int64_t chatId;
-    ntg_stream_status_enum status;
+    ntg_stream_status_enum capture;
+    ntg_stream_status_enum playback;
 } ntg_call_struct;
 
 typedef struct {

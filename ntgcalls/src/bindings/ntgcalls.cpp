@@ -653,8 +653,9 @@ int ntg_calls(const uintptr_t ptr, ntg_call_struct *buffer, const uint64_t size,
         groupCalls.reserve(callsCpp.size());
         for (const auto [chatId, status] : callsCpp) {
             groupCalls.push_back(ntg_call_struct{
-                fst,
-                parseCStatus(snd),
+                chatId,
+                parseCStatus(status.capture),
+                parseCStatus(status.playback)
             });
         }
         *future.errorCode = copyAndReturn(groupCalls, buffer, static_cast<int>(size));
