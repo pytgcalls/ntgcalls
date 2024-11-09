@@ -20,14 +20,14 @@ func main() {
 	})
 	_ = mtproto.Start()
 	// Choose between outgoingCall or joinGroupCall
-	fmt.Println(client.Calls())
-	//outgoingCall(client, mtproto, "@PyTgCallsVideoBeta")
+	//outgoingCall(client, mtproto, "@Laky64")
 	//joinGroupCall(client, mtproto, "@pytgcallschat")
-	client.OnStreamEnd(func(chatId int64, streamType ntgcalls.StreamType) {
+	fmt.Println(client.Calls())
+	client.OnStreamEnd(func(chatId int64, streamType ntgcalls.StreamType, streamDevice ntgcalls.StreamDevice) {
 		fmt.Println(chatId)
 	})
-	client.OnConnectionChange(func(chatId int64, state ntgcalls.ConnectionState) {
-		switch state {
+	client.OnConnectionChange(func(chatId int64, state ntgcalls.CallNetworkState) {
+		switch state.State {
 		case ntgcalls.Connecting:
 			fmt.Println("Connecting with chatId:", chatId)
 		case ntgcalls.Connected:
@@ -48,12 +48,11 @@ func joinGroupCall(client *ntgcalls.Client, mtproto *tg.Client, username string)
 	rawChannel, _ := mtproto.ResolveUsername(username)
 	channel := rawChannel.(*tg.Channel)
 	jsonParams, _ := client.CreateCall(channel.ID, ntgcalls.MediaDescription{
-		Audio: &ntgcalls.AudioDescription{
-			InputMode:     ntgcalls.InputModeShell,
-			SampleRate:    96000,
-			BitsPerSample: 16,
-			ChannelCount:  2,
-			Input:         "ffmpeg -i https://docs.evostream.com/sample_content/assets/sintel1m720p.mp4 -f s16le -ac 2 -ar 96k -v quiet pipe:1",
+		Microphone: &ntgcalls.AudioDescription{
+			MediaSource:  ntgcalls.MediaSourceShell,
+			SampleRate:   96000,
+			ChannelCount: 2,
+			Input:        "ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 -i https://docs.evostream.com/sample_content/assets/sintel1m720p.mp4 -f s16le -ac 2 -ar 96k -v quiet pipe:1",
 		},
 	})
 	fullChatRaw, _ := mtproto.ChannelsGetFullChannel(
@@ -82,7 +81,7 @@ func joinGroupCall(client *ntgcalls.Client, mtproto *tg.Client, username string)
 		switch update.(type) {
 		case *tg.UpdateGroupCallConnection:
 			phoneCall := update.(*tg.UpdateGroupCallConnection)
-			_ = client.Connect(channel.ID, phoneCall.Params.Data)
+			_ = client.Connect(channel.ID, phoneCall.Params.Data, false)
 		}
 	}
 }
@@ -92,20 +91,20 @@ func outgoingCall(client *ntgcalls.Client, mtproto *tg.Client, username string) 
 	user := rawUser.(*tg.UserObj)
 	dhConfigRaw, _ := mtproto.MessagesGetDhConfig(0, 256)
 	dhConfig := dhConfigRaw.(*tg.MessagesDhConfigObj)
-	gAHash, _ := client.CreateP2PCall(user.ID, ntgcalls.DhConfig{
+	_ = client.CreateP2PCall(user.ID, ntgcalls.MediaDescription{
+		Microphone: &ntgcalls.AudioDescription{
+			MediaSource:  ntgcalls.MediaSourceShell,
+			SampleRate:   96000,
+			ChannelCount: 2,
+			Input:        "ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 -i https://docs.evostream.com/sample_content/assets/sintel1m720p.mp4 -f s16le -ac 2 -ar 96k -v quiet pipe:1",
+		},
+	})
+	gAHash, _ := client.InitExchange(user.ID, ntgcalls.DhConfig{
 		G:      dhConfig.G,
 		P:      dhConfig.P,
 		Random: dhConfig.Random,
-	}, nil, ntgcalls.MediaDescription{
-		Audio: &ntgcalls.AudioDescription{
-			InputMode:     ntgcalls.InputModeShell,
-			SampleRate:    96000,
-			BitsPerSample: 16,
-			ChannelCount:  2,
-			Input:         "ffmpeg -i https://docs.evostream.com/sample_content/assets/sintel1m720p.mp4 -f s16le -ac 2 -ar 96k -v quiet pipe:1",
-		},
-	})
-	protocolRaw := client.GetProtocol()
+	}, nil)
+	protocolRaw := ntgcalls.GetProtocol()
 	protocol := &tg.PhoneCallProtocol{
 		UdpP2P:          protocolRaw.UdpP2P,
 		UdpReflector:    protocolRaw.UdpReflector,

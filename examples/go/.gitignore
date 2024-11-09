@@ -2,3 +2,5 @@
 *.h
 *.dll
 *.dylib
+*.db
+session
