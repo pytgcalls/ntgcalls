@@ -56,18 +56,17 @@ namespace ntgcalls {
     class AudioDescription final : public BaseMediaDescription {
     public:
         uint32_t sampleRate;
-        uint8_t bitsPerSample, channelCount;
+        uint8_t channelCount;
 
-        AudioDescription(const MediaSource mediaSource, const uint32_t sampleRate, const uint8_t bitsPerSample, const uint8_t channelCount, const std::string& input):
-                BaseMediaDescription(input, mediaSource), sampleRate(sampleRate), bitsPerSample(bitsPerSample), channelCount(channelCount) {}
+        AudioDescription(const MediaSource mediaSource, const uint32_t sampleRate, const uint8_t channelCount, const std::string& input):
+                BaseMediaDescription(input, mediaSource), sampleRate(sampleRate), channelCount(channelCount) {}
     };
 
     inline bool operator==(const AudioDescription& lhs, const AudioDescription& rhs) {
         return lhs.sampleRate == rhs.sampleRate &&
-            lhs.bitsPerSample == rhs.bitsPerSample &&
-                lhs.channelCount == rhs.channelCount &&
-                    lhs.input == rhs.input &&
-                        lhs.mediaSource == rhs.mediaSource;
+            lhs.channelCount == rhs.channelCount &&
+                lhs.input == rhs.input &&
+                    lhs.mediaSource == rhs.mediaSource;
     }
 
     class VideoDescription final : public BaseMediaDescription {

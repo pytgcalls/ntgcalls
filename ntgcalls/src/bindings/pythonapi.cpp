@@ -136,15 +136,13 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::AudioDescription> audioWrapper(m, "AudioDescription", mediaWrapper);
     audioWrapper.def(
-        py::init<ntgcalls::BaseMediaDescription::MediaSource, uint32_t, uint8_t, uint8_t, std::string>(),
+        py::init<ntgcalls::BaseMediaDescription::MediaSource, uint32_t, uint8_t, std::string>(),
         py::arg("media_source"),
         py::arg("sample_rate"),
-        py::arg("bits_per_sample"),
         py::arg("channel_count"),
         py::arg("input")
     );
     audioWrapper.def_readwrite("sample_rate", &ntgcalls::AudioDescription::sampleRate);
-    audioWrapper.def_readwrite("bits_per_sample", &ntgcalls::AudioDescription::bitsPerSample);
     audioWrapper.def_readwrite("channel_count", &ntgcalls::AudioDescription::channelCount);
 
     py::class_<ntgcalls::VideoDescription> videoWrapper(m, "VideoDescription", mediaWrapper);

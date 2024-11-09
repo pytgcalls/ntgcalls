@@ -12,7 +12,7 @@ namespace ntgcalls {
 
     int64_t AudioSink::frameSize() {
         if (!description) return 0;
-        return description->sampleRate * description->bitsPerSample / 8 / 100 * description->channelCount;
+        return description->sampleRate * 16 / 8 / 100 * description->channelCount;
     }
 
     bool AudioSink::setConfig(const std::optional<AudioDescription>& desc) {
@@ -20,7 +20,7 @@ namespace ntgcalls {
         if (changed) {
             description = desc;
             clear();
-            RTC_LOG(LS_INFO) << "AudioSink configured with " << desc->sampleRate << "Hz, " << desc->bitsPerSample << "bps, " << desc->channelCount << " channels";
+            RTC_LOG(LS_INFO) << "AudioSink configured with " << desc->sampleRate << "Hz, " << 16 << "bps, " << desc->channelCount << " channels";
         }
         return changed;
     }

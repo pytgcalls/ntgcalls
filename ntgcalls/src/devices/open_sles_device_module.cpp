@@ -24,8 +24,8 @@ namespace ntgcalls {
         pcmFormat.formatType = SL_DATAFORMAT_PCM;
         pcmFormat.numChannels = desc->channelCount;
         pcmFormat.samplesPerSec = desc->sampleRate * 1000;
-        pcmFormat.bitsPerSample = desc->bitsPerSample;
-        pcmFormat.containerSize = desc->bitsPerSample;
+        pcmFormat.bitsPerSample = 16;
+        pcmFormat.containerSize = 16;
         pcmFormat.channelMask = desc->channelCount == 1 ? SL_SPEAKER_FRONT_CENTER : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
         pcmFormat.endianness = SL_BYTEORDER_LITTLEENDIAN;
         const auto engineObject = engineManager->GetOpenSLEngine();
