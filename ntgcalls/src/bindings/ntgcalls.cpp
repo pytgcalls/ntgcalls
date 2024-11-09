@@ -212,6 +212,7 @@ ntg_log_source_enum parseCSource(const ntgcalls::LogSink::Source source) {
 
 std::vector<ntgcalls::RTCServer> parseRTCServers(ntg_rtc_server_struct* servers, const int size) {
     std::vector<ntgcalls::RTCServer> serversCpp;
+    serversCpp.reserve(size);
     for (int i = 0; i < size; i++) {
         serversCpp.emplace_back(
             servers[i].id,
@@ -231,6 +232,7 @@ std::vector<ntgcalls::RTCServer> parseRTCServers(ntg_rtc_server_struct* servers,
 
 std::vector<std::string> copyAndReturn(char** versions, const int size) {
     std::vector<std::string> versionsCpp;
+    versionsCpp.reserve(size);
     for (int i = 0; i < size; i++) {
         versionsCpp.emplace_back(versions[i]);
     }
@@ -648,7 +650,8 @@ int ntg_calls(const uintptr_t ptr, ntg_call_struct *buffer, const uint64_t size,
     PREPARE_ASYNC(calls)
     [future, buffer, size](const auto callsCpp) {
         std::vector<ntg_call_struct> groupCalls;
-        for (const auto [fst, snd] : callsCpp) {
+        groupCalls.reserve(callsCpp.size());
+        for (const auto [chatId, status] : callsCpp) {
             groupCalls.push_back(ntg_call_struct{
                 fst,
                 parseCStatus(snd),
