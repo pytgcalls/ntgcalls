@@ -36,19 +36,16 @@ ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescr
     jfieldID inputField = env->GetFieldID(audioDescriptionClass.obj(), "input", "Ljava/lang/String;");
     jfieldID mediaSourceField = env->GetFieldID(audioDescriptionClass.obj(), "mediaSource", "I");
     jfieldID sampleRateField = env->GetFieldID(audioDescriptionClass.obj(), "sampleRate", "I");
-    jfieldID bitsPerSampleField = env->GetFieldID(audioDescriptionClass.obj(), "bitsPerSample", "I");
     jfieldID channelCountField = env->GetFieldID(audioDescriptionClass.obj(), "channelCount", "I");
 
     webrtc::ScopedJavaLocalRef<jstring> input{env, reinterpret_cast<jstring>(env->GetObjectField(audioDescription, inputField))};
     auto mediaSource = env->GetIntField(audioDescription, mediaSourceField);
     auto sampleRate = static_cast<uint32_t>(env->GetIntField(audioDescription, sampleRateField));
-    auto bitsPerSample = static_cast<uint8_t>(env->GetIntField(audioDescription, bitsPerSampleField));
     auto channelCount = static_cast<uint8_t>(env->GetIntField(audioDescription, channelCountField));
 
     return {
         parseMediaSource(mediaSource),
         sampleRate,
-        bitsPerSample,
         channelCount,
         parseString(env, input.obj())
     };
