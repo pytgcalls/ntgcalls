@@ -207,6 +207,8 @@ PYBIND11_MODULE(ntgcalls, m) {
     py::class_<wrtc::FrameData> frameDataWrapper(m, "FrameData");
     frameDataWrapper.def(py::init<>());
     frameDataWrapper.def_readonly("rotation", &wrtc::FrameData::rotation);
+    frameDataWrapper.def_readonly("width", &wrtc::FrameData::width);
+    frameDataWrapper.def_readonly("height", &wrtc::FrameData::height);
     frameDataWrapper.def_readonly("absolute_capture_timestamp_ms", &wrtc::FrameData::absoluteCaptureTimestampMs);
 
     py::class_<ntgcalls::RemoteSource> remoteSource(m, "RemoteSource");
