@@ -334,8 +334,18 @@ namespace ntgcalls {
     }
 
     MediaDevices NTgCalls::getMediaDevices() {
+        auto devices = MediaDevice::GetAudioDevices();
+        std::vector<DeviceInfo> microphones, speakers;
+        for (const auto& device : devices) {
+            if (json::parse(device.metadata)["is_microphone"]) {
+                microphones.emplace_back(device.name, device.metadata);
+            } else {
+                speakers.emplace_back(device.name, device.metadata);
+            }
+        }
         return {
-            MediaDevice::GetAudioDevices(),
+            microphones,
+            speakers,
             MediaDevice::GetCameraDevices(),
             MediaDevice::GetScreenDevices()
         };

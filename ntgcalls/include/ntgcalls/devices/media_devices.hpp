@@ -9,6 +9,7 @@ namespace ntgcalls {
 
     struct MediaDevices {
         std::vector<DeviceInfo> microphone{};
+        std::vector<DeviceInfo> speaker{};
         std::vector<DeviceInfo> camera{};
         std::vector<DeviceInfo> screen{};
     };
