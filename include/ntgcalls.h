@@ -213,6 +213,8 @@ typedef struct {
 typedef struct {
     ntg_device_info_struct* microphone;
     int sizeMicrophone;
+    ntg_device_info_struct* speaker;
+    int sizeSpeaker;
     ntg_device_info_struct* camera;
     int sizeCamera;
     ntg_device_info_struct* screen;

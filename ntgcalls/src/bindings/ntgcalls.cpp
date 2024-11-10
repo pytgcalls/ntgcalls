@@ -636,10 +636,13 @@ int ntg_send_external_frame(const uintptr_t ptr, const int64_t chatID, const ntg
 }
 
 int ntg_get_media_devices(ntg_media_devices_struct* buffer) {
-    auto [microphone, camera, screen] = ntgcalls::NTgCalls::getMediaDevices();
+    auto [microphone, speaker, camera, screen] = ntgcalls::NTgCalls::getMediaDevices();
     auto [microphoneList, microphoneSize] = copyAndReturn(microphone);
     buffer->microphone = microphoneList;
     buffer->sizeMicrophone = microphoneSize;
+    auto [speakerList, speakerSize] = copyAndReturn(speaker);
+    buffer->speaker = speakerList;
+    buffer->sizeSpeaker = speakerSize;
     auto [cameraList, cameraSize] = copyAndReturn(camera);
     buffer->camera = cameraList;
     buffer->sizeCamera = cameraSize;
