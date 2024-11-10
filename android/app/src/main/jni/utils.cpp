@@ -408,9 +408,10 @@ webrtc::ScopedJavaLocalRef<jobject> parseJMediaDevices(JNIEnv *env, const ntgcal
     const webrtc::ScopedJavaLocalRef<jclass> mediaDevicesClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaDevices");
     jmethodID constructor = env->GetMethodID(mediaDevicesClass.obj(), "<init>", "(Ljava/util/List;Ljava/util/List;Ljava/util/List;)V");
     auto microphone = parseJDeviceInfoList(env, devices.microphone);
+    auto speaker = parseJDeviceInfoList(env, devices.speaker);
     auto camera = parseJDeviceInfoList(env, devices.camera);
     auto screen = parseJDeviceInfoList(env, devices.screen);
-    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(mediaDevicesClass.obj(), constructor, microphone.obj(), camera.obj(), screen.obj())};
+    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(mediaDevicesClass.obj(), constructor, microphone.obj(), speaker.obj(), camera.obj(), screen.obj())};
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJDeviceInfoList(JNIEnv *env, const std::vector<ntgcalls::DeviceInfo> &devices) {
