@@ -128,6 +128,7 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::MediaDevices>(m, "MediaDevices")
         .def_readonly("microphone", &ntgcalls::MediaDevices::microphone)
+        .def_readonly("speaker", &ntgcalls::MediaDevices::speaker)
         .def_readonly("camera", &ntgcalls::MediaDevices::camera)
         .def_readonly("screen", &ntgcalls::MediaDevices::screen);
 
