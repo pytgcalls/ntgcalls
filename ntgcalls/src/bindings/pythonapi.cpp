@@ -36,9 +36,9 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("stop_presentation", &ntgcalls::NTgCalls::stopPresentation, py::arg("chat_id"));
     wrapper.def("time", &ntgcalls::NTgCalls::time, py::arg("chat_id"), py::arg("direction"));
     wrapper.def("get_state", &ntgcalls::NTgCalls::getState, py::arg("chat_id"));
-    wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade);
-    wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd);
-    wrapper.def("on_connection_change", &ntgcalls::NTgCalls::onConnectionChange);
+    wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade, py::arg("callback"));
+    wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd, py::arg("callback"));
+    wrapper.def("on_connection_change", &ntgcalls::NTgCalls::onConnectionChange), py::arg("callback");
     wrapper.def("on_signaling", &ntgcalls::NTgCalls::onSignalingData, py::arg("callback"));
     wrapper.def("on_frame", &ntgcalls::NTgCalls::onFrame, py::arg("callback"));
     wrapper.def("on_remote_source_change", &ntgcalls::NTgCalls::onRemoteSourceChange, py::arg("callback"));
