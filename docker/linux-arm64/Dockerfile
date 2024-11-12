@@ -1,7 +1,13 @@
 FROM quay.io/pypa/manylinux2014_aarch64:latest
 RUN yum install -y \
     git \
-    make
+    make \
+    alsa-lib-devel \
+    pulseaudio-libs-devel \
+    mesa-libgbm-devel \
+    libXcomposite-devel \
+    libXrandr-devel \
+    libXtst-devel
 ENV MAKEFLAGS="-j$(nproc)"
 ENV CFLAGS="-march=native -O3"
 ENV CXXFLAGS="-march=native -O3"

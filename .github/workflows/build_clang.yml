@@ -4,7 +4,17 @@ on:
 
 jobs:
   build:
-    runs-on: arm64-server
+    runs-on: ${{ matrix.platform.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux-x86_64
+            arch: x86_64
+            host: ubuntu-latest
+          - name: linux-arm64
+            arch: arm64
+            host: arm64-server
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -20,6 +30,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile
+          file: docker/${{ matrix.platform.name }}/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/arm64:latest
+          tags: ghcr.io/${{ github.repository }}/${{ matrix.platform.arch }}:latest
