@@ -9,10 +9,13 @@ target_link_libraries(${target_name} PUBLIC
     msdmo.lib
     Secur32.lib
     wmcodecdspuuid.lib
+    d3d11.lib
+    dxgi.lib
+    dwmapi.lib
+    shcore.lib
 )
 target_compile_definitions(${target_name} PRIVATE
     _WIN32_WINNT=0x0A00
-    WEBRTC_WIN
     NOMINMAX
     WIN32_LEAN_AND_MEAN
     UNICODE
