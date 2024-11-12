@@ -7,15 +7,19 @@ set(AVUTIL_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}avutil${CMAKE_STATIC_LIBRARY_SUFFIX
 
 if (LINUX_ARM64)
     set(PLATFORM linux)
+    set(ARCHIVE_FORMAT .tar.gz)
     set(ARCH arm64)
 elseif (LINUX_x86_64)
     set(PLATFORM linux)
+    set(ARCHIVE_FORMAT .tar.gz)
     set(ARCH x86_64)
 elseif (MACOS_ARM64)
     set(PLATFORM macos)
+    set(ARCHIVE_FORMAT .tar.gz)
     set(ARCH arm64)
 elseif (WINDOWS_x86_64)
     set(PLATFORM windows)
+    set(ARCHIVE_FORMAT .zip)
     set(ARCH x86_64)
 else ()
     message(STATUS "FFmpeg is not supported on ${CMAKE_SYSTEM_NAME} with ${CMAKE_HOST_SYSTEM_PROCESSOR}")
@@ -25,7 +29,7 @@ endif ()
 GetProperty("version.ffmpeg" FFMPEG_VERSION)
 message(STATUS "ffmpeg v${FFMPEG_VERSION}")
 
-set(FILE_NAME ffmpeg.${PLATFORM}-${ARCH}.tar.gz)
+set(FILE_NAME ffmpeg.${PLATFORM}-${ARCH}${ARCHIVE_FORMAT})
 DownloadProject(
     URL ${FFMPEG_GIT}/releases/download/v${FFMPEG_VERSION}/${FILE_NAME}
     DOWNLOAD_DIR ${FFMPEG_DIR}/download
