@@ -182,7 +182,7 @@ namespace openh264 {
             return WEBRTC_VIDEO_CODEC_UNINITIALIZED;
         }
         if (!encodedImageCallback) {
-            RTC_LOG(LS_WARNING)
+            RTC_LOG(LS_INFO)
                 << "InitEncode() has been called, but a callback function "
                    "has not been set with RegisterEncodeCompleteCallback()";
             ReportError();
@@ -307,7 +307,7 @@ namespace openh264 {
                             RTC_DCHECK_EQ(layerFrames[0].IsKeyframe(), true);
                         }
                         if (layerFrames[0].TemporalId() != tid) {
-                            RTC_LOG(LS_WARNING)
+                            RTC_LOG(LS_INFO)
                                 << "Encoder produced a frame with temporal id " << tid
                                 << ", expected " << layerFrames[0].TemporalId() << ".";
                             continue;
@@ -336,12 +336,12 @@ namespace openh264 {
 
     void H264Encoder::SetRates(const RateControlParameters& parameters) {
         if (encoders.empty()) {
-            RTC_LOG(LS_WARNING) << "SetRates() while uninitialized.";
+            RTC_LOG(LS_INFO) << "SetRates() while uninitialized.";
             return;
         }
 
         if (parameters.framerate_fps < 1.0) {
-            RTC_LOG(LS_WARNING) << "Invalid frame rate: " << parameters.framerate_fps;
+            RTC_LOG(LS_INFO) << "Invalid frame rate: " << parameters.framerate_fps;
             return;
         }
 
