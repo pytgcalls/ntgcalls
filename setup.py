@@ -41,6 +41,10 @@ def cmake_bin():
     return 'cmake'
 
 
+def release_kind():
+    return 'ReleaseWithDebInfo' if sys.platform.startswith('linux') else 'Release'
+
+
 def install_cmake(cmake_version: str):
     fixed_name = cmake_path()
     if Path(fixed_name, 'bin').exists():
@@ -67,8 +71,7 @@ class CMakeBuild(build_ext):
             install_cmake(CMAKE_VERSION)
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
-        cfg = 'RelWithDebInfo' if 'b' in version else 'Release'
-
+        cfg = release_kind()
         cmake_args = [
             f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}',
             f'-DPYTHON_EXECUTABLE={sys.executable}',
@@ -124,12 +127,12 @@ class SharedCommand(Command):
             'auto',
         ]
         cmake_args = [
-            f'-DCMAKE_BUILD_TYPE=RelWithDebInfo',
+            f'-DCMAKE_BUILD_TYPE={release_kind()}',
             f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
             f'-DCMAKE_TOOLCHAIN_FILE={Path(Path.cwd(), "cmake", "Toolchain.cmake")}',
         ]
         build_args = [
-            '--config', 'RelWithDebInfo',
+            '--config', release_kind(),
             f'-j{multiprocessing.cpu_count()}',
         ]
         build_temp = Path('build_lib')
