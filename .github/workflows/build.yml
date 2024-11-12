@@ -127,14 +127,14 @@ jobs:
       - name: Build Shared Libs (Debug and Release) (Linux) (x86_64)
         if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-shared-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --debug
-          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/x86_64:latest python3.12 setup.py build_lib --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/x86_64:latest python3.12 setup.py build_lib
 
       - name: Build Static Libs (Debug and Release) (Linux) (x86_64)
         if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-static-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --static --debug
-          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --static
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/x86_64:latest python3.12 setup.py build_lib --static --debug
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/x86_64:latest python3.12 setup.py build_lib --static
 
       - name: Build Shared Libs (Debug and Release) (Linux) (ARM64)
         if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
@@ -178,6 +178,7 @@ jobs:
           CIBW_TEST_SKIP: "cp38-macosx_arm64 *-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
+          CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/x86_64:latest
 
       - uses: actions/upload-artifact@v4
         if: github.event.inputs.build-wheels == 'true'
