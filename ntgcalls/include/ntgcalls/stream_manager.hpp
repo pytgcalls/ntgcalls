@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <shared_mutex>
 #include <wrtc/wrtc.hpp>
 #include <ntgcalls/io/base_reader.hpp>
@@ -90,6 +91,9 @@ namespace ntgcalls {
         std::map<Device, std::unique_ptr<BaseWriter>> writers;
         std::set<Device> externalWriters;
         std::set<Device> externalReaders;
+        mutable std::mutex syncMutex;
+        std::condition_variable cv;
+        std::set<Device> syncReaders;
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;

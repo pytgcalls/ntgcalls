@@ -21,6 +21,8 @@ namespace ntgcalls {
     StreamManager::~StreamManager() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
         std::lock_guard lock(mutex);
+        syncReaders.clear();
+        cv.notify_all();
         onEOF = nullptr;
         readers.clear();
         writers.clear();
@@ -277,6 +279,7 @@ namespace ntgcalls {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
                 if (mode == Capture) {
+                    syncReaders.insert(device);
                     const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device;
                     readers.erase(device);
                     if (desc.value().mediaSource == DescriptionType::MediaSource::External) {
@@ -285,6 +288,12 @@ namespace ntgcalls {
                     }
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     readers[device]->onData([this, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
+                        if (syncReaders.contains(id.second)) {
+                            std::unique_lock lock(syncMutex);
+                            syncReaders.erase(id.second);
+                            cv.notify_all();
+                            cv.wait(lock, [this] { return syncReaders.empty(); });
+                        }
                         if (streams.contains(id)) {
                             if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
                                 frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
@@ -303,6 +312,10 @@ namespace ntgcalls {
                     });
                     readers[device]->onEof([this, device] {
                         workerThread->PostTask([this, device] {
+                            if (syncReaders.contains(device)) {
+                                syncReaders.erase(device);
+                                cv.notify_all();
+                            }
                             std::lock_guard lock(mutex);
                             readers.erase(device);
                             (void) onEOF(getStreamType(device), device);
@@ -371,6 +384,10 @@ namespace ntgcalls {
                 }
             }
         } else if (mode == Capture) {
+            if (syncReaders.contains(device)) {
+                syncReaders.erase(device);
+                cv.notify_all();
+            }
             readers.erase(device);
             externalReaders.erase(device);
         } else {
