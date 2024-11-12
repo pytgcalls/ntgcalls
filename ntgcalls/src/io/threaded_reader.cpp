@@ -46,7 +46,7 @@ namespace ntgcalls {
                             cv.wait(lock, [this, i] {
                                 return (!running || activeBuffer == i) && enabled;
                             });
-                            if (!running) return;
+                            if (!running) break;
                             if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
                                 std::this_thread::sleep_for(waitTime);
                             }
@@ -56,9 +56,12 @@ namespace ntgcalls {
                             lock.unlock();
                             cv.notify_all();
                         }
+                        std::lock_guard lock(mtx);
                         activeBufferCount--;
                         if (activeBufferCount == 0) {
                             (void) eofCallback();
+                        } else {
+                            cv.notify_all();
                         }
                     },
                     "ThreadedReader_" + std::to_string(bufferCount),

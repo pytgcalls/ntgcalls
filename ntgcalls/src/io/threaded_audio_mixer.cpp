@@ -43,6 +43,8 @@ namespace ntgcalls {
                         }
                     } catch (...) {
                         running = false;
+                        lock.unlock();
+                        cv.notify_all();
                         break;
                     }
                 }
