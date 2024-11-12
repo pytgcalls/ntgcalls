@@ -302,9 +302,9 @@ namespace ntgcalls {
                         }
                     });
                     readers[device]->onEof([this, device] {
-                        std::lock_guard lock(mutex);
-                        readers.erase(device);
                         workerThread->PostTask([this, device] {
+                            std::lock_guard lock(mutex);
+                            readers.erase(device);
                             (void) onEOF(getStreamType(device), device);
                         });
                     });
