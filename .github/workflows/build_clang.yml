@@ -1,4 +1,4 @@
-name: Build Arm64 Image
+name: Build CLang Image
 on:
   workflow_dispatch:
 
