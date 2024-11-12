@@ -119,6 +119,8 @@ namespace openh264 {
             }
             int video_format = videoFormatI420;
             openh264Encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &video_format);
+            int32_t iTraceLevel = WELS_LOG_QUIET;
+            openh264Encoder->SetOption(ENCODER_OPTION_TRACE_LEVEL, &iTraceLevel);
             const size_t new_capacity = CalcBufferSize(
                 webrtc::VideoType::kI420,
                 codec.simulcastStream[idx].width,
