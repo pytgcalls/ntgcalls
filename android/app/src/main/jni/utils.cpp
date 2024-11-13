@@ -406,7 +406,7 @@ webrtc::ScopedJavaLocalRef<jobject> parseJMediaStatusMap(JNIEnv *env, const std:
 
 webrtc::ScopedJavaLocalRef<jobject> parseJMediaDevices(JNIEnv *env, const ntgcalls::MediaDevices &devices) {
     const webrtc::ScopedJavaLocalRef<jclass> mediaDevicesClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaDevices");
-    jmethodID constructor = env->GetMethodID(mediaDevicesClass.obj(), "<init>", "(Ljava/util/List;Ljava/util/List;Ljava/util/List;)V");
+    jmethodID constructor = env->GetMethodID(mediaDevicesClass.obj(), "<init>", "(Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V");
     auto microphone = parseJDeviceInfoList(env, devices.microphone);
     auto speaker = parseJDeviceInfoList(env, devices.speaker);
     auto camera = parseJDeviceInfoList(env, devices.camera);
