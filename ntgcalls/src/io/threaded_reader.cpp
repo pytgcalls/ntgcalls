@@ -23,16 +23,15 @@ namespace ntgcalls {
         }
     }
 
-    void ThreadedReader::run(std::function<bytes::unique_binary(int64_t)> readCallback) {
+    void ThreadedReader::run(const std::function<bytes::unique_binary(int64_t)>& readCallback) {
         if (running) return;
         const size_t bufferCount = bufferThreads.capacity();
         running = true;
-        auto frameSize = sink->frameSize();
         auto frameTime = sink->frameTime();
         for (size_t i = 0; i < bufferCount; ++i) {
             bufferThreads.push_back(
                 rtc::PlatformThread::SpawnJoinable(
-                    [this, i, frameSize, frameTime, readCallback] {
+                    [this, i, bufferCount, frameSize = sink->frameSize(), frameTime, readCallback] {
                         activeBufferCount++;
                         while (running) {
                             std::unique_lock lock(mtx);
@@ -52,7 +51,7 @@ namespace ntgcalls {
                             }
                             dataCallback(std::move(data), {});
                             lastTime = std::chrono::high_resolution_clock::now();
-                            activeBuffer = (activeBuffer + 1) % bufferThreads.size();
+                            activeBuffer = (activeBuffer + 1) % bufferCount;
                             lock.unlock();
                             cv.notify_all();
                         }

@@ -27,7 +27,7 @@ namespace ntgcalls {
     protected:
         int64_t readChunks = 0;
 
-        void run(std::function<bytes::unique_binary(int64_t)> readCallback);
+        void run(const std::function<bytes::unique_binary(int64_t)>& readCallback);
 
         bool set_enabled(bool status) override;
     };
