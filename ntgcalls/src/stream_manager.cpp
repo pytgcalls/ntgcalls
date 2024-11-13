@@ -119,6 +119,9 @@ namespace ntgcalls {
             averageTime += stream->time();
             count++;
         }
+        if (count == 0) {
+            return 0;
+        }
         return averageTime / count;
     }
 
