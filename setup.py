@@ -42,7 +42,7 @@ def cmake_bin():
 
 
 def release_kind():
-    return 'ReleaseWithDebInfo' if sys.platform.startswith('linux') else 'Release'
+    return 'RelWithDebInfo' if sys.platform.startswith('linux') else 'Release'
 
 
 def install_cmake(cmake_version: str):
