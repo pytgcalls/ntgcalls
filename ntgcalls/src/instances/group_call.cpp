@@ -55,7 +55,7 @@ namespace ntgcalls {
         return Safe<wrtc::GroupConnection>(presentationConnection)->getJoinPayload();
     }
 
-    void GroupCall::connect(const std::string& jsonData, bool isPresentation) {
+    void GroupCall::connect(const std::string& jsonData, const bool isPresentation) {
         RTC_LOG(LS_INFO) << "Connecting to group call";
         std::lock_guard lock(mutex);
         const auto &conn = isPresentation ? presentationConnection : connection;
