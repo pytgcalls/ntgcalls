@@ -279,14 +279,15 @@ namespace ntgcalls {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
                 if (mode == Capture) {
-                    syncReaders.insert(device);
                     const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device;
                     readers.erase(device);
                     if (desc.value().mediaSource == DescriptionType::MediaSource::External) {
                         externalReaders.insert(device);
+                        syncReaders.insert(device);
                         return;
                     }
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
+                    syncReaders.insert(device);
                     readers[device]->onData([this, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
                         if (syncReaders.contains(id.second)) {
                             std::unique_lock lock(syncMutex);
