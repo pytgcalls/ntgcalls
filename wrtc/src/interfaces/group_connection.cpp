@@ -298,6 +298,7 @@ namespace wrtc {
 
     void GroupConnection::beginAudioChannelCleanupTimer() {
         workerThread()->PostDelayedTask([this] {
+            std::lock_guard lock(mutex);
             if (isExiting) return;
             const auto timestamp = rtc::TimeMillis();
             std::vector<std::string> removeChannels;
@@ -315,6 +316,7 @@ namespace wrtc {
 
     void GroupConnection::close() {
         isExiting = true;
+        std::lock_guard lock(mutex);
         outgoingVideoSsrcGroups.clear();
         NativeNetworkInterface::close();
     }

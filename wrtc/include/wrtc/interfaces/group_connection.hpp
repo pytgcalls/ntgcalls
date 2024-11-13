@@ -42,6 +42,7 @@ namespace wrtc {
         void close() override;
 
     private:
+        std::mutex mutex;
         int64_t lastNetworkActivityMs = 0;
         uint32_t outgoingAudioSsrc = 0, outgoingVideoSsrc = 0;
         std::vector<SsrcGroup> outgoingVideoSsrcGroups;
