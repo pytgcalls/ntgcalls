@@ -14,11 +14,11 @@ namespace ntgcalls {
     class FileReader final: public ThreadedReader {
         std::ifstream source;
 
-        bytes::unique_binary read(int64_t size) override;
-
     public:
         explicit FileReader(const std::string& path, BaseSink *sink);
 
         ~FileReader() override;
+
+        void open() override;
     };
 }

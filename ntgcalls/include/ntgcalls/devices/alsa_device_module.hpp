@@ -21,8 +21,6 @@ namespace ntgcalls {
 
         static std::map<std::string, std::string> getDevices(_snd_pcm_stream stream);
 
-        bytes::unique_binary read(int64_t size) override;
-
         void onData(bytes::unique_binary data) override;
 
     public:

@@ -17,12 +17,12 @@ namespace ntgcalls {
         bp::ipstream stdOut;
         bp::child shellProcess;
 
-        bytes::unique_binary read(int64_t size) override;
-
     public:
         explicit ShellReader(const std::string& command, BaseSink *sink);
 
         ~ShellReader() override;
+
+        void open() override;
     };
 
 } // ntgcalls

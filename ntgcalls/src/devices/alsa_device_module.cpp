@@ -64,14 +64,6 @@ namespace ntgcalls {
         LATE(snd_pcm_close)(alsaHandle);
     }
 
-    bytes::unique_binary AlsaDeviceModule::read(const int64_t size) {
-        auto device_data = bytes::make_unique_binary(size);
-        if (const auto err = LATE(snd_pcm_readi)(alsaHandle, device_data.get(), size / (channels * sizeof(int16_t))); err < 0) {
-            throw MediaDeviceError("cannot read from audio interface (" + std::string(LATE(snd_strerror)(static_cast<int>(err))) + ")");
-        }
-        return std::move(device_data);
-    }
-
     void AlsaDeviceModule::onData(const bytes::unique_binary data) {
         LATE(snd_pcm_writei)(alsaHandle, data.get(), sink->frameSize() / (channels * sizeof(int16_t)));
     }
@@ -142,7 +134,13 @@ namespace ntgcalls {
 
     void AlsaDeviceModule::open() {
         if (isCapture) {
-            ThreadedReader::open();
+            run([this](const int64_t size) {
+                auto device_data = bytes::make_unique_binary(size);
+                if (const auto err = LATE(snd_pcm_readi)(alsaHandle, device_data.get(), size / (channels * sizeof(int16_t))); err < 0) {
+                    throw MediaDeviceError("cannot read from audio interface (" + std::string(LATE(snd_strerror)(static_cast<int>(err))) + ")");
+                }
+                return std::move(device_data);
+            });
         }
     }
 } // alsa
