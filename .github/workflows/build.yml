@@ -64,7 +64,7 @@ jobs:
             build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"arm64\"}"
           fi
           if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"macos-14\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
+            build_list+=",{\"os\":\"macos-15\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
           fi
           if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
             build_list+=",{\"os\":\"windows-2022\",\"cibw_archs\":\"native\",\"shared_name\":\"windows-x86_64\"}"
