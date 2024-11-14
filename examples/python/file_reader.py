@@ -22,7 +22,6 @@ async def main():
                     media_source=MediaSource.FILE,
                     input="output.pcm",
                     sample_rate=48000,
-                    bits_per_sample=16,
                     channel_count=2,
                 ),
                 camera=VideoDescription(

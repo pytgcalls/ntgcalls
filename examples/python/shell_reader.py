@@ -1,6 +1,6 @@
 import asyncio
 
-from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, InputMode
+from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, MediaSource
 from pyrogram import Client, idle
 
 from utils import connect_call
@@ -20,15 +20,14 @@ async def main():
         call_params = await wrtc.create_call(
             chat_id,
             MediaDescription(
-                audio=AudioDescription(
-                    input_mode=InputMode.Shell,
+                microphone=AudioDescription(
+                    media_source=MediaSource.SHELL,
                     input=f"ffmpeg -i {link} -f s16le -ac 2 -ar 96k pipe:1",
                     sample_rate=96000,
-                    bits_per_sample=16,
                     channel_count=2,
                 ),
-                video=VideoDescription(
-                    input_mode=InputMode.Shell,
+                camera=VideoDescription(
+                    media_source=MediaSource.SHELL,
                     input=f"ffmpeg -i {link} -f rawvideo -r 30 -pix_fmt yuv420p -vf scale=1280:720 pipe:1",
                     width=1280,
                     height=720,
@@ -37,7 +36,7 @@ async def main():
             ),
         )
         result = await connect_call(client, chat_id, call_params)
-        await wrtc.connect(chat_id, result)
+        await wrtc.connect(chat_id, result, True)
         print("Connected!")
         await idle()
         print("Closed!")
