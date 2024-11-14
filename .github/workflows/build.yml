@@ -58,10 +58,10 @@ jobs:
         run: |
           build_list=""
           if [[ "${{ github.event.inputs.linux-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\"}"
+            build_list+=",{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"x86_64\"}"
           fi
           if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\"}"
+            build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"arm64\"}"
           fi
           if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
             build_list+=",{\"os\":\"macos-14\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
@@ -103,7 +103,7 @@ jobs:
       - name: Install Python Requirements
         if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64'
         run: |
-          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools pipx
+          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools
         shell: bash
 
       - name: Set up QEMU
@@ -124,29 +124,25 @@ jobs:
           ${{ steps.python.outputs.python-path }} setup.py build_lib --static --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib --static
 
-      - name: Build Shared Libs (Debug and Release) (Linux) (x86_64)
-        if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-shared-libs == 'true'
+      - name: Build Shared Libs (Debug and Release) (Linux)
+        if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-shared-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/x86_64:latest python3.12 setup.py build_lib --debug
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/x86_64:latest python3.12 setup.py build_lib
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
+            python3.12 -m pip install setuptools
+            python3.12 setup.py build_lib --debug"
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
+            python3.12 -m pip install setuptools
+            python3.12 setup.py build_lib"
 
-      - name: Build Static Libs (Debug and Release) (Linux) (x86_64)
-        if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-static-libs == 'true'
+      - name: Build Static Libs (Debug and Release) (Linux) (${{ matrix.image_arch }})
+        if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-static-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/x86_64:latest python3.12 setup.py build_lib --static --debug
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/x86_64:latest python3.12 setup.py build_lib --static
-
-      - name: Build Shared Libs (Debug and Release) (Linux) (ARM64)
-        if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
-        run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3.12 setup.py build_lib --debug
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3.12 setup.py build_lib
-
-      - name: Build Static Libs (Debug and Release) (Linux ARM64)
-        if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
-        run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3.12 setup.py build_lib --static --debug
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3.12 setup.py build_lib --static
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
+            python3.12 -m pip install setuptools
+            python3.12 setup.py build_lib --static --debug"
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
+            python3.12 -m pip install setuptools
+            python3.12 setup.py build_lib --static"
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
