@@ -101,9 +101,9 @@ jobs:
         run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
 
       - name: Install Python Requirements
+        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64'
         run: |
-          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools
-          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install pipx
+          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools pipx
         shell: bash
 
       - name: Set up QEMU
