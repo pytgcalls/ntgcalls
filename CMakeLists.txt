@@ -20,7 +20,7 @@ add_custom_target(clean_objects
     COMMENT "Removing all object (.o) files"
 )
 
-project(ntgcalls VERSION 1.3.0.1 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.3.0.2 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
