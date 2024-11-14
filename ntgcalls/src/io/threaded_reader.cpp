@@ -11,6 +11,7 @@ namespace ntgcalls {
     }
 
     ThreadedReader::~ThreadedReader() {
+        exiting = true;
         const bool wasRunning = running;
         if (running) {
             running = false;
@@ -58,7 +59,7 @@ namespace ntgcalls {
                         std::lock_guard lock(mtx);
                         activeBufferCount--;
                         if (activeBufferCount == 0) {
-                            (void) eofCallback();
+                            if (!exiting) (void) eofCallback();
                         } else {
                             cv.notify_all();
                         }

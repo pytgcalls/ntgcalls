@@ -20,9 +20,11 @@ namespace ntgcalls {
 
     StreamManager::~StreamManager() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
+        std::unique_lock eofLock(eofMutex);
+        eofCV.wait(eofLock, [this] { return runningEof == 0; });
         std::lock_guard lock(mutex);
         syncReaders.clear();
-        cv.notify_all();
+        syncCV.notify_all();
         onEOF = nullptr;
         readers.clear();
         writers.clear();
@@ -63,6 +65,7 @@ namespace ntgcalls {
         if (!initialized && mode == Capture) {
             initialized = true;
         }
+        RTC_LOG(LS_INFO) << "Configuration set";
     }
 
     void StreamManager::optimizeSources(const std::unique_ptr<wrtc::NetworkInterface>& pc) const {
@@ -278,6 +281,9 @@ namespace ntgcalls {
             }
         }
 
+        std::unique_lock eofLock(eofMutex);
+        eofCV.wait(eofLock, [this] { return runningEof == 0; });
+
         if (desc) {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
@@ -295,8 +301,8 @@ namespace ntgcalls {
                         if (syncReaders.contains(id.second)) {
                             std::unique_lock lock(syncMutex);
                             syncReaders.erase(id.second);
-                            cv.notify_all();
-                            cv.wait(lock, [this] { return syncReaders.empty(); });
+                            syncCV.notify_all();
+                            syncCV.wait(lock, [this] { return syncReaders.empty(); });
                         }
                         if (streams.contains(id)) {
                             if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
@@ -315,14 +321,17 @@ namespace ntgcalls {
                         }
                     });
                     readers[device]->onEof([this, device] {
+                        ++runningEof;
                         workerThread->PostTask([this, device] {
                             if (syncReaders.contains(device)) {
                                 syncReaders.erase(device);
-                                cv.notify_all();
+                                syncCV.notify_all();
                             }
                             std::lock_guard lock(mutex);
                             readers.erase(device);
                             (void) onEOF(getStreamType(device), device);
+                            --runningEof;
+                            eofCV.notify_all();
                         });
                     });
                     if (initialized) {
@@ -376,9 +385,12 @@ namespace ntgcalls {
                     }
                     if (!isExternal) {
                         writers[device]->onEof([this, device] {
+                            ++runningEof;
                             workerThread->PostTask([this, device] {
                                 std::lock_guard lock(mutex);
                                 writers.erase(device);
+                                --runningEof;
+                                eofCV.notify_all();
                             });
                         });
                         if (initialized) {
@@ -390,7 +402,7 @@ namespace ntgcalls {
         } else if (mode == Capture) {
             if (syncReaders.contains(device)) {
                 syncReaders.erase(device);
-                cv.notify_all();
+                syncCV.notify_all();
             }
             readers.erase(device);
             externalReaders.erase(device);

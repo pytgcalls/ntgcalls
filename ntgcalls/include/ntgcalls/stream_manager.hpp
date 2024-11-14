@@ -91,8 +91,9 @@ namespace ntgcalls {
         std::map<Device, std::unique_ptr<BaseWriter>> writers;
         std::set<Device> externalWriters;
         std::set<Device> externalReaders;
-        mutable std::mutex syncMutex;
-        std::condition_variable cv;
+        std::atomic_int8_t runningEof;
+        mutable std::mutex syncMutex, eofMutex;
+        std::condition_variable syncCV, eofCV;
         std::set<Device> syncReaders;
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;

@@ -12,7 +12,6 @@ namespace ntgcalls {
 
     class ThreadedReader: public BaseReader {
         std::vector<rtc::PlatformThread> bufferThreads;
-        std::atomic_bool eof = false;
         size_t activeBuffer = 0;
         size_t activeBufferCount = 0;
         std::condition_variable cv;

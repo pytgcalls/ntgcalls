@@ -8,6 +8,7 @@ namespace ntgcalls {
     ThreadedAudioMixer::ThreadedAudioMixer(BaseSink* sink): AudioMixer(sink) {}
 
     ThreadedAudioMixer::~ThreadedAudioMixer() {
+        exiting = true;
         std::lock_guard queueLock(queueMutex);
         const bool wasRunning = running;
         if (running) {
@@ -48,7 +49,7 @@ namespace ntgcalls {
                         break;
                     }
                 }
-                (void) eofCallback();
+                if (!exiting) (void) eofCallback();
             },
             "ThreadedMixer",
             rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
