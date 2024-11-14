@@ -68,6 +68,7 @@ namespace wrtc {
     }
 
     void NativeNetworkInterface::addIncomingSmartSource(const std::string& endpoint, const MediaContent& mediaContent, const bool force) {
+        std::lock_guard lock(mutex);
         if (pendingContent.contains(endpoint) && !force) {
             return;
         }
@@ -268,6 +269,7 @@ namespace wrtc {
                     }
                 }
             } else {
+                std::lock_guard lock(mutex);
                 incomingAudioChannels.clear();
             }
         });

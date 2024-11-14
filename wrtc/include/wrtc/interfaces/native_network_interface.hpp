@@ -56,6 +56,7 @@ namespace wrtc {
         static int getH264LevelAssymetryAllowedPriority(std::string const &levelAssymetryAllowed);
 
     protected:
+        std::mutex mutex;
         std::unique_ptr<webrtc::Call> call;
         webrtc::LocalAudioSinkAdapter audioSink;
         LocalVideoAdapter videoSink;
