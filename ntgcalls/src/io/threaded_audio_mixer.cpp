@@ -9,11 +9,10 @@ namespace ntgcalls {
 
     ThreadedAudioMixer::~ThreadedAudioMixer() {
         exiting = true;
-        std::lock_guard queueLock(queueMutex);
         const bool wasRunning = running;
         if (running) {
             running = false;
-            cv.notify_one();
+            cv.notify_all();
         }
         if (wasRunning) thread.Finalize();
     }
@@ -32,7 +31,7 @@ namespace ntgcalls {
                         return !queue.empty() || !running;
                     });
                     if (!running) {
-                        return;
+                        break;
                     }
                     try {
                         if (ok) {

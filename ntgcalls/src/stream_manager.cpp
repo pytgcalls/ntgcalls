@@ -20,8 +20,6 @@ namespace ntgcalls {
 
     StreamManager::~StreamManager() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
-        std::unique_lock eofLock(eofMutex);
-        eofCV.wait(eofLock, [this] { return runningEof == 0; });
         std::lock_guard lock(mutex);
         syncReaders.clear();
         syncCV.notify_all();
@@ -281,9 +279,6 @@ namespace ntgcalls {
             }
         }
 
-        std::unique_lock eofLock(eofMutex);
-        eofCV.wait(eofLock, [this] { return runningEof == 0; });
-
         if (desc) {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
@@ -321,17 +316,12 @@ namespace ntgcalls {
                         }
                     });
                     readers[device]->onEof([this, device] {
-                        ++runningEof;
                         workerThread->PostTask([this, device] {
                             if (syncReaders.contains(device)) {
                                 syncReaders.erase(device);
                                 syncCV.notify_all();
                             }
-                            std::lock_guard lock(mutex);
-                            readers.erase(device);
                             (void) onEOF(getStreamType(device), device);
-                            --runningEof;
-                            eofCV.notify_all();
                         });
                     });
                     if (initialized) {
@@ -384,15 +374,6 @@ namespace ntgcalls {
                         throw InvalidParams("Invalid input mode");
                     }
                     if (!isExternal) {
-                        writers[device]->onEof([this, device] {
-                            ++runningEof;
-                            workerThread->PostTask([this, device] {
-                                std::lock_guard lock(mutex);
-                                writers.erase(device);
-                                --runningEof;
-                                eofCV.notify_all();
-                            });
-                        });
                         if (initialized) {
                             writers[device]->open();
                         }
