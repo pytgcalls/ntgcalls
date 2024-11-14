@@ -298,8 +298,8 @@ namespace wrtc {
 
     void GroupConnection::beginAudioChannelCleanupTimer() {
         workerThread()->PostDelayedTask([this] {
-            std::lock_guard lock(mutex);
             if (isExiting) return;
+            std::lock_guard lock(mutex);
             const auto timestamp = rtc::TimeMillis();
             std::vector<std::string> removeChannels;
             for (const auto& [channelId, channel] : incomingAudioChannels) {
