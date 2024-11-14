@@ -104,7 +104,6 @@ class SharedCommand(Command):
     description = 'Generate shared-libs files'
     user_options = [
         ('no-preserve-cache', None, 'Do not preserve cache'),
-        ('debug', None, 'Debug build'),
         ('static', None, 'Static build'),
         ('android', None, 'Android build'),
     ]
@@ -112,7 +111,6 @@ class SharedCommand(Command):
     # noinspection PyAttributeOutsideInit
     def initialize_options(self):
         self.no_preserve_cache = False
-        self.debug = False
         self.static = False
         self.android = False
 

@@ -35,12 +35,10 @@ else ()
             set(ARCHIVE_TYPE LIBRARY)
             set(ARCHIVE_TYPE_NAME "shared")
         endif ()
-        string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
-        string(REPLACE "RelWithDebInfo" "debug" BUILD_TYPE ${BUILD_TYPE})
-        set(ARCHIVE_DIR "${CMAKE_SOURCE_DIR}/${ARCHIVE_TYPE_NAME}-output/${BUILD_TYPE}")
+        set(ARCHIVE_DIR "${CMAKE_SOURCE_DIR}/${ARCHIVE_TYPE_NAME}-output")
         file(COPY ../include DESTINATION ${ARCHIVE_DIR})
         set_target_properties(ntgcalls PROPERTIES
-            ${ARCHIVE_TYPE}_OUTPUT_DIRECTORY ${ARCHIVE_DIR}
+            ${ARCHIVE_TYPE}_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
         )
     endif ()
 endif ()

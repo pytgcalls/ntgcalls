@@ -112,34 +112,26 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Build Shared Libs (Debug and Release)
+      - name: Build Shared Libs
         if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
         run: |
-          ${{ steps.python.outputs.python-path }} setup.py build_lib --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib
 
-      - name: Build Static Libs (Debug and Release)
+      - name: Build Static Libs
         if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
         run: |
-          ${{ steps.python.outputs.python-path }} setup.py build_lib --static --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib --static
 
-      - name: Build Shared Libs (Debug and Release) (Linux)
+      - name: Build Shared Libs (Linux)
         if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-shared-libs == 'true'
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
             python3.12 -m pip install setuptools
-            python3.12 setup.py build_lib --debug"
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
-            python3.12 -m pip install setuptools
             python3.12 setup.py build_lib"
 
-      - name: Build Static Libs (Debug and Release) (Linux)
+      - name: Build Static Libs (Linux)
         if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-static-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
-            python3.12 -m pip install setuptools
-            python3.12 setup.py build_lib --static --debug"
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
             python3.12 -m pip install setuptools
             python3.12 setup.py build_lib --static"
