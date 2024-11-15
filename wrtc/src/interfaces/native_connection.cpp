@@ -16,12 +16,20 @@ namespace wrtc {
     isOutgoing(isOutgoing),
     enableP2P(enableP2P),
     rtcServers(std::move(rtcServers)),
-    eventLog(std::make_unique<webrtc::RtcEventLogNull>()) {
+    eventLog(std::make_unique<webrtc::RtcEventLogNull>()) {}
+
+    void NativeConnection::open() {
         initConnection();
         contentNegotiationContext = std::make_unique<ContentNegotiationContext>(factory->fieldTrials(), isOutgoing, factory->mediaEngine(), factory->ssrcGenerator());
         contentNegotiationContext->copyCodecsFromChannelManager(factory->mediaEngine(), false);
-        networkThread()->PostTask([this] {
-            start();
+        std::weak_ptr weak(shared_from_this());
+        networkThread()->PostTask([weak] {
+
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->start();
         });
     }
 
@@ -98,8 +106,13 @@ namespace wrtc {
 
     void NativeConnection::registerTransportCallbacks(cricket::P2PTransportChannel* transportChannel) {
         transportChannel->SignalCandidateGathered.connect(this, &NativeConnection::candidateGathered);
-        transportChannel->SetCandidatePairChangeCallback([this](cricket::CandidatePairChangeEvent const &event) {
-            candidatePairChanged(event);
+        std::weak_ptr weak(shared_from_this());
+        transportChannel->SetCandidatePairChangeCallback([weak](cricket::CandidatePairChangeEvent const &event) {
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->candidatePairChanged(event);
         });
         transportChannel->SignalNetworkRouteChanged.connect(this, &NativeConnection::transportRouteChanged);
     }
@@ -215,10 +228,6 @@ namespace wrtc {
         }
     }
 
-    NativeConnection::~NativeConnection() {
-        close();
-    }
-
     void NativeConnection::notifyStateUpdated() const {
         ConnectionState newValue;
         if (failed) {
@@ -228,19 +237,29 @@ namespace wrtc {
         } else {
             newValue = ConnectionState::Connecting;
         }
-        signalingThread()->PostTask([this, newValue] {
-            (void) connectionChangeCallback(newValue);
+        std::weak_ptr weak(shared_from_this());
+        signalingThread()->PostTask([weak, newValue] {
+            const auto strong = std::static_pointer_cast<const NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            (void) strong->connectionChangeCallback(newValue);
         });
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst
     void NativeConnection::candidateGathered(cricket::IceTransportInternal*, const cricket::Candidate& candidate) {
         assert(networkThread()->IsCurrent());
-        signalingThread()->PostTask([this, candidate] {
+        std::weak_ptr weak(shared_from_this());
+        signalingThread()->PostTask([weak, candidate] {
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
             cricket::Candidate patchedCandidate = candidate;
             patchedCandidate.set_component(1);
             webrtc::JsepIceCandidate iceCandidate{std::string(),0, patchedCandidate};
-            (void) iceCandidateCallback(IceCandidate(&iceCandidate));
+            (void) strong->iceCandidateCallback(IceCandidate(&iceCandidate));
         });
     }
 
@@ -282,15 +301,24 @@ namespace wrtc {
             networkThread(),
             signalingThread()
         );
-        dataChannelInterface->onMessageReceived([this](const bytes::binary &data) {
-            (void) dataChannelMessageCallback(data);
+        std::weak_ptr weak(shared_from_this());
+        dataChannelInterface->onMessageReceived([weak](const bytes::binary &data) {
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            (void) strong->dataChannelMessageCallback(data);
         });
-        dataChannelInterface->onStateChanged([this](const bool isOpen) {
-            if (!dataChannelOpen && isOpen) {
-                dataChannelOpen = true;
-                (void) dataChannelOpenedCallback();
+        dataChannelInterface->onStateChanged([weak](const bool isOpen) {
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            if (!strong->dataChannelOpen && isOpen) {
+                strong->dataChannelOpen = true;
+                (void) strong->dataChannelOpenedCallback();
             } else {
-                dataChannelOpen = false;
+                strong->dataChannelOpen = false;
             }
         });
         lastDisconnectedTimestamp = rtc::TimeMillis();
@@ -298,7 +326,6 @@ namespace wrtc {
     }
 
     void NativeConnection::close() {
-        isExiting = true;
         contentNegotiationContext = nullptr;
         NativeNetworkInterface::close();
     }
@@ -311,30 +338,40 @@ namespace wrtc {
                 return;
             }
         }
-        networkThread()->PostTask([this, candidate] {
-            transportChannel->AddRemoteCandidate(candidate);
+        std::weak_ptr weak(shared_from_this());
+        networkThread()->PostTask([weak, candidate] {
+            const auto strong = std::static_pointer_cast<const NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->transportChannel->AddRemoteCandidate(candidate);
         });
     }
 
     void NativeConnection::setRemoteParams(PeerIceParameters remoteIceParameters, std::unique_ptr<rtc::SSLFingerprint> fingerprint, const std::string& sslSetup) {
-        networkThread()->PostTask([this, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint), sslSetup] {
-            remoteParameters = remoteIceParameters;
+        std::weak_ptr weak(shared_from_this());
+        networkThread()->PostTask([weak, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint), sslSetup] {
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->remoteParameters = remoteIceParameters;
             const cricket::IceParameters parameters(
                 remoteIceParameters.ufrag,
                 remoteIceParameters.pwd,
                 remoteIceParameters.supportsRenomination
             );
-            transportChannel->SetRemoteIceParameters(parameters);
+            strong->transportChannel->SetRemoteIceParameters(parameters);
             rtc::SSLRole sslRole;
             if (sslSetup == "active") {
                 sslRole = rtc::SSLRole::SSL_SERVER;
             } else if (sslSetup == "passive") {
                 sslRole = rtc::SSLRole::SSL_CLIENT;
             } else {
-                sslRole = isOutgoing ? rtc::SSLRole::SSL_CLIENT : rtc::SSLRole::SSL_SERVER;
+                sslRole = strong->isOutgoing ? rtc::SSLRole::SSL_CLIENT : rtc::SSLRole::SSL_SERVER;
             }
             if (fingerprint) {
-                dtlsTransport->SetRemoteParameters(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size(), sslRole);
+                strong->dtlsTransport->SetRemoteParameters(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size(), sslRole);
             }
         });
     }
@@ -358,16 +395,20 @@ namespace wrtc {
     }
 
     void NativeConnection::checkConnectionTimeout() {
-        networkThread()->PostDelayedTask([this] {
-            if (isExiting) return;
-            const int64_t currentTimestamp = rtc::TimeMillis();
-            if (constexpr int64_t maxTimeout = 20000; !connected && lastDisconnectedTimestamp + maxTimeout < currentTimestamp) {
-                RTC_LOG(LS_INFO) << "NativeNetworkingImpl timeout " << currentTimestamp - lastDisconnectedTimestamp << " ms";
-                failed = true;
-                notifyStateUpdated();
+        std::weak_ptr weak(shared_from_this());
+        networkThread()->PostDelayedTask([weak] {
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
                 return;
             }
-            checkConnectionTimeout();
+            const int64_t currentTimestamp = rtc::TimeMillis();
+            if (constexpr int64_t maxTimeout = 20000; !strong->connected && strong->lastDisconnectedTimestamp + maxTimeout < currentTimestamp) {
+                RTC_LOG(LS_INFO) << "NativeNetworkingImpl timeout " << currentTimestamp - strong->lastDisconnectedTimestamp << " ms";
+                strong->failed = true;
+                strong->notifyStateUpdated();
+                return;
+            }
+            strong->checkConnectionTimeout();
         }, webrtc::TimeDelta::Millis(1000));
     }
 } // wrtc

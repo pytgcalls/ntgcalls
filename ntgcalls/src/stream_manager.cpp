@@ -66,7 +66,7 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Configuration set";
     }
 
-    void StreamManager::optimizeSources(const std::unique_ptr<wrtc::NetworkInterface>& pc) const {
+    void StreamManager::optimizeSources(wrtc::NetworkInterface* pc) const {
         pc->enableAudioIncoming(writers.contains(Microphone) || externalWriters.contains(Microphone));
         pc->enableVideoIncoming(writers.contains(Camera) || externalWriters.contains(Camera), false);
         pc->enableVideoIncoming(writers.contains(Screen) || externalWriters.contains(Screen), true);
@@ -142,7 +142,7 @@ namespace ntgcalls {
         onChangeStatus = callback;
     }
 
-    void StreamManager::addTrack(Mode mode, Device device, const std::unique_ptr<wrtc::NetworkInterface>& pc) {
+    void StreamManager::addTrack(Mode mode, Device device, wrtc::NetworkInterface* pc) {
         const std::pair id(mode, device);
         if (mode == Capture) {
             tracks[id] = pc->addOutgoingTrack(dynamic_cast<BaseStreamer*>(streams[id].get())->createTrack());
@@ -292,22 +292,29 @@ namespace ntgcalls {
                     }
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
                     syncReaders.insert(device);
-                    readers[device]->onData([this, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
-                        if (syncReaders.contains(id.second)) {
-                            std::unique_lock lock(syncMutex);
-                            syncReaders.erase(id.second);
-                            syncCV.notify_all();
-                            syncCV.wait(lock, [this] { return syncReaders.empty(); });
+                    std::weak_ptr weak(shared_from_this());
+                    readers[device]->onData([weak, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
+                        const auto strong = weak.lock();
+                        if (!strong) {
+                            return;
                         }
-                        if (streams.contains(id)) {
-                            if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
+                        if (strong->syncReaders.contains(id.second)) {
+                            std::unique_lock lock(strong->syncMutex);
+                            strong->syncReaders.erase(id.second);
+                            strong->syncCV.notify_all();
+                            strong->syncCV.wait(lock, [strong]{
+                                return strong->syncReaders.empty();
+                            });
+                        }
+                        if (strong->streams.contains(id)) {
+                            if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
                                 frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
                                 if (streamType == Video && isShared) {
-                                    (void) frameCallback(
+                                    (void) strong->frameCallback(
                                         0,
                                         id.first,
                                         id.second,
-                                        {data.get(), data.get() + streams[id]->frameSize()},
+                                        {data.get(), data.get() + strong->streams[id]->frameSize()},
                                         frameData
                                     );
                                 }
@@ -315,13 +322,21 @@ namespace ntgcalls {
                             }
                         }
                     });
-                    readers[device]->onEof([this, device] {
-                        workerThread->PostTask([this, device] {
-                            if (syncReaders.contains(device)) {
-                                syncReaders.erase(device);
-                                syncCV.notify_all();
+                    readers[device]->onEof([weak, device] {
+                        const auto strong = weak.lock();
+                        if (!strong) {
+                            return;
+                        }
+                        strong->workerThread->PostTask([weak, device] {
+                            const auto strongThread = weak.lock();
+                            if (!strongThread) {
+                                return;
                             }
-                            (void) onEOF(getStreamType(device), device);
+                            if (strongThread->syncReaders.contains(device)) {
+                                strongThread->syncReaders.erase(device);
+                                strongThread->syncCV.notify_all();
+                            }
+                            (void) strongThread->onEOF(getStreamType(device), device);
                         });
                     });
                     if (initialized) {
@@ -337,11 +352,16 @@ namespace ntgcalls {
                             writers.erase(device);
                             writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
                         }
-                        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([this, id, isExternal](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
+                        std::weak_ptr weak(shared_from_this());
+                        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([weak, id, isExternal](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
+                            const auto strong = weak.lock();
+                            if (!strong) {
+                                return;
+                            }
                             if (isExternal) {
                                 for (const auto& [ssrc, data] : frames) {
-                                    if (externalWriters.contains(id.second)) {
-                                        (void) frameCallback(
+                                    if (strong->externalWriters.contains(id.second)) {
+                                        (void) strong->frameCallback(
                                             ssrc,
                                             id.first,
                                             id.second,
@@ -351,17 +371,22 @@ namespace ntgcalls {
                                     }
                                 }
                             } else {
-                                if (writers.contains(id.second)) {
-                                    if (const auto audioWriter = dynamic_cast<AudioWriter*>(writers[id.second].get())) {
+                                if (strong->writers.contains(id.second)) {
+                                    if (const auto audioWriter = dynamic_cast<AudioWriter*>(strong->writers[id.second].get())) {
                                         audioWriter->sendFrames(frames);
                                     }
                                 }
                             }
                         });
                     } else if (isExternal) {
-                        dynamic_cast<VideoReceiver*>(streams[id].get())->onFrame([this, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::FrameData frameData) {
-                            if (externalWriters.contains(id.second)) {
-                                (void) frameCallback(
+                        std::weak_ptr weak(shared_from_this());
+                        dynamic_cast<VideoReceiver*>(streams[id].get())->onFrame([weak, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::FrameData frameData) {
+                            const auto strong = weak.lock();
+                            if (!strong) {
+                                return;
+                            }
+                            if (strong->externalWriters.contains(id.second)) {
+                                (void) strong->frameCallback(
                                     ssrc,
                                     id.first,
                                     id.second,

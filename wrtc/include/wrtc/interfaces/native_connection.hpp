@@ -20,7 +20,6 @@ namespace wrtc {
 
     class NativeConnection final : public NativeNetworkInterface {
         json customParameters;
-        std::atomic_bool isExiting;
         bool isOutgoing, enableP2P;
         int64_t lastDisconnectedTimestamp = 0;
         std::vector<RTCServer> rtcServers;
@@ -73,7 +72,7 @@ namespace wrtc {
     public:
         explicit NativeConnection(std::vector<RTCServer> rtcServers, bool enableP2P, bool isOutgoing);
 
-        ~NativeConnection() override;
+        void open() override;
 
         void close() override;
 

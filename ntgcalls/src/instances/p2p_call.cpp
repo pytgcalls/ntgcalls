@@ -132,7 +132,7 @@ namespace ntgcalls {
         }
         protocolVersion = signaling::Signaling::matchVersion(versions);
         if (protocolVersion & signaling::Signaling::Version::V2Full) {
-            connection = std::make_unique<wrtc::PeerConnection>(
+            connection = std::make_shared<wrtc::PeerConnection>(
                 RTCServer::toIceServers(servers),
                 true,
             p2pAllowed
@@ -144,13 +144,14 @@ namespace ntgcalls {
                 }
             });
         } else {
-            connection = std::make_unique<wrtc::NativeConnection>(
+            connection = std::make_shared<wrtc::NativeConnection>(
                 RTCServer::toRtcServers(servers),
                 p2pAllowed,
                 type() == Type::Outgoing
             );
         }
-        streamManager->optimizeSources(connection);
+        connection->open();
+        streamManager->optimizeSources(connection.get());
         signaling = signaling::Signaling::Create(
             protocolVersion,
             connection->networkThread(),
@@ -194,10 +195,10 @@ namespace ntgcalls {
         connection->onDataChannelMessage([this](const bytes::binary& data) {
             processSignalingData(data);
         });
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection);
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection.get());
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection.get());
         streamManager->onUpgrade([this] (const MediaState mediaState) {
             sendMediaState(mediaState);
         });

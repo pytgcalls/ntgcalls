@@ -22,21 +22,22 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        connection = std::make_unique<wrtc::GroupConnection>(false);
+        connection = std::make_shared<wrtc::GroupConnection>(false);
+        connection->open();
         RTC_LOG(LS_INFO) << "Group call initialized";
         streamManager->setStreamSources(StreamManager::Mode::Capture, config);
         streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
-        streamManager->optimizeSources(connection);
+        streamManager->optimizeSources(connection.get());
 
         connection->onDataChannelOpened([this] {
             RTC_LOG(LS_INFO) << "Data channel opened";
             updateRemoteVideoConstraints();
         });
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection);
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection);
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, connection);
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection.get());
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection.get());
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, connection.get());
         RTC_LOG(LS_INFO) << "AVStream settings applied";
         return Safe<wrtc::GroupConnection>(connection)->getJoinPayload();
     }
@@ -48,11 +49,12 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Screen sharing already initialized";
             throw ConnectionError("Screen sharing already initialized");
         }
-        presentationConnection = std::make_unique<wrtc::GroupConnection>(true);
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection);
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Screen, presentationConnection);
+        presentationConnection = std::make_shared<wrtc::GroupConnection>(true);
+        presentationConnection->open();
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection.get());
+        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Screen, presentationConnection.get());
         RTC_LOG(LS_INFO) << "Screen sharing initialized";
-        return Safe<wrtc::GroupConnection>(presentationConnection)->getJoinPayload();
+        return presentationConnection->getJoinPayload();
     }
 
     void GroupCall::connect(const std::string& jsonData, const bool isPresentation) {

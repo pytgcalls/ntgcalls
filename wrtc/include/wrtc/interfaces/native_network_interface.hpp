@@ -22,7 +22,7 @@
 
 namespace wrtc {
 
-    class NativeNetworkInterface:  public sigslot::has_slots<>, public NetworkInterface {
+    class NativeNetworkInterface: public sigslot::has_slots<>, public NetworkInterface, public std::enable_shared_from_this<NativeNetworkInterface> {
         struct H264FormatParameters {
             std::string profileLevelId;
             std::string packetizationMode;

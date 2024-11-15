@@ -21,7 +21,7 @@ namespace wrtc {
     public:
         explicit PeerConnection(const webrtc::PeerConnectionInterface::IceServers& servers = {}, bool allowAttachDataChannel = false, bool allowP2P = true);
 
-        ~PeerConnection() override;
+        void open() override{}
 
         std::optional<Description> localDescription() const;
 

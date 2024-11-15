@@ -5,12 +5,13 @@
 #include <ntgcalls/instances/call_interface.hpp>
 #include <wrtc/models/media_content.hpp>
 #include <nlohmann/json.hpp>
+#include <wrtc/interfaces/group_connection.hpp>
 
 namespace ntgcalls {
     using json = nlohmann::json;
 
     class GroupCall final : public CallInterface {
-        std::unique_ptr<wrtc::NetworkInterface> presentationConnection;
+        std::shared_ptr<wrtc::GroupConnection> presentationConnection;
 
         void updateRemoteVideoConstraints() const;
 

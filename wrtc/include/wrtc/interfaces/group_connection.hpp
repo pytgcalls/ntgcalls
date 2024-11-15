@@ -23,8 +23,6 @@ namespace wrtc {
 
         explicit GroupConnection(bool isPresentation);
 
-        ~GroupConnection() override;
-
         std::string getJoinPayload();
 
         void addIceCandidate(const IceCandidate& rawCandidate) const override;
@@ -39,13 +37,14 @@ namespace wrtc {
 
         bool removeIncomingVideo(const std::string& endpoint);
 
+        void open() override;
+
         void close() override;
 
     private:
         int64_t lastNetworkActivityMs = 0;
         uint32_t outgoingAudioSsrc = 0, outgoingVideoSsrc = 0;
         std::vector<SsrcGroup> outgoingVideoSsrcGroups;
-        std::atomic_bool isExiting;
         bool isPresentation = false;
         bool isRtcConnected = false, isRtmpConnected = false;
         bool lastEffectivelyConnected = false;

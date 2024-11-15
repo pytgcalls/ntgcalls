@@ -14,44 +14,77 @@
 
 namespace wrtc {
     void NativeNetworkInterface::initConnection(bool supportsPacketSending) {
-        networkThread()->PostTask([this, supportsPacketSending] {
-            localParameters = PeerIceParameters(
+        std::weak_ptr weak(shared_from_this());
+        networkThread()->PostTask([weak, supportsPacketSending] {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            strong->localParameters = PeerIceParameters(
                 rtc::CreateRandomString(cricket::ICE_UFRAG_LENGTH),
                 rtc::CreateRandomString(cricket::ICE_PWD_LENGTH),
                 true
             );
-            localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(
+            strong->localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(
                 rtc::KeyParams(rtc::KT_ECDSA),
                 absl::nullopt
             );
-            asyncResolverFactory = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
-            dtlsSrtpTransport = std::make_unique<WrappedDtlsSrtpTransport>(
+            strong->asyncResolverFactory = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
+            strong->dtlsSrtpTransport = std::make_unique<WrappedDtlsSrtpTransport>(
                 true,
-                factory->fieldTrials(),
-                [this](const webrtc::RtpPacketReceived& packet) {
-                    workerThread()->PostTask([this, packet] {
-                        RtpPacketReceived(packet);
+                strong->factory->fieldTrials(),
+                [weak](const webrtc::RtpPacketReceived& packet) {
+                    const auto strongListener = weak.lock();
+                    if (!strongListener) {
+                        return;
+                    }
+                    strongListener->workerThread()->PostTask([weak, packet] {
+                        const auto strongWorker = weak.lock();
+                        if (!strongWorker) {
+                            return;
+                        }
+                        strongWorker->RtpPacketReceived(packet);
                     });
                 }
             );
-            dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
-            dtlsSrtpTransport->SetActiveResetSrtpParams(false);
-            dtlsSrtpTransport->SubscribeReadyToSend(this, [this](const bool readyToSend) {
-                DtlsReadyToSend(readyToSend);
+            strong->dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
+            strong->dtlsSrtpTransport->SetActiveResetSrtpParams(false);
+            strong->dtlsSrtpTransport->SubscribeReadyToSend(strong.get(), [weak](const bool readyToSend) {
+                const auto strongListener = weak.lock();
+                if (!strongListener) {
+                    return;
+                }
+                strongListener->DtlsReadyToSend(readyToSend);
             });
-            dtlsSrtpTransport->SubscribeRtcpPacketReceived(this, [this](const rtc::CopyOnWriteBuffer* packet, int64_t) {
-               workerThread()->PostTask([this, packet = *packet] {
-                   if (call) call->Receiver()->DeliverRtcpPacket(packet);
-               });
+            strong->dtlsSrtpTransport->SubscribeRtcpPacketReceived(strong.get(), [weak](const rtc::CopyOnWriteBuffer* packet, int64_t) {
+                const auto strongListener = weak.lock();
+                if (!strongListener) {
+                    return;
+                }
+                strongListener->workerThread()->PostTask([weak, packet = *packet] {
+                    const auto strongWorker = weak.lock();
+                    if (!strongWorker) {
+                        return;
+                    }
+                    if (strongWorker->call) strongWorker->call->Receiver()->DeliverRtcpPacket(packet);
+                });
             });
             if (supportsPacketSending) {
-                dtlsSrtpTransport->SubscribeSentPacket(this, [this](const rtc::SentPacket& packet) {
-                    workerThread()->PostTask([this, packet] {
-                        if (call) call->OnSentPacket(packet);
+                strong->dtlsSrtpTransport->SubscribeSentPacket(strong.get(), [weak](const rtc::SentPacket& packet) {
+                    const auto strongListener = weak.lock();
+                    if (!strongListener) {
+                        return;
+                    }
+                    strongListener->workerThread()->PostTask([weak, packet] {
+                        const auto strongWorker = weak.lock();
+                        if (!strongWorker) {
+                            return;
+                        }
+                        if (strongWorker->call) strongWorker->call->OnSentPacket(packet);
                     });
                 });
             }
-            resetDtlsSrtpTransport();
+            strong->resetDtlsSrtpTransport();
         });
         channelManager = std::make_unique<ChannelManager>(
             factory->mediaEngine(),
@@ -59,10 +92,14 @@ namespace wrtc {
             networkThread(),
             signalingThread()
         );
-        workerThread()->BlockingCall([&] {
-            webrtc::CallConfig callConfig(factory->environment(), networkThread());
-            callConfig.audio_state = factory->mediaEngine()->voice().GetAudioState();
-            call = factory->mediaFactory()->CreateCall(std::move(callConfig));
+        workerThread()->BlockingCall([weak] {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            webrtc::CallConfig callConfig(strong->factory->environment(), strong->networkThread());
+            callConfig.audio_state = strong->factory->mediaEngine()->voice().GetAudioState();
+            strong->call = strong->factory->mediaFactory()->CreateCall(std::move(callConfig));
         });
         availableVideoFormats = filterSupportedVideoFormats(factory->getSupportedVideoFormats());
     }
@@ -159,8 +196,13 @@ namespace wrtc {
         UpdateAggregateStates_n();
 
         if (isReadyToSend) {
-            networkThread()->PostTask([this] {
-                UpdateAggregateStates_n();
+            std::weak_ptr weak(shared_from_this());
+            networkThread()->PostTask([weak] {
+                const auto strong = weak.lock();
+                if (!strong) {
+                    return;
+                }
+                strong->UpdateAggregateStates_n();
             });
         }
     }
@@ -261,16 +303,22 @@ namespace wrtc {
             return;
         }
         NetworkInterface::enableAudioIncoming(enable);
-        workerThread()->BlockingCall([&] {
+
+        std::weak_ptr weak(shared_from_this());
+        workerThread()->BlockingCall([weak, enable] {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
             if (enable) {
-                for (const auto& [endpoint, mediaContent] : pendingContent) {
+                for (const auto& [endpoint, mediaContent] : strong->pendingContent) {
                     if (mediaContent.type == MediaContent::Type::Audio) {
-                        addIncomingSmartSource(endpoint, mediaContent, true);
+                        strong->addIncomingSmartSource(endpoint, mediaContent, true);
                     }
                 }
             } else {
-                std::lock_guard lock(mutex);
-                incomingAudioChannels.clear();
+                std::lock_guard lock(strong->mutex);
+                strong->incomingAudioChannels.clear();
             }
         });
     }
@@ -286,17 +334,22 @@ namespace wrtc {
             }
         }
         NetworkInterface::enableVideoIncoming(enable, isScreenCast);
-        workerThread()->BlockingCall([&] {
+        std::weak_ptr weak(shared_from_this());
+        workerThread()->BlockingCall([weak, enable, isScreenCast] {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
             if (enable) {
-                for (const auto& [endpoint, mediaContent] : pendingContent) {
+                for (const auto& [endpoint, mediaContent] : strong->pendingContent) {
                     if (mediaContent.type == MediaContent::Type::Video && mediaContent.isScreenCast() == isScreenCast) {
-                        addIncomingSmartSource(endpoint, mediaContent, true);
+                        strong->addIncomingSmartSource(endpoint, mediaContent, true);
                     }
                 }
             } else {
-                for (const auto& [endpoint, mediaContent] : pendingContent) {
+                for (const auto& [endpoint, mediaContent] : strong->pendingContent) {
                     if (mediaContent.type == MediaContent::Type::Video && mediaContent.isScreenCast() == isScreenCast) {
-                        incomingVideoChannels.erase(endpoint);
+                        strong->incomingVideoChannels.erase(endpoint);
                     }
                 }
             }
@@ -322,35 +375,48 @@ namespace wrtc {
     }
 
     void NativeNetworkInterface::close() {
-        workerThread()->BlockingCall([&] {
-            audioChannel = nullptr;
-            videoChannel = nullptr;
-            incomingAudioChannels.clear();
-            incomingVideoChannels.clear();
+        std::weak_ptr weak(shared_from_this());
+        workerThread()->BlockingCall([weak] {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            strong->audioChannel = nullptr;
+            strong->videoChannel = nullptr;
+            strong->incomingAudioChannels.clear();
+            strong->incomingVideoChannels.clear();
         });
         channelManager = nullptr;
         if (factory) {
-            workerThread()->BlockingCall([&] {
-                call = nullptr;
+            workerThread()->BlockingCall([weak] {
+                const auto strong = weak.lock();
+                if (!strong) {
+                    return;
+                }
+                strong->call = nullptr;
             });
-            networkThread()->BlockingCall([&] {
-                if (transportChannel) {
-                    transportChannel->SignalCandidateGathered.disconnect(this);
-                    transportChannel->SignalIceTransportStateChanged.disconnect(this);
-                    transportChannel->SignalNetworkRouteChanged.disconnect(this);
+            networkThread()->BlockingCall([weak] {
+                const auto strong = weak.lock();
+                if (!strong) {
+                    return;
                 }
-                dataChannelInterface = nullptr;
-                if (dtlsTransport) {
-                    dtlsTransport->SignalWritableState.disconnect(this);
-                    dtlsTransport->SignalReceivingState.disconnect(this);
+                if (strong->transportChannel) {
+                    strong->transportChannel->SignalCandidateGathered.disconnect(strong.get());
+                    strong->transportChannel->SignalIceTransportStateChanged.disconnect(strong.get());
+                    strong->transportChannel->SignalNetworkRouteChanged.disconnect(strong.get());
                 }
-                if (dtlsSrtpTransport) {
-                    dtlsSrtpTransport->UnsubscribeSentPacket(this);
-                    dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
+                strong->dataChannelInterface = nullptr;
+                if (strong->dtlsTransport) {
+                    strong->dtlsTransport->SignalWritableState.disconnect(strong.get());
+                    strong->dtlsTransport->SignalReceivingState.disconnect(strong.get());
                 }
-                dtlsTransport = nullptr;
-                transportChannel = nullptr;
-                portAllocator = nullptr;
+                if (strong->dtlsSrtpTransport) {
+                    strong->dtlsSrtpTransport->UnsubscribeSentPacket(strong.get());
+                    strong->dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
+                }
+                strong->dtlsTransport = nullptr;
+                strong->transportChannel = nullptr;
+                strong->portAllocator = nullptr;
             });
             signalingThread()->BlockingCall([] {});
         }
@@ -370,19 +436,28 @@ namespace wrtc {
     }
 
     std::unique_ptr<MediaTrackInterface> NativeNetworkInterface::addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
+        std::weak_ptr weak(shared_from_this());
         if (const auto audioTrack = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
             audioTrack->AddSink(&audioSink);
-            return std::make_unique<MediaTrackInterface>([this](const bool enable) {
-                if (audioChannel != nullptr) {
-                    audioChannel->set_enabled(enable);
+            return std::make_unique<MediaTrackInterface>([weak](const bool enable) {
+                const auto strong = weak.lock();
+                if (!strong) {
+                    return;
+                }
+                if (strong->audioChannel != nullptr) {
+                    strong->audioChannel->set_enabled(enable);
                 }
             });
         }
         if (const auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
             videoTrack->AddOrUpdateSink(&videoSink, rtc::VideoSinkWants());
-            return std::make_unique<MediaTrackInterface>([this](const bool enable) {
-                if (videoChannel != nullptr) {
-                    videoChannel->set_enabled(enable);
+            return std::make_unique<MediaTrackInterface>([weak](const bool enable) {
+                const auto strong = weak.lock();
+                if (!strong) {
+                    return;
+                }
+                if (strong->videoChannel != nullptr) {
+                    strong->videoChannel->set_enabled(enable);
                 }
             });
         }
@@ -394,9 +469,14 @@ namespace wrtc {
     }
 
     void NativeNetworkInterface::sendDataChannelMessage(const bytes::binary& data) const {
-        networkThread()->PostTask([this, data] {
-            if (dataChannelInterface) {
-                dataChannelInterface->sendDataChannelMessage(data);
+        std::weak_ptr weak(shared_from_this());
+        networkThread()->PostTask([weak, data] {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            if (strong->dataChannelInterface) {
+                strong->dataChannelInterface->sendDataChannelMessage(data);
             }
         });
     }

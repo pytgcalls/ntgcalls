@@ -20,8 +20,8 @@ namespace ntgcalls {
 
     protected:
         std::mutex mutex;
-        std::unique_ptr<wrtc::NetworkInterface> connection;
-        std::unique_ptr<StreamManager> streamManager;
+        std::shared_ptr<wrtc::NetworkInterface> connection;
+        std::shared_ptr<StreamManager> streamManager;
         wrtc::synchronized_callback<CallNetworkState> connectionChangeCallback;
         wrtc::synchronized_callback<RemoteSource> remoteSourceCallback;
         rtc::Thread* updateThread;
@@ -75,7 +75,7 @@ namespace ntgcalls {
         void sendExternalFrame(StreamManager::Device device, const bytes::binary& data, wrtc::FrameData frameData) const;
 
         template<typename DestCallType, typename BaseCallType>
-        static DestCallType* Safe(const std::unique_ptr<BaseCallType>& call) {
+        static DestCallType* Safe(const std::shared_ptr<BaseCallType>& call) {
             if (!call) {
                 return nullptr;
             }

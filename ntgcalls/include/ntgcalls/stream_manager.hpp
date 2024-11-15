@@ -15,7 +15,7 @@
 
 namespace ntgcalls {
 
-    class StreamManager {
+    class StreamManager: public std::enable_shared_from_this<StreamManager> {
     public:
         enum Type {
             Audio,
@@ -52,7 +52,7 @@ namespace ntgcalls {
 
         void setStreamSources(Mode mode, const MediaDescription& desc);
 
-        void optimizeSources(const std::unique_ptr<wrtc::NetworkInterface>& pc) const;
+        void optimizeSources(wrtc::NetworkInterface* pc) const;
 
         MediaState getState();
 
@@ -72,7 +72,7 @@ namespace ntgcalls {
 
         void onUpgrade(const std::function<void(MediaState)> &callback);
 
-        void addTrack(Mode mode, Device device, const std::unique_ptr<wrtc::NetworkInterface> &pc);
+        void addTrack(Mode mode, Device device, wrtc::NetworkInterface* pc);
 
         void start();
 

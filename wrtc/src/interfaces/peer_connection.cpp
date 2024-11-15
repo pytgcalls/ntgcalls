@@ -40,10 +40,6 @@ namespace wrtc {
         peerConnection = result.MoveValue();
     }
 
-    PeerConnection::~PeerConnection() {
-        close();
-    }
-
     std::optional<Description> PeerConnection::localDescription() const {
         if (peerConnection) {
             if (const auto raw_description = peerConnection->local_description()) {

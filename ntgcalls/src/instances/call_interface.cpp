@@ -8,7 +8,7 @@ namespace ntgcalls {
     CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {
         networkThread = rtc::Thread::Create();
         networkThread->Start();
-        streamManager = std::make_unique<StreamManager>(updateThread);
+        streamManager = std::make_shared<StreamManager>(updateThread);
     }
 
     CallInterface::~CallInterface() {
@@ -19,6 +19,7 @@ namespace ntgcalls {
         streamManager = nullptr;
         if (connection) {
             connection->onConnectionChange(nullptr);
+            connection->close();
             connection = nullptr;
             RTC_LOG(LS_VERBOSE) << "Connection closed";
         }
@@ -46,7 +47,7 @@ namespace ntgcalls {
     void CallInterface::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
         streamManager->setStreamSources(mode, config);
         if (mode == StreamManager::Mode::Playback && connection) {
-            streamManager->optimizeSources(connection);
+            streamManager->optimizeSources(connection.get());
         }
     }
 
@@ -143,8 +144,7 @@ namespace ntgcalls {
         }, webrtc::TimeDelta::Seconds(20));
     }
 
-    RemoteSource::State CallInterface::parseVideoState(signaling::MediaStateMessage::VideoState state)
-    {
+    RemoteSource::State CallInterface::parseVideoState(const signaling::MediaStateMessage::VideoState state) {
         switch (state){
         case signaling::MediaStateMessage::VideoState::Active:
             return RemoteSource::State::Active;

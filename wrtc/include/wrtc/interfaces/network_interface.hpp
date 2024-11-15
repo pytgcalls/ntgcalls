@@ -29,6 +29,8 @@ namespace wrtc {
     public:
         NetworkInterface();
 
+        virtual void open() = 0;
+
         virtual ~NetworkInterface() = default;
 
         [[nodiscard]] rtc::Thread *networkThread() const;

@@ -10,14 +10,12 @@
 #include <modules/rtp_rtcp/source/rtp_header_extensions.h>
 
 namespace wrtc {
-    GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation) {
+    GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation) {}
+
+    void GroupConnection::open() {
         initConnection(true);
         generateSsrcs();
         beginAudioChannelCleanupTimer();
-    }
-
-    GroupConnection::~GroupConnection() {
-        close();
     }
 
     void GroupConnection::generateSsrcs() {
@@ -86,35 +84,52 @@ namespace wrtc {
             signalingThread()
         );
 
-        dataChannelInterface->onMessageReceived([this](const bytes::binary &data) {
-           (void) dataChannelMessageCallback(data);
+        std::weak_ptr weak(shared_from_this());
+        dataChannelInterface->onMessageReceived([weak](const bytes::binary &data) {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+           (void) strong->dataChannelMessageCallback(data);
         });
 
-        dataChannelInterface->onStateChanged([this](const bool isOpen) {
-            if (!dataChannelOpen && isOpen) {
-                dataChannelOpen = true;
-                (void) dataChannelOpenedCallback();
+        dataChannelInterface->onStateChanged([weak](const bool isOpen) {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            if (!strong->dataChannelOpen && isOpen) {
+                strong->dataChannelOpen = true;
+                (void) strong->dataChannelOpenedCallback();
             } else {
-                dataChannelOpen = false;
+                strong->dataChannelOpen = false;
             }
         });
 
-        dataChannelInterface->onClosed([this] {
-            dataChannelOpen = false;
+        dataChannelInterface->onClosed([weak] {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->dataChannelOpen = false;
             RTC_LOG(LS_INFO) << "Data channel closed, restarting";
-            restartDataChannel();
+            strong->restartDataChannel();
         });
 
         dataChannelInterface->updateIsConnected(connected);
     }
 
     std::string GroupConnection::getJoinPayload() {
-        json jsonRes;
-        networkThread()->BlockingCall([this, &jsonRes] {
-            const auto fingerprint = localFingerprint();
-            jsonRes = {
-                {"ufrag", localParameters.ufrag},
-                {"pwd", localParameters.pwd},
+        std::weak_ptr weak(shared_from_this());
+        return networkThread()->BlockingCall([weak] {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return std::string();
+            }
+            const auto fingerprint = strong->localFingerprint();
+            json jsonRes = {
+                {"ufrag", strong->localParameters.ufrag},
+                {"pwd", strong->localParameters.pwd},
                 {"fingerprints",
                     {
                         {
@@ -124,10 +139,10 @@ namespace wrtc {
                         }
                     }
                 },
-                {"ssrc", *reinterpret_cast<const int32_t *>(&outgoingAudioSsrc)},
+                {"ssrc", *reinterpret_cast<const int32_t *>(&strong->outgoingAudioSsrc)},
                 {"ssrc-groups", json::array()}
             };
-            for (const auto& [semantics, sources] : outgoingVideoSsrcGroups) {
+            for (const auto& [semantics, sources] : strong->outgoingVideoSsrcGroups) {
                 std::vector<int32_t> signedSources;
                 signedSources.reserve(sources.size());
                 for (const auto source : sources) {
@@ -138,38 +153,53 @@ namespace wrtc {
                     {"semantics", semantics}
                 });
             }
+            return jsonRes.dump();
         });
-        return jsonRes.dump();
     }
 
     void GroupConnection::addIceCandidate(const IceCandidate& rawCandidate) const {
         const auto candidate = parseIceCandidate(rawCandidate)->candidate();
-        networkThread()->PostTask([this, candidate] {
-            transportChannel->AddRemoteCandidate(candidate);
+        std::weak_ptr weak(shared_from_this());
+        networkThread()->PostTask([weak, candidate] {
+            const auto strong = std::static_pointer_cast<const GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->transportChannel->AddRemoteCandidate(candidate);
         });
     }
 
     void GroupConnection::setRemoteParams(PeerIceParameters remoteIceParameters, std::unique_ptr<rtc::SSLFingerprint> fingerprint) {
-        networkThread()->PostTask([this, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint)] {
-            remoteParameters = remoteIceParameters;
+        std::weak_ptr weak(shared_from_this());
+        networkThread()->PostTask([weak, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint)] {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->remoteParameters = remoteIceParameters;
             const cricket::IceParameters parameters(
                 remoteIceParameters.ufrag,
                 remoteIceParameters.pwd,
                 false
             );
-            transportChannel->SetRemoteIceParameters(parameters);
+            strong->transportChannel->SetRemoteIceParameters(parameters);
             if (fingerprint) {
-                dtlsTransport->SetRemoteFingerprint(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size());
+                strong->dtlsTransport->SetRemoteFingerprint(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size());
             }
         });
     }
 
     void GroupConnection::setConnectionMode(const Mode mode) {
         connectionMode = mode;
+        std::weak_ptr weak(shared_from_this());
         switch (mode) {
         case Mode::Rtc:
-            networkThread()->PostTask([this] {
-                start();
+            networkThread()->PostTask([weak] {
+                const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                strong->start();
             });
             break;
         default:
@@ -192,14 +222,13 @@ namespace wrtc {
         }
         if (isEffectivelyConnected != lastEffectivelyConnected) {
             lastEffectivelyConnected = isEffectivelyConnected;
-            ConnectionState newValue;
-            if (isEffectivelyConnected) {
-                newValue = ConnectionState::Connected;
-            } else {
-                newValue = ConnectionState::Connecting;
-            }
-            signalingThread()->PostTask([this, newValue] {
-                (void) connectionChangeCallback(newValue);
+            std::weak_ptr weak(shared_from_this());
+            signalingThread()->PostTask([weak, newValue = isEffectivelyConnected ? ConnectionState::Connected : ConnectionState::Connecting] {
+                const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                (void) strong->connectionChangeCallback(newValue);
             });
         }
     }
@@ -297,25 +326,28 @@ namespace wrtc {
 
 
     void GroupConnection::beginAudioChannelCleanupTimer() {
-        workerThread()->PostDelayedTask([this] {
-            if (isExiting) return;
-            std::lock_guard lock(mutex);
+        std::weak_ptr weak(shared_from_this());
+        workerThread()->PostDelayedTask([weak] {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            std::lock_guard lock(strong->mutex);
             const auto timestamp = rtc::TimeMillis();
             std::vector<std::string> removeChannels;
-            for (const auto& [channelId, channel] : incomingAudioChannels) {
+            for (const auto& [channelId, channel] : strong->incomingAudioChannels) {
                 if (channel->getActivity() < timestamp - 1000) {
                     removeChannels.push_back(channelId);
                 }
             }
             for (const auto &channelId : removeChannels) {
-                removeIncomingAudio(channelId);
+                strong->removeIncomingAudio(channelId);
             }
-            beginAudioChannelCleanupTimer();
+            strong->beginAudioChannelCleanupTimer();
         }, webrtc::TimeDelta::Millis(500));
     }
 
     void GroupConnection::close() {
-        isExiting = true;
         std::lock_guard lock(mutex);
         outgoingVideoSsrcGroups.clear();
         NativeNetworkInterface::close();
@@ -350,8 +382,13 @@ namespace wrtc {
     }
 
     void GroupConnection::registerTransportCallbacks(cricket::P2PTransportChannel* transportChannel) {
-        transportChannel->RegisterReceivedPacketCallback(this, [this](rtc::PacketTransportInternal*, const rtc::ReceivedPacket&) {
-            lastNetworkActivityMs = rtc::TimeMillis();
+        std::weak_ptr weak(shared_from_this());
+        transportChannel->RegisterReceivedPacketCallback(this, [weak](rtc::PacketTransportInternal*, const rtc::ReceivedPacket&) {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->lastNetworkActivityMs = rtc::TimeMillis();
         });
     }
 
