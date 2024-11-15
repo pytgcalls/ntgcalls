@@ -348,7 +348,6 @@ namespace wrtc {
     }
 
     void GroupConnection::close() {
-        std::lock_guard lock(mutex);
         outgoingVideoSsrcGroups.clear();
         NativeNetworkInterface::close();
     }
