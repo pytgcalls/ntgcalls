@@ -14,7 +14,7 @@ namespace ntgcalls {
     CallInterface::~CallInterface() {
         RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
         isExiting = true;
-        networkThread->BlockingCall([this] {
+        updateThread->BlockingCall([this] {
             std::lock_guard lock(mutex);
             connectionChangeCallback = nullptr;
             streamManager = nullptr;
@@ -103,7 +103,7 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Connecting...";
         (void) connectionChangeCallback({CallNetworkState::ConnectionState::Connecting, kind});
         connection->onConnectionChange([this, kind](const wrtc::ConnectionState state) {
-            networkThread->PostTask([this, kind, state] {
+            updateThread->PostTask([this, kind, state] {
                 if (isExiting) return;
                 std::lock_guard lock(mutex);
                 switch (state) {
@@ -124,11 +124,9 @@ namespace ntgcalls {
                 case wrtc::ConnectionState::Disconnected:
                 case wrtc::ConnectionState::Failed:
                 case wrtc::ConnectionState::Closed:
-                    updateThread->PostTask([this] {
-                        if (connection) {
-                            connection->onConnectionChange(nullptr);
-                        }
-                    });
+                    if (connection) {
+                        connection->onConnectionChange(nullptr);
+                    }
                     if (state == wrtc::ConnectionState::Failed) {
                         RTC_LOG(LS_ERROR) << "Connection failed";
                         (void) connectionChangeCallback({CallNetworkState::ConnectionState::Failed, kind});
