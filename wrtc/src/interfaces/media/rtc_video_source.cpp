@@ -14,7 +14,6 @@ namespace wrtc {
     RTCVideoSource::~RTCVideoSource() {
         factory = nullptr;
         source = nullptr;
-        PeerConnectionFactory::UnRef();
     }
 
     rtc::scoped_refptr<webrtc::VideoTrackInterface> RTCVideoSource::createTrack() const {

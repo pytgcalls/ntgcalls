@@ -55,7 +55,6 @@ namespace wrtc {
 
     void NetworkInterface::close() {
         if (factory) {
-            PeerConnectionFactory::UnRef();
             factory = nullptr;
         }
     }

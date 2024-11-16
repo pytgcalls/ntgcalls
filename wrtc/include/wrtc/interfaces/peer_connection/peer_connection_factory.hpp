@@ -18,8 +18,6 @@ namespace wrtc {
 
         static rtc::scoped_refptr<PeerConnectionFactory> GetOrCreateDefault();
 
-        static void UnRef();
-
         rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory();
 
         [[nodiscard]] rtc::Thread* networkThread() const;
@@ -46,7 +44,7 @@ namespace wrtc {
 
     private:
         static std::mutex _mutex;
-        static int _references;
+        static bool initialized;
         void *jniEnv;
         static rtc::scoped_refptr<PeerConnectionFactory> _default;
 

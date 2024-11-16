@@ -14,7 +14,6 @@ namespace wrtc {
     RTCAudioSource::~RTCAudioSource() {
         factory = nullptr;
         source = nullptr;
-        PeerConnectionFactory::UnRef();
     }
 
     rtc::scoped_refptr<webrtc::AudioTrackInterface> RTCAudioSource::createTrack() const {

@@ -20,7 +20,7 @@
 
 namespace wrtc {
     std::mutex PeerConnectionFactory::_mutex{};
-    int PeerConnectionFactory::_references = 0;
+    bool PeerConnectionFactory::initialized = false;
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::_default = nullptr;
 
     PeerConnectionFactory::PeerConnectionFactory() {
@@ -143,22 +143,13 @@ namespace wrtc {
 
     rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
         std::lock_guard lock(_mutex);
-        _references++;
-        if (_references == 1) {
+        if (initialized == false) {
 #ifndef IS_ANDROID
             rtc::InitializeSSL();
 #endif
+            initialized = true;
             _default = rtc::scoped_refptr<PeerConnectionFactory>(new rtc::RefCountedObject<PeerConnectionFactory>());
         }
         return _default;
-    }
-
-    void PeerConnectionFactory::UnRef() {
-        std::lock_guard lock(_mutex);
-        _references--;
-        if (!_references) {
-            _default = nullptr;
-            rtc::CleanupSSL();
-        }
     }
 } // wrtc
