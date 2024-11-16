@@ -104,9 +104,11 @@ namespace ntgcalls {
 
         static Protocol getProtocol();
 
+#ifndef IS_ANDROID
         static void enableGlibLoop(bool enable);
 
         static void enableH264Encoder(bool enable);
+#endif
 
         void onUpgrade(const std::function<void(int64_t, MediaState)>& callback);
 

@@ -315,6 +315,7 @@ namespace ntgcalls {
         };
     }
 
+#ifndef IS_ANDROID
     void NTgCalls::enableGlibLoop(const bool enable) {
         GLibLoopManager::EnableEventLoop(enable);
     }
@@ -322,6 +323,7 @@ namespace ntgcalls {
     void NTgCalls::enableH264Encoder(const bool enable) {
         wrtc::VideoFactoryConfig::EnableH264Encoder(enable);
     }
+#endif
 
     template<typename DestCallType, typename BaseCallType>
     DestCallType* NTgCalls::SafeCall(BaseCallType* call) {
