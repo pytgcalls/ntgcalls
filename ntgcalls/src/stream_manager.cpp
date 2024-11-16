@@ -294,6 +294,7 @@ namespace ntgcalls {
                     syncReaders.insert(device);
                     std::weak_ptr weak(shared_from_this());
                     readers[device]->onData([weak, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
+                        frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
                         const auto strong = weak.lock();
                         if (!strong) {
                             return;
@@ -308,7 +309,6 @@ namespace ntgcalls {
                         }
                         if (strong->streams.contains(id)) {
                             if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
-                                frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
                                 if (streamType == Video && isShared) {
                                     (void) strong->frameCallback(
                                         0,
