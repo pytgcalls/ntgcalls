@@ -690,6 +690,20 @@ int ntg_cpu_usage(const uintptr_t ptr, double *buffer, ntg_async_struct future) 
     PREPARE_ASYNC_END
 }
 
+int ntg_enable_g_lib_loop(const bool enable) {
+    try {
+        ntgcalls::NTgCalls::enableGlibLoop(enable);
+    } catch (ntgcalls::MediaDeviceError&) {
+        return NTG_ERROR_MEDIA_DEVICE;
+    }
+    return 0;
+}
+
+int ntg_enable_h264_encoder(const bool enable) {
+    ntgcalls::NTgCalls::enableH264Encoder(enable);
+    return 0;
+}
+
 int ntg_on_stream_end(const uintptr_t ptr, ntg_stream_callback callback, void* userData) {
     try {
         getInstance(ptr)->onStreamEnd([ptr, callback, userData](const int64_t chatId, const ntgcalls::StreamManager::Type type, const ntgcalls::StreamManager::Device device) {
