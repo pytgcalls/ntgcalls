@@ -9,6 +9,7 @@
 #include <ntgcalls/instances/p2p_call.hpp>
 #include <ntgcalls/models/dh_config.hpp>
 #include <ntgcalls/utils/g_lib_loop_manager.hpp>
+#include <wrtc/video_factory/video_factory_config.hpp>
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
@@ -316,6 +317,10 @@ namespace ntgcalls {
 
     void NTgCalls::enableGlibLoop(const bool enable) {
         GLibLoopManager::EnableEventLoop(enable);
+    }
+
+    void NTgCalls::enableH264Encoder(const bool enable) {
+        wrtc::VideoFactoryConfig::EnableH264Encoder(enable);
     }
 
     template<typename DestCallType, typename BaseCallType>
