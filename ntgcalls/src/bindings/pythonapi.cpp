@@ -49,6 +49,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def_static("get_protocol", &ntgcalls::NTgCalls::getProtocol);
     wrapper.def_static("get_media_devices", &ntgcalls::NTgCalls::getMediaDevices);
     wrapper.def_static("enable_glib_loop", &ntgcalls::NTgCalls::enableGlibLoop, py::arg("enable"));
+    wrapper.def_static("enable_h264_encoder", &ntgcalls::NTgCalls::enableH264Encoder, py::arg("enable"));
 
     py::enum_<ntgcalls::StreamManager::Type>(m, "StreamType")
         .value("AUDIO", ntgcalls::StreamManager::Type::Audio)
