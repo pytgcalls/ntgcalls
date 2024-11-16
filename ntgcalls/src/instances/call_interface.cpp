@@ -14,18 +14,23 @@ namespace ntgcalls {
     CallInterface::~CallInterface() {
         RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
         isExiting = true;
-        std::lock_guard lock(mutex);
-        connectionChangeCallback = nullptr;
-        streamManager = nullptr;
-        if (connection) {
-            connection->onConnectionChange(nullptr);
-            connection->close();
-            connection = nullptr;
-            RTC_LOG(LS_VERBOSE) << "Connection closed";
-        }
-        updateThread = nullptr;
-        cancelNetworkListener();
-        RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
+        networkThread->BlockingCall([this] {
+            std::lock_guard lock(mutex);
+            connectionChangeCallback = nullptr;
+            streamManager = nullptr;
+            if (connection) {
+                RTC_LOG(LS_VERBOSE) << "Removing connection listener";
+                connection->onConnectionChange(nullptr);
+                RTC_LOG(LS_VERBOSE) << "Closing connection";
+                connection->close();
+                RTC_LOG(LS_VERBOSE) << "Connection closed";
+                connection = nullptr;
+                RTC_LOG(LS_VERBOSE) << "Connection destroyed";
+            }
+            updateThread = nullptr;
+            cancelNetworkListener();
+            RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
+        });
     }
 
     bool CallInterface::pause() const {
@@ -98,43 +103,45 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Connecting...";
         (void) connectionChangeCallback({CallNetworkState::ConnectionState::Connecting, kind});
         connection->onConnectionChange([this, kind](const wrtc::ConnectionState state) {
-            if (isExiting) return;
-            std::lock_guard lock(mutex);
-            switch (state) {
-            case wrtc::ConnectionState::Connecting:
-                if (connected) {
-                    RTC_LOG(LS_INFO) << "Reconnecting...";
-                }
-                break;
-            case wrtc::ConnectionState::Connected:
-                RTC_LOG(LS_INFO) << "Connection established";
-                if (!connected && streamManager) {
-                    connected = true;
-                    streamManager->start();
-                    RTC_LOG(LS_INFO) << "Stream started";
-                    (void) connectionChangeCallback({CallNetworkState::ConnectionState::Connected, kind});
-                }
-                break;
-            case wrtc::ConnectionState::Disconnected:
-            case wrtc::ConnectionState::Failed:
-            case wrtc::ConnectionState::Closed:
-                updateThread->PostTask([this] {
-                    if (connection) {
-                        connection->onConnectionChange(nullptr);
+            networkThread->PostTask([this, kind, state] {
+                if (isExiting) return;
+                std::lock_guard lock(mutex);
+                switch (state) {
+                case wrtc::ConnectionState::Connecting:
+                    if (connected) {
+                        RTC_LOG(LS_INFO) << "Reconnecting...";
                     }
-                });
-                if (state == wrtc::ConnectionState::Failed) {
-                    RTC_LOG(LS_ERROR) << "Connection failed";
-                    (void) connectionChangeCallback({CallNetworkState::ConnectionState::Failed, kind});
-                } else {
-                    RTC_LOG(LS_INFO) << "Connection closed";
-                    (void) connectionChangeCallback({CallNetworkState::ConnectionState::Closed, kind});
+                    break;
+                case wrtc::ConnectionState::Connected:
+                    RTC_LOG(LS_INFO) << "Connection established";
+                    if (!connected && streamManager) {
+                        connected = true;
+                        streamManager->start();
+                        RTC_LOG(LS_INFO) << "Stream started";
+                        (void) connectionChangeCallback({CallNetworkState::ConnectionState::Connected, kind});
+                    }
+                    break;
+                case wrtc::ConnectionState::Disconnected:
+                case wrtc::ConnectionState::Failed:
+                case wrtc::ConnectionState::Closed:
+                    updateThread->PostTask([this] {
+                        if (connection) {
+                            connection->onConnectionChange(nullptr);
+                        }
+                    });
+                    if (state == wrtc::ConnectionState::Failed) {
+                        RTC_LOG(LS_ERROR) << "Connection failed";
+                        (void) connectionChangeCallback({CallNetworkState::ConnectionState::Failed, kind});
+                    } else {
+                        RTC_LOG(LS_INFO) << "Connection closed";
+                        (void) connectionChangeCallback({CallNetworkState::ConnectionState::Closed, kind});
+                    }
+                    break;
+                default:
+                    break;
                 }
-                break;
-            default:
-                break;
-            }
-            cancelNetworkListener();
+                cancelNetworkListener();
+            });
         });
         networkThread->PostDelayedTask([this, kind] {
             if (!connected) {
