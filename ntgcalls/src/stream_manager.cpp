@@ -20,14 +20,16 @@ namespace ntgcalls {
 
     StreamManager::~StreamManager() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
-        std::lock_guard lock(mutex);
-        syncReaders.clear();
-        syncCV.notify_all();
-        onEOF = nullptr;
-        readers.clear();
-        writers.clear();
-        streams.clear();
-        tracks.clear();
+        workerThread->BlockingCall([this] {
+            std::lock_guard lock(mutex);
+            syncReaders.clear();
+            syncCV.notify_all();
+            onEOF = nullptr;
+            readers.clear();
+            writers.clear();
+            streams.clear();
+            tracks.clear();
+        });
         workerThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
