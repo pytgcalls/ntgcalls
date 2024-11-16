@@ -363,6 +363,14 @@ func (ctx *Client) CpuUsage() (float64, error) {
 	return float64(buffer), parseErrorCode(f)
 }
 
+func (ctx *Client) EnableGLibLoop(enable bool) {
+	C.ntg_enable_glib_loop(C.bool(enable))
+}
+
+func (ctx *Client) EnableH264Encoder(enable bool) {
+	C.ntg_enable_h264_encoder(C.bool(enable))
+}
+
 func (ctx *Client) Calls() map[int64]MediaStatus {
 	mapReturn := make(map[int64]MediaStatus)
 
