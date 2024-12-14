@@ -10,7 +10,7 @@ namespace ntgcalls {
         bufferThreads.reserve(bufferCount);
     }
 
-    ThreadedReader::~ThreadedReader() {
+    void ThreadedReader::close() {
         exiting = true;
         const bool wasRunning = running;
         if (running) {

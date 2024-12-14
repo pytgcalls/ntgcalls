@@ -21,7 +21,7 @@ namespace ntgcalls {
     public:
         explicit ThreadedReader(BaseSink *sink, size_t bufferCount = 2);
 
-        ~ThreadedReader() override;
+        void close();
 
     protected:
         int64_t readChunks = 0;

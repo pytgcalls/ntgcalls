@@ -261,6 +261,7 @@ namespace ntgcalls {
         std::pair id(mode, device);
         if (!videoSimulcast && (device == Camera || device == Screen)) {
             id = std::make_pair(mode, Camera);
+            RTC_LOG(LS_INFO) << "Ignoring screen source";
         }
         const auto streamType = getStreamType(device);
 
@@ -279,20 +280,24 @@ namespace ntgcalls {
                 }
                 dynamic_cast<BaseReceiver*>(streams[id].get())->open();
             }
+            RTC_LOG(LS_INFO) << "Stream created";
         }
 
         if (desc) {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
                 if (mode == Capture) {
+                    RTC_LOG(LS_INFO) << "Setting reader";
                     const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device;
                     readers.erase(device);
+                    RTC_LOG(LS_INFO) << "Reader erased";
                     if (desc.value().mediaSource == DescriptionType::MediaSource::External) {
                         externalReaders.insert(device);
                         syncReaders.insert(device);
                         return;
                     }
                     readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
+                    RTC_LOG(LS_INFO) << "Reader created from input";
                     syncReaders.insert(device);
                     std::weak_ptr weak(shared_from_this());
                     readers[device]->onData([weak, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
@@ -343,6 +348,7 @@ namespace ntgcalls {
                     });
                     if (initialized) {
                         readers[device]->open();
+                        RTC_LOG(LS_INFO) << "Reader opened";
                     }
                 } else {
                     const bool isExternal = desc.value().mediaSource == DescriptionType::MediaSource::External;
@@ -408,12 +414,14 @@ namespace ntgcalls {
                 }
             }
         } else if (mode == Capture) {
+            RTC_LOG(LS_INFO) << "Removing reader";
             if (syncReaders.contains(device)) {
                 syncReaders.erase(device);
                 syncCV.notify_all();
             }
             readers.erase(device);
             externalReaders.erase(device);
+            RTC_LOG(LS_INFO) << "Reader removed";
         } else {
             writers.erase(device);
             externalWriters.erase(device);

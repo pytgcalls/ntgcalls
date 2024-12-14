@@ -16,13 +16,15 @@ namespace ntgcalls {
     }
 
     ShellReader::~ShellReader() {
+        close();
+        RTC_LOG(LS_VERBOSE) << "ThreadedReader closed";
         if (shellProcess) {
             shellProcess.terminate();
             shellProcess.wait();
             shellProcess.detach();
         }
-        RTC_LOG(LS_VERBOSE) << "ShellReader closed";
         stdOut.clear();
+        RTC_LOG(LS_VERBOSE) << "ShellReader closed";
     }
 
     void ShellReader::open() {
