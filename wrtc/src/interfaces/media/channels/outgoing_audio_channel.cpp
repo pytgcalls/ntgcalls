@@ -78,7 +78,6 @@ namespace wrtc {
             if (updatedParameters.encodings.empty()) {
                 updatedParameters.encodings.emplace_back();
             }
-            updatedParameters.encodings[0].max_bitrate_bps = 32 * 1024;
             if (initialParameters != updatedParameters) {
                 channel->send_channel()->SetRtpSendParameters(_ssrc, updatedParameters);
             }
