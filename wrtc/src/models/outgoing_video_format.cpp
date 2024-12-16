@@ -7,7 +7,7 @@
 #include <wrtc/models/outgoing_video_format.hpp>
 
 namespace wrtc {
-    OutgoingVideoFormat::OutgoingVideoFormat(cricket::Codec videoCodec_, absl::optional<cricket::Codec> rtxCodec_) :
+    OutgoingVideoFormat::OutgoingVideoFormat(cricket::Codec videoCodec_, std::optional<cricket::Codec> rtxCodec_) :
     videoCodec(std::move(videoCodec_)), rtxCodec(std::move(rtxCodec_)){}
 
     std::vector<OutgoingVideoFormat> OutgoingVideoFormat::assignPayloadTypes(std::vector<webrtc::SdpVideoFormat> const& formats) {
@@ -44,7 +44,7 @@ namespace wrtc {
                     break;
                 }
 
-                absl::optional<cricket::Codec> rtxCodec;
+                std::optional<cricket::Codec> rtxCodec;
                 if (!absl::EqualsIgnoreCase(codec.name, cricket::kUlpfecCodecName) && !absl::EqualsIgnoreCase(codec.name, cricket::kFlexfecCodecName)) {
                     rtxCodec = cricket::CreateVideoRtxCodec(payload_type, codec.id);
 

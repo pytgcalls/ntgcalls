@@ -31,7 +31,7 @@ namespace ntgcalls {
 
         void sendLocalDescription();
 
-        void applyRemoteSdp(wrtc::Description::SdpType sdpType, const std::string& sdp);
+        void applyRemoteSdp(webrtc::SdpType sdpType, const std::string& sdp);
 
         void applyPendingIceCandidates();
 

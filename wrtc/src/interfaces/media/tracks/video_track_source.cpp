@@ -6,7 +6,7 @@
 
 namespace wrtc {
 
-    VideoTrackSource::VideoTrackSource(const bool is_screencast, const absl::optional<bool> needs_denoising) {
+    VideoTrackSource::VideoTrackSource(const bool is_screencast, const std::optional<bool> needs_denoising) {
         _is_screencast = is_screencast;
         _needs_denoising = needs_denoising;
     }
@@ -23,7 +23,7 @@ namespace wrtc {
         return _is_screencast;
     }
 
-    absl::optional<bool> VideoTrackSource::needs_denoising() const {
+    std::optional<bool> VideoTrackSource::needs_denoising() const {
         return _needs_denoising;
     }
 

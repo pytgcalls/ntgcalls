@@ -10,25 +10,16 @@ namespace wrtc {
 
     class Description {
     public:
-        enum class SdpType {
-            Offer,
-            Answer,
-            Pranswer,
-            Rollback
-        };
+        Description(webrtc::SdpType type, std::string sdp);
 
-        Description(SdpType type, std::string sdp);
-
-        explicit Description(webrtc::SdpType type, std::string sdp);
-
-        [[nodiscard]] SdpType type() const;
+        [[nodiscard]] webrtc::SdpType type() const;
 
         [[nodiscard]] std::string sdp() const;
 
-        static std::string SdpTypeToString(SdpType type);
+        static std::string SdpTypeToString(webrtc::SdpType type);
 
     private:
-        SdpType _type;
+        webrtc::SdpType _type;
         std::string _sdp;
     };
 } // namespace wrtc

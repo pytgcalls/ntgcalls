@@ -20,7 +20,7 @@ namespace wrtc {
 
     void NativeConnection::open() {
         initConnection();
-        contentNegotiationContext = std::make_unique<ContentNegotiationContext>(factory->fieldTrials(), isOutgoing, factory->mediaEngine(), factory->ssrcGenerator());
+        contentNegotiationContext = std::make_unique<ContentNegotiationContext>(factory->fieldTrials(), isOutgoing, factory->mediaEngine(), factory->ssrcGenerator(), call->GetPayloadTypeSuggester());
         contentNegotiationContext->copyCodecsFromChannelManager(factory->mediaEngine(), false);
         std::weak_ptr weak(shared_from_this());
         networkThread()->PostTask([weak] {
@@ -264,7 +264,7 @@ namespace wrtc {
     }
 
     // ReSharper disable once CppPassValueParameterByConstReference
-    void NativeConnection::transportRouteChanged(absl::optional<rtc::NetworkRoute> route) {
+    void NativeConnection::transportRouteChanged(std::optional<rtc::NetworkRoute> route) {
         assert(networkThread()->IsCurrent());
         if (route.has_value()) {
             RTC_LOG(LS_INFO) << "NativeNetworkingImpl route changed: " << route->DebugString();

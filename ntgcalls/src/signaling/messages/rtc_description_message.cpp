@@ -21,7 +21,7 @@ namespace signaling {
             RTC_LOG(LS_ERROR) << "Invalid sdp type: " << j["@type"];
             throw ntgcalls::InvalidParams("Invalid sdp type");
         }
-        message->type = j["@type"] == "offer" ? wrtc::Description::SdpType::Offer : wrtc::Description::SdpType::Answer;
+        message->type = j["@type"] == "offer" ? webrtc::SdpType::kOffer : webrtc::SdpType::kAnswer;
         message->sdp = j["sdp"];
         return std::move(message);
     }

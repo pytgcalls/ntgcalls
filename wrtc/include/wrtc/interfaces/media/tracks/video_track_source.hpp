@@ -10,7 +10,7 @@ namespace wrtc {
 
     class VideoTrackSource: public rtc::AdaptedVideoTrackSource {
     public:
-        explicit VideoTrackSource(bool is_screencast = false, absl::optional<bool> needs_denoising = false);
+        explicit VideoTrackSource(bool is_screencast = false, std::optional<bool> needs_denoising = false);
 
         SourceState state() const override;
 
@@ -18,13 +18,13 @@ namespace wrtc {
 
         bool is_screencast() const override;
 
-        absl::optional<bool> needs_denoising() const override;
+        std::optional<bool> needs_denoising() const override;
 
         void PushFrame(const webrtc::VideoFrame& frame);
 
     private:
         bool _is_screencast;
-        absl::optional<bool> _needs_denoising;
+        std::optional<bool> _needs_denoising;
     };
 
 } // wrtc

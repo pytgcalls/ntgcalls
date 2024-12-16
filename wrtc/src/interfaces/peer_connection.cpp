@@ -82,9 +82,7 @@ namespace wrtc {
             throw RTCException("Failed to execute 'setRemoteDescription' on 'PeerConnection': The PeerConnection's signalingState is 'closed'.");
         }
         webrtc::SdpParseError sdpParseError;
-        std::unique_ptr<webrtc::SessionDescriptionInterface> remoteDescription(
-            CreateSessionDescription(Description::SdpTypeToString(description.type()), description.sdp(), &sdpParseError)
-        );
+        auto remoteDescription = CreateSessionDescription(description.type(), description.sdp(), &sdpParseError);
         if (!remoteDescription) {
             throw wrapSdpParseError(sdpParseError);
         }

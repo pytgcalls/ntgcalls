@@ -46,7 +46,7 @@ namespace signaling {
         return 0;
     }
 
-    absl::optional<rtc::NetworkRoute> SignalingPacketTransport::network_route() const {
-        return absl::nullopt;
+    std::optional<rtc::NetworkRoute> SignalingPacketTransport::network_route() const {
+        return std::nullopt;
     }
 } // signaling

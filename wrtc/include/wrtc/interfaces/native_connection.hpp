@@ -24,8 +24,8 @@ namespace wrtc {
         int64_t lastDisconnectedTimestamp = 0;
         std::vector<RTCServer> rtcServers;
         std::unique_ptr<cricket::RelayPortFactoryInterface> relayPortFactory;
-        absl::optional<RouteDescription> currentRouteDescription;
-        absl::optional<ConnectionDescription> currentConnectionDescription;
+        std::optional<RouteDescription> currentRouteDescription;
+        std::optional<ConnectionDescription> currentConnectionDescription;
         std::unique_ptr<webrtc::RtcEventLogNull> eventLog;
         std::unique_ptr<ContentNegotiationContext> contentNegotiationContext;
         std::optional<std::string> audioChannelId, videoChannelId;
@@ -34,7 +34,7 @@ namespace wrtc {
 
         void candidateGathered(cricket::IceTransportInternal *transport, const cricket::Candidate &candidate);
 
-        void transportRouteChanged(absl::optional<rtc::NetworkRoute> route);
+        void transportRouteChanged(std::optional<rtc::NetworkRoute> route);
 
         void candidatePairChanged(cricket::CandidatePairChangeEvent const &event);
 

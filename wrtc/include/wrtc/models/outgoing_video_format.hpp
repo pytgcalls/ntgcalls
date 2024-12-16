@@ -12,9 +12,9 @@ namespace wrtc {
     class OutgoingVideoFormat {
     public:
         cricket::Codec videoCodec;
-        absl::optional<cricket::Codec> rtxCodec;
+        std::optional<cricket::Codec> rtxCodec;
 
-        OutgoingVideoFormat(cricket::Codec videoCodec_, absl::optional<cricket::Codec> rtxCodec_);
+        OutgoingVideoFormat(cricket::Codec videoCodec_, std::optional<cricket::Codec> rtxCodec_);
 
         static std::vector<OutgoingVideoFormat> assignPayloadTypes(std::vector<webrtc::SdpVideoFormat> const &formats);
 

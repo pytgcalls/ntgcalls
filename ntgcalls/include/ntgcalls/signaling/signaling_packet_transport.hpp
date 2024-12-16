@@ -31,7 +31,7 @@ namespace signaling {
 
         int GetError() override;
 
-        [[nodiscard]] absl::optional<rtc::NetworkRoute> network_route() const override;
+        [[nodiscard]] std::optional<rtc::NetworkRoute> network_route() const override;
     };
 
 } // signaling

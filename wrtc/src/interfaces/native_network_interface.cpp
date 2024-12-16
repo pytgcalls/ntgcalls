@@ -27,7 +27,7 @@ namespace wrtc {
             );
             strong->localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(
                 rtc::KeyParams(rtc::KT_ECDSA),
-                absl::nullopt
+                std::nullopt
             );
             strong->asyncResolverFactory = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
             strong->dtlsSrtpTransport = std::make_unique<WrappedDtlsSrtpTransport>(

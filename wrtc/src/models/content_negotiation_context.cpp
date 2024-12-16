@@ -16,19 +16,21 @@ namespace wrtc {
         const webrtc::FieldTrialsView& fieldTrials,
         const bool isOutgoing,
         cricket::MediaEngineInterface *mediaEngine,
-        rtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator
+        rtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
+        webrtc::PayloadTypeSuggester *payloadTypeSuggester
     ) :isOutgoing(isOutgoing), uniqueRandomIdGenerator(uniqueRandomIdGenerator) {
         transportDescriptionFactory = std::make_unique<cricket::TransportDescriptionFactory>(fieldTrials);
         const auto tempCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(
             rtc::KeyParams(rtc::KT_ECDSA),
-            absl::nullopt
+            std::nullopt
         );
         transportDescriptionFactory->set_certificate(tempCertificate);
         sessionDescriptionFactory = std::make_unique<cricket::MediaSessionDescriptionFactory>(
             mediaEngine,
             true,
             uniqueRandomIdGenerator,
-            transportDescriptionFactory.get()
+            transportDescriptionFactory.get(),
+            payloadTypeSuggester
         );
         needNegotiation = true;
     }
@@ -239,10 +241,10 @@ namespace wrtc {
                 if (std::to_string(channel.ssrc) == id) {
                     found = true;
                     auto mappedContent = convertSignalingContentToContentInfo(std::to_string(channel.ssrc), channel, webrtc::RtpTransceiverDirection::kRecvOnly);
-                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), absl::nullopt);
+                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
                     std::unique_ptr<rtc::SSLFingerprint> fingerprint;
                     if (localCertificate) {
-                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate.get());
+                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                     }
                     std::vector<std::string> transportOptions;
                     cricket::TransportDescription transportDescription(
@@ -263,10 +265,10 @@ namespace wrtc {
                 if (channel.id == id) {
                     found = true;
                     auto mappedContent = convertSignalingContentToContentInfo(channel.id, channel.content, webrtc::RtpTransceiverDirection::kSendOnly);
-                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), absl::nullopt);
+                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
                     std::unique_ptr<rtc::SSLFingerprint> fingerprint;
                     if (localCertificate) {
-                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate.get());
+                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                     }
                     std::vector<std::string> transportOptions;
                     cricket::TransportDescription transportDescription(
@@ -286,10 +288,10 @@ namespace wrtc {
 
             if (!found) {
                 auto mappedContent = createInactiveContentInfo("_" + id);
-                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), absl::nullopt);
+                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
                 std::unique_ptr<rtc::SSLFingerprint> fingerprint;
                 if (localCertificate) {
-                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate.get());
+                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                 }
                 std::vector<std::string> transportOptions;
                 cricket::TransportDescription transportDescription(
@@ -510,10 +512,10 @@ namespace wrtc {
                         contentDescription.header_extensions.emplace_back(extension.uri, extension.id);
                     }
                     answerOptions.media_description_options.push_back(contentDescription);
-                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), absl::nullopt);
+                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
                     std::unique_ptr<rtc::SSLFingerprint> fingerprint;
                     if (localCertificate) {
-                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate.get());
+                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                     }
                     std::vector<std::string> transportOptions;
                     cricket::TransportDescription transportDescription(
@@ -539,10 +541,10 @@ namespace wrtc {
                         contentDescription.header_extensions.emplace_back(extension.uri, extension.id);
                     }
                     answerOptions.media_description_options.push_back(contentDescription);
-                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), absl::nullopt);
+                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
                     std::unique_ptr<rtc::SSLFingerprint> fingerprint;
                     if (localCertificate) {
-                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate.get());
+                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                     }
                     std::vector<std::string> transportOptions;
                     cricket::TransportDescription transportDescription(
@@ -563,10 +565,10 @@ namespace wrtc {
                 auto mappedContent = createInactiveContentInfo("_" + id);
                 cricket::MediaDescriptionOptions contentDescription(cricket::MediaType::MEDIA_TYPE_AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
                 answerOptions.media_description_options.push_back(contentDescription);
-                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), absl::nullopt);
+                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
                 std::unique_ptr<rtc::SSLFingerprint> fingerprint;
                 if (localCertificate) {
-                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate.get());
+                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                 }
                 std::vector<std::string> transportOptions;
                 cricket::TransportDescription transportDescription(
@@ -587,10 +589,10 @@ namespace wrtc {
                 channelIdOrder.push_back(std::to_string(content.ssrc));
                 answerOptions.media_description_options.push_back(getIncomingContentDescription(content));
                 auto mappedContent = convertSignalingContentToContentInfo(std::to_string(content.ssrc), content, webrtc::RtpTransceiverDirection::kSendOnly);
-                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), absl::nullopt);
+                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
                 std::unique_ptr<rtc::SSLFingerprint> fingerprint;
                 if (localCertificate) {
-                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate.get());
+                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                 }
 
                 std::vector<std::string> transportOptions;

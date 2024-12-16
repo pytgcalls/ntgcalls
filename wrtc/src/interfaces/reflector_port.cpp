@@ -188,7 +188,7 @@ namespace wrtc {
             RTC_LOG(LS_INFO) << ToString() << ": Trying to connect to REFLECTOR server via " << ProtoToString(serverAddress.proto) << " @ " << serverAddress.address.ToSensitiveString();
             if (!CreateReflectorClientSocket()) {
                 RTC_LOG(LS_ERROR) << "Failed to create REFLECTOR client socket";
-                OnAllocateError(cricket::SERVER_NOT_REACHABLE_ERROR,
+                OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE,
                                 "Failed to create REFLECTOR client socket.");
                 return;
             }
@@ -556,7 +556,7 @@ namespace wrtc {
             auto& result = resolver->result();
             if (result.GetError() != 0 && (serverAddress.proto == cricket::PROTO_TCP || serverAddress.proto == cricket::PROTO_TLS)) {
                 if (!CreateReflectorClientSocket()) {
-                    OnAllocateError(cricket::SERVER_NOT_REACHABLE_ERROR, "TURN host lookup received error.");
+                    OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE, "TURN host lookup received error.");
                 }
                 return;
             }
@@ -564,7 +564,7 @@ namespace wrtc {
             if (result.GetError() != 0 || !result.GetResolvedAddress(Network()->GetBestIP().family(), &resolved_address)) {
                 RTC_LOG(LS_WARNING) << ToString() << ": TURN host lookup received error " << result.GetError();
                 error = result.GetError();
-                OnAllocateError(cricket::SERVER_NOT_REACHABLE_ERROR, "TURN host lookup received error.");
+                OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE, "TURN host lookup received error.");
                 return;
             }
             SignalResolvedServerAddress(this, serverAddress.address, resolved_address);
@@ -604,7 +604,7 @@ namespace wrtc {
 
     void ReflectorPort::Close() {
         if (!ready()) {
-            OnAllocateError(cricket::SERVER_NOT_REACHABLE_ERROR, "");
+            OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE, "");
         }
         state = STATE_DISCONNECTED;
         for (auto [fst, snd] : connections()) {

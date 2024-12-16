@@ -74,7 +74,8 @@ namespace wrtc {
             const webrtc::FieldTrialsView& fieldTrials,
             bool isOutgoing,
             cricket::MediaEngineInterface *mediaEngine,
-            rtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator
+            rtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
+            webrtc::PayloadTypeSuggester *payloadTypeSuggester
         );
 
         void copyCodecsFromChannelManager(cricket::MediaEngineInterface *mediaEngine, bool randomize);

@@ -285,7 +285,7 @@ namespace ntgcalls {
                 const auto message = signaling::RtcDescriptionMessage::deserialize(buffer);
                 if (
                     type() == Type::Outgoing &&
-                    message->type == wrtc::Description::SdpType::Offer &&
+                    message->type == webrtc::SdpType::kOffer &&
                     (isMakingOffer || Safe<wrtc::PeerConnection>(connection)->signalingState() != wrtc::SignalingState::Stable)
                 ) {
                     return;
@@ -357,7 +357,7 @@ namespace ntgcalls {
         }, [this](const std::exception_ptr&) {});
     }
 
-    void P2PCall::applyRemoteSdp(const wrtc::Description::SdpType sdpType, const std::string& sdp) {
+    void P2PCall::applyRemoteSdp(const webrtc::SdpType sdpType, const std::string& sdp) {
         RTC_LOG(LS_INFO) << "Calling SetRemoteDescription";
         Safe<wrtc::PeerConnection>(connection)->setRemoteDescription(
             wrtc::Description(
@@ -366,7 +366,7 @@ namespace ntgcalls {
             ),
             [this, sdpType] {
                 connection->signalingThread()->PostTask([this, sdpType] {
-                    if (sdpType == wrtc::Description::SdpType::Offer) {
+                    if (sdpType == webrtc::SdpType::kOffer) {
                         makingNegotation = true;
                         sendLocalDescription();
                     }

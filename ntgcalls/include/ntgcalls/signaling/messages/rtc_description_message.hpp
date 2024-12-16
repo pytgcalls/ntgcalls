@@ -11,7 +11,7 @@ namespace signaling {
 
 class RtcDescriptionMessage final : public Message  {
 public:
-    wrtc::Description::SdpType type;
+    webrtc::SdpType type;
     std::string sdp;
 
     [[nodiscard]] bytes::binary serialize() const override;
