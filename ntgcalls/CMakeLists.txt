@@ -32,7 +32,7 @@ else ()
             set(ARCHIVE_TYPE ARCHIVE)
             set(ARCHIVE_TYPE_NAME "static")
         else ()
-            if (IS_WINDOWS)
+            if (WINDOWS)
                 set(ARCHIVE_TYPE RUNTIME)
             else ()
                 set(ARCHIVE_TYPE LIBRARY)
@@ -44,7 +44,7 @@ else ()
         set_target_properties(ntgcalls PROPERTIES
             ${ARCHIVE_TYPE}_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
         )
-        if (IS_WINDOWS AND NOT STATIC_BUILD)
+        if (WINDOWS AND NOT STATIC_BUILD)
             set_target_properties(ntgcalls PROPERTIES
                 ARCHIVE_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
             )
