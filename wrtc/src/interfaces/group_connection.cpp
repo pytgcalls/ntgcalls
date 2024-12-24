@@ -120,12 +120,16 @@ namespace wrtc {
     }
 
     std::string GroupConnection::getJoinPayload() {
+        RTC_LOG(LS_INFO) << "Asking for join payload";
         std::weak_ptr weak(shared_from_this());
         return networkThread()->BlockingCall([weak] {
+            RTC_LOG(LS_INFO) << "Acquiring weak pointer";
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            RTC_LOG(LS_INFO) << "Checking if strong pointer is valid";
             if (!strong) {
                 return std::string();
             }
+            RTC_LOG(LS_INFO) << "Generating join payload";
             const auto fingerprint = strong->localFingerprint();
             json jsonRes = {
                 {"ufrag", strong->localParameters.ufrag},
@@ -153,6 +157,7 @@ namespace wrtc {
                     {"semantics", semantics}
                 });
             }
+            RTC_LOG(LS_INFO) << "Join payload generated";
             return jsonRes.dump();
         });
     }
