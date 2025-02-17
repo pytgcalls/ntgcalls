@@ -208,7 +208,11 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<wrtc::FrameData> frameDataWrapper(m, "FrameData");
     frameDataWrapper.def(py::init<>());
-    frameDataWrapper.def_readonly("rotation", &wrtc::FrameData::rotation);
+    frameDataWrapper.def_property("rotation", [](const wrtc::FrameData& self) {
+        return static_cast<int>(self.rotation);
+    }, [](wrtc::FrameData& self, int rotation) {
+        self.rotation = static_cast<webrtc::VideoRotation>(rotation);
+    });
     frameDataWrapper.def_readonly("width", &wrtc::FrameData::width);
     frameDataWrapper.def_readonly("height", &wrtc::FrameData::height);
     frameDataWrapper.def_readonly("absolute_capture_timestamp_ms", &wrtc::FrameData::absoluteCaptureTimestampMs);
