@@ -413,7 +413,7 @@ namespace openh264 {
         size_t requiredCapacity = 0;
         size_t fragments_count = 0;
         for (int layer = 0; layer < info->iLayerNum; ++layer) {
-            const auto& [uiTemporalId, uiSpatialId, uiQualityId, eFrameType, uiLayerType, iSubSeqId, iNalCount, pNalLengthInByte, pBsBuf] = info->sLayerInfo[layer];
+            const auto& [uiTemporalId, uiSpatialId, uiQualityId, eFrameType, uiLayerType, iSubSeqId, iNalCount, pNalLengthInByte, pBsBuf, rPsnr] = info->sLayerInfo[layer];
             for (int nal = 0; nal < iNalCount; ++nal, ++fragments_count) {
                 RTC_CHECK_GE(pNalLengthInByte[nal], 0);
                 RTC_CHECK_LE(pNalLengthInByte[nal], std::numeric_limits<size_t>::max() - requiredCapacity);
@@ -426,7 +426,7 @@ namespace openh264 {
         size_t frag = 0;
         encodedImage->set_size(0);
         for (int layer = 0; layer < info->iLayerNum; ++layer) {
-            const auto& [uiTemporalId, uiSpatialId, uiQualityId, eFrameType, uiLayerType, iSubSeqId, iNalCount, pNalLengthInByte, pBsBuf] = info->sLayerInfo[layer];
+            const auto& [uiTemporalId, uiSpatialId, uiQualityId, eFrameType, uiLayerType, iSubSeqId, iNalCount, pNalLengthInByte, pBsBuf, rPsnr] = info->sLayerInfo[layer];
             size_t layer_len = 0;
             for (int nal = 0; nal < iNalCount; ++nal, ++frag) {
                 RTC_DCHECK_GE(pNalLengthInByte[nal], 4);
