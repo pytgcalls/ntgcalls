@@ -91,6 +91,9 @@ namespace ntgcalls {
 
     void LogSink::registerLogMessage(const std::string &message, const rtc::LoggingSeverity severity) const {
         thread->PostTask([this, message, severity] {
+            if (!Py_IsInitialized()) {
+                return;
+            }
             const std::regex regex(R"(\((.*)\.(.*):([0-9]+)\):\s?(.*))");
             if (std::smatch match; std::regex_search(message, match, regex)) {
                 const auto fileName = std::string(match[1]) + "." + std::string(match[2]);
