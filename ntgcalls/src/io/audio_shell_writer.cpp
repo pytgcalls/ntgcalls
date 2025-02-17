@@ -29,7 +29,7 @@ namespace ntgcalls {
         if (!stdIn || stdIn.eof() || stdIn.fail() || !stdIn.pipe().is_open() || !shellProcess.running()) {
             throw EOFError("Reached end of the stream");
         }
-        stdIn << reinterpret_cast<const char*>(data.get());
+        stdIn.write(reinterpret_cast<const char*>(data.get()), sink->frameSize());
         stdIn.flush();
     }
 } // ntgcalls
