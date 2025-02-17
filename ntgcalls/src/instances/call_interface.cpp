@@ -12,11 +12,10 @@ namespace ntgcalls {
     }
 
     CallInterface::~CallInterface() {
+        // TODO: Fixed deadlock?
         RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
         isExiting = true;
         updateThread->BlockingCall([this] {
-            RTC_LOG(LS_VERBOSE) << "Acquiring lock";
-            std::lock_guard lock(mutex);
             RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
             connectionChangeCallback = nullptr;
             RTC_LOG(LS_VERBOSE) << "Removing stream sources";
@@ -59,23 +58,19 @@ namespace ntgcalls {
         }
     }
 
-    void CallInterface::onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)>& callback) {
-        std::lock_guard lock(mutex);
+    void CallInterface::onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)>& callback) const {
         streamManager->onStreamEnd(callback);
     }
 
     void CallInterface::onConnectionChange(const std::function<void(CallNetworkState)>& callback) {
-        std::lock_guard lock(mutex);
         connectionChangeCallback = callback;
     }
 
-    void CallInterface::onFrame(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const bytes::binary&, wrtc::FrameData frameData)>& callback) {
-        std::lock_guard lock(mutex);
+    void CallInterface::onFrame(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const bytes::binary&, wrtc::FrameData frameData)>& callback) const {
         streamManager->onFrame(callback);
     }
 
     void CallInterface::onRemoteSourceChange(const std::function<void(RemoteSource)>& callback) {
-        std::lock_guard lock(mutex);
         remoteSourceCallback = callback;
     }
 
@@ -108,7 +103,6 @@ namespace ntgcalls {
         connection->onConnectionChange([this, kind](const wrtc::ConnectionState state) {
             updateThread->PostTask([this, kind, state] {
                 if (isExiting) return;
-                std::lock_guard lock(mutex);
                 switch (state) {
                 case wrtc::ConnectionState::Connecting:
                     if (connected) {

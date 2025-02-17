@@ -19,7 +19,6 @@ namespace ntgcalls {
         void cancelNetworkListener();
 
     protected:
-        std::mutex mutex;
         std::shared_ptr<wrtc::NetworkInterface> connection;
         std::shared_ptr<StreamManager> streamManager;
         wrtc::synchronized_callback<CallNetworkState> connectionChangeCallback;
@@ -56,11 +55,11 @@ namespace ntgcalls {
 
         void setStreamSources(StreamManager::Mode mode, const MediaDescription& config) const;
 
-        void onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)> &callback);
+        void onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)> &callback) const;
 
         void onConnectionChange(const std::function<void(CallNetworkState)> &callback);
 
-        void onFrame(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const bytes::binary&, wrtc::FrameData frameData)>& callback);
+        void onFrame(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const bytes::binary&, wrtc::FrameData frameData)>& callback) const;
 
         void onRemoteSourceChange(const std::function<void(RemoteSource)>& callback);
 

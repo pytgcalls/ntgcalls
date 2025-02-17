@@ -96,7 +96,6 @@ namespace ntgcalls {
 
     ASYNC_RETURN(void) NTgCalls::createP2PCall(const int64_t userId, const MediaDescription& media) {
         SMART_ASYNC(this, media, userId)
-        std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(userId)
         connections[userId] = std::make_shared<P2PCall>(updateThread.get());
         setupListeners(userId);
@@ -133,7 +132,6 @@ namespace ntgcalls {
 
     ASYNC_RETURN(std::string) NTgCalls::createCall(const int64_t chatId, const MediaDescription& media) {
         SMART_ASYNC(this, chatId, media)
-        std::lock_guard lock(mutex);
         CHECK_AND_THROW_IF_EXISTS(chatId)
         connections[chatId] = std::make_shared<GroupCall>(updateThread.get());
         setupListeners(chatId);
@@ -270,7 +268,6 @@ namespace ntgcalls {
     ASYNC_RETURN(std::map<int64_t, StreamManager::MediaStatus>) NTgCalls::calls() {
         SMART_ASYNC(this)
         std::map<int64_t, StreamManager::MediaStatus> statusList;
-        std::lock_guard lock(mutex);
         for (const auto& [fst, snd] : connections) {
             statusList.emplace(fst, StreamManager::MediaStatus{
                 snd->status(StreamManager::Mode::Playback),

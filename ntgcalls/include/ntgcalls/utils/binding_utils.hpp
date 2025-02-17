@@ -71,7 +71,8 @@ executor = py::module::import("concurrent.futures").attr("ThreadPoolExecutor")(s
 
 #define SMART_ASYNC(...) \
 return loop.attr("run_in_executor")(executor, py::cpp_function([__VA_ARGS__](){\
-py::gil_scoped_release release;
+py::gil_scoped_release release; \
+std::lock_guard lock(mutex);
 
 #define END_ASYNC }));
 
@@ -85,7 +86,8 @@ py::gil_scoped_release release;
 #define CAST_BYTES(...) __VA_ARGS__
 #define ASYNC_FUNC_ARGS(...)
 #define ASYNC_RETURN(...) __VA_ARGS__
-#define SMART_ASYNC(...)
+#define SMART_ASYNC(...) \
+std::lock_guard lock(mutex);
 #define END_ASYNC
 #else
 #include <functional>
@@ -151,7 +153,9 @@ public:
 
 #define ASYNC_RETURN(...) AsyncPromise<__VA_ARGS__>
 
-#define SMART_ASYNC(...) return { asyncWorker.get(), [__VA_ARGS__]{
+#define SMART_ASYNC(...) \
+return { asyncWorker.get(), [__VA_ARGS__]{ \
+std::lock_guard lock(mutex);
 
 #define END_ASYNC }};
 
