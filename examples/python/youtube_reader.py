@@ -26,7 +26,7 @@ async def main():
                     channel_count=2,
                 ),
                 camera=VideoDescription(
-                    media_source=InputMode.SHELL,
+                    media_source=MediaSource.SHELL,
                     input=f"ffmpeg -i {video} -loglevel panic -f rawvideo -r 60 -pix_fmt yuv420p -vf scale=1920:1080 pipe:1",
                     width=1920,
                     height=1080,
