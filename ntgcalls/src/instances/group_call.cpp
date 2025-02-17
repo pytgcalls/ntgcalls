@@ -17,7 +17,6 @@ namespace ntgcalls {
 
     std::string GroupCall::init(const MediaDescription& config) {
         RTC_LOG(LS_INFO) << "Initializing group call";
-        std::lock_guard lock(mutex);
         if (connection) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
@@ -44,7 +43,6 @@ namespace ntgcalls {
 
     std::string GroupCall::initPresentation() {
         RTC_LOG(LS_INFO) << "Initializing screen sharing";
-        std::lock_guard lock(mutex);
         if (presentationConnection) {
             RTC_LOG(LS_ERROR) << "Screen sharing already initialized";
             throw ConnectionError("Screen sharing already initialized");
@@ -59,7 +57,6 @@ namespace ntgcalls {
 
     void GroupCall::connect(const std::string& jsonData, const bool isPresentation) {
         RTC_LOG(LS_INFO) << "Connecting to group call";
-        std::lock_guard lock(mutex);
         const auto &conn = isPresentation ? presentationConnection : connection;
         if (!conn) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
@@ -120,8 +117,7 @@ namespace ntgcalls {
         }
     }
 
-    void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) {
-        std::lock_guard lock(mutex);
+    void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) const {
         streamManager->onUpgrade(callback);
     }
 

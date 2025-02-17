@@ -259,7 +259,7 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(double) NTgCalls::cpuUsage() const {
+    ASYNC_RETURN(double) NTgCalls::cpuUsage() {
         SMART_ASYNC(this)
         return hardwareInfo->getCpuUsage();
         END_ASYNC

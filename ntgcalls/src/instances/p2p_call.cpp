@@ -21,9 +21,8 @@ namespace ntgcalls {
         signaling = nullptr;
     }
 
-    void P2PCall::init(const MediaDescription &media) {
+    void P2PCall::init(const MediaDescription &media) const {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
-        std::lock_guard lock(mutex);
         streamManager->enableVideoSimulcast(false);
         streamManager->setStreamSources(StreamManager::Mode::Capture, media);
         streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
@@ -31,7 +30,6 @@ namespace ntgcalls {
     }
 
     bytes::vector P2PCall::initExchange(const DhConfig& dhConfig, const std::optional<bytes::vector>& g_a_hash) {
-        std::lock_guard lock(mutex);
         if (g_a_or_b) {
             RTC_LOG(LS_ERROR) << "Exchange already initialized";
             throw ConnectionError("Exchange already initialized");
@@ -52,7 +50,6 @@ namespace ntgcalls {
     }
 
     AuthParams P2PCall::exchangeKeys(const bytes::vector &g_a_or_b, const int64_t fingerprint) {
-        std::lock_guard lock(mutex);
         if (connection) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
@@ -115,7 +112,6 @@ namespace ntgcalls {
 
     void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
         RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2pAllowed ? "true" : "false");
-        std::lock_guard lock(mutex);
         if (connection) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
@@ -463,8 +459,7 @@ namespace ntgcalls {
         onEmitData = callback;
     }
 
-    void P2PCall::sendSignalingData(const bytes::binary& buffer) {
-        std::lock_guard lock(mutex);
+    void P2PCall::sendSignalingData(const bytes::binary& buffer) const {
         if (!signaling) {
             throw ConnectionError("Connection not initialized");
         }

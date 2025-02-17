@@ -46,7 +46,7 @@ namespace ntgcalls {
 
         ~P2PCall() override;
 
-        void init(const MediaDescription &media);
+        void init(const MediaDescription &media) const;
 
         bytes::vector initExchange(const DhConfig &dhConfig, const std::optional<bytes::vector> &g_a_hash);
 
@@ -60,7 +60,7 @@ namespace ntgcalls {
 
         void onSignalingData(const std::function<void(const bytes::binary&)>& callback);
 
-        void sendSignalingData(const bytes::binary& buffer);
+        void sendSignalingData(const bytes::binary& buffer) const;
     };
 
 } // ntgcalls

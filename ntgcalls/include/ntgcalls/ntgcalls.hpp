@@ -96,7 +96,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(MediaState) getState(int64_t chatId);
 
-        ASYNC_RETURN(double) cpuUsage() const;
+        ASYNC_RETURN(double) cpuUsage();
 
         static std::string ping();
 

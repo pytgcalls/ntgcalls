@@ -34,7 +34,7 @@ namespace ntgcalls {
 
         Type type() const override;
 
-        void onUpgrade(const std::function<void(MediaState)> &callback);
+        void onUpgrade(const std::function<void(MediaState)> &callback) const;
     };
 
 } // ntgcalls
