@@ -40,4 +40,4 @@ async def main():
         print("Closed!")
 
 
-asyncio.new_event_loop().run_until_complete(main())
+asyncio.run(main())
