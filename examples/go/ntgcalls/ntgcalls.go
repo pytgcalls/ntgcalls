@@ -364,7 +364,7 @@ func (ctx *Client) CpuUsage() (float64, error) {
 }
 
 func (ctx *Client) EnableGLibLoop(enable bool) {
-	C.ntg_enable_glib_loop(C.bool(enable))
+	C.ntg_enable_g_lib_loop(C.bool(enable))
 }
 
 func (ctx *Client) EnableH264Encoder(enable bool) {
