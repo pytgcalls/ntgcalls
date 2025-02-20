@@ -8,10 +8,20 @@
 
 namespace wrtc {
 
-    struct FrameData {
+    class FrameData {
+    public:
         int64_t absoluteCaptureTimestampMs;
         webrtc::VideoRotation rotation;
         uint16_t width, height;
+
+        FrameData() = default;
+
+        FrameData(
+            int64_t absoluteCaptureTimestampMs,
+            webrtc::VideoRotation rotation,
+            uint16_t width,
+            uint16_t height
+        );
     };
 
 } // wrtc
