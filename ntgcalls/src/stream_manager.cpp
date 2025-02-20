@@ -185,7 +185,7 @@ namespace ntgcalls {
         if (!externalReaders.contains(device) || !streams.contains(id)) {
             throw InvalidParams("External source not initialized");
         }
-        if (const auto stream = dynamic_cast<VideoStreamer*>(streams[id].get())) {
+        if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
             const auto uniqueData = bytes::make_unique_binary(data.size());
             memcpy(uniqueData.get(), data.data(), data.size());
             stream->sendData(uniqueData.get(), frameData);
