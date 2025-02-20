@@ -353,6 +353,7 @@ namespace wrtc {
     }
 
     void GroupConnection::close() {
+        RTC_LOG(LS_INFO) << "Cleaning up GroupConnection";
         outgoingVideoSsrcGroups.clear();
         NativeNetworkInterface::close();
     }
