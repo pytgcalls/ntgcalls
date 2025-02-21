@@ -31,8 +31,7 @@ namespace wrtc {
             const webrtc::Environment& env,
             rtc::PacketTransportInternal* transportChannel,
             bool isOutgoing,
-            rtc::Thread* networkThread,
-            rtc::Thread* signalingThread
+            rtc::Thread* networkThread
         );
 
         ~SctpDataChannelProviderInterfaceImpl() override;

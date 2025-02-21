@@ -12,8 +12,7 @@ namespace wrtc {
         const webrtc::Environment& env,
         rtc::PacketTransportInternal* transportChannel,
         const bool isOutgoing,
-        rtc::Thread* networkThread,
-        rtc::Thread* signalingThread
+        rtc::Thread* networkThread
     ): weakFactory(this), networkThread(networkThread) {
         assert(networkThread->IsCurrent());
         sctpTransportFactory = std::make_unique<cricket::SctpTransportFactory>(networkThread);
@@ -28,7 +27,7 @@ namespace wrtc {
             "data",
             true,
             dataChannelInit,
-            signalingThread,
+            networkThread,
             networkThread
         );
         if (dataChannel == nullptr) {
