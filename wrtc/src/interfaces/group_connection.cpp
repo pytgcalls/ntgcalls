@@ -80,8 +80,7 @@ namespace wrtc {
             environment(),
             dtlsTransport.get(),
             true,
-            networkThread(),
-            signalingThread()
+            networkThread()
         );
 
         std::weak_ptr weak(shared_from_this());

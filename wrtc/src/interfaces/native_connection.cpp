@@ -298,8 +298,7 @@ namespace wrtc {
             environment(),
             dtlsTransport.get(),
             isOutgoing,
-            networkThread(),
-            signalingThread()
+            networkThread()
         );
         std::weak_ptr weak(shared_from_this());
         dataChannelInterface->onMessageReceived([weak](const bytes::binary &data) {

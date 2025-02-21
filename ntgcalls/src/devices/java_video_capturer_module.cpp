@@ -118,9 +118,10 @@ namespace ntgcalls {
         memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
 
         (void) dataCallback(std::move(yuv), {
-            .rotation = frame.rotation(),
-            .width = static_cast<uint16_t>(desc.width),
-            .height = static_cast<uint16_t>(desc.height),
+            0,
+            frame.rotation(),
+            static_cast<uint16_t>(desc.width),
+            static_cast<uint16_t>(desc.height),
         });
     }
 

@@ -68,9 +68,10 @@ namespace ntgcalls {
             memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
 
             (void) frameCallback(ssrc, std::move(yuv), totalSize, {
-                .rotation = frame->rotation(),
-                .width = newWidth,
-                .height = newHeight
+                0,
+                frame->rotation(),
+                newWidth,
+                newHeight
             });
         });
         weakSink = sink;

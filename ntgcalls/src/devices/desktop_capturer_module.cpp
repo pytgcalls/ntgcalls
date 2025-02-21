@@ -91,8 +91,10 @@ namespace ntgcalls {
             }
 
             (void) dataCallback(std::move(yuv), {
-                .width = static_cast<uint16_t>(desc.width),
-                .height = static_cast<uint16_t>(desc.height),
+                0,
+                webrtc::kVideoRotation_0,
+                static_cast<uint16_t>(desc.width),
+                static_cast<uint16_t>(desc.height),
             });
         } else if (result == webrtc::DesktopCapturer::Result::ERROR_PERMANENT) {
             (void) eofCallback();
