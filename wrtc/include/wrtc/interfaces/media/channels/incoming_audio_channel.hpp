@@ -35,6 +35,8 @@ namespace wrtc {
         void updateActivity();
 
         [[nodiscard]] int64_t getActivity() const;
+
+        uint32_t ssrc() const;
     };
 
 } // wrtc

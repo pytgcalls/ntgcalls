@@ -106,4 +106,8 @@ namespace wrtc {
     int64_t IncomingAudioChannel::getActivity() const {
         return activityTimestamp;
     }
+
+    uint32_t IncomingAudioChannel::ssrc() const {
+        return _ssrc;
+    }
 } // wrtc
