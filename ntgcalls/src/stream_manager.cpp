@@ -176,8 +176,8 @@ namespace ntgcalls {
         return false;
     }
 
-    void StreamManager::onFrame(const std::function<void(int64_t, Mode, Device, const bytes::binary&, wrtc::FrameData)>& callback) {
-        frameCallback = callback;
+    void StreamManager::onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback) {
+        framesCallback = callback;
     }
 
     void StreamManager::sendExternalFrame(Device device, const bytes::binary& data, const wrtc::FrameData frameData) {
@@ -317,12 +317,16 @@ namespace ntgcalls {
                         if (strong->streams.contains(id)) {
                             if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
                                 if (streamType == Video && isShared) {
-                                    (void) strong->frameCallback(
-                                        0,
+                                    (void) strong->framesCallback(
                                         id.first,
                                         id.second,
-                                        {data.get(), data.get() + strong->streams[id]->frameSize()},
-                                        frameData
+                                        {
+                                            {
+                                                0,
+                                                {data.get(), data.get() + strong->streams[id]->frameSize()},
+                                                frameData
+                                            }
+                                        }
                                     );
                                 }
                                 stream->sendData(data.get(), frameData);
@@ -367,17 +371,21 @@ namespace ntgcalls {
                                 return;
                             }
                             if (isExternal) {
+                                std::vector<wrtc::Frame> externalFrames;
                                 for (const auto& [ssrc, data] : frames) {
                                     if (strong->externalWriters.contains(id.second)) {
-                                        (void) strong->frameCallback(
+                                        externalFrames.push_back({
                                             ssrc,
-                                            id.first,
-                                            id.second,
                                             {data.first.get(), data.first.get() + data.second},
                                             {}
-                                        );
+                                        });
                                     }
                                 }
+                                (void) strong->framesCallback(
+                                    id.first,
+                                    id.second,
+                                    externalFrames
+                                );
                             } else {
                                 if (strong->writers.contains(id.second)) {
                                     if (const auto audioWriter = dynamic_cast<AudioWriter*>(strong->writers[id.second].get())) {
@@ -394,12 +402,16 @@ namespace ntgcalls {
                                 return;
                             }
                             if (strong->externalWriters.contains(id.second)) {
-                                (void) strong->frameCallback(
-                                    ssrc,
+                                (void) strong->framesCallback(
                                     id.first,
                                     id.second,
-                                    {frame.get(), frame.get() + size},
-                                    frameData
+                                    {
+                                        {
+                                            ssrc,
+                                            {frame.get(), frame.get() + size},
+                                            frameData
+                                        }
+                                    }
                                 );
                             }
                         });

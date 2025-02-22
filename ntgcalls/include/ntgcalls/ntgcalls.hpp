@@ -36,7 +36,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, CallNetworkState> connectionChangeCallback;
         wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
         wrtc::synchronized_callback<int64_t, RemoteSource> remoteSourceCallback;
-        wrtc::synchronized_callback<int64_t, int64_t, StreamManager::Mode, StreamManager::Device, BYTES(bytes::binary), wrtc::FrameData> frameCallback;
+        wrtc::synchronized_callback<int64_t, StreamManager::Mode, StreamManager::Device, std::vector<wrtc::Frame>> framesCallback;
         std::unique_ptr<rtc::Thread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
@@ -116,7 +116,7 @@ namespace ntgcalls {
 
         void onConnectionChange(const std::function<void(int64_t, CallNetworkState)>& callback);
 
-        void onFrame(const std::function<void(int64_t, int64_t, StreamManager::Mode, StreamManager::Device, const BYTES(bytes::binary)&, wrtc::FrameData)>& callback);
+        void onFrames(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const std::vector<wrtc::Frame>&)>& callback);
 
         void onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
 

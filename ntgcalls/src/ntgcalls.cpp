@@ -71,9 +71,9 @@ namespace ntgcalls {
             END_THREAD_SAFE
             END_WORKER
         });
-        connections[chatId]->onFrame([this, chatId] (const int64_t sourceId, const StreamManager::Mode mode, const StreamManager::Device device, const bytes::binary& data, const wrtc::FrameData frameData) {
+        connections[chatId]->onFrames([this, chatId] (const StreamManager::Mode mode, const StreamManager::Device device, const std::vector<wrtc::Frame>& frames) {
             THREAD_SAFE
-            (void) frameCallback(chatId, sourceId, mode, device, CAST_BYTES(data), frameData);
+            (void) framesCallback(chatId, mode, device, frames);
             END_THREAD_SAFE
         });
         connections[chatId]->onRemoteSourceChange([this, chatId](const RemoteSource &state) {
@@ -220,9 +220,9 @@ namespace ntgcalls {
        connectionChangeCallback = callback;
     }
 
-    void NTgCalls::onFrame(const std::function<void(int64_t, int64_t, StreamManager::Mode, StreamManager::Device, const BYTES(bytes::binary)&, wrtc::FrameData)>& callback) {
+    void NTgCalls::onFrames(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const std::vector<wrtc::Frame>&)>& callback) {
         std::lock_guard lock(mutex);
-        frameCallback = callback;
+        framesCallback = callback;
     }
 
     void NTgCalls::onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback) {
