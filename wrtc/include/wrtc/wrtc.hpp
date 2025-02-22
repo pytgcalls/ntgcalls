@@ -6,6 +6,7 @@
 
 #include <wrtc/exceptions.hpp>
 #include <wrtc/enums.hpp>
+#include <wrtc/models/frame.hpp>
 #include <wrtc/interfaces/peer_connection.hpp>
 #include <wrtc/interfaces/media/rtc_audio_source.hpp>
 #include <wrtc/interfaces/media/rtc_video_source.hpp>
