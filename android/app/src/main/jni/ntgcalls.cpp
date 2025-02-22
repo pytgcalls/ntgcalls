@@ -65,7 +65,7 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_init(JNIEnv *env, jobje
         CAPTURE_JAVA_EXCEPTION
     });
 
-    instance->onFrame([instancePtr](int64_t chatId, int64_t streamId, ntgcalls::StreamManager::Mode mode, ntgcalls::StreamManager::Device device, const bytes::binary& data, wrtc::FrameData frameData) {
+    instance->onFrames([instancePtr](int64_t chatId, ntgcalls::StreamManager::Mode mode, ntgcalls::StreamManager::Device device, const std::vector<wrtc::Frame>& frames) {
         std::lock_guard lock(callbacksMutex);
         auto callback = callbacksInstances[instancePtr].onFrameCallback;
         if (!callback) {
@@ -74,9 +74,8 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_init(JNIEnv *env, jobje
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
         auto jStreamMode = parseJStreamMode(env, mode);
         auto jDevice = parseJDevice(env, device);
-        auto jData = parseJBinary(env, data);
-        auto jFrameData = parseJFrameData(env, frameData);
-        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), static_cast<jlong>(streamId), jStreamMode.obj(), jDevice.obj(), jData.obj(), jFrameData.obj());
+        auto jFrames = parseJFrames(env, frames);
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jStreamMode.obj(), jDevice.obj(), jFrames.obj());
         CAPTURE_JAVA_EXCEPTION
     });
 
