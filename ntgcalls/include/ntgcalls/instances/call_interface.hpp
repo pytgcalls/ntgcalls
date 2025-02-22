@@ -59,7 +59,7 @@ namespace ntgcalls {
 
         void onConnectionChange(const std::function<void(CallNetworkState)> &callback);
 
-        void onFrame(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const bytes::binary&, wrtc::FrameData frameData)>& callback) const;
+        void onFrames(const std::function<void(StreamManager::Mode, StreamManager::Device, const std::vector<wrtc::Frame>&)>& callback) const;
 
         void onRemoteSourceChange(const std::function<void(RemoteSource)>& callback);
 

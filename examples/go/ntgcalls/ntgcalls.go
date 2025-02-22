@@ -5,7 +5,7 @@ package ntgcalls
 //extern void handleUpgrade(uintptr_t ptr, int64_t chatID, ntg_media_state_struct state, void*);
 //extern void handleConnectionChange(uintptr_t ptr, int64_t chatID, ntg_call_network_state_struct callNetworkState, void*);
 //extern void handleSignal(uintptr_t ptr, int64_t chatID, uint8_t*, int, void*);
-//extern void handleFrame(uintptr_t ptr, int64_t chatID, int64_t sourceId, ntg_stream_mode_enum streamMode, ntg_stream_device_enum streamDevice, uint8_t* data, int size, ntg_frame_data_struct* frameData, void*);
+//extern void handleFrames(uintptr_t ptr, int64_t chatID, ntg_stream_mode_enum streamMode, ntg_stream_device_enum streamDevice, ntg_frame_struct* frames, int size, void*);
 //extern void handleRemoteSourceChange(uintptr_t ptr, int64_t chatID, ntg_remote_source_struct remoteSource, void*);
 import "C"
 import (
@@ -27,7 +27,7 @@ func NTgCalls() *Client {
 	C.ntg_on_upgrade(C.uintptr_t(instance.ptr), (C.ntg_upgrade_callback)(unsafe.Pointer(C.handleUpgrade)), nil)
 	C.ntg_on_signaling_data(C.uintptr_t(instance.ptr), (C.ntg_signaling_callback)(unsafe.Pointer(C.handleSignal)), nil)
 	C.ntg_on_connection_change(C.uintptr_t(instance.ptr), (C.ntg_connection_callback)(unsafe.Pointer(C.handleConnectionChange)), nil)
-	C.ntg_on_frame(C.uintptr_t(instance.ptr), (C.ntg_frame_callback)(unsafe.Pointer(C.handleFrame)), nil)
+	C.ntg_on_frames(C.uintptr_t(instance.ptr), (C.ntg_frame_callback)(unsafe.Pointer(C.handleFrames)), nil)
 	C.ntg_on_remote_source_change(C.uintptr_t(instance.ptr), (C.ntg_remote_source_callback)(unsafe.Pointer(C.handleRemoteSourceChange)), nil)
 	return instance
 }
@@ -95,10 +95,9 @@ func handleConnectionChange(ptr C.uintptr_t, chatID C.int64_t, callNetworkState 
 	}
 }
 
-//export handleFrame
-func handleFrame(ptr C.uintptr_t, chatID C.int64_t, sourceId C.int64_t, streamMode C.ntg_stream_mode_enum, streamDevice C.ntg_stream_device_enum, data *C.uint8_t, size C.int, frameData *C.ntg_frame_data_struct, _ unsafe.Pointer) {
+//export handleFrames
+func handleFrames(ptr C.uintptr_t, chatID C.int64_t, streamMode C.ntg_stream_mode_enum, streamDevice C.ntg_stream_device_enum, frames *C.ntg_frame_struct, size C.int, _ unsafe.Pointer) {
 	goChatID := int64(chatID)
-	goSourceID := int64(sourceId)
 	goPtr := uintptr(ptr)
 	var goStreamMode StreamMode
 	switch streamMode {
@@ -107,18 +106,23 @@ func handleFrame(ptr C.uintptr_t, chatID C.int64_t, sourceId C.int64_t, streamMo
 	case C.NTG_STREAM_PLAYBACK:
 		goStreamMode = PlaybackStream
 	}
-	var frameDataGo FrameData
-	if frameData != nil {
-		frameDataGo = FrameData{
-			AbsoluteCaptureTimestampMs: int64(frameData.absoluteCaptureTimestampMs),
-			Width:                      uint16(frameData.width),
-			Height:                     uint16(frameData.height),
-			Rotation:                   uint16(frameData.rotation),
+	rawFrames := make([]Frame, size)
+	for i := 0; i < int(size); i++ {
+		rawFrame := *(*C.ntg_device_info_struct)(unsafe.Pointer(uintptr(unsafe.Pointer(frames)) + uintptr(i)*unsafe.Sizeof(C.ntg_frame_struct{})))
+		rawFrames[i] = Frame{
+			Ssrc: uint32(rawFrame.ssrc),
+			Data: C.GoBytes(unsafe.Pointer(rawFrame.data), rawFrame.size),
+			FrameData: FrameData{
+				AbsoluteCaptureTimestampMs: int64(frames.frameData.absoluteCaptureTimestampMs),
+				Width:                      uint16(frames.frameData.width),
+				Height:                     uint16(frames.frameData.height),
+				Rotation:                   uint16(frames.frameData.rotation),
+			},
 		}
 	}
 	if handlerFrame[goPtr] != nil {
 		for _, x0 := range handlerFrame[goPtr] {
-			go x0(goChatID, goSourceID, goStreamMode, parseStreamDevice(streamDevice), C.GoBytes(unsafe.Pointer(data), size), frameDataGo)
+			go x0(goChatID, goStreamMode, parseStreamDevice(streamDevice), rawFrames)
 		}
 	}
 }

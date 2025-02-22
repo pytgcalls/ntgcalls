@@ -756,12 +756,19 @@ int ntg_on_signaling_data(uintptr_t ptr, ntg_signaling_callback callback, void* 
     return 0;
 }
 
-int ntg_on_frame(uintptr_t ptr, ntg_frame_callback callback, void* userData) {
+int ntg_on_frames(uintptr_t ptr, ntg_frame_callback callback, void* userData) {
     try {
-        getInstance(ptr)->onFrame([ptr, callback, userData](const int64_t chatId, const int64_t sourceId, const ntgcalls::StreamManager::Mode mode, const ntgcalls::StreamManager::Device device, const bytes::binary& data, const wrtc::FrameData frameData) {
-            auto* buffer = new uint8_t[data.size()];
-            const auto bufferSize = copyAndReturn(data, buffer, static_cast<int>(data.size()));
-            callback(ptr, chatId, sourceId, parseCStreamMode(mode), parseCStreamDevice(device), buffer, bufferSize, parseCFrameData(frameData), userData);
+        getInstance(ptr)->onFrames([ptr, callback, userData](const int64_t chatId, const ntgcalls::StreamManager::Mode mode, const ntgcalls::StreamManager::Device device, const std::vector<wrtc::Frame>& frames) {
+            auto* buffer = new ntg_frame_struct[frames.size()];
+            for (int i = 0; i < frames.size(); i++) {
+                ntg_frame_struct frame{};
+                frame.ssrc = frames[i].ssrc;
+                frame.data =  new uint8_t[frames[i].data.size()];
+                frame.sizeData = copyAndReturn(frames[i].data, frame.data, static_cast<int>(frames[i].data.size()));
+                frame.frameData = parseCFrameData(frames[i].frameData);
+                buffer[i] = frame;
+            }
+            callback(ptr, chatId, parseCStreamMode(mode), parseCStreamDevice(device), buffer, frames.size(), userData);
         });
     } catch (ntgcalls::NullPointer&) {
         return NTG_ERROR_NULL_POINTER;

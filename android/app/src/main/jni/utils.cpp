@@ -515,7 +515,7 @@ wrtc::FrameData parseFrameData(JNIEnv *env, jobject frameData) {
     const auto width = static_cast<uint16_t>(env->GetIntField(frameData, widthField));
     const auto height = static_cast<uint16_t>(env->GetIntField(frameData, heightField));
     const auto rotation = static_cast<uint8_t>(env->GetIntField(frameData, rotationField));
-    return wrtc::FrameData(absoluteCaptureTimestampMs, (webrtc::VideoRotation) rotation, width, height);
+    return {absoluteCaptureTimestampMs, (webrtc::VideoRotation) rotation, width, height};
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJFrameData(JNIEnv *env, const wrtc::FrameData& frameData) {
@@ -574,6 +574,26 @@ std::vector<wrtc::SsrcGroup> parseSsrcGroupList(JNIEnv *env, jobject list) {
     for (int i = 0; i < env->CallIntMethod(list, sizeMethod); i++) {
         const webrtc::ScopedJavaLocalRef<jobject> element{env, env->CallObjectMethod(list, getMethod, i)};
         result.push_back(parseSsrcGroup(env, element.obj()));
+    }
+    return result;
+}
+
+webrtc::ScopedJavaLocalRef<jobject> parseJFrame(JNIEnv *env, const wrtc::Frame& frame) {
+    const webrtc::ScopedJavaLocalRef<jclass> frameClass = webrtc::GetClass(env,"io/github/pytgcalls/media/Frame");
+    jmethodID constructor = env->GetMethodID(frameClass.obj(), "<init>", "(J[BLio/github/pytgcalls/media/FrameData;)V");
+    auto data = parseJFrameData(env, frame.frameData);
+    auto frameData = parseJBinary(env, frame.data);
+    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(frameClass.obj(), constructor, frame.ssrc, data.obj(), frameData.obj())};
+}
+
+webrtc::ScopedJavaLocalRef<jobject> parseJFrames(JNIEnv *env, const std::vector<wrtc::Frame>& frame) {
+    const webrtc::ScopedJavaLocalRef<jclass> arrayListClass = webrtc::GetClass(env, "java/util/ArrayList");
+    jmethodID constructor = env->GetMethodID(arrayListClass.obj(), "<init>", "(I)V");
+    const webrtc::ScopedJavaLocalRef<jobject> result{env, env->NewObject(arrayListClass.obj(), constructor, static_cast<jint>(frame.size()))};
+    jmethodID addMethod = env->GetMethodID(arrayListClass.obj(), "add", "(Ljava/lang/Object;)Z");
+    for (const auto &element : frame) {
+        auto jFrame = parseJFrame(env, element);
+        env->CallBooleanMethod(result.obj(), addMethod, jFrame.obj());
     }
     return result;
 }

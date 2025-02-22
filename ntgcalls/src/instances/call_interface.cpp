@@ -66,8 +66,8 @@ namespace ntgcalls {
         connectionChangeCallback = callback;
     }
 
-    void CallInterface::onFrame(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const bytes::binary&, wrtc::FrameData frameData)>& callback) const {
-        streamManager->onFrame(callback);
+    void CallInterface::onFrames(const std::function<void(StreamManager::Mode, StreamManager::Device, const std::vector<wrtc::Frame>&)>& callback) const {
+        streamManager->onFrames(callback);
     }
 
     void CallInterface::onRemoteSourceChange(const std::function<void(RemoteSource)>& callback) {

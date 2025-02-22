@@ -78,7 +78,7 @@ namespace ntgcalls {
 
         bool hasDevice(Mode mode, Device device) const;
 
-        void onFrame(const std::function<void(int64_t, Mode, Device, const bytes::binary&, wrtc::FrameData)>& callback);
+        void onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback);
 
         void sendExternalFrame(Device device, const bytes::binary& data, wrtc::FrameData frameData);
 
@@ -97,7 +97,7 @@ namespace ntgcalls {
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
-        wrtc::synchronized_callback<int64_t, Mode, Device, bytes::binary, wrtc::FrameData> frameCallback;
+        wrtc::synchronized_callback<Mode, Device, std::vector<wrtc::Frame>> framesCallback;
 
         template<typename SinkType, typename DescriptionType>
         void setConfig(Mode mode, Device device, const std::optional<DescriptionType>& desc);

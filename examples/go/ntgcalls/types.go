@@ -16,7 +16,7 @@ type StreamEndCallback func(chatId int64, streamType StreamType, streamDevice St
 type UpgradeCallback func(chatId int64, state MediaState)
 type ConnectionChangeCallback func(chatId int64, state CallNetworkState)
 type SignalCallback func(chatId int64, signal []byte)
-type FrameCallback func(chatId int64, sourceId int64, mode StreamMode, device StreamDevice, data []byte, frameData FrameData)
+type FrameCallback func(chatId int64, mode StreamMode, device StreamDevice, frames []Frame)
 type RemoteSourceCallback func(chatId int64, source RemoteSource)
 
 const (

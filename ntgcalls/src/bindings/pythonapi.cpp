@@ -40,7 +40,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd, py::arg("callback"));
     wrapper.def("on_connection_change", &ntgcalls::NTgCalls::onConnectionChange), py::arg("callback");
     wrapper.def("on_signaling", &ntgcalls::NTgCalls::onSignalingData, py::arg("callback"));
-    wrapper.def("on_frame", &ntgcalls::NTgCalls::onFrame, py::arg("callback"));
+    wrapper.def("on_frames", &ntgcalls::NTgCalls::onFrames, py::arg("callback"));
     wrapper.def("on_remote_source_change", &ntgcalls::NTgCalls::onRemoteSourceChange, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
@@ -242,6 +242,22 @@ PYBIND11_MODULE(ntgcalls, m) {
     ssrcGroupWrapper.def(py::init<std::string, std::vector<uint32_t>>(), py::arg("semantics"), py::arg("ssrcs"));
     ssrcGroupWrapper.def_readonly("semantics", &wrtc::SsrcGroup::semantics);
     ssrcGroupWrapper.def_readonly("ssrcs", &wrtc::SsrcGroup::ssrcs);
+
+    py::class_<wrtc::Frame> frameWrapper(m, "Frame");
+    frameWrapper.def(
+        py::init([](
+            const int64_t ssrc,
+            const py::bytes& data,
+            const wrtc::FrameData frameData
+        ) {
+            return wrtc::Frame(ssrc, toCBytes<bytes::binary>(data), frameData);
+        })
+    );
+    frameWrapper.def_readonly("ssrc", &wrtc::Frame::ssrc);
+    frameWrapper.def_property_readonly("data", [](const wrtc::Frame& self) {
+        return toBytes(self.data);
+    });
+    frameWrapper.def_readonly("frame_data", &wrtc::Frame::frameData);
 
     // Exceptions
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");

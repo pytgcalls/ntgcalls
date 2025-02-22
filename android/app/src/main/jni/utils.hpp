@@ -109,6 +109,10 @@ wrtc::SsrcGroup parseSsrcGroup(JNIEnv *env, jobject ssrcGroup);
 
 std::vector<wrtc::SsrcGroup> parseSsrcGroupList(JNIEnv *env, jobject list);
 
+webrtc::ScopedJavaLocalRef<jobject> parseJFrame(JNIEnv *env, const wrtc::Frame& frame);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJFrames(JNIEnv *env, const std::vector<wrtc::Frame>& frame);
+
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 
 #define TRANSLATE_NTG_EXCEPTION(x) \
