@@ -221,6 +221,13 @@ typedef struct {
     int sizeScreen;
 } ntg_media_devices_struct;
 
+typedef struct {
+    int64_t ssrc;
+    uint8_t* data;
+    int sizeData;
+    ntg_frame_data_struct frameData;
+} ntg_frame_struct;
+
 typedef void (*ntg_stream_callback)(uintptr_t, int64_t, ntg_stream_type_enum, ntg_stream_device_enum, void*);
 
 typedef void (*ntg_upgrade_callback)(uintptr_t, int64_t, ntg_media_state_struct, void*);
@@ -229,7 +236,7 @@ typedef void (*ntg_connection_callback)(uintptr_t, int64_t, ntg_call_network_sta
 
 typedef void (*ntg_signaling_callback)(uintptr_t, int64_t, uint8_t*, int, void*);
 
-typedef void (*ntg_frame_callback)(uintptr_t, int64_t, int64_t, ntg_stream_mode_enum, ntg_stream_device_enum, uint8_t*, int, ntg_frame_data_struct, void*);
+typedef void (*ntg_frame_callback)(uintptr_t, int64_t, ntg_stream_mode_enum, ntg_stream_device_enum, ntg_frame_struct*, int, void*);
 
 typedef void (*ntg_remote_source_callback)(uintptr_t, int64_t, ntg_remote_source_struct, void*);
 
@@ -320,7 +327,7 @@ NTG_C_EXPORT int ntg_on_connection_change(uintptr_t ptr, ntg_connection_callback
 
 NTG_C_EXPORT int ntg_on_signaling_data(uintptr_t ptr, ntg_signaling_callback callback, void* userData);
 
-NTG_C_EXPORT int ntg_on_frame(uintptr_t ptr, ntg_frame_callback callback, void* userData);
+NTG_C_EXPORT int ntg_on_frames(uintptr_t ptr, ntg_frame_callback callback, void* userData);
 
 NTG_C_EXPORT int ntg_on_remote_source_change(uintptr_t ptr, ntg_remote_source_callback callback, void* userData);
 
