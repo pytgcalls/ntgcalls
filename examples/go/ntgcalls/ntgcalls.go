@@ -108,10 +108,10 @@ func handleFrames(ptr C.uintptr_t, chatID C.int64_t, streamMode C.ntg_stream_mod
 	}
 	rawFrames := make([]Frame, size)
 	for i := 0; i < int(size); i++ {
-		rawFrame := *(*C.ntg_device_info_struct)(unsafe.Pointer(uintptr(unsafe.Pointer(frames)) + uintptr(i)*unsafe.Sizeof(C.ntg_frame_struct{})))
+		rawFrame := *(*C.ntg_frame_struct)(unsafe.Pointer(uintptr(unsafe.Pointer(frames)) + uintptr(i)*unsafe.Sizeof(C.ntg_frame_struct{})))
 		rawFrames[i] = Frame{
 			Ssrc: uint32(rawFrame.ssrc),
-			Data: C.GoBytes(unsafe.Pointer(rawFrame.data), rawFrame.size),
+			Data: C.GoBytes(unsafe.Pointer(rawFrame.data), rawFrame.sizeData),
 			FrameData: FrameData{
 				AbsoluteCaptureTimestampMs: int64(frames.frameData.absoluteCaptureTimestampMs),
 				Width:                      uint16(frames.frameData.width),
