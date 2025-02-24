@@ -13,6 +13,8 @@ namespace wrtc {
     public:
         LocalVideoAdapter();
 
+        ~LocalVideoAdapter() override;
+
         void OnFrame(const webrtc::VideoFrame& frame) override;
 
         void AddOrUpdateSink(VideoSinkInterface* sink, const rtc::VideoSinkWants& wants) override;

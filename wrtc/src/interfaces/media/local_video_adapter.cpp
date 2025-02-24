@@ -7,6 +7,11 @@
 namespace wrtc {
     LocalVideoAdapter::LocalVideoAdapter(): _sink(std::nullopt){}
 
+    LocalVideoAdapter::~LocalVideoAdapter() {
+        webrtc::MutexLock lock(&lock_);
+        _sink = std::nullopt;
+    }
+
     void LocalVideoAdapter::OnFrame(const webrtc::VideoFrame& frame) {
         webrtc::MutexLock lock(&lock_);
         if(_sink.has_value()){
