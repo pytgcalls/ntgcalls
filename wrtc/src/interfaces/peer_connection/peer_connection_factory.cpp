@@ -5,6 +5,7 @@
 #include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
 #include <api/enable_media.h>
 #include <rtc_base/ssl_adapter.h>
+#include <api/audio/builtin_audio_processing_builder.h>
 #include <api/create_peerconnection_factory.h>
 #include <api/rtc_event_log/rtc_event_log_factory.h>
 #include <api/task_queue/default_task_queue_factory.h>
@@ -67,7 +68,7 @@ namespace wrtc {
         dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
 #endif
         dependencies.audio_mixer = nullptr;
-        dependencies.audio_processing = webrtc::AudioProcessingBuilder().Create();
+        dependencies.audio_processing = webrtc::BuiltinAudioProcessingBuilder().Build(webrtc::CreateEnvironment());
         supportedVideoFormats = dependencies.video_encoder_factory->GetSupportedFormats();
         EnableMedia(dependencies);
         if (!factory_) {
