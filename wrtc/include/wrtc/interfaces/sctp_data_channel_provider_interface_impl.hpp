@@ -23,7 +23,6 @@ namespace wrtc {
         bool isSctpTransportStarted = false;
 
         synchronized_callback<bool> onStateChangedCallback;
-        synchronized_callback<void> onClosedCallback;
         synchronized_callback<bytes::binary> onMessageReceivedCallback;
 
     public:
@@ -59,8 +58,6 @@ namespace wrtc {
         void OnTransportClosed(webrtc::RTCError) override;
 
         void onStateChanged(const std::function<void(bool)>& callback);
-
-        void onClosed(const std::function<void()>& callback);
 
         void onMessageReceived(const std::function<void(const bytes::binary&)>& callback);
 

@@ -114,15 +114,11 @@ namespace wrtc {
     }
 
     void SctpDataChannelProviderInterfaceImpl::OnTransportClosed(const webrtc::RTCError) {
-        (void) onClosedCallback();
+        assert(networkThread->IsCurrent());
     }
 
     void SctpDataChannelProviderInterfaceImpl::onStateChanged(const std::function<void(bool)>& callback) {
         onStateChangedCallback = callback;
-    }
-
-    void SctpDataChannelProviderInterfaceImpl::onClosed(const std::function<void()>& callback) {
-        onClosedCallback = callback;
     }
 
     void SctpDataChannelProviderInterfaceImpl::onMessageReceived(const std::function<void(const bytes::binary&)>& callback) {

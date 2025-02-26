@@ -105,16 +105,6 @@ namespace wrtc {
             }
         });
 
-        dataChannelInterface->onClosed([weak] {
-            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
-            if (!strong) {
-                return;
-            }
-            strong->dataChannelOpen = false;
-            RTC_LOG(LS_INFO) << "Data channel closed, restarting";
-            strong->restartDataChannel();
-        });
-
         dataChannelInterface->updateIsConnected(connected);
     }
 
