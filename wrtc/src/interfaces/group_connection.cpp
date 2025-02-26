@@ -174,7 +174,7 @@ namespace wrtc {
             const cricket::IceParameters parameters(
                 remoteIceParameters.ufrag,
                 remoteIceParameters.pwd,
-                false
+                true
             );
             strong->transportChannel->SetRemoteIceParameters(parameters);
             if (fingerprint) {
