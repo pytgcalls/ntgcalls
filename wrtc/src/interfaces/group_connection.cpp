@@ -67,7 +67,11 @@ namespace wrtc {
     }
 
     void GroupConnection::setPortAllocatorFlags(cricket::BasicPortAllocator* portAllocator) {
-        portAllocator->set_flags(portAllocator->flags());
+        uint32_t flags = portAllocator->flags();
+        flags |=
+            cricket::PORTALLOCATOR_ENABLE_IPV6 |
+            cricket::PORTALLOCATOR_ENABLE_IPV6_ON_WIFI;
+        portAllocator->set_flags(flags);
     }
 
     void GroupConnection::start() {
