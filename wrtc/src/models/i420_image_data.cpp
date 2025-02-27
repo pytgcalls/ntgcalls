@@ -25,13 +25,20 @@ namespace wrtc {
         return dataU() + sizeOfChromaPlane();
     }
 
-    i420ImageData::i420ImageData(const uint16_t width, const uint16_t height, uint8_t* contents) {
+    i420ImageData::i420ImageData(const uint16_t width, const uint16_t height, const uint8_t* contents) {
         this->width = width;
         this->height = height;
-        this->contents = contents;
+        const size_t dataSize = sizeOfLuminancePlane() + 2 * sizeOfChromaPlane();
+        this->contents = new uint8_t[dataSize];
+        if (contents) {
+            memcpy(this->contents, contents, dataSize);
+        } else {
+            memset(this->contents, 0, dataSize);
+        }
     }
 
     i420ImageData::~i420ImageData() {
+        delete[] contents;
         contents = nullptr;
     }
 
