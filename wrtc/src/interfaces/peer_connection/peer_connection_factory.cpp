@@ -68,7 +68,6 @@ namespace wrtc {
         dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
 #endif
         dependencies.audio_mixer = nullptr;
-        dependencies.audio_processing = webrtc::BuiltinAudioProcessingBuilder().Build(webrtc::CreateEnvironment());
         supportedVideoFormats = dependencies.video_encoder_factory->GetSupportedFormats();
         EnableMedia(dependencies);
         if (!factory_) {
