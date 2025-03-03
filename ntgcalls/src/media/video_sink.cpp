@@ -23,7 +23,11 @@ namespace ntgcalls {
         if (changed) {
             description = desc;
             clear();
-            RTC_LOG(LS_INFO) << "VideoSink configured with " << desc->width << "x" << desc->height << "@" << desc->fps << "fps";
+            if (desc -> width == 0 || desc -> height == 0 || desc -> fps == 0) {
+                RTC_LOG(LS_INFO) << "VideoSink configured with auto resolution";
+            } else {
+                RTC_LOG(LS_INFO) << "VideoSink configured with " << desc->width << "x" << desc->height << "@" << desc->fps << "fps";
+            }
         }
         return changed;
     }
