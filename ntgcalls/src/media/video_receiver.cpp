@@ -28,7 +28,7 @@ namespace ntgcalls {
             if (const auto sink = weakSink.lock(); !sink) {
                 return;
             }
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
             uint16_t newWidth, newHeight;
             if (description->width <= 0) {
                 newWidth = static_cast<int16_t>(frame->width());
