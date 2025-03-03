@@ -68,7 +68,7 @@ namespace ntgcalls {
             memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
 
             (void) frameCallback(ssrc, std::move(yuv), totalSize, {
-                0,
+                frame->timestamp_us(),
                 frame->rotation(),
                 newWidth,
                 newHeight
