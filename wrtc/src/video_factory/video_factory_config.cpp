@@ -10,7 +10,7 @@
 
 namespace wrtc {
 
-    bool VideoFactoryConfig::allowH264Encoder = false;
+    bool VideoFactoryConfig::allowH264Encoder = true;
 
     VideoFactoryConfig::VideoFactoryConfig() {
         // Google (Software, VP9, VP8)
