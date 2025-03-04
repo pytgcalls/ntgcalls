@@ -51,7 +51,7 @@ namespace ntgcalls {
         presentationConnection->open();
         presentationConnection->onDataChannelOpened([this] {
             RTC_LOG(LS_INFO) << "Data channel opened";
-            for (const auto& [endpoint, ssrcGroup] : pendingIncomingPresentations) {
+            for (auto x = pendingIncomingPresentations; const auto& [endpoint, ssrcGroup] : x) {
                 addIncomingVideo(endpoint, ssrcGroup);
             }
             updateRemoteVideoConstraints(presentationConnection);
