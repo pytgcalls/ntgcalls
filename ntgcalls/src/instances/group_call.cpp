@@ -50,6 +50,10 @@ namespace ntgcalls {
         }
         presentationConnection = std::make_shared<wrtc::GroupConnection>(true);
         presentationConnection->open();
+        presentationConnection->onDataChannelOpened([this] {
+            RTC_LOG(LS_INFO) << "Data channel opened";
+            updateRemoteVideoConstraints(presentationConnection);
+        });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Screen, presentationConnection.get());
         RTC_LOG(LS_INFO) << "Screen sharing initialized";
