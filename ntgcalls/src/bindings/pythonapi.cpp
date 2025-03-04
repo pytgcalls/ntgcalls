@@ -149,7 +149,7 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::VideoDescription> videoWrapper(m, "VideoDescription", mediaWrapper);
     videoWrapper.def(
-        py::init<ntgcalls::BaseMediaDescription::MediaSource, uint16_t, uint16_t, uint8_t, std::string>(),
+        py::init<ntgcalls::BaseMediaDescription::MediaSource, int16_t, int16_t, uint8_t, std::string>(),
         py::arg("media_source"),
         py::arg("width"),
         py::arg("height"),
