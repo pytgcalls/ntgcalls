@@ -41,6 +41,8 @@ namespace wrtc {
 
         void close() override;
 
+        ResponsePayload::Media getMediaConfig() const;
+
     private:
         int64_t lastNetworkActivityMs = 0;
         uint32_t outgoingAudioSsrc = 0, outgoingVideoSsrc = 0;
