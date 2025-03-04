@@ -228,7 +228,7 @@ namespace wrtc {
         }
     }
 
-    void NativeConnection::notifyStateUpdated() const {
+    void NativeConnection::notifyStateUpdated() {
         ConnectionState newValue;
         if (failed) {
             newValue = ConnectionState::Failed;
@@ -239,11 +239,14 @@ namespace wrtc {
         }
         std::weak_ptr weak(shared_from_this());
         signalingThread()->PostTask([weak, newValue] {
-            const auto strong = std::static_pointer_cast<const NativeConnection>(weak.lock());
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
             }
-            (void) strong->connectionChangeCallback(newValue);
+            (void) strong->connectionChangeCallback(newValue, strong->alreadyConnected);
+            if (newValue == ConnectionState::Connected && !strong->alreadyConnected) {
+                strong->alreadyConnected = true;
+            }
         });
     }
 

@@ -226,7 +226,10 @@ namespace wrtc {
                 if (!strong) {
                     return;
                 }
-                (void) strong->connectionChangeCallback(newValue);
+                (void) strong->connectionChangeCallback(newValue, strong->alreadyConnected);
+                if (newValue == ConnectionState::Connected && !strong->alreadyConnected) {
+                    strong->alreadyConnected = true;
+                }
             });
         }
     }
@@ -349,6 +352,10 @@ namespace wrtc {
         RTC_LOG(LS_INFO) << "Cleaning up GroupConnection";
         outgoingVideoSsrcGroups.clear();
         NativeNetworkInterface::close();
+    }
+
+    ResponsePayload::Media GroupConnection::getMediaConfig() const {
+        return mediaConfig;
     }
 
     bool GroupConnection::supportsRenomination() const {

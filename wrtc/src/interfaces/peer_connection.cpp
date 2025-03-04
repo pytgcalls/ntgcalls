@@ -350,6 +350,9 @@ namespace wrtc {
                 newValue = ConnectionState::Closed;
                 break;
         }
-        (void) connectionChangeCallback(newValue);
+        (void) connectionChangeCallback(newValue, alreadyConnected);
+        if (newValue == ConnectionState::Connected && !alreadyConnected) {
+            alreadyConnected = true;
+        }
     }
 } // wrtc

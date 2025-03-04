@@ -13,7 +13,6 @@
 namespace ntgcalls {
 
     class CallInterface {
-        bool connected = false;
         std::atomic_bool isExiting;
 
         void cancelNetworkListener();
@@ -29,7 +28,10 @@ namespace ntgcalls {
         RemoteSource::State lastScreenState = RemoteSource::State::Inactive;
         RemoteSource::State lastMicState = RemoteSource::State::Inactive;
 
-        void setConnectionObserver(CallNetworkState::Kind kind = CallNetworkState::Kind::Normal);
+        void setConnectionObserver(
+            const std::shared_ptr<wrtc::NetworkInterface>& conn,
+            CallNetworkState::Kind kind = CallNetworkState::Kind::Normal
+        );
 
         static RemoteSource::State parseVideoState(signaling::MediaStateMessage::VideoState state);
 

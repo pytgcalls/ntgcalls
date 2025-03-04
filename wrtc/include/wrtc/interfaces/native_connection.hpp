@@ -30,7 +30,7 @@ namespace wrtc {
         std::unique_ptr<ContentNegotiationContext> contentNegotiationContext;
         std::optional<std::string> audioChannelId, videoChannelId;
 
-        void notifyStateUpdated() const;
+        void notifyStateUpdated();
 
         void candidateGathered(cricket::IceTransportInternal *transport, const cricket::Candidate &candidate);
 
@@ -88,5 +88,4 @@ namespace wrtc {
 
         std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
     };
-
 } // wrtc

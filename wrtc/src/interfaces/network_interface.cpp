@@ -45,7 +45,7 @@ namespace wrtc {
         iceCandidateCallback = callback;
     }
 
-    void NetworkInterface::onConnectionChange(const std::function<void(ConnectionState state)>& callback) {
+    void NetworkInterface::onConnectionChange(const std::function<void(ConnectionState state, bool wasConnected)>& callback) {
         connectionChangeCallback = callback;
     }
 
@@ -61,6 +61,10 @@ namespace wrtc {
 
     bool NetworkInterface::isDataChannelOpen() const {
         return dataChannelOpen;
+    }
+
+    bool NetworkInterface::isConnected() const {
+        return alreadyConnected;
     }
 
     void NetworkInterface::enableAudioIncoming(const bool enable) {

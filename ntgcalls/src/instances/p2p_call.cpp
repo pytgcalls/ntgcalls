@@ -209,7 +209,7 @@ namespace ntgcalls {
                 sendOfferIfNeeded();
             }
         }
-        setConnectionObserver();
+        setConnectionObserver(connection);
     }
 
     void P2PCall::processSignalingData(const bytes::binary& buffer) {

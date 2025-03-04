@@ -81,7 +81,10 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "RTMP connection not supported";
             throw RTMPNeeded("RTMP connection not supported");
         }
-        setConnectionObserver(isPresentation ? CallNetworkState::Kind::Presentation : CallNetworkState::Kind::Normal);
+        setConnectionObserver(
+            conn,
+            isPresentation ? CallNetworkState::Kind::Presentation : CallNetworkState::Kind::Normal
+        );
     }
 
     void GroupCall::updateRemoteVideoConstraints() const {
