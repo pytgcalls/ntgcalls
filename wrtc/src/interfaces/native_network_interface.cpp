@@ -325,11 +325,11 @@ namespace wrtc {
 
     void NativeNetworkInterface::enableVideoIncoming(const bool enable, const bool isScreenCast) {
         if (isScreenCast) {
-            if (cameraIncoming == enable) {
+            if (screenIncoming == enable) {
                 return;
             }
         } else {
-            if (screenIncoming == enable) {
+            if (cameraIncoming == enable) {
                 return;
             }
         }
