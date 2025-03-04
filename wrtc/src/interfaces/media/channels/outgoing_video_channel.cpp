@@ -18,7 +18,7 @@ namespace wrtc {
         LocalVideoAdapter* sink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
         cricket::VideoOptions videoOptions;
-        videoOptions.is_screencast = false;
+        videoOptions.is_screencast = mediaContent.isScreenCast();
         bitrateAllocatorFactory = webrtc::CreateBuiltinVideoBitrateAllocatorFactory();
         channel = channelManager->CreateVideoChannel(
             call,
