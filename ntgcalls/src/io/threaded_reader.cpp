@@ -44,7 +44,7 @@ namespace ntgcalls {
                                 break;
                             }
                             cv.wait(lock, [this, i] {
-                                return (!running || activeBuffer == i) && enabled;
+                                return !running || (activeBuffer == i && enabled);
                             });
                             if (!running) break;
                             if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
