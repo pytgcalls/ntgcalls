@@ -33,6 +33,8 @@ namespace ntgcalls {
 
         void stopPresentation(bool force = false);
 
+        void setStreamSources(StreamManager::Mode mode, const MediaDescription& config) const override;
+
         Type type() const override;
 
         void onUpgrade(const std::function<void(MediaState)> &callback) const;

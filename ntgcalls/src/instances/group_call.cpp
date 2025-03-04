@@ -146,6 +146,13 @@ namespace ntgcalls {
         }
     }
 
+    void GroupCall::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
+        CallInterface::setStreamSources(mode, config);
+        if (mode == StreamManager::Mode::Playback && presentationConnection) {
+            streamManager->optimizeSources(presentationConnection.get());
+        }
+    }
+
     void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) const {
         streamManager->onUpgrade(callback);
     }
