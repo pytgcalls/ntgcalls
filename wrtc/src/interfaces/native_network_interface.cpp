@@ -290,10 +290,11 @@ namespace wrtc {
 
     std::vector<std::string> NativeNetworkInterface::getEndpoints() const {
         std::vector<std::string> endpoints;
-        endpoints.reserve(incomingVideoChannels.size());
         // ReSharper disable once CppUseElementsView
-        for (const auto &[endpoint, _] : incomingVideoChannels) {
-            endpoints.push_back(endpoint);
+        for (const auto &[endpoint, media] : pendingContent) {
+            if (media.type == MediaContent::Type::Video) {
+                endpoints.push_back(endpoint);
+            }
         }
         return endpoints;
     }
