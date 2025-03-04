@@ -12,6 +12,7 @@ namespace ntgcalls {
 
     class GroupCall final : public CallInterface {
         std::shared_ptr<wrtc::GroupConnection> presentationConnection;
+        std::map<std::string, bool> endpointsKind;
 
         static void updateRemoteVideoConstraints(const std::shared_ptr<wrtc::NetworkInterface>& conn) ;
 
@@ -26,9 +27,9 @@ namespace ntgcalls {
 
         void connect(const std::string& jsonData, bool isPresentation);
 
-        uint32_t addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const;
+        uint32_t addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup);
 
-        bool removeIncomingVideo(const std::string& endpoint) const;
+        bool removeIncomingVideo(const std::string& endpoint);
 
         void stopPresentation(bool force = false);
 

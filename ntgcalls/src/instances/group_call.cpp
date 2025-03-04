@@ -108,14 +108,30 @@ namespace ntgcalls {
         conn->sendDataChannelMessage(bytes::make_binary(to_string(jsonRes)));
     }
 
-    uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const {
-        const auto ssrc = Safe<wrtc::GroupConnection>(connection)->addIncomingVideo(endpoint, ssrcGroup);
-        updateRemoteVideoConstraints();
+    uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) {
+        // When the size of the ssrcGroup is 3, the connection is the presentationConnection, otherwise it is the normal connection
+        bool isPresentation = ssrcGroup.size() == 3;
+        RTC_LOG(LS_INFO) << "Adding incoming video" << (isPresentation ? " (presentation)" : "");
+        const auto& conn = isPresentation ? presentationConnection:connection;
+        if (!conn) {
+            throw ConnectionError("Connection not initialized");
+        }
+        const auto ssrc = Safe<wrtc::GroupConnection>(conn)->addIncomingVideo(endpoint, ssrcGroup);
+        updateRemoteVideoConstraints(conn);
+        endpointsKind.insert({endpoint, isPresentation});
         return ssrc;
     }
 
-    bool GroupCall::removeIncomingVideo(const std::string& endpoint) const {
-        return Safe<wrtc::GroupConnection>(connection)->removeIncomingVideo(endpoint);
+    bool GroupCall::removeIncomingVideo(const std::string& endpoint) {
+        if (!endpointsKind.contains(endpoint)) {
+            return false;
+        }
+        const auto& conn = endpointsKind.at(endpoint) ? presentationConnection : connection;
+        if (!conn) {
+            throw ConnectionError("Connection not initialized");
+        }
+        endpointsKind.erase(endpoint);
+        return Safe<wrtc::GroupConnection>(conn)->removeIncomingVideo(endpoint);
     }
 
     void GroupCall::stopPresentation(const bool force) {
