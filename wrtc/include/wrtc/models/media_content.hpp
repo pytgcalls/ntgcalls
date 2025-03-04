@@ -96,12 +96,12 @@ namespace wrtc {
             }
 
             std::vector<PayloadType> sortedPayloadTypes = payloadTypes;
-            std::ranges::sort(sortedPayloadTypes, [](PayloadType const &lhs, PayloadType const &rhs) {
-                return lhs.id < rhs.id;
+            std::ranges::sort(sortedPayloadTypes, [](PayloadType const &lhs, PayloadType const &rhs2) {
+                return lhs.id < rhs2.id;
             });
             std::vector<PayloadType> sortedRhsPayloadTypes = rhs.payloadTypes;
-            std::ranges::sort(sortedRhsPayloadTypes, [](PayloadType const &lhs, PayloadType const &rhs) {
-                return lhs.id < rhs.id;
+            std::ranges::sort(sortedRhsPayloadTypes, [](PayloadType const &lhs, PayloadType const &rhs2) {
+                return lhs.id < rhs2.id;
             });
             if (sortedPayloadTypes != sortedRhsPayloadTypes) {
                 return false;
