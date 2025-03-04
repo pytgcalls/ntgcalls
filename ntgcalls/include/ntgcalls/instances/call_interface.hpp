@@ -35,6 +35,8 @@ namespace ntgcalls {
 
         static RemoteSource::State parseVideoState(signaling::MediaStateMessage::VideoState state);
 
+        void initNetThread();
+
     public:
         explicit CallInterface(rtc::Thread* updateThread);
 

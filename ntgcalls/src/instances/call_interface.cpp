@@ -6,8 +6,7 @@
 
 namespace ntgcalls {
     CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {
-        networkThread = rtc::Thread::Create();
-        networkThread->Start();
+        initNetThread();
         streamManager = std::make_shared<StreamManager>(updateThread);
     }
 
@@ -155,5 +154,10 @@ namespace ntgcalls {
             return RemoteSource::State::Suspended;
         }
         return RemoteSource::State::Inactive;
+    }
+
+    void CallInterface::initNetThread() {
+        networkThread = rtc::Thread::Create();
+        networkThread->Start();
     }
 } // ntgcalls
