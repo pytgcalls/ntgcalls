@@ -13,7 +13,7 @@ namespace ntgcalls {
     class GroupCall final : public CallInterface {
         std::shared_ptr<wrtc::GroupConnection> presentationConnection;
 
-        void updateRemoteVideoConstraints() const;
+        static void updateRemoteVideoConstraints(const std::shared_ptr<wrtc::NetworkInterface>& conn) ;
 
     public:
         explicit GroupCall(rtc::Thread* updateThread): CallInterface(updateThread) {}

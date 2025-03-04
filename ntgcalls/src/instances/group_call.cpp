@@ -30,7 +30,7 @@ namespace ntgcalls {
 
         connection->onDataChannelOpened([this] {
             RTC_LOG(LS_INFO) << "Data channel opened";
-            updateRemoteVideoConstraints();
+            updateRemoteVideoConstraints(connection);
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
@@ -87,20 +87,20 @@ namespace ntgcalls {
         );
     }
 
-    void GroupCall::updateRemoteVideoConstraints() const {
+    void GroupCall::updateRemoteVideoConstraints(const std::shared_ptr<wrtc::NetworkInterface>& conn) {
         json jsonRes = {
             {"colibriClass", "ReceiverVideoConstraints"},
             {"constraints", json::object()},
             {"defaultConstraints", {{"maxHeight", 0}}},
             {"onStageEndpoints", json::array()}
         };
-        for (const auto& endpoint : Safe<wrtc::GroupConnection>(connection)->getEndpoints()) {
+        for (const auto& endpoint : Safe<wrtc::GroupConnection>(conn)->getEndpoints()) {
             jsonRes["constraints"][endpoint] = {
                 {"maxHeight", 360},
                 {"minHeight", 180},
             };
         }
-        connection->sendDataChannelMessage(bytes::make_binary(to_string(jsonRes)));
+        conn->sendDataChannelMessage(bytes::make_binary(to_string(jsonRes)));
     }
 
     uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const {
