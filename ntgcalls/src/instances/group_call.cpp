@@ -42,6 +42,7 @@ namespace ntgcalls {
     }
 
     std::string GroupCall::initPresentation() {
+        initNetThread();
         RTC_LOG(LS_INFO) << "Initializing screen sharing";
         if (presentationConnection) {
             RTC_LOG(LS_ERROR) << "Screen sharing already initialized";
