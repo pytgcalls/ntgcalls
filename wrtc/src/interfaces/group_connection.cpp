@@ -327,6 +327,9 @@ namespace wrtc {
 
 
     void GroupConnection::beginAudioChannelCleanupTimer() {
+        if (!factory) {
+            return;
+        }
         std::weak_ptr weak(shared_from_this());
         workerThread()->PostDelayedTask([weak] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
