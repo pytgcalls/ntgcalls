@@ -66,6 +66,12 @@ namespace wrtc {
         const auto state = dataChannel->state();
         if (const bool isDataChannelOpen = state == webrtc::DataChannelInterface::DataState::kOpen; isOpen != isDataChannelOpen) {
             isOpen = isDataChannelOpen;
+            if (isOpen) {
+                for (const auto& message : pendingMessages) {
+                    sendDataChannelMessage(message);
+                }
+                pendingMessages.clear();
+            }
             (void) onStateChangedCallback(isDataChannelOpen);
         }
     }
@@ -102,14 +108,15 @@ namespace wrtc {
         }
     }
 
-    void SctpDataChannelProviderInterfaceImpl::sendDataChannelMessage(const bytes::binary& data) const {
+    void SctpDataChannelProviderInterfaceImpl::sendDataChannelMessage(const bytes::binary& data) {
         if (isOpen) {
             const std::string message = bytes::to_string(data);
             RTC_LOG(LS_INFO) << "Outgoing DataChannel message: " << message;
             const webrtc::DataBuffer buffer(message);
             dataChannel->Send(buffer);
         } else {
-            RTC_LOG(LS_INFO) << "Could not send an outgoing DataChannel message: the channel is not open";
+            RTC_LOG(LS_INFO) << "Could not send an outgoing DataChannel message, adding to pending messages";
+            pendingMessages.push_back(data);
         }
     }
 

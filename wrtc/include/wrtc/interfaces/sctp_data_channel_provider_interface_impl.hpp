@@ -18,6 +18,7 @@ namespace wrtc {
         std::unique_ptr<cricket::SctpTransportFactory> sctpTransportFactory;
         std::unique_ptr<cricket::SctpTransportInternal> sctpTransport;
         rtc::scoped_refptr<webrtc::SctpDataChannel> dataChannel;
+        std::vector<bytes::binary> pendingMessages;
         rtc::Thread* networkThread;
         bool isOpen = false;
         bool isSctpTransportStarted = false;
@@ -53,7 +54,7 @@ namespace wrtc {
 
         void updateIsConnected(bool isConnected);
 
-        void sendDataChannelMessage(const bytes::binary& data) const;
+        void sendDataChannelMessage(const bytes::binary& data);
 
         void OnTransportClosed(webrtc::RTCError) override;
 
