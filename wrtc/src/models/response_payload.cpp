@@ -67,9 +67,10 @@ namespace wrtc {
                     transport["fingerprints"][0]["fingerprint"].get<std::string>()
                 );
             }
-            auto audio = data["audio"];
-            media.audioPayloadTypes = parsePayloadTypes(audio);
-            media.audioRtpExtensions = parseRtpExtensions(audio);
+            if (auto audio = data["audio"]; !audio.is_null()) {
+                media.audioPayloadTypes = parsePayloadTypes(audio);
+                media.audioRtpExtensions = parseRtpExtensions(audio);
+            }
             auto video = data["video"];
             media.videoPayloadTypes = parsePayloadTypes(video);
             media.videoRtpExtensions = parseRtpExtensions(video);

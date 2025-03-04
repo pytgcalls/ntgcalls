@@ -70,6 +70,11 @@ namespace ntgcalls {
                 webrtc::JsepIceCandidate iceCandidate{std::string(), 0, rawCandidate};
                 conn->addIceCandidate(wrtc::IceCandidate(&iceCandidate));
             }
+            if (isPresentation) {
+                const auto mediaConfig = Safe<wrtc::GroupConnection>(conn)->getMediaConfig();
+                payload.media.audioPayloadTypes = mediaConfig.audioPayloadTypes;
+                payload.media.audioRtpExtensions = mediaConfig.audioRtpExtensions;
+            }
             Safe<wrtc::GroupConnection>(conn)->createChannels(payload.media);
             RTC_LOG(LS_INFO) << "Remote parameters set";
         } else {
