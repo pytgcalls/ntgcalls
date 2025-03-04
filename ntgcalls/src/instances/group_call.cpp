@@ -49,6 +49,7 @@ namespace ntgcalls {
         }
         presentationConnection = std::make_shared<wrtc::GroupConnection>(true);
         presentationConnection->open();
+        streamManager->optimizeSources(presentationConnection.get());
         presentationConnection->onDataChannelOpened([this] {
             RTC_LOG(LS_INFO) << "Data channel opened";
             for (auto x = pendingIncomingPresentations; const auto& [endpoint, ssrcGroup] : x) {
