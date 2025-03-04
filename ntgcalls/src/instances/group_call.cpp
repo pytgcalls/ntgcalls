@@ -51,6 +51,9 @@ namespace ntgcalls {
         presentationConnection->open();
         presentationConnection->onDataChannelOpened([this] {
             RTC_LOG(LS_INFO) << "Data channel opened";
+            for (const auto& [endpoint, ssrcGroup] : pendingIncomingPresentations) {
+                addIncomingVideo(endpoint, ssrcGroup);
+            }
             updateRemoteVideoConstraints(presentationConnection);
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection.get());
@@ -109,12 +112,17 @@ namespace ntgcalls {
     }
 
     uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) {
-        // When the size of the ssrcGroup is 3, the connection is the presentationConnection, otherwise it is the normal connection
         bool isPresentation = ssrcGroup.size() == 3;
-        RTC_LOG(LS_INFO) << "Adding incoming video" << (isPresentation ? " (presentation)" : "");
         const auto& conn = isPresentation ? presentationConnection:connection;
         if (!conn) {
-            throw ConnectionError("Connection not initialized");
+            if (!isPresentation) {
+                throw ConnectionError("Connection not initialized");
+            }
+            pendingIncomingPresentations[endpoint] = ssrcGroup;
+            return 0;
+        }
+        if (isPresentation && pendingIncomingPresentations.contains(endpoint)) {
+            pendingIncomingPresentations.erase(endpoint);
         }
         const auto ssrc = Safe<wrtc::GroupConnection>(conn)->addIncomingVideo(endpoint, ssrcGroup);
         updateRemoteVideoConstraints(conn);
@@ -123,6 +131,10 @@ namespace ntgcalls {
     }
 
     bool GroupCall::removeIncomingVideo(const std::string& endpoint) {
+        if (pendingIncomingPresentations.contains(endpoint)) {
+            pendingIncomingPresentations.erase(endpoint);
+            return true;
+        }
         if (!endpointsKind.contains(endpoint)) {
             return false;
         }
