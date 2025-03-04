@@ -7,7 +7,7 @@
 
 namespace ntgcalls {
     VideoReceiver::~VideoReceiver() {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard lock(mutex);
         sink = nullptr;
         frameCallback = nullptr;
     }
