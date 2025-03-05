@@ -67,7 +67,7 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_init(JNIEnv *env, jobje
 
     instance->onFrames([instancePtr](int64_t chatId, ntgcalls::StreamManager::Mode mode, ntgcalls::StreamManager::Device device, const std::vector<wrtc::Frame>& frames) {
         std::lock_guard lock(callbacksMutex);
-        auto callback = callbacksInstances[instancePtr].onFrameCallback;
+        auto callback = callbacksInstances[instancePtr].onFramesCallback;
         if (!callback) {
             return;
         }
@@ -116,7 +116,7 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_destroy(JNIEnv *env, jo
     if (auto callback = callbackInfo.onSignalingDataCallback) {
         env->DeleteGlobalRef(callback->callback);
     }
-    if (auto callback = callbackInfo.onFrameCallback) {
+    if (auto callback = callbackInfo.onFramesCallback) {
         env->DeleteGlobalRef(callback->callback);
     }
     if (auto callback = callbackInfo.onRemoteSourceChangeCallback) {
@@ -272,7 +272,7 @@ REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLio/github
 
 REGISTER_CALLBACK(setSignalingDataCallback, onSignalingData, "(J[B)V")
 
-REGISTER_CALLBACK(setFrameCallback, onFrame, "(JJLio/github/pytgcalls/media/StreamMode;Lio/github/pytgcalls/media/StreamDevice;[BLio/github/pytgcalls/media/FrameData;)V")
+REGISTER_CALLBACK(setFrameCallback, onFrames, "(JLio/github/pytgcalls/media/StreamMode;Lio/github/pytgcalls/media/StreamDevice;Ljava/util/List;)V")
 
 REGISTER_CALLBACK(setRemoteSourceChangeCallback, onRemoteSourceChange, "(JLio/github/pytgcalls/media/RemoteSource;)V")
 

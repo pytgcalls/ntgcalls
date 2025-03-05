@@ -21,7 +21,7 @@ struct InstanceCallbacks {
     std::optional<JavaCallback> onStreamEndCallback;
     std::optional<JavaCallback> onConnectionChangeCallback;
     std::optional<JavaCallback> onSignalingDataCallback;
-    std::optional<JavaCallback> onFrameCallback;
+    std::optional<JavaCallback> onFramesCallback;
     std::optional<JavaCallback> onRemoteSourceChangeCallback;
 };
 

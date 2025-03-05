@@ -581,8 +581,8 @@ std::vector<wrtc::SsrcGroup> parseSsrcGroupList(JNIEnv *env, jobject list) {
 webrtc::ScopedJavaLocalRef<jobject> parseJFrame(JNIEnv *env, const wrtc::Frame& frame) {
     const webrtc::ScopedJavaLocalRef<jclass> frameClass = webrtc::GetClass(env,"io/github/pytgcalls/media/Frame");
     jmethodID constructor = env->GetMethodID(frameClass.obj(), "<init>", "(J[BLio/github/pytgcalls/media/FrameData;)V");
-    auto data = parseJFrameData(env, frame.frameData);
-    auto frameData = parseJBinary(env, frame.data);
+    auto data = parseJBinary(env, frame.data);
+    auto frameData = parseJFrameData(env, frame.frameData);
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(frameClass.obj(), constructor, frame.ssrc, data.obj(), frameData.obj())};
 }
 
