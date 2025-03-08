@@ -121,7 +121,7 @@ namespace wrtc {
         }
 
         [[nodiscard]] uint32_t mainSsrc() const {
-            if (ssrcGroups.empty()) {
+            if (ssrcGroups.size() <= 1) {
                 return ssrc;
             }
             for (const auto& [semantics, ssrcs] : ssrcGroups) {
