@@ -68,7 +68,7 @@ namespace wrtc {
             videoRecvStreamParams.ssrc_groups.push_back(parsedGroup);
         }
 
-        if (_ssrc == 0 &&  ssrcGroups.size() == 1) {
+        if (_ssrc == 0 && ssrcGroups.size() == 1) {
             _ssrc = ssrcGroups[0].ssrcs[0];
         }
         videoRecvStreamParams.ssrcs = allSsrcs;
