@@ -69,6 +69,8 @@ namespace wrtc {
         int candidatePoolSize() const override;
 
         void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) override {}
+
+        bool isGroupConnection() const override;
     public:
         explicit NativeConnection(std::vector<RTCServer> rtcServers, bool enableP2P, bool isOutgoing);
 

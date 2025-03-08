@@ -90,6 +90,8 @@ namespace wrtc {
         void addIncomingAudio(uint32_t ssrc, const std::string& endpoint);
 
         void beginAudioChannelCleanupTimer();
+
+        bool isGroupConnection() const override;
     };
 
 } // wrtc

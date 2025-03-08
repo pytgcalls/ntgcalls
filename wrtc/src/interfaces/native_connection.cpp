@@ -396,6 +396,10 @@ namespace wrtc {
         return NativeNetworkInterface::addOutgoingTrack(track);
     }
 
+    bool NativeConnection::isGroupConnection() const {
+        return false;
+    }
+
     void NativeConnection::checkConnectionTimeout() {
         std::weak_ptr weak(shared_from_this());
         networkThread()->PostDelayedTask([weak] {

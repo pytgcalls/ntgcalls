@@ -351,6 +351,10 @@ namespace wrtc {
         }, webrtc::TimeDelta::Millis(500));
     }
 
+    bool GroupConnection::isGroupConnection() const {
+        return true;
+    }
+
     void GroupConnection::close() {
         RTC_LOG(LS_INFO) << "Cleaning up GroupConnection";
         outgoingVideoSsrcGroups.clear();

@@ -28,7 +28,7 @@ namespace wrtc {
             webrtc::RtpTransport* rtpTransport,
             std::vector<SsrcGroup> ssrcGroups,
             rtc::UniqueRandomIdGenerator *randomIdGenerator,
-            const std::vector<webrtc::SdpVideoFormat>& availableVideoFormats,
+            const std::vector<cricket::Codec>& codecs,
             rtc::Thread *workerThread,
             rtc::Thread* networkThread,
             std::weak_ptr<RemoteVideoSink> remoteVideoSink

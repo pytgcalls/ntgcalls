@@ -10,6 +10,34 @@ namespace wrtc {
     OutgoingVideoFormat::OutgoingVideoFormat(cricket::Codec videoCodec_, std::optional<cricket::Codec> rtxCodec_) :
     videoCodec(std::move(videoCodec_)), rtxCodec(std::move(rtxCodec_)){}
 
+    std::vector<cricket::Codec> OutgoingVideoFormat::getVideoCodecs(
+        const std::vector<webrtc::SdpVideoFormat>& formats,
+        const std::vector<PayloadType>& payloadTypes,
+        const bool isGroupConnection
+    ) {
+        std::vector<cricket::Codec> codecs;
+        if (isGroupConnection) {
+            for (auto assignedPayloads = assignPayloadTypes(formats); const auto &payloadType : assignedPayloads) {
+                codecs.push_back(payloadType.videoCodec);
+                if (payloadType.rtxCodec) {
+                    codecs.push_back(payloadType.rtxCodec.value());
+                }
+            }
+        } else {
+            for (const auto &payloadType : payloadTypes) {
+                cricket::Codec codec = cricket::CreateVideoCodec(payloadType.id, payloadType.name);
+                for (const auto & [fst, snd] : payloadType.parameters) {
+                    codec.SetParam(fst, snd);
+                }
+                for (const auto & [type, subtype] : payloadType.feedbackTypes) {
+                    codec.AddFeedbackParam(cricket::FeedbackParam(type, subtype));
+                }
+                codecs.push_back(std::move(codec));
+            }
+        }
+        return codecs;
+    }
+
     std::vector<OutgoingVideoFormat> OutgoingVideoFormat::assignPayloadTypes(std::vector<webrtc::SdpVideoFormat> const& formats) {
         if (formats.empty()) {
             return {};

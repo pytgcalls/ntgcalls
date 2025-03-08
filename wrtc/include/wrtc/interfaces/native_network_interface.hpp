@@ -95,6 +95,8 @@ namespace wrtc {
 
         virtual int candidatePoolSize() const = 0;
 
+        virtual bool isGroupConnection() const = 0;
+
         virtual std::optional<rtc::SSLRole> dtlsRole() const = 0;
 
         virtual void registerTransportCallbacks(cricket::P2PTransportChannel* transportChannel) = 0;

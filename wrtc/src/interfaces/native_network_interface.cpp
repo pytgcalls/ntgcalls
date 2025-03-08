@@ -11,6 +11,7 @@
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
+#include <wrtc/models/outgoing_video_format.hpp>
 
 namespace wrtc {
     void NativeNetworkInterface::initConnection(bool supportsPacketSending) {
@@ -153,14 +154,18 @@ namespace wrtc {
                 remoteAudioSink
             );
         } else if (isAddable && mediaContent.type == MediaContent::Type::Video) {
-            RTC_LOG(LS_INFO) << "Adding incoming video channel with ssrc " << mediaContent.mainSsrc();
+            auto videoCodecs = OutgoingVideoFormat::getVideoCodecs(
+                availableVideoFormats,
+                mediaContent.payloadTypes,
+                isGroupConnection()
+            );
             incomingVideoChannels[endpoint] = std::make_unique<IncomingVideoChannel>(
                 call.get(),
                 channelManager.get(),
                 dtlsSrtpTransport.get(),
                 mediaContent.ssrcGroups,
                 factory->ssrcGenerator(),
-                availableVideoFormats,
+                videoCodecs,
                 workerThread(),
                 networkThread(),
                 mediaContent.isScreenCast() ? remoteScreenCastSink : remoteVideoSink

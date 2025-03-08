@@ -14,7 +14,7 @@ namespace wrtc {
         webrtc::RtpTransport* rtpTransport,
         std::vector<SsrcGroup> ssrcGroups,
         rtc::UniqueRandomIdGenerator *randomIdGenerator,
-        const std::vector<webrtc::SdpVideoFormat>& availableVideoFormats,
+        const std::vector<cricket::Codec>& codecs,
         rtc::Thread* workerThread,
         rtc::Thread* networkThread,
         std::weak_ptr<RemoteVideoSink> remoteVideoSink
@@ -37,15 +37,6 @@ namespace wrtc {
         networkThread->BlockingCall([&] {
             channel->SetRtpTransport(rtpTransport);
         });
-
-        auto payloadTypes = OutgoingVideoFormat::assignPayloadTypes(availableVideoFormats);
-        std::vector<cricket::Codec> codecs;
-        for (const auto &payloadType : payloadTypes) {
-            codecs.push_back(payloadType.videoCodec);
-            if (payloadType.rtxCodec) {
-                codecs.push_back(payloadType.rtxCodec.value());
-            }
-        }
 
         auto outgoingVideoDescription = std::make_unique<cricket::VideoContentDescription>();
         outgoingVideoDescription->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAudioLevelUri, 1));
