@@ -11,6 +11,7 @@ namespace ntgcalls {
     }
 
     void ThreadedReader::close() {
+        dataCallback = nullptr;
         exiting = true;
         const bool wasRunning = running;
         if (running) {
