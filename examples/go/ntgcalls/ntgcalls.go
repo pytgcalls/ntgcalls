@@ -400,7 +400,7 @@ func (ctx *Client) Calls() map[int64]MediaStatus {
 
 //goland:noinspection GoUnusedExportedFunction
 func Version() string {
-	var buffer [8]C.char
+	var buffer [20]C.char
 	size := C.int(len(buffer))
 	C.ntg_get_version(&buffer[0], size)
 	return C.GoString(&buffer[0])
