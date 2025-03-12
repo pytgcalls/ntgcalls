@@ -235,6 +235,10 @@ namespace wrtc {
     }
 
     void GroupConnection::RtpPacketReceived(const webrtc::RtpPacketReceived& packet) {
+        if (isPresentation) {
+            // TODO: Support for system audio
+            return;
+        }
         const std::string endpoint = std::to_string(packet.Ssrc());
         if (packet.HasExtension(webrtc::kRtpExtensionAudioLevel)) {
             webrtc::AudioLevel audioLevel;
