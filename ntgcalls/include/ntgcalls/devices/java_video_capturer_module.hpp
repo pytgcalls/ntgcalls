@@ -30,7 +30,7 @@ namespace ntgcalls {
 
         void onCapturerStopped() const;
 
-        void onFrame(const webrtc::VideoFrame& frame);
+        void onFrame(const webrtc::VideoFrame& frame) const;
 
         void open() override;
     };

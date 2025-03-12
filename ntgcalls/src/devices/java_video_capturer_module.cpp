@@ -90,7 +90,7 @@ namespace ntgcalls {
         (void) eofCallback();
     }
 
-    void JavaVideoCapturerModule::onFrame(const webrtc::VideoFrame& frame) {
+    void JavaVideoCapturerModule::onFrame(const webrtc::VideoFrame& frame) const {
         const auto yScaledSize = desc.width * desc.height;
         const auto uvScaledSize = yScaledSize / 4;
         auto yuv = bytes::make_unique_binary(yScaledSize + uvScaledSize * 2);
