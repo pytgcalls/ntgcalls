@@ -92,7 +92,7 @@ class JavaAudioDeviceModule {
         effects = null;
     }
 
-    @TargetApi(26)
+    @RequiresApi(Build.VERSION_CODES.O)
     private static AudioTrack createAudioTrackOnOreoOrHigher(int sampleRateInHz, int channelConfig, int bufferSizeInBytes) {
         return new AudioTrack.Builder()
                 .setAudioAttributes(getAudioAttributes())
@@ -128,7 +128,7 @@ class JavaAudioDeviceModule {
         return new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, sampleRate, channelConfig, DEFAULT_AUDIO_FORMAT, bufferSizeInBytes);
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
+    @RequiresApi(Build.VERSION_CODES.M)
     @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     private static AudioRecord createAudioRecordOnMOrHigher(int sampleRate, int channelConfig, int bufferSizeInBytes) {
         return new AudioRecord.Builder()
@@ -194,6 +194,10 @@ class JavaAudioDeviceModule {
             if (isCapture) {
                 if (audioRecord != null) {
                     audioRecord.stop();
+                }
+            } else {
+                if (audioTrack != null) {
+                    audioTrack.stop();
                 }
             }
         }
