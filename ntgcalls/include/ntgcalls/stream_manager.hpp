@@ -93,7 +93,7 @@ namespace ntgcalls {
         std::set<Device> externalReaders;
         mutable std::mutex syncMutex;
         std::condition_variable syncCV;
-        std::set<Device> syncReaders;
+        std::set<Device> syncReaders, cancelSyncReaders;
         std::shared_mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;

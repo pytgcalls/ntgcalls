@@ -46,15 +46,22 @@ namespace ntgcalls {
     OpenSLESDeviceModule::~OpenSLESDeviceModule() {
         std::lock_guard queueLock(queueMutex);
         running = false;
-        (*simpleBufferQueue)->Clear(simpleBufferQueue);
-        (*simpleBufferQueue)->RegisterCallback(simpleBufferQueue, nullptr, nullptr);
         if (isCapture) {
             (*recorder)->SetRecordState(recorder, SL_RECORDSTATE_STOPPED);
         } else {
             (*player)->SetPlayState(player, SL_PLAYSTATE_STOPPED);
-            outputMix.Reset();
         }
-        deviceObject.Reset();
+        if (simpleBufferQueue) {
+            (*simpleBufferQueue)->Clear(simpleBufferQueue);
+            (*simpleBufferQueue)->RegisterCallback(simpleBufferQueue, nullptr, nullptr);
+            deviceObject.Reset();
+            if (isCapture) {
+                recorder = nullptr;
+            } else {
+                player = nullptr;
+            }
+            simpleBufferQueue = nullptr;
+        }
         engine = nullptr;
     }
 

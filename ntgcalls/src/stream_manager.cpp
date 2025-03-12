@@ -280,10 +280,17 @@ namespace ntgcalls {
 
         if (desc) {
             auto sink = dynamic_cast<SinkType*>(streams[id].get());
-            if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device)) {
+            if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device) && desc.value().mediaSource == DescriptionType::MediaSource::External) {
                 if (mode == Capture) {
                     const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device;
+                    if (readers.contains(device)) {
+                        cancelSyncReaders.insert(device);
+                        syncCV.notify_all();
+                    }
                     readers.erase(device);
+                    if (cancelSyncReaders.contains(device)) {
+                        cancelSyncReaders.erase(device);
+                    }
                     if (desc.value().mediaSource == DescriptionType::MediaSource::External) {
                         externalReaders.insert(device);
                         syncReaders.insert(device);
@@ -302,9 +309,13 @@ namespace ntgcalls {
                             std::unique_lock lock(strong->syncMutex);
                             strong->syncReaders.erase(id.second);
                             strong->syncCV.notify_all();
-                            strong->syncCV.wait(lock, [strong]{
-                                return strong->syncReaders.empty();
+                            strong->syncCV.wait(lock, [strong, id] {
+                                return strong->syncReaders.empty() || strong->cancelSyncReaders.contains(id.second);
                             });
+                            if (strong->cancelSyncReaders.contains(id.second)) {
+                                strong->cancelSyncReaders.erase(id.second);
+                                return;
+                            }
                         }
                         if (strong->streams.contains(id)) {
                             if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
