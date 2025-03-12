@@ -169,25 +169,25 @@ ntg_log_level_enum parseCLevel(const ntgcalls::LogSink::Level level) {
     }
 }
 
-ntg_connection_state_enum parseCConnectionState(const ntgcalls::CallNetworkState::ConnectionState state) {
+ntg_connection_state_enum parseCConnectionState(const ntgcalls::NetworkInfo::ConnectionState state) {
     switch (state) {
-        case ntgcalls::CallNetworkState::ConnectionState::Connecting:
+        case ntgcalls::NetworkInfo::ConnectionState::Connecting:
             return NTG_STATE_CONNECTING;
-        case ntgcalls::CallNetworkState::ConnectionState::Connected:
+        case ntgcalls::NetworkInfo::ConnectionState::Connected:
             return NTG_STATE_CONNECTED;
-        case ntgcalls::CallNetworkState::ConnectionState::Timeout:
+        case ntgcalls::NetworkInfo::ConnectionState::Timeout:
             return NTG_STATE_TIMEOUT;
-        case ntgcalls::CallNetworkState::ConnectionState::Failed:
+        case ntgcalls::NetworkInfo::ConnectionState::Failed:
             return NTG_STATE_FAILED;
-        case ntgcalls::CallNetworkState::ConnectionState::Closed:
+        case ntgcalls::NetworkInfo::ConnectionState::Closed:
             return NTG_STATE_CLOSED;
     }
     return {};
 }
 
-ntg_call_network_state_struct parseCCallNetworkState(const ntgcalls::CallNetworkState state) {
+ntg_network_info_struct parseCNetworkInfo(const ntgcalls::NetworkInfo state) {
     return {
-        state.kind == ntgcalls::CallNetworkState::Kind::Normal? NTG_KIND_NORMAL : NTG_KIND_PRESENTATION,
+        state.kind == ntgcalls::NetworkInfo::Kind::Normal? NTG_KIND_NORMAL : NTG_KIND_PRESENTATION,
         parseCConnectionState(state.connectionState),
     };
 }
@@ -385,18 +385,6 @@ wrtc::FrameData parseFrameData(const ntg_frame_data_struct data) {
         data.height,
         data.width
     };
-}
-
-ntg_remote_source_state_enum parseCRemoteSourceState(const ntgcalls::RemoteSource::State state) {
-    switch (state) {
-    case ntgcalls::RemoteSource::State::Inactive:
-        return NTG_REMOTE_INACTIVE;
-    case ntgcalls::RemoteSource::State::Suspended:
-        return NTG_REMOTE_SUSPENDED;
-    case ntgcalls::RemoteSource::State::Active:
-        return NTG_REMOTE_ACTIVE;
-    }
-    return {};
 }
 
 std::vector<wrtc::SsrcGroup> parseSsrcGroups(ntg_ssrc_group_struct* ssrcGroups, const int size) {
@@ -652,13 +640,13 @@ int ntg_get_media_devices(ntg_media_devices_struct* buffer) {
     return 0;
 }
 
-int ntg_calls(const uintptr_t ptr, ntg_call_struct *buffer, const uint64_t size, ntg_async_struct future) {
+int ntg_calls(const uintptr_t ptr, ntg_call_info_struct *buffer, const uint64_t size, ntg_async_struct future) {
     PREPARE_ASYNC(calls)
     [future, buffer, size](const auto callsCpp) {
-        std::vector<ntg_call_struct> groupCalls;
+        std::vector<ntg_call_info_struct> groupCalls;
         groupCalls.reserve(callsCpp.size());
         for (const auto [chatId, status] : callsCpp) {
-            groupCalls.push_back(ntg_call_struct{
+            groupCalls.push_back(ntg_call_info_struct{
                 chatId,
                 parseCStatus(status.capture),
                 parseCStatus(status.playback)
@@ -734,8 +722,8 @@ int ntg_on_upgrade(const uintptr_t ptr, ntg_upgrade_callback callback, void* use
 
 int ntg_on_connection_change(const uintptr_t ptr, ntg_connection_callback callback, void* userData) {
     try {
-        getInstance(ptr)->onConnectionChange([ptr, callback, userData](const int64_t chatId, const ntgcalls::CallNetworkState state) {
-            callback(ptr, chatId, parseCCallNetworkState(state), userData);
+        getInstance(ptr)->onConnectionChange([ptr, callback, userData](const int64_t chatId, const ntgcalls::NetworkInfo state) {
+            callback(ptr, chatId, parseCNetworkInfo(state), userData);
         });
     } catch (ntgcalls::NullPointer&) {
         return NTG_ERROR_NULL_POINTER;
@@ -781,7 +769,7 @@ int ntg_on_remote_source_change(uintptr_t ptr, ntg_remote_source_callback callba
         getInstance(ptr)->onRemoteSourceChange([ptr, callback, userData](const int64_t chatId, const ntgcalls::RemoteSource state) {
             callback(ptr, chatId, {
                 state.ssrc,
-                static_cast<ntg_remote_source_state_enum>(state.state),
+                parseCStatus(state.state),
                 parseCStreamDevice(state.device),
             }, userData);
         });

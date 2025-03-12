@@ -33,7 +33,7 @@ namespace ntgcalls {
         std::unordered_map<int64_t, std::shared_ptr<CallInterface>> connections;
         wrtc::synchronized_callback<int64_t, StreamManager::Type, StreamManager::Device> onEof;
         wrtc::synchronized_callback<int64_t, MediaState> mediaStateCallback;
-        wrtc::synchronized_callback<int64_t, CallNetworkState> connectionChangeCallback;
+        wrtc::synchronized_callback<int64_t, NetworkInfo> connectionChangeCallback;
         wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
         wrtc::synchronized_callback<int64_t, RemoteSource> remoteSourceCallback;
         wrtc::synchronized_callback<int64_t, StreamManager::Mode, StreamManager::Device, std::vector<wrtc::Frame>> framesCallback;
@@ -114,7 +114,7 @@ namespace ntgcalls {
 
         void onStreamEnd(const std::function<void(int64_t, StreamManager::Type, StreamManager::Device)>& callback);
 
-        void onConnectionChange(const std::function<void(int64_t, CallNetworkState)>& callback);
+        void onConnectionChange(const std::function<void(int64_t, NetworkInfo)>& callback);
 
         void onFrames(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const std::vector<wrtc::Frame>&)>& callback);
 
@@ -126,7 +126,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) sendExternalFrame(int64_t chatId, StreamManager::Device device, const BYTES(bytes::binary) &data, wrtc::FrameData frameData);
 
-        ASYNC_RETURN(std::map<int64_t, StreamManager::MediaStatus>) calls();
+        ASYNC_RETURN(std::map<int64_t, StreamManager::CallInfo>) calls();
     };
 
 } // ntgcalls

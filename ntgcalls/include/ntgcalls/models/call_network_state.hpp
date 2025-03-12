@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
 
-    class CallNetworkState {
+    class NetworkInfo {
     public:
         enum class ConnectionState {
             Connecting = 1 << 0,
@@ -21,10 +21,10 @@ namespace ntgcalls {
             Presentation
         };
 
-        ConnectionState connectionState;
+        ConnectionState state;
         Kind kind;
 
-        CallNetworkState(ConnectionState connectionState, Kind kind);
+        NetworkInfo(ConnectionState connectionState, Kind kind);
     };
 
 } // ntgcalls

@@ -99,7 +99,7 @@ typedef enum{
 typedef struct {
     ntg_connection_kind_enum kind;
     ntg_connection_state_enum state;
-} ntg_call_network_state_struct;
+} ntg_network_info_struct;
 
 typedef struct {
     ntg_media_source_enum mediaSource;
@@ -132,7 +132,7 @@ typedef struct {
     int64_t chatId;
     ntg_stream_status_enum capture;
     ntg_stream_status_enum playback;
-} ntg_call_struct;
+} ntg_call_info_struct;
 
 typedef struct {
     bool muted;
@@ -178,15 +178,9 @@ typedef struct {
     uint16_t rotation;
 } ntg_frame_data_struct;
 
-typedef enum {
-    NTG_REMOTE_ACTIVE,
-    NTG_REMOTE_SUSPENDED,
-    NTG_REMOTE_INACTIVE
-} ntg_remote_source_state_enum;
-
 typedef struct {
     uint32_t ssrc;
-    ntg_remote_source_state_enum state;
+    ntg_stream_status_enum state;
     ntg_stream_device_enum device;
 } ntg_remote_source_struct;
 
@@ -232,7 +226,7 @@ typedef void (*ntg_stream_callback)(uintptr_t, int64_t, ntg_stream_type_enum, nt
 
 typedef void (*ntg_upgrade_callback)(uintptr_t, int64_t, ntg_media_state_struct, void*);
 
-typedef void (*ntg_connection_callback)(uintptr_t, int64_t, ntg_call_network_state_struct, void*);
+typedef void (*ntg_connection_callback)(uintptr_t, int64_t, ntg_network_info_struct, void*);
 
 typedef void (*ntg_signaling_callback)(uintptr_t, int64_t, uint8_t*, int, void*);
 
@@ -315,7 +309,7 @@ NTG_C_EXPORT int ntg_send_external_frame(uintptr_t ptr, int64_t chatID, ntg_stre
 
 NTG_C_EXPORT int ntg_get_media_devices(ntg_media_devices_struct *buffer);
 
-NTG_C_EXPORT int ntg_calls(uintptr_t ptr, ntg_call_struct *buffer, uint64_t size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_calls(uintptr_t ptr, ntg_call_info_struct *buffer, uint64_t size, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_calls_count(uintptr_t ptr, uint64_t* size, ntg_async_struct future);
 

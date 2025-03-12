@@ -53,14 +53,14 @@ namespace ntgcalls {
                 END_WORKER
             });
         }
-        connections[chatId]->onConnectionChange([this, chatId](const CallNetworkState &state) {
+        connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
             THREAD_SAFE
-            if (state.kind == CallNetworkState::Kind::Normal) {
-                switch (state.connectionState) {
-                    case CallNetworkState::ConnectionState::Closed:
-                    case CallNetworkState::ConnectionState::Failed:
-                    case CallNetworkState::ConnectionState::Timeout:
+            if (state.kind == NetworkInfo::Kind::Normal) {
+                switch (state.state) {
+                    case NetworkInfo::ConnectionState::Closed:
+                    case NetworkInfo::ConnectionState::Failed:
+                    case NetworkInfo::ConnectionState::Timeout:
                         remove(chatId);
                         break;
                     default:
@@ -215,7 +215,7 @@ namespace ntgcalls {
         mediaStateCallback = callback;
     }
 
-    void NTgCalls::onConnectionChange(const std::function<void(int64_t, CallNetworkState)>& callback) {
+    void NTgCalls::onConnectionChange(const std::function<void(int64_t, NetworkInfo)>& callback) {
        std::lock_guard lock(mutex);
        connectionChangeCallback = callback;
     }
@@ -265,11 +265,11 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(std::map<int64_t, StreamManager::MediaStatus>) NTgCalls::calls() {
+    ASYNC_RETURN(std::map<int64_t, StreamManager::CallInfo>) NTgCalls::calls() {
         SMART_ASYNC(this)
-        std::map<int64_t, StreamManager::MediaStatus> statusList;
+        std::map<int64_t, StreamManager::CallInfo> statusList;
         for (const auto& [fst, snd] : connections) {
-            statusList.emplace(fst, StreamManager::MediaStatus{
+            statusList.emplace(fst, StreamManager::CallInfo{
                 snd->status(StreamManager::Mode::Playback),
                 snd->status(StreamManager::Mode::Capture)
             });

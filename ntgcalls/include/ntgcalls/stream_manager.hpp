@@ -28,7 +28,7 @@ namespace ntgcalls {
             Idling,
         };
 
-        struct MediaStatus {
+        struct CallInfo {
             Status playback, capture;
         };
 

@@ -26,7 +26,7 @@ func main() {
 	client.OnStreamEnd(func(chatId int64, streamType ntgcalls.StreamType, streamDevice ntgcalls.StreamDevice) {
 		fmt.Println(chatId)
 	})
-	client.OnConnectionChange(func(chatId int64, state ntgcalls.CallNetworkState) {
+	client.OnConnectionChange(func(chatId int64, state ntgcalls.NetworkInfo) {
 		switch state.State {
 		case ntgcalls.Connecting:
 			fmt.Println("Connecting with chatId:", chatId)

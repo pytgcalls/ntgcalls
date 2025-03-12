@@ -61,7 +61,7 @@ namespace ntgcalls {
         streamManager->onStreamEnd(callback);
     }
 
-    void CallInterface::onConnectionChange(const std::function<void(CallNetworkState)>& callback) {
+    void CallInterface::onConnectionChange(const std::function<void(NetworkInfo)>& callback) {
         connectionChangeCallback = callback;
     }
 
@@ -96,9 +96,9 @@ namespace ntgcalls {
         }
     }
 
-    void CallInterface::setConnectionObserver(const std::shared_ptr<wrtc::NetworkInterface>& conn, CallNetworkState::Kind kind) {
+    void CallInterface::setConnectionObserver(const std::shared_ptr<wrtc::NetworkInterface>& conn, NetworkInfo::Kind kind) {
         RTC_LOG(LS_INFO) << "Connecting...";
-        (void) connectionChangeCallback({CallNetworkState::ConnectionState::Connecting, kind});
+        (void) connectionChangeCallback({NetworkInfo::ConnectionState::Connecting, kind});
         conn->onConnectionChange([this, kind, conn](const wrtc::ConnectionState state, bool wasConnected) {
             updateThread->PostTask([this, kind, conn, state, wasConnected] {
                 if (isExiting) return;
@@ -113,7 +113,7 @@ namespace ntgcalls {
                     if (!wasConnected && streamManager) {
                         streamManager->start();
                         RTC_LOG(LS_INFO) << "Stream started";
-                        (void) connectionChangeCallback({CallNetworkState::ConnectionState::Connected, kind});
+                        (void) connectionChangeCallback({NetworkInfo::ConnectionState::Connected, kind});
                     }
                     break;
                 case wrtc::ConnectionState::Disconnected:
@@ -124,10 +124,10 @@ namespace ntgcalls {
                     }
                     if (state == wrtc::ConnectionState::Failed) {
                         RTC_LOG(LS_ERROR) << "Connection failed";
-                        (void) connectionChangeCallback({CallNetworkState::ConnectionState::Failed, kind});
+                        (void) connectionChangeCallback({NetworkInfo::ConnectionState::Failed, kind});
                     } else {
                         RTC_LOG(LS_INFO) << "Connection closed";
-                        (void) connectionChangeCallback({CallNetworkState::ConnectionState::Closed, kind});
+                        (void) connectionChangeCallback({NetworkInfo::ConnectionState::Closed, kind});
                     }
                     break;
                 default:
@@ -139,21 +139,21 @@ namespace ntgcalls {
         networkThread->PostDelayedTask([this, kind, conn] {
             if (!conn->isConnected()) {
                 RTC_LOG(LS_ERROR) << "Connection timeout";
-                (void) connectionChangeCallback({CallNetworkState::ConnectionState::Timeout, kind});
+                (void) connectionChangeCallback({NetworkInfo::ConnectionState::Timeout, kind});
             }
         }, webrtc::TimeDelta::Seconds(20));
     }
 
-    RemoteSource::State CallInterface::parseVideoState(const signaling::MediaStateMessage::VideoState state) {
+    StreamManager::Status CallInterface::parseVideoState(const signaling::MediaStateMessage::VideoState state) {
         switch (state){
         case signaling::MediaStateMessage::VideoState::Active:
-            return RemoteSource::State::Active;
+            return StreamManager::Status::Active;
         case signaling::MediaStateMessage::VideoState::Inactive:
-            return RemoteSource::State::Inactive;
+            return StreamManager::Status::Idling;
         case signaling::MediaStateMessage::VideoState::Suspended:
-            return RemoteSource::State::Suspended;
+            return StreamManager::Status::Paused;
         }
-        return RemoteSource::State::Inactive;
+        return StreamManager::Status::Idling;
     }
 
     void CallInterface::initNetThread() {

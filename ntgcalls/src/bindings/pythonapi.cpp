@@ -74,22 +74,21 @@ PYBIND11_MODULE(ntgcalls, m) {
         .value("IDLING", ntgcalls::StreamManager::Status::Idling)
         .export_values();
 
-    py::class_<ntgcalls::CallNetworkState>(m, "CallNetworkState")
-        .def_readonly("connection_state", &ntgcalls::CallNetworkState::connectionState)
-        .def_readonly("kind", &ntgcalls::CallNetworkState::kind);
+    py::class_<ntgcalls::NetworkInfo>(m, "NetworkInfo")
+        .def_readonly("state", &ntgcalls::NetworkInfo::state)
+        .def_readonly("kind", &ntgcalls::NetworkInfo::kind);
 
-
-    py::enum_<ntgcalls::CallNetworkState::ConnectionState>(m, "ConnectionState")
-        .value("CONNECTING", ntgcalls::CallNetworkState::ConnectionState::Connecting)
-        .value("CONNECTED", ntgcalls::CallNetworkState::ConnectionState::Connected)
-        .value("FAILED", ntgcalls::CallNetworkState::ConnectionState::Failed)
-        .value("TIMEOUT", ntgcalls::CallNetworkState::ConnectionState::Timeout)
-        .value("CLOSED", ntgcalls::CallNetworkState::ConnectionState::Closed)
+    py::enum_<ntgcalls::NetworkInfo::ConnectionState>(m, "ConnectionState")
+        .value("CONNECTING", ntgcalls::NetworkInfo::ConnectionState::Connecting)
+        .value("CONNECTED", ntgcalls::NetworkInfo::ConnectionState::Connected)
+        .value("FAILED", ntgcalls::NetworkInfo::ConnectionState::Failed)
+        .value("TIMEOUT", ntgcalls::NetworkInfo::ConnectionState::Timeout)
+        .value("CLOSED", ntgcalls::NetworkInfo::ConnectionState::Closed)
         .export_values();
 
-    py::enum_<ntgcalls::CallNetworkState::Kind>(m, "ConnectionKind")
-        .value("NORMAL", ntgcalls::CallNetworkState::Kind::Normal)
-        .value("PRESENTATION", ntgcalls::CallNetworkState::Kind::Presentation)
+    py::enum_<ntgcalls::NetworkInfo::Kind>(m, "ConnectionKind")
+        .value("NORMAL", ntgcalls::NetworkInfo::Kind::Normal)
+        .value("PRESENTATION", ntgcalls::NetworkInfo::Kind::Presentation)
         .export_values();
 
     py::enum_<ntgcalls::BaseMediaDescription::MediaSource>(m, "MediaSource")
@@ -99,19 +98,7 @@ PYBIND11_MODULE(ntgcalls, m) {
         .value("DEVICE", ntgcalls::BaseMediaDescription::MediaSource::Device)
         .value("DESKTOP", ntgcalls::BaseMediaDescription::MediaSource::Desktop)
         .value("EXTERNAL", ntgcalls::BaseMediaDescription::MediaSource::External)
-        .export_values()
-        .def("__and__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const ntgcalls::BaseMediaDescription::MediaSource& rhs) {
-            return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs & rhs);
-        })
-        .def("__and__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const int rhs) {
-            return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs & rhs);
-        })
-        .def("__or__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const ntgcalls::BaseMediaDescription::MediaSource& rhs) {
-            return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs | rhs);
-        })
-        .def("__or__",[](const ntgcalls::BaseMediaDescription::MediaSource& lhs, const int rhs) {
-            return static_cast<ntgcalls::BaseMediaDescription::MediaSource>(lhs | rhs);
-        });
+        .export_values();
 
     py::class_<ntgcalls::MediaState>(m, "MediaState")
         .def_readonly("muted", &ntgcalls::MediaState::muted)
@@ -119,9 +106,9 @@ PYBIND11_MODULE(ntgcalls, m) {
         .def_readonly("video_paused", &ntgcalls::MediaState::videoPaused)
         .def_readonly("presentation_paused", &ntgcalls::MediaState::presentationPaused);
 
-    py::class_<ntgcalls::StreamManager::MediaStatus>(m, "MediaStatus")
-        .def_readonly("playback", &ntgcalls::StreamManager::MediaStatus::playback)
-        .def_readonly("capture", &ntgcalls::StreamManager::MediaStatus::capture);
+    py::class_<ntgcalls::StreamManager::CallInfo>(m, "CallInfo")
+        .def_readonly("playback", &ntgcalls::StreamManager::CallInfo::playback)
+        .def_readonly("capture", &ntgcalls::StreamManager::CallInfo::capture);
 
     py::class_<ntgcalls::DeviceInfo>(m, "DeviceInfo")
         .def_readonly("name", &ntgcalls::DeviceInfo::name)
@@ -215,7 +202,7 @@ PYBIND11_MODULE(ntgcalls, m) {
             const uint16_t height
         ) {
             return wrtc::FrameData(absoluteCaptureTimestampMs, static_cast<webrtc::VideoRotation>(rotation), width, height);
-        })
+        }), py::arg("absolute_capture_timestamp_ms"), py::arg("rotation"), py::arg("width"), py::arg("height")
     );
     frameDataWrapper.def_property("rotation", [](const wrtc::FrameData& self) {
         return static_cast<int>(self.rotation);
@@ -231,12 +218,6 @@ PYBIND11_MODULE(ntgcalls, m) {
     remoteSource.def_readonly("ssrc", &ntgcalls::RemoteSource::ssrc);
     remoteSource.def_readonly("state", &ntgcalls::RemoteSource::state);
     remoteSource.def_readonly("device", &ntgcalls::RemoteSource::device);
-
-    py::enum_<ntgcalls::RemoteSource::State>(m, "SourceState")
-       .value("INACTIVE", ntgcalls::RemoteSource::State::Inactive)
-       .value("SUSPENDED", ntgcalls::RemoteSource::State::Suspended)
-       .value("ACTIVE", ntgcalls::RemoteSource::State::Active)
-       .export_values();
 
     py::class_<wrtc::SsrcGroup> ssrcGroupWrapper(m, "SsrcGroup");
     ssrcGroupWrapper.def(py::init<std::string, std::vector<uint32_t>>(), py::arg("semantics"), py::arg("ssrcs"));

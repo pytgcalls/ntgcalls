@@ -8,14 +8,8 @@
 namespace ntgcalls {
 
     struct RemoteSource {
-        enum class State {
-            Inactive,
-            Suspended,
-            Active
-        };
-
         uint32_t ssrc = 0;
-        State state = State::Inactive;
+        StreamManager::Status state = StreamManager::Status::Idling;
         StreamManager::Device device{};
     };
 

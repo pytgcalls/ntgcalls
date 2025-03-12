@@ -94,7 +94,7 @@ namespace ntgcalls {
         }
         setConnectionObserver(
             conn,
-            isPresentation ? CallNetworkState::Kind::Presentation : CallNetworkState::Kind::Normal
+            isPresentation ? NetworkInfo::Kind::Presentation : NetworkInfo::Kind::Normal
         );
     }
 

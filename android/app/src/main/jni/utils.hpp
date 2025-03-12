@@ -73,17 +73,17 @@ webrtc::ScopedJavaLocalRef<jobject> parseJProtocol(JNIEnv *env, const ntgcalls::
 
 webrtc::ScopedJavaLocalRef<jobject> parseJStreamType(JNIEnv *env, ntgcalls::StreamManager::Type type);
 
-webrtc::ScopedJavaLocalRef<jobject> parseJCallNetworkState(JNIEnv *env, ntgcalls::CallNetworkState state);
+webrtc::ScopedJavaLocalRef<jobject> parseJNetworkInfo(JNIEnv *env, ntgcalls::NetworkInfo state);
 
-webrtc::ScopedJavaLocalRef<jobject> parseJConnectionState(JNIEnv *env, ntgcalls::CallNetworkState::ConnectionState state);
+webrtc::ScopedJavaLocalRef<jobject> parseJConnectionState(JNIEnv *env, ntgcalls::NetworkInfo::ConnectionState state);
 
-webrtc::ScopedJavaLocalRef<jobject> parseJCallNetworkStateKind(JNIEnv *env, ntgcalls::CallNetworkState::Kind kind);
+webrtc::ScopedJavaLocalRef<jobject> parseJNetworkInfoKind(JNIEnv *env, ntgcalls::NetworkInfo::Kind kind);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJStreamStatus(JNIEnv *env, ntgcalls::StreamManager::Status status);
 
-webrtc::ScopedJavaLocalRef<jobject> parseJMediaStatus(JNIEnv *env, const ntgcalls::StreamManager::MediaStatus& status);
+webrtc::ScopedJavaLocalRef<jobject> parseJCallInfo(JNIEnv *env, const ntgcalls::StreamManager::CallInfo& status);
 
-webrtc::ScopedJavaLocalRef<jobject> parseJMediaStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::StreamManager::MediaStatus>& calls);
+webrtc::ScopedJavaLocalRef<jobject> parseJCallInfoMap(JNIEnv *env, const std::map<int64_t, ntgcalls::StreamManager::CallInfo>& calls);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJMediaDevices(JNIEnv *env, const ntgcalls::MediaDevices& devices);
 

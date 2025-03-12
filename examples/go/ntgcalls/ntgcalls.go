@@ -3,7 +3,7 @@ package ntgcalls
 //#include "ntgcalls.h"
 //extern void handleStream(uintptr_t ptr, int64_t chatID, ntg_stream_type_enum streamType, ntg_stream_device_enum streamDevice, void*);
 //extern void handleUpgrade(uintptr_t ptr, int64_t chatID, ntg_media_state_struct state, void*);
-//extern void handleConnectionChange(uintptr_t ptr, int64_t chatID, ntg_call_network_state_struct callNetworkState, void*);
+//extern void handleConnectionChange(uintptr_t ptr, int64_t chatID, ntg_network_info_struct networkInfo, void*);
 //extern void handleSignal(uintptr_t ptr, int64_t chatID, uint8_t*, int, void*);
 //extern void handleFrames(uintptr_t ptr, int64_t chatID, ntg_stream_mode_enum streamMode, ntg_stream_device_enum streamDevice, ntg_frame_struct* frames, int size, void*);
 //extern void handleRemoteSourceChange(uintptr_t ptr, int64_t chatID, ntg_remote_source_struct remoteSource, void*);
@@ -77,17 +77,17 @@ func handleSignal(ptr C.uintptr_t, chatID C.int64_t, data *C.uint8_t, size C.int
 }
 
 //export handleConnectionChange
-func handleConnectionChange(ptr C.uintptr_t, chatID C.int64_t, callNetworkState C.ntg_call_network_state_struct, _ unsafe.Pointer) {
+func handleConnectionChange(ptr C.uintptr_t, chatID C.int64_t, networkInfo C.ntg_network_info_struct, _ unsafe.Pointer) {
 	goChatID := int64(chatID)
 	goPtr := uintptr(ptr)
-	var goCallState CallNetworkState
-	switch callNetworkState.kind {
+	var goCallState NetworkInfo
+	switch networkInfo.kind {
 	case C.NTG_KIND_NORMAL:
 		goCallState.Kind = NormalConnection
 	case C.NTG_KIND_PRESENTATION:
 		goCallState.Kind = PresentationConnection
 	}
-	goCallState.State = parseConnectionState(callNetworkState.state)
+	goCallState.State = parseConnectionState(networkInfo.state)
 	if handlerConnectionChange[goPtr] != nil {
 		for _, x0 := range handlerConnectionChange[goPtr] {
 			go x0(goChatID, goCallState)
@@ -375,8 +375,8 @@ func (ctx *Client) EnableH264Encoder(enable bool) {
 	C.ntg_enable_h264_encoder(C.bool(enable))
 }
 
-func (ctx *Client) Calls() map[int64]MediaStatus {
-	mapReturn := make(map[int64]MediaStatus)
+func (ctx *Client) Calls() map[int64]CallInfo {
+	mapReturn := make(map[int64]CallInfo)
 
 	f := CreateFuture()
 	var callSize C.uint64_t
@@ -386,11 +386,11 @@ func (ctx *Client) Calls() map[int64]MediaStatus {
 	if callSize == 0 {
 		return mapReturn
 	}
-	buffer := make([]C.ntg_call_struct, callSize)
+	buffer := make([]C.ntg_call_info_struct, callSize)
 	C.ntg_calls(C.uintptr_t(ctx.ptr), &buffer[0], callSize, f.ParseToC())
 	f.wait()
 	for _, call := range buffer {
-		mapReturn[int64(call.chatId)] = MediaStatus{
+		mapReturn[int64(call.chatId)] = CallInfo{
 			Playback: parseStreamStatus(call.playback),
 			Capture:  parseStreamStatus(call.capture),
 		}

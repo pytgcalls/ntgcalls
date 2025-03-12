@@ -41,14 +41,14 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_init(JNIEnv *env, jobje
         CAPTURE_JAVA_EXCEPTION
     });
 
-    instance->onConnectionChange([instancePtr](int64_t chatId, ntgcalls::CallNetworkState state) {
+    instance->onConnectionChange([instancePtr](int64_t chatId, ntgcalls::NetworkInfo state) {
         std::lock_guard lock(callbacksMutex);
         auto callback = callbacksInstances[instancePtr].onConnectionChangeCallback;
         if (!callback) {
             return;
         }
         auto env = (JNIEnv*) wrtc::GetJNIEnv();
-        auto networkState = parseJCallNetworkState(env, state);
+        auto networkState = parseJNetworkInfo(env, state);
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), networkState.obj());
         CAPTURE_JAVA_EXCEPTION
     });
@@ -268,7 +268,7 @@ REGISTER_CALLBACK(setUpgradeCallback, onUpgrade, "(JLio/github/pytgcalls/media/M
 
 REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLio/github/pytgcalls/media/StreamType;)V")
 
-REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLio/github/pytgcalls/CallNetworkState;)V")
+REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLio/github/pytgcalls/NetworkInfo;)V")
 
 REGISTER_CALLBACK(setSignalingDataCallback, onSignalingData, "(J[B)V")
 
@@ -316,7 +316,7 @@ JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_getMediaDevices(JNIE
 extern "C"
 JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_calls(JNIEnv *env, jobject thiz) {
     auto instance = getInstance(env, thiz);
-    return parseJMediaStatusMap(env, instance->calls()).Release();
+    return parseJCallInfoMap(env, instance->calls()).Release();
 }
 
 extern "C"

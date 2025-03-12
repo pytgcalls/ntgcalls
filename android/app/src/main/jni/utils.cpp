@@ -317,46 +317,46 @@ webrtc::ScopedJavaLocalRef<jobject> parseJStreamType(JNIEnv *env, ntgcalls::Stre
     return nullptr;
 }
 
-webrtc::ScopedJavaLocalRef<jobject> parseJConnectionState(JNIEnv *env, ntgcalls::CallNetworkState::ConnectionState state) {
-    const webrtc::ScopedJavaLocalRef<jclass> connectionStateClass = webrtc::GetClass(env, "io/github/pytgcalls/CallNetworkState$State");
-    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTING", "Lio/github/pytgcalls/CallNetworkState$State;");
-    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTED", "Lio/github/pytgcalls/CallNetworkState$State;");
-    jfieldID failedField = env->GetStaticFieldID(connectionStateClass.obj(), "FAILED", "Lio/github/pytgcalls/CallNetworkState$State;");
-    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass.obj(), "TIMEOUT", "Lio/github/pytgcalls/CallNetworkState$State;");
-    jfieldID closedField = env->GetStaticFieldID(connectionStateClass.obj(), "CLOSED", "Lio/github/pytgcalls/CallNetworkState$State;");
+webrtc::ScopedJavaLocalRef<jobject> parseJConnectionState(JNIEnv *env, ntgcalls::NetworkInfo::ConnectionState state) {
+    const webrtc::ScopedJavaLocalRef<jclass> connectionStateClass = webrtc::GetClass(env, "io/github/pytgcalls/NetworkInfo$State");
+    jfieldID connectingField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTING", "Lio/github/pytgcalls/NetworkInfo$State;");
+    jfieldID connectedField = env->GetStaticFieldID(connectionStateClass.obj(), "CONNECTED", "Lio/github/pytgcalls/NetworkInfo$State;");
+    jfieldID failedField = env->GetStaticFieldID(connectionStateClass.obj(), "FAILED", "Lio/github/pytgcalls/NetworkInfo$State;");
+    jfieldID timeoutField = env->GetStaticFieldID(connectionStateClass.obj(), "TIMEOUT", "Lio/github/pytgcalls/NetworkInfo$State;");
+    jfieldID closedField = env->GetStaticFieldID(connectionStateClass.obj(), "CLOSED", "Lio/github/pytgcalls/NetworkInfo$State;");
 
     switch (state) {
-        case ntgcalls::CallNetworkState::ConnectionState::Connecting:
+        case ntgcalls::NetworkInfo::ConnectionState::Connecting:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionStateClass.obj(), connectingField)};
-        case ntgcalls::CallNetworkState::ConnectionState::Connected:
+        case ntgcalls::NetworkInfo::ConnectionState::Connected:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionStateClass.obj(), connectedField)};
-        case ntgcalls::CallNetworkState::ConnectionState::Failed:
+        case ntgcalls::NetworkInfo::ConnectionState::Failed:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionStateClass.obj(), failedField)};
-        case ntgcalls::CallNetworkState::ConnectionState::Timeout:
+        case ntgcalls::NetworkInfo::ConnectionState::Timeout:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionStateClass.obj(), timeoutField)};
-        case ntgcalls::CallNetworkState::ConnectionState::Closed:
+        case ntgcalls::NetworkInfo::ConnectionState::Closed:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionStateClass.obj(), closedField)};
     }
     return nullptr;
 }
 
-webrtc::ScopedJavaLocalRef<jobject> parseJCallNetworkState(JNIEnv *env, ntgcalls::CallNetworkState state) {
-    const webrtc::ScopedJavaLocalRef<jclass> callNetworkStateClass = webrtc::GetClass(env, "io/github/pytgcalls/CallNetworkState");
-    jmethodID constructor = env->GetMethodID(callNetworkStateClass.obj(), "<init>", "(Lio/github/pytgcalls/CallNetworkState$Kind;Lio/github/pytgcalls/CallNetworkState$State;)V");
-    auto kind = parseJCallNetworkStateKind(env, state.kind);
+webrtc::ScopedJavaLocalRef<jobject> parseJNetworkInfo(JNIEnv *env, ntgcalls::NetworkInfo state) {
+    const webrtc::ScopedJavaLocalRef<jclass> networkInfoClass = webrtc::GetClass(env, "io/github/pytgcalls/NetworkInfo");
+    jmethodID constructor = env->GetMethodID(networkInfoClass.obj(), "<init>", "(Lio/github/pytgcalls/NetworkInfo$Kind;Lio/github/pytgcalls/NetworkInfo$State;)V");
+    auto kind = parseJNetworkInfoKind(env, state.kind);
     auto connectionState = parseJConnectionState(env, state.connectionState);
-    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(callNetworkStateClass.obj(), constructor, kind.obj(), connectionState.obj())};
+    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(networkInfoClass.obj(), constructor, kind.obj(), connectionState.obj())};
 }
 
-webrtc::ScopedJavaLocalRef<jobject> parseJCallNetworkStateKind(JNIEnv *env, ntgcalls::CallNetworkState::Kind kind) {
-    const webrtc::ScopedJavaLocalRef<jclass> kindClass = webrtc::GetClass(env, "io/github/pytgcalls/CallNetworkState$Kind");
-    jfieldID normalField = env->GetStaticFieldID(kindClass.obj(), "NORMAL", "Lio/github/pytgcalls/CallNetworkState$Kind;");
-    jfieldID presentationField = env->GetStaticFieldID(kindClass.obj(), "PRESENTATION", "Lio/github/pytgcalls/CallNetworkState$Kind;");
+webrtc::ScopedJavaLocalRef<jobject> parseJNetworkInfoKind(JNIEnv *env, ntgcalls::NetworkInfo::Kind kind) {
+    const webrtc::ScopedJavaLocalRef<jclass> kindClass = webrtc::GetClass(env, "io/github/pytgcalls/NetworkInfo$Kind");
+    jfieldID normalField = env->GetStaticFieldID(kindClass.obj(), "NORMAL", "Lio/github/pytgcalls/NetworkInfo$Kind;");
+    jfieldID presentationField = env->GetStaticFieldID(kindClass.obj(), "PRESENTATION", "Lio/github/pytgcalls/NetworkInfo$Kind;");
 
     switch (kind) {
-        case ntgcalls::CallNetworkState::Kind::Normal:
+        case ntgcalls::NetworkInfo::Kind::Normal:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(kindClass.obj(), normalField)};
-        case ntgcalls::CallNetworkState::Kind::Presentation:
+        case ntgcalls::NetworkInfo::Kind::Presentation:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(kindClass.obj(), presentationField)};
     }
     return nullptr;
@@ -379,16 +379,16 @@ webrtc::ScopedJavaLocalRef<jobject> parseJStreamStatus(JNIEnv *env, ntgcalls::St
     return nullptr;
 }
 
-webrtc::ScopedJavaLocalRef<jobject> parseJMediaStatus(JNIEnv *env, const ntgcalls::StreamManager::MediaStatus &status) {
-    const webrtc::ScopedJavaLocalRef<jclass> mediaStatusClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaStatus");
+webrtc::ScopedJavaLocalRef<jobject> parseJCallInfo(JNIEnv *env, const ntgcalls::StreamManager::CallInfo &status) {
+    const webrtc::ScopedJavaLocalRef<jclass> callInfoClass = webrtc::GetClass(env, "io/github/pytgcalls/media/CallInfo");
 
-    jmethodID constructor = env->GetMethodID(mediaStatusClass.obj(), "<init>", "(Lio/github/pytgcalls/media/StreamStatus;Lio/github/pytgcalls/media/StreamStatus;)V");
+    jmethodID constructor = env->GetMethodID(callInfoClass.obj(), "<init>", "(Lio/github/pytgcalls/media/StreamStatus;Lio/github/pytgcalls/media/StreamStatus;)V");
     auto capture = parseJStreamStatus(env, status.capture);
     auto playback = parseJStreamStatus(env, status.playback);
-    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(mediaStatusClass.obj(), constructor, capture.obj(), playback.obj())};
+    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(callInfoClass.obj(), constructor, capture.obj(), playback.obj())};
 }
 
-webrtc::ScopedJavaLocalRef<jobject> parseJMediaStatusMap(JNIEnv *env, const std::map<int64_t, ntgcalls::StreamManager::MediaStatus> &calls) {
+webrtc::ScopedJavaLocalRef<jobject> parseJCallInfoMap(JNIEnv *env, const std::map<int64_t, ntgcalls::StreamManager::CallInfo> &calls) {
     const webrtc::ScopedJavaLocalRef<jclass> mapClass = webrtc::GetClass(env, "java/util/HashMap");
     jmethodID mapConstructor = env->GetMethodID(mapClass.obj(), "<init>", "()V");
     webrtc::ScopedJavaLocalRef<jobject> hashMap{env, env->NewObject(mapClass.obj(), mapConstructor)};
@@ -398,7 +398,7 @@ webrtc::ScopedJavaLocalRef<jobject> parseJMediaStatusMap(JNIEnv *env, const std:
     jmethodID longConstructor = env->GetMethodID(longClass.obj(), "<init>", "(J)V");
     for (auto const& [key, val] : calls) {
         webrtc::ScopedJavaLocalRef<jobject> longKey{env, env->NewObject(longClass.obj(), longConstructor, static_cast<jlong>(key))};
-        auto status = parseJMediaStatus(env, val);
+        auto status = parseJCallInfo(env, val);
         env->CallObjectMethod(hashMap.obj(), putMethod, longKey.obj(), status.obj());
     }
     return hashMap;
@@ -526,20 +526,9 @@ webrtc::ScopedJavaLocalRef<jobject> parseJFrameData(JNIEnv *env, const wrtc::Fra
 
 webrtc::ScopedJavaLocalRef<jobject> parseJRemoteSource(JNIEnv *env, const ntgcalls::RemoteSource& source) {
     const webrtc::ScopedJavaLocalRef<jclass> remoteSourceClass = webrtc::GetClass(env,"io/github/pytgcalls/media/RemoteSource");
-    jmethodID constructor = env->GetMethodID(remoteSourceClass.obj(), "<init>", "(ILio/github/pytgcalls/media/SourceState;Lio/github/pytgcalls/media/StreamDevice;)V");
-    const webrtc::ScopedJavaLocalRef<jclass> sourceStateClass = webrtc::GetClass(env, "io/github/pytgcalls/media/SourceState");
-    webrtc::ScopedJavaLocalRef<jobject> state;
-    switch (source.state) {
-        case ntgcalls::RemoteSource::State::Active:
-            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "ACTIVE", "Lio/github/pytgcalls/media/SourceState;"))};
-            break;
-        case ntgcalls::RemoteSource::State::Suspended:
-            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "SUSPENDED", "Lio/github/pytgcalls/media/SourceState;"))};
-            break;
-        case ntgcalls::RemoteSource::State::Inactive:
-            state = webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(sourceStateClass.obj(), env->GetStaticFieldID(sourceStateClass.obj(), "INACTIVE", "Lio/github/pytgcalls/media/SourceState;"))};
-            break;
-    }
+    jmethodID constructor = env->GetMethodID(remoteSourceClass.obj(), "<init>", "(ILio/github/pytgcalls/media/StreamStatus;Lio/github/pytgcalls/media/StreamDevice;)V");
+    const webrtc::ScopedJavaLocalRef<jclass> sourceStateClass = webrtc::GetClass(env, "io/github/pytgcalls/media/StreamStatus");
+    webrtc::ScopedJavaLocalRef<jobject> state = parseJStreamStatus(env, source.state);
     auto device = parseJDevice(env, source.device);
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(remoteSourceClass.obj(), constructor, source.ssrc, state.obj(), device.obj())};
 }

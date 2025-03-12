@@ -5,5 +5,5 @@
 #include <ntgcalls/models/call_network_state.hpp>
 
 namespace ntgcalls {
-    CallNetworkState::CallNetworkState(const ConnectionState connectionState, const Kind kind) : connectionState(connectionState), kind(kind) {}
+    NetworkInfo::NetworkInfo(const ConnectionState connectionState, const Kind kind) : state(connectionState), kind(kind) {}
 } // ntgcalls

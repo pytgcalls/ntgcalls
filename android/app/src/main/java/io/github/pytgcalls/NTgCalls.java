@@ -8,7 +8,7 @@ import io.github.pytgcalls.media.FrameData;
 import io.github.pytgcalls.media.MediaDescription;
 import io.github.pytgcalls.media.MediaDevices;
 import io.github.pytgcalls.media.MediaState;
-import io.github.pytgcalls.media.MediaStatus;
+import io.github.pytgcalls.media.CallInfo;
 import io.github.pytgcalls.media.SsrcGroup;
 import io.github.pytgcalls.media.StreamDevice;
 import io.github.pytgcalls.media.StreamMode;
@@ -121,5 +121,5 @@ public class NTgCalls {
 
     public native void removeIncomingVideo(long chatId, String endpoint);
 
-    public native Map<Long, MediaStatus> calls();
+    public native Map<Long, CallInfo> calls();
 }

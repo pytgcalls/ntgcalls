@@ -310,7 +310,7 @@ namespace ntgcalls {
                 const auto message = signaling::MediaStateMessage::deserialize(buffer);
                 const auto cameraState = parseVideoState(message->videoState);
                 const auto screenState = parseVideoState(message->screencastState);
-                const auto micState = message->isMuted ? RemoteSource::State::Inactive : RemoteSource::State::Active;
+                const auto micState = message->isMuted ? StreamManager::Status::Idling : StreamManager::Status::Active;
                 if (lastCameraState != cameraState) {
                     lastCameraState = cameraState;
                     (void) remoteSourceCallback({0, cameraState, StreamManager::Device::Camera});

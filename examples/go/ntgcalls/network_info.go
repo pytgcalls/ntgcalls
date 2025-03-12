@@ -1,6 +1,6 @@
 package ntgcalls
 
-type CallNetworkState struct {
+type NetworkInfo struct {
 	Kind  ConnectionKind
 	State ConnectionState
 }

@@ -1,9 +1,9 @@
 package io.github.pytgcalls.media;
 
-public class MediaStatus {
+public class CallInfo {
     public final StreamStatus playback, capture;
 
-    public MediaStatus(StreamStatus playback, StreamStatus capture) {
+    public CallInfo(StreamStatus playback, StreamStatus capture) {
         this.playback = playback;
         this.capture = capture;
     }

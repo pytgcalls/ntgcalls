@@ -1,5 +1,5 @@
 package ntgcalls
 
-type MediaStatus struct {
+type CallInfo struct {
 	Playback, Capture StreamStatus
 }
