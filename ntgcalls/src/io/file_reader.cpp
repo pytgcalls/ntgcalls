@@ -15,7 +15,6 @@ namespace ntgcalls {
 
     FileReader::~FileReader() {
         close();
-        RTC_LOG(LS_VERBOSE) << "ThreadedReader closed";
         if (source.is_open()) {
             source.close();
         }

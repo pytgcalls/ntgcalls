@@ -11,26 +11,17 @@ namespace ntgcalls {
     }
 
     CallInterface::~CallInterface() {
-        // TODO: Fixed deadlock?
-        RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
         isExiting = true;
         updateThread->BlockingCall([this] {
-            RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
             connectionChangeCallback = nullptr;
-            RTC_LOG(LS_VERBOSE) << "Removing stream sources";
             streamManager = nullptr;
             if (connection) {
-                RTC_LOG(LS_VERBOSE) << "Removing connection listener";
                 connection->onConnectionChange(nullptr);
-                RTC_LOG(LS_VERBOSE) << "Closing connection";
                 connection->close();
-                RTC_LOG(LS_VERBOSE) << "Connection closed";
                 connection = nullptr;
-                RTC_LOG(LS_VERBOSE) << "Connection destroyed";
             }
             updateThread = nullptr;
             cancelNetworkListener();
-            RTC_LOG(LS_VERBOSE) << "CallInterface destroyed";
         });
     }
 

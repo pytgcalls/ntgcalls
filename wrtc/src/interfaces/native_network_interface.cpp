@@ -381,24 +381,18 @@ namespace wrtc {
     }
 
     void NativeNetworkInterface::close() {
-        RTC_LOG(LS_INFO) << "Closing native network interface";
         std::weak_ptr weak(shared_from_this());
         workerThread()->BlockingCall([weak] {
-            RTC_LOG(LS_INFO) << "Acquiring weak pointer";
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            RTC_LOG(LS_INFO) << "Clearing audio and video channels";
             strong->audioChannel = nullptr;
             strong->videoChannel = nullptr;
-            RTC_LOG(LS_INFO) << "Clearing incoming audio and video channels";
             strong->incomingAudioChannels.clear();
             strong->incomingVideoChannels.clear();
         });
-        RTC_LOG(LS_INFO) << "Clearing audio channel manager";
         channelManager = nullptr;
-        RTC_LOG(LS_INFO) << "Clearing call";
         if (factory) {
             workerThread()->BlockingCall([weak] {
                 const auto strong = weak.lock();
@@ -431,13 +425,9 @@ namespace wrtc {
                 strong->transportChannel = nullptr;
                 strong->portAllocator = nullptr;
             });
-            RTC_LOG(LS_INFO) << "Cleared Transport Channel";
             signalingThread()->BlockingCall([] {});
-            RTC_LOG(LS_INFO) << "Cleared Signaling Thread";
         }
-        RTC_LOG(LS_INFO) << "Destroying network interface";
         NetworkInterface::close();
-        RTC_LOG(LS_INFO) << "Destroyed network interface";
     }
 
     void NativeNetworkInterface::addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) {
