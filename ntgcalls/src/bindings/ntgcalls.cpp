@@ -188,7 +188,7 @@ ntg_connection_state_enum parseCConnectionState(const ntgcalls::NetworkInfo::Con
 ntg_network_info_struct parseCNetworkInfo(const ntgcalls::NetworkInfo state) {
     return {
         state.kind == ntgcalls::NetworkInfo::Kind::Normal? NTG_KIND_NORMAL : NTG_KIND_PRESENTATION,
-        parseCConnectionState(state.connectionState),
+        parseCConnectionState(state.state),
     };
 }
 

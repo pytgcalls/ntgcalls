@@ -344,7 +344,7 @@ webrtc::ScopedJavaLocalRef<jobject> parseJNetworkInfo(JNIEnv *env, ntgcalls::Net
     const webrtc::ScopedJavaLocalRef<jclass> networkInfoClass = webrtc::GetClass(env, "io/github/pytgcalls/NetworkInfo");
     jmethodID constructor = env->GetMethodID(networkInfoClass.obj(), "<init>", "(Lio/github/pytgcalls/NetworkInfo$Kind;Lio/github/pytgcalls/NetworkInfo$State;)V");
     auto kind = parseJNetworkInfoKind(env, state.kind);
-    auto connectionState = parseJConnectionState(env, state.connectionState);
+    auto connectionState = parseJConnectionState(env, state.state);
     return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(networkInfoClass.obj(), constructor, kind.obj(), connectionState.obj())};
 }
 
