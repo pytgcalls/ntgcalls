@@ -211,15 +211,27 @@ namespace wrtc {
             }
         }
 
-        pendingContent.clear();
+        std::unordered_set<uint32_t> remoteChannels;
+        for (const auto &content : coordinatedState->incomingContents) {
+            remoteChannels.insert(content.ssrc);
+        }
+        auto removeChannel = [&](auto &channels) {
+            std::erase_if(channels, [&](const auto &entry) {
+                if (const uint32_t ssrc = entry.second->ssrc(); !remoteChannels.contains(ssrc)) {
+                    pendingContent.erase(entry.first);
+                    return true;
+                }
+                return false;
+            });
+        };
+        removeChannel(incomingAudioChannels);
+        removeChannel(incomingVideoChannels);
         for (const auto &content : coordinatedState->incomingContents) {
             switch (content.type) {
             case MediaContent::Type::Audio:
-                incomingAudioChannels.clear();
                 addIncomingSmartSource(std::to_string(content.ssrc), content);
                 break;
             case MediaContent::Type::Video:
-                incomingVideoChannels.clear();
                 addIncomingSmartSource(std::to_string(content.ssrc), content);
                 break;
             default:
