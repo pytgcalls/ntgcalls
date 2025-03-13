@@ -9,7 +9,6 @@ type ConnectionState int
 type StreamStatus int
 type StreamMode int
 type StreamDevice int
-type RemoteSourceState int
 type MediaSource int
 
 type StreamEndCallback func(chatId int64, streamType StreamType, streamDevice StreamDevice)
@@ -62,12 +61,6 @@ const (
 const (
 	CaptureStream StreamMode = iota
 	PlaybackStream
-)
-
-const (
-	ActiveRemoteSource RemoteSourceState = iota
-	SuspendedRemoteSource
-	InactiveRemoteSource
 )
 
 func (ctx MediaSource) ParseToC() C.ntg_media_source_enum {

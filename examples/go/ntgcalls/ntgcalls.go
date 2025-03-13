@@ -131,18 +131,9 @@ func handleFrames(ptr C.uintptr_t, chatID C.int64_t, streamMode C.ntg_stream_mod
 func handleRemoteSourceChange(ptr C.uintptr_t, chatID C.int64_t, remoteSource C.ntg_remote_source_struct, _ unsafe.Pointer) {
 	goChatID := int64(chatID)
 	goPtr := uintptr(ptr)
-	var goRemoteState RemoteSourceState
-	switch remoteSource.state {
-	case C.NTG_REMOTE_ACTIVE:
-		goRemoteState = ActiveRemoteSource
-	case C.NTG_REMOTE_SUSPENDED:
-		goRemoteState = SuspendedRemoteSource
-	case C.NTG_REMOTE_INACTIVE:
-		goRemoteState = InactiveRemoteSource
-	}
 	goRemoteSource := RemoteSource{
 		Ssrc:   uint32(remoteSource.ssrc),
-		State:  goRemoteState,
+		State:  parseStreamStatus(remoteSource.state),
 		Device: parseStreamDevice(remoteSource.device),
 	}
 	if handlerRemoteSourceChange[goPtr] != nil {
