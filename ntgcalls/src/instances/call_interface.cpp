@@ -98,7 +98,7 @@ namespace ntgcalls {
                     if (wasConnected) {
                         RTC_LOG(LS_INFO) << "Reconnecting...";
                     }
-                    break;
+                    return;
                 case wrtc::ConnectionState::Connected:
                     RTC_LOG(LS_INFO) << "Connection established";
                     if (!wasConnected && streamManager) {
