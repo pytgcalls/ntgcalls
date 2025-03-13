@@ -1,5 +1,5 @@
 package ntgcalls
 
 type MediaDevices struct {
-	Microphone, Camera, Screen []DeviceInfo
+	Microphone, Speaker, Camera, Screen []DeviceInfo
 }
