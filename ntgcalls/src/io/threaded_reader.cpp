@@ -37,9 +37,15 @@ namespace ntgcalls {
                         activeBufferCount++;
                         while (running) {
                             std::unique_lock lock(mtx);
-                            bytes::unique_binary data;
+                            std::vector<bytes::unique_binary> frames;
                             try {
-                                data = std::move(readCallback(frameSize * static_cast<int64_t>(bufferSize)));
+                                auto data = std::move(readCallback(frameSize * static_cast<int64_t>(bufferSize)));
+                                for (size_t j = 0; j < bufferSize; ++j) {
+                                    const size_t offset = j * frameSize;
+                                    auto chunk = bytes::make_unique_binary(frameSize);
+                                    std::memcpy(chunk.get(), data.get() + offset, frameSize);
+                                    frames.push_back(std::move(chunk));
+                                }
                             } catch (...) {
                                 running = false;
                                 break;
@@ -48,11 +54,8 @@ namespace ntgcalls {
                                 return !running || (activeBuffer == i && enabled);
                             });
                             if (!running) break;
-                            for (size_t j = 0; j < bufferSize; j++) {
+                            for (auto& chunk : frames) {
                                 if (!running) break;
-                                const size_t offset = j * frameSize;
-                                auto chunk = bytes::make_unique_binary(frameSize);
-                                std::memcpy(chunk.get(), data.get() + offset, frameSize);
                                 if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
                                     std::this_thread::sleep_for(waitTime);
                                 }
