@@ -6,8 +6,8 @@
 #include <ntgcalls/io/threaded_reader.hpp>
 
 namespace ntgcalls {
-    ThreadedReader::ThreadedReader(BaseSink *sink, const size_t bufferCount): BaseReader(sink) {
-        bufferThreads.reserve(bufferCount);
+    ThreadedReader::ThreadedReader(BaseSink *sink, const size_t threadCount, const size_t bufferSize): BaseReader(sink), bufferSize(bufferSize) {
+        bufferThreads.reserve(threadCount);
     }
 
     void ThreadedReader::close() {
@@ -39,7 +39,7 @@ namespace ntgcalls {
                             std::unique_lock lock(mtx);
                             bytes::unique_binary data;
                             try {
-                                data = std::move(readCallback(frameSize));
+                                data = std::move(readCallback(frameSize * static_cast<int64_t>(bufferSize)));
                             } catch (...) {
                                 running = false;
                                 break;
@@ -48,11 +48,16 @@ namespace ntgcalls {
                                 return !running || (activeBuffer == i && enabled);
                             });
                             if (!running) break;
-                            if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
-                                std::this_thread::sleep_for(waitTime);
+                            for (size_t j = 0; j < bufferSize; j++) {
+                                const size_t offset = j * frameSize;
+                                auto chunk = bytes::make_unique_binary(frameSize);
+                                std::memcpy(chunk.get(), data.get() + offset, frameSize);
+                                if (auto waitTime = lastTime - std::chrono::high_resolution_clock::now() + frameTime; waitTime.count() > 0) {
+                                    std::this_thread::sleep_for(waitTime);
+                                }
+                                dataCallback(std::move(chunk), {});
+                                lastTime = std::chrono::high_resolution_clock::now();
                             }
-                            dataCallback(std::move(data), {});
-                            lastTime = std::chrono::high_resolution_clock::now();
                             activeBuffer = (activeBuffer + 1) % bufferCount;
                             lock.unlock();
                             cv.notify_all();
