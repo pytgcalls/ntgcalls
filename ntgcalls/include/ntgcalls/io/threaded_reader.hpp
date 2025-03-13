@@ -20,7 +20,7 @@ namespace ntgcalls {
         std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
 
     public:
-        explicit ThreadedReader(BaseSink *sink, size_t threadCount = 2, size_t bufferSize = 10);
+        explicit ThreadedReader(BaseSink *sink, size_t threadCount = 2, size_t bufferSize = 5);
 
         void close();
 
