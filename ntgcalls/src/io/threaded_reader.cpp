@@ -35,11 +35,13 @@ namespace ntgcalls {
                 rtc::PlatformThread::SpawnJoinable(
                     [this, i, bufferCount, frameSize = sink->frameSize(), maxBufferSize = std::chrono::seconds(1) / frameTime / 10, frameTime, readCallback] {
                         activeBufferCount++;
+                        std::vector<bytes::unique_binary> frames;
+                        frames.reserve(maxBufferSize);
                         while (running) {
                             std::unique_lock lock(mtx);
-                            std::vector<bytes::unique_binary> frames;
                             try {
                                 auto data = std::move(readCallback(frameSize * maxBufferSize));
+                                frames.clear();
                                 for (size_t j = 0; j < maxBufferSize; j++) {
                                     const size_t offset = j * frameSize;
                                     auto chunk = bytes::make_unique_binary(frameSize);
