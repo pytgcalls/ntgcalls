@@ -40,7 +40,7 @@ namespace ntgcalls {
                             std::vector<bytes::unique_binary> frames;
                             try {
                                 auto data = std::move(readCallback(frameSize * static_cast<int64_t>(bufferSize)));
-                                for (size_t j = 0; j < bufferSize; ++j) {
+                                for (size_t j = 0; j < bufferSize; j++) {
                                     const size_t offset = j * frameSize;
                                     auto chunk = bytes::make_unique_binary(frameSize);
                                     std::memcpy(chunk.get(), data.get() + offset, frameSize);
