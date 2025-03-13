@@ -10,7 +10,6 @@ namespace ntgcalls {
     class BaseSink {
     protected:
         uint64_t frames = 0;
-        std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
 
         void clear();
 

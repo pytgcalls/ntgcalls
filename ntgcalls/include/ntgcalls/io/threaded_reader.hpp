@@ -14,13 +14,11 @@ namespace ntgcalls {
         std::vector<rtc::PlatformThread> bufferThreads;
         size_t activeBuffer = 0;
         size_t activeBufferCount = 0;
-        size_t bufferSize = 0;
         std::condition_variable cv;
         std::mutex mtx;
-        std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
 
     public:
-        explicit ThreadedReader(BaseSink *sink, size_t threadCount = 2, size_t bufferSize = 5);
+        explicit ThreadedReader(BaseSink *sink, size_t threadCount = 2);
 
         void close();
 
