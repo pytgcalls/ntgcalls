@@ -49,6 +49,7 @@ namespace ntgcalls {
                             });
                             if (!running) break;
                             for (size_t j = 0; j < bufferSize; j++) {
+                                if (!running) break;
                                 const size_t offset = j * frameSize;
                                 auto chunk = bytes::make_unique_binary(frameSize);
                                 std::memcpy(chunk.get(), data.get() + offset, frameSize);
