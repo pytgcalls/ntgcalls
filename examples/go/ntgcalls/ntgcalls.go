@@ -404,4 +404,6 @@ func (ctx *Client) Free() {
 	delete(handlerUpgrade, ctx.ptr)
 	delete(handlerConnectionChange, ctx.ptr)
 	delete(handlerSignal, ctx.ptr)
+	delete(handlerFrame, ctx.ptr)
+	delete(handlerRemoteSourceChange, ctx.ptr)
 }
