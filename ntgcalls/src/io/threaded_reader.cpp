@@ -38,9 +38,10 @@ namespace ntgcalls {
                         std::vector<bytes::unique_binary> frames;
                         frames.reserve(maxBufferSize);
                         while (running) {
-                            std::unique_lock lock(mtx);
                             try {
-                                auto data = std::move(readCallback(frameSize * maxBufferSize));
+                                std::unique_lock lock(mtx);
+                                auto data = readCallback(frameSize * maxBufferSize);
+                                lock.unlock();
                                 frames.clear();
                                 for (size_t j = 0; j < maxBufferSize; j++) {
                                     const size_t offset = j * frameSize;
@@ -52,9 +53,12 @@ namespace ntgcalls {
                                 running = false;
                                 break;
                             }
-                            cv.wait(lock, [this, i] {
-                                return !running || (activeBuffer == i && enabled);
-                            });
+                            {
+                                std::unique_lock lock(mtx);
+                                cv.wait(lock, [this, i] {
+                                    return !running || (activeBuffer == i && enabled);
+                                });
+                            }
                             if (!running) break;
                             for (auto& chunk : frames) {
                                 if (!running) break;
@@ -62,7 +66,6 @@ namespace ntgcalls {
                                 std::this_thread::sleep_for(frameTime);
                             }
                             activeBuffer = (activeBuffer + 1) % bufferCount;
-                            lock.unlock();
                             cv.notify_all();
                         }
                         std::lock_guard lock(mtx);
