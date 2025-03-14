@@ -2,6 +2,7 @@
 // Created by Laky64 on 01/10/24.
 //
 
+#include <ranges>
 #include <p2p/base/basic_async_resolver_factory.h>
 #include <p2p/base/p2p_constants.h>
 #include <p2p/client/basic_port_allocator.h>
@@ -175,8 +176,7 @@ namespace wrtc {
             return;
         }
         int audioChannelsCount = 0;
-        // ReSharper disable once CppUseElementsView
-        for (const auto& [endpoint, content] : pendingContent) {
+        for (const auto& content : pendingContent | std::views::values) {
             if (content.type == MediaContent::Type::Audio) {
                 audioChannelsCount++;
             }
@@ -295,7 +295,6 @@ namespace wrtc {
 
     std::vector<std::string> NativeNetworkInterface::getEndpoints() const {
         std::vector<std::string> endpoints;
-        // ReSharper disable once CppUseElementsView
         for (const auto &[endpoint, media] : pendingContent) {
             if (media.type == MediaContent::Type::Video) {
                 endpoints.push_back(endpoint);

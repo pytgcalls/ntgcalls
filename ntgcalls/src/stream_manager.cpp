@@ -2,6 +2,7 @@
 // Created by Laky64 on 28/09/24.
 //
 
+#include <ranges>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/stream_manager.hpp>
 #include <ntgcalls/media/audio_receiver.hpp>
@@ -156,12 +157,10 @@ namespace ntgcalls {
 
     void StreamManager::start() {
         std::lock_guard lock(mutex);
-        // ReSharper disable once CppUseElementsView
-        for (const auto& [key, reader] : readers) {
+        for (const auto& reader : readers | std::views::values) {
             reader->open();
         }
-        // ReSharper disable once CppUseElementsView
-        for (const auto& [key, writer] : writers) {
+        for (const auto& writer : writers | std::views::values) {
             writer->open();
         }
     }
@@ -210,8 +209,7 @@ namespace ntgcalls {
     bool StreamManager::updatePause(const bool isPaused) {
         std::lock_guard lock(mutex);
         auto res = false;
-        // ReSharper disable once CppUseElementsView
-        for (const auto& [key, reader] : readers) {
+        for (const auto& reader : readers | std::views::values) {
             if (reader->set_enabled(!isPaused)) {
                 res = true;
             }
@@ -224,8 +222,7 @@ namespace ntgcalls {
 
     bool StreamManager::isPaused() {
         auto res = false;
-        // ReSharper disable once CppUseElementsView
-        for (const auto& [key, reader] : readers) {
+        for (const auto& reader : readers | std::views::values) {
             if (!reader->is_enabled()) {
                 res = true;
             }
