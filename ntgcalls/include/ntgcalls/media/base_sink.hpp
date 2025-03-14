@@ -22,6 +22,8 @@ namespace ntgcalls {
 
         virtual int64_t frameSize() = 0;
 
+        virtual uint8_t frameRate() = 0;
+
         virtual std::chrono::nanoseconds frameTime() = 0;
     };
 

@@ -15,6 +15,11 @@ namespace ntgcalls {
         return description->sampleRate * 16 / 8 / 100 * description->channelCount;
     }
 
+    uint8_t AudioSink::frameRate() {
+        return 100;
+    }
+
+
     bool AudioSink::setConfig(const std::optional<AudioDescription>& desc) {
         const bool changed = description != desc;
         if (changed) {

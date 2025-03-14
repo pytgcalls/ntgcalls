@@ -18,6 +18,10 @@ namespace ntgcalls {
         return std::llround(static_cast<float>(description->width * description->height) * 1.5f);
     }
 
+    uint8_t VideoSink::frameRate() {
+        return description ? description->fps : 0;
+    }
+
     bool VideoSink::setConfig(const std::optional<VideoDescription>& desc) {
         const bool changed = description != desc;
         if (changed) {
