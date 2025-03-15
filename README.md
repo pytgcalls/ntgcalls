@@ -131,7 +131,8 @@ For developers looking to use NTgCalls with C and C++, we provide C Bindings. Fo
 * <b><a href="https://github.com/LyzCoote">@LyzCoote</a>:</b> for providing an ARM64 Server and allowing us to build an image with clang-18 preinstalled on manylinux2014 arm64.
 
 _We would like to extend a special thanks to <b><a href='https://github.com/null-nick'>@null-nick</a></b>
-and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library.
+and <b><a href='https://github.com/branchscope'>@branchscope</a></b> for their valuable contributions to the testing phase of the library and to 
+<b><a href='https://github.com/SadLuffy'>@SadLuffy</a></b> for his assistance as a copywriter.
 Their dedication to testing and optimizing the library has been instrumental in its success._
 
 _Additionally, we extend our gratitude to all contributors for their exceptional work in making this project a reality._
