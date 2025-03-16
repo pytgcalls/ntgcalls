@@ -4,6 +4,7 @@
 
 #include <thread>
 #include <ntgcalls/io/threaded_reader.hpp>
+#include <rtc_base/logging.h>
 
 namespace ntgcalls {
     ThreadedReader::ThreadedReader(BaseSink *sink, const size_t threadCount): BaseReader(sink) {
@@ -75,7 +76,9 @@ namespace ntgcalls {
                             activeBuffer = (activeBuffer + 1) % bufferCount;
                             cv.notify_all();
                         }
+                        RTC_LOG(LS_INFO) << "ThreadedReader_" << i << " stopped" << (exiting ? " (exiting)" : "") << " (active: " << activeBufferCount << ")";
                         std::lock_guard lock(mtx);
+                        RTC_LOG(LS_INFO) << "Finished reading from ThreadedReader_" << i;
                         activeBufferCount--;
                         if (activeBufferCount == 0) {
                             if (!exiting) (void) eofCallback();
