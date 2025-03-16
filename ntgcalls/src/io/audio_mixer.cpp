@@ -2,6 +2,7 @@
 // Created by Laky64 on 07/10/24.
 //
 
+#include <ranges>
 #include <algorithm>
 #include <ntgcalls/io/audio_mixer.hpp>
 
@@ -17,9 +18,8 @@ namespace ntgcalls {
         const auto numSources = frames.size();
         for (size_t i = 0; i < frameSize / sizeof(int16_t); i++) {
             int32_t mixedSample = 0;
-            // ReSharper disable once CppUseElementsView
-            for (const auto& [fst, snd] : frames) {
-                const auto sourceSamples = reinterpret_cast<const int16_t*>(snd.first.get());
+            for (const auto& [fst, snd] : frames | std::views::values) {
+                const auto sourceSamples = reinterpret_cast<const int16_t*>(fst.get());
                 mixedSample += sourceSamples[i];
             }
 

@@ -27,13 +27,13 @@ namespace ntgcalls {
 
     void ThreadedReader::run(const std::function<bytes::unique_binary(int64_t)>& readCallback) {
         if (running) return;
-        const size_t bufferCount = bufferThreads.capacity();
+        const auto bufferCount = bufferThreads.capacity();
         running = true;
         auto frameTime = sink->frameTime();
         for (size_t i = 0; i < bufferCount; ++i) {
             bufferThreads.push_back(
                 rtc::PlatformThread::SpawnJoinable(
-                    [this, i, bufferCount, frameSize = sink->frameSize(), maxBufferSize = std::chrono::seconds(1) / frameTime / 10, frameTime, readCallback] {
+                    [this, i, bufferCount, frequencyFrames = getFrameFrequency(), frameSize = sink->frameSize(), maxBufferSize = std::chrono::seconds(1) / frameTime / 10, frameTime, readCallback] {
                         activeBufferCount++;
                         std::vector<bytes::unique_binary> frames;
                         frames.reserve(maxBufferSize);
@@ -63,7 +63,12 @@ namespace ntgcalls {
                             for (auto& chunk : frames) {
                                 if (!running) break;
                                 dataCallback(std::move(chunk), {});
-                                std::this_thread::sleep_for(frameTime);
+                                auto additionalTime = std::chrono::nanoseconds(0);
+                                if (frequencyFrames > 0 && std::fmod(frameSent, frequencyFrames) < 1) {
+                                    additionalTime = std::chrono::milliseconds(1);
+                                }
+                                std::this_thread::sleep_for(frameTime + additionalTime);
+                                frameSent++;
                             }
                             activeBuffer = (activeBuffer + 1) % bufferCount;
                             cv.notify_all();
@@ -87,5 +92,14 @@ namespace ntgcalls {
         const auto res = BaseReader::set_enabled(status);
         cv.notify_all();
         return res;
+    }
+
+    double_t ThreadedReader::getFrameFrequency() const {
+        const auto missingMS  = std::chrono::milliseconds(1000) - std::chrono::duration_cast<std::chrono::milliseconds>(sink->frameTime()) * sink -> frameRate();
+        double_t frequencyFrames = 0;
+        if (missingMS.count() > 0) {
+            frequencyFrames = sink -> frameRate() / static_cast<double_t>(missingMS.count());
+        }
+        return frequencyFrames;
     }
 } // ntgcalls

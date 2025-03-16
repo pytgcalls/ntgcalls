@@ -29,6 +29,8 @@ namespace ntgcalls {
         std::chrono::nanoseconds frameTime() override;
 
         int64_t frameSize() override;
+
+        uint8_t frameRate() override;
     };
 
 } // ntgcalls
