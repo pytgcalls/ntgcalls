@@ -50,7 +50,9 @@ namespace ntgcalls {
                                     frames.push_back(std::move(chunk));
                                 }
                             } catch (...) {
+                                std::lock_guard lock(mtx);
                                 running = false;
+                                cv.notify_all();
                                 break;
                             }
                             {
@@ -77,8 +79,6 @@ namespace ntgcalls {
                         activeBufferCount--;
                         if (activeBufferCount == 0) {
                             if (!exiting) (void) eofCallback();
-                        } else {
-                            cv.notify_all();
                         }
                     },
                     "ThreadedReader_" + std::to_string(bufferCount),
