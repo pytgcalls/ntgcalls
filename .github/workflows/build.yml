@@ -161,7 +161,7 @@ jobs:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
-          CIBW_SKIP: cp36-* cp37-*
+          CIBW_SKIP: cp36-* cp37-* cp38-*
           CIBW_BUILD_VERBOSITY: 3
           CIBW_TEST_SKIP: "cp38-macosx_arm64 *-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
