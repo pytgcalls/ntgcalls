@@ -37,6 +37,16 @@ on:
         required: false
         default: false
         type: boolean
+      android-build:
+        description: 'Build for Android'
+        required: false
+        default: false
+        type: boolean
+      publish:
+        description: 'Publish the library'
+        required: false
+        default: true
+        type: boolean
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -48,13 +58,13 @@ jobs:
         run: |
           build_list=""
           if [[ "${{ github.event.inputs.linux-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\"}"
+            build_list+=",{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"x86_64\"}"
           fi
           if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\"}"
+            build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"arm64\"}"
           fi
           if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"macos-14\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
+            build_list+=",{\"os\":\"macos-15\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
           fi
           if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
             build_list+=",{\"os\":\"windows-2022\",\"cibw_archs\":\"native\",\"shared_name\":\"windows-x86_64\"}"
@@ -65,6 +75,7 @@ jobs:
           matrix=$(echo "{\"include\":[$build_list]}")
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
   build:
+    if: github.event.inputs.build-wheels == 'true' || github.event.inputs.build-shared-libs == 'true' || github.event.inputs.build-static-libs == 'true'
     needs: setup
     runs-on: ${{ matrix.os }}
     strategy:
@@ -81,7 +92,7 @@ jobs:
         if: matrix.cibw_archs != 'aarch64'
         id: python
         with:
-          python-version: "3.8 - 3.12"
+          python-version: "3.9 - 3.13"
           update-environment: false
 
       - name: Set up Python (ARM64)
@@ -90,9 +101,9 @@ jobs:
         run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
 
       - name: Install Python Requirements
+        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64'
         run: |
           "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools
-          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install pipx
         shell: bash
 
       - name: Set up QEMU
@@ -101,41 +112,29 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Build Shared Libs (Debug and Release)
+      - name: Build Shared Libs
         if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
         run: |
-          ${{ steps.python.outputs.python-path }} setup.py build_lib --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib
 
-      - name: Build Static Libs (Debug and Release)
+      - name: Build Static Libs
         if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
         run: |
-          ${{ steps.python.outputs.python-path }} setup.py build_lib --static --debug
           ${{ steps.python.outputs.python-path }} setup.py build_lib --static
 
-      - name: Build Shared Libs (Debug and Release) (Linux) (x86_64)
-        if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-shared-libs == 'true'
+      - name: Build Shared Libs (Linux)
+        if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-shared-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --debug
-          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
+            python3.12 -m pip install setuptools
+            python3.12 setup.py build_lib"
 
-      - name: Build Static Libs (Debug and Release) (Linux) (x86_64)
-        if: matrix.shared_name == 'linux-x86_64' && github.event.inputs.build-static-libs == 'true'
+      - name: Build Static Libs (Linux)
+        if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-static-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --static --debug
-          docker run -v $(pwd):/app -w /app quay.io/pypa/manylinux2014_x86_64:latest python3.12 setup.py build_lib --static
-
-      - name: Build Shared Libs (Debug and Release) (Linux) (ARM64)
-        if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
-        run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --debug
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib
-
-      - name: Build Static Libs (Debug and Release) (Linux ARM64)
-        if: matrix.shared_name == 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
-        run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static --debug
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/arm64:latest python3 setup.py build_lib --static
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
+            python3.12 -m pip install setuptools
+            python3.12 setup.py build_lib --static"
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
@@ -160,13 +159,14 @@ jobs:
           python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp36-* cp37-*
           CIBW_BUILD_VERBOSITY: 3
           CIBW_TEST_SKIP: "cp38-macosx_arm64 *-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
+          CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/x86_64:latest
 
       - uses: actions/upload-artifact@v4
         if: github.event.inputs.build-wheels == 'true'
@@ -175,9 +175,56 @@ jobs:
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
+  build-android:
+    needs: setup
+    runs-on: ubuntu-latest
+    if: github.event.inputs.android-build == 'true'
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        id: python
+        with:
+          python-version: "3.12"
+          update-environment: false
+
+      - name: Install Python Requirements
+        run: |
+          "${{ steps.python.outputs.python-path }}" -m pip install setuptools
+          "${{ steps.python.outputs.python-path }}" -m pip install pipx
+        shell: bash
+
+      - name: Build JNI Libraries
+        run: |
+          ${{ steps.python.outputs.python-path }} setup.py build_lib --android
+        shell: bash
+
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          server-id: central
+
+      - name: Publish Library to Maven Central
+        run: bash ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+        shell: bash
+        working-directory: android/
+
+
   publish:
     runs-on: ubuntu-latest
     needs: [ build ]
+    if: github.event.inputs.publish == 'true'
     permissions:
       id-token: write
       contents: write

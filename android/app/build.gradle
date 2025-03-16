@@ -1,0 +1,147 @@
+apply plugin: 'com.android.library'
+apply plugin: 'signing'
+apply plugin: 'com.vanniktech.maven.publish'
+
+import com.vanniktech.maven.publish.SonatypeHost
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+
+def baseDir = "$projectDir/../.."
+def depsDir = "$baseDir/deps"
+def ndkDir = "$depsDir/ndk/src"
+def ntgcallsIncludeDir = "$baseDir/ntgcalls/include"
+def wrtcIncludeDir = "$baseDir/wrtc/include"
+def androidCmakeDir = "$baseDir/cmake/Android.cmake"
+def cmakeListsContent = file("$rootProject.projectDir/../CMakeLists.txt").text
+def versionName = (cmakeListsContent =~ /project\(ntgcalls.*VERSION ([\d.]+).*\)/)[0][1]
+def versionComponents = versionName.tokenize('.')
+def major = versionComponents[0].toInteger()
+def minor = versionComponents[1].toInteger()
+def patch = versionComponents.size() > 2 ? versionComponents[2].toInteger() : 0
+def isBeta = versionComponents.size() == 4
+def versionCode = (major * 100000 + minor * 1000 + patch * 100)
+
+if (isBeta) {
+    def betaNumber = versionComponents[3].toInteger()
+    versionCode += betaNumber
+} else {
+    versionCode += 100
+}
+
+versionName = versionComponents.take(3).join('.')
+if (isBeta) {
+    versionName += "-beta${versionComponents[3]}"
+}
+def versionProps = new Properties()
+new File("$baseDir/version.properties").withInputStream {
+    versionProps.load(it)
+}
+
+android {
+    namespace "org.pytgcalls.ntgcalls"
+    compileSdk 34
+    testBuildType "release"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    defaultConfig {
+        minSdk 16
+        targetSdk 34
+        buildConfigField 'int', 'VERSION_CODE', "${versionCode}"
+        buildConfigField 'String', 'VERSION_NAME', "\"${versionName}\""
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                cppFlags '-std=gnu++20'
+                arguments "-DANDROID_STL=none",
+                        "-DANDROID_NATIVE_API_LEVEL=${versionProps.getProperty('version.sdk_compile')}",
+                        "-DANDROID_PLATFORM=${versionProps.getProperty('version.sdk_compile')}",
+                        "-DANDROID_CPP_FEATURES=exceptions rtti",
+                        "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+                        "-DLIBCXX_INCLUDE_DIR=$depsDir/libcxx/include",
+                        "-DCMAKE_TOOLCHAIN_FILE=$ndkDir/build/cmake/android.toolchain.cmake",
+                        "-DANDROID_NDK=$ndkDir",
+                        "-DDEPS_DIR=$depsDir",
+                        "-DNTGCALLS_INCLUDE_DIR=$ntgcallsIncludeDir",
+                        "-DWRTC_INCLUDE_DIR=$wrtcIncludeDir",
+                        "-DANDROID_CMAKE_DIR=$androidCmakeDir",
+                        "-DCMAKE_ANDROID_EXCEPTIONS=ON"
+            }
+        }
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+        }
+    }
+    sourceSets.main.jniLibs.srcDirs = ['./jni']
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/jni/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            testCoverageEnabled true
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
+mavenPublishing {
+    coordinates("io.github.pytgcalls", "ntgcalls", versionName)
+
+    pom {
+        name = "ntgcalls"
+        description = "A Native Implementation of Telegram Calls in a seamless way."
+        url = "https://github.com/pytgcalls/ntgcalls"
+
+        licenses {
+            license {
+                name = "GNU Lesser General Public License v3.0"
+                url = "https://www.gnu.org/licenses/lgpl-3.0.html"
+                distribution = "repo"
+            }
+        }
+
+        developers {
+            developer {
+                id = "Laky-64"
+                name = "Laky64"
+                url = "https://github.com/Laky-64"
+            }
+        }
+
+        scm {
+            connection.set("scm:git:git://github.com/pytgcalls/ntgcalls.git")
+            developerConnection.set("scm:git:ssh://github.com/pytgcalls/ntgcalls.git")
+            url.set("https://github.com/pytgcalls/ntgcalls")
+        }
+    }
+
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    configure(new AndroidSingleVariantLibrary("release", true, true))
+    signAllPublications()
+}
+
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.9.1'
+    //noinspection GradleDependency
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    //noinspection GradleDependency
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation fileTree(dir: "$depsDir/libwebrtc/src/jar/", include: ['webrtc.jar'])
+}

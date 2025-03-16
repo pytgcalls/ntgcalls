@@ -4,3 +4,4 @@ recursive-include deps *
 recursive-include include *
 recursive-include ntgcalls *
 include CMakeLists.txt
+include version.properties

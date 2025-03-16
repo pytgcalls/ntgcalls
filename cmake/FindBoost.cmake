@@ -1,3 +1,4 @@
+GetProperty("version.boost" BOOST_REVISION)
 string(REPLACE "." "_" BOOST_REVISION_UNDERSCORE ${BOOST_REVISION})
 set(BOOST_DIR ${deps_loc}/boost)
 set(BOOST_WORKDIR ${BOOST_DIR}/src)
