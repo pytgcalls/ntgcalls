@@ -132,7 +132,7 @@ namespace ntgcalls {
                 RTC_LOG(LS_ERROR) << "Connection timeout";
                 (void) connectionChangeCallback({NetworkInfo::ConnectionState::Timeout, kind});
             }
-        }, webrtc::TimeDelta::Seconds(20));
+        }, webrtc::TimeDelta::Seconds(10));
     }
 
     StreamManager::Status CallInterface::parseVideoState(const signaling::MediaStateMessage::VideoState state) {
