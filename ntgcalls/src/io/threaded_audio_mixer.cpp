@@ -8,7 +8,7 @@ namespace ntgcalls {
     ThreadedAudioMixer::ThreadedAudioMixer(BaseSink* sink): AudioMixer(sink) {}
 
     ThreadedAudioMixer::~ThreadedAudioMixer() {
-        exiting = true;
+        eofCallback = nullptr;
         const bool wasRunning = running;
         if (running) {
             running = false;
@@ -46,7 +46,7 @@ namespace ntgcalls {
                         break;
                     }
                 }
-                if (!exiting) (void) eofCallback();
+                (void) eofCallback();
             },
             "ThreadedMixer",
             rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)

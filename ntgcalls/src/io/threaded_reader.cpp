@@ -11,17 +11,15 @@ namespace ntgcalls {
     }
 
     void ThreadedReader::close() {
-        dataCallback = nullptr;
-        exiting = true;
-        const bool wasRunning = running;
-        if (running) {
+        {
+            std::lock_guard lock(mtx);
+            dataCallback = nullptr;
+            eofCallback = nullptr;
             running = false;
             cv.notify_all();
         }
-        if (wasRunning) {
-            for (auto& thread : bufferThreads) {
-                thread.Finalize();
-            }
+        for (auto& thread : bufferThreads) {
+            thread.Finalize();
         }
     }
 
@@ -78,7 +76,7 @@ namespace ntgcalls {
                         std::lock_guard lock(mtx);
                         activeBufferCount--;
                         if (activeBufferCount == 0) {
-                            if (!exiting) (void) eofCallback();
+                            (void) eofCallback();
                         }
                     },
                     "ThreadedReader_" + std::to_string(bufferCount),
