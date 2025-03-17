@@ -11,7 +11,7 @@ RUN yum install -y \
 ENV MAKEFLAGS="-j$(nproc)"
 ENV CFLAGS="-march=native -O3"
 ENV CXXFLAGS="-march=native -O3"
-RUN git clone --depth=1 -b release/19.x https://github.com/llvm/llvm-project.git \
+RUN git clone --depth=1 -b release/20.x https://github.com/llvm/llvm-project.git \
     && cd llvm-project \
     && mkdir build \
     && cd build \
