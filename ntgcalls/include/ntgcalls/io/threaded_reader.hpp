@@ -18,6 +18,7 @@ namespace ntgcalls {
         uint64_t frameSent = 0;
         std::condition_variable cv;
         std::mutex mtx;
+        uint32_t uniqueId;
 
     public:
         explicit ThreadedReader(BaseSink *sink, size_t threadCount = 2);

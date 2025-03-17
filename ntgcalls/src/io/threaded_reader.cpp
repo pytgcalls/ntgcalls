@@ -5,22 +5,31 @@
 #include <thread>
 #include <ntgcalls/io/threaded_reader.hpp>
 #include <rtc_base/logging.h>
+#include <rtc_base/unique_id_generator.h>
 
 namespace ntgcalls {
     ThreadedReader::ThreadedReader(BaseSink *sink, const size_t threadCount): BaseReader(sink) {
         bufferThreads.reserve(threadCount);
+        uniqueId = rtc::UniqueRandomIdGenerator().GenerateId();
     }
 
     void ThreadedReader::close() {
         {
+            RTC_LOG(LS_INFO) << "Stopping ThreadedReader_" << uniqueId << " acquiring lock";
             std::lock_guard lock(mtx);
+            RTC_LOG(LS_INFO) << "Stopping ThreadedReader_" << uniqueId << " lock acquired";
             dataCallback = nullptr;
+            RTC_LOG(LS_INFO) << "Stopping ThreadedReader_" << uniqueId << " dataCallback set to nullptr";
             eofCallback = nullptr;
+            RTC_LOG(LS_INFO) << "Stopping ThreadedReader_" << uniqueId << " eofCallback set to nullptr";
             running = false;
             cv.notify_all();
+            RTC_LOG(LS_INFO) << "Stopping ThreadedReader_" << uniqueId << " notified all threads";
         }
         for (auto& thread : bufferThreads) {
+            RTC_LOG(LS_INFO) << "Stopping ThreadedReader_" << uniqueId << " waiting for thread to join";
             thread.Finalize();
+            RTC_LOG(LS_INFO) << "Stopping ThreadedReader_" << uniqueId << " thread joined";
         }
     }
 
@@ -74,9 +83,9 @@ namespace ntgcalls {
                             activeBuffer = (activeBuffer + 1) % bufferCount;
                             cv.notify_all();
                         }
-                        RTC_LOG(LS_INFO) << "ThreadedReader_" << i << " stopped" << (exiting ? " (exiting)" : "") << " (active: " << activeBufferCount << ")";
+                        RTC_LOG(LS_INFO) << "ThreadedReader_" << uniqueId << " " << i << " stopped" << " (active: " << activeBufferCount << ")";
                         std::lock_guard lock(mtx);
-                        RTC_LOG(LS_INFO) << "Finished reading from ThreadedReader_" << i;
+                        RTC_LOG(LS_INFO) << "Finished reading from ThreadedReader_" << i << " " << uniqueId;
                         activeBufferCount--;
                         if (activeBufferCount == 0) {
                             (void) eofCallback();
