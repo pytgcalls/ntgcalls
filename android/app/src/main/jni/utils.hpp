@@ -120,6 +120,11 @@ catch (const ntgcalls::x& e) {  \
 throwJavaException(env, #x, e.what()); \
 }
 
+#define TRANSLATE_WRTC_EXCEPTION(x) \
+catch (const wrtc::x& e) {  \
+throwJavaException(env, #x, e.what()); \
+}
+
 #define HANDLE_EXCEPTIONS \
 TRANSLATE_NTG_EXCEPTION(InvalidParams) \
 TRANSLATE_NTG_EXCEPTION(ShellError) \
@@ -127,11 +132,11 @@ TRANSLATE_NTG_EXCEPTION(FFmpegError) \
 TRANSLATE_NTG_EXCEPTION(ConnectionError) \
 TRANSLATE_NTG_EXCEPTION(ConnectionNotFound) \
 TRANSLATE_NTG_EXCEPTION(TelegramServerError) \
-TRANSLATE_NTG_EXCEPTION(RTMPNeeded) \
 TRANSLATE_NTG_EXCEPTION(CryptoError) \
 TRANSLATE_NTG_EXCEPTION(SignalingError) \
 TRANSLATE_NTG_EXCEPTION(SignalingUnsupported)\
-TRANSLATE_NTG_EXCEPTION(MediaDeviceError) \
+TRANSLATE_NTG_EXCEPTION(MediaDeviceError)\
+TRANSLATE_WRTC_EXCEPTION(RTMPNeeded) \
 catch (const ntgcalls::FileError& e) { \
 throwJavaException(env, "FileNotFoundException", e.what()); \
 } \

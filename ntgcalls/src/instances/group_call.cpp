@@ -88,9 +88,6 @@ namespace ntgcalls {
             }
             Safe<wrtc::GroupConnection>(conn)->createChannels(payload.media);
             RTC_LOG(LS_INFO) << "Remote parameters set";
-        } else {
-            RTC_LOG(LS_ERROR) << "RTMP connection not supported";
-            throw RTMPNeeded("RTMP connection not supported");
         }
         setConnectionObserver(
             conn,

@@ -201,7 +201,8 @@ namespace wrtc {
             });
             break;
         default:
-            throw RTCException("Unsupported connection mode");
+            RTC_LOG(LS_ERROR) << "RTMP connection not supported";
+            throw RTMPNeeded("RTMP connection not supported");
         }
         updateIsConnected();
     }
