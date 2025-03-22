@@ -20,6 +20,10 @@ namespace ntgcalls {
     StreamManager::StreamManager(rtc::Thread* workerThread): workerThread(workerThread) {}
 
     StreamManager::~StreamManager() {
+        workerThread = nullptr;
+    }
+
+    void StreamManager::close() {
         workerThread->BlockingCall([this] {
             std::lock_guard lock(mutex);
             syncReaders.clear();
@@ -30,7 +34,6 @@ namespace ntgcalls {
             streams.clear();
             tracks.clear();
         });
-        workerThread = nullptr;
     }
 
     void StreamManager::enableVideoSimulcast(const bool enable) {

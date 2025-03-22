@@ -14,6 +14,7 @@ namespace ntgcalls {
         isExiting = true;
         updateThread->BlockingCall([this] {
             connectionChangeCallback = nullptr;
+            streamManager->close();
             streamManager = nullptr;
             if (connection) {
                 connection->onConnectionChange(nullptr);
