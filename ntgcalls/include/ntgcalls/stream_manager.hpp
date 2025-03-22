@@ -48,6 +48,8 @@ namespace ntgcalls {
 
         ~StreamManager();
 
+        void close();
+
         void enableVideoSimulcast(bool enable);
 
         void setStreamSources(Mode mode, const MediaDescription& desc);

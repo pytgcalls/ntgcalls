@@ -17,7 +17,9 @@ namespace ntgcalls {
         updateThread->BlockingCall([this] {
             RTC_LOG(LS_VERBOSE) << "Destroying CallInterface";
             connectionChangeCallback = nullptr;
-            RTC_LOG(LS_VERBOSE) << "Removing stream sources";
+            RTC_LOG(LS_VERBOSE) << "Closing stream stream sources";
+            streamManager->close();
+            RTC_LOG(LS_VERBOSE) << "Destroying stream manager";
             streamManager = nullptr;
             if (connection) {
                 RTC_LOG(LS_VERBOSE) << "Removing connection listener";

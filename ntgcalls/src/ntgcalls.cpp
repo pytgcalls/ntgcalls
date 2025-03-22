@@ -55,7 +55,6 @@ namespace ntgcalls {
         }
         connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
-            THREAD_SAFE
             if (state.kind == NetworkInfo::Kind::Normal) {
                 switch (state.state) {
                     case NetworkInfo::ConnectionState::Closed:
@@ -67,6 +66,7 @@ namespace ntgcalls {
                         break;
                 }
             }
+            THREAD_SAFE
             (void) connectionChangeCallback(chatId, state);
             END_THREAD_SAFE
             END_WORKER

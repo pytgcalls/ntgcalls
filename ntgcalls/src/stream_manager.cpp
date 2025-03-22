@@ -20,6 +20,12 @@ namespace ntgcalls {
     StreamManager::StreamManager(rtc::Thread* workerThread): workerThread(workerThread) {}
 
     StreamManager::~StreamManager() {
+        RTC_LOG(LS_VERBOSE) << "Cleaning up";
+        workerThread = nullptr;
+        RTC_LOG(LS_VERBOSE) << "Stream destroyed";
+    }
+
+    void StreamManager::close() {
         RTC_LOG(LS_VERBOSE) << "Destroying Stream";
         workerThread->BlockingCall([this] {
             RTC_LOG(LS_VERBOSE) << "Destroying Stream, Acquiring lock";
@@ -37,9 +43,6 @@ namespace ntgcalls {
             streams.clear();
             tracks.clear();
         });
-        RTC_LOG(LS_VERBOSE) << "Cleaning up";
-        workerThread = nullptr;
-        RTC_LOG(LS_VERBOSE) << "Stream destroyed";
     }
 
     void StreamManager::enableVideoSimulcast(const bool enable) {
