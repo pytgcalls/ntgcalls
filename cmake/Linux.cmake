@@ -32,9 +32,8 @@ target_link_libraries(${target_name}
 
 set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_x11_libraries(${target_name})
+target_mesa_libraries(${target_name})
 target_link_libraries(${target_name} PRIVATE
-    gbm
-    drm
     dl
     rt
     m

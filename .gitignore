@@ -24,6 +24,7 @@ deps/openh264/
 deps/ffmpeg/
 deps/ndk/
 deps/libx11/
+deps/mesa/
 android/app/src/main/jni/ntgcalls/
 android/app/src/main/jni/wrtc/
 android/local.properties
