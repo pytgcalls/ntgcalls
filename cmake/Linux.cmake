@@ -72,13 +72,13 @@ target_link_libraries(${target_name} INTERFACE X11)
 target_link_static_libraries(${MESA_SRC} ${target_name}
     gbm
     drm
+    ffi
 )
 
 target_link_libraries(${target_name} PRIVATE
     dl
     rt
     m
-    ffi
     expat
     z
     -static-libgcc
