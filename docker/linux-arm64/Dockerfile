@@ -7,7 +7,7 @@ RUN yum install -y \
     pulseaudio-libs-devel \
     flex \
     elfutils-libelf-devel \
-    libffi-devel \
+    texinfo \
     libxml2-devel
 
 ENV MAKEFLAGS="-j$(nproc)"
