@@ -31,17 +31,10 @@ target_link_libraries(${target_name}
 )
 
 set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_x11_libraries(${target_name})
 target_link_libraries(${target_name} PRIVATE
-    X11
     gbm
     drm
-    Xcomposite
-    Xdamage
-    Xext
-    Xfixes
-    Xrandr
-    Xrender
-    Xtst
     dl
     rt
     m

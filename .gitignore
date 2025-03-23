@@ -23,6 +23,7 @@ deps/clang/
 deps/openh264/
 deps/ffmpeg/
 deps/ndk/
+deps/libx11/
 android/app/src/main/jni/ntgcalls/
 android/app/src/main/jni/wrtc/
 android/local.properties

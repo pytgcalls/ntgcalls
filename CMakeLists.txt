@@ -7,6 +7,7 @@ endif ()
 include(ExternalProject)
 
 set(BOOST_LIBS filesystem)
+set(X11_LIBS X11 X11-xcb xcb Xau Xcomposite Xdamage Xext Xfixes Xrandr Xrender Xtst)
 
 option(STATIC_BUILD "Build static libraries" ON)
 option(USE_LIBCXX   "Use libc++" ON)
@@ -30,6 +31,7 @@ get_filename_component(android_loc  "android" REALPATH)
 get_filename_component(jni_loc      "${android_loc}/app/src/main/jni" REALPATH)
 get_filename_component(props_loc    "version.properties" REALPATH)
 
+include(cmake/FindX11.cmake)
 include(cmake/FindWebRTC.cmake)
 include(cmake/FindLibCXX.cmake)
 include(cmake/FindBoost.cmake)
