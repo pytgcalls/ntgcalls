@@ -23,12 +23,3 @@ DownloadProject(
     DOWNLOAD_DIR ${MESA_DIR}/download
     SOURCE_DIR ${MESA_SRC}
 )
-
-function(target_mesa_libraries target_name)
-    set(interface_libs "")
-    foreach (lib ${MESA_LIBS})
-        set(link_option "-L${MESA_SRC}/lib -Wl,--push-state,-Bstatic,-l${lib},--pop-state")
-        list(APPEND interface_libs ${link_option})
-    endforeach ()
-    target_link_libraries(${target_name} INTERFACE ${interface_libs})
-endfunction()

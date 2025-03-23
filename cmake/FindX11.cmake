@@ -23,13 +23,3 @@ DownloadProject(
     DOWNLOAD_DIR ${X11_DIR}/download
     SOURCE_DIR ${X11_SRC}
 )
-
-function(target_x11_libraries target_name)
-    set(interface_libs "")
-    foreach (lib ${X11_LIBS})
-        set(link_option "-L${X11_SRC}/lib -Wl,--push-state,-Bstatic,-l${lib},--pop-state")
-        list(APPEND interface_libs ${link_option})
-    endforeach ()
-    target_link_libraries(${target_name} INTERFACE ${interface_libs})
-    target_link_libraries(${target_name} INTERFACE X11)
-endfunction()
