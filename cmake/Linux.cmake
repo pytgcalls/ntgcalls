@@ -81,6 +81,7 @@ target_link_libraries(${target_name} PRIVATE
     m
     expat
     z
+    resolv
     -static-libgcc
     -static-libstdc++
     Threads::Threads
