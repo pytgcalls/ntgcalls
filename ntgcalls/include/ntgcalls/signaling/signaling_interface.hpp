@@ -23,7 +23,7 @@ namespace signaling {
             DataReceiver onSignalData
         );
 
-        void start();
+        void init();
 
         virtual void send(const bytes::binary& data) = 0;
 

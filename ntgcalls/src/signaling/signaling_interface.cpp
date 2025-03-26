@@ -27,7 +27,7 @@ namespace signaling {
         signalingEncryption = std::make_unique<SignalingEncryption>(key);
     }
 
-    void SignalingInterface::start() {
+    void SignalingInterface::init() {
         std::weak_ptr weak(shared_from_this());
         signalingEncryption->onServiceMessage([weak](const int delayMs, int cause) {
             const auto strong = weak.lock();

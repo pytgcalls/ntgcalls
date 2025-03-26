@@ -35,7 +35,7 @@ namespace signaling {
         if (!signaling) {
             throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
         }
-        signaling->start();
+        signaling->init();
         return signaling;
     }
 
