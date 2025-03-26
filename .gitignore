@@ -15,6 +15,7 @@ linux_output/
 tools/opus/
 *.egg-info
 *.ogg
+*.whl
 deps/libcxx/
 deps/libwebrtc/
 deps/libcxxabi/
