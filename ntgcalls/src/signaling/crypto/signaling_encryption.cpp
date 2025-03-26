@@ -13,7 +13,10 @@
 #include <wrtc/utils/encryption.hpp>
 
 namespace signaling {
-    SignalingEncryption::SignalingEncryption(EncryptionKey key): _key(std::move(key)) {}
+    SignalingEncryption::SignalingEncryption(EncryptionKey key):
+       _key(std::move(key)),
+        sendAcksTimerActive(false),
+        resendTimerActive(false) {}
 
     SignalingEncryption::~SignalingEncryption() {
         std::lock_guard lock(mutex);

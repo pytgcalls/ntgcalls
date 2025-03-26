@@ -176,7 +176,7 @@ namespace wrtc {
         return mappedOffer;
     }
 
-    std::unique_ptr<ContentNegotiationContext::NegotiationContents> ContentNegotiationContext::setPendingAnswer(std::unique_ptr<NegotiationContents>&& answer) {
+    std::unique_ptr<ContentNegotiationContext::NegotiationContents> ContentNegotiationContext::setPendingAnswer(std::unique_ptr<NegotiationContents> answer) {
         if (!answer) {
             return nullptr;
         }

@@ -9,7 +9,11 @@
 #include <ntgcalls/exceptions.hpp>
 
 namespace signaling {
-    SignalingInterface::~SignalingInterface() {
+    void SignalingInterface::close() {
+        signalingEncryption->onServiceMessage(nullptr);
+        onEmitData = nullptr;
+        onSignalData = nullptr;
+        signalingThread->BlockingCall([&] {});
         signalingEncryption = nullptr;
     }
 
@@ -20,34 +24,44 @@ namespace signaling {
         DataEmitter onEmitData,
         DataReceiver onSignalData
     ): onSignalData(std::move(onSignalData)), onEmitData(std::move(onEmitData)), networkThread(networkThread), signalingThread(signalingThread) {
-        signalingEncryption = std::make_shared<SignalingEncryption>(key);
-        signalingEncryptionWeak = signalingEncryption;
-        signalingEncryption->onServiceMessage([this](const int delayMs, int cause) {
+        signalingEncryption = std::make_unique<SignalingEncryption>(key);
+    }
+
+    void SignalingInterface::start() {
+        std::weak_ptr weak(shared_from_this());
+        signalingEncryption->onServiceMessage([weak](const int delayMs, int cause) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
             if (delayMs == 0) {
-                this->signalingThread->PostTask([this, cause] {
-                    const auto strong = signalingEncryptionWeak.lock();
-                    if (!strong) {
+                strong->signalingThread->PostTask([weak, cause] {
+                    const auto strongThread = weak.lock();
+                    if (!strongThread) {
                         return;
                     }
-                    if (const auto service = strong->prepareForSendingService(cause)) {
-                        this->onEmitData(*service);
+                    std::lock_guard lock(strongThread->mutex);
+                    if (const auto service = strongThread->signalingEncryption->prepareForSendingService(cause)) {
+                        strongThread->onEmitData(*service);
                     }
                 });
             } else {
-                this->signalingThread->PostDelayedTask([this, cause] {
-                    const auto strong = signalingEncryptionWeak.lock();
-                    if (!strong) {
+                strong->signalingThread->PostDelayedTask([weak, cause] {
+                    const auto strongThread = weak.lock();
+                    if (!strongThread) {
                         return;
                     }
-                    if (const auto service = strong->prepareForSendingService(cause)) {
-                        this->onEmitData(*service);
+                    std::lock_guard lock(strongThread->mutex);
+                    if (const auto service = strongThread->signalingEncryption->prepareForSendingService(cause)) {
+                        strongThread->onEmitData(*service);
                     }
                 }, webrtc::TimeDelta::Millis(delayMs));
             }
         });
     }
 
-    std::vector<bytes::binary> SignalingInterface::preReadData(const bytes::binary &data, const bool isRaw) const {
+    std::vector<bytes::binary> SignalingInterface::preReadData(const bytes::binary &data, const bool isRaw) {
+        std::lock_guard lock(mutex);
         RTC_LOG(LS_VERBOSE) << "Decrypting packets";
         const auto raw = signalingEncryption->decrypt(rtc::CopyOnWriteBuffer(data.data(), data.size()), isRaw);
         if (raw.empty()) {
@@ -71,7 +85,8 @@ namespace signaling {
         return packets;
     }
 
-    bytes::binary SignalingInterface::preSendData(const bytes::binary &data, const bool isRaw) const {
+    bytes::binary SignalingInterface::preSendData(const bytes::binary &data, const bool isRaw) {
+        std::lock_guard lock(mutex);
         auto packetData = data;
         if (supportsCompression()) {
             RTC_LOG(LS_VERBOSE) << "Compressing packet";

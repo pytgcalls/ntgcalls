@@ -20,7 +20,7 @@ namespace signaling {
 
         void send(const bytes::binary& data) override;
 
-        void receive(const bytes::binary& data) const override;
+        void receive(const bytes::binary& data) override;
 
     protected:
         [[nodiscard]] bool supportsCompression() const override;

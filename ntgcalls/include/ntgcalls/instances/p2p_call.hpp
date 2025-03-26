@@ -44,7 +44,7 @@ namespace ntgcalls {
     public:
         explicit P2PCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
 
-        ~P2PCall() override;
+        void stop() override;
 
         void init(const MediaDescription &media) const;
 

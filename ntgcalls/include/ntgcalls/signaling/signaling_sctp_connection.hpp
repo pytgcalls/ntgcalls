@@ -28,9 +28,9 @@ namespace signaling {
             bool allowCompression
         );
 
-        ~SignalingSctpConnection() override;
+        void close() override;
 
-        void receive(const bytes::binary& data) const override;
+        void receive(const bytes::binary& data) override;
 
         void send(const bytes::binary& data) override;
 

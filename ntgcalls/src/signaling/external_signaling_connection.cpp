@@ -17,7 +17,7 @@ namespace signaling {
         onEmitData(preSendData(data, true));
     }
 
-    void ExternalSignalingConnection::receive(const bytes::binary& data) const {
+    void ExternalSignalingConnection::receive(const bytes::binary& data) {
         signalingThread->PostTask([this, data] {
             onSignalData(preReadData(data, true));
         });

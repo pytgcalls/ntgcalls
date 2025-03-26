@@ -20,7 +20,7 @@ namespace ntgcalls {
     public:
         explicit GroupCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
 
-        ~GroupCall() override;
+        void stop() override;
 
         std::string init(const MediaDescription& config);
 

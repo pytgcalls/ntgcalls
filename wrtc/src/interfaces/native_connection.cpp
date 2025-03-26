@@ -340,8 +340,8 @@ namespace wrtc {
     }
 
     void NativeConnection::close() {
-        contentNegotiationContext = nullptr;
         NativeNetworkInterface::close();
+        contentNegotiationContext = nullptr;
     }
 
     void NativeConnection::addIceCandidate(const IceCandidate& rawCandidate) const {

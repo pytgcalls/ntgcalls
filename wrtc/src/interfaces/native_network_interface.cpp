@@ -381,6 +381,10 @@ namespace wrtc {
 
     void NativeNetworkInterface::close() {
         std::weak_ptr weak(shared_from_this());
+        dataChannelOpenedCallback = nullptr;
+        iceCandidateCallback = nullptr;
+        connectionChangeCallback = nullptr;
+        dataChannelMessageCallback = nullptr;
         workerThread()->BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {

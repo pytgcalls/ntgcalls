@@ -26,7 +26,10 @@ namespace ntgcalls {
 #endif
         std::unique_lock lock(mutex);
         RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
-        connections = {};
+        for (const auto& connection : connections | std::views::values) {
+            connection->stop();
+        }
+        connections.clear();
         hardwareInfo = nullptr;
         lock.unlock();
         updateThread->Stop();
@@ -286,7 +289,9 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Call " << chatId << " not found";
             THROW_CONNECTION_NOT_FOUND(chatId)
         }
-        connections.erase(connections.find(chatId));
+        const auto call = connections.find(chatId);
+        call->second->stop();
+        connections.erase(call);
         RTC_LOG(LS_INFO) << "Call " << chatId << " removed";
     }
 

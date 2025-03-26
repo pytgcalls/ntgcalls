@@ -13,7 +13,7 @@ namespace signaling {
 
     class SignalingInterface: public std::enable_shared_from_this<SignalingInterface> {
     public:
-        virtual ~SignalingInterface();
+        virtual ~SignalingInterface() = default;
 
         SignalingInterface(
             rtc::Thread* networkThread,
@@ -23,23 +23,28 @@ namespace signaling {
             DataReceiver onSignalData
         );
 
+        void start();
+
         virtual void send(const bytes::binary& data) = 0;
 
-        virtual void receive(const bytes::binary& data) const = 0;
+        virtual void receive(const bytes::binary& data) = 0;
+
+        virtual void close();
 
     protected:
         DataReceiver onSignalData;
         DataEmitter onEmitData;
         rtc::Thread *networkThread, *signalingThread;
 
-        [[nodiscard]] std::vector<bytes::binary> preReadData(const bytes::binary &data, bool isRaw = false) const;
+        std::vector<bytes::binary> preReadData(const bytes::binary &data, bool isRaw = false);
 
-        [[nodiscard]] bytes::binary preSendData(const bytes::binary &data, bool isRaw = false) const;
+        bytes::binary preSendData(const bytes::binary &data, bool isRaw = false);
 
-        [[nodiscard]] virtual bool supportsCompression() const = 0;
+        virtual bool supportsCompression() const = 0;
 
     private:
-        std::shared_ptr<SignalingEncryption> signalingEncryption;
-        std::weak_ptr<SignalingEncryption> signalingEncryptionWeak;
+        std::mutex mutex;
+        std::unique_ptr<SignalingEncryption> signalingEncryption;
+
     };
 } // signaling
