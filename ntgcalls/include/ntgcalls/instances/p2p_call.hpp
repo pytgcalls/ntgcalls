@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <future>
 #include <nlohmann/json.hpp>
 
 #include <ntgcalls/instances/call_interface.hpp>

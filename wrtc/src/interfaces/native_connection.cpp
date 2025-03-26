@@ -24,7 +24,6 @@ namespace wrtc {
         contentNegotiationContext->copyCodecsFromChannelManager(factory->mediaEngine(), false);
         std::weak_ptr weak(shared_from_this());
         networkThread()->PostTask([weak] {
-
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
