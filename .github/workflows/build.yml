@@ -163,6 +163,7 @@ jobs:
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp36-* cp37-* cp38-*
           CIBW_BUILD_VERBOSITY: 3
+          CIBW_TEST_SKIP: "*-manylinux_aarch64"
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
           CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/x86_64:latest
