@@ -270,6 +270,7 @@ namespace ntgcalls {
 
     ASYNC_RETURN(std::map<int64_t, StreamManager::CallInfo>) NTgCalls::calls() {
         SMART_ASYNC(this)
+        std::lock_guard lock(mutex);
         std::map<int64_t, StreamManager::CallInfo> statusList;
         for (const auto& [fst, snd] : connections) {
             statusList.emplace(fst, StreamManager::CallInfo{
