@@ -27,8 +27,6 @@ target_link_static_libraries(${GLIB_SRC} ${target_name}
     gmodule-2.0
     gthread-2.0
     pcre2-8
-    pcre2-16
-    pcre2-32
     pcre2-posix
 )
 
