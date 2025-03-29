@@ -41,7 +41,9 @@ if(NOT TARGET ffmpeg::avcodec)
     set_target_properties(ffmpeg::avcodec PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_SRC}/lib/${AVCODEC_LIB}")
-    set_target_properties(ffmpeg::avcodec PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
+    if (IS_LINUX)
+        set_target_properties(ffmpeg::avcodec PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
+    endif ()
 endif ()
 
 if(NOT TARGET ffmpeg::avformat)
@@ -49,7 +51,9 @@ if(NOT TARGET ffmpeg::avformat)
     set_target_properties(ffmpeg::avformat PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_SRC}/lib/${AVFORMAT_LIB}")
-    set_target_properties(ffmpeg::avformat PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
+    if (IS_LINUX)
+        set_target_properties(ffmpeg::avformat PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
+    endif ()
 endif ()
 
 if(NOT TARGET ffmpeg::avutil)
@@ -57,5 +61,7 @@ if(NOT TARGET ffmpeg::avutil)
     set_target_properties(ffmpeg::avutil PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_SRC}/lib/${AVUTIL_LIB}")
-    set_target_properties(ffmpeg::avutil PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
+    if (IS_LINUX)
+        set_target_properties(ffmpeg::avutil PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
+    endif ()
 endif ()
