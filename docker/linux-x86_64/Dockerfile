@@ -7,7 +7,8 @@ RUN yum install -y \
     pulseaudio-libs-devel \
     flex \
     elfutils-libelf-devel \
-    texinfo
+    texinfo \
+    libstdc++-static
 
 ENV MAKEFLAGS="-j$(nproc)"
 ENV CFLAGS="-march=native -O3"
