@@ -1,4 +1,4 @@
-FROM quay.io/pypa/manylinux2014_aarch64:latest
+FROM quay.io/pypa/manylinux_2_28_aarch64:latest
 RUN yum install -y \
     git \
     make \
