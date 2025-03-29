@@ -20,6 +20,7 @@ target_include_directories(${target_name}
 
 target_link_static_libraries(${GLIB_SRC} ${target_name}
     ffi
+    expat-full
     gio-2.0
     glib-2.0
     gobject-2.0
@@ -79,7 +80,6 @@ target_link_libraries(${target_name} PRIVATE
     dl
     rt
     m
-    expat
     z
     resolv
     -static-libgcc
