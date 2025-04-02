@@ -3,6 +3,7 @@ package main
 /*
 #cgo LDFLAGS: -L . -lntgcalls -lm -lz
 #include "ntgcalls/ntgcalls.h"
+#include "glibc_compatibility.h"
 */
 import "C"
 import (
