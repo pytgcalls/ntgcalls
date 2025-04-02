@@ -280,9 +280,9 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
 
     set(bundled_tgt_full_name ${bundle_output_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}${bundled_tgt_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-    if (CMAKE_CXX_COMPILER_ID MATCHES "^(Clang|GNU)$")
-        file(WRITE ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in
-                "CREATE ${bundled_tgt_full_name}\n" )
+    if (LINUX)
+        file(WRITE ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in "CREATE ${bundled_tgt_full_name}\n")
+
         foreach(tgt IN LISTS static_libs)
             if (tgt MATCHES "^/")
                 file(APPEND ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in
@@ -298,7 +298,8 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
 
         file(GENERATE
             OUTPUT ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
-            INPUT ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in)
+            INPUT ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in
+        )
 
         set(ar_tool ${CMAKE_AR})
         if (CMAKE_INTERPROCEDURAL_OPTIMIZATION)
@@ -311,11 +312,9 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
             OUTPUT ${bundled_tgt_full_name}
             VERBATIM
         )
-    elseif (MSVC)
-        find_program(lib_tool lib)
-
+    elseif (WINDOWS)
         foreach(tgt IN LISTS static_libs)
-            if (tgt MATCHES "^/")
+            if (tgt MATCHES "^[A-Z]:")
                 list(APPEND static_libs_full_names ${tgt})
             else ()
                 list(APPEND static_libs_full_names $<TARGET_FILE:${tgt}>)
@@ -323,7 +322,32 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
         endforeach()
 
         add_custom_command(
-            COMMAND ${lib_tool} /NOLOGO /OUT:${bundled_tgt_full_name} ${static_libs_full_names}
+            COMMAND ${LIB_ASSEMBLER} /NOLOGO /IGNORE:4006 /OUT:${bundled_tgt_full_name} ${static_libs_full_names}
+            COMMENT "Bundling ${bundled_tgt_name}"
+            OUTPUT ${bundled_tgt_full_name}
+            VERBATIM
+        )
+    elseif (MACOS)
+        find_program(lib_tool libtool)
+        set(ar_tool ${lib_tool})
+
+        file(WRITE ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in "")
+
+        foreach(tgt IN LISTS static_libs)
+            if (tgt MATCHES "^/")
+                file(APPEND ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in "${tgt}\n")
+            else ()
+                file(APPEND ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in "$<TARGET_FILE:${tgt}>\n")
+            endif ()
+        endforeach()
+
+        file(GENERATE
+            OUTPUT ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
+            INPUT ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in
+        )
+
+        add_custom_command(
+            COMMAND ${ar_tool} -static -o "${bundled_tgt_full_name}" -filelist "${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar"
             COMMENT "Bundling ${bundled_tgt_name}"
             OUTPUT ${bundled_tgt_full_name}
             VERBATIM
