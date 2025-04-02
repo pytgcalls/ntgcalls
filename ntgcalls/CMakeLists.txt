@@ -1,37 +1,45 @@
 file(GLOB_RECURSE MODULE_SRC *.cpp)
 
 set(BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/bindings)
+set(NTG_LIB_NAME ntgcalls)
 
 if(IS_PYTHON)
     list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/ntgcalls.cpp")
-    pybind11_add_module(ntgcalls-native ${MODULE_SRC})
-    target_compile_definitions(ntgcalls-native PRIVATE VERSION_INFO=${PY_VERSION_INFO})
+    pybind11_add_module(${NTG_LIB_NAME} ${MODULE_SRC})
+    target_compile_definitions(ntgcalls PRIVATE VERSION_INFO=${PY_VERSION_INFO})
     add_compile_definitions(PYTHON_ENABLED)
 else ()
     if (STATIC_BUILD OR ANDROID)
-         add_library(ntgcalls-native STATIC)
+        if (NOT ANDROID)
+            set(NTG_LIB_NAME ntgcalls-native)
+        endif ()
+        add_library(${NTG_LIB_NAME} STATIC)
     else()
-         add_library(ntgcalls-native SHARED)
+        add_library(${NTG_LIB_NAME} SHARED)
     endif ()
-    set_target_properties(ntgcalls-native PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+    set_target_properties(${NTG_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/pythonapi.cpp")
+
     if (ANDROID_ABI)
         list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/ntgcalls.cpp")
     else ()
-        target_include_directories(ntgcalls-native PRIVATE ../include)
+        target_include_directories(${NTG_LIB_NAME} PRIVATE ../include)
     endif ()
-    target_compile_definitions(ntgcalls-native PRIVATE NTG_EXPORTS)
-    target_sources(ntgcalls-native PRIVATE ${MODULE_SRC})
+
+    target_compile_definitions(${NTG_LIB_NAME} PRIVATE NTG_EXPORTS)
+    target_sources(${NTG_LIB_NAME} PRIVATE ${MODULE_SRC})
+
     if (ANDROID)
-        set_target_properties(ntgcalls-native PROPERTIES
+        set_target_properties(${NTG_LIB_NAME} PROPERTIES
             ARCHIVE_OUTPUT_DIRECTORY "${jni_loc}/ntgcalls/${ANDROID_ABI}"
         )
     endif ()
 endif ()
-target_include_directories(ntgcalls-native PRIVATE include)
-set_property(TARGET ntgcalls-native PROPERTY CXX_STANDARD 20 C_STANDARD 20)
 
-target_link_libraries(ntgcalls-native PRIVATE wrtc nlohmann_json::nlohmann_json)
+target_include_directories(${NTG_LIB_NAME} PRIVATE include)
+set_property(TARGET ${NTG_LIB_NAME} PROPERTY CXX_STANDARD 20 C_STANDARD 20)
+target_link_libraries(${NTG_LIB_NAME} PRIVATE wrtc nlohmann_json::nlohmann_json)
 
 if (NOT IS_PYTHON AND NOT ANDROID)
     set(ARCHIVE_TYPE)
@@ -65,5 +73,5 @@ if (NOT IS_PYTHON AND NOT ANDROID)
 endif ()
 
 if(BOOST_ENABLED)
-    target_link_libraries(ntgcalls-native PRIVATE Boost::filesystem)
+    target_link_libraries(${NTG_LIB_NAME} PRIVATE Boost::filesystem)
 endif ()
