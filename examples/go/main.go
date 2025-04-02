@@ -1,6 +1,9 @@
 package main
 
-//#cgo LDFLAGS: -L . -lntgcalls -Wl,-rpath=./
+/*
+#cgo LDFLAGS: -L . -lntgcalls -lm -lz
+#include "ntgcalls/ntgcalls.h"
+*/
 import "C"
 import (
 	"fmt"

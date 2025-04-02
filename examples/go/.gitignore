@@ -1,5 +1,6 @@
 *.so
-*.h
+*.a
+ntgcalls/*.h
 *.dll
 *.dylib
 *.db
