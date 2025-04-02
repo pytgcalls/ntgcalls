@@ -54,3 +54,124 @@ function(target_link_static_libraries src target_name)
     list(APPEND static_group "-Wl,--pop-state")
     target_link_libraries(${target_name} INTERFACE ${static_flags} ${static_group})
 endfunction()
+
+function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
+    list(APPEND static_libs ${tgt_name})
+    file(MAKE_DIRECTORY ${bundle_output_dir})
+
+    function(recursively_collect_dependencies input_target)
+        get_target_property(input_type ${input_target} TYPE)
+        set(input_link_libraries INTERFACE_LINK_LIBRARIES)
+        get_target_property(interface_dependencies ${input_target} INTERFACE_LINK_LIBRARIES)
+        if (NOT interface_dependencies)
+            get_target_property(interface_dependencies ${input_target} LINK_LIBRARIES)
+        endif ()
+        if (NOT interface_dependencies)
+            get_target_property(interface_dependencies ${input_target} IMPORTED_LOCATION)
+            if (NOT interface_dependencies)
+                return()
+            endif ()
+            list(APPEND static_libs ${interface_dependencies})
+            set(static_libs ${static_libs} PARENT_SCOPE)
+            return()
+        endif ()
+        set(library_path "")
+        set(group_opened false)
+        foreach(dependency IN LISTS interface_dependencies)
+            if (TARGET ${dependency} OR dependency MATCHES "^\\$<LINK_ONLY:(.+)>$")
+                string(LENGTH "${CMAKE_MATCH_1}" length)
+                if (${length} GREATER 0)
+                    set(dependency ${CMAKE_MATCH_1})
+                endif()
+                if (TARGET ${dependency})
+                    get_target_property(alias ${dependency} ALIASED_TARGET)
+                    if (TARGET ${alias})
+                        set(dependency ${alias})
+                    endif()
+                    get_target_property(_type ${dependency} TYPE)
+                    if (${_type} STREQUAL "STATIC_LIBRARY")
+                        list(APPEND static_libs ${dependency})
+                    endif()
+                    recursively_collect_dependencies(${dependency})
+                endif ()
+            elseif(dependency MATCHES "^-L(.+)$")
+                set(library_path "${CMAKE_MATCH_1}")
+            elseif (dependency MATCHES "^-Wl,--start-group")
+                set(group_opened true)
+            elseif (dependency MATCHES "^-Wl,--end-group")
+                set(group_opened false)
+            elseif (dependency MATCHES "-l([^ ]+)" AND group_opened)
+                list(APPEND static_libs "${library_path}/${CMAKE_STATIC_LIBRARY_PREFIX}${CMAKE_MATCH_1}${CMAKE_STATIC_LIBRARY_SUFFIX}")
+            endif ()
+        endforeach ()
+        set(static_libs ${static_libs} PARENT_SCOPE)
+    endfunction()
+
+    recursively_collect_dependencies(${tgt_name})
+    list(REMOVE_DUPLICATES static_libs)
+
+    set(bundled_tgt_full_name ${bundle_output_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}${bundled_tgt_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "^(Clang|GNU)$")
+        file(WRITE ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in
+                "CREATE ${bundled_tgt_full_name}\n" )
+        foreach(tgt IN LISTS static_libs)
+            if (tgt MATCHES "^/")
+                file(APPEND ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in
+                        "ADDLIB ${tgt}\n")
+            else ()
+                file(APPEND ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in
+                        "ADDLIB $<TARGET_FILE:${tgt}>\n")
+            endif ()
+        endforeach()
+
+        file(APPEND ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in "SAVE\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in "END\n")
+
+        file(GENERATE
+            OUTPUT ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
+            INPUT ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in)
+
+        set(ar_tool ${CMAKE_AR})
+        if (CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+            set(ar_tool ${CMAKE_CXX_COMPILER_AR})
+        endif()
+
+        add_custom_command(
+            COMMAND ${ar_tool} -M < ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
+            COMMENT "Bundling ${bundled_tgt_name}"
+            OUTPUT ${bundled_tgt_full_name}
+            VERBATIM
+        )
+    elseif (MSVC)
+        find_program(lib_tool lib)
+
+        foreach(tgt IN LISTS static_libs)
+            if (tgt MATCHES "^/")
+                list(APPEND static_libs_full_names ${tgt})
+            else ()
+                list(APPEND static_libs_full_names $<TARGET_FILE:${tgt}>)
+            endif ()
+        endforeach()
+
+        add_custom_command(
+            COMMAND ${lib_tool} /NOLOGO /OUT:${bundled_tgt_full_name} ${static_libs_full_names}
+            COMMENT "Bundling ${bundled_tgt_name}"
+            OUTPUT ${bundled_tgt_full_name}
+            VERBATIM
+        )
+    else ()
+        message(FATAL_ERROR "Unsupported compiler for static library bundling")
+    endif ()
+
+    add_custom_target(bundling_target ALL DEPENDS ${bundled_tgt_full_name})
+    add_dependencies(bundling_target ${tgt_name})
+
+    add_library(${bundled_tgt_name} STATIC IMPORTED)
+    set_target_properties(${bundled_tgt_name}
+        PROPERTIES
+        IMPORTED_LOCATION ${bundled_tgt_full_name}
+        INTERFACE_INCLUDE_DIRECTORIES $<TARGET_PROPERTY:${tgt_name},INTERFACE_INCLUDE_DIRECTORIES>
+    )
+    add_dependencies(${bundled_tgt_name} bundling_target)
+endfunction()
