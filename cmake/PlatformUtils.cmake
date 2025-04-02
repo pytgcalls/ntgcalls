@@ -55,6 +55,174 @@ function(target_link_static_libraries src target_name)
     target_link_libraries(${target_name} INTERFACE ${static_flags} ${static_group})
 endfunction()
 
+function(setup_platform_flags target_name import_libraries)
+    if (WINDOWS_x86_64)
+        target_compile_definitions(${target_name} PRIVATE
+            _WIN32_WINNT=0x0A00
+            NOMINMAX
+            WIN32_LEAN_AND_MEAN
+            UNICODE
+            _UNICODE
+        )
+        target_compile_definitions(${target_name} PUBLIC
+            WEBRTC_WIN
+            RTC_ENABLE_H265
+            _ITERATOR_DEBUG_LEVEL=0
+            NDEBUG
+        )
+        target_compile_options(${target_name} PRIVATE /utf-8 /bigobj)
+        set_target_properties(${target_name} PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        if (import_libraries)
+            target_link_libraries(${target_name} PUBLIC
+                winmm.lib
+                ws2_32.lib
+                Strmiids.lib
+                dmoguids.lib
+                iphlpapi.lib
+                msdmo.lib
+                Secur32.lib
+                wmcodecdspuuid.lib
+                d3d11.lib
+                dxgi.lib
+                dwmapi.lib
+                shcore.lib
+            )
+        endif ()
+    elseif (ANDROID)
+        target_compile_options(wrtc PUBLIC
+            -fexperimental-relative-c++-abi-vtables
+        )
+        target_compile_definitions(wrtc PUBLIC
+            WEBRTC_POSIX
+            WEBRTC_LINUX
+            WEBRTC_ANDROID
+            _LIBCPP_ABI_NAMESPACE=Cr
+            _LIBCPP_ABI_VERSION=2
+            _LIBCPP_DISABLE_AVAILABILITY
+            _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS
+            _LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS
+            _LIBCPP_ENABLE_NODISCARD
+            _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE
+            BOOST_NO_CXX98_FUNCTION_BASE
+        )
+    elseif (LINUX)
+        target_compile_definitions(wrtc PUBLIC
+            WEBRTC_POSIX
+            WEBRTC_LINUX
+            _LIBCPP_ABI_NAMESPACE=Cr
+            _LIBCPP_ABI_VERSION=2
+            _LIBCPP_DISABLE_AVAILABILITY
+            BOOST_NO_CXX98_FUNCTION_BASE
+            NDEBUG
+            RTC_ENABLE_H265
+            WEBRTC_USE_PIPEWIRE
+            WEBRTC_USE_X11
+        )
+        if (import_libraries)
+            target_link_static_libraries(${GLIB_SRC} wrtc
+                ffi
+                expat-full
+                gio-2.0
+                glib-2.0
+                gobject-2.0
+                gmodule-2.0
+                gthread-2.0
+                pcre2-8
+                pcre2-posix
+            )
+
+            target_include_directories(wrtc
+                INTERFACE
+                ${GLIB_SRC}/include
+            )
+
+            target_link_static_libraries(${X11_SRC} wrtc
+                X11
+                X11-xcb
+                xcb
+                xcb-composite
+                xcb-damage
+                xcb-dbe
+                xcb-dpms
+                xcb-dri2
+                xcb-dri3
+                xcb-glx
+                xcb-present
+                xcb-randr
+                xcb-record
+                xcb-render
+                xcb-res
+                xcb-screensaver
+                xcb-shape
+                xcb-shm
+                xcb-sync
+                xcb-xf86dri
+                xcb-xfixes
+                xcb-xinerama
+                xcb-xinput
+                xcb-xkb
+                xcb-xtest
+                xcb-xv
+                xcb-xvmc
+                Xau
+                Xcomposite
+                Xdamage
+                Xext
+                Xfixes
+                Xrandr
+                Xrender
+                Xtst
+            )
+            target_link_libraries(wrtc INTERFACE X11)
+
+            target_link_static_libraries(${MESA_SRC} wrtc
+                gbm
+                drm
+            )
+
+            target_link_libraries(wrtc PRIVATE
+                dl
+                rt
+                m
+                z
+                resolv
+                -static-libgcc
+                -static-libstdc++
+                Threads::Threads
+            )
+        endif ()
+    elseif (MACOS)
+        target_compile_definitions(wrtc PUBLIC
+            WEBRTC_POSIX
+            WEBRTC_MAC
+            NDEBUG
+        )
+        enable_language(OBJCXX)
+        target_compile_options(wrtc PRIVATE -fconstant-string-class=NSConstantString)
+        target_link_options(wrtc PUBLIC -ObjC)
+        set_target_properties(wrtc PROPERTIES CXX_VISIBILITY_PRESET hidden)
+        if (import_libraries)
+            target_link_libraries(wrtc PUBLIC
+                "-framework AVFoundation"
+                "-framework AudioToolbox"
+                "-framework CoreAudio"
+                "-framework QuartzCore"
+                "-framework CoreMedia"
+                "-framework VideoToolbox"
+                "-framework AppKit"
+                "-framework Metal"
+                "-framework MetalKit"
+                "-framework OpenGL"
+                "-framework IOSurface"
+                "-framework ScreenCaptureKit"
+                "iconv"
+            )
+        endif ()
+    else()
+        message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} with ${OS_ARCH} is not supported yet")
+    endif ()
+endfunction()
+
 function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
     list(APPEND static_libs ${tgt_name})
     file(MAKE_DIRECTORY ${bundle_output_dir})
