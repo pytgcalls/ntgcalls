@@ -69,7 +69,9 @@ NTgCalls includes Go Bindings, enabling seamless integration with Go. Follow the
 3. Download **shared** or **static** release of the library from https://github.com/pytgcalls/ntgcalls/releases
 4. Copy `ntgcalls.h` file into `./examples/go/ntgcalls/` directory
 5. The rest of the files should be copied to `./examples/go/` directory
-    * `ntgcalls.dll` and `ntgcalls.lib` files in case of Windows amd64 shared release
+    * `ntgcalls.dll` or `ntgcalls.lib` files in case of Windows amd64
+    * `libntgcalls.so` or `libntgcalls.a` files in case of Linux amd64
+    * `libntgcalls.dylib` or `libntgcalls.a` files in case of macOS
 6. Then in `./examples/go/` directory run `go build` or `go run .` with CGO_ENABLED=1 env variable set
     * `$env:CGO_ENABLED=1; go run .` for Windows PowerShell
     * `CGO_ENABLED=1 go run .` for UNIX
