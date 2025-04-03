@@ -36,33 +36,6 @@ namespace wrtc {
     }
 
     void ContentNegotiationContext::copyCodecsFromChannelManager(cricket::MediaEngineInterface *mediaEngine, const bool randomize) {
-        std::vector<cricket::Codec> audioSendCodecs = mediaEngine->voice().send_codecs();
-        std::vector<cricket::Codec> audioRecvCodecs = mediaEngine->voice().recv_codecs();
-        std::vector<cricket::Codec> videoSendCodecs = mediaEngine->video().send_codecs();
-        std::vector<cricket::Codec> videoRecvCodecs = mediaEngine->video().recv_codecs();
-        for (const auto &codec : audioSendCodecs) {
-            if (codec.name == "opus") {
-                audioSendCodecs = { codec };
-                audioRecvCodecs = { codec };
-                break;
-            }
-        }
-        if (randomize) {
-            for (auto &codec : audioSendCodecs) {
-                codec.id += 3;
-            }
-            for (auto &codec : videoSendCodecs) {
-                codec.id += 3;
-            }
-            for (auto &codec : audioRecvCodecs) {
-                codec.id += 3;
-            }
-            for (auto &codec : videoRecvCodecs) {
-                codec.id += 3;
-            }
-        }
-        sessionDescriptionFactory->set_audio_codecs(audioSendCodecs, audioRecvCodecs);
-        sessionDescriptionFactory->set_video_codecs(videoSendCodecs, videoRecvCodecs);
         int absSendTimeUriId = 2;
         int transportSequenceNumberUriId = 3;
         int videoRotationUri = 13;
@@ -279,7 +252,7 @@ namespace wrtc {
                         cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
                         fingerprint.get()
                     );
-                    cricket::TransportInfo transportInfo(mappedContent.name, transportDescription);
+                    cricket::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
                     sessionDescription->AddTransportInfo(transportInfo);
                     sessionDescription->AddContent(std::move(mappedContent));
                     break;
@@ -302,7 +275,7 @@ namespace wrtc {
                     cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
                     fingerprint.get()
                 );
-                cricket::TransportInfo transportInfo(mappedContent.name, transportDescription);
+                cricket::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
                 sessionDescription->AddTransportInfo(transportInfo);
                 sessionDescription->AddContent(std::move(mappedContent));
             }
@@ -375,12 +348,11 @@ namespace wrtc {
         }
         contentDescription->set_direction(direction);
         contentDescription->set_rtcp_mux(true);
-        cricket::ContentInfo mappedContentInfo(cricket::MediaProtocolType::kRtp);
-        mappedContentInfo.name = contentId;
-        mappedContentInfo.rejected = false;
-        mappedContentInfo.bundle_only = false;
-        mappedContentInfo.set_media_description(std::move(contentDescription));
-        return mappedContentInfo;
+        return {
+            cricket::MediaProtocolType::kRtp,
+            contentId,
+            std::move(contentDescription),
+        };
     }
 
     MediaContent ContentNegotiationContext::convertContentInfoToSignalingContent(const cricket::ContentInfo &content) {
@@ -455,17 +427,16 @@ namespace wrtc {
         auto contentDescription = std::move(audioDescription);
         contentDescription->set_direction(webrtc::RtpTransceiverDirection::kInactive);
         contentDescription->set_rtcp_mux(true);
-        cricket::ContentInfo mappedContentInfo(cricket::MediaProtocolType::kRtp);
-        mappedContentInfo.name = contentId;
-        mappedContentInfo.rejected = false;
-        mappedContentInfo.bundle_only = false;
-        mappedContentInfo.set_media_description(std::move(contentDescription));
-        return mappedContentInfo;
+        return {
+            cricket::MediaProtocolType::kRtp,
+            contentId,
+            std::move(contentDescription),
+        };
     }
 
     cricket::MediaDescriptionOptions ContentNegotiationContext::getIncomingContentDescription(const MediaContent &content) {
         auto mappedContent = convertSignalingContentToContentInfo(std::to_string(content.ssrc), content, webrtc::RtpTransceiverDirection::kSendOnly);
-        cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.name, webrtc::RtpTransceiverDirection::kRecvOnly, false);
+        cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kRecvOnly, false);
         for (const auto &extension : mappedContent.media_description()->rtp_header_extensions()) {
             contentDescription.header_extensions.emplace_back(extension.uri, extension.id);
         }
@@ -507,7 +478,7 @@ namespace wrtc {
                 if (channel.id == id) {
                     found = true;
                     auto mappedContent = convertSignalingContentToContentInfo(channel.id, channel.content, webrtc::RtpTransceiverDirection::kRecvOnly);
-                    cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.name, webrtc::RtpTransceiverDirection::kSendOnly, false);
+                    cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kSendOnly, false);
                     for (const auto &extension : mappedContent.media_description()->rtp_header_extensions()) {
                         contentDescription.header_extensions.emplace_back(extension.uri, extension.id);
                     }
@@ -536,7 +507,7 @@ namespace wrtc {
                 if (std::to_string(content.ssrc) == id) {
                     found = true;
                     auto mappedContent = convertSignalingContentToContentInfo(std::to_string(content.ssrc), content, webrtc::RtpTransceiverDirection::kSendOnly);
-                    cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.name, webrtc::RtpTransceiverDirection::kRecvOnly, false);
+                    cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kRecvOnly, false);
                     for (const auto &extension : mappedContent.media_description()->rtp_header_extensions()) {
                         contentDescription.header_extensions.emplace_back(extension.uri, extension.id);
                     }

@@ -10,7 +10,7 @@
 namespace wrtc {
     SctpDataChannelProviderInterfaceImpl::SctpDataChannelProviderInterfaceImpl(
         const webrtc::Environment& env,
-        rtc::PacketTransportInternal* transportChannel,
+        cricket::DtlsTransportInternal* transportChannel,
         const bool isOutgoing,
         rtc::Thread* networkThread
     ): weakFactory(this), networkThread(networkThread) {

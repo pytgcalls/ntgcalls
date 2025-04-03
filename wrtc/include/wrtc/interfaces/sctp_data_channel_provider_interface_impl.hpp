@@ -29,7 +29,7 @@ namespace wrtc {
     public:
         SctpDataChannelProviderInterfaceImpl(
             const webrtc::Environment& env,
-            rtc::PacketTransportInternal* transportChannel,
+            cricket::DtlsTransportInternal* transportChannel,
             bool isOutgoing,
             rtc::Thread* networkThread
         );

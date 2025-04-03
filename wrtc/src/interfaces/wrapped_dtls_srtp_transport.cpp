@@ -12,7 +12,7 @@ namespace wrtc {
     };
 
     struct tag_SrtpTransport_UnprotectRtp {
-        using pfn_t = bool (webrtc::SrtpTransport::*)(void* data, int in_len, int* out_len);
+        using pfn_t = bool (webrtc::SrtpTransport::*)(rtc::CopyOnWriteBuffer& buffer);
         friend constexpr pfn_t pfn_of(tag_SrtpTransport_UnprotectRtp);
     };
     template struct tag_bind_pfn<tag_SrtpTransport_UnprotectRtp, &webrtc::SrtpTransport::UnprotectRtp>;
@@ -34,11 +34,9 @@ namespace wrtc {
         }
 
         rtc::CopyOnWriteBuffer payload(packet.payload());
-        char* data = payload.MutableData<char>();
-        int len = rtc::checked_cast<int>(payload.size());
-        if (!(this->*c_pfn_SrtpTransport_UnprotectRtp)(data, len, &len)) {
+        if (!(this->*c_pfn_SrtpTransport_UnprotectRtp)(payload)) {
             if (decryptionFailureCount % 100 == 0) {
-                RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << len
+                RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << payload.size()
                                   << ", seqnum=" << webrtc::ParseRtpSequenceNumber(payload)
                                   << ", SSRC=" << webrtc::ParseRtpSsrc(payload)
                                   << ", previous failure count: "
@@ -47,7 +45,6 @@ namespace wrtc {
             ++decryptionFailureCount;
             return;
         }
-        payload.SetSize(len);
 
         webrtc::RtpPacketReceived parsedPacket(&headerExtensionMap);
         parsedPacket.set_arrival_time(packet.arrival_time().value_or(webrtc::Timestamp::MinusInfinity()));
