@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include <p2p/base/packet_transport_internal.h>
-#include <p2p/dtls/dtls_transport.h>
 
+#include <pc/dtls_transport.h>
+#include <rtc_base/rtc_certificate.h>
 #include <wrtc/utils/binary.hpp>
 
 namespace signaling {
