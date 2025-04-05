@@ -70,7 +70,7 @@ if (import_libraries)
 
     target_link_static_libraries(${MESA_SRC} ${target_name}
         gbm
-        drm
+        drm-full
     )
 
     target_link_libraries(${target_name} PRIVATE
