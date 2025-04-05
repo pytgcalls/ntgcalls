@@ -63,11 +63,11 @@ if (NOT IS_PYTHON AND NOT ANDROID)
     if (STATIC_BUILD)
         bundle_static_library(ntgcalls-native ntgcalls ${ARCHIVE_DIR}/lib)
     else ()
-        set_target_properties(${LIBRARY_OUTPUT_NAME} PROPERTIES
+        set_target_properties(${NTG_LIB_NAME} PROPERTIES
             ${ARCHIVE_TYPE}_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
         )
         if (WINDOWS)
-            set_target_properties(${LIBRARY_OUTPUT_NAME} PROPERTIES
+            set_target_properties(${NTG_LIB_NAME} PROPERTIES
                 ARCHIVE_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
             )
         endif ()
