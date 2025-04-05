@@ -79,8 +79,6 @@ if (import_libraries)
         m
         z
         resolv
-        -static-libgcc
-        -static-libstdc++
         Threads::Threads
     )
 endif ()
