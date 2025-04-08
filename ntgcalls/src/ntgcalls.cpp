@@ -26,7 +26,10 @@ namespace ntgcalls {
 #endif
         std::unique_lock lock(mutex);
         RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
-        connections = {};
+        for (const auto& connection : connections | std::views::values) {
+            connection->stop();
+        }
+        connections.clear();
         hardwareInfo = nullptr;
         lock.unlock();
         updateThread->Stop();
@@ -55,7 +58,6 @@ namespace ntgcalls {
         }
         connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
-            THREAD_SAFE
             if (state.kind == NetworkInfo::Kind::Normal) {
                 switch (state.state) {
                     case NetworkInfo::ConnectionState::Closed:
@@ -67,6 +69,7 @@ namespace ntgcalls {
                         break;
                 }
             }
+            THREAD_SAFE
             (void) connectionChangeCallback(chatId, state);
             END_THREAD_SAFE
             END_WORKER
@@ -267,6 +270,7 @@ namespace ntgcalls {
 
     ASYNC_RETURN(std::map<int64_t, StreamManager::CallInfo>) NTgCalls::calls() {
         SMART_ASYNC(this)
+        std::lock_guard lock(mutex);
         std::map<int64_t, StreamManager::CallInfo> statusList;
         for (const auto& [fst, snd] : connections) {
             statusList.emplace(fst, StreamManager::CallInfo{
@@ -286,7 +290,9 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Call " << chatId << " not found";
             THROW_CONNECTION_NOT_FOUND(chatId)
         }
-        connections.erase(connections.find(chatId));
+        const auto call = connections.find(chatId);
+        call->second->stop();
+        connections.erase(call);
         RTC_LOG(LS_INFO) << "Call " << chatId << " removed";
     }
 
@@ -338,7 +344,7 @@ namespace ntgcalls {
     }
 
     MediaDevices NTgCalls::getMediaDevices() {
-        auto devices = MediaDevice::GetAudioDevices();
+        const auto devices = MediaDevice::GetAudioDevices();
         std::vector<DeviceInfo> microphones, speakers;
         for (const auto& device : devices) {
             if (json::parse(device.metadata)["is_microphone"]) {

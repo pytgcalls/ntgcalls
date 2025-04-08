@@ -23,7 +23,6 @@ REGISTER_EXCEPTION(ntgcalls::SignalingUnsupported, SIGNALING_UNSUPPORTED) \
 REGISTER_EXCEPTION(ntgcalls::SignalingError, SIGNALING) \
 REGISTER_EXCEPTION(ntgcalls::InvalidParams, INVALID_PARAMS) \
 REGISTER_EXCEPTION(ntgcalls::CryptoError, CRYPTO) \
-REGISTER_EXCEPTION(ntgcalls::RTMPNeeded, RTMP_NEEDED) \
 REGISTER_EXCEPTION(ntgcalls::FileError, FILE) \
 REGISTER_EXCEPTION(ntgcalls::FFmpegError, FFMPEG) \
 REGISTER_EXCEPTION(ntgcalls::ShellError, SHELL) \
@@ -31,6 +30,7 @@ REGISTER_EXCEPTION(ntgcalls::MediaDeviceError, MEDIA_DEVICE) \
 REGISTER_EXCEPTION(wrtc::RTCException, WEBRTC) \
 REGISTER_EXCEPTION(wrtc::SdpParseException, PARSE_SDP) \
 REGISTER_EXCEPTION(wrtc::TransportParseException, PARSE_TRANSPORT) \
+REGISTER_EXCEPTION(wrtc::RTMPNeeded, RTMP_NEEDED) \
 } catch (...) { \
 *future.errorCode = NTG_ERROR_UNKNOWN; \
 } \

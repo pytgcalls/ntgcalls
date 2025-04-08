@@ -61,7 +61,7 @@ jobs:
             build_list+=",{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"x86_64\"}"
           fi
           if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"aarch64\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"arm64\"}"
+            build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"arm64\"}"
           fi
           if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
             build_list+=",{\"os\":\"macos-15\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
@@ -89,14 +89,14 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v5
-        if: matrix.cibw_archs != 'aarch64'
+        if: matrix.shared_name != 'linux-arm64'
         id: python
         with:
           python-version: "3.9 - 3.13"
           update-environment: false
 
       - name: Set up Python (ARM64)
-        if: matrix.cibw_archs == 'aarch64'
+        if: matrix.shared_name == 'linux-arm64'
         id: python-arm64
         run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
 
@@ -107,7 +107,7 @@ jobs:
         shell: bash
 
       - name: Set up QEMU
-        if: matrix.cibw_archs == 'aarch64'
+        if: matrix.shared_name == 'linux-arm64'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
@@ -161,12 +161,11 @@ jobs:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
-          CIBW_SKIP: cp36-* cp37-*
-          CIBW_BUILD_VERBOSITY: 3
-          CIBW_TEST_SKIP: "cp38-macosx_arm64 *-manylinux_aarch64"
+          CIBW_SKIP: cp38-*
           CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
           CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/x86_64:latest
+          MACOSX_DEPLOYMENT_TARGET: 12.0
 
       - uses: actions/upload-artifact@v4
         if: github.event.inputs.build-wheels == 'true'

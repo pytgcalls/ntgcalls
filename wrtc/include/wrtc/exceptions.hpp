@@ -24,6 +24,10 @@ namespace wrtc {
         using BaseRTCException::BaseRTCException;
     };
 
+    class RTMPNeeded final : public BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     class SdpParseException final : public BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };

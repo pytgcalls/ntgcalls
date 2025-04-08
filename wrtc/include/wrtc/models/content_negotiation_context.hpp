@@ -84,7 +84,7 @@ namespace wrtc {
 
         std::unique_ptr<NegotiationContents> getPendingOffer();
 
-        std::unique_ptr<NegotiationContents> setPendingAnswer(std::unique_ptr<NegotiationContents>&& answer);
+        std::unique_ptr<NegotiationContents> setPendingAnswer(std::unique_ptr<NegotiationContents> answer);
 
         [[nodiscard]] std::unique_ptr<CoordinatedState> coordinatedState() const;
 

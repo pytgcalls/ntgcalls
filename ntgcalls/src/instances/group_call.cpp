@@ -11,8 +11,10 @@
 #include <wrtc/models/response_payload.hpp>
 
 namespace ntgcalls {
-    GroupCall::~GroupCall() {
+
+    void GroupCall::stop() {
         stopPresentation();
+        CallInterface::stop();
     }
 
     std::string GroupCall::init(const MediaDescription& config) {
@@ -28,9 +30,14 @@ namespace ntgcalls {
         streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
         streamManager->optimizeSources(connection.get());
 
-        connection->onDataChannelOpened([this] {
+        std::weak_ptr weak(shared_from_this());
+        connection->onDataChannelOpened([weak] {
+            const auto strong = std::static_pointer_cast<GroupCall>(weak.lock());
+            if (!strong) {
+                return;
+            }
             RTC_LOG(LS_INFO) << "Data channel opened";
-            updateRemoteVideoConstraints(connection);
+            updateRemoteVideoConstraints(strong->connection);
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
@@ -50,14 +57,23 @@ namespace ntgcalls {
         presentationConnection = std::make_shared<wrtc::GroupConnection>(true);
         presentationConnection->open();
         streamManager->optimizeSources(presentationConnection.get());
-        presentationConnection->onDataChannelOpened([this] {
+        std::weak_ptr weak(shared_from_this());
+        presentationConnection->onDataChannelOpened([weak] {
+            const auto strong = std::static_pointer_cast<GroupCall>(weak.lock());
+            if (!strong) {
+                return;
+            }
             RTC_LOG(LS_INFO) << "Data channel opened";
-            updateThread->PostTask([this]{
-                for (auto x = pendingIncomingPresentations; const auto& [endpoint, ssrcGroup] : x) {
-                    addIncomingVideo(endpoint, ssrcGroup);
+            strong->updateThread->PostTask([weak]{
+                const auto strongChannel = std::static_pointer_cast<GroupCall>(weak.lock());
+                if (!strongChannel) {
+                    return;
+                }
+                for (auto x = strongChannel->pendingIncomingPresentations; const auto& [endpoint, ssrcGroup] : x) {
+                    strongChannel->addIncomingVideo(endpoint, ssrcGroup);
                 }
             });
-            updateRemoteVideoConstraints(presentationConnection);
+            updateRemoteVideoConstraints(strong->presentationConnection);
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Screen, presentationConnection.get());
@@ -88,9 +104,6 @@ namespace ntgcalls {
             }
             Safe<wrtc::GroupConnection>(conn)->createChannels(payload.media);
             RTC_LOG(LS_INFO) << "Remote parameters set";
-        } else {
-            RTC_LOG(LS_ERROR) << "RTMP connection not supported";
-            throw RTMPNeeded("RTMP connection not supported");
         }
         setConnectionObserver(
             conn,

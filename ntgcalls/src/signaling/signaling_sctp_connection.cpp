@@ -25,8 +25,8 @@ namespace signaling {
             sctpTransport->Start(5000, 5000, 262144);
         });
     }
-
-    SignalingSctpConnection::~SignalingSctpConnection() {
+    void SignalingSctpConnection::close() {
+        SignalingInterface::close();
         networkThread->BlockingCall([&] {
             sctpTransport = nullptr;
             sctpTransportFactory = nullptr;
@@ -34,7 +34,7 @@ namespace signaling {
         });
     }
 
-    void SignalingSctpConnection::receive(const bytes::binary& data) const {
+    void SignalingSctpConnection::receive(const bytes::binary& data) {
         networkThread->BlockingCall([&] {
             packetTransport->receiveData(data);
         });

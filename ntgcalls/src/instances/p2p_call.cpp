@@ -17,8 +17,13 @@
 #include <wrtc/utils/encryption.hpp>
 
 namespace ntgcalls {
-    P2PCall::~P2PCall() {
-        signaling = nullptr;
+
+    void P2PCall::stop() {
+        CallInterface::stop();
+        if (signaling) {
+            signaling->close();
+            signaling = nullptr;
+        }
     }
 
     void P2PCall::init(const MediaDescription &media) const {
@@ -127,16 +132,21 @@ namespace ntgcalls {
             memcpy(encryptionKey->data(), skipExchangeKey.data(), signaling::EncryptionKey::kSize);
         }
         protocolVersion = signaling::Signaling::matchVersion(versions);
+        std::weak_ptr weak(shared_from_this());
         if (protocolVersion & signaling::Signaling::Version::V2Full) {
             connection = std::make_shared<wrtc::PeerConnection>(
                 RTCServer::toIceServers(servers),
                 true,
             p2pAllowed
             );
-            Safe<wrtc::PeerConnection>(connection)->onRenegotiationNeeded([this] {
-                if (makingNegotation) {
+            Safe<wrtc::PeerConnection>(connection)->onRenegotiationNeeded([weak] {
+                const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                if (strong->makingNegotation) {
                     RTC_LOG(LS_INFO) << "Renegotiation needed";
-                    sendLocalDescription();
+                    strong->sendLocalDescription();
                 }
             });
         } else {
@@ -154,23 +164,30 @@ namespace ntgcalls {
             connection->signalingThread(),
             connection->environment(),
             signaling::EncryptionKey(std::move(encryptionKey), type() == Type::Outgoing),
-            [this](const bytes::binary &data) {
-                (void) onEmitData(data);
+            [weak](const bytes::binary &data) {
+                const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                (void) strong->onEmitData(data);
             },
-            [this](const std::vector<bytes::binary> &data) {
+            [weak](const std::vector<bytes::binary> &data) {
+                const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+                if (!strong) {
+                    return;
+                }
                 for (const auto &packet : data) {
-                    processSignalingData(packet);
+                    strong->processSignalingData(packet);
                 }
             }
         );
-        std::weak_ptr weakSignaling = signaling;
-        connection->onIceCandidate([this, weakSignaling](const wrtc::IceCandidate& candidate) {
-            const auto signaling = weakSignaling.lock();
-            if (!signaling) {
+        connection->onIceCandidate([weak](const wrtc::IceCandidate& candidate) {
+            const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+            if (!strong) {
                 return;
             }
             bytes::binary message;
-            if (protocolVersion & signaling::Signaling::Version::V2Full) {
+            if (strong->protocolVersion & signaling::Signaling::Version::V2Full) {
                 signaling::CandidateMessage candMess;
                 candMess.sdp = candidate.sdp;
                 candMess.mid = candidate.mid;
@@ -182,21 +199,33 @@ namespace ntgcalls {
                 message = candMess.serialize();
             }
             RTC_LOG(LS_INFO) << "Sending candidate: " << bytes::to_string(message);
-            signaling->send(message);
+            strong->signaling->send(message);
         });
-        connection->onDataChannelOpened([this] {
-            sendMediaState(streamManager->getState());
+        connection->onDataChannelOpened([weak] {
+            const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->sendMediaState(strong->streamManager->getState());
             RTC_LOG(LS_INFO) << "Data channel opened";
         });
-        connection->onDataChannelMessage([this](const bytes::binary& data) {
-            processSignalingData(data);
+        connection->onDataChannelMessage([weak](const bytes::binary& data) {
+            const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->processSignalingData(data);
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
         streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection.get());
         streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection.get());
-        streamManager->onUpgrade([this] (const MediaState mediaState) {
-            sendMediaState(mediaState);
+        streamManager->onUpgrade([weak] (const MediaState mediaState) {
+            const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->sendMediaState(mediaState);
         });
         if (type() == Type::Outgoing) {
             if (protocolVersion & signaling::Signaling::Version::V2Full) {
@@ -336,10 +365,18 @@ namespace ntgcalls {
     void P2PCall::sendLocalDescription() {
         isMakingOffer = true;
         RTC_LOG(LS_INFO) << "Calling SetLocalDescription";
-        Safe<wrtc::PeerConnection>(connection)->setLocalDescription([this] {
-            connection->signalingThread()->PostTask([this] {
-                assert(signaling);
-                const auto description = Safe<wrtc::PeerConnection>(connection)->localDescription();
+        std::weak_ptr weak(shared_from_this());
+        Safe<wrtc::PeerConnection>(connection)->setLocalDescription([weak] {
+            const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->connection->signalingThread()->PostTask([weak] {
+                const auto strongDesc = std::static_pointer_cast<P2PCall>(weak.lock());
+                if (!strongDesc) {
+                    return;
+                }
+                const auto description = Safe<wrtc::PeerConnection>(strongDesc->connection)->localDescription();
                 if (!description) {
                     return;
                 }
@@ -347,28 +384,37 @@ namespace ntgcalls {
                 message.type = description->type();
                 message.sdp = description->sdp();
                 RTC_LOG(LS_INFO) << "Sending local description: " << bytes::to_string(message.serialize());
-                signaling->send(message.serialize());
-                isMakingOffer = false;
+                strongDesc->signaling->send(message.serialize());
+                strongDesc->isMakingOffer = false;
             });
-        }, [this](const std::exception_ptr&) {});
+        }, [](const std::exception_ptr&) {});
     }
 
     void P2PCall::applyRemoteSdp(const webrtc::SdpType sdpType, const std::string& sdp) {
         RTC_LOG(LS_INFO) << "Calling SetRemoteDescription";
+        std::weak_ptr weak(shared_from_this());
         Safe<wrtc::PeerConnection>(connection)->setRemoteDescription(
             wrtc::Description(
                 sdpType,
                 sdp
             ),
-            [this, sdpType] {
-                connection->signalingThread()->PostTask([this, sdpType] {
+            [weak, sdpType] {
+                const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                strong->connection->signalingThread()->PostTask([weak, sdpType] {
+                    const auto strongDesc = std::static_pointer_cast<P2PCall>(weak.lock());
+                    if (!strongDesc) {
+                        return;
+                    }
                     if (sdpType == webrtc::SdpType::kOffer) {
-                        makingNegotation = true;
-                        sendLocalDescription();
+                        strongDesc->makingNegotation = true;
+                        strongDesc->sendLocalDescription();
                     }
                 });
             },
-            [this](const std::exception_ptr&) {}
+            [](const std::exception_ptr&) {}
         );
         if (!handshakeCompleted) {
             handshakeCompleted = true;
@@ -414,6 +460,9 @@ namespace ntgcalls {
     }
 
     void P2PCall::sendOfferIfNeeded() const {
+        if (signaling == nullptr) {
+            return;
+        }
         if (const auto offer = Safe<wrtc::NativeConnection>(connection)->getPendingOffer()) {
             signaling::NegotiateChannelsMessage data;
             data.exchangeId = offer->exchangeId;
@@ -424,8 +473,14 @@ namespace ntgcalls {
     }
 
     void P2PCall::sendInitialSetup() const {
-        connection->networkThread()->PostTask([this] {
-            const auto localFingerprint = Safe<wrtc::NativeConnection>(connection)->localFingerprint();
+        std::weak_ptr weak(shared_from_this());
+        connection->networkThread()->PostTask([weak] {
+            const auto strong = std::static_pointer_cast<const P2PCall>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            const auto connection = Safe<wrtc::NativeConnection>(strong->connection);
+            const auto localFingerprint = connection->localFingerprint();
             std::string hash;
             std::string fingerprint;
             if (localFingerprint) {
@@ -433,13 +488,17 @@ namespace ntgcalls {
                 fingerprint = localFingerprint->GetRfc4572Fingerprint();
             }
             std::string setup;
-            if (type() == Type::Outgoing) {
+            if (strong->type() == Type::Outgoing) {
                 setup = "actpass";
             } else {
                 setup = "passive";
             }
-            const auto localIceParams = Safe<wrtc::NativeConnection>(connection)->localIceParameters();
-            connection->signalingThread()->PostTask([this, localIceParams, hash, fingerprint, setup] {
+            const auto localIceParams = connection->localIceParameters();
+            connection->signalingThread()->PostTask([weak, localIceParams, hash, fingerprint, setup] {
+                const auto strongMessage = std::static_pointer_cast<const P2PCall>(weak.lock());
+                if (!strongMessage) {
+                    return;
+                }
                 signaling::InitialSetupMessage message;
                 message.ufrag = localIceParams.ufrag;
                 message.pwd = localIceParams.pwd;
@@ -449,8 +508,9 @@ namespace ntgcalls {
                 dtlsFingerprint.fingerprint = fingerprint;
                 dtlsFingerprint.setup = setup;
                 message.fingerprints.push_back(std::move(dtlsFingerprint));
-                RTC_LOG(LS_INFO) << "Sending initial setup: " << bytes::to_string(message.serialize());
-                signaling->send(message.serialize());
+                const auto serializedMessage = message.serialize();
+                RTC_LOG(LS_INFO) << "Sending initial setup: " << bytes::to_string(serializedMessage);
+                strongMessage->signaling->send(serializedMessage);
             });
         });
     }

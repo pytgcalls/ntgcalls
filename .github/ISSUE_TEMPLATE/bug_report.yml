@@ -54,24 +54,32 @@ body:
     placeholder: Describe the expected outcome.
 - type: input
   id: programming-language
+  validations:
+    required: true
   attributes:
       label: Programming Language
       description: Provide the programming language you are using.
       placeholder: e.g., Python 3.9, Go 1.23
 - type: input
   id: ntgcalls-version
+  validations:
+    required: true
   attributes:
       label: NTgCalls Version
       description: Provide the version of NTgCalls you are using.
       placeholder: e.g., 1.3.0
 - type: input
   id: platform
+  validations:
+    required: true
   attributes:
       label: Platform
       description: Provide the platform you are using and the architecture.
       placeholder: e.g., Windows 10 (AMD64), Ubuntu 20.04 (ARM64)
 - type: input
   id: library
+  validations:
+    required: true
   attributes:
       label: Library
       description: Provide the mtproto library you are using.

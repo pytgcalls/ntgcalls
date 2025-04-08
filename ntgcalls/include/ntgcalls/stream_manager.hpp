@@ -46,7 +46,7 @@ namespace ntgcalls {
 
         explicit StreamManager(rtc::Thread* workerThread);
 
-        ~StreamManager();
+        void close();
 
         void enableVideoSimulcast(bool enable);
 

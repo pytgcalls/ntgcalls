@@ -15,6 +15,7 @@ linux_output/
 tools/opus/
 *.egg-info
 *.ogg
+*.whl
 deps/libcxx/
 deps/libwebrtc/
 deps/libcxxabi/
@@ -23,6 +24,9 @@ deps/clang/
 deps/openh264/
 deps/ffmpeg/
 deps/ndk/
+deps/libx11/
+deps/mesa/
+deps/glib/
 android/app/src/main/jni/ntgcalls/
 android/app/src/main/jni/wrtc/
 android/local.properties

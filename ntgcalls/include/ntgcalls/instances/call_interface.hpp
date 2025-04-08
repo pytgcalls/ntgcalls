@@ -12,7 +12,7 @@
 
 namespace ntgcalls {
 
-    class CallInterface {
+    class CallInterface: public std::enable_shared_from_this<CallInterface> {
         std::atomic_bool isExiting;
 
         void cancelNetworkListener();
@@ -38,9 +38,9 @@ namespace ntgcalls {
         void initNetThread();
 
     public:
-        explicit CallInterface(rtc::Thread* updateThread);
+        virtual ~CallInterface() = default;
 
-        virtual ~CallInterface();
+        explicit CallInterface(rtc::Thread* updateThread);
 
         enum class Type {
             Group = 1 << 0,
@@ -48,6 +48,8 @@ namespace ntgcalls {
             Incoming = 1 << 2,
             P2P = Outgoing | Incoming
         };
+
+        virtual void stop();
 
         bool pause() const;
 

@@ -20,7 +20,7 @@ add_custom_target(clean_objects
     COMMENT "Removing all object (.o) files"
 )
 
-project(ntgcalls VERSION 1.3.0.17 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.3.3 LANGUAGES C CXX)
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
@@ -30,6 +30,9 @@ get_filename_component(android_loc  "android" REALPATH)
 get_filename_component(jni_loc      "${android_loc}/app/src/main/jni" REALPATH)
 get_filename_component(props_loc    "version.properties" REALPATH)
 
+include(cmake/FindGLib.cmake)
+include(cmake/FindX11.cmake)
+include(cmake/FindMesa.cmake)
 include(cmake/FindWebRTC.cmake)
 include(cmake/FindLibCXX.cmake)
 include(cmake/FindBoost.cmake)

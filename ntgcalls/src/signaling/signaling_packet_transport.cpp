@@ -49,4 +49,72 @@ namespace signaling {
     std::optional<rtc::NetworkRoute> SignalingPacketTransport::network_route() const {
         return std::nullopt;
     }
+
+    webrtc::DtlsTransportState SignalingPacketTransport::dtls_state() const {
+        return webrtc::DtlsTransportState::kNew;
+    }
+
+    int SignalingPacketTransport::component() const {
+        return 0;
+    }
+
+    bool SignalingPacketTransport::IsDtlsActive() const {
+        return false;
+    }
+
+    bool SignalingPacketTransport::GetDtlsRole(rtc::SSLRole* role) const {
+        return false;
+    }
+
+    bool SignalingPacketTransport::SetDtlsRole(rtc::SSLRole role) {
+        return false;
+    }
+
+    bool SignalingPacketTransport::GetSslVersionBytes(int* version) const {
+        return false;
+    }
+
+    bool SignalingPacketTransport::GetSrtpCryptoSuite(int* cipher) const {
+        return false;
+    }
+
+    bool SignalingPacketTransport::GetSslCipherSuite(int* cipher) const {
+        return false;
+    }
+
+    std::optional<absl::string_view> SignalingPacketTransport::GetTlsCipherSuiteName() const {
+        return std::nullopt;
+    }
+
+    uint16_t SignalingPacketTransport::GetSslPeerSignatureAlgorithm() const {
+        return 0;
+    }
+
+    rtc::scoped_refptr<rtc::RTCCertificate> SignalingPacketTransport::GetLocalCertificate() const {
+        return nullptr;
+    }
+
+    bool SignalingPacketTransport::SetLocalCertificate(const rtc::scoped_refptr<rtc::RTCCertificate>& certificate) {
+        return false;
+    }
+
+    std::unique_ptr<rtc::SSLCertChain> SignalingPacketTransport::GetRemoteSSLCertChain() const {
+        return nullptr;
+    }
+
+    bool SignalingPacketTransport::ExportSrtpKeyingMaterial(rtc::ZeroOnFreeBuffer<uint8_t>& keying_material) {
+        return false;
+    }
+
+    bool SignalingPacketTransport::SetRemoteFingerprint(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len) {
+        return true;
+    }
+
+    webrtc::RTCError SignalingPacketTransport::SetRemoteParameters(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len, std::optional<rtc::SSLRole> role) {
+        return webrtc::RTCError::OK();
+    }
+
+    cricket::IceTransportInternal* SignalingPacketTransport::ice_transport() {
+        return nullptr;
+    }
 } // signaling

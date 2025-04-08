@@ -23,15 +23,20 @@ namespace signaling {
             RTC_LOG(LS_ERROR) << "Signaling V1 is not supported";
             throw ntgcalls::SignalingUnsupported("Signaling V1 is not supported");
         }
+        std::shared_ptr<SignalingInterface> signaling;
         if (version & Version::V2) {
             RTC_LOG(LS_INFO) << "Using signaling V2 Legacy";
-            return std::make_shared<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
+            signaling = std::make_shared<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
         }
         if (version & Version::V2Full) {
             RTC_LOG(LS_INFO) << "Using signaling V2 Full";
-            return std::make_shared<SignalingSctpConnection>(networkThread, signalingThread, env, key, onEmitData, onSignalData, true);
+            signaling = std::make_shared<SignalingSctpConnection>(networkThread, signalingThread, env, key, onEmitData, onSignalData, true);
         }
-        throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
+        if (!signaling) {
+            throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
+        }
+        signaling->init();
+        return signaling;
     }
 
     std::vector<std::string> Signaling::SupportedVersions() {

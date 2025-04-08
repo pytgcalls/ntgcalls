@@ -24,7 +24,6 @@ namespace wrtc {
         contentNegotiationContext->copyCodecsFromChannelManager(factory->mediaEngine(), false);
         std::weak_ptr weak(shared_from_this());
         networkThread()->PostTask([weak] {
-
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -340,8 +339,8 @@ namespace wrtc {
     }
 
     void NativeConnection::close() {
-        contentNegotiationContext = nullptr;
         NativeNetworkInterface::close();
+        contentNegotiationContext = nullptr;
     }
 
     void NativeConnection::addIceCandidate(const IceCandidate& rawCandidate) const {

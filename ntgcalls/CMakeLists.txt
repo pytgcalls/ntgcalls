@@ -1,63 +1,79 @@
 file(GLOB_RECURSE MODULE_SRC *.cpp)
 
 set(BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/bindings)
+set(NTG_LIB_NAME ntgcalls)
 
 if(IS_PYTHON)
     list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/ntgcalls.cpp")
-    pybind11_add_module(ntgcalls ${MODULE_SRC})
+    pybind11_add_module(${NTG_LIB_NAME} ${MODULE_SRC})
     target_compile_definitions(ntgcalls PRIVATE VERSION_INFO=${PY_VERSION_INFO})
     add_compile_definitions(PYTHON_ENABLED)
 else ()
     if (STATIC_BUILD OR ANDROID)
-         add_library(ntgcalls STATIC)
+        if (NOT ANDROID)
+            set(NTG_LIB_NAME ntgcalls-native)
+        endif ()
+        add_library(${NTG_LIB_NAME} STATIC)
     else()
-         add_library(ntgcalls SHARED)
+        add_library(${NTG_LIB_NAME} SHARED)
     endif ()
+
+    set_target_properties(${NTG_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/pythonapi.cpp")
+
     if (ANDROID_ABI)
         list(REMOVE_ITEM MODULE_SRC "${BINDINGS_DIR}/ntgcalls.cpp")
     else ()
-        target_include_directories(ntgcalls PRIVATE ../include)
+        target_include_directories(${NTG_LIB_NAME} PRIVATE ../include)
     endif ()
-    target_compile_definitions(ntgcalls PRIVATE NTG_EXPORTS)
-    target_sources(ntgcalls PRIVATE ${MODULE_SRC})
+
+    target_compile_definitions(${NTG_LIB_NAME} PRIVATE NTG_EXPORTS)
+    target_sources(${NTG_LIB_NAME} PRIVATE ${MODULE_SRC})
+
     if (ANDROID)
-        set_target_properties(ntgcalls PROPERTIES
+        set_target_properties(${NTG_LIB_NAME} PROPERTIES
             ARCHIVE_OUTPUT_DIRECTORY "${jni_loc}/ntgcalls/${ANDROID_ABI}"
         )
+    endif ()
+endif ()
+
+setup_platform_flags(${NTG_LIB_NAME} OFF)
+
+target_include_directories(${NTG_LIB_NAME} PRIVATE include)
+set_property(TARGET ${NTG_LIB_NAME} PROPERTY CXX_STANDARD 20 C_STANDARD 20)
+target_link_libraries(${NTG_LIB_NAME} PRIVATE wrtc nlohmann_json::nlohmann_json)
+
+if (NOT IS_PYTHON AND NOT ANDROID)
+    set(ARCHIVE_TYPE)
+    set(ARCHIVE_TYPE_NAME)
+    if (STATIC_BUILD)
+        set(ARCHIVE_TYPE ARCHIVE)
+        set(ARCHIVE_TYPE_NAME "static")
     else ()
-        set(ARCHIVE_TYPE)
-        set(ARCHIVE_TYPE_NAME)
-        if (STATIC_BUILD)
-            set(ARCHIVE_TYPE ARCHIVE)
-            set(ARCHIVE_TYPE_NAME "static")
+        if (WINDOWS)
+            set(ARCHIVE_TYPE RUNTIME)
         else ()
-            if (WINDOWS)
-                set(ARCHIVE_TYPE RUNTIME)
-            else ()
-                set(ARCHIVE_TYPE LIBRARY)
-            endif ()
-            set(ARCHIVE_TYPE_NAME "shared")
+            set(ARCHIVE_TYPE LIBRARY)
         endif ()
-        set(ARCHIVE_DIR "${CMAKE_SOURCE_DIR}/${ARCHIVE_TYPE_NAME}-output")
-        file(COPY ../include DESTINATION ${ARCHIVE_DIR})
-        set_target_properties(ntgcalls PROPERTIES
+        set(ARCHIVE_TYPE_NAME "shared")
+    endif ()
+    set(ARCHIVE_DIR "${CMAKE_SOURCE_DIR}/${ARCHIVE_TYPE_NAME}-output")
+    file(COPY ../include DESTINATION ${ARCHIVE_DIR})
+
+    if (STATIC_BUILD)
+        bundle_static_library(ntgcalls-native ntgcalls ${ARCHIVE_DIR}/lib)
+    else ()
+        set_target_properties(${NTG_LIB_NAME} PROPERTIES
             ${ARCHIVE_TYPE}_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
         )
-        if (WINDOWS AND NOT STATIC_BUILD)
-            set_target_properties(ntgcalls PROPERTIES
+        if (WINDOWS)
+            set_target_properties(${NTG_LIB_NAME} PROPERTIES
                 ARCHIVE_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
             )
         endif ()
     endif ()
 endif ()
-target_include_directories(ntgcalls PRIVATE include)
-set_property(TARGET ntgcalls PROPERTY CXX_STANDARD 20 C_STANDARD 20)
-
-target_link_libraries(ntgcalls PRIVATE wrtc nlohmann_json::nlohmann_json)
 
 if(BOOST_ENABLED)
-    target_link_libraries(ntgcalls PRIVATE Boost::filesystem)
+    target_link_libraries(${NTG_LIB_NAME} PRIVATE Boost::filesystem)
 endif ()
-
-setup_platform_libs(ntgcalls)

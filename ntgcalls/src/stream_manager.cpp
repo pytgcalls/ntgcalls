@@ -19,14 +19,27 @@ namespace ntgcalls {
 
     StreamManager::StreamManager(rtc::Thread* workerThread): workerThread(workerThread) {}
 
-    StreamManager::~StreamManager() {
+    void StreamManager::close() {
         workerThread->BlockingCall([this] {
             std::lock_guard lock(mutex);
             syncReaders.clear();
             syncCV.notify_all();
             onEOF = nullptr;
+            framesCallback = nullptr;
+            onChangeStatus = nullptr;
+            for (const auto& reader : readers | std::views::values) {
+                reader->onData(nullptr);
+                reader->onEof(nullptr);
+            }
             readers.clear();
             writers.clear();
+            for (const auto& stream : streams | std::views::values) {
+                if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
+                    audioReceiver->onFrames(nullptr);
+                } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
+                    videoReceiver->onFrame(nullptr);
+                }
+            }
             streams.clear();
             tracks.clear();
         });
@@ -283,6 +296,8 @@ namespace ntgcalls {
                     if (readers.contains(device)) {
                         cancelSyncReaders.insert(device);
                         syncCV.notify_all();
+                        readers[device]->onData(nullptr);
+                        readers[device]->onEof(nullptr);
                     }
                     readers.erase(device);
                     if (cancelSyncReaders.contains(device)) {
@@ -429,6 +444,10 @@ namespace ntgcalls {
             if (syncReaders.contains(device)) {
                 syncReaders.erase(device);
                 syncCV.notify_all();
+            }
+            if (readers.contains(device)) {
+                readers[device]->onData(nullptr);
+                readers[device]->onEof(nullptr);
             }
             readers.erase(device);
             externalReaders.erase(device);
