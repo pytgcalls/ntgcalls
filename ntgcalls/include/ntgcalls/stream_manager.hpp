@@ -5,7 +5,6 @@
 #pragma once
 
 #include <condition_variable>
-#include <shared_mutex>
 #include <wrtc/wrtc.hpp>
 #include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/io/base_writer.hpp>
@@ -14,7 +13,6 @@
 #include <ntgcalls/models/media_state.hpp>
 
 namespace ntgcalls {
-    using std::chrono::operator ""ns;
 
     class StreamManager: public std::enable_shared_from_this<StreamManager> {
     public:
