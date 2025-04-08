@@ -3,7 +3,6 @@
 //
 
 #if !defined(IS_ANDROID) && !defined(IS_MACOS)
-#include <thread>
 #include <ntgcalls/exceptions.hpp>
 #include <third_party/libyuv/include/libyuv.h>
 #include <ntgcalls/utils/g_lib_loop_manager.hpp>
@@ -11,7 +10,7 @@
 #include <modules/desktop_capture/desktop_capturer_differ_wrapper.h>
 
 namespace ntgcalls {
-    DesktopCapturerModule::DesktopCapturerModule(const VideoDescription& desc, BaseSink* sink): BaseIO(sink), BaseReader(sink), desc(desc) {
+    DesktopCapturerModule::DesktopCapturerModule(const VideoDescription& desc, BaseSink* sink): BaseIO(sink), BaseReader(sink), SyncHelper(sink), desc(desc) {
         capturer = CreateCapturer();
         try {
             auto sourceMetadata = json::parse(desc.input);
@@ -129,7 +128,7 @@ namespace ntgcalls {
         thread = rtc::PlatformThread::SpawnJoinable(
             [this] {
                 while (running) {
-                    std::this_thread::sleep_for(sink->frameTime());
+                    waitNextFrame();
                     capturer->CaptureFrame();
                 }
             },

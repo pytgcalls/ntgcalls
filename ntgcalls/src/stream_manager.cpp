@@ -5,6 +5,7 @@
 #include <ranges>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/stream_manager.hpp>
+#include <ntgcalls/io/threaded_reader.hpp>
 #include <ntgcalls/media/audio_receiver.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
 #include <ntgcalls/media/audio_streamer.hpp>
@@ -86,7 +87,7 @@ namespace ntgcalls {
     }
 
     MediaState StreamManager::getState() {
-        std::shared_lock lock(mutex);
+        std::lock_guard lock(mutex);
         bool muted = false;
         for (const auto& [key, track] : tracks) {
             if (key.first != Capture) {
@@ -123,7 +124,7 @@ namespace ntgcalls {
     }
 
     uint64_t StreamManager::time(const Mode mode) {
-        std::shared_lock lock(mutex);
+        std::lock_guard lock(mutex);
         uint64_t averageTime = 0;
         int count = 0;
         for (const auto& [key, stream] : streams) {
@@ -140,7 +141,7 @@ namespace ntgcalls {
     }
 
     StreamManager::Status StreamManager::status(const Mode mode) {
-        std::shared_lock lock(mutex);
+        std::lock_guard lock(mutex);
         if (mode == Capture) {
             return readers.empty() ? Idling : isPaused() ? Paused : Active;
         }
@@ -222,9 +223,13 @@ namespace ntgcalls {
     bool StreamManager::updatePause(const bool isPaused) {
         std::lock_guard lock(mutex);
         auto res = false;
+        const auto now = std::chrono::milliseconds(rtc::TimeMillis());
         for (const auto& reader : readers | std::views::values) {
             if (reader->set_enabled(!isPaused)) {
                 res = true;
+            }
+            if (const auto threadedReader = dynamic_cast<SyncHelper*>(reader.get())) {
+                threadedReader->synchronizeTime(now);
             }
         }
         if (res) {
@@ -326,6 +331,9 @@ namespace ntgcalls {
                             if (strong->cancelSyncReaders.contains(id.second)) {
                                 strong->cancelSyncReaders.erase(id.second);
                                 return;
+                            }
+                            if (const auto threadedReader = dynamic_cast<SyncHelper*>(strong->readers[id.second].get())) {
+                                threadedReader->synchronizeTime();
                             }
                         }
                         if (strong->streams.contains(id)) {

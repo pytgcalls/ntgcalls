@@ -14,6 +14,7 @@
 #include <ntgcalls/models/media_state.hpp>
 
 namespace ntgcalls {
+    using std::chrono::operator ""ns;
 
     class StreamManager: public std::enable_shared_from_this<StreamManager> {
     public:
@@ -91,10 +92,10 @@ namespace ntgcalls {
         std::map<Device, std::unique_ptr<BaseWriter>> writers;
         std::set<Device> externalWriters;
         std::set<Device> externalReaders;
-        mutable std::mutex syncMutex;
+        std::mutex syncMutex;
         std::condition_variable syncCV;
         std::set<Device> syncReaders, cancelSyncReaders;
-        std::shared_mutex mutex;
+        std::mutex mutex;
         wrtc::synchronized_callback<Type, Device> onEOF;
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         wrtc::synchronized_callback<Mode, Device, std::vector<wrtc::Frame>> framesCallback;
