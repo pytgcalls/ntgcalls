@@ -154,7 +154,8 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
 
         add_custom_command(
             COMMAND ${ar_tool} -M < ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
-            COMMENT "Bundling ${bundled_tgt_name}"
+            COMMAND ${CMAKE_STRIP} --strip-unneeded ${bundled_tgt_full_name}
+            COMMENT "Bundling and stripping ${bundled_tgt_name}"
             OUTPUT ${bundled_tgt_full_name}
             VERBATIM
         )
@@ -169,7 +170,8 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
 
         add_custom_command(
             COMMAND ${LIB_ASSEMBLER} /NOLOGO /IGNORE:4006 /OUT:${bundled_tgt_full_name} ${static_libs_full_names}
-            COMMENT "Bundling ${bundled_tgt_name}"
+            COMMAND ${CMAKE_STRIP} --strip-unneeded ${bundled_tgt_full_name}
+            COMMENT "Bundling and stripping ${bundled_tgt_name}"
             OUTPUT ${bundled_tgt_full_name}
             VERBATIM
         )
@@ -194,7 +196,8 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
 
         add_custom_command(
             COMMAND ${ar_tool} -static -o "${bundled_tgt_full_name}" -filelist "${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar"
-            COMMENT "Bundling ${bundled_tgt_name}"
+            COMMAND ${CMAKE_STRIP} -x "${bundled_tgt_full_name}"
+            COMMENT "Bundling and stripping ${bundled_tgt_name}"
             OUTPUT ${bundled_tgt_full_name}
             VERBATIM
         )
