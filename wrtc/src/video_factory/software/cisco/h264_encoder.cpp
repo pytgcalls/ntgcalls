@@ -17,6 +17,9 @@
 #include <modules/video_coding/utility/simulcast_rate_allocator.h>
 #include <modules/video_coding/svc/create_scalability_structure.h>
 
+// Currently updated with the latest commit from
+// https://webrtc.googlesource.com/src/+/c382c845754eda4a2c193102dc4c314d7dc4439f
+
 namespace openh264 {
     H264Encoder::H264Encoder(webrtc::Environment env):
     hasReportedError(false),
@@ -325,7 +328,7 @@ namespace openh264 {
                 }
                 if (svcControllers[i]) {
                     codec_specific.generic_frame_info = svcControllers[i]->OnEncodeDone(layerFrames[0]);
-                    if (sendKeyFrame && codec_specific.generic_frame_info.has_value()) {
+                    if (encodedImages[i]._frameType == webrtc::VideoFrameType::kVideoFrameKey && codec_specific.generic_frame_info.has_value()) {
                         codec_specific.template_structure = svcControllers[i]->DependencyStructure();
                     }
                     codec_specific.scalability_mode = scalabilityModes[i];

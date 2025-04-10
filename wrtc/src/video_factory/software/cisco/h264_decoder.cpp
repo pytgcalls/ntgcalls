@@ -15,6 +15,9 @@ extern "C" {
     #include <libavutil/imgutils.h>
 }
 
+// Currently updated with the latest commit from:
+// https://webrtc.googlesource.com/src/+/8037fc6ffa131805248c2a63c3edec69155b05cf
+
 constexpr std::array kPixelFormatsSupported = {
     AV_PIX_FMT_YUV420P,     AV_PIX_FMT_YUV422P,     AV_PIX_FMT_YUV444P,
     AV_PIX_FMT_YUVJ420P,    AV_PIX_FMT_YUVJ422P,    AV_PIX_FMT_YUVJ444P,
