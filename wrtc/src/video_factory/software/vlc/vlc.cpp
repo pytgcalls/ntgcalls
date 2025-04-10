@@ -17,7 +17,7 @@ namespace vlc {
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
         encoders.emplace_back(
             webrtc::kVideoCodecAV1,
-            [](auto) {
+            [](const auto&) {
                 return CreateLibaomAv1Encoder(webrtc::CreateEnvironment());
             }
         );
@@ -28,7 +28,7 @@ namespace vlc {
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
         decoders.emplace_back(
             webrtc::kVideoCodecAV1,
-            [](auto) {
+            [](const auto&) {
                 return webrtc::CreateDav1dDecoder();
             }
         );
