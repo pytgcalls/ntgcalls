@@ -3,9 +3,10 @@
 //
 
 #ifndef IS_ANDROID
+#include <wrtc/video_factory/hardware/amd/amd.hpp>
+#include <wrtc/video_factory/software/vlc/vlc.hpp>
 #include <wrtc/video_factory/video_factory_config.hpp>
 #include <wrtc/video_factory/software/google/google.hpp>
-#include <wrtc/video_factory/software/vlc/vlc.hpp>
 #include <wrtc/video_factory/software/openh264/openh264.hpp>
 
 namespace wrtc {
@@ -26,6 +27,10 @@ namespace wrtc {
             openh264::addEncoders(encoders);
         }
         openh264::addDecoders(decoders);
+
+        // AMD (Hardware, H264, AV1)
+        amd::addEncoders(encoders);
+        amd::addDecoders(decoders);
 
         // NVCODEC (Hardware, VP8, VP9, H264)
         // TODO: @Laky-64 Add NVCODEC encoder-decoder when available

@@ -27,6 +27,7 @@ deps/ndk/
 deps/libx11/
 deps/mesa/
 deps/glib/
+deps/amf/
 android/app/src/main/jni/ntgcalls/
 android/app/src/main/jni/wrtc/
 android/local.properties

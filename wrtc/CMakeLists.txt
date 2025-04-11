@@ -13,7 +13,23 @@ target_link_libraries(wrtc PRIVATE nlohmann_json::nlohmann_json)
 setup_platform_flags(wrtc ON)
 
 if (NOT ANDROID)
-    target_link_libraries(wrtc PRIVATE cisco::OpenH264 ffmpeg::avcodec ffmpeg::avformat ffmpeg::avutil)
+    target_link_libraries(wrtc PRIVATE cisco::OpenH264 amd::AMF ffmpeg::avcodec ffmpeg::avformat ffmpeg::avutil)
+
+    #target_include_directories(wrtc
+    #    PRIVATE
+    #    ${AMF_SRC}/include
+    #)
+    #target_sources(wrtc
+    #    PRIVATE
+    #    ${AMF_SRC}/include/public/common/AMFFactory.cpp
+    #    ${AMF_SRC}/include/public/common/AMFSTL.cpp
+    #    ${AMF_SRC}/include/public/common/DataStreamFactory.cpp
+    #    ${AMF_SRC}/include/public/common/DataStreamFile.cpp
+    #    ${AMF_SRC}/include/public/common/DataStreamMemory.cpp
+    #    ${AMF_SRC}/include/public/common/Thread.cpp
+    #    ${AMF_SRC}/include/public/common/TraceAdapter.cpp
+    #    ${AMF_SRC}/include/public/common/Linux/ThreadLinux.cpp
+    #)
 endif ()
 
 if (ANDROID)
