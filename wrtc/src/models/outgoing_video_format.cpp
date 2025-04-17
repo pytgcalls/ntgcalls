@@ -49,7 +49,7 @@ namespace wrtc {
 
         std::vector<OutgoingVideoFormat> result;
 
-        std::vector<std::string> filterCodecNames = {
+        const std::vector<std::string> filterCodecNames = {
             cricket::kVp8CodecName,
             cricket::kVp9CodecName,
             cricket::kH264CodecName,

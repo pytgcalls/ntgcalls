@@ -59,22 +59,14 @@ int copyAndReturn(const std::vector<std::byte>& b, uint8_t *buffer, const int si
     if (size < static_cast<int>(b.size()))
         return NTG_ERROR_TOO_SMALL;
     const auto *bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
-#ifndef IS_MACOS
     std::copy_n(bufferTemp, b.size(), buffer);
-#else
-    std::copy(bufferTemp, bufferTemp + b.size(), buffer);
-#endif
     return static_cast<int>(b.size());
 }
 
 bytes::vector copyAndReturn(const uint8_t *buffer, const int size) {
     bytes::vector b(size);
     const auto *bufferTemp = reinterpret_cast<const std::byte*>(buffer);
-#ifndef IS_MACOS
     std::copy_n(bufferTemp, size, b.begin());
-#else
-    std::copy(bufferTemp, bufferTemp + size, b.begin());
-#endif
     return b;
 }
 

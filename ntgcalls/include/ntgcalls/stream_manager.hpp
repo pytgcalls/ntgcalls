@@ -11,6 +11,7 @@
 #include <ntgcalls/media/base_sink.hpp>
 #include <ntgcalls/models/media_description.hpp>
 #include <ntgcalls/models/media_state.hpp>
+#include <wrtc/interfaces/network_interface.hpp>
 
 namespace ntgcalls {
 

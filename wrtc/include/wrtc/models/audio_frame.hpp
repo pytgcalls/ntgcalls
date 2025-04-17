@@ -4,7 +4,7 @@
 
 #pragma once
 #include <cstdint>
-#include <wrtc/utils/binary.hpp>
+#include <cstddef>
 
 namespace wrtc {
 

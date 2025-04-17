@@ -28,31 +28,6 @@ namespace ntgcalls {
         virtual ~BaseMediaDescription() = default;
     };
 
-    inline int operator&(const BaseMediaDescription::MediaSource lhs, const int rhs) {
-        return static_cast<int>(lhs) & rhs;
-    }
-
-    inline int operator|(const BaseMediaDescription::MediaSource lhs, const BaseMediaDescription::MediaSource rhs) {
-        return static_cast<int>(lhs) | static_cast<int>(rhs);
-    }
-
-    inline int operator|(const BaseMediaDescription::MediaSource lhs, const int rhs) {
-        return static_cast<int>(lhs) | rhs;
-    }
-
-    inline BaseMediaDescription::MediaSource operator|=(BaseMediaDescription::MediaSource &lhs, BaseMediaDescription::MediaSource rhs) {
-        lhs = static_cast<BaseMediaDescription::MediaSource>(static_cast<int>(lhs) | static_cast<int>(rhs));
-        return lhs;
-    }
-
-    inline int operator&(const BaseMediaDescription::MediaSource& lhs, const BaseMediaDescription::MediaSource rhs){
-        return static_cast<int>(lhs) & static_cast<int>(rhs);
-    }
-
-    inline int operator==(const int lhs, const BaseMediaDescription::MediaSource& rhs){
-        return lhs == static_cast<int>(rhs);
-    }
-
     class AudioDescription final : public BaseMediaDescription {
     public:
         uint32_t sampleRate;
