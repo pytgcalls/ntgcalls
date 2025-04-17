@@ -7,12 +7,10 @@
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/signaling/crypto/mod_exp_first.hpp>
 #include <ntgcalls/signaling/messages/candidates_message.hpp>
-#include <ntgcalls/signaling/messages/candidate_message.hpp>
 #include <ntgcalls/signaling/messages/initial_setup_message.hpp>
 #include <ntgcalls/signaling/messages/media_state_message.hpp>
 #include <ntgcalls/signaling/messages/message.hpp>
 #include <ntgcalls/signaling/messages/negotiate_channels_message.hpp>
-#include <ntgcalls/signaling/messages/rtc_description_message.hpp>
 #include <wrtc/interfaces/native_connection.hpp>
 #include <wrtc/utils/encryption.hpp>
 
@@ -133,23 +131,7 @@ namespace ntgcalls {
         }
         protocolVersion = signaling::Signaling::matchVersion(versions);
         std::weak_ptr weak(shared_from_this());
-        if (protocolVersion & signaling::Signaling::Version::V2Full) {
-            connection = std::make_shared<wrtc::PeerConnection>(
-                RTCServer::toIceServers(servers),
-                true,
-            p2pAllowed
-            );
-            Safe<wrtc::PeerConnection>(connection)->onRenegotiationNeeded([weak] {
-                const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
-                if (!strong) {
-                    return;
-                }
-                if (strong->makingNegotation) {
-                    RTC_LOG(LS_INFO) << "Renegotiation needed";
-                    strong->sendLocalDescription();
-                }
-            });
-        } else {
+        if (protocolVersion == signaling::Signaling::Version::V2) {
             connection = std::make_shared<wrtc::NativeConnection>(
                 RTCServer::toRtcServers(servers),
                 p2pAllowed,
@@ -187,13 +169,7 @@ namespace ntgcalls {
                 return;
             }
             bytes::binary message;
-            if (strong->protocolVersion & signaling::Signaling::Version::V2Full) {
-                signaling::CandidateMessage candMess;
-                candMess.sdp = candidate.sdp;
-                candMess.mid = candidate.mid;
-                candMess.mLine = candidate.mLine;
-                message = candMess.serialize();
-            } else {
+            if (strong->protocolVersion == signaling::Signaling::Version::V2) {
                 signaling::CandidatesMessage candMess;
                 candMess.iceCandidates.push_back({candidate.sdp});
                 message = candMess.serialize();
@@ -228,12 +204,7 @@ namespace ntgcalls {
             strong->sendMediaState(mediaState);
         });
         if (type() == Type::Outgoing) {
-            if (protocolVersion & signaling::Signaling::Version::V2Full) {
-                RTC_LOG(LS_INFO) << "Creating data channel";
-                Safe<wrtc::PeerConnection>(connection)->createDataChannel("data");
-                makingNegotation = true;
-                sendLocalDescription();
-            } else {
+            if (protocolVersion == signaling::Signaling::Version::V2) {
                 sendInitialSetup();
                 sendOfferIfNeeded();
             }
@@ -306,35 +277,6 @@ namespace ntgcalls {
                 Safe<wrtc::NativeConnection>(connection)->createChannels();
                 break;
             }
-            case signaling::Message::Type::RtcDescription: {
-                const auto message = signaling::RtcDescriptionMessage::deserialize(buffer);
-                if (
-                    type() == Type::Outgoing &&
-                    message->type == webrtc::SdpType::kOffer &&
-                    (isMakingOffer || Safe<wrtc::PeerConnection>(connection)->signalingState() != wrtc::SignalingState::Stable)
-                ) {
-                    return;
-                }
-                applyRemoteSdp(
-                    message->type,
-                    message->sdp
-                );
-                break;
-            }
-            case signaling::Message::Type::Candidate: {
-                const auto message = signaling::CandidateMessage::deserialize(buffer);
-                const auto candidate = wrtc::IceCandidate(
-                    message->mid,
-                    message->mLine,
-                    message->sdp
-                );
-                if (handshakeCompleted) {
-                    connection->addIceCandidate(candidate);
-                } else {
-                    pendingIceCandidates.push_back(candidate);
-                }
-                break;
-            }
             case signaling::Message::Type::MediaState: {
                 const auto message = signaling::MediaStateMessage::deserialize(buffer);
                 const auto cameraState = parseVideoState(message->videoState);
@@ -359,66 +301,6 @@ namespace ntgcalls {
             }
         } catch (InvalidParams& e) {
             RTC_LOG(LS_ERROR) << "Invalid params: " << e.what();
-        }
-    }
-
-    void P2PCall::sendLocalDescription() {
-        isMakingOffer = true;
-        RTC_LOG(LS_INFO) << "Calling SetLocalDescription";
-        std::weak_ptr weak(shared_from_this());
-        Safe<wrtc::PeerConnection>(connection)->setLocalDescription([weak] {
-            const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
-            if (!strong) {
-                return;
-            }
-            strong->connection->signalingThread()->PostTask([weak] {
-                const auto strongDesc = std::static_pointer_cast<P2PCall>(weak.lock());
-                if (!strongDesc) {
-                    return;
-                }
-                const auto description = Safe<wrtc::PeerConnection>(strongDesc->connection)->localDescription();
-                if (!description) {
-                    return;
-                }
-                signaling::RtcDescriptionMessage message;
-                message.type = description->type();
-                message.sdp = description->sdp();
-                RTC_LOG(LS_INFO) << "Sending local description: " << bytes::to_string(message.serialize());
-                strongDesc->signaling->send(message.serialize());
-                strongDesc->isMakingOffer = false;
-            });
-        }, [](const std::exception_ptr&) {});
-    }
-
-    void P2PCall::applyRemoteSdp(const webrtc::SdpType sdpType, const std::string& sdp) {
-        RTC_LOG(LS_INFO) << "Calling SetRemoteDescription";
-        std::weak_ptr weak(shared_from_this());
-        Safe<wrtc::PeerConnection>(connection)->setRemoteDescription(
-            wrtc::Description(
-                sdpType,
-                sdp
-            ),
-            [weak, sdpType] {
-                const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
-                if (!strong) {
-                    return;
-                }
-                strong->connection->signalingThread()->PostTask([weak, sdpType] {
-                    const auto strongDesc = std::static_pointer_cast<P2PCall>(weak.lock());
-                    if (!strongDesc) {
-                        return;
-                    }
-                    if (sdpType == webrtc::SdpType::kOffer) {
-                        strongDesc->makingNegotation = true;
-                        strongDesc->sendLocalDescription();
-                    }
-                });
-            },
-            [](const std::exception_ptr&) {}
-        );
-        if (!handshakeCompleted) {
-            handshakeCompleted = true;
-            applyPendingIceCandidates();
         }
     }
 

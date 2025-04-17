@@ -12,12 +12,6 @@ namespace signaling {
         }
         auto j = json::parse(data.begin(), data.end());
         if (const auto type = j["@type"];!type.is_null()) {
-            if (type == "candidate") {
-                return Type::Candidate;
-            }
-            if (type == "offer" || type == "answer") {
-                return Type::RtcDescription;
-            }
             if (type == "InitialSetup") {
                 return Type::InitialSetup;
             }

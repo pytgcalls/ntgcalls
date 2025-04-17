@@ -14,23 +14,15 @@ namespace signaling {
         const Version version,
         rtc::Thread* networkThread,
         rtc::Thread* signalingThread,
-        const webrtc::Environment& env,
+        const webrtc::Environment&,
         const EncryptionKey &key,
         const DataEmitter& onEmitData,
         const DataReceiver& onSignalData
     ) {
-        if (version == Version::V1) {
-            RTC_LOG(LS_ERROR) << "Signaling V1 is not supported";
-            throw ntgcalls::SignalingUnsupported("Signaling V1 is not supported");
-        }
         std::shared_ptr<SignalingInterface> signaling;
         if (version & Version::V2) {
             RTC_LOG(LS_INFO) << "Using signaling V2 Legacy";
             signaling = std::make_shared<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
-        }
-        if (version & Version::V2Full) {
-            RTC_LOG(LS_INFO) << "Using signaling V2 Full";
-            signaling = std::make_shared<SignalingSctpConnection>(networkThread, signalingThread, env, key, onEmitData, onSignalData, true);
         }
         if (!signaling) {
             throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
@@ -43,7 +35,6 @@ namespace signaling {
         return {
             "8.0.0",
             "9.0.0",
-            "11.0.0",
         };
     }
 
@@ -52,12 +43,6 @@ namespace signaling {
         RTC_LOG(LS_INFO) << "Selected version: " << version;
         if (version == "8.0.0" || version == "9.0.0") {
             return Version::V2;
-        }
-        if (version == "10.0.0") {
-            return Version::V1;
-        }
-        if (version == "11.0.0") {
-            return Version::V2Full;
         }
         throw ntgcalls::SignalingUnsupported("Unsupported " + version + " protocol version");
     }

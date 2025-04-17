@@ -15,8 +15,6 @@ namespace signaling {
     class Message {
     public:
         enum class Type {
-            Candidate,
-            RtcDescription,
             InitialSetup,
             Candidates,
             NegotiateChannels,

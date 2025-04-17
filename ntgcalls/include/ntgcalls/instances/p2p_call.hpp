@@ -28,10 +28,6 @@ namespace ntgcalls {
 
         void processSignalingData(const bytes::binary& buffer);
 
-        void sendLocalDescription();
-
-        void applyRemoteSdp(webrtc::SdpType sdpType, const std::string& sdp);
-
         void applyPendingIceCandidates();
 
         void sendMediaState(MediaState mediaState) const;
