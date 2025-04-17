@@ -63,8 +63,8 @@ namespace wrtc {
         return dataChannelOpen;
     }
 
-    bool NetworkInterface::isConnected() const {
-        return alreadyConnected;
+    ConnectionState NetworkInterface::getConnectionState() const {
+        return currentState;
     }
 
     void NetworkInterface::enableAudioIncoming(const bool enable) {

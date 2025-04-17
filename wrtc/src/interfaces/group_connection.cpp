@@ -227,6 +227,7 @@ namespace wrtc {
                 if (!strong) {
                     return;
                 }
+                strong->currentState = newValue;
                 (void) strong->connectionChangeCallback(newValue, strong->alreadyConnected);
                 if (newValue == ConnectionState::Connected && !strong->alreadyConnected) {
                     strong->alreadyConnected = true;

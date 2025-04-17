@@ -15,15 +15,12 @@ namespace ntgcalls {
     class CallInterface: public std::enable_shared_from_this<CallInterface> {
         std::atomic_bool isExiting;
 
-        void cancelNetworkListener();
-
     protected:
         std::shared_ptr<wrtc::NetworkInterface> connection;
         std::shared_ptr<StreamManager> streamManager;
         wrtc::synchronized_callback<NetworkInfo> connectionChangeCallback;
         wrtc::synchronized_callback<RemoteSource> remoteSourceCallback;
         rtc::Thread* updateThread;
-        std::unique_ptr<rtc::Thread> networkThread;
         StreamManager::Status lastCameraState = StreamManager::Status::Idling;
         StreamManager::Status lastScreenState = StreamManager::Status::Idling;
         StreamManager::Status lastMicState = StreamManager::Status::Idling;
@@ -34,8 +31,6 @@ namespace ntgcalls {
         );
 
         static StreamManager::Status parseVideoState(signaling::MediaStateMessage::VideoState state);
-
-        void initNetThread();
 
     public:
         virtual ~CallInterface() = default;

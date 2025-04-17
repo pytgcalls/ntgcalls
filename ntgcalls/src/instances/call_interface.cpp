@@ -6,7 +6,6 @@
 
 namespace ntgcalls {
     CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {
-        initNetThread();
         streamManager = std::make_shared<StreamManager>(updateThread);
     }
 
@@ -26,7 +25,6 @@ namespace ntgcalls {
                 strong->connection = nullptr;
             }
             strong->updateThread = nullptr;
-            strong->cancelNetworkListener();
         });
     }
 
@@ -85,13 +83,6 @@ namespace ntgcalls {
         streamManager->sendExternalFrame(device, data, frameData);
     }
 
-    void CallInterface::cancelNetworkListener() {
-        if (networkThread) {
-            networkThread->Stop();
-            networkThread = nullptr;
-        }
-    }
-
     void CallInterface::setConnectionObserver(const std::shared_ptr<wrtc::NetworkInterface>& conn, NetworkInfo::Kind kind) {
         RTC_LOG(LS_INFO) << "Connecting...";
         (void) connectionChangeCallback({NetworkInfo::ConnectionState::Connecting, kind});
@@ -138,17 +129,16 @@ namespace ntgcalls {
                 default:
                     break;
                 }
-                strongUpdate->cancelNetworkListener();
             });
         });
-        networkThread->PostDelayedTask([weak, kind, conn] {
-            const auto strongNetwork = weak.lock();
-            if (!strongNetwork) {
+        updateThread->PostDelayedTask([weak, kind, conn] {
+            const auto strong = weak.lock();
+            if (!strong) {
                 return;
             }
-            if (!conn->isConnected()) {
+            if (conn->getConnectionState() == wrtc::ConnectionState::Connecting) {
                 RTC_LOG(LS_ERROR) << "Connection timeout";
-                (void) strongNetwork->connectionChangeCallback({NetworkInfo::ConnectionState::Timeout, kind});
+                (void) strong->connectionChangeCallback({NetworkInfo::ConnectionState::Timeout, kind});
             }
         }, webrtc::TimeDelta::Seconds(10));
     }
@@ -163,10 +153,5 @@ namespace ntgcalls {
             return StreamManager::Status::Paused;
         }
         return StreamManager::Status::Idling;
-    }
-
-    void CallInterface::initNetThread() {
-        networkThread = rtc::Thread::Create();
-        networkThread->Start();
     }
 } // ntgcalls

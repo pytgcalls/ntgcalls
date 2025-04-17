@@ -64,7 +64,7 @@ namespace wrtc {
 
         bool isDataChannelOpen() const;
 
-        bool isConnected() const;
+        ConnectionState getConnectionState() const;
 
         virtual void enableAudioIncoming(bool enable);
 
