@@ -26,6 +26,8 @@ namespace wrtc {
         void addSource();
 
         void removeSource();
+
+        void updateAudioSourceCount(int count);
     };
 
 } // wrtc

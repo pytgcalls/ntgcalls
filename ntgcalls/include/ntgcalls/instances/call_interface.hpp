@@ -9,6 +9,7 @@
 #include <ntgcalls/models/call_network_state.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
 #include <ntgcalls/signaling/messages/media_state_message.hpp>
+#include <wrtc/interfaces/network_interface.hpp>
 
 namespace ntgcalls {
 
@@ -45,6 +46,8 @@ namespace ntgcalls {
         };
 
         virtual void stop();
+
+        wrtc::NetworkInterface::Mode getConnectionMode() const;
 
         bool pause() const;
 

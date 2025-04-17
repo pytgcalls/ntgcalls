@@ -303,6 +303,10 @@ namespace wrtc {
         return endpoints;
     }
 
+    NetworkInterface::Mode NativeNetworkInterface::getConnectionMode() const {
+        return Mode::Rtc;
+    }
+
     void NativeNetworkInterface::enableAudioIncoming(const bool enable) {
         if (audioIncoming == enable) {
             return;

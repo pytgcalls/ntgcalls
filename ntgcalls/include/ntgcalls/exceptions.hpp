@@ -19,6 +19,10 @@ namespace ntgcalls {
         using BaseRTCException::BaseRTCException;
     };
 
+    class RTCConnectionNeeded final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     class SignalingUnsupported final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };

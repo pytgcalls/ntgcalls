@@ -132,6 +132,8 @@ namespace wrtc {
 
         std::vector<std::string> getEndpoints() const;
 
+        Mode getConnectionMode() const override;
+
         void enableAudioIncoming(bool enable) override;
 
         void enableVideoIncoming(bool enable, bool isScreenCast) override;

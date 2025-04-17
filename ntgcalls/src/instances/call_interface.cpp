@@ -28,6 +28,10 @@ namespace ntgcalls {
         });
     }
 
+    wrtc::NetworkInterface::Mode CallInterface::getConnectionMode() const {
+        return connection->getConnectionMode();
+    }
+
     bool CallInterface::pause() const {
         return streamManager->pause();
     }

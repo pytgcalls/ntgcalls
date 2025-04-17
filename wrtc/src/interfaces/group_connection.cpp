@@ -187,17 +187,81 @@ namespace wrtc {
         });
     }
 
-    void GroupConnection::setConnectionMode(const Mode mode) {
-        connectionMode = mode;
+    void GroupConnection::connectMediaStream() {
+        if (!mtprotoStream) {
+            throw RTCException("MTProto stream not initialized");
+        }
+        mtprotoStream->connect();
+
         std::weak_ptr weak(shared_from_this());
-        switch (mode) {
+        networkThread()->PostDelayedTask([weak] {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->isStreamConnected = true;
+            strong->updateIsConnected();
+        }, webrtc::TimeDelta::Millis(500));
+    }
+
+    void GroupConnection::setConnectionMode(const Mode kind) {
+        connectionMode = kind;
+        std::weak_ptr weak(shared_from_this());
+        switch (kind) {
         case Mode::Rtc:
+            if (mtprotoStream) {
+                RTC_LOG(LS_INFO) << "Migrating to RTC connection";
+                mtprotoStream->close();
+                mtprotoStream = nullptr;
+                alreadyConnected = false;
+                if (const auto audioSink = remoteAudioSink.lock()) {
+                    audioSink->updateAudioSourceCount(0);
+                }
+                remoteScreenCastSink.reset();
+            }
             networkThread()->PostTask([weak] {
                 const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
                 if (!strong) {
                     return;
                 }
                 strong->start();
+            });
+            break;
+        case Mode::Stream:
+        case Mode::Rtmp:
+            mtprotoStream = std::make_shared<MTProtoStream>(signalingThread(), connectionMode == Mode::Rtmp);
+            mtprotoStream->onAudioFrame([weak](std::unique_ptr<AudioFrame> frame) {
+                const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                if (const auto audioSink = strong->remoteAudioSink.lock()) {
+                    audioSink->sendData(std::move(frame));
+                }
+            });
+            mtprotoStream->onVideoFrame([weak](const uint32_t ssrc, const bool isPresentation, std::unique_ptr<webrtc::VideoFrame> frame) {
+                const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                if (isPresentation) {
+                    if (const auto videoSink = strong->remoteScreenCastSink.lock()) {
+                        videoSink->sendFrame(ssrc, std::move(frame));
+                    }
+                } else {
+                    if (const auto videoSink = strong->remoteVideoSink.lock()) {
+                        videoSink->sendFrame(ssrc, std::move(frame));
+                    }
+                }
+            });
+            mtprotoStream->onUpdateAudioSourceCount([weak](const int count) {
+                const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                if (const auto audioSink = strong->remoteAudioSink.lock()) {
+                    audioSink->updateAudioSourceCount(count);
+                }
             });
             break;
         default:
@@ -207,16 +271,48 @@ namespace wrtc {
         updateIsConnected();
     }
 
+    void GroupConnection::sendBroadcastPart(const int64_t segmentID, const int32_t partID, const MediaSegment::Part::Status status, const bool qualityUpdate, const std::optional<bytes::binary>& data) const {
+        if (mtprotoStream) {
+            mtprotoStream->sendBroadcastPart(segmentID, partID, status, qualityUpdate, data);
+        } else {
+            throw RTCException("MTProto stream not initialized");
+        }
+    }
+
+    void GroupConnection::onRequestBroadcastPart(const std::function<void(SegmentPartRequest)>& callback) const {
+        if (mtprotoStream) {
+            mtprotoStream->onRequestBroadcastPart(callback);
+        } else {
+            throw RTCException("MTProto stream not initialized");
+        }
+    }
+
+    void GroupConnection::sendBroadcastTimestamp(const int64_t timestamp) const {
+        if (mtprotoStream) {
+            mtprotoStream->sendBroadcastTimestamp(timestamp);
+        } else {
+            throw RTCException("MTProto stream not initialized");
+        }
+    }
+
+    void GroupConnection::onRequestBroadcastTimestamp(const std::function<void()>& callback) const {
+        if (mtprotoStream) {
+            mtprotoStream->onRequestBroadcastTime(callback);
+        } else {
+            throw RTCException("MTProto stream not initialized");
+        }
+    }
+
     void GroupConnection::updateIsConnected() {
         bool isEffectivelyConnected = false;
         switch (connectionMode) {
             case Mode::Rtc:
                 isEffectivelyConnected = isRtcConnected;
                 break;
-            case Mode::Rtmp:
-                isEffectivelyConnected = isRtmpConnected;
+            case Mode::Stream:
+                isEffectivelyConnected = isStreamConnected;
                 break;
-            case Mode::None:
+            default:
                 break;
         }
         if (isEffectivelyConnected != lastEffectivelyConnected) {
@@ -309,11 +405,22 @@ namespace wrtc {
         MediaContent mediaContent;
         mediaContent.type = MediaContent::Type::Video;
         mediaContent.ssrcGroups = ssrcGroups;
-        addIncomingSmartSource(endpoint, mediaContent);
+        if (mtprotoStream) {
+            mtprotoStream->addIncomingVideo(
+                endpoint,
+                mediaContent.mainSsrc(),
+                mediaContent.isScreenCast()
+            );
+        } else {
+            addIncomingSmartSource(endpoint, mediaContent);
+        }
         return mediaContent.mainSsrc();
     }
 
     bool GroupConnection::removeIncomingVideo(const std::string& endpoint) {
+        if (mtprotoStream) {
+            return mtprotoStream->removeIncomingVideo(endpoint);
+        }
         if (!pendingContent.contains(endpoint)) {
             return false;
         }
@@ -331,6 +438,21 @@ namespace wrtc {
         addIncomingSmartSource(endpoint, audioContent);
     }
 
+    void GroupConnection::enableAudioIncoming(const bool enable) {
+        if (mtprotoStream) {
+            mtprotoStream->enableAudioIncoming(enable);
+        } else {
+            NativeNetworkInterface::enableAudioIncoming(enable);
+        }
+    }
+
+    void GroupConnection::enableVideoIncoming(const bool enable, const bool isScreenCast) {
+        if (mtprotoStream) {
+            mtprotoStream->enableVideoIncoming(enable, isScreenCast);
+        } else {
+            NativeNetworkInterface::enableVideoIncoming(enable, isScreenCast);
+        }
+    }
 
     void GroupConnection::beginAudioChannelCleanupTimer() {
         if (!factory) {
@@ -363,11 +485,19 @@ namespace wrtc {
 
     void GroupConnection::close() {
         outgoingVideoSsrcGroups.clear();
+        if (mtprotoStream) {
+            mtprotoStream->close();
+            mtprotoStream = nullptr;
+        }
         NativeNetworkInterface::close();
     }
 
     ResponsePayload::Media GroupConnection::getMediaConfig() const {
         return mediaConfig;
+    }
+
+    NetworkInterface::Mode GroupConnection::getConnectionMode() const {
+        return connectionMode;
     }
 
     bool GroupConnection::supportsRenomination() const {
