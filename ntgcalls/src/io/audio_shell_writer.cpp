@@ -2,35 +2,36 @@
 // Created by Laky64 on 08/10/24.
 //
 
+#ifdef BOOST_ENABLED
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/audio_shell_writer.hpp>
-
-#ifdef BOOST_ENABLED
 
 namespace ntgcalls {
     AudioShellWriter::AudioShellWriter(const std::string &command, BaseSink* sink): BaseIO(sink), ThreadedAudioMixer(sink) {
         try {
-            shellProcess = bp::child(command, bp::std_out.close(), bp::std_in < stdIn);
+            const auto cmd = bp::shell(command);
+            shellProcess = bp::process(ctx, cmd.exe(), cmd.args(), bp::process_stdio{stdIn, nullptr, {}});
         } catch (std::runtime_error &e) {
             throw ShellError(e.what());
         }
     }
 
     AudioShellWriter::~AudioShellWriter() {
-        if (shellProcess) {
-            shellProcess.terminate();
-            shellProcess.wait();
-            shellProcess.detach();
+        boost::system::error_code ec;
+        if (stdIn.is_open()) {
+            stdIn.close(ec);
         }
-        stdIn.clear();
+        shellProcess.terminate(ec);
+        shellProcess.wait(ec);
+        shellProcess.detach();
     }
 
     void AudioShellWriter::write(const bytes::unique_binary& data) {
-        if (!stdIn || stdIn.eof() || stdIn.fail() || !stdIn.pipe().is_open() || !shellProcess.running()) {
+        boost::system::error_code ec;
+        asio::write(stdIn, asio::buffer(data.get(), sink->frameSize()), ec);
+        if (ec || !stdIn.is_open() || !shellProcess.running()) {
             throw EOFError("Reached end of the stream");
         }
-        stdIn.write(reinterpret_cast<const char*>(data.get()), sink->frameSize());
-        stdIn.flush();
     }
 } // ntgcalls
 

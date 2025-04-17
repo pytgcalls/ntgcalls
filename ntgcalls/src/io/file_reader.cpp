@@ -14,11 +14,11 @@ namespace ntgcalls {
     }
 
     FileReader::~FileReader() {
+        close();
         if (source.is_open()) {
             source.close();
         }
         source.clear();
-        close();
         RTC_LOG(LS_VERBOSE) << "FileReader closed";
     }
 

@@ -5,17 +5,19 @@
 #pragma once
 
 #ifdef BOOST_ENABLED
+#include <boost/asio.hpp>
 #include <boost/process.hpp>
-
 #include <ntgcalls/io/threaded_reader.hpp>
 
 namespace bp = boost::process;
+namespace asio = boost::asio;
 
 namespace ntgcalls {
 
     class ShellReader final: public ThreadedReader {
-        bp::ipstream stdOut;
-        bp::child shellProcess;
+        asio::io_context ctx;
+        asio::readable_pipe stdOut{ctx};
+        bp::process shellProcess{ctx};
 
     public:
         explicit ShellReader(const std::string& command, BaseSink *sink);
