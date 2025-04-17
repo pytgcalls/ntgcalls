@@ -8,7 +8,7 @@
 #include <wrtc/enums.hpp>
 #include <wrtc/models/ice_candidate.hpp>
 #include <wrtc/utils/binary.hpp>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 #include <wrtc/interfaces/media/remote_audio_sink.hpp>
 #include <wrtc/interfaces/media/remote_video_sink.hpp>
 

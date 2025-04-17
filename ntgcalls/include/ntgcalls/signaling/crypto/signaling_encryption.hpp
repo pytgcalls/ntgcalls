@@ -9,7 +9,7 @@
 
 
 #include <wrtc/utils/binary.hpp>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 #include <ntgcalls/signaling/crypto/auth_key.hpp>
 
 namespace signaling {

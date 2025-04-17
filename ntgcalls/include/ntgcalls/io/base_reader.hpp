@@ -4,7 +4,7 @@
 
 #pragma once
 #include <wrtc/utils/binary.hpp>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 #include <ntgcalls/io/base_io.hpp>
 #include <wrtc/models/frame_data.hpp>
 

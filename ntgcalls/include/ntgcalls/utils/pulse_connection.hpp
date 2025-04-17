@@ -5,7 +5,7 @@
 #pragma once
 #include <atomic>
 #include <map>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 
 
 #ifdef IS_LINUX

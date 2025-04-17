@@ -4,7 +4,7 @@
 
 #pragma once
 #include <pc/dtls_srtp_transport.h>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 
 namespace wrtc {
 

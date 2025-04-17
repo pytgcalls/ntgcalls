@@ -9,7 +9,7 @@
 #include <media/sctp/sctp_transport_factory.h>
 
 #include <wrtc/utils/binary.hpp>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 
 namespace wrtc {
 

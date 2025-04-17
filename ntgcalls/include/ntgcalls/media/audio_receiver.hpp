@@ -8,7 +8,7 @@
 #include <ntgcalls/media/base_receiver.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
 #include <common_audio/resampler/include/resampler.h>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 
 namespace ntgcalls {
 

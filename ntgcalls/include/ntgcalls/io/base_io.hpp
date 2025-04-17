@@ -5,7 +5,7 @@
 #pragma once
 #include <atomic>
 #include <ntgcalls/media/base_sink.hpp>
-#include <wrtc/utils/syncronized_callback.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 
 namespace ntgcalls {
 
