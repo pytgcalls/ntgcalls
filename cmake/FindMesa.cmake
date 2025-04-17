@@ -1,6 +1,8 @@
 set(MESA_DIR ${deps_loc}/mesa)
 set(MESA_SRC ${MESA_DIR}/src)
 set(MESA_GIT https://github.com/pytgcalls/mesa)
+set(GBM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}gbm${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(DRM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}drm${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 if (LINUX_ARM64)
     set(PLATFORM linux)
@@ -23,3 +25,18 @@ DownloadProject(
     DOWNLOAD_DIR ${MESA_DIR}/download
     SOURCE_DIR ${MESA_SRC}
 )
+
+if(NOT TARGET mesa::gbm)
+    add_library(mesa::gbm UNKNOWN IMPORTED)
+    set_target_properties(mesa::gbm PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${MESA_SRC}/include"
+            IMPORTED_LOCATION "${MESA_SRC}/lib/${GBM_LIB}")
+    target_link_libraries(mesa::gbm INTERFACE gnu::expat)
+endif ()
+
+if(NOT TARGET mesa::drm)
+    add_library(mesa::drm UNKNOWN IMPORTED)
+    set_target_properties(mesa::drm PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${MESA_SRC}/include"
+            IMPORTED_LOCATION "${MESA_SRC}/lib/${DRM_LIB}")
+endif ()

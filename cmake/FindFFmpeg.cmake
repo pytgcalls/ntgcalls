@@ -4,6 +4,7 @@ set(FFMPEG_GIT https://github.com/pytgcalls/ffmpeg)
 set(AVCODEC_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}avcodec${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(AVFORMAT_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}avformat${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(AVUTIL_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}avutil${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(SWRESAMPLE_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}swresample${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 if (LINUX_ARM64)
     set(PLATFORM linux)
@@ -51,6 +52,7 @@ if(NOT TARGET ffmpeg::avformat)
     set_target_properties(ffmpeg::avformat PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_SRC}/lib/${AVFORMAT_LIB}")
+    target_link_libraries(ffmpeg::avformat INTERFACE ffmpeg::avcodec)
     if (IS_LINUX)
         set_target_properties(ffmpeg::avformat PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
     endif ()
@@ -63,5 +65,15 @@ if(NOT TARGET ffmpeg::avutil)
             IMPORTED_LOCATION "${FFMPEG_SRC}/lib/${AVUTIL_LIB}")
     if (IS_LINUX)
         set_target_properties(ffmpeg::avutil PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
+    endif ()
+endif ()
+
+if (NOT TARGET ffmpeg::swresample)
+    add_library(ffmpeg::swresample UNKNOWN IMPORTED)
+    set_target_properties(ffmpeg::swresample PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
+            IMPORTED_LOCATION "${FFMPEG_SRC}/lib/${SWRESAMPLE_LIB}")
+    if (IS_LINUX)
+        set_target_properties(ffmpeg::swresample PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
     endif ()
 endif ()
