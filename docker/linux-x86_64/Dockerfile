@@ -8,6 +8,7 @@ RUN yum install -y \
     flex \
     elfutils-libelf-devel \
     texinfo \
+    wget \
     libstdc++-static
 
 ENV MAKEFLAGS="-j$(nproc)"
