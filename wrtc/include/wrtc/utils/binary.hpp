@@ -4,6 +4,7 @@
 
 #pragma once
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <vector>
@@ -44,6 +45,13 @@ namespace bytes {
     template <typename Container>
     binary make_binary(const Container &container) {
         return { container.begin(), container.end() };
+    }
+
+    inline std::optional<binary> make_binary_optional(const void *data, const size_t size) {
+        if (data == nullptr || size == 0) {
+            return std::nullopt;
+        }
+        return binary(static_cast<const uint8_t*>(data), static_cast<const uint8_t*>(data) + size);
     }
 
     std::string to_string(const binary &buffer);
