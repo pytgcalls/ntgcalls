@@ -42,7 +42,11 @@ endif ()
 GetProperty("version.ffmpeg" FFMPEG_VERSION)
 message(STATUS "ffmpeg v${FFMPEG_VERSION}")
 
-set(FILE_NAME ffmpeg.${PLATFORM}-${ARCH}${ARCHIVE_FORMAT})
+set(FILE_NAME ffmpeg.${PLATFORM})
+if (NOT ANDROID)
+    set(FILE_NAME ${FILE_NAME}_${ARCH})
+endif ()
+set(FILE_NAME ${FILE_NAME}${ARCHIVE_FORMAT})
 DownloadProject(
     URL ${FFMPEG_GIT}/releases/download/v${FFMPEG_VERSION}/${FILE_NAME}
     DOWNLOAD_DIR ${FFMPEG_DIR}/download
