@@ -3,6 +3,7 @@
 //
 
 #include <ranges>
+#include <variant>
 #include <rtc_base/logging.h>
 #include <rtc_base/time_utils.h>
 #include <wrtc/exceptions.hpp>
@@ -384,7 +385,7 @@ namespace wrtc {
                         }
                     }
                     auto videoQuality = MediaSegment::Quality::None;
-                    std::optional<int32_t> videoChannelId = std::nullopt;
+                    int32_t videoChannelId = 0;
                     const auto typeData = &part->typeData;
 
                     if (const auto video = std::get_if<MediaSegment::Part::Video>(typeData)) {
