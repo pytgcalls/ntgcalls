@@ -679,11 +679,6 @@ int ntg_enable_g_lib_loop(const bool enable) {
     return 0;
 }
 
-int ntg_enable_h264_encoder(const bool enable) {
-    ntgcalls::NTgCalls::enableH264Encoder(enable);
-    return 0;
-}
-
 int ntg_on_stream_end(const uintptr_t ptr, ntg_stream_callback callback, void* userData) {
     try {
         getInstance(ptr)->onStreamEnd([ptr, callback, userData](const int64_t chatId, const ntgcalls::StreamManager::Type type, const ntgcalls::StreamManager::Device device) {

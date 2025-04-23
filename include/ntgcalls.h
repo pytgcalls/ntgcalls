@@ -331,8 +331,6 @@ NTG_C_EXPORT int ntg_cpu_usage(uintptr_t ptr, double *buffer, ntg_async_struct f
 
 NTG_C_EXPORT int ntg_enable_g_lib_loop(bool enable);
 
-NTG_C_EXPORT int ntg_enable_h264_encoder(bool enable);
-
 #ifdef __cplusplus
 }
 #endif

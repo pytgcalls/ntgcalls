@@ -368,10 +368,6 @@ namespace ntgcalls {
     void NTgCalls::enableGlibLoop(const bool enable) {
         GLibLoopManager::EnableEventLoop(enable);
     }
-
-    void NTgCalls::enableH264Encoder(const bool enable) {
-        wrtc::VideoFactoryConfig::EnableH264Encoder(enable);
-    }
 #endif
 
     template<typename DestCallType, typename BaseCallType>

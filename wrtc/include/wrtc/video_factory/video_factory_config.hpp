@@ -22,8 +22,6 @@ namespace wrtc {
         std::unique_ptr<VideoEncoderFactory> CreateVideoEncoderFactory();
 
         std::unique_ptr<VideoDecoderFactory> CreateVideoDecoderFactory();
-
-        static void EnableH264Encoder(bool enable);
     };
 
 } // wrtc
