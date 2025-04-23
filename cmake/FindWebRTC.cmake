@@ -62,7 +62,7 @@ if(NOT TARGET WebRTC::webrtc)
         SOURCE_DIR ${WEBRTC_SRC}
     )
 
-    add_library(WebRTC::webrtc UNKNOWN IMPORTED)
+    add_library(WebRTC::webrtc STATIC IMPORTED)
 
     target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_PATCH_LOCATION})
 

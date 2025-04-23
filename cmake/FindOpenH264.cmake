@@ -35,7 +35,7 @@ if(NOT TARGET cisco::OpenH264)
         DOWNLOAD_DIR ${OPENH264_DIR}/download
         SOURCE_DIR ${OPENH264_SRC}
     )
-    add_library(cisco::OpenH264 UNKNOWN IMPORTED)
+    add_library(cisco::OpenH264 STATIC IMPORTED)
 
     set_target_properties(cisco::OpenH264 PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${OPENH264_SRC}/include"

@@ -51,34 +51,34 @@ DownloadProject(
 
 if (LINUX)
     if (NOT TARGET intel::va-drm)
-        add_library(intel::va-drm UNKNOWN IMPORTED)
+        add_library(intel::va-drm STATIC IMPORTED)
         set_target_properties(intel::va-drm PROPERTIES
                 IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${VA_DRM_LIB}")
     endif ()
 
     if (LINUX_x86_64)
         if (NOT TARGET intel::va-x11)
-            add_library(intel::va-x11 UNKNOWN IMPORTED)
+            add_library(intel::va-x11 STATIC IMPORTED)
             set_target_properties(intel::va-x11 PROPERTIES
                     IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${VA_X11_LIB}")
         endif ()
     endif ()
 
     if (NOT TARGET intel::va)
-        add_library(intel::va UNKNOWN IMPORTED)
+        add_library(intel::va STATIC IMPORTED)
         set_target_properties(intel::va PROPERTIES
                 IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${VA_LIB}")
     endif ()
 
     if (NOT TARGET mesa::vdpau)
-        add_library(mesa::vdpau UNKNOWN IMPORTED)
+        add_library(mesa::vdpau STATIC IMPORTED)
         set_target_properties(mesa::vdpau PROPERTIES
                 IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${VDPAU_LIB}")
     endif ()
 endif ()
 
 if(NOT TARGET ffmpeg::avcodec)
-    add_library(ffmpeg::avcodec UNKNOWN IMPORTED)
+    add_library(ffmpeg::avcodec STATIC IMPORTED)
     set_target_properties(ffmpeg::avcodec PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${AVCODEC_LIB}")
@@ -89,7 +89,7 @@ if(NOT TARGET ffmpeg::avcodec)
 endif ()
 
 if(NOT TARGET ffmpeg::avformat)
-    add_library(ffmpeg::avformat UNKNOWN IMPORTED)
+    add_library(ffmpeg::avformat STATIC IMPORTED)
     set_target_properties(ffmpeg::avformat PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${AVFORMAT_LIB}")
@@ -101,7 +101,7 @@ if(NOT TARGET ffmpeg::avformat)
 endif ()
 
 if(NOT TARGET ffmpeg::avutil)
-    add_library(ffmpeg::avutil UNKNOWN IMPORTED)
+    add_library(ffmpeg::avutil STATIC IMPORTED)
     set_target_properties(ffmpeg::avutil PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${AVUTIL_LIB}")
@@ -115,7 +115,7 @@ if(NOT TARGET ffmpeg::avutil)
 endif ()
 
 if (NOT TARGET ffmpeg::swresample)
-    add_library(ffmpeg::swresample UNKNOWN IMPORTED)
+    add_library(ffmpeg::swresample STATIC IMPORTED)
     set_target_properties(ffmpeg::swresample PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${SWRESAMPLE_LIB}")

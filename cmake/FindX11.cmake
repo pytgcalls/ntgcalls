@@ -35,20 +35,20 @@ DownloadProject(
 )
 
 if(NOT TARGET xorg::Xau)
-    add_library(xorg::Xau UNKNOWN IMPORTED)
+    add_library(xorg::Xau STATIC IMPORTED)
     set_target_properties(xorg::Xau PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XAU_LIB}")
 endif ()
 
 if(NOT TARGET xorg::xcb)
-    add_library(xorg::xcb UNKNOWN IMPORTED)
+    add_library(xorg::xcb STATIC IMPORTED)
     set_target_properties(xorg::xcb PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XCB_LIB}")
     target_link_libraries(xorg::xcb INTERFACE xorg::Xau)
 endif ()
 
 if(NOT TARGET xorg::X11)
-    add_library(xorg::X11 UNKNOWN IMPORTED)
+    add_library(xorg::X11 STATIC IMPORTED)
     set_target_properties(xorg::X11 PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${X11_SRC}/include"
             IMPORTED_LOCATION "${X11_SRC}/lib/${X11_LIB}")
@@ -56,45 +56,45 @@ if(NOT TARGET xorg::X11)
 endif ()
 
 if(NOT TARGET xorg::Xcomposite)
-    add_library(xorg::Xcomposite UNKNOWN IMPORTED)
+    add_library(xorg::Xcomposite STATIC IMPORTED)
     set_target_properties(xorg::Xcomposite PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XCOMPOSITE_LIB}")
 endif ()
 
 if(NOT TARGET xorg::Xdamage)
-    add_library(xorg::Xdamage UNKNOWN IMPORTED)
+    add_library(xorg::Xdamage STATIC IMPORTED)
     set_target_properties(xorg::Xdamage PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XDAMAGE_LIB}")
 endif ()
 
 if(NOT TARGET xorg::Xext)
-    add_library(xorg::Xext UNKNOWN IMPORTED)
+    add_library(xorg::Xext STATIC IMPORTED)
     set_target_properties(xorg::Xext PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XEXT_LIB}")
 endif ()
 
 if(NOT TARGET xorg::Xfixes)
-    add_library(xorg::Xfixes UNKNOWN IMPORTED)
+    add_library(xorg::Xfixes STATIC IMPORTED)
     set_target_properties(xorg::Xfixes PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XFIXES_LIB}")
 endif ()
 
 if(NOT TARGET xorg::Xrender)
-    add_library(xorg::Xrender UNKNOWN IMPORTED)
+    add_library(xorg::Xrender STATIC IMPORTED)
     set_target_properties(xorg::Xrender PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XRENDER_LIB}")
     target_link_libraries(xorg::Xrender INTERFACE xorg::X11)
 endif ()
 
 if(NOT TARGET xorg::Xrandr)
-    add_library(xorg::Xrandr UNKNOWN IMPORTED)
+    add_library(xorg::Xrandr STATIC IMPORTED)
     set_target_properties(xorg::Xrandr PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XRANDR_LIB}")
     target_link_libraries(xorg::Xrandr INTERFACE xorg::Xrender)
 endif ()
 
 if(NOT TARGET xorg::Xtst)
-    add_library(xorg::Xtst UNKNOWN IMPORTED)
+    add_library(xorg::Xtst STATIC IMPORTED)
     set_target_properties(xorg::Xtst PROPERTIES
             IMPORTED_LOCATION "${X11_SRC}/lib/${XTST_LIB}")
 endif ()
