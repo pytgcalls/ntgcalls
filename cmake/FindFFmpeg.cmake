@@ -109,7 +109,7 @@ if(NOT TARGET ffmpeg::avutil)
     set_target_properties(ffmpeg::avutil PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_SRC}/include"
             IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${AVUTIL_LIB}")
-    if (LINUX)
+    if (LINUX AND NOT ANDROID)
         target_link_libraries(ffmpeg::avutil INTERFACE xorg::X11 mesa::vdpau intel::va intel::va-drm)
         if (LINUX_x86_64)
             target_link_libraries(ffmpeg::avutil INTERFACE intel::va-x11)

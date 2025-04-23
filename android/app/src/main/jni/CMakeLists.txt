@@ -7,8 +7,6 @@ add_subdirectory("${DEPS_DIR}/json" "deps/json" EXCLUDE_FROM_ALL)
 
 include(cmake/CompileUtils.cmake)
 include(cmake/FindNTgCalls.cmake)
-include(cmake/FindWRTC.cmake)
-include(cmake/FindWebRTC.cmake)
 
 find_package(Threads REQUIRED)
 

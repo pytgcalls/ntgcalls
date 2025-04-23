@@ -22,9 +22,3 @@ target_link_libraries(wrtc PUBLIC ffmpeg::avcodec ffmpeg::avformat ffmpeg::avuti
 if (NOT ANDROID)
     target_link_libraries(wrtc PRIVATE cisco::OpenH264)
 endif ()
-
-if (ANDROID)
-    set_target_properties(wrtc PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${jni_loc}/wrtc/${ANDROID_ABI}"
-    )
-endif ()

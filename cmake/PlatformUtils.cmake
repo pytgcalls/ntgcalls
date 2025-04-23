@@ -101,7 +101,7 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
 
     set(bundled_tgt_full_name ${bundle_output_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}${bundled_tgt_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-    if (LINUX)
+    if (LINUX OR ANDROID)
         file(WRITE ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in "CREATE ${bundled_tgt_full_name}\n")
 
         foreach(tgt IN LISTS static_libs)
@@ -127,13 +127,22 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
             set(ar_tool ${CMAKE_CXX_COMPILER_AR})
         endif()
 
-        add_custom_command(
-            COMMAND ${ar_tool} -M < ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
-            COMMAND ${CMAKE_STRIP} --strip-unneeded ${bundled_tgt_full_name}
-            COMMENT "Bundling and stripping ${bundled_tgt_name}"
-            OUTPUT ${bundled_tgt_full_name}
-            VERBATIM
-        )
+        if (ANDROID)
+            add_custom_command(
+                COMMAND ${ar_tool} -M < ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
+                COMMENT "Bundling ${bundled_tgt_name}"
+                OUTPUT ${bundled_tgt_full_name}
+                VERBATIM
+            )
+        else ()
+            add_custom_command(
+                COMMAND ${ar_tool} -M < ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
+                COMMAND ${CMAKE_STRIP} --strip-unneeded ${bundled_tgt_full_name}
+                COMMENT "Bundling and stripping ${bundled_tgt_name}"
+                OUTPUT ${bundled_tgt_full_name}
+                VERBATIM
+            )
+        endif ()
     elseif (WINDOWS)
         foreach(tgt IN LISTS static_libs)
             if (tgt MATCHES "^[A-Z]:")
