@@ -101,7 +101,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(wrtc::NetworkInterface::Mode) getConnectionMode(int64_t chatId);
 
-        ASYNC_RETURN(double) cpuUsage();
+        ASYNC_RETURN(double) cpuUsage() const;
 
         static std::string ping();
 

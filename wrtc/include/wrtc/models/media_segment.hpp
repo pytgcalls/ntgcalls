@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <vector>
 #include <wrtc/interfaces/mtproto/audio_streaming_part.hpp>
 #include <wrtc/interfaces/mtproto/video_streaming_part.hpp>

@@ -260,7 +260,7 @@ PYBIND11_MODULE(ntgcalls, m) {
         .value("FULL", wrtc::MediaSegment::Quality::Full)
         .export_values();
 
-    py::enum_<wrtc::MediaSegment::Part::Status>(m, "MediaSegmentPartStatus")
+    py::enum_<wrtc::MediaSegment::Part::Status>(m, "MediaSegmentStatus")
         .value("NOT_READY", wrtc::MediaSegment::Part::Status::NotReady)
         .value("RESYNC_NEEDED", wrtc::MediaSegment::Part::Status::ResyncNeeded)
         .value("SUCCESS", wrtc::MediaSegment::Part::Status::Success)
