@@ -23,6 +23,8 @@ struct InstanceCallbacks {
     std::optional<JavaCallback> onSignalingDataCallback;
     std::optional<JavaCallback> onFramesCallback;
     std::optional<JavaCallback> onRemoteSourceChangeCallback;
+    std::optional<JavaCallback> onRequestBroadcastPartCallback;
+    std::optional<JavaCallback> onRequestBroadcastTimestampCallback;
 };
 
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj);
@@ -65,7 +67,7 @@ ntgcalls::RTCServer parseRTCServer(JNIEnv *env, jobject rtcServer);
 
 std::vector<ntgcalls::RTCServer> parseRTCServerList(JNIEnv *env, jobject list);
 
-ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(jint inputMode);
+ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(JNIEnv *env, jobject inputMode);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJMediaState(JNIEnv *env, ntgcalls::MediaState mediaState);
 
@@ -112,6 +114,14 @@ std::vector<wrtc::SsrcGroup> parseSsrcGroupList(JNIEnv *env, jobject list);
 webrtc::ScopedJavaLocalRef<jobject> parseJFrame(JNIEnv *env, const wrtc::Frame& frame);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJFrames(JNIEnv *env, const std::vector<wrtc::Frame>& frame);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJSegmentPartRequest(JNIEnv *env, const wrtc::SegmentPartRequest& request);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJMediaSegmentQuality(JNIEnv *env, const wrtc::MediaSegment::Quality& quality);
+
+wrtc::MediaSegment::Part::Status parseSegmentPartStatus(JNIEnv *env, jobject status);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJConnectionMode(JNIEnv *env, wrtc::NetworkInterface::Mode mode);
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 

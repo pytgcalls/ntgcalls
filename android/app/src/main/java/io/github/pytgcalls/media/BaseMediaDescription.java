@@ -1,10 +1,10 @@
 package io.github.pytgcalls.media;
 
 public class BaseMediaDescription {
-    public final @MediaSource int mediaSource;
+    public final MediaSource mediaSource;
     public final String input;
 
-    public BaseMediaDescription(@MediaSource int mediaSource, String input) {
+    public BaseMediaDescription(MediaSource mediaSource, String input) {
         this.mediaSource = mediaSource;
         this.input = input;
     }

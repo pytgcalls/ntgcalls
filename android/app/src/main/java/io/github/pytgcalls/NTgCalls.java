@@ -7,6 +7,7 @@ import io.github.pytgcalls.exceptions.ConnectionNotFoundException;
 import io.github.pytgcalls.media.FrameData;
 import io.github.pytgcalls.media.MediaDescription;
 import io.github.pytgcalls.media.MediaDevices;
+import io.github.pytgcalls.media.MediaSegmentStatus;
 import io.github.pytgcalls.media.MediaState;
 import io.github.pytgcalls.media.CallInfo;
 import io.github.pytgcalls.media.SsrcGroup;
@@ -113,6 +114,10 @@ public class NTgCalls {
 
     public native void setRemoteSourceChangeCallback(RemoteSourceChangeCallback callback);
 
+    public native void setRequestBroadcastTimestampCallback(RequestBroadcastTimestampCallback callback);
+
+    public native void setRequestBroadcastPartCallback(RequestBroadcastPartCallback callback);
+
     public native void sendSignalingData(long chatId, byte[] data) throws ConnectionNotFoundException;
 
     public native void sendExternalFrame(long chatId, StreamDevice device, byte[] data, FrameData frameData);
@@ -120,6 +125,12 @@ public class NTgCalls {
     public native void addIncomingVideo(long chatId, String endpoint, List<SsrcGroup> ssrcGroups);
 
     public native void removeIncomingVideo(long chatId, String endpoint);
+
+    public native void sendBroadcastTimestamp(long chatId, long timestamp);
+
+    public native void sendBroadcastPart(long chatId, long segmentId, int partId, MediaSegmentStatus status, boolean qualityUpdate, byte[] data);
+
+    public native ConnectionMode getConnectionMode(long chatId) throws ConnectionNotFoundException;
 
     public native Map<Long, CallInfo> calls();
 }
