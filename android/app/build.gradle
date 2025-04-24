@@ -38,7 +38,7 @@ new File("$baseDir/version.properties").withInputStream {
 
 android {
     namespace = "org.pytgcalls.ntgcalls"
-    compileSdk = 34
+    compileSdk = 35
     testBuildType = "release"
 
     compileOptions {
@@ -48,7 +48,7 @@ android {
 
     defaultConfig {
         minSdk = 16
-        targetSdk = 34
+        targetSdk = 35
         buildConfigField 'int', 'VERSION_CODE', "${versionCode}"
         buildConfigField 'String', 'VERSION_NAME', "\"${versionName}\""
 
