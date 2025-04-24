@@ -64,7 +64,7 @@ if (NOT IS_PYTHON AND NOT ANDROID)
     endif ()
 endif ()
 
-if(BOOST_ENABLED)
+if (BOOST_ENABLED)
     target_link_libraries(${NTG_LIB_NAME} PRIVATE Boost::process)
 endif ()
 
