@@ -48,7 +48,7 @@ namespace bytes {
     }
 
     inline std::optional<binary> make_binary_optional(const void *data, const size_t size) {
-        if (data == nullptr || size == 0) {
+        if (data == nullptr) {
             return std::nullopt;
         }
         return binary(static_cast<const uint8_t*>(data), static_cast<const uint8_t*>(data) + size);
