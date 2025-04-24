@@ -1,6 +1,8 @@
-apply plugin: 'com.android.library'
-apply plugin: 'signing'
-apply plugin: 'com.vanniktech.maven.publish'
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.signing)
+    alias(libs.plugins.vanniktech.publish)
+}
 
 import com.vanniktech.maven.publish.SonatypeHost
 import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
