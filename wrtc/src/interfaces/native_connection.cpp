@@ -414,19 +414,21 @@ namespace wrtc {
 
     void NativeConnection::checkConnectionTimeout() {
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostDelayedTask([weak] {
-            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
-            if (!strong) {
-                return;
-            }
-            const int64_t currentTimestamp = rtc::TimeMillis();
-            if (constexpr int64_t maxTimeout = 20000; !strong->connected && strong->lastDisconnectedTimestamp + maxTimeout < currentTimestamp) {
-                RTC_LOG(LS_INFO) << "NativeNetworkingImpl timeout " << currentTimestamp - strong->lastDisconnectedTimestamp << " ms";
-                strong->failed = true;
-                strong->notifyStateUpdated();
-                return;
-            }
-            strong->checkConnectionTimeout();
-        }, webrtc::TimeDelta::Millis(1000));
+        if (factory != nullptr) {
+            networkThread()->PostDelayedTask([weak] {
+                const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                const int64_t currentTimestamp = rtc::TimeMillis();
+                if (constexpr int64_t maxTimeout = 20000; !strong->connected && strong->lastDisconnectedTimestamp + maxTimeout < currentTimestamp) {
+                    RTC_LOG(LS_INFO) << "NativeNetworkingImpl timeout " << currentTimestamp - strong->lastDisconnectedTimestamp << " ms";
+                    strong->failed = true;
+                    strong->notifyStateUpdated();
+                    return;
+                }
+                strong->checkConnectionTimeout();
+            }, webrtc::TimeDelta::Millis(1000));
+        }
     }
 } // wrtc
