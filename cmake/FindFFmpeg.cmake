@@ -44,7 +44,7 @@ message(STATUS "ffmpeg v${FFMPEG_VERSION}")
 
 set(FILE_NAME ffmpeg.${PLATFORM})
 if (NOT ANDROID)
-    set(FILE_NAME ${FILE_NAME}_${ARCH})
+    set(FILE_NAME ${FILE_NAME}-${ARCH})
 endif ()
 set(FILE_NAME ${FILE_NAME}${ARCHIVE_FORMAT})
 DownloadProject(
