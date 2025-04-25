@@ -68,7 +68,7 @@ if (BOOST_ENABLED)
     target_link_libraries(${NTG_LIB_NAME} PRIVATE Boost::process)
 endif ()
 
-if (STATIC_BUILD OR ANDROID)
+if (STATIC_BUILD OR ANDROID AND NOT IS_PYTHON)
     set(OUTPUT_ARCHIVE_DIR "${ARCHIVE_DIR}/lib")
     if (ANDROID)
         set(OUTPUT_ARCHIVE_DIR "${jni_loc}/ntgcalls/${ANDROID_ABI}")
