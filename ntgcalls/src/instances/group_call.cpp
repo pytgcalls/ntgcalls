@@ -37,7 +37,7 @@ namespace ntgcalls {
                 return;
             }
             RTC_LOG(LS_INFO) << "Data channel opened";
-            updateRemoteVideoConstraints(strong->connection);
+            updateRemoteVideoConstraints(Safe<wrtc::GroupConnection>(strong->connection));
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
@@ -67,16 +67,7 @@ namespace ntgcalls {
                 return;
             }
             RTC_LOG(LS_INFO) << "Data channel opened";
-            strong->updateThread->PostTask([weak]{
-                const auto strongChannel = std::static_pointer_cast<GroupCall>(weak.lock());
-                if (!strongChannel) {
-                    return;
-                }
-                for (auto x = strongChannel->pendingIncomingPresentations; const auto& [endpoint, ssrcGroup] : x) {
-                    strongChannel->addIncomingVideo(endpoint, ssrcGroup);
-                }
-            });
-            updateRemoteVideoConstraints(strong->presentationConnection);
+            updateRemoteVideoConstraints(Safe<wrtc::GroupConnection>(strong->presentationConnection));
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Screen, presentationConnection.get());
@@ -156,14 +147,14 @@ namespace ntgcalls {
         );
     }
 
-    void GroupCall::updateRemoteVideoConstraints(const std::shared_ptr<wrtc::NetworkInterface>& conn) {
+    void GroupCall::updateRemoteVideoConstraints(const wrtc::GroupConnection* conn) {
         json jsonRes = {
             {"colibriClass", "ReceiverVideoConstraints"},
             {"constraints", json::object()},
             {"defaultConstraints", {{"maxHeight", 0}}},
             {"onStageEndpoints", json::array()}
         };
-        for (const auto& endpoint : Safe<wrtc::GroupConnection>(conn)->getEndpoints()) {
+        for (const auto& endpoint : conn->getEndpoints()) {
             jsonRes["constraints"][endpoint] = {
                 {"maxHeight", 360},
                 {"minHeight", 180},
@@ -172,40 +163,22 @@ namespace ntgcalls {
         conn->sendDataChannelMessage(bytes::make_binary(to_string(jsonRes)));
     }
 
-    uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) {
-        const auto isRtc = getConnectionMode() == wrtc::GroupConnection::Mode::Rtc;
-        bool isPresentation = ssrcGroup.size() == 3 && isRtc;
-        const auto& conn = isPresentation ? presentationConnection : connection;
-        if (!conn) {
-            if (!isPresentation) {
-                throw ConnectionError("Connection not initialized");
-            }
-            pendingIncomingPresentations[endpoint] = ssrcGroup;
-            return 0;
-        }
-        if (isPresentation && pendingIncomingPresentations.contains(endpoint)) {
-            pendingIncomingPresentations.erase(endpoint);
-        }
-        const auto ssrc = Safe<wrtc::GroupConnection>(conn)->addIncomingVideo(endpoint, ssrcGroup);
-        if (isRtc) updateRemoteVideoConstraints(conn);
-        endpointsKind.insert({endpoint, isPresentation});
-        return ssrc;
-    }
-
-    bool GroupCall::removeIncomingVideo(const std::string& endpoint) {
-        if (pendingIncomingPresentations.contains(endpoint)) {
-            pendingIncomingPresentations.erase(endpoint);
-            return true;
-        }
-        if (!endpointsKind.contains(endpoint)) {
-            return false;
-        }
-        const auto& conn = endpointsKind.at(endpoint) ? presentationConnection : connection;
+    uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const {
+        const auto& conn = Safe<wrtc::GroupConnection>(connection);
         if (!conn) {
             throw ConnectionError("Connection not initialized");
         }
-        endpointsKind.erase(endpoint);
-        return Safe<wrtc::GroupConnection>(conn)->removeIncomingVideo(endpoint);
+        const auto ssrc = conn->addIncomingVideo(endpoint, ssrcGroup);
+        if (getConnectionMode() == wrtc::GroupConnection::Mode::Rtc) updateRemoteVideoConstraints(conn);
+        return ssrc;
+    }
+
+    bool GroupCall::removeIncomingVideo(const std::string& endpoint) const {
+        const auto& conn = Safe<wrtc::GroupConnection>(connection);
+        if (!conn) {
+            throw ConnectionError("Connection not initialized");
+        }
+        return conn->removeIncomingVideo(endpoint);
     }
 
     void GroupCall::stopPresentation(const bool force) {
@@ -232,11 +205,12 @@ namespace ntgcalls {
     }
 
     void GroupCall::sendBroadcastPart(const int64_t segmentID, const int32_t partID, const wrtc::MediaSegment::Part::Status status, const bool qualityUpdate, const std::optional<bytes::binary>& data) const {
-        if (!connection) {
+        const auto groupConnection = Safe<wrtc::GroupConnection>(connection);
+        if (!groupConnection) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionError("Connection not initialized");
         }
-        Safe<wrtc::GroupConnection>(connection)->sendBroadcastPart(segmentID, partID, status, qualityUpdate, data);
+        groupConnection->sendBroadcastPart(segmentID, partID, status, qualityUpdate, data);
     }
 
     void GroupCall::onRequestedBroadcastPart(const std::function<void(wrtc::SegmentPartRequest)>& callback) {
@@ -244,11 +218,12 @@ namespace ntgcalls {
     }
 
     void GroupCall::sendBroadcastTimestamp(const int64_t timestamp) const {
-        if (!connection) {
+        const auto groupConnection = Safe<wrtc::GroupConnection>(connection);
+        if (!groupConnection) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionError("Connection not initialized");
         }
-        Safe<wrtc::GroupConnection>(connection)->sendBroadcastTimestamp(timestamp);
+        groupConnection->sendBroadcastTimestamp(timestamp);
     }
 
     void GroupCall::onRequestedBroadcastTimestamp(const std::function<void()>& callback) {
