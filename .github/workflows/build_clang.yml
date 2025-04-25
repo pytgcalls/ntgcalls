@@ -9,11 +9,9 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - name: linux-x86_64
-            arch: x86_64
+          - name: x86_64
             host: ubuntu-latest
-          - name: linux-arm64
-            arch: arm64
+          - name: arm64
             host: arm64-server
     steps:
       - name: Check out the repo
@@ -29,7 +27,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: docker/${{ matrix.platform.name }}/Dockerfile
+          context: docker
+          file: docker/Clang.${{ matrix.platform.name }}.dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/${{ matrix.platform.arch }}:latest
+          tags: ghcr.io/${{ github.repository }}/${{ matrix.platform.name }}:latest
