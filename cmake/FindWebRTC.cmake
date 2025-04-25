@@ -74,9 +74,10 @@ if(NOT TARGET WebRTC::webrtc)
         ${WEBRTC_INCLUDE}/third_party/zlib
     )
     if (MACOS)
-        list(APPEND WEBRTC_INCLUDE
+        list(APPEND _DIRS
             ${WEBRTC_INCLUDE}/sdk/objc
             ${WEBRTC_INCLUDE}/sdk/objc/base
+            ${WEBRTC_INCLUDE}/sdk/objc/components/video_codec
         )
     endif()
 
