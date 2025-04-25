@@ -103,7 +103,11 @@ namespace wrtc {
         if (isConnected) {
             if (!isSctpTransportStarted) {
                 isSctpTransportStarted = true;
-                sctpTransport->Start(5000, 5000, 262144);
+                sctpTransport->Start({
+                    5000,
+                    5000,
+                    262144
+                });
             }
         }
     }

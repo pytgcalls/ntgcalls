@@ -25,14 +25,33 @@ namespace wrtc {
             std::nullopt
         );
         transportDescriptionFactory->set_certificate(tempCertificate);
+        codecLookupHelper = std::make_unique<CodecLookupHelper>(
+            mediaEngine,
+            transportDescriptionFactory.get(),
+            payloadTypeSuggester
+        );
         sessionDescriptionFactory = std::make_unique<cricket::MediaSessionDescriptionFactory>(
             mediaEngine,
             true,
             uniqueRandomIdGenerator,
             transportDescriptionFactory.get(),
-            payloadTypeSuggester
+            codecLookupHelper.get()
         );
         needNegotiation = true;
+    }
+
+    ContentNegotiationContext::~ContentNegotiationContext() {
+        sessionDescriptionFactory = nullptr;
+        transportDescriptionFactory = nullptr;
+        codecLookupHelper = nullptr;
+        uniqueRandomIdGenerator = nullptr;
+        outgoingChannelDescriptions.clear();
+        channelIdOrder.clear();
+        incomingChannels.clear();
+        outgoingChannels.clear();
+        rtpAudioExtensions.clear();
+        rtpVideoExtensions.clear();
+        pendingOutgoingOffer.reset();
     }
 
     void ContentNegotiationContext::copyCodecsFromChannelManager(cricket::MediaEngineInterface *mediaEngine, const bool randomize) {
@@ -54,13 +73,13 @@ namespace wrtc {
 
     std::string ContentNegotiationContext::addOutgoingChannel(const webrtc::MediaStreamTrackInterface* track) {
         std::string channelId = track->id();
-        cricket::MediaType mappedMediaType;
+        webrtc::MediaType mappedMediaType;
         std::vector<webrtc::RtpHeaderExtensionCapability> rtpExtensions;
         if (track->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) {
-            mappedMediaType = cricket::MediaType::MEDIA_TYPE_AUDIO;
+            mappedMediaType = webrtc::MediaType::AUDIO;
             rtpExtensions = rtpAudioExtensions;
         } else {
-            mappedMediaType = cricket::MediaType::MEDIA_TYPE_VIDEO;
+            mappedMediaType = webrtc::MediaType::VIDEO;
             rtpExtensions = rtpVideoExtensions;
         }
         cricket::MediaDescriptionOptions offerDescription(mappedMediaType, channelId, webrtc::RtpTransceiverDirection::kSendOnly, false);
@@ -108,7 +127,7 @@ namespace wrtc {
                 }
             }
             if (!found) {
-                cricket::MediaDescriptionOptions contentDescription(cricket::MediaType::MEDIA_TYPE_AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
+                cricket::MediaDescriptionOptions contentDescription(webrtc::MediaType::AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
                 offerOptions.media_description_options.push_back(contentDescription);
             }
         }
@@ -358,7 +377,7 @@ namespace wrtc {
     MediaContent ContentNegotiationContext::convertContentInfoToSignalingContent(const cricket::ContentInfo &content) {
         MediaContent mappedContent;
         switch (content.media_description()->type()) {
-            case cricket::MediaType::MEDIA_TYPE_AUDIO:
+            case webrtc::MediaType::AUDIO:
                 mappedContent.type = MediaContent::Type::Audio;
                 for (const auto &codec : content.media_description()->as_audio()->codecs()) {
                     PayloadType mappedPayloadType;
@@ -381,7 +400,7 @@ namespace wrtc {
                     mappedContent.payloadTypes.push_back(std::move(mappedPayloadType));
                 }
                 break;
-            case cricket::MediaType::MEDIA_TYPE_VIDEO:
+            case webrtc::MediaType::VIDEO:
                 mappedContent.type = MediaContent::Type::Video;
                 for (const auto &codec : content.media_description()->as_video()->codecs()) {
                     PayloadType mappedPayloadType;
@@ -534,7 +553,7 @@ namespace wrtc {
             }
             if (!found) {
                 auto mappedContent = createInactiveContentInfo("_" + id);
-                cricket::MediaDescriptionOptions contentDescription(cricket::MediaType::MEDIA_TYPE_AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
+                cricket::MediaDescriptionOptions contentDescription(webrtc::MediaType::AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
                 answerOptions.media_description_options.push_back(contentDescription);
                 auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
                 std::unique_ptr<rtc::SSLFingerprint> fingerprint;

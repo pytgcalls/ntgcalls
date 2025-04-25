@@ -251,7 +251,7 @@ namespace signaling {
         writer.WriteUInt32(seq);
         writer.WriteUInt8(kCustomId);
         writer.WriteUInt32(static_cast<uint32_t>(message.size()));
-        writer.WriteBytes(message.data(), message.size());
+        writer.Write(rtc::MakeArrayView(message.data(), message.size()));
         auto result = rtc::CopyOnWriteBuffer();
         result.AppendData(writer.Data(), writer.Length());
         return result;

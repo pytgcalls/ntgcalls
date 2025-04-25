@@ -226,16 +226,7 @@ namespace wrtc {
         removeChannel(incomingAudioChannels);
         removeChannel(incomingVideoChannels);
         for (const auto &content : coordinatedState->incomingContents) {
-            switch (content.type) {
-            case MediaContent::Type::Audio:
-                addIncomingSmartSource(std::to_string(content.ssrc), content);
-                break;
-            case MediaContent::Type::Video:
-                addIncomingSmartSource(std::to_string(content.ssrc), content);
-                break;
-            default:
-                RTC_LOG(LS_WARNING) << "NativeNetworkingImpl unsupported incoming content type";
-            }
+            addIncomingSmartSource(std::to_string(content.ssrc), content);
         }
     }
 
@@ -342,6 +333,7 @@ namespace wrtc {
     void NativeConnection::close() {
         NativeNetworkInterface::close();
         contentNegotiationContext = nullptr;
+        relayPortFactory = nullptr;
     }
 
     void NativeConnection::addIceCandidate(const IceCandidate& rawCandidate) const {

@@ -6,6 +6,7 @@
 #include <p2p/base/transport_description_factory.h>
 #include <rtc_base/unique_id_generator.h>
 #include <pc/media_session.h>
+#include <wrtc/interfaces/media/codec_lookup_helper.hpp>
 #include <wrtc/models/media_content.hpp>
 
 namespace wrtc {
@@ -50,6 +51,7 @@ namespace wrtc {
         std::vector<webrtc::RtpHeaderExtensionCapability> rtpVideoExtensions;
         std::vector<PendingOutgoingChannel> outgoingChannelDescriptions;
         std::unique_ptr<PendingOutgoingOffer> pendingOutgoingOffer;
+        std::unique_ptr<CodecLookupHelper> codecLookupHelper;
         std::vector<std::string> channelIdOrder;
         std::vector<MediaContent> incomingChannels;
         std::vector<OutgoingChannel> outgoingChannels;
@@ -77,6 +79,8 @@ namespace wrtc {
             rtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
             webrtc::PayloadTypeSuggester *payloadTypeSuggester
         );
+
+        ~ContentNegotiationContext();
 
         void copyCodecsFromChannelManager(cricket::MediaEngineInterface *mediaEngine, bool randomize);
 
