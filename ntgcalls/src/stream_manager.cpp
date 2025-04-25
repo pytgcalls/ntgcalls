@@ -102,7 +102,7 @@ namespace ntgcalls {
         return MediaState{
             muted,
             (paused || muted),
-            !hasDevice(Capture, Camera) && !hasDevice(Capture, Screen),
+            !hasDevice(Capture, Camera),
             (paused || muted),
         };
     }
