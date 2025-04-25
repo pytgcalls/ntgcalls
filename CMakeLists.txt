@@ -21,6 +21,11 @@ add_custom_target(clean_objects
 )
 
 project(ntgcalls VERSION 1.3.5.1 LANGUAGES C CXX)
+
+if (MACOS)
+    enable_language(OBJCXX)
+endif ()
+
 add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
