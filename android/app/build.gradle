@@ -1,6 +1,8 @@
-apply plugin: 'com.android.library'
-apply plugin: 'signing'
-apply plugin: 'com.vanniktech.maven.publish'
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.signing)
+    alias(libs.plugins.vanniktech.publish)
+}
 
 import com.vanniktech.maven.publish.SonatypeHost
 import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
@@ -37,9 +39,9 @@ new File("$baseDir/version.properties").withInputStream {
 }
 
 android {
-    namespace "org.pytgcalls.ntgcalls"
-    compileSdk 34
-    testBuildType "release"
+    namespace = "org.pytgcalls.ntgcalls"
+    compileSdk = 35
+    testBuildType = "release"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -47,8 +49,8 @@ android {
     }
 
     defaultConfig {
-        minSdk 16
-        targetSdk 34
+        minSdk = 16
+        targetSdk = 35
         buildConfigField 'int', 'VERSION_CODE', "${versionCode}"
         buildConfigField 'String', 'VERSION_NAME', "\"${versionName}\""
 
@@ -80,17 +82,17 @@ android {
 
     externalNativeBuild {
         cmake {
-            path "src/main/jni/CMakeLists.txt"
-            version "3.22.1"
+            path = "src/main/jni/CMakeLists.txt"
+            version = "3.22.1"
         }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
-            testCoverageEnabled true
+            minifyEnabled = false
+            testCoverageEnabled = true
             ndk {
-                debugSymbolLevel 'SYMBOL_TABLE'
+                debugSymbolLevel = 'SYMBOL_TABLE'
             }
         }
     }

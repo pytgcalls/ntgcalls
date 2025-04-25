@@ -23,6 +23,8 @@ struct InstanceCallbacks {
     std::optional<JavaCallback> onSignalingDataCallback;
     std::optional<JavaCallback> onFramesCallback;
     std::optional<JavaCallback> onRemoteSourceChangeCallback;
+    std::optional<JavaCallback> onRequestBroadcastPartCallback;
+    std::optional<JavaCallback> onRequestBroadcastTimestampCallback;
 };
 
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj);
@@ -65,7 +67,7 @@ ntgcalls::RTCServer parseRTCServer(JNIEnv *env, jobject rtcServer);
 
 std::vector<ntgcalls::RTCServer> parseRTCServerList(JNIEnv *env, jobject list);
 
-ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(jint inputMode);
+ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(JNIEnv *env, jobject inputMode);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJMediaState(JNIEnv *env, ntgcalls::MediaState mediaState);
 
@@ -113,6 +115,14 @@ webrtc::ScopedJavaLocalRef<jobject> parseJFrame(JNIEnv *env, const wrtc::Frame& 
 
 webrtc::ScopedJavaLocalRef<jobject> parseJFrames(JNIEnv *env, const std::vector<wrtc::Frame>& frame);
 
+webrtc::ScopedJavaLocalRef<jobject> parseJSegmentPartRequest(JNIEnv *env, const wrtc::SegmentPartRequest& request);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJMediaSegmentQuality(JNIEnv *env, const wrtc::MediaSegment::Quality& quality);
+
+wrtc::MediaSegment::Part::Status parseSegmentPartStatus(JNIEnv *env, jobject status);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJConnectionMode(JNIEnv *env, wrtc::NetworkInterface::Mode mode);
+
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 
 #define TRANSLATE_NTG_EXCEPTION(x) \
@@ -134,9 +144,10 @@ TRANSLATE_NTG_EXCEPTION(ConnectionNotFound) \
 TRANSLATE_NTG_EXCEPTION(TelegramServerError) \
 TRANSLATE_NTG_EXCEPTION(CryptoError) \
 TRANSLATE_NTG_EXCEPTION(SignalingError) \
-TRANSLATE_NTG_EXCEPTION(SignalingUnsupported)\
-TRANSLATE_NTG_EXCEPTION(MediaDeviceError)\
-TRANSLATE_WRTC_EXCEPTION(RTMPNeeded) \
+TRANSLATE_NTG_EXCEPTION(SignalingUnsupported) \
+TRANSLATE_NTG_EXCEPTION(MediaDeviceError) \
+TRANSLATE_NTG_EXCEPTION(RTCConnectionNeeded) \
+TRANSLATE_WRTC_EXCEPTION(RTMPNeeded)   \
 catch (const ntgcalls::FileError& e) { \
 throwJavaException(env, "FileNotFoundException", e.what()); \
 } \

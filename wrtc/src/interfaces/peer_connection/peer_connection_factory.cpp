@@ -16,6 +16,10 @@
 #include <wrtc/interfaces/media/audio_device_module.hpp>
 #include <wrtc/utils/java_context.hpp>
 
+extern "C" {
+#include <libavutil/avutil.h>
+}
+
 #include <wrtc/video_factory/video_factory_config.hpp>
 #include <wrtc/video_factory/hardware/android/video_factory.hpp>
 
@@ -31,6 +35,7 @@ namespace wrtc {
             "WebRTC-Audio-iOS-Holding/Enabled/"
             "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
         );
+        av_log_set_level(AV_LOG_QUIET);
         network_thread_ = rtc::Thread::CreateWithSocketServer();
         network_thread_->SetName("ntg-net", nullptr);
         network_thread_->Start();

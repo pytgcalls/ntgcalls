@@ -28,4 +28,8 @@ namespace wrtc {
     void RemoteAudioSink::removeSource() {
         --numSources;
     }
+
+    void RemoteAudioSink::updateAudioSourceCount(const int count) {
+        numSources = count;
+    }
 } // wrtc

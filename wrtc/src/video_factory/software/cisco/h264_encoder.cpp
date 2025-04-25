@@ -92,6 +92,8 @@ namespace openh264 {
                 return WEBRTC_VIDEO_CODEC_ERROR;
             }
             RTC_DCHECK(openh264Encoder);
+            int32_t iTraceLevel = WELS_LOG_QUIET;
+            openh264Encoder->SetOption(ENCODER_OPTION_TRACE_LEVEL, &iTraceLevel);
             encoders[i] = openh264Encoder;
 
             configurations[i].simulcastIdx = idx;
@@ -122,8 +124,6 @@ namespace openh264 {
             }
             int video_format = videoFormatI420;
             openh264Encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &video_format);
-            int32_t iTraceLevel = WELS_LOG_QUIET;
-            openh264Encoder->SetOption(ENCODER_OPTION_TRACE_LEVEL, &iTraceLevel);
             const size_t new_capacity = CalcBufferSize(
                 webrtc::VideoType::kI420,
                 codec.simulcastStream[idx].width,
@@ -425,13 +425,13 @@ namespace openh264 {
         }
         const auto buffer = webrtc::EncodedImageBuffer::Create(requiredCapacity);
         encodedImage->SetEncodedData(buffer);
-        constexpr uint8_t startCode[4] = {0, 0, 0, 1};
         size_t frag = 0;
         encodedImage->set_size(0);
         for (int layer = 0; layer < info->iLayerNum; ++layer) {
             const auto& [uiTemporalId, uiSpatialId, uiQualityId, eFrameType, uiLayerType, iSubSeqId, iNalCount, pNalLengthInByte, pBsBuf, rPsnr] = info->sLayerInfo[layer];
             size_t layer_len = 0;
             for (int nal = 0; nal < iNalCount; ++nal, ++frag) {
+                constexpr uint8_t startCode[4] = {0, 0, 0, 1};
                 RTC_DCHECK_GE(pNalLengthInByte[nal], 4);
                 RTC_DCHECK_EQ(pBsBuf[layer_len + 0], startCode[0]);
                 RTC_DCHECK_EQ(pBsBuf[layer_len + 1], startCode[1]);
@@ -467,7 +467,7 @@ namespace openh264 {
         return std::nullopt;
     }
 
-    SEncParamExt H264Encoder::CreateEncoderParams(size_t i) const {
+    SEncParamExt H264Encoder::CreateEncoderParams(const size_t i) const {
         SEncParamExt encoderParams;
         encoders[i]->GetDefaultParams(&encoderParams);
         if (codec.mode == webrtc::VideoCodecMode::kRealtimeVideo) {

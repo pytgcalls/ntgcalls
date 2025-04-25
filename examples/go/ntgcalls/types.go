@@ -4,12 +4,15 @@ package ntgcalls
 import "C"
 
 type StreamType int
+type ConnectionMode int
 type ConnectionKind int
 type ConnectionState int
 type StreamStatus int
 type StreamMode int
 type StreamDevice int
 type MediaSource int
+type MediaSegmentQuality int
+type MediaSegmentStatus int
 
 type StreamEndCallback func(chatId int64, streamType StreamType, streamDevice StreamDevice)
 type UpgradeCallback func(chatId int64, state MediaState)
@@ -17,6 +20,9 @@ type ConnectionChangeCallback func(chatId int64, state NetworkInfo)
 type SignalCallback func(chatId int64, signal []byte)
 type FrameCallback func(chatId int64, mode StreamMode, device StreamDevice, frames []Frame)
 type RemoteSourceCallback func(chatId int64, source RemoteSource)
+type BroadcastTimestampCallback func(chatId int64)
+
+type BroadcastPartCallback func(chatId int64, segmentPartRequest SegmentPartRequest)
 
 const (
 	MicrophoneStream StreamDevice = iota
@@ -46,6 +52,12 @@ const (
 )
 
 const (
+	RtcConnection ConnectionMode = iota
+	StreamConnection
+	RTMPConnection
+)
+
+const (
 	Connecting ConnectionState = iota
 	Connected
 	Failed
@@ -61,6 +73,19 @@ const (
 const (
 	CaptureStream StreamMode = iota
 	PlaybackStream
+)
+
+const (
+	SegmentQualityNone MediaSegmentQuality = iota - 1
+	SegmentQualityThumbnail
+	SegmentQualityMedium
+	SegmentQualityFull
+)
+
+const (
+	SegmentStatusNotReady MediaSegmentStatus = iota
+	SegmentStatusResyncNeeded
+	SegmentStatusSuccess
 )
 
 func (ctx MediaSource) ParseToC() C.ntg_media_source_enum {
@@ -105,5 +130,18 @@ func (ctx StreamDevice) ParseToC() C.ntg_stream_device_enum {
 		return C.NTG_STREAM_SCREEN
 	default:
 		return C.NTG_STREAM_MICROPHONE
+	}
+}
+
+func (ctx MediaSegmentStatus) ParseToC() C.ntg_media_segment_status_enum {
+	switch ctx {
+	case SegmentStatusNotReady:
+		return C.NTG_MEDIA_SEGMENT_NOT_READY
+	case SegmentStatusResyncNeeded:
+		return C.NTG_MEDIA_SEGMENT_RESYNC_NEEDED
+	case SegmentStatusSuccess:
+		return C.NTG_MEDIA_SEGMENT_SUCCESS
+	default:
+		return C.NTG_MEDIA_SEGMENT_NOT_READY
 	}
 }

@@ -7,3 +7,4 @@ ntgcalls/*.h
 *.db
 *.sum
 session
+session-test

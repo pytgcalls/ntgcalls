@@ -27,6 +27,7 @@ REGISTER_EXCEPTION(ntgcalls::FileError, FILE) \
 REGISTER_EXCEPTION(ntgcalls::FFmpegError, FFMPEG) \
 REGISTER_EXCEPTION(ntgcalls::ShellError, SHELL) \
 REGISTER_EXCEPTION(ntgcalls::MediaDeviceError, MEDIA_DEVICE) \
+REGISTER_EXCEPTION(ntgcalls::RTCConnectionNeeded, RTC_CONNECTION_NEEDED) \
 REGISTER_EXCEPTION(wrtc::RTCException, WEBRTC) \
 REGISTER_EXCEPTION(wrtc::SdpParseException, PARSE_SDP) \
 REGISTER_EXCEPTION(wrtc::TransportParseException, PARSE_TRANSPORT) \
@@ -76,13 +77,7 @@ int copyAndReturn(std::string s, char *buffer, const int size) {
 
     if (size < static_cast<int>(s.size() + 1))
         return NTG_ERROR_TOO_SMALL;
-
-#ifndef IS_MACOS
     std::ranges::copy(s, buffer);
-#else
-    std::copy(s.begin(), s.end(), buffer);
-#endif
-
     buffer[s.size()] = '\0';
     return static_cast<int>(s.size() + 1);
 }
@@ -361,6 +356,46 @@ ntg_stream_type_enum parseCStreamType(const ntgcalls::StreamManager::Type type) 
     return {};
 }
 
+ntg_media_segment_quality_enum parseCSegmentQuality(const wrtc::MediaSegment::Quality quality) {
+    switch (quality) {
+    case wrtc::MediaSegment::Quality::None:
+        return NTG_MEDIA_SEGMENT_QUALITY_NONE;
+    case wrtc::MediaSegment::Quality::Thumbnail:
+        return NTG_MEDIA_SEGMENT_QUALITY_THUMBNAIL;
+    case wrtc::MediaSegment::Quality::Medium:
+        return NTG_MEDIA_SEGMENT_QUALITY_MEDIUM;
+    case wrtc::MediaSegment::Quality::Full:
+        return NTG_MEDIA_SEGMENT_QUALITY_FULL;
+    }
+    return {};
+}
+
+wrtc::MediaSegment::Part::Status parseSegmentStatus(const ntg_media_segment_status_enum status) {
+    switch (status) {
+    case NTG_MEDIA_SEGMENT_NOT_READY:
+        return wrtc::MediaSegment::Part::Status::NotReady;
+    case NTG_MEDIA_SEGMENT_RESYNC_NEEDED:
+        return wrtc::MediaSegment::Part::Status::ResyncNeeded;
+    case NTG_MEDIA_SEGMENT_SUCCESS:
+        return wrtc::MediaSegment::Part::Status::Success;
+    }
+    return {};
+}
+
+ntg_connection_mode_enum parseCConnectionMode(const wrtc::NetworkInterface::Mode mode) {
+    switch (mode) {
+    case wrtc::NetworkInterface::Mode::None:
+        return NTG_CONNECTION_MODE_NONE;
+    case wrtc::NetworkInterface::Mode::Rtc:
+        return NTG_CONNECTION_MODE_RTC;
+    case wrtc::NetworkInterface::Mode::Stream:
+        return NTG_CONNECTION_MODE_STREAM;
+    case wrtc::NetworkInterface::Mode::Rtmp:
+        return NTG_CONNECTION_MODE_RTMP;
+    }
+    return {};
+}
+
 ntg_frame_data_struct parseCFrameData(const wrtc::FrameData data) {
     return {
         data.absoluteCaptureTimestampMs,
@@ -606,8 +641,36 @@ int ntg_get_state(const uintptr_t ptr, const int64_t chatID, ntg_media_state_str
     PREPARE_ASYNC_END
 }
 
+int ntg_get_connection_mode(const uintptr_t ptr, const int64_t chatID, ntg_connection_mode_enum* mode, ntg_async_struct future) {
+    PREPARE_ASYNC(getConnectionMode, chatID)
+    [future, mode](const wrtc::NetworkInterface::Mode m) {
+        *mode = parseCConnectionMode(m);
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
 int ntg_send_external_frame(const uintptr_t ptr, const int64_t chatID, const ntg_stream_device_enum device, uint8_t* frame, const int frameSize, const ntg_frame_data_struct frameData, ntg_async_struct future) {
     PREPARE_ASYNC(sendExternalFrame, chatID, parseStreamDevice(device), bytes::binary(frame, frame + frameSize), parseFrameData(frameData))
+    [future] {
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_send_broadcast_timestamp(const uintptr_t ptr, const int64_t chatId, const int64_t timestamp, ntg_async_struct future) {
+    PREPARE_ASYNC(sendBroadcastTimestamp, chatId, timestamp)
+    [future] {
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_send_broadcast_part(const uintptr_t ptr, const int64_t chatId, const int64_t segmentId, const int32_t partId, const ntg_media_segment_status_enum status, const bool qualityUpdate, const uint8_t* frame, const int frameSize, ntg_async_struct future) {
+    PREPARE_ASYNC(sendBroadcastPart, chatId, segmentId, partId, parseSegmentStatus(status), qualityUpdate, bytes::make_binary_optional(frame, frameSize))
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
@@ -634,7 +697,7 @@ int ntg_get_media_devices(ntg_media_devices_struct* buffer) {
 
 int ntg_calls(const uintptr_t ptr, ntg_call_info_struct *buffer, const uint64_t size, ntg_async_struct future) {
     PREPARE_ASYNC(calls)
-    [future, buffer, size](const auto callsCpp) {
+    [future, buffer, size](const auto& callsCpp) {
         std::vector<ntg_call_info_struct> groupCalls;
         groupCalls.reserve(callsCpp.size());
         for (const auto [chatId, status] : callsCpp) {
@@ -652,7 +715,7 @@ int ntg_calls(const uintptr_t ptr, ntg_call_info_struct *buffer, const uint64_t 
 
 int ntg_calls_count(const uintptr_t ptr, uint64_t* size, ntg_async_struct future) {
     PREPARE_ASYNC(calls)
-    [future, size](const auto callsCpp) {
+    [future, size](const auto& callsCpp) {
         *size = callsCpp.size();
         *future.errorCode = 0;
         future.promise(future.userData);
@@ -676,11 +739,6 @@ int ntg_enable_g_lib_loop(const bool enable) {
     } catch (ntgcalls::MediaDeviceError&) {
         return NTG_ERROR_MEDIA_DEVICE;
     }
-    return 0;
-}
-
-int ntg_enable_h264_encoder(const bool enable) {
-    ntgcalls::NTgCalls::enableH264Encoder(enable);
     return 0;
 }
 
@@ -763,6 +821,36 @@ int ntg_on_remote_source_change(uintptr_t ptr, ntg_remote_source_callback callba
                 state.ssrc,
                 parseCStatus(state.state),
                 parseCStreamDevice(state.device),
+            }, userData);
+        });
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+    return 0;
+}
+
+int ntg_on_request_broadcast_timestamp(uintptr_t ptr, ntg_broadcast_timestamp_callback callback, void* userData) {
+    try {
+        getInstance(ptr)->onRequestBroadcastTimestamp([ptr, callback, userData](const int64_t chatId) {
+            callback(ptr, chatId, userData);
+        });
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+    return 0;
+}
+
+int ntg_on_request_broadcast_part(uintptr_t ptr, ntg_broadcast_part_callback callback, void* userData) {
+    try {
+        getInstance(ptr)->onRequestBroadcastPart([ptr, callback, userData](const int64_t chatId, const wrtc::SegmentPartRequest& partRequest) {
+            callback(ptr, chatId, {
+                partRequest.segmentId,
+                partRequest.partId,
+                partRequest.limit,
+                partRequest.timestamp,
+                partRequest.qualityUpdate,
+                partRequest.channelId,
+                parseCSegmentQuality(partRequest.quality)
             }, userData);
         });
     } catch (ntgcalls::NullPointer&) {

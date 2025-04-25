@@ -1,85 +1,79 @@
 package ntgcalls
 
 //#include "ntgcalls.h"
-//extern void handleStream(uintptr_t ptr, int64_t chatID, ntg_stream_type_enum streamType, ntg_stream_device_enum streamDevice, void*);
+//extern void handleStreamEnd(uintptr_t ptr, int64_t chatID, ntg_stream_type_enum streamType, ntg_stream_device_enum streamDevice, void*);
 //extern void handleUpgrade(uintptr_t ptr, int64_t chatID, ntg_media_state_struct state, void*);
 //extern void handleConnectionChange(uintptr_t ptr, int64_t chatID, ntg_network_info_struct networkInfo, void*);
 //extern void handleSignal(uintptr_t ptr, int64_t chatID, uint8_t*, int, void*);
 //extern void handleFrames(uintptr_t ptr, int64_t chatID, ntg_stream_mode_enum streamMode, ntg_stream_device_enum streamDevice, ntg_frame_struct* frames, int size, void*);
 //extern void handleRemoteSourceChange(uintptr_t ptr, int64_t chatID, ntg_remote_source_struct remoteSource, void*);
+//extern void handleRequestBroadcastTimestamp(uintptr_t ptr, int64_t chatID, void*);
+//extern void handleRequestBroadcastPart(uintptr_t ptr, int64_t chatID, ntg_segment_part_request_struct segmentPartRequest, void*);
 import "C"
 import (
+	"fmt"
 	"unsafe"
 )
-
-var handlerEnd = make(map[uintptr][]StreamEndCallback)
-var handlerUpgrade = make(map[uintptr][]UpgradeCallback)
-var handlerConnectionChange = make(map[uintptr][]ConnectionChangeCallback)
-var handlerSignal = make(map[uintptr][]SignalCallback)
-var handlerFrame = make(map[uintptr][]FrameCallback)
-var handlerRemoteSourceChange = make(map[uintptr][]RemoteSourceCallback)
 
 func NTgCalls() *Client {
 	instance := &Client{
 		ptr: uintptr(C.ntg_init()),
 	}
-	C.ntg_on_stream_end(C.uintptr_t(instance.ptr), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStream)), nil)
-	C.ntg_on_upgrade(C.uintptr_t(instance.ptr), (C.ntg_upgrade_callback)(unsafe.Pointer(C.handleUpgrade)), nil)
-	C.ntg_on_signaling_data(C.uintptr_t(instance.ptr), (C.ntg_signaling_callback)(unsafe.Pointer(C.handleSignal)), nil)
-	C.ntg_on_connection_change(C.uintptr_t(instance.ptr), (C.ntg_connection_callback)(unsafe.Pointer(C.handleConnectionChange)), nil)
-	C.ntg_on_frames(C.uintptr_t(instance.ptr), (C.ntg_frame_callback)(unsafe.Pointer(C.handleFrames)), nil)
-	C.ntg_on_remote_source_change(C.uintptr_t(instance.ptr), (C.ntg_remote_source_callback)(unsafe.Pointer(C.handleRemoteSourceChange)), nil)
+	selfPointer := unsafe.Pointer(instance)
+	C.ntg_on_stream_end(C.uintptr_t(instance.ptr), (C.ntg_stream_callback)(unsafe.Pointer(C.handleStreamEnd)), selfPointer)
+	C.ntg_on_upgrade(C.uintptr_t(instance.ptr), (C.ntg_upgrade_callback)(unsafe.Pointer(C.handleUpgrade)), selfPointer)
+	C.ntg_on_signaling_data(C.uintptr_t(instance.ptr), (C.ntg_signaling_callback)(unsafe.Pointer(C.handleSignal)), selfPointer)
+	C.ntg_on_connection_change(C.uintptr_t(instance.ptr), (C.ntg_connection_callback)(unsafe.Pointer(C.handleConnectionChange)), selfPointer)
+	C.ntg_on_frames(C.uintptr_t(instance.ptr), (C.ntg_frame_callback)(unsafe.Pointer(C.handleFrames)), selfPointer)
+	C.ntg_on_remote_source_change(C.uintptr_t(instance.ptr), (C.ntg_remote_source_callback)(unsafe.Pointer(C.handleRemoteSourceChange)), selfPointer)
+	C.ntg_on_request_broadcast_timestamp(C.uintptr_t(instance.ptr), (C.ntg_broadcast_timestamp_callback)(unsafe.Pointer(C.handleRequestBroadcastTimestamp)), selfPointer)
+	C.ntg_on_request_broadcast_part(C.uintptr_t(instance.ptr), (C.ntg_broadcast_part_callback)(unsafe.Pointer(C.handleRequestBroadcastPart)), selfPointer)
 	return instance
 }
 
-//export handleStream
-func handleStream(ptr C.uintptr_t, chatID C.int64_t, streamType C.ntg_stream_type_enum, streamDevice C.ntg_stream_device_enum, _ unsafe.Pointer) {
+//export handleStreamEnd
+func handleStreamEnd(_ C.uintptr_t, chatID C.int64_t, streamType C.ntg_stream_type_enum, streamDevice C.ntg_stream_device_enum, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
 	goChatID := int64(chatID)
-	goPtr := uintptr(ptr)
 	var goStreamType StreamType
 	if streamType == C.NTG_STREAM_AUDIO {
 		goStreamType = AudioStream
 	} else {
 		goStreamType = VideoStream
 	}
-	if handlerEnd[goPtr] != nil {
-		for _, x0 := range handlerEnd[goPtr] {
-			go x0(goChatID, goStreamType, parseStreamDevice(streamDevice))
-		}
+	for _, x0 := range self.streamEndCallbacks {
+		go x0(goChatID, goStreamType, parseStreamDevice(streamDevice))
 	}
 }
 
 //export handleUpgrade
-func handleUpgrade(ptr C.uintptr_t, chatID C.int64_t, state C.ntg_media_state_struct, _ unsafe.Pointer) {
+func handleUpgrade(_ C.uintptr_t, chatID C.int64_t, state C.ntg_media_state_struct, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
 	goChatID := int64(chatID)
-	goPtr := uintptr(ptr)
 	goState := MediaState{
-		Muted:        bool(state.muted),
-		VideoPaused:  bool(state.videoPaused),
-		VideoStopped: bool(state.videoStopped),
+		Muted:              bool(state.muted),
+		VideoPaused:        bool(state.videoPaused),
+		VideoStopped:       bool(state.videoStopped),
+		PresentationPaused: bool(state.presentationPaused),
 	}
-	if handlerUpgrade[goPtr] != nil {
-		for _, x0 := range handlerUpgrade[goPtr] {
-			go x0(goChatID, goState)
-		}
+	for _, x0 := range self.upgradeCallbacks {
+		go x0(goChatID, goState)
 	}
 }
 
 //export handleSignal
-func handleSignal(ptr C.uintptr_t, chatID C.int64_t, data *C.uint8_t, size C.int, _ unsafe.Pointer) {
+func handleSignal(_ C.uintptr_t, chatID C.int64_t, data *C.uint8_t, size C.int, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
 	goChatID := int64(chatID)
-	goPtr := uintptr(ptr)
-	if handlerSignal[goPtr] != nil {
-		for _, x0 := range handlerSignal[goPtr] {
-			go x0(goChatID, C.GoBytes(unsafe.Pointer(data), size))
-		}
+	for _, x0 := range self.signalCallbacks {
+		go x0(goChatID, C.GoBytes(unsafe.Pointer(data), size))
 	}
 }
 
 //export handleConnectionChange
-func handleConnectionChange(ptr C.uintptr_t, chatID C.int64_t, networkInfo C.ntg_network_info_struct, _ unsafe.Pointer) {
+func handleConnectionChange(_ C.uintptr_t, chatID C.int64_t, networkInfo C.ntg_network_info_struct, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
 	goChatID := int64(chatID)
-	goPtr := uintptr(ptr)
 	var goCallState NetworkInfo
 	switch networkInfo.kind {
 	case C.NTG_KIND_NORMAL:
@@ -88,17 +82,15 @@ func handleConnectionChange(ptr C.uintptr_t, chatID C.int64_t, networkInfo C.ntg
 		goCallState.Kind = PresentationConnection
 	}
 	goCallState.State = parseConnectionState(networkInfo.state)
-	if handlerConnectionChange[goPtr] != nil {
-		for _, x0 := range handlerConnectionChange[goPtr] {
-			go x0(goChatID, goCallState)
-		}
+	for _, x0 := range self.connectionChangeCallbacks {
+		go x0(goChatID, goCallState)
 	}
 }
 
 //export handleFrames
-func handleFrames(ptr C.uintptr_t, chatID C.int64_t, streamMode C.ntg_stream_mode_enum, streamDevice C.ntg_stream_device_enum, frames *C.ntg_frame_struct, size C.int, _ unsafe.Pointer) {
+func handleFrames(_ C.uintptr_t, chatID C.int64_t, streamMode C.ntg_stream_mode_enum, streamDevice C.ntg_stream_device_enum, frames *C.ntg_frame_struct, size C.int, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
 	goChatID := int64(chatID)
-	goPtr := uintptr(ptr)
 	var goStreamMode StreamMode
 	switch streamMode {
 	case C.NTG_STREAM_CAPTURE:
@@ -120,51 +112,131 @@ func handleFrames(ptr C.uintptr_t, chatID C.int64_t, streamMode C.ntg_stream_mod
 			},
 		}
 	}
-	if handlerFrame[goPtr] != nil {
-		for _, x0 := range handlerFrame[goPtr] {
-			go x0(goChatID, goStreamMode, parseStreamDevice(streamDevice), rawFrames)
-		}
+	for _, x0 := range self.frameCallbacks {
+		go x0(goChatID, goStreamMode, parseStreamDevice(streamDevice), rawFrames)
 	}
 }
 
 //export handleRemoteSourceChange
-func handleRemoteSourceChange(ptr C.uintptr_t, chatID C.int64_t, remoteSource C.ntg_remote_source_struct, _ unsafe.Pointer) {
+func handleRemoteSourceChange(_ C.uintptr_t, chatID C.int64_t, remoteSource C.ntg_remote_source_struct, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
 	goChatID := int64(chatID)
-	goPtr := uintptr(ptr)
 	goRemoteSource := RemoteSource{
 		Ssrc:   uint32(remoteSource.ssrc),
 		State:  parseStreamStatus(remoteSource.state),
 		Device: parseStreamDevice(remoteSource.device),
 	}
-	if handlerRemoteSourceChange[goPtr] != nil {
-		for _, x0 := range handlerRemoteSourceChange[goPtr] {
-			go x0(goChatID, goRemoteSource)
-		}
+	for _, x0 := range self.remoteSourceCallbacks {
+		go x0(goChatID, goRemoteSource)
+	}
+}
+
+//export handleRequestBroadcastTimestamp
+func handleRequestBroadcastTimestamp(_ C.uintptr_t, chatID C.int64_t, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
+	goChatID := int64(chatID)
+	for _, x0 := range self.broadcastTimestampCallbacks {
+		go x0(goChatID)
+	}
+}
+
+//export handleRequestBroadcastPart
+func handleRequestBroadcastPart(_ C.uintptr_t, chatID C.int64_t, segmentPartRequest C.ntg_segment_part_request_struct, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
+	goChatID := int64(chatID)
+	var goSegmentQuality MediaSegmentQuality
+	switch segmentPartRequest.quality {
+	case C.NTG_MEDIA_SEGMENT_QUALITY_NONE:
+		goSegmentQuality = SegmentQualityNone
+	case C.NTG_MEDIA_SEGMENT_QUALITY_THUMBNAIL:
+		goSegmentQuality = SegmentQualityThumbnail
+	case C.NTG_MEDIA_SEGMENT_QUALITY_MEDIUM:
+		goSegmentQuality = SegmentQualityMedium
+	case C.NTG_MEDIA_SEGMENT_QUALITY_FULL:
+		goSegmentQuality = SegmentQualityFull
+	}
+	goSegmentPartRequest := SegmentPartRequest{
+		SegmentID:     int64(segmentPartRequest.segmentId),
+		PartID:        int32(segmentPartRequest.partId),
+		Limit:         int32(segmentPartRequest.limit),
+		Timestamp:     int64(segmentPartRequest.timestamp),
+		QualityUpdate: bool(segmentPartRequest.qualityUpdate),
+		ChannelID:     int32(segmentPartRequest.channelId),
+		Quality:       goSegmentQuality,
+	}
+	for _, x0 := range self.broadcastPartCallbacks {
+		go x0(goChatID, goSegmentPartRequest)
 	}
 }
 
 func (ctx *Client) OnStreamEnd(callback StreamEndCallback) {
-	handlerEnd[ctx.ptr] = append(handlerEnd[ctx.ptr], callback)
+	ctx.streamEndCallbacks = append(ctx.streamEndCallbacks, callback)
 }
 
 func (ctx *Client) OnUpgrade(callback UpgradeCallback) {
-	handlerUpgrade[ctx.ptr] = append(handlerUpgrade[ctx.ptr], callback)
+	ctx.upgradeCallbacks = append(ctx.upgradeCallbacks, callback)
 }
 
 func (ctx *Client) OnConnectionChange(callback ConnectionChangeCallback) {
-	handlerConnectionChange[ctx.ptr] = append(handlerConnectionChange[ctx.ptr], callback)
+	ctx.connectionChangeCallbacks = append(ctx.connectionChangeCallbacks, callback)
 }
 
 func (ctx *Client) OnSignal(callback SignalCallback) {
-	handlerSignal[ctx.ptr] = append(handlerSignal[ctx.ptr], callback)
+	ctx.signalCallbacks = append(ctx.signalCallbacks, callback)
 }
 
 func (ctx *Client) OnFrame(callback FrameCallback) {
-	handlerFrame[ctx.ptr] = append(handlerFrame[ctx.ptr], callback)
+	ctx.frameCallbacks = append(ctx.frameCallbacks, callback)
 }
 
 func (ctx *Client) OnRemoteSourceChange(callback RemoteSourceCallback) {
-	handlerRemoteSourceChange[ctx.ptr] = append(handlerRemoteSourceChange[ctx.ptr], callback)
+	ctx.remoteSourceCallbacks = append(ctx.remoteSourceCallbacks, callback)
+}
+
+func (ctx *Client) OnRequestBroadcastTimestamp(callback BroadcastTimestampCallback) {
+	ctx.broadcastTimestampCallbacks = append(ctx.broadcastTimestampCallbacks, callback)
+}
+
+func (ctx *Client) OnRequestBroadcastPart(callback BroadcastPartCallback) {
+	ctx.broadcastPartCallbacks = append(ctx.broadcastPartCallbacks, callback)
+}
+
+func (ctx *Client) GetState(chatId int64) (MediaState, error) {
+	f := CreateFuture()
+	var buffer C.ntg_media_state_struct
+	C.ntg_get_state(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer, f.ParseToC())
+	f.wait()
+	err := parseErrorCode(f)
+	if err != nil {
+		return MediaState{}, err
+	}
+	return MediaState{
+		Muted:              bool(buffer.muted),
+		VideoPaused:        bool(buffer.videoPaused),
+		VideoStopped:       bool(buffer.videoStopped),
+		PresentationPaused: bool(buffer.presentationPaused),
+	}, nil
+}
+
+func (ctx *Client) GetConnectionMode(chatId int64) (ConnectionMode, error) {
+	f := CreateFuture()
+	var buffer C.ntg_connection_mode_enum
+	C.ntg_get_connection_mode(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer, f.ParseToC())
+	f.wait()
+	err := parseErrorCode(f)
+	if err != nil {
+		return ConnectionMode(0), err
+	}
+	switch buffer {
+	case C.NTG_CONNECTION_MODE_RTC:
+		return RtcConnection, nil
+	case C.NTG_CONNECTION_MODE_STREAM:
+		return StreamConnection, nil
+	case C.NTG_CONNECTION_MODE_RTMP:
+		return RTMPConnection, nil
+	default:
+		return ConnectionMode(0), fmt.Errorf("unknown connection mode")
+	}
 }
 
 func (ctx *Client) CreateCall(chatId int64, desc MediaDescription) (string, error) {
@@ -296,6 +368,21 @@ func (ctx *Client) SendExternalFrame(chatId int64, streamDevice StreamDevice, da
 	return parseErrorCode(f)
 }
 
+func (ctx *Client) SendBroadcastTimestamp(chatId int64, timestamp int64) error {
+	f := CreateFuture()
+	C.ntg_send_broadcast_timestamp(C.uintptr_t(ctx.ptr), C.int64_t(chatId), C.int64_t(timestamp), f.ParseToC())
+	f.wait()
+	return parseErrorCode(f)
+}
+
+func (ctx *Client) SendBroadcastPart(chatId int64, segmentID int64, partID int32, status MediaSegmentStatus, qualityUpdate bool, data []byte) error {
+	f := CreateFuture()
+	dataC, dataSize := parseBytes(data)
+	C.ntg_send_broadcast_part(C.uintptr_t(ctx.ptr), C.int64_t(chatId), C.int64_t(segmentID), C.int32_t(partID), status.ParseToC(), C.bool(qualityUpdate), dataC, dataSize, f.ParseToC())
+	f.wait()
+	return parseErrorCode(f)
+}
+
 func (ctx *Client) Pause(chatId int64) (bool, error) {
 	f := CreateFuture()
 	C.ntg_pause(C.uintptr_t(ctx.ptr), C.int64_t(chatId), f.ParseToC())
@@ -363,10 +450,6 @@ func (ctx *Client) EnableGLibLoop(enable bool) {
 	C.ntg_enable_g_lib_loop(C.bool(enable))
 }
 
-func (ctx *Client) EnableH264Encoder(enable bool) {
-	C.ntg_enable_h264_encoder(C.bool(enable))
-}
-
 func (ctx *Client) Calls() map[int64]CallInfo {
 	mapReturn := make(map[int64]CallInfo)
 
@@ -400,10 +483,4 @@ func Version() string {
 
 func (ctx *Client) Free() {
 	C.ntg_destroy(C.uintptr_t(ctx.ptr))
-	delete(handlerEnd, ctx.ptr)
-	delete(handlerUpgrade, ctx.ptr)
-	delete(handlerConnectionChange, ctx.ptr)
-	delete(handlerSignal, ctx.ptr)
-	delete(handlerFrame, ctx.ptr)
-	delete(handlerRemoteSourceChange, ctx.ptr)
 }

@@ -43,7 +43,7 @@ func parseBool(futureResult *Future) (bool, error) {
 }
 
 func parseBytes(data []byte) (*C.uint8_t, C.int) {
-	if len(data) > 0 {
+	if data != nil {
 		rawBytes := C.CBytes(data)
 		return (*C.uint8_t)(rawBytes), C.int(len(data))
 	}

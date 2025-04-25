@@ -55,6 +55,22 @@ namespace ntgcalls {
                 END_THREAD_SAFE
                 END_WORKER
             });
+
+            SafeCall<GroupCall>(connections[chatId].get())->onRequestedBroadcastPart([this, chatId](const wrtc::SegmentPartRequest &request) {
+                WORKER_NO_LOG(updateThread, this, chatId, request)
+                THREAD_SAFE
+                (void) segmentPartRequestCallback(chatId, request);
+                END_THREAD_SAFE
+                END_WORKER_NO_LOG
+            });
+
+            SafeCall<GroupCall>(connections[chatId].get())->onRequestedBroadcastTimestamp([this, chatId] {
+                WORKER_NO_LOG(updateThread, this, chatId)
+                THREAD_SAFE
+                (void) broadcastTimestampCallback(chatId);
+                END_THREAD_SAFE
+                END_WORKER_NO_LOG
+            });
         }
         connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
@@ -240,6 +256,28 @@ namespace ntgcalls {
         remoteSourceCallback = callback;
     }
 
+    void NTgCalls::onRequestBroadcastPart(const std::function<void(int64_t, wrtc::SegmentPartRequest)>& callback) {
+        std::lock_guard lock(mutex);
+        segmentPartRequestCallback = callback;
+    }
+
+    void NTgCalls::onRequestBroadcastTimestamp(const std::function<void(int64_t)>& callback) {
+        std::lock_guard lock(mutex);
+        broadcastTimestampCallback = callback;
+    }
+
+    ASYNC_RETURN(void) NTgCalls::sendBroadcastTimestamp(int64_t chatId, int64_t timestamp) {
+        SMART_ASYNC(this, chatId, timestamp)
+        SafeCall<GroupCall>(safeConnection(chatId))->sendBroadcastTimestamp(timestamp);
+        END_ASYNC
+    }
+
+    ASYNC_RETURN(void) NTgCalls::sendBroadcastPart(int64_t chatId, int64_t segmentId, int32_t partId, wrtc::MediaSegment::Part::Status status, const bool qualityUpdate, const std::optional<BYTES(bytes::binary)> &data) {
+        SMART_ASYNC(this, chatId, segmentId, partId, status, qualityUpdate, data = CPP_BYTES(data, bytes::binary))
+        SafeCall<GroupCall>(safeConnection(chatId))->sendBroadcastPart(segmentId, partId, status, qualityUpdate, data);
+        END_ASYNC
+    }
+
     ASYNC_RETURN(void) NTgCalls::sendSignalingData(const int64_t chatId, const BYTES(bytes::binary) &msgKey) {
         SMART_ASYNC(this, chatId, msgKey = CPP_BYTES(msgKey, bytes::binary))
         SafeCall<P2PCall>(safeConnection(chatId))->sendSignalingData(msgKey);
@@ -264,7 +302,13 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(double) NTgCalls::cpuUsage() {
+    ASYNC_RETURN(wrtc::NetworkInterface::Mode) NTgCalls::getConnectionMode(int64_t chatId) {
+        SMART_ASYNC(this, chatId)
+        return safeConnection(chatId)->getConnectionMode();
+        END_ASYNC
+    }
+
+    ASYNC_RETURN(double) NTgCalls::cpuUsage() const {
         SMART_ASYNC(this)
         return hardwareInfo->getCpuUsage();
         END_ASYNC
@@ -323,10 +367,6 @@ namespace ntgcalls {
 #ifndef IS_ANDROID
     void NTgCalls::enableGlibLoop(const bool enable) {
         GLibLoopManager::EnableEventLoop(enable);
-    }
-
-    void NTgCalls::enableH264Encoder(const bool enable) {
-        wrtc::VideoFactoryConfig::EnableH264Encoder(enable);
     }
 #endif
 

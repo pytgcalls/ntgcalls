@@ -24,6 +24,10 @@ namespace wrtc {
                 isRtmp = true;
                 return;
             }
+            if (!data["stream"].is_null()) {
+                isStream = true;
+                return;
+            }
             if (data["transport"].is_null()) {
                 RTC_LOG(LS_ERROR) << "Transport not found";
                 throw TransportParseException("Transport not found");

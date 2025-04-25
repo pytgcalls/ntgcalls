@@ -10,9 +10,7 @@ if(IS_PYTHON)
     add_compile_definitions(PYTHON_ENABLED)
 else ()
     if (STATIC_BUILD OR ANDROID)
-        if (NOT ANDROID)
-            set(NTG_LIB_NAME ntgcalls-native)
-        endif ()
+        set(NTG_LIB_NAME ntgcalls-native)
         add_library(${NTG_LIB_NAME} STATIC)
     else()
         add_library(${NTG_LIB_NAME} SHARED)
@@ -29,19 +27,13 @@ else ()
 
     target_compile_definitions(${NTG_LIB_NAME} PRIVATE NTG_EXPORTS)
     target_sources(${NTG_LIB_NAME} PRIVATE ${MODULE_SRC})
-
-    if (ANDROID)
-        set_target_properties(${NTG_LIB_NAME} PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${jni_loc}/ntgcalls/${ANDROID_ABI}"
-        )
-    endif ()
 endif ()
 
 setup_platform_flags(${NTG_LIB_NAME} OFF)
 
 target_include_directories(${NTG_LIB_NAME} PRIVATE include)
 set_property(TARGET ${NTG_LIB_NAME} PROPERTY CXX_STANDARD 20 C_STANDARD 20)
-target_link_libraries(${NTG_LIB_NAME} PRIVATE wrtc Boost::process nlohmann_json::nlohmann_json)
+target_link_libraries(${NTG_LIB_NAME} PRIVATE wrtc nlohmann_json::nlohmann_json)
 
 if (NOT IS_PYTHON AND NOT ANDROID)
     set(ARCHIVE_TYPE)
@@ -60,9 +52,7 @@ if (NOT IS_PYTHON AND NOT ANDROID)
     set(ARCHIVE_DIR "${CMAKE_SOURCE_DIR}/${ARCHIVE_TYPE_NAME}-output")
     file(COPY ../include DESTINATION ${ARCHIVE_DIR})
 
-    if (STATIC_BUILD)
-        bundle_static_library(ntgcalls-native ntgcalls ${ARCHIVE_DIR}/lib)
-    else ()
+    if (NOT STATIC_BUILD)
         set_target_properties(${NTG_LIB_NAME} PROPERTIES
             ${ARCHIVE_TYPE}_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
         )
@@ -74,6 +64,14 @@ if (NOT IS_PYTHON AND NOT ANDROID)
     endif ()
 endif ()
 
-if(BOOST_ENABLED)
-    target_link_libraries(${NTG_LIB_NAME} PRIVATE Boost::filesystem)
+if (BOOST_ENABLED)
+    target_link_libraries(${NTG_LIB_NAME} PRIVATE Boost::process)
+endif ()
+
+if (STATIC_BUILD OR ANDROID)
+    set(OUTPUT_ARCHIVE_DIR "${ARCHIVE_DIR}/lib")
+    if (ANDROID)
+        set(OUTPUT_ARCHIVE_DIR "${jni_loc}/ntgcalls/${ANDROID_ABI}")
+    endif ()
+    bundle_static_library(ntgcalls-native ntgcalls ${OUTPUT_ARCHIVE_DIR})
 endif ()

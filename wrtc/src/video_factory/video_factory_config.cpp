@@ -22,9 +22,7 @@ namespace wrtc {
         vlc::addDecoders(decoders);
 
         // OpenH264 (Software, H264)
-        if (allowH264Encoder) {
-            openh264::addEncoders(encoders);
-        }
+        openh264::addEncoders(encoders);
         openh264::addDecoders(decoders);
 
         // NVCODEC (Hardware, VP8, VP9, H264)
@@ -37,10 +35,6 @@ namespace wrtc {
 
     std::unique_ptr<VideoDecoderFactory> VideoFactoryConfig::CreateVideoDecoderFactory() {
         return absl::make_unique<VideoDecoderFactory>(decoders);
-    }
-
-    void VideoFactoryConfig::EnableH264Encoder(const bool enable) {
-        allowH264Encoder = enable;
     }
 } // wrtc
 #endif
