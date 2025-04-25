@@ -43,6 +43,7 @@ namespace ntgcalls {
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
         streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection.get());
         streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection.get());
+        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, connection.get());
         RTC_LOG(LS_INFO) << "AVStream settings applied";
         return Safe<wrtc::GroupConnection>(connection)->getJoinPayload();
     }
@@ -71,7 +72,6 @@ namespace ntgcalls {
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Screen, presentationConnection.get());
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, presentationConnection.get());
         RTC_LOG(LS_INFO) << "Screen sharing initialized";
         return presentationConnection->getJoinPayload();
     }
