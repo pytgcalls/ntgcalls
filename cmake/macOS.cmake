@@ -22,5 +22,7 @@ if (import_libraries)
         "-framework IOSurface"
         "-framework ScreenCaptureKit"
         "iconv"
+        "z"
+        "bz2"
     )
 endif ()
