@@ -108,7 +108,8 @@ namespace wrtc {
 
     std::optional<VideoStreamingPartFrame> VideoStreamingPartInternal::convertCurrentFrame() {
 #ifdef IS_MACOS
-        if (const auto nativeFrame = extractCVPixelBuffer(frame->getFrame())) {
+        if (const auto rtcFrame = frame->getFrame(); rtcFrame && rtcFrame->format == AV_PIX_FMT_VIDEOTOOLBOX && rtcFrame->data[3]) {
+            const auto nativeFrame = extractCVPixelBuffer(rtcFrame->data[3]);
             const auto videoFrame = webrtc::VideoFrame::Builder()
                 .set_video_frame_buffer(nativeFrame)
                 .set_rotation(rotation)
@@ -116,7 +117,7 @@ namespace wrtc {
             return VideoStreamingPartFrame(endpointId, videoFrame, frame->pts(stream, firstFramePts), frameIndex);
         }
 #endif
-        const webrtc::scoped_refptr<webrtc::I420Buffer> i420Buffer = webrtc::I420Buffer::Copy(
+        const rtc::scoped_refptr<webrtc::I420Buffer> i420Buffer = webrtc::I420Buffer::Copy(
             frame->getFrame()->width,
             frame->getFrame()->height,
             frame->getFrame()->data[0],

@@ -3,14 +3,11 @@
 //
 
 #pragma once
-#include <api/scoped_refptr.h>
+#include <api/make_ref_counted.h>
 #include <api/video/video_frame_buffer.h>
-extern "C" {
-#include <libavutil/frame.h>
-}
 
 namespace wrtc {
 
-    webrtc::scoped_refptr<webrtc::VideoFrameBuffer> extractCVPixelBuffer(const AVFrame *frame);
+    rtc::scoped_refptr<webrtc::VideoFrameBuffer> extractCVPixelBuffer(void *data);
 
 } // wrtc
