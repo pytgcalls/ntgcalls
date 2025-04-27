@@ -6,8 +6,6 @@ endif ()
 
 include(ExternalProject)
 
-set(BOOST_LIBS process)
-
 option(STATIC_BUILD "Build static libraries" ON)
 option(USE_LIBCXX   "Use libc++" ON)
 
