@@ -231,7 +231,7 @@ namespace signaling {
             return std::nullopt;
         }
 
-        return ++counter | (messageRequiresAck ? kMessageRequiresAckSeqBit : 0);
+        return static_cast<uint32_t>(++counter | (messageRequiresAck ? kMessageRequiresAckSeqBit : 0));
     }
 
     bool SignalingEncryption::enoughSpaceInPacket(const rtc::CopyOnWriteBuffer &buffer, const size_t amount) {

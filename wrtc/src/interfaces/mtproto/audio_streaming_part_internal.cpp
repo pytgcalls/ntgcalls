@@ -87,7 +87,7 @@ namespace wrtc {
                     size_t endpointIndex = 0;
                     for (size_t i2 = 0; i2 < videoChannels.size(); i2++) {
                         if (videoChannels[i2]) {
-                            endpointMapping.insert(std::make_pair(endpointList[endpointIndex], i2));
+                            endpointMapping.insert(std::make_pair(endpointList[endpointIndex], static_cast<int32_t>(i2)));
                             endpointIndex++;
                         }
                     }
