@@ -6,7 +6,7 @@
 #include <wrtc/interfaces/mtproto/audio_streaming_part_persistent_decoder.hpp>
 
 namespace wrtc {
-    void AudioStreamingPartPersistentDecoder::maybeReset(AVCodecParameters const* codecParameters, AVRational timeBase) {
+    void AudioStreamingPartPersistentDecoder::maybeReset(const AVCodecParameters* codecParameters, AVRational timeBase) {
         if (state) {
             bool isUpdated = false;
             if (!state->getCodecParameters()->isEqual(codecParameters)) {

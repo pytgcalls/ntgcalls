@@ -42,6 +42,7 @@ namespace wrtc {
         std::map<std::string, int32_t> currentEndpointMapping;
         std::map<std::string, std::unique_ptr<VideoStreamingSharedState>> sharedVideoState;
 
+        AudioStreamingPartPersistentDecoder persistentAudioDecoder;
         synchronized_callback<void> requestCurrentTimeCallback;
         synchronized_callback<int> updateAudioSourceCountCallback;
         synchronized_callback<std::unique_ptr<AudioFrame>> audioFrameCallback;

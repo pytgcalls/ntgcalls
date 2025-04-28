@@ -6,6 +6,7 @@
 #ifdef IS_MACOS
 #include <wrtc/interfaces/mtproto/extract_cv_pixel_buffer.hpp>
 #endif
+#include <rtc_base/logging.h>
 #include <wrtc/interfaces/mtproto/video_streaming_part_internal.hpp>
 
 namespace wrtc {

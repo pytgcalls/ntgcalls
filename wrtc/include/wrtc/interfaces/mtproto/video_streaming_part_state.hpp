@@ -4,6 +4,8 @@
 
 #pragma once
 #include <optional>
+#include <api/media_types.h>
+#include <wrtc/interfaces/mtproto/audio_streaming_part.hpp>
 #include <wrtc/interfaces/mtproto/video_streaming_part_internal.hpp>
 
 namespace wrtc {
@@ -24,7 +26,8 @@ namespace wrtc {
 
         std::optional<StreamInfo> streamInfo;
         std::vector<VideoStreamingPartFrame> availableFrames;
-        std::vector<std::unique_ptr<VideoStreamingPartInternal>> parsedParts;
+        std::vector<std::unique_ptr<AudioStreamingPart>> parsedAudioParts;
+        std::vector<std::unique_ptr<VideoStreamingPartInternal>> parsedVideoParts;
 
         static int32_t roundUp(int32_t numToRound);
 
@@ -39,7 +42,7 @@ namespace wrtc {
         static std::optional<StreamInfo> consumeStreamInfo(bytes::binary &data);
 
     public:
-        explicit VideoStreamingPartState(bytes::binary&& data);
+        explicit VideoStreamingPartState(bytes::binary&& data, webrtc::MediaType mediaType);
 
         ~VideoStreamingPartState();
 
@@ -48,6 +51,8 @@ namespace wrtc {
         std::optional<std::string> getActiveEndpointId() const;
 
         bool hasRemainingFrames() const;
+
+        std::vector<AudioStreamingPartState::Channel> getAudio10msPerChannel(AudioStreamingPartPersistentDecoder &persistentDecoder);
     };
 
 } // wrtc

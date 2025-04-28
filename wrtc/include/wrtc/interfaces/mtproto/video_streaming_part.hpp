@@ -11,13 +11,15 @@ namespace wrtc {
         std::unique_ptr<VideoStreamingPartState> state;
 
     public:
-        explicit VideoStreamingPart(bytes::binary&& data);
+        explicit VideoStreamingPart(bytes::binary&& data, webrtc::MediaType mediaType = webrtc::MediaType::VIDEO);
 
         ~VideoStreamingPart();
 
         std::optional<std::string> getActiveEndpointId() const;
 
         std::optional<VideoStreamingPartFrame> getFrameAtRelativeTimestamp(VideoStreamingSharedState *sharedState, double timestamp) const;
+
+        std::vector<AudioStreamingPartState::Channel> getAudio10msPerChannel(AudioStreamingPartPersistentDecoder& persistentDecoder) const;
     };
 
 } // wrtc

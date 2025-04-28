@@ -141,6 +141,9 @@ namespace ntgcalls {
             streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, conn.get());
             RTC_LOG(LS_INFO) << "MTProto stream attached";
         }
+        if (connectionMode == wrtc::GroupConnection::Mode::Rtmp) {
+            streamManager->setStreamSources(StreamManager::Mode::Capture, MediaDescription());
+        }
         setConnectionObserver(
             conn,
             isPresentation ? NetworkInfo::Kind::Presentation : NetworkInfo::Kind::Normal

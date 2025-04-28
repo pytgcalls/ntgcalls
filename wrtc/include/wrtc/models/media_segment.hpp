@@ -33,6 +33,8 @@ namespace wrtc {
 
             struct Audio {};
 
+            struct Unified {};
+
             struct Video {
                 Quality quality;
                 int32_t channelId = 0;
@@ -44,9 +46,9 @@ namespace wrtc {
             Status status = Status::NotReady;
             int64_t minRequestTimestamp = 0;
             int64_t timestampMilliseconds = 0;
-            std::variant<Audio, Video> typeData;
+            std::variant<Audio, Video, Unified> typeData;
 
-            explicit Part(const std::variant<Audio, Video> typeData) : typeData(typeData) {}
+            explicit Part(const std::variant<Audio, Video, Unified> typeData) : typeData(typeData) {}
         };
 
         struct Video {
@@ -64,6 +66,7 @@ namespace wrtc {
         std::vector<std::unique_ptr<Part>> parts;
         std::unique_ptr<AudioStreamingPart> audio;
         std::vector<std::unique_ptr<Video>> video;
+        std::unique_ptr<VideoStreamingPart> unifiedAudio;
     };
 
 } // wrtc

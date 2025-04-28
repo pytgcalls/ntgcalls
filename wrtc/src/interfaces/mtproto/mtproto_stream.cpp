@@ -241,11 +241,25 @@ namespace wrtc {
             std::set<std::string> usedEndpoints;
             for (const auto &videoSegment : segment->video) {
                 videoSegment->isPlaying = true;
-                cancelPendingVideoQualityUpdate(videoSegment.get());
-                if (auto endpointId = videoSegment->part->getActiveEndpointId(); endpointId.has_value() && videoChannels.contains(endpointId.value())) {
-                    const auto videoChannel = videoChannels[endpointId.value()];
-                    const auto isScreenCast = videoChannel.isScreenCast;
-                    const auto ssrc = videoChannel.ssrc;
+                std::optional<std::string> endpointId;
+
+                if (isRtmp) {
+                    endpointId = "unified";
+                } else {
+                    cancelPendingVideoQualityUpdate(videoSegment.get());
+                    endpointId = videoSegment->part->getActiveEndpointId();
+                }
+
+                if (endpointId.has_value() && (videoChannels.contains(endpointId.value()) || isRtmp)) {
+                    bool isScreenCast = false;
+                    uint32_t ssrc = 1;
+
+                    if (!isRtmp) {
+                        const auto videoChannel = videoChannels[endpointId.value()];
+                        isScreenCast = videoChannel.isScreenCast;
+                        ssrc = videoChannel.ssrc;
+                    }
+
                     if ((isScreenCast && screenIncoming) || (!isScreenCast && cameraIncoming)) {
                         if (!sharedVideoState.contains(endpointId.value())) {
                             sharedVideoState[endpointId.value()] = std::make_unique<VideoStreamingSharedState>();
@@ -275,9 +289,14 @@ namespace wrtc {
                 }
             }
 
-            if (segment->audio && audioIncoming) {
+            if ((segment->audio || segment->unifiedAudio) && audioIncoming) {
                 while (true) {
-                    const auto audioChannels = segment->audio->get10msPerChannel(segment->audioDecoder);
+                    std::vector<AudioStreamingPartState::Channel> audioChannels;
+                    if (isRtmp) {
+                        audioChannels = segment->unifiedAudio->getAudio10msPerChannel(persistentAudioDecoder);
+                    } else {
+                        audioChannels = segment->audio->get10msPerChannel(segment->audioDecoder);
+                    }
                     if (audioChannels.empty()) {
                         break;
                     }
@@ -339,8 +358,12 @@ namespace wrtc {
             if (nextSegmentTimestamp != -1) {
                 nextSegmentTimestamp += segmentDuration;
             }
-
-            auto audioPart = std::make_unique<MediaSegment::Part>(MediaSegment::Part::Audio());
+            std::unique_ptr<MediaSegment::Part> audioPart;
+            if (isRtmp) {
+                audioPart = std::make_unique<MediaSegment::Part>(MediaSegment::Part::Unified());
+            } else {
+                audioPart = std::make_unique<MediaSegment::Part>(MediaSegment::Part::Audio());
+            }
             pendingSegment->parts.push_back(std::move(audioPart));
 
             for (const auto &[endpoint, videoChannel] : videoChannels) {
@@ -388,6 +411,9 @@ namespace wrtc {
                     if (const auto video = std::get_if<MediaSegment::Part::Video>(typeData)) {
                         videoQuality = video->quality;
                         videoChannelId = video->channelId;
+                    } else if (std::get_if<MediaSegment::Part::Unified>(typeData)) {
+                        videoQuality = MediaSegment::Quality::Full;
+                        videoChannelId = 1;
                     }
 
                     const auto requested = requestBroadcastPartCallback({
@@ -422,6 +448,12 @@ namespace wrtc {
                         }
                         videoSegment->part = std::make_unique<VideoStreamingPart>(std::move(part->data.value()));
                         pendingSegment->video.push_back(std::move(videoSegment));
+                    } else if (std::get_if<MediaSegment::Part::Unified>(typeData)) {
+                        auto unifiedSegment = std::make_unique<MediaSegment::Video>();
+                        bytes::binary dataCopy = part->data.value();
+                        unifiedSegment->part = std::make_unique<VideoStreamingPart>(std::move(part->data.value()));
+                        pendingSegment->video.push_back(std::move(unifiedSegment));
+                        pendingSegment->unifiedAudio = std::make_unique<VideoStreamingPart>(std::move(dataCopy), webrtc::MediaType::AUDIO);
                     }
                 }
                 pendingSegment->parts.clear();

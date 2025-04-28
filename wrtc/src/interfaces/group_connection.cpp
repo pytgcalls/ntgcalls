@@ -265,8 +265,7 @@ namespace wrtc {
             });
             break;
         default:
-            RTC_LOG(LS_ERROR) << "RTMP connection not supported";
-            throw RTMPNeeded("RTMP connection not supported");
+            throw RTCException("Invalid connection mode");
         }
         updateIsConnected();
     }
@@ -310,6 +309,7 @@ namespace wrtc {
                 isEffectivelyConnected = isRtcConnected;
                 break;
             case Mode::Stream:
+            case Mode::Rtmp:
                 isEffectivelyConnected = isStreamConnected;
                 break;
             default:

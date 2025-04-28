@@ -5,7 +5,6 @@
 #pragma once
 #include <string>
 #include <api/video/video_rotation.h>
-#include <rtc_base/logging.h>
 #include <wrtc/models/video_streaming_av_frame.hpp>
 #include <wrtc/models/video_streaming_part_frame.hpp>
 #include <wrtc/interfaces/mtproto/avio_context_impl.hpp>

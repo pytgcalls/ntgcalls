@@ -5,7 +5,7 @@
 #include <wrtc/interfaces/mtproto/video_streaming_part_state.hpp>
 
 namespace wrtc {
-    VideoStreamingPartState::VideoStreamingPartState(bytes::binary&& data) {
+    VideoStreamingPartState::VideoStreamingPartState(bytes::binary&& data, const webrtc::MediaType mediaType) {
         streamInfo = consumeStreamInfo(data);
         if (!streamInfo) {
             return;
@@ -50,13 +50,26 @@ namespace wrtc {
                 }
             }
 
-            auto part = std::make_unique<VideoStreamingPartInternal>(streamInfo->events[i].endpointId, rotation, std::move(dataSlice), streamInfo->container);
-            parsedParts.push_back(std::move(part));
+            switch (mediaType) {
+                case webrtc::MediaType::AUDIO: {
+                    auto part = std::make_unique<AudioStreamingPart>(std::move(dataSlice), streamInfo->container, true);
+                    parsedAudioParts.push_back(std::move(part));
+                } break;
+                case webrtc::MediaType::VIDEO: {
+                    auto part = std::make_unique<VideoStreamingPartInternal>(streamInfo->events[i].endpointId, rotation, std::move(dataSlice), streamInfo->container);
+                    parsedVideoParts.push_back(std::move(part));
+                } break;
+                default: {
+                    break;
+                }
+            }
         }
     }
 
     VideoStreamingPartState::~VideoStreamingPartState() {
-        parsedParts.clear();
+        parsedAudioParts.clear();
+        parsedVideoParts.clear();
+        availableFrames.clear();
         streamInfo = std::nullopt;
     }
 
@@ -71,11 +84,11 @@ namespace wrtc {
             }
 
             if (availableFrames.size() < 2) {
-                if (!parsedParts.empty()) {
-                    if (auto result = parsedParts[0]->getNextFrame(sharedState)) {
+                if (!parsedVideoParts.empty()) {
+                    if (auto result = parsedVideoParts[0]->getNextFrame(sharedState)) {
                         availableFrames.push_back(result.value());
                     } else {
-                        parsedParts.erase(parsedParts.begin());
+                        parsedVideoParts.erase(parsedVideoParts.begin());
                     }
                     continue;
                 }
@@ -94,14 +107,25 @@ namespace wrtc {
     }
 
     std::optional<std::string> VideoStreamingPartState::getActiveEndpointId() const {
-        if (!parsedParts.empty()) {
-            return parsedParts[0]->getEndpointId();
+        if (!parsedVideoParts.empty()) {
+            return parsedVideoParts[0]->getEndpointId();
         }
         return std::nullopt;
     }
 
     bool VideoStreamingPartState::hasRemainingFrames() const {
-        return !parsedParts.empty();
+        return !parsedVideoParts.empty();
+    }
+
+    std::vector<AudioStreamingPartState::Channel> VideoStreamingPartState::getAudio10msPerChannel(AudioStreamingPartPersistentDecoder& persistentDecoder) {
+        while (!parsedAudioParts.empty()) {
+            if (auto firstPartResult = parsedAudioParts[0]->get10msPerChannel(persistentDecoder); firstPartResult.empty()) {
+                parsedAudioParts.erase(parsedAudioParts.begin());
+            } else {
+                return firstPartResult;
+            }
+        }
+        return {};
     }
 
     std::optional<int32_t> VideoStreamingPartState::readInt32(const bytes::binary& data, int& offset) {
