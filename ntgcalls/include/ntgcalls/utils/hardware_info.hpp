@@ -11,13 +11,12 @@
 #include <sys/sysctl.h>
 #else
 #include <sys/times.h>
-#include <unistd.h>
 #endif
 
 namespace ntgcalls {
 
     class HardwareInfo {
-        uint16_t numProcessors;
+        int numProcessors;
 #ifdef _WIN32
         ULARGE_INTEGER lastCPU{}, lastSysCPU{}, lastUserCPU{};
         HANDLE self;

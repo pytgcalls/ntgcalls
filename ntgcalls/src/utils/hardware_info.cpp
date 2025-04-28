@@ -2,6 +2,9 @@
 // Created by Laky64 on 02/03/2024.
 //
 
+#ifdef IS_LINUX
+#include <unistd.h>
+#endif
 #include <ntgcalls/utils/hardware_info.hpp>
 
 namespace ntgcalls {
@@ -28,7 +31,7 @@ namespace ntgcalls {
         lastUserCPU = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec;
 #else
         numProcessors = sysconf(_SC_NPROCESSORS_ONLN);
-        struct tms timeSample;
+        tms timeSample{};
         lastCPU = times(&timeSample);
         lastSysCPU = timeSample.tms_stime;
         lastUserCPU = timeSample.tms_utime;
@@ -69,9 +72,8 @@ namespace ntgcalls {
         lastSysCPU = usage.ru_stime.tv_sec;
         lastUserCPU = usage.ru_utime.tv_sec;
 #else
-        struct tms timeSample;
-        clock_t now;
-        now = times(&timeSample);
+        tms timeSample{};
+        auto now = times(&timeSample);
         if (now <= lastCPU || timeSample.tms_stime < lastSysCPU || timeSample.tms_utime < lastUserCPU) {
             percent = -1.0;
         } else{
