@@ -5,6 +5,7 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
 #include <functional>
 #include <wrtc/models/audio_frame.hpp>
 #include <wrtc/interfaces/media/remote_media_interface.hpp>
