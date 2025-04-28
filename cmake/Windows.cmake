@@ -28,5 +28,7 @@ if (import_libraries)
         dxgi.lib
         dwmapi.lib
         shcore.lib
+        bcrypt.lib
+        ntdll.lib
     )
 endif ()
