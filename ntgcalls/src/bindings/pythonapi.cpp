@@ -277,7 +277,6 @@ PYBIND11_MODULE(ntgcalls, m) {
     pybind11::register_exception<wrtc::SdpParseException>(m, "SdpParseException", baseExc);
     pybind11::register_exception<wrtc::RTCException>(m, "RTCException", baseExc);
     pybind11::register_exception<wrtc::TransportParseException>(m, "TransportParseException", baseExc);
-    pybind11::register_exception<wrtc::RTMPNeeded>(m, "RTMPNeeded", baseExc);
     pybind11::register_exception<ntgcalls::ConnectionError>(m, "ConnectionError", baseExc);
     pybind11::register_exception<ntgcalls::TelegramServerError>(m, "TelegramServerError", baseExc);
     pybind11::register_exception<ntgcalls::ConnectionNotFound>(m, "ConnectionNotFound", baseExc);

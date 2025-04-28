@@ -31,7 +31,6 @@ REGISTER_EXCEPTION(ntgcalls::RTCConnectionNeeded, RTC_CONNECTION_NEEDED) \
 REGISTER_EXCEPTION(wrtc::RTCException, WEBRTC) \
 REGISTER_EXCEPTION(wrtc::SdpParseException, PARSE_SDP) \
 REGISTER_EXCEPTION(wrtc::TransportParseException, PARSE_TRANSPORT) \
-REGISTER_EXCEPTION(wrtc::RTMPNeeded, RTMP_NEEDED) \
 } catch (...) { \
 *future.errorCode = NTG_ERROR_UNKNOWN; \
 } \

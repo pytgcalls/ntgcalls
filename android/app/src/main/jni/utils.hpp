@@ -147,7 +147,6 @@ TRANSLATE_NTG_EXCEPTION(SignalingError) \
 TRANSLATE_NTG_EXCEPTION(SignalingUnsupported) \
 TRANSLATE_NTG_EXCEPTION(MediaDeviceError) \
 TRANSLATE_NTG_EXCEPTION(RTCConnectionNeeded) \
-TRANSLATE_WRTC_EXCEPTION(RTMPNeeded)   \
 catch (const ntgcalls::FileError& e) { \
 throwJavaException(env, "FileNotFoundException", e.what()); \
 } \
