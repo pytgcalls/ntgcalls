@@ -69,77 +69,74 @@ namespace wrtc {
         });
     }
 
-    void MTProtoStream::sendBroadcastPart(const int64_t segmentID, const int32_t partID, const MediaSegment::Part::Status status, const bool qualityUpdate, const std::optional<bytes::binary>& data) {
+    void MTProtoStream::sendBroadcastPart(const int64_t segmentID, const int32_t partID, const MediaSegment::Part::Status status, const bool qualityUpdate, std::optional<bytes::binary> data) {
         std::weak_ptr weak(shared_from_this());
-        const bool foundPart = mediaThread->BlockingCall([weak, segmentID, partID, qualityUpdate] {
+        mediaThread->PostTask([weak, segmentID, partID, status, qualityUpdate, data = std::move(data)] {
             const auto strong = weak.lock();
             if (!strong) {
-                return false;
+                return;
             }
+
+            bool foundPart = false;
             if (strong->segments.contains(segmentID)) {
                 if (qualityUpdate) {
-                    return strong->segments[segmentID]->video.size() > partID &&
+                    foundPart = strong->segments[segmentID]->video.size() > partID &&
                         strong->segments[segmentID]->video[partID]->qualityUpdatePart;
-                }
-                return strong->segments[segmentID]->parts.size() > partID;
-            }
-            return false;
-        });
-
-        if (foundPart) {
-            mediaThread->PostTask([weak, segmentID, partID, status, qualityUpdate, data = std::move(data)] {
-                const auto strong = weak.lock();
-                if (!strong) {
-                    return;
-                }
-                const auto &segment = strong->segments[segmentID];
-                MediaSegment::Part* part;
-                if (qualityUpdate) {
-                    part = segment->video[partID]->qualityUpdatePart.get();
                 } else {
-                    part = segment->parts[partID].get();
+                    foundPart = strong->segments[segmentID]->parts.size() > partID;
                 }
-                const auto responseTimestamp = rtc::TimeMillis();
-                const auto responseTimestampMilliseconds = static_cast<int64_t>(static_cast<double>(responseTimestamp) * 1000.0);
-                const auto responseTimestampBoundary = responseTimestampMilliseconds / strong->segmentDuration * strong->segmentDuration;
+            }
 
-                part->status = status;
-                switch (status) {
-                case MediaSegment::Part::Status::Success:
-                    part->data = data;
-                    if (strong->nextSegmentTimestamp == -1) {
-                        strong->nextSegmentTimestamp = part->timestampMilliseconds + strong->segmentDuration;
-                    }
-                    strong->checkPendingSegments();
-                    if (qualityUpdate) {
-                        segment->video[partID]->part = std::make_unique<VideoStreamingPart>(std::move(part->data.value()));
-                        segment->video[partID]->qualityUpdatePart = nullptr;
-                    }
-                    break;
-                case MediaSegment::Part::Status::NotReady:
-                    if (segment->timestamp == 0) {
-                        strong->nextSegmentTimestamp = responseTimestampBoundary;
-                        strong->discardAllPendingSegments();
-                        strong->requestSegmentsIfNeeded();
-                        strong->checkPendingSegments();
-                    } else {
-                        part->minRequestTimestamp = rtc::TimeMillis() + 100;
-                        strong->checkPendingSegments();
-                    }
-                    break;
-                case MediaSegment::Part::Status::ResyncNeeded:
+            if (!foundPart) {
+                RTC_LOG(LS_WARNING) << "Part " << partID << " not found in segment " << segmentID;
+                return;
+            }
+
+            const auto &segment = strong->segments[segmentID];
+            MediaSegment::Part* part;
+            if (qualityUpdate) {
+                part = segment->video[partID]->qualityUpdatePart.get();
+            } else {
+                part = segment->parts[partID].get();
+            }
+            const auto responseTimestamp = rtc::TimeMillis();
+            const auto responseTimestampMilliseconds = static_cast<int64_t>(static_cast<double>(responseTimestamp) * 1000.0);
+            const auto responseTimestampBoundary = responseTimestampMilliseconds / strong->segmentDuration * strong->segmentDuration;
+
+            part->status = status;
+            switch (status) {
+            case MediaSegment::Part::Status::Success:
+                part->data = data;
+                if (strong->nextSegmentTimestamp == -1) {
+                    strong->nextSegmentTimestamp = part->timestampMilliseconds + strong->segmentDuration;
+                }
+                strong->checkPendingSegments();
+                if (qualityUpdate) {
+                    segment->video[partID]->part = std::make_unique<VideoStreamingPart>(std::move(part->data.value()));
+                    segment->video[partID]->qualityUpdatePart = nullptr;
+                }
+                break;
+            case MediaSegment::Part::Status::NotReady:
+                if (segment->timestamp == 0) {
                     strong->nextSegmentTimestamp = responseTimestampBoundary;
                     strong->discardAllPendingSegments();
                     strong->requestSegmentsIfNeeded();
                     strong->checkPendingSegments();
-                    break;
-                default:
-                    throw RTCException("Invalid part status");
+                } else {
+                    part->minRequestTimestamp = rtc::TimeMillis() + 100;
+                    strong->checkPendingSegments();
                 }
-            });
-        } else {
-            throw RTCException("Invalid segment ID or part ID");
-        }
+                break;
+            case MediaSegment::Part::Status::ResyncNeeded:
+                strong->nextSegmentTimestamp = responseTimestampBoundary;
+                strong->discardAllPendingSegments();
+                strong->requestSegmentsIfNeeded();
+                strong->checkPendingSegments();
+                break;
+            default:
+                throw RTCException("Invalid part status");
+            }
+        });
     }
 
     void MTProtoStream::addIncomingVideo(const std::string& endpoint, const uint32_t ssrc, bool isScreenCast) {

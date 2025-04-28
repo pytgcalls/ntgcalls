@@ -77,7 +77,7 @@ namespace wrtc {
 
         void sendBroadcastTimestamp(int64_t timestamp);
 
-        void sendBroadcastPart(int64_t segmentID, int32_t partID, MediaSegment::Part::Status status, bool qualityUpdate, const std::optional<bytes::binary>& data);
+        void sendBroadcastPart(int64_t segmentID, int32_t partID, MediaSegment::Part::Status status, bool qualityUpdate, std::optional<bytes::binary> data);
 
         void addIncomingVideo(const std::string& endpoint, uint32_t ssrc, bool isScreenCast);
 
