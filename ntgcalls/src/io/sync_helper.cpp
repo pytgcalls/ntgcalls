@@ -4,15 +4,14 @@
 
 #include <thread>
 #include <ntgcalls/io/sync_helper.hpp>
-#include <rtc_base/time_utils.h>
 
 namespace ntgcalls {
 
     SyncHelper::SyncHelper(BaseSink* sink): frameTime(sink->frameTime()) {}
 
-    void SyncHelper::synchronizeTime(const std::chrono::milliseconds time) {
-        if (time <= 0ms) {
-            nextFrameTime = std::chrono::milliseconds(rtc::TimeMillis());
+    void SyncHelper::synchronizeTime(const std::chrono::steady_clock::time_point time) {
+        if (time <= std::chrono::steady_clock::time_point{}) {
+            nextFrameTime = std::chrono::steady_clock::now();
         } else {
             nextFrameTime = time;
         }
@@ -20,7 +19,7 @@ namespace ntgcalls {
 
     void SyncHelper::waitNextFrame() {
         nextFrameTime += frameTime;
-        std::this_thread::sleep_until(std::chrono::steady_clock::time_point(nextFrameTime));
+        std::this_thread::sleep_until(nextFrameTime);
     }
 
 } // ntgcalls

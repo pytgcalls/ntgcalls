@@ -8,11 +8,9 @@
 #include <ntgcalls/media/base_sink.hpp>
 
 namespace ntgcalls {
-    using std::chrono::operator ""ns;
-    using std::chrono::operator ""ms;
 
     class SyncHelper {
-        std::chrono::nanoseconds nextFrameTime = 0ns;
+        std::chrono::steady_clock::time_point nextFrameTime;
         std::chrono::nanoseconds frameTime;
 
     protected:
@@ -21,7 +19,7 @@ namespace ntgcalls {
     public:
         explicit SyncHelper(BaseSink *sink);
 
-        void synchronizeTime(std::chrono::milliseconds time = 0ms);
+        void synchronizeTime(std::chrono::steady_clock::time_point time = std::chrono::steady_clock::time_point{});
     };
 
 } // ntgcalls

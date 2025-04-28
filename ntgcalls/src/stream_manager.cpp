@@ -223,7 +223,7 @@ namespace ntgcalls {
     bool StreamManager::updatePause(const bool isPaused) {
         std::lock_guard lock(mutex);
         auto res = false;
-        const auto now = std::chrono::milliseconds(rtc::TimeMillis());
+        const auto now = std::chrono::steady_clock::now();
         for (const auto& reader : readers | std::views::values) {
             if (reader->set_enabled(!isPaused)) {
                 res = true;
