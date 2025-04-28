@@ -2,6 +2,7 @@
 // Created by Laky64 on 14/04/25.
 //
 
+#include <rtc_base/logging.h>
 #include <wrtc/interfaces/mtproto/audio_streaming_part_persistent_decoder_state.hpp>
 
 namespace wrtc {
@@ -20,6 +21,8 @@ namespace wrtc {
                     codecContext = nullptr;
                 }
             }
+        } else {
+            RTC_LOG(LS_ERROR) << "Failed to find audio codec: " << codecParameters->codec_id;
         }
     }
 
@@ -31,6 +34,10 @@ namespace wrtc {
     }
 
     int AudioStreamingPartPersistentDecoderState::decode(const AVPacket& packet, AVFrame* frame) const {
+        if (!codecContext) {
+            return -1;
+        }
+
         int ret = avcodec_send_packet(codecContext, &packet);
         if (ret < 0) {
             return ret;
