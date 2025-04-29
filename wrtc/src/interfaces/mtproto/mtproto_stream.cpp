@@ -290,11 +290,13 @@ namespace wrtc {
                 }
             }
 
-            for (auto it = sharedVideoState.begin(); it != sharedVideoState.end();) {
-                if (!usedEndpoints.contains(it->first) && !videoChannels.contains(it->first)) {
-                    it = sharedVideoState.erase(it);
-                } else {
-                    ++it;
+            if (!isRtmp) {
+                for (auto it = sharedVideoState.begin(); it != sharedVideoState.end();) {
+                    if (!usedEndpoints.contains(it->first) && !videoChannels.contains(it->first)) {
+                        it = sharedVideoState.erase(it);
+                    } else {
+                        ++it;
+                    }
                 }
             }
 
