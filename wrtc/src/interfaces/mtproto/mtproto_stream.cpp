@@ -88,7 +88,6 @@ namespace wrtc {
             }
 
             if (!foundPart) {
-                RTC_LOG(LS_WARNING) << "Part " << partID << " not found in segment " << segmentID;
                 return;
             }
 
@@ -358,6 +357,7 @@ namespace wrtc {
             if (nextSegmentTimestamp != -1) {
                 nextSegmentTimestamp += segmentDuration;
             }
+
             std::unique_ptr<MediaSegment::Part> audioPart;
             if (isRtmp) {
                 audioPart = std::make_unique<MediaSegment::Part>(MediaSegment::Part::Unified());
