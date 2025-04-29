@@ -197,6 +197,10 @@ namespace ntgcalls {
     }
 
     void GroupCall::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
+        if (mode == StreamManager::Mode::Capture && getConnectionMode() == wrtc::GroupConnection::Mode::Rtmp) {
+            RTC_LOG(LS_ERROR) << "Media capture is not allowed during an RTMP connection";
+            throw ConnectionError("Media capture is not allowed during an RTMP connection");
+        }
         CallInterface::setStreamSources(mode, config);
         if (mode == StreamManager::Mode::Playback && presentationConnection) {
             streamManager->optimizeSources(presentationConnection.get());
