@@ -116,7 +116,7 @@ namespace wrtc {
                 }
                 break;
             case MediaSegment::Part::Status::NotReady:
-                if (segment->timestamp == 0) {
+                if (segment->timestamp == 0 && !strong->isRtmp) {
                     strong->nextSegmentTimestamp = responseTimestampBoundary;
                     strong->discardAllPendingSegments();
                     strong->requestSegmentsIfNeeded();
@@ -127,7 +127,11 @@ namespace wrtc {
                 }
                 break;
             case MediaSegment::Part::Status::ResyncNeeded:
-                strong->nextSegmentTimestamp = responseTimestampBoundary;
+                if (strong->isRtmp) {
+                    strong->nextSegmentTimestamp = -1;
+                } else {
+                    strong->nextSegmentTimestamp = responseTimestampBoundary;
+                }
                 strong->discardAllPendingSegments();
                 strong->requestSegmentsIfNeeded();
                 strong->checkPendingSegments();
@@ -139,6 +143,9 @@ namespace wrtc {
     }
 
     void MTProtoStream::addIncomingVideo(const std::string& endpoint, const uint32_t ssrc, bool isScreenCast) {
+        if (isRtmp) {
+            return;
+        }
         std::weak_ptr weak(shared_from_this());
         mediaThread->BlockingCall([weak, endpoint, ssrc, isScreenCast] {
             const auto strong = weak.lock();
@@ -155,6 +162,9 @@ namespace wrtc {
     }
 
     bool MTProtoStream::removeIncomingVideo(const std::string& endpoint) {
+        if (isRtmp) {
+            return false;
+        }
         std::weak_ptr weak(shared_from_this());
         return mediaThread->BlockingCall([weak, endpoint] {
             const auto strong = weak.lock();
