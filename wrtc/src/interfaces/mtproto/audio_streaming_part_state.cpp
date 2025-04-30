@@ -56,7 +56,6 @@ namespace wrtc {
                 for (int j = 0; j < numSamples; j++) {
                     channel->pcmData.push_back(pcm10ms[sourceChannelIndex + j * numChannels]);
                 }
-                channel->numSamples += numSamples;
             }
         } else {
             for (const auto ssrc : allSsrcs) {
@@ -65,18 +64,16 @@ namespace wrtc {
                 resultChannels.push_back(emptyPart);
             }
 
-            for (auto & [ssrc, pcmData, currentChannelSamples] : resultChannels) {
+            for (auto & [ssrc, pcmData] : resultChannels) {
                 if (auto mappedChannelIndex = getCurrentMappedChannelIndex(ssrc)) {
                     const int sourceChannelIndex = mappedChannelIndex.value();
                     for (int j = 0; j < numSamples; j++) {
                         pcmData.push_back(pcm10ms[sourceChannelIndex + j * numChannels]);
                     }
-                    currentChannelSamples += numSamples;
                 } else {
                     for (int j = 0; j < numSamples; j++) {
                         pcmData.push_back(0);
                     }
-                    currentChannelSamples += numSamples;
                 }
             }
         }

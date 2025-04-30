@@ -33,7 +33,6 @@ namespace wrtc {
         struct Channel {
             uint32_t ssrc = 0;
             std::vector<int16_t> pcmData;
-            int numSamples = 0;
         };
 
         AudioStreamingPartState(bytes::binary&& data, const std::string &container, bool isSingleChannel);

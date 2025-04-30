@@ -5,11 +5,11 @@
 #pragma once
 #include <atomic>
 #include <rtc_base/thread.h>
-#include <wrtc/utils/binary.hpp>
+#include <wrtc/interfaces/mtproto/audio_thread_buffer.hpp>
+#include <wrtc/models/audio_frame.hpp>
 #include <wrtc/models/media_segment.hpp>
 #include <wrtc/models/segment_part_request.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
-#include <wrtc/models/audio_frame.hpp>
 
 namespace wrtc {
 
@@ -36,13 +36,14 @@ namespace wrtc {
         rtc::Thread* mediaThread;
         std::atomic_bool running;
 
+        std::unique_ptr<AudioThreadBuffer> audioThreadBuffer;
+        AudioStreamingPartPersistentDecoder persistentAudioDecoder;
         std::optional<int> waitForBufferedMillisecondsBeforeRendering;
         std::map<int64_t, std::unique_ptr<MediaSegment>> segments;
         std::map<std::string, VideoChannel> videoChannels;
         std::map<std::string, int32_t> currentEndpointMapping;
         std::map<std::string, std::unique_ptr<VideoStreamingSharedState>> sharedVideoState;
 
-        AudioStreamingPartPersistentDecoder persistentAudioDecoder;
         synchronized_callback<void> requestCurrentTimeCallback;
         synchronized_callback<int> updateAudioSourceCountCallback;
         synchronized_callback<std::unique_ptr<AudioFrame>> audioFrameCallback;

@@ -3,7 +3,6 @@
 //
 
 #include <ranges>
-#include <variant>
 #include <rtc_base/logging.h>
 #include <rtc_base/time_utils.h>
 #include <wrtc/exceptions.hpp>
@@ -11,7 +10,7 @@
 
 namespace wrtc {
 
-    MTProtoStream::MTProtoStream(rtc::Thread* mediaThread, const bool isRtmp) : isRtmp(isRtmp), mediaThread(mediaThread){}
+    MTProtoStream::MTProtoStream(rtc::Thread* mediaThread, const bool isRtmp) : isRtmp(isRtmp), mediaThread(mediaThread) {}
 
     void MTProtoStream::connect() {
         if (running) {
@@ -21,9 +20,18 @@ namespace wrtc {
         serverTimeMs = rtc::TimeUTCMillis();
         serverTimeMsGotAt = rtc::TimeMillis();
         beginRenderTimer(0);
+        audioThreadBuffer = std::make_unique<AudioThreadBuffer>(
+            [this](const int count) {
+                (void) updateAudioSourceCountCallback(count);
+            },
+            [this](std::unique_ptr<AudioFrame> frame) {
+                audioFrameCallback(std::move(frame));
+            }
+        );
     }
 
     void MTProtoStream::close() {
+        audioThreadBuffer = nullptr;
         audioFrameCallback = nullptr;
         videoFrameCallback = nullptr;
         requestCurrentTimeCallback = nullptr;
@@ -308,18 +316,37 @@ namespace wrtc {
                     } else {
                         audioChannels = segment->audio->get10msPerChannel(segment->audioDecoder);
                     }
+
                     if (audioChannels.empty()) {
                         break;
                     }
-                    (void) updateAudioSourceCountCallback(static_cast<int>(audioChannels.size()));
-                    for (const auto & [ssrc, pcmData, numSamples] : audioChannels) {
-                        auto frame = std::make_unique<AudioFrame>(ssrc);
-                        frame->channels = pcmData.size() / numSamples;
-                        frame->sampleRate = numSamples * 100;
-                        frame->data = pcmData.data();
-                        frame->size = numSamples * frame->channels * sizeof(int16_t);
-                        (void) audioFrameCallback(std::move(frame));
+
+                    std::map<uint32_t, std::unique_ptr<AudioThreadBuffer::Buffer>> interleavedAudioBySSRC;
+                    for (const auto& [ssrc, pcmData] : audioChannels) {
+                        uint32_t realSSRC = isRtmp ? 1 : ssrc;
+                        const size_t sampleCount = isRtmp ? 480 : pcmData.size();
+
+                        auto &prevBuffer = interleavedAudioBySSRC[realSSRC];
+                        if (!prevBuffer) {
+                            prevBuffer = std::make_unique<AudioThreadBuffer::Buffer>();
+                            prevBuffer->ssrc = realSSRC;
+                            prevBuffer->sampleRate = sampleCount * 100;
+                        }
+
+                        const int channelCount = prevBuffer->channels;
+                        prevBuffer->channels++;
+
+                        std::vector<int16_t> output;
+                        output.reserve(sampleCount * channelCount);
+                        for (size_t i = 0; i < sampleCount; ++i) {
+                            for (int j = 0; j < channelCount; ++j) {
+                                output.push_back(i < prevBuffer->data.size() ? prevBuffer->data[i] : static_cast<int16_t>(0));
+                            }
+                            output.push_back(i < pcmData.size() ? pcmData[i] : static_cast<int16_t>(0));
+                        }
+                        prevBuffer->data = std::move(output);
                     }
+                    audioThreadBuffer->sendData(interleavedAudioBySSRC);
                 }
             }
 
