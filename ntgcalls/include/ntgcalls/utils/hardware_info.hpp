@@ -4,12 +4,11 @@
 # pragma once
 #include <cstdint>
 
-#include <thread>
-#ifdef _WIN32
+#ifdef IS_WINDOWS
 #include <windows.h>
-#elif __APPLE__
+#elif IS_MACOS
 #include <sys/sysctl.h>
-#else
+#elif defined(IS_LINUX) || defined(IS_ANDROID)
 #include <sys/times.h>
 #endif
 
@@ -17,7 +16,7 @@ namespace ntgcalls {
 
     class HardwareInfo {
         int numProcessors;
-#ifdef _WIN32
+#ifdef IS_WINDOWS
         ULARGE_INTEGER lastCPU{}, lastSysCPU{}, lastUserCPU{};
         HANDLE self;
 #else
