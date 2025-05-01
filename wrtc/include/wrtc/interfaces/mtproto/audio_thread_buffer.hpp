@@ -19,7 +19,7 @@ namespace wrtc {
         struct Buffer {
             uint32_t ssrc;
             std::vector<int16_t> data;
-            int sampleRate = 0;
+            size_t sampleRate = 0;
             int channels = 0;
         };
 
