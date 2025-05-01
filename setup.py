@@ -166,10 +166,6 @@ class SharedCommand(Command):
             )
         if self.no_preserve_cache:
             shutil.rmtree(build_temp)
-            boost_dir = Path(source_dir, 'deps', 'boost')
-            for boost_build in os.listdir(boost_dir):
-                if boost_build.startswith('boost_'):
-                    shutil.rmtree(Path(boost_dir, boost_build))
             print('Cleanup successfully')
 
 
