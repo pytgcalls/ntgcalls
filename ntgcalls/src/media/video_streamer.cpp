@@ -21,8 +21,8 @@ namespace ntgcalls {
         frames++;
         video->OnFrame(
             wrtc::i420ImageData(
-                description->width,
-                description->height,
+                additionalData.width,
+                additionalData.height,
                 sample,
                 size
             ),
