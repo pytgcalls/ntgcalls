@@ -17,13 +17,14 @@ namespace ntgcalls {
         return video->createTrack();
     }
 
-    void VideoStreamer::sendData(uint8_t* sample, const wrtc::FrameData additionalData) {
+    void VideoStreamer::sendData(uint8_t* sample, const size_t size, const wrtc::FrameData additionalData) {
         frames++;
         video->OnFrame(
             wrtc::i420ImageData(
                 description->width,
                 description->height,
-                sample
+                sample,
+                size
             ),
             additionalData
         );

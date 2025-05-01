@@ -198,7 +198,7 @@ namespace ntgcalls {
         if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
             const auto uniqueData = bytes::make_unique_binary(data.size());
             memcpy(uniqueData.get(), data.data(), data.size());
-            stream->sendData(uniqueData.get(), frameData);
+            stream->sendData(uniqueData.get(), data.size(), frameData);
         }
     }
 
@@ -337,6 +337,7 @@ namespace ntgcalls {
                             }
                         }
                         if (strong->streams.contains(id)) {
+                            const auto frameSize = strong->streams[id]->frameSize();
                             if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
                                 frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
                                 if (streamType == Video && isShared) {
@@ -346,13 +347,13 @@ namespace ntgcalls {
                                         {
                                             {
                                                 0,
-                                                {data.get(), data.get() + strong->streams[id]->frameSize()},
+                                                {data.get(), data.get() + frameSize},
                                                 frameData
                                             }
                                         }
                                     );
                                 }
-                                stream->sendData(data.get(), frameData);
+                                stream->sendData(data.get(), frameSize, frameData);
                             }
                         }
                     });
