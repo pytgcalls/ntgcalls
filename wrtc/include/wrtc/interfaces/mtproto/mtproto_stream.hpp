@@ -5,15 +5,22 @@
 #pragma once
 #include <atomic>
 #include <rtc_base/thread.h>
-#include <wrtc/interfaces/mtproto/audio_thread_buffer.hpp>
 #include <wrtc/models/audio_frame.hpp>
 #include <wrtc/models/media_segment.hpp>
 #include <wrtc/models/segment_part_request.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
+#include <wrtc/interfaces/mtproto/thread_buffer.hpp>
 
 namespace wrtc {
 
     class MTProtoStream: public std::enable_shared_from_this<MTProtoStream> {
+        struct AudioBuffer {
+            uint32_t ssrc;
+            std::vector<int16_t> data;
+            size_t sampleRate = 0;
+            int channels = 0;
+        };
+
         struct VideoChannel {
             uint32_t ssrc;
             bool isScreenCast;
@@ -30,13 +37,11 @@ namespace wrtc {
         int nextPendingRequestTimeDelayTaskId = 0;
         int pendingRequestTimeDelayTaskId = 0;
         int64_t nextSegmentTimestamp = -1;
-        int64_t playbackReferenceTimestamp = 0;
         int64_t serverTimeMs = 0;
         int64_t serverTimeMsGotAt = 0;
         rtc::Thread* mediaThread;
         std::atomic_bool running;
 
-        std::unique_ptr<AudioThreadBuffer> audioThreadBuffer;
         AudioStreamingPartPersistentDecoder persistentAudioDecoder;
         std::optional<int> waitForBufferedMillisecondsBeforeRendering;
         std::map<int64_t, std::unique_ptr<MediaSegment>> segments;
@@ -50,6 +55,9 @@ namespace wrtc {
         synchronized_callback<uint32_t, bool, std::unique_ptr<webrtc::VideoFrame>> videoFrameCallback;
         synchronized_callback<SegmentPartRequest> requestBroadcastPartCallback;
 
+        std::mutex segmentMutex;
+        std::unique_ptr<ThreadBuffer> threadBuffer;
+
         std::map<int64_t, MediaSegment*> filterSegments(MediaSegment::Status status) const;
 
         void render();
@@ -59,8 +67,6 @@ namespace wrtc {
         void requestSegmentsIfNeeded();
 
         void checkPendingSegments();
-
-        void beginRenderTimer(int timeoutMs);
 
         void discardAllPendingSegments();
 

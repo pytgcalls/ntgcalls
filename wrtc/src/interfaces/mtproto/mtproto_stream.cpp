@@ -19,19 +19,11 @@ namespace wrtc {
         running = true;
         serverTimeMs = rtc::TimeUTCMillis();
         serverTimeMsGotAt = rtc::TimeMillis();
-        beginRenderTimer(0);
-        audioThreadBuffer = std::make_unique<AudioThreadBuffer>(
-            [this](const int count) {
-                (void) updateAudioSourceCountCallback(count);
-            },
-            [this](std::unique_ptr<AudioFrame> frame) {
-                audioFrameCallback(std::move(frame));
-            }
-        );
+        render();
     }
 
     void MTProtoStream::close() {
-        audioThreadBuffer = nullptr;
+        threadBuffer = nullptr;
         audioFrameCallback = nullptr;
         videoFrameCallback = nullptr;
         requestCurrentTimeCallback = nullptr;
@@ -85,6 +77,7 @@ namespace wrtc {
                 return;
             }
 
+            std::lock_guard lock(strong->segmentMutex);
             bool foundPart = false;
             if (strong->segments.contains(segmentID)) {
                 if (qualityUpdate) {
@@ -231,104 +224,33 @@ namespace wrtc {
     }
 
     void MTProtoStream::render() {
-        const int64_t absoluteTimestamp = rtc::TimeMillis();
-        while (true) {
-            if (waitForBufferedMillisecondsBeforeRendering) {
-                if (getAvailableBufferDuration() < waitForBufferedMillisecondsBeforeRendering.value()) {
-                    break;
-                }
-                waitForBufferedMillisecondsBeforeRendering = std::nullopt;
+        std::weak_ptr weak(shared_from_this());
+        threadBuffer = std::make_unique<ThreadBuffer>([weak] (const webrtc::MediaType mediaType, MediaSegment* segment, std::chrono::milliseconds relativeTimestamp) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
             }
-            const auto availableSegments = filterSegments(MediaSegment::Status::Ready);
-            if (availableSegments.empty()) {
-                playbackReferenceTimestamp = 0;
-                waitForBufferedMillisecondsBeforeRendering = segmentBufferDuration + segmentDuration;
-                break;
-            }
-
-            if (playbackReferenceTimestamp == 0) {
-                playbackReferenceTimestamp = absoluteTimestamp;
-            }
-
-            const double relativeTimestamp = static_cast<double>(absoluteTimestamp - playbackReferenceTimestamp) / 1000.0;
-
-            const auto segment = availableSegments.begin()->second;
-            const double renderSegmentDuration = static_cast<double>(segment->duration) / 1000.0;
-
-            std::set<std::string> usedEndpoints;
-            for (const auto &videoSegment : segment->video) {
-                videoSegment->isPlaying = true;
-                std::optional<std::string> endpointId;
-
-                if (isRtmp) {
-                    endpointId = "unified";
-                } else {
-                    cancelPendingVideoQualityUpdate(videoSegment.get());
-                    endpointId = videoSegment->part->getActiveEndpointId();
-                }
-
-                if (endpointId.has_value() && (videoChannels.contains(endpointId.value()) || isRtmp)) {
-                    bool isScreenCast = false;
-                    uint32_t ssrc = 1;
-
-                    if (!isRtmp) {
-                        const auto videoChannel = videoChannels[endpointId.value()];
-                        isScreenCast = videoChannel.isScreenCast;
-                        ssrc = videoChannel.ssrc;
-                    }
-
-                    if ((isScreenCast && screenIncoming) || (!isScreenCast && cameraIncoming)) {
-                        if (!sharedVideoState.contains(endpointId.value())) {
-                            sharedVideoState[endpointId.value()] = std::make_unique<VideoStreamingSharedState>();
-                        }
-                        usedEndpoints.insert(endpointId.value());
-                        if (const auto frame = videoSegment->part->getFrameAtRelativeTimestamp(sharedVideoState[endpointId.value()].get(), relativeTimestamp)) {
-                            if (videoSegment->lastFramePts != frame->pts) {
-                                videoSegment->lastFramePts = frame->pts;
-                                auto videoFrame = std::make_unique<webrtc::VideoFrame>(frame->frame);
-                                videoFrame->set_timestamp_us(static_cast<int64_t>(frame->pts * 1000) + playbackReferenceTimestamp);
-                                videoFrameCallback(
-                                    ssrc,
-                                    isScreenCast,
-                                    std::move(videoFrame)
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!isRtmp) {
-                for (auto it = sharedVideoState.begin(); it != sharedVideoState.end();) {
-                    if (!usedEndpoints.contains(it->first) && !videoChannels.contains(it->first)) {
-                        it = sharedVideoState.erase(it);
-                    } else {
-                        ++it;
-                    }
-                }
-            }
-
-            if ((segment->audio || segment->unifiedAudio) && audioIncoming) {
-                while (true) {
+            if (mediaType == webrtc::MediaType::AUDIO) {
+                if ((segment->audio || segment->unifiedAudio) && strong->audioIncoming) {
                     std::vector<AudioStreamingPartState::Channel> audioChannels;
-                    if (isRtmp) {
-                        audioChannels = segment->unifiedAudio->getAudio10msPerChannel(persistentAudioDecoder);
+                    if (strong->isRtmp) {
+                        audioChannels = segment->unifiedAudio->getAudio10msPerChannel(strong->persistentAudioDecoder);
                     } else {
                         audioChannels = segment->audio->get10msPerChannel(segment->audioDecoder);
                     }
 
                     if (audioChannels.empty()) {
-                        break;
+                        return;
                     }
 
-                    std::map<uint32_t, std::unique_ptr<AudioThreadBuffer::Buffer>> interleavedAudioBySSRC;
+                    std::map<uint32_t, std::unique_ptr<AudioBuffer>> interleavedAudioBySSRC;
                     for (const auto& [ssrc, pcmData] : audioChannels) {
-                        uint32_t realSSRC = isRtmp ? 1 : ssrc;
-                        const size_t sampleCount = isRtmp ? 480 : pcmData.size();
+                        uint32_t realSSRC = strong->isRtmp ? 1 : ssrc;
+                        const size_t sampleCount = strong->isRtmp ? 480 : pcmData.size();
 
                         auto &prevBuffer = interleavedAudioBySSRC[realSSRC];
                         if (!prevBuffer) {
-                            prevBuffer = std::make_unique<AudioThreadBuffer::Buffer>();
+                            prevBuffer = std::make_unique<AudioBuffer>();
                             prevBuffer->ssrc = realSSRC;
                             prevBuffer->sampleRate = sampleCount * 100;
                         }
@@ -346,19 +268,112 @@ namespace wrtc {
                         }
                         prevBuffer->data = std::move(output);
                     }
-                    audioThreadBuffer->sendData(interleavedAudioBySSRC);
+                    for (const auto& buffer : interleavedAudioBySSRC | std::views::values) {
+                        auto frame = std::make_unique<AudioFrame>(buffer->ssrc);
+                        frame->channels = buffer->channels;
+                        frame->sampleRate = buffer->sampleRate;
+                        frame->data = buffer->data.data();
+                        frame->size = buffer->data.size() * sizeof(int16_t);
+                        strong->audioFrameCallback(std::move(frame));
+                    }
+                }
+            } else {
+                std::set<std::string> usedEndpoints;
+                for (const auto &videoSegment : segment->video) {
+                    videoSegment->isPlaying = true;
+                    std::optional<std::string> endpointId;
+
+                    if (strong->isRtmp) {
+                        endpointId = "unified";
+                    } else {
+                        cancelPendingVideoQualityUpdate(videoSegment.get());
+                        endpointId = videoSegment->part->getActiveEndpointId();
+                    }
+
+                    if (endpointId.has_value() && (strong->videoChannels.contains(endpointId.value()) || strong->isRtmp)) {
+                        bool isScreenCast = false;
+                        uint32_t ssrc = 1;
+
+                        if (!strong->isRtmp) {
+                            const auto videoChannel = strong->videoChannels[endpointId.value()];
+                            isScreenCast = videoChannel.isScreenCast;
+                            ssrc = videoChannel.ssrc;
+                        }
+
+                        if ((isScreenCast && strong->screenIncoming) || (!isScreenCast && strong->cameraIncoming)) {
+                            if (!strong->sharedVideoState.contains(endpointId.value())) {
+                                strong->sharedVideoState[endpointId.value()] = std::make_unique<VideoStreamingSharedState>();
+                            }
+                            usedEndpoints.insert(endpointId.value());
+                            if (const auto frame = videoSegment->part->getFrameAtRelativeTimestamp(
+                                strong->sharedVideoState[endpointId.value()].get(),
+                                static_cast<double>(relativeTimestamp.count()) / 1000.0
+                            )) {
+                                if (videoSegment->lastFramePts != frame->pts) {
+                                    videoSegment->lastFramePts = frame->pts;
+                                    auto videoFrame = std::make_unique<webrtc::VideoFrame>(frame->frame);
+                                    const auto frameTimestamp = static_cast<int64_t>(frame->pts * 1000) + segment->timestamp;
+                                    videoFrame->set_timestamp_us(frameTimestamp);
+                                    strong->videoFrameCallback(
+                                        ssrc,
+                                        isScreenCast,
+                                        std::move(videoFrame)
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!strong->isRtmp) {
+                    for (auto it = strong->sharedVideoState.begin(); it != strong->sharedVideoState.end();) {
+                        if (!usedEndpoints.contains(it->first) && !strong->videoChannels.contains(it->first)) {
+                            it = strong->sharedVideoState.erase(it);
+                        } else {
+                            ++it;
+                        }
+                    }
                 }
             }
-
-            if (relativeTimestamp >= renderSegmentDuration) {
-                playbackReferenceTimestamp += segment->duration;
-                segments.erase(segments.begin());
+        },
+        [weak] () -> MediaSegment* {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return nullptr;
             }
-            break;
-        }
-
-        requestSegmentsIfNeeded();
-        checkPendingSegments();
+            if (strong->waitForBufferedMillisecondsBeforeRendering) {
+                if (strong->getAvailableBufferDuration() < strong->waitForBufferedMillisecondsBeforeRendering.value()) {
+                    return nullptr;
+                }
+                strong->waitForBufferedMillisecondsBeforeRendering = std::nullopt;
+            }
+            const auto availableSegments = strong->filterSegments(MediaSegment::Status::Ready);
+            if (availableSegments.empty()) {
+                strong->waitForBufferedMillisecondsBeforeRendering = strong->segmentBufferDuration + strong->segmentDuration;
+                return nullptr;
+            }
+            return availableSegments.begin()->second;
+        },
+        [weak] (const ThreadBuffer::RequestType requestType) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            switch (requestType) {
+            case ThreadBuffer::RequestType::RequestSegments:
+                strong->requestSegmentsIfNeeded();
+                strong->checkPendingSegments();
+                break;
+            case ThreadBuffer::RequestType::RemoveSegment:
+                std::lock_guard lock(strong->segmentMutex);
+                const auto segment = strong->segments.begin();
+                if (segment == strong->segments.end()) {
+                    return;
+                }
+                strong->segments.erase(segment);
+                break;
+            }
+        });
     }
 
     int64_t MTProtoStream::getAvailableBufferDuration() const {
@@ -413,7 +428,7 @@ namespace wrtc {
                 auto videoPart = std::make_unique<MediaSegment::Part>(MediaSegment::Part::Video(channelId, videoChannel.quality));
                 pendingSegment->parts.push_back(std::move(videoPart));
             }
-
+            std::lock_guard lock(segmentMutex);
             segments[nextSegmentTimestamp] = std::move(pendingSegment);
 
             if (nextSegmentTimestamp == -1) {
@@ -516,18 +531,6 @@ namespace wrtc {
         if (shouldRequestMoreSegments) {
             requestSegmentsIfNeeded();
         }
-    }
-
-    void MTProtoStream::beginRenderTimer(const int timeoutMs) {
-        std::weak_ptr weak(shared_from_this());
-        mediaThread->PostDelayedTask([weak]{
-            const auto strong = weak.lock();
-            if (!strong) {
-                return;
-            }
-            strong->render();
-            strong->beginRenderTimer(static_cast<int>(1.0 * 1000.0 / 120.0));
-        }, webrtc::TimeDelta::Millis(timeoutMs));
     }
 
     void MTProtoStream::discardAllPendingSegments() {
