@@ -10,7 +10,7 @@
 #include <modules/desktop_capture/desktop_capturer_differ_wrapper.h>
 
 namespace ntgcalls {
-    DesktopCapturerModule::DesktopCapturerModule(const VideoDescription& desc, BaseSink* sink): BaseIO(sink), BaseReader(sink), SyncHelper(sink), desc(desc) {
+    DesktopCapturerModule::DesktopCapturerModule(const VideoDescription& desc, BaseSink* sink): BaseIO(sink), BaseReader(sink), SyncHelper(sink->frameTime()), desc(desc) {
         capturer = CreateCapturer();
         try {
             auto sourceMetadata = json::parse(desc.input);

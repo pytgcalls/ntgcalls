@@ -228,7 +228,7 @@ namespace ntgcalls {
             if (reader->set_enabled(!isPaused)) {
                 res = true;
             }
-            if (const auto threadedReader = dynamic_cast<SyncHelper*>(reader.get())) {
+            if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(reader.get())) {
                 threadedReader->synchronizeTime(now);
             }
         }
@@ -332,7 +332,7 @@ namespace ntgcalls {
                                 strong->cancelSyncReaders.erase(id.second);
                                 return;
                             }
-                            if (const auto threadedReader = dynamic_cast<SyncHelper*>(strong->readers[id.second].get())) {
+                            if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(strong->readers[id.second].get())) {
                                 threadedReader->synchronizeTime();
                             }
                         }

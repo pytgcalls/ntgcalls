@@ -5,21 +5,18 @@
 #pragma once
 
 #include <chrono>
-#include <ntgcalls/media/base_sink.hpp>
 
-namespace ntgcalls {
+namespace wrtc {
 
     class SyncHelper {
-        std::chrono::steady_clock::time_point nextFrameTime;
         std::chrono::nanoseconds frameTime;
-
-    protected:
-        void waitNextFrame();
-
+        std::chrono::steady_clock::time_point nextFrameTime;
     public:
-        explicit SyncHelper(BaseSink *sink);
+        explicit SyncHelper(std::chrono::nanoseconds frameTime);
 
         void synchronizeTime(std::chrono::steady_clock::time_point time = std::chrono::steady_clock::time_point{});
+
+        void waitNextFrame();
     };
 
-} // ntgcalls
+} // wrtc

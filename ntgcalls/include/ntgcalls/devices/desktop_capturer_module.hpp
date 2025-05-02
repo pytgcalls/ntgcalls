@@ -8,7 +8,7 @@
 #include <nlohmann/json.hpp>
 #include <rtc_base/platform_thread.h>
 #include <ntgcalls/io/base_reader.hpp>
-#include <ntgcalls/io/sync_helper.hpp>
+#include <wrtc/utils/sync_helper.hpp>
 #include <ntgcalls/devices/device_info.hpp>
 #include <ntgcalls/models/media_description.hpp>
 #include <modules/desktop_capture/desktop_and_cursor_composer.h>
@@ -16,7 +16,7 @@
 namespace ntgcalls {
     using nlohmann::json;
 
-    class DesktopCapturerModule final: public BaseReader, public SyncHelper, public webrtc::DesktopCapturer::Callback {
+    class DesktopCapturerModule final: public BaseReader, public wrtc::SyncHelper, public webrtc::DesktopCapturer::Callback {
         std::unique_ptr<webrtc::DesktopCapturer> capturer;
         VideoDescription desc;
         rtc::PlatformThread thread;

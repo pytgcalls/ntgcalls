@@ -3,11 +3,11 @@
 //
 
 #include <thread>
-#include <ntgcalls/io/sync_helper.hpp>
+#include <wrtc/utils/sync_helper.hpp>
 
-namespace ntgcalls {
+namespace wrtc {
 
-    SyncHelper::SyncHelper(BaseSink* sink): frameTime(sink->frameTime()) {}
+    SyncHelper::SyncHelper(const std::chrono::nanoseconds frameTime): frameTime(frameTime) {}
 
     void SyncHelper::synchronizeTime(const std::chrono::steady_clock::time_point time) {
         if (time <= std::chrono::steady_clock::time_point{}) {
@@ -22,4 +22,4 @@ namespace ntgcalls {
         std::this_thread::sleep_until(nextFrameTime);
     }
 
-} // ntgcalls
+} // wrtc
