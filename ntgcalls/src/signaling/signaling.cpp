@@ -21,7 +21,7 @@ namespace signaling {
     ) {
         std::shared_ptr<SignalingInterface> signaling;
         if (version & Version::V2) {
-            RTC_LOG(LS_INFO) << "Using signaling V2 Legacy";
+            RTC_LOG(LS_VERBOSE) << "Using signaling V2 Legacy";
             signaling = std::make_shared<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
         }
         if (!signaling) {

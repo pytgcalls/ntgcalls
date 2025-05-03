@@ -506,7 +506,7 @@ namespace wrtc {
                         auto videoSegment = std::make_unique<MediaSegment::Video>();
                         videoSegment->quality = videoData->quality;
                         if (part->data.value().empty()) {
-                            RTC_LOG(LS_INFO) << "Video part " << pendingSegment->timestamp << " is empty";
+                            RTC_LOG(LS_VERBOSE) << "Video part " << pendingSegment->timestamp << " is empty";
                         }
                         videoSegment->part = std::make_unique<VideoStreamingPart>(std::move(part->data.value()));
                         pendingSegment->video.push_back(std::move(videoSegment));

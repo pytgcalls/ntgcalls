@@ -408,7 +408,7 @@ namespace wrtc {
                 }
                 strong->call = nullptr;
             });
-            RTC_LOG(LS_INFO) << "Removed call";
+            RTC_LOG(LS_VERBOSE) << "Removed call";
             networkThread()->BlockingCall([weak] {
                 const auto strong = weak.lock();
                 if (!strong) {

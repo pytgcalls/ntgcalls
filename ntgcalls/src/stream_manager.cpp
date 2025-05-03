@@ -52,9 +52,9 @@ namespace ntgcalls {
     }
 
     void StreamManager::setStreamSources(const Mode mode, const MediaDescription& desc) {
-        RTC_LOG(LS_INFO) << "Setting Configuration, Acquiring lock";
+        RTC_LOG(LS_VERBOSE) << "Setting Configuration, Acquiring lock";
         std::lock_guard lock(mutex);
-        RTC_LOG(LS_INFO) << "Setting Configuration, Lock acquired";
+        RTC_LOG(LS_VERBOSE) << "Setting Configuration, Lock acquired";
 
         const bool wasIdling = isPaused();
 
@@ -376,7 +376,7 @@ namespace ntgcalls {
                     });
                     if (initialized) {
                         readers[device]->open();
-                        RTC_LOG(LS_INFO) << "Reader opened";
+                        RTC_LOG(LS_VERBOSE) << "Reader opened";
                     }
                 } else {
                     const bool isExternal = desc.value().mediaSource == DescriptionType::MediaSource::External;

@@ -186,7 +186,7 @@ namespace wrtc {
                 return;
             }
             attemptedServerAddresses.insert(serverAddress.address);
-            RTC_LOG(LS_INFO) << ToString() << ": Trying to connect to REFLECTOR server via " << cricket::ProtoToString(serverAddress.proto) << " @ " << serverAddress.address.ToSensitiveString();
+            RTC_LOG(LS_VERBOSE) << ToString() << ": Trying to connect to REFLECTOR server via " << cricket::ProtoToString(serverAddress.proto) << " @ " << serverAddress.address.ToSensitiveString();
             if (!CreateReflectorClientSocket()) {
                 RTC_LOG(LS_ERROR) << "Failed to create REFLECTOR client socket";
                 OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE,
@@ -314,7 +314,7 @@ namespace wrtc {
         if (serverAddress.address.IsUnresolvedIP()) {
             serverAddress.address = socket->GetRemoteAddress();
         }
-        RTC_LOG(LS_INFO) << "ReflectorPort connected to " << socket->GetRemoteAddress().ToSensitiveString() << " using tcp.";
+        RTC_LOG(LS_VERBOSE) << "ReflectorPort connected to " << socket->GetRemoteAddress().ToSensitiveString() << " using tcp.";
     }
 
     void ReflectorPort::OnSocketClose(rtc::AsyncPacketSocket* socket, const int error) {
@@ -468,7 +468,7 @@ namespace wrtc {
         if (state != STATE_READY) {
             state = STATE_READY;
 
-            RTC_LOG(LS_INFO) << ToString() << ": REFLECTOR " << serverAddress.address.ToString() << " is now ready";
+            RTC_LOG(LS_VERBOSE) << ToString() << ": REFLECTOR " << serverAddress.address.ToString() << " is now ready";
 
             const auto ipFormat = "reflector-" + std::to_string(static_cast<uint32_t>(serverId)) + "-" + std::to_string(randomTag) + ".reflector";
             rtc::SocketAddress candidateAddress(ipFormat, serverAddress.address.port());
@@ -551,7 +551,7 @@ namespace wrtc {
     void ReflectorPort::ResolveTurnAddress(const rtc::SocketAddress& address) {
         if (resolver)
             return;
-        RTC_LOG(LS_INFO) << ToString() << ": Starting TURN host lookup for " << address.ToSensitiveString();
+        RTC_LOG(LS_VERBOSE) << ToString() << ": Starting TURN host lookup for " << address.ToSensitiveString();
         resolver = socket_factory()->CreateAsyncDnsResolver();
         resolver->Start(address, [this] {
             auto& result = resolver->result();

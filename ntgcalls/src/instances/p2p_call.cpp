@@ -110,7 +110,7 @@ namespace ntgcalls {
         }
         skipExchangeKey = std::move(encryptionKey);
         skipIsOutgoing = isOutgoing;
-        RTC_LOG(LS_INFO) << "Exchange skipped";
+        RTC_LOG(LS_VERBOSE) << "Exchange skipped";
     }
 
     void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
@@ -174,7 +174,7 @@ namespace ntgcalls {
                 candMess.iceCandidates.push_back({candidate.sdp});
                 message = candMess.serialize();
             }
-            RTC_LOG(LS_INFO) << "Sending candidate: " << bytes::to_string(message);
+            RTC_LOG(LS_VERBOSE) << "Sending candidate: " << bytes::to_string(message);
             strong->signaling->send(message);
         });
         connection->onDataChannelOpened([weak] {
@@ -183,7 +183,7 @@ namespace ntgcalls {
                 return;
             }
             strong->sendMediaState(strong->streamManager->getState());
-            RTC_LOG(LS_INFO) << "Data channel opened";
+            RTC_LOG(LS_VERBOSE) << "Data channel opened";
         });
         connection->onDataChannelMessage([weak](const bytes::binary& data) {
             const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
@@ -216,7 +216,7 @@ namespace ntgcalls {
         if (signaling == nullptr) {
             return;
         }
-        RTC_LOG(LS_INFO) << "processSignalingData: " << std::string(buffer.begin(), buffer.end());
+        RTC_LOG(LS_VERBOSE) << "processSignalingData: " << std::string(buffer.begin(), buffer.end());
         try {
             switch (signaling::Message::type(buffer)) {
             case signaling::Message::Type::InitialSetup: {
@@ -270,7 +270,7 @@ namespace ntgcalls {
                     signaling::NegotiateChannelsMessage channelMessage;
                     channelMessage.exchangeId = response->exchangeId;
                     channelMessage.contents = response->contents;
-                    RTC_LOG(LS_INFO) << "Sending negotiate channels: " << bytes::to_string(channelMessage.serialize());
+                    RTC_LOG(LS_VERBOSE) << "Sending negotiate channels: " << bytes::to_string(channelMessage.serialize());
                     signaling->send(channelMessage.serialize());
                 }
                 sendOfferIfNeeded();
@@ -337,7 +337,7 @@ namespace ntgcalls {
             message.screencastState = signaling::MediaStateMessage::VideoState::Active;
         }
 
-        RTC_LOG(LS_INFO) << "Sending media state: " << bytes::to_string(message.serialize());
+        RTC_LOG(LS_VERBOSE) << "Sending media state: " << bytes::to_string(message.serialize());
         connection->sendDataChannelMessage(message.serialize());
     }
 
@@ -349,7 +349,7 @@ namespace ntgcalls {
             signaling::NegotiateChannelsMessage data;
             data.exchangeId = offer->exchangeId;
             data.contents = offer->contents;
-            RTC_LOG(LS_INFO) << "Sending offer: " << bytes::to_string(data.serialize());
+            RTC_LOG(LS_VERBOSE) << "Sending offer: " << bytes::to_string(data.serialize());
             signaling->send(data.serialize());
         }
     }
@@ -391,7 +391,7 @@ namespace ntgcalls {
                 dtlsFingerprint.setup = setup;
                 message.fingerprints.push_back(std::move(dtlsFingerprint));
                 const auto serializedMessage = message.serialize();
-                RTC_LOG(LS_INFO) << "Sending initial setup: " << bytes::to_string(serializedMessage);
+                RTC_LOG(LS_VERBOSE) << "Sending initial setup: " << bytes::to_string(serializedMessage);
                 strongMessage->signaling->send(serializedMessage);
             });
         });

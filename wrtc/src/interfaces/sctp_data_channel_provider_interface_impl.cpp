@@ -115,11 +115,11 @@ namespace wrtc {
     void SctpDataChannelProviderInterfaceImpl::sendDataChannelMessage(const bytes::binary& data) {
         if (isOpen) {
             const std::string message = bytes::to_string(data);
-            RTC_LOG(LS_INFO) << "Outgoing DataChannel message: " << message;
+            RTC_LOG(LS_VERBOSE) << "Outgoing DataChannel message: " << message;
             const webrtc::DataBuffer buffer(message);
             dataChannel->Send(buffer);
         } else {
-            RTC_LOG(LS_INFO) << "Could not send an outgoing DataChannel message, adding to pending messages";
+            RTC_LOG(LS_VERBOSE) << "Could not send an outgoing DataChannel message, adding to pending messages";
             pendingMessages.push_back(data);
         }
     }

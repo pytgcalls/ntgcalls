@@ -105,7 +105,7 @@ namespace signaling {
                 break;
             }
         }
-        RTC_LOG(LS_INFO) << (type ? "Got ACK:type" + std::to_string(type) + "#" : "Repeated ACK#") << CounterFromSeq(seq);
+        RTC_LOG(LS_VERBOSE) << (type ? "Got ACK:type" + std::to_string(type) + "#" : "Repeated ACK#") << CounterFromSeq(seq);
     }
 
     void SignalingEncryption::sendAckPostponed(const uint32_t incomingSeq) {
@@ -157,7 +157,7 @@ namespace signaling {
                     RTC_LOG(LS_ERROR) << "Got RECV:empty in additional message";
                     return {};
                 }
-                RTC_LOG(LS_INFO) << "Got RECV:empty" << "#" << currentCounter;
+                RTC_LOG(LS_VERBOSE) << "Got RECV:empty" << "#" << currentCounter;
                 reader.Consume(1);
             } else if (type == kAckId) {
                 if (!additionalMessage) {
@@ -179,7 +179,7 @@ namespace signaling {
                             newRequiringAckReceived = true;
                         }
                         sendAckPostponed(currentSeq);
-                        RTC_LOG(LS_INFO) << (skipMessage ? "Repeated RECV:type" : "Got RECV:type") << type << "#" << currentCounter;
+                        RTC_LOG(LS_VERBOSE) << (skipMessage ? "Repeated RECV:type" : "Got RECV:type") << type << "#" << currentCounter;
                     }
                     if (!skipMessage) {
                         messages.push_back(std::move(*message));
@@ -271,15 +271,15 @@ namespace signaling {
             const auto counter = CounterFromSeq(ReadSeq(data.data()));
             const auto type = static_cast<uint8_t>(data.data()[4]);
             if (when > now) {
-                RTC_LOG(LS_INFO)<< "Skip RESEND:type" << type << "#" << counter << " (wait " << when - now << "ms).";
+                RTC_LOG(LS_VERBOSE)<< "Skip RESEND:type" << type << "#" << counter << " (wait " << when - now << "ms).";
                 break;
             }
             if (enoughSpaceInPacket(buffer, data.size())) {
-                RTC_LOG(LS_INFO) << "Add RESEND:type" << type << "#" << counter;
+                RTC_LOG(LS_VERBOSE) << "Add RESEND:type" << type << "#" << counter;
                 buffer.AppendData(data);
                 lastSent = now;
             } else {
-                RTC_LOG(LS_INFO) << "Skip RESEND:type" << type << "#" << counter << " (no space, length: " << data.size() << ", already: " << buffer.size() << ")";
+                RTC_LOG(LS_VERBOSE) << "Skip RESEND:type" << type << "#" << counter << " (no space, length: " << data.size() << ", already: " << buffer.size() << ")";
                 break;
             }
         }
@@ -296,14 +296,14 @@ namespace signaling {
     void SignalingEncryption::appendAcksToSend(rtc::CopyOnWriteBuffer &buffer) {
         auto i = acksToSendSeqs.begin();
         while (i != acksToSendSeqs.end() && enoughSpaceInPacket(buffer, kAckSerializedSize)) {
-            RTC_LOG(LS_INFO) << "Add ACK#" << CounterFromSeq(*i);
+            RTC_LOG(LS_VERBOSE) << "Add ACK#" << CounterFromSeq(*i);
             AppendSeq(buffer, *i);
             buffer.AppendData(&kAckId, 1);
             ++i;
         }
         acksToSendSeqs.erase(acksToSendSeqs.begin(), i);
         for (const auto seq : acksToSendSeqs) {
-            RTC_LOG(LS_INFO) << "Skip ACK#" << CounterFromSeq(seq) << " (no space, length: " << kAckSerializedSize << ", already: " << buffer.size() << ")";
+            RTC_LOG(LS_VERBOSE) << "Skip ACK#" << CounterFromSeq(seq) << " (no space, length: " << kAckSerializedSize << ", already: " << buffer.size() << ")";
         }
     }
 
@@ -320,9 +320,9 @@ namespace signaling {
         const auto type = static_cast<uint8_t>(serialized.cdata()[4]);
         const auto sendEnqueued = !myNotYetAckedMessages.empty();
         if (sendEnqueued) {
-            RTC_LOG(LS_INFO) << "Enqueue SEND:type" << type << "#" << CounterFromSeq(seq);
+            RTC_LOG(LS_VERBOSE) << "Enqueue SEND:type" << type << "#" << CounterFromSeq(seq);
         } else {
-            RTC_LOG(LS_INFO) << "Add SEND:type" << type << "#" << CounterFromSeq(seq);
+            RTC_LOG(LS_VERBOSE) << "Add SEND:type" << type << "#" << CounterFromSeq(seq);
             appendMessages(serialized);
         }
         myNotYetAckedMessages.push_back({notYetAckedCopy, rtc::TimeMillis()});
@@ -417,7 +417,7 @@ namespace signaling {
             RTC_LOG(LS_ERROR) << "Failed to serialize empty message";
             return std::nullopt;
         }
-        RTC_LOG(LS_INFO) << "SEND:empty#" << CounterFromSeq(*seq);
+        RTC_LOG(LS_VERBOSE) << "SEND:empty#" << CounterFromSeq(*seq);
         appendMessages(serialized);
         return encryptPrepared(serialized);
     }

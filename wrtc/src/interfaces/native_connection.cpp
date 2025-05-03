@@ -273,10 +273,10 @@ namespace wrtc {
     void NativeConnection::transportRouteChanged(std::optional<rtc::NetworkRoute> route) {
         assert(networkThread()->IsCurrent());
         if (route.has_value()) {
-            RTC_LOG(LS_INFO) << "NativeNetworkingImpl route changed: " << route->DebugString();
+            RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl route changed: " << route->DebugString();
             const bool localIsWifi = route->local.adapter_type() == rtc::AdapterType::ADAPTER_TYPE_WIFI;
             const bool remoteIsWifi = route->remote.adapter_type() == rtc::AdapterType::ADAPTER_TYPE_WIFI;
-            RTC_LOG(LS_INFO) << "NativeNetworkingImpl is wifi: local=" << localIsWifi << ", remote=" << remoteIsWifi;
+            RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl is wifi: local=" << localIsWifi << ", remote=" << remoteIsWifi;
             const std::string localDescription = route->local.uses_turn() ? "turn" : "p2p";
             const std::string remoteDescription = route->remote.uses_turn() ? "turn" : "p2p";
             if (RouteDescription routeDescription(localDescription, remoteDescription); !currentRouteDescription || routeDescription != currentRouteDescription.value()) {

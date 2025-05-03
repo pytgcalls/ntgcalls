@@ -36,7 +36,7 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            RTC_LOG(LS_INFO) << "Data channel opened";
+            RTC_LOG(LS_VERBOSE) << "Data channel opened";
             updateRemoteVideoConstraints(Safe<wrtc::GroupConnection>(strong->connection));
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
@@ -67,7 +67,7 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            RTC_LOG(LS_INFO) << "Data channel opened";
+            RTC_LOG(LS_VERBOSE) << "Data channel opened";
             updateRemoteVideoConstraints(Safe<wrtc::GroupConnection>(strong->presentationConnection));
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection.get());
@@ -77,7 +77,7 @@ namespace ntgcalls {
     }
 
     void GroupCall::connect(const std::string& jsonData, const bool isPresentation) {
-        RTC_LOG(LS_INFO) << "Connecting to group call";
+        RTC_LOG(LS_VERBOSE) << "Connecting to group call";
         const auto &conn = isPresentation ? presentationConnection : connection;
         if (!conn) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
@@ -119,7 +119,7 @@ namespace ntgcalls {
             }
             streamManager->optimizeSources(conn.get());
             Safe<wrtc::GroupConnection>(conn)->createChannels(payload.media);
-            RTC_LOG(LS_INFO) << "Remote parameters set";
+            RTC_LOG(LS_VERBOSE) << "Remote parameters set";
         } else {
             std::weak_ptr weak(shared_from_this());
             Safe<wrtc::GroupConnection>(conn)->onRequestBroadcastPart([weak](const wrtc::SegmentPartRequest& request){
@@ -139,7 +139,7 @@ namespace ntgcalls {
             Safe<wrtc::GroupConnection>(conn)->connectMediaStream();
             streamManager->optimizeSources(conn.get());
             streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, conn.get());
-            RTC_LOG(LS_INFO) << "MTProto stream attached";
+            RTC_LOG(LS_VERBOSE) << "MTProto stream attached";
         }
         if (connectionMode == wrtc::GroupConnection::Mode::Rtmp) {
             streamManager->setStreamSources(StreamManager::Mode::Capture, MediaDescription());

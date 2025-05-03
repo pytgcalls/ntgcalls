@@ -329,9 +329,9 @@ namespace ntgcalls {
     }
 
     void NTgCalls::remove(const int64_t chatId) {
-        RTC_LOG(LS_INFO) << "Removing call " << chatId << ", Acquiring lock";
+        RTC_LOG(LS_VERBOSE) << "Removing call " << chatId << ", Acquiring lock";
         std::lock_guard lock(mutex);
-        RTC_LOG(LS_INFO) << "Lock acquired, removing call " << chatId;
+        RTC_LOG(LS_VERBOSE) << "Lock acquired, removing call " << chatId;
         if (!exists(chatId)) {
             RTC_LOG(LS_ERROR) << "Call " << chatId << " not found";
             THROW_CONNECTION_NOT_FOUND(chatId)
@@ -339,7 +339,7 @@ namespace ntgcalls {
         const auto call = connections.find(chatId);
         call->second->stop();
         connections.erase(call);
-        RTC_LOG(LS_INFO) << "Call " << chatId << " removed";
+        RTC_LOG(LS_VERBOSE) << "Call " << chatId << " removed";
     }
 
     bool NTgCalls::exists(const int64_t chatId) const {

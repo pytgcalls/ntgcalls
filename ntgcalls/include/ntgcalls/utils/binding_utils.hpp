@@ -10,12 +10,12 @@ worker->PostTask([__VA_ARGS__] {\
 #define END_WORKER_NO_LOG });
 
 #define WORKER(funcName, worker, ...) \
-RTC_LOG(LS_INFO) << funcName << ": " << "Starting worker"; \
+RTC_LOG(LS_VERBOSE) << funcName << ": " << "Starting worker"; \
 WORKER_NO_LOG(worker, __VA_ARGS__) \
-RTC_LOG(LS_INFO) << funcName << ": " << "Worker started";
+RTC_LOG(LS_VERBOSE) << funcName << ": " << "Worker started";
 
 #define END_WORKER \
-RTC_LOG(LS_INFO) << "Worker finished";\
+RTC_LOG(LS_VERBOSE) << "Worker finished";\
 END_WORKER_NO_LOG
 
 #ifdef PYTHON_ENABLED
