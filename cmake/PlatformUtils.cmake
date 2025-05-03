@@ -101,6 +101,10 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
 
     set(bundled_tgt_full_name ${bundle_output_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}${bundled_tgt_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
 
+    if (EXISTS ${bundled_tgt_full_name})
+        file(REMOVE ${bundled_tgt_full_name})
+    endif ()
+
     if (LINUX OR ANDROID)
         file(WRITE ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar.in "CREATE ${bundled_tgt_full_name}\n")
 
@@ -137,7 +141,8 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
         else ()
             add_custom_command(
                 COMMAND ${ar_tool} -M < ${CMAKE_BINARY_DIR}/${bundled_tgt_name}.ar
-                COMMENT "Bundling ${bundled_tgt_name}"
+                COMMAND ${CMAKE_STRIP} --strip-unneeded ${bundled_tgt_full_name}
+                COMMENT "Bundling and stripping ${bundled_tgt_name}"
                 OUTPUT ${bundled_tgt_full_name}
                 VERBATIM
             )
