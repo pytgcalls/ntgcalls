@@ -10,8 +10,6 @@
 
 namespace wrtc {
 
-    bool VideoFactoryConfig::allowH264Encoder = true;
-
     VideoFactoryConfig::VideoFactoryConfig() {
         // Google (Software, VP9, VP8)
         google::addEncoders(encoders);
@@ -36,5 +34,6 @@ namespace wrtc {
     std::unique_ptr<VideoDecoderFactory> VideoFactoryConfig::CreateVideoDecoderFactory() {
         return absl::make_unique<VideoDecoderFactory>(decoders);
     }
+
 } // wrtc
 #endif

@@ -12,7 +12,6 @@
 namespace wrtc {
 
     class VideoFactoryConfig {
-        static bool allowH264Encoder;
     public:
         std::vector<VideoEncoderConfig> encoders;
         std::vector<VideoDecoderConfig> decoders;
