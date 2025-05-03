@@ -66,6 +66,7 @@ namespace wrtc {
         if (audioConsumedTime >= 1s && videoConsumedTime >= 1s) {
             audioConsumedTime = 0ms;
             videoConsumedTime = 0ms;
+            lastSegment = nullptr;
             requestCallback(RequestType::RemoveSegment);
         }
 
@@ -74,8 +75,7 @@ namespace wrtc {
         }
 
         const auto consume = [&](auto& timeConsumed, auto increment) -> MediaSegment* {
-            if (timeConsumed >= 1s)
-                return nullptr;
+            if (timeConsumed >= 1s) return nullptr;
             if (lastSegment) timeConsumed += increment;
             return lastSegment;
         };

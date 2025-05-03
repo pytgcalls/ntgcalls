@@ -32,11 +32,11 @@ namespace wrtc {
 
     private:
         std::mutex mutex;
-        MediaSegment* lastSegment;
+        MediaSegment* lastSegment = nullptr;
         int checkSyncCount = 0;
         std::atomic_bool running = true;
         std::unique_ptr<SyncHelper> audioSync, videoSync;
-        std::chrono::milliseconds audioConsumedTime, videoConsumedTime;
+        std::chrono::milliseconds audioConsumedTime = 0ms, videoConsumedTime = 0ms;
         std::vector<rtc::PlatformThread> threads;
         std::function<void(RequestType)> requestCallback;
         std::function<MediaSegment*()> getSegmentCallback;

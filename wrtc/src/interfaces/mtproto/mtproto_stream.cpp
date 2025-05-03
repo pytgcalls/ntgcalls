@@ -41,6 +41,7 @@ namespace wrtc {
             if (!strong) {
                 return;
             }
+            std::lock_guard lock(strong->segmentMutex);
             strong->isWaitingCurrentTime = false;
             int64_t adjustedTimestamp = 0;
             if (timestamp > 0) {
@@ -52,16 +53,17 @@ namespace wrtc {
                 strong->nextPendingRequestTimeDelayTaskId++;
 
                 strong->mediaThread->PostDelayedTask([weak, taskId] {
-                   const auto strongMedia = weak.lock();
-                   if (!strongMedia) {
-                       return;
-                   }
-                   if (strongMedia->pendingRequestTimeDelayTaskId != taskId) {
-                       return;
-                   }
-                   strongMedia->pendingRequestTimeDelayTaskId = 0;
-                   strongMedia->requestSegmentsIfNeeded();
-               }, webrtc::TimeDelta::Millis(1000));
+                    const auto strongMedia = weak.lock();
+                    if (!strongMedia) {
+                        return;
+                    }
+                    std::lock_guard lockMedia(strongMedia->segmentMutex);
+                    if (strongMedia->pendingRequestTimeDelayTaskId != taskId) {
+                        return;
+                    }
+                    strongMedia->pendingRequestTimeDelayTaskId = 0;
+                    strongMedia->requestSegmentsIfNeeded();
+                }, webrtc::TimeDelta::Millis(1000));
             } else {
                 strong->nextSegmentTimestamp = adjustedTimestamp;
                 strong->requestSegmentsIfNeeded();
@@ -153,6 +155,7 @@ namespace wrtc {
             if (!strong) {
                 return;
             }
+            std::lock_guard lock(strong->segmentMutex);
             strong->videoChannels[endpoint] = VideoChannel(
                 ssrc,
                 isScreenCast,
@@ -172,6 +175,7 @@ namespace wrtc {
             if (!strong) {
                 return false;
             }
+            std::lock_guard lock(strong->segmentMutex);
             if (strong->videoChannels.contains(endpoint)) {
                 strong->videoChannels.erase(endpoint);
                 strong->checkPendingVideoQualityUpdate();
@@ -225,11 +229,12 @@ namespace wrtc {
 
     void MTProtoStream::render() {
         std::weak_ptr weak(shared_from_this());
-        threadBuffer = std::make_unique<ThreadBuffer>([weak] (const webrtc::MediaType mediaType, MediaSegment* segment, std::chrono::milliseconds relativeTimestamp) {
+        threadBuffer = std::make_unique<ThreadBuffer>([weak] (const webrtc::MediaType mediaType, MediaSegment* segment, const std::chrono::milliseconds relativeTimestamp) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
+            std::shared_lock lock(strong->segmentMutex);
             if (mediaType == webrtc::MediaType::AUDIO) {
                 if ((segment->audio || segment->unifiedAudio) && strong->audioIncoming) {
                     std::vector<AudioStreamingPartState::Channel> audioChannels;
@@ -271,7 +276,7 @@ namespace wrtc {
                     for (const auto& buffer : interleavedAudioBySSRC | std::views::values) {
                         auto frame = std::make_unique<AudioFrame>(buffer->ssrc);
                         frame->channels = buffer->channels;
-                        frame->sampleRate = buffer->sampleRate;
+                        frame->sampleRate = static_cast<int>(buffer->sampleRate);
                         frame->data = buffer->data.data();
                         frame->size = buffer->data.size() * sizeof(int16_t);
                         strong->audioFrameCallback(std::move(frame));
@@ -341,6 +346,7 @@ namespace wrtc {
             if (!strong) {
                 return nullptr;
             }
+            std::lock_guard lock(strong->segmentMutex);
             if (strong->waitForBufferedMillisecondsBeforeRendering) {
                 if (strong->getAvailableBufferDuration() < strong->waitForBufferedMillisecondsBeforeRendering.value()) {
                     return nullptr;
@@ -359,13 +365,13 @@ namespace wrtc {
             if (!strong) {
                 return;
             }
+            std::lock_guard lock(strong->segmentMutex);
             switch (requestType) {
             case ThreadBuffer::RequestType::RequestSegments:
                 strong->requestSegmentsIfNeeded();
                 strong->checkPendingSegments();
                 break;
             case ThreadBuffer::RequestType::RemoveSegment:
-                std::lock_guard lock(strong->segmentMutex);
                 const auto segment = strong->segments.begin();
                 if (segment == strong->segments.end()) {
                     return;
@@ -428,7 +434,9 @@ namespace wrtc {
                 auto videoPart = std::make_unique<MediaSegment::Part>(MediaSegment::Part::Video(channelId, videoChannel.quality));
                 pendingSegment->parts.push_back(std::move(videoPart));
             }
-            std::lock_guard lock(segmentMutex);
+            if (segments.contains(nextSegmentTimestamp)) {
+                return;
+            }
             segments[nextSegmentTimestamp] = std::move(pendingSegment);
 
             if (nextSegmentTimestamp == -1) {
@@ -524,6 +532,7 @@ namespace wrtc {
                 if (!strong) {
                     return;
                 }
+                std::lock_guard lock(strong->segmentMutex);
                 strong->checkPendingSegments();
             }, webrtc::TimeDelta::Millis(std::max(static_cast<int32_t>(minDelayedRequestTimeout), 10)));
         }

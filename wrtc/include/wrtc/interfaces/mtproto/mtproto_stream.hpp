@@ -4,6 +4,7 @@
 
 #pragma once
 #include <atomic>
+#include <shared_mutex>
 #include <rtc_base/thread.h>
 #include <wrtc/models/audio_frame.hpp>
 #include <wrtc/models/media_segment.hpp>
@@ -55,7 +56,7 @@ namespace wrtc {
         synchronized_callback<uint32_t, bool, std::unique_ptr<webrtc::VideoFrame>> videoFrameCallback;
         synchronized_callback<SegmentPartRequest> requestBroadcastPartCallback;
 
-        std::mutex segmentMutex;
+        std::shared_mutex segmentMutex;
         std::unique_ptr<ThreadBuffer> threadBuffer;
 
         std::map<int64_t, MediaSegment*> filterSegments(MediaSegment::Status status) const;
