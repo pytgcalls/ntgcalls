@@ -37,12 +37,13 @@ typedef enum {
     NTG_ERROR_MEDIA_DEVICE = -204,
 
     // WebRTC
-    NTG_ERROR_RTC_CONNECTION_NEEDED = -300,
+    NTG_ERROR_RTMP_STREAMING_UNSUPPORTED = -300,
     NTG_ERROR_PARSE_TRANSPORT = -301,
     NTG_ERROR_CONNECTION = -302,
     NTG_ERROR_TELEGRAM_SERVER = -303,
     NTG_ERROR_WEBRTC = -304,
     NTG_ERROR_PARSE_SDP = -305,
+    NTG_ERROR_RTC_CONNECTION_NEEDED = -306,
 
     // Others
     NTG_ERROR_UNKNOWN = -1,
@@ -297,7 +298,7 @@ NTG_C_EXPORT uintptr_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uintptr_t ptr);
 
-NTG_C_EXPORT int ntg_create_p2p(uintptr_t ptr, int64_t userId, ntg_media_description_struct desc, ntg_async_struct future);
+NTG_C_EXPORT int ntg_create_p2p(uintptr_t ptr, int64_t userId, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_init_presentation(uintptr_t ptr, int64_t chatId, char* buffer, int size, ntg_async_struct future);
 
@@ -319,7 +320,7 @@ NTG_C_EXPORT int ntg_send_signaling_data(uintptr_t ptr, int64_t userId, uint8_t*
 
 NTG_C_EXPORT int ntg_get_protocol(ntg_protocol_struct *buffer);
 
-NTG_C_EXPORT int ntg_create(uintptr_t ptr, int64_t chatID, ntg_media_description_struct desc, char* buffer, int size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_create(uintptr_t ptr, int64_t chatID, char* buffer, int size, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_connect(uintptr_t ptr, int64_t chatID, char* params, bool isPresentation, ntg_async_struct future);
 

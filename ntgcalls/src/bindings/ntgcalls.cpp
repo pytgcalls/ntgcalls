@@ -27,6 +27,7 @@ REGISTER_EXCEPTION(ntgcalls::FileError, FILE) \
 REGISTER_EXCEPTION(ntgcalls::FFmpegError, FFMPEG) \
 REGISTER_EXCEPTION(ntgcalls::ShellError, SHELL) \
 REGISTER_EXCEPTION(ntgcalls::MediaDeviceError, MEDIA_DEVICE) \
+REGISTER_EXCEPTION(ntgcalls::RTMPStreamingUnsupported, RTMP_STREAMING_UNSUPPORTED) \
 REGISTER_EXCEPTION(ntgcalls::RTCConnectionNeeded, RTC_CONNECTION_NEEDED) \
 REGISTER_EXCEPTION(wrtc::RTCException, WEBRTC) \
 REGISTER_EXCEPTION(wrtc::SdpParseException, PARSE_SDP) \
@@ -475,9 +476,8 @@ int ntg_remove_incoming_video(const uintptr_t ptr, const int64_t chatId, char* e
     PREPARE_ASYNC_END
 }
 
-// ReSharper disable once CppPassValueParameterByConstReference
-int ntg_create_p2p(const uintptr_t ptr, const int64_t userId, ntg_media_description_struct desc, ntg_async_struct future) {
-    PREPARE_ASYNC(createP2PCall, userId, parseMediaDescription(desc))
+int ntg_create_p2p(const uintptr_t ptr, const int64_t userId, ntg_async_struct future) {
+    PREPARE_ASYNC(createP2PCall, userId)
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
@@ -546,9 +546,8 @@ int ntg_get_protocol(ntg_protocol_struct* buffer) {
     return 0;
 }
 
-// ReSharper disable once CppPassValueParameterByConstReference
-int ntg_create(const uintptr_t ptr, const int64_t chatID, ntg_media_description_struct desc, char* buffer, const int size, ntg_async_struct future) {
-    PREPARE_ASYNC(createCall, chatID, parseMediaDescription(desc))
+int ntg_create(const uintptr_t ptr, const int64_t chatID, char* buffer, const int size, ntg_async_struct future) {
+    PREPARE_ASYNC(createCall, chatID)
     [future, buffer, size](const std::string& s) {
         *future.errorCode = copyAndReturn(s, buffer, size);
         future.promise(future.userData);
