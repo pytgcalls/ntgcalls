@@ -137,6 +137,8 @@ namespace ntgcalls {
                 p2pAllowed,
                 type() == Type::Outgoing
             );
+        } else {
+            throw InvalidParams("Unsupported protocol version");
         }
         connection->open();
         streamManager->optimizeSources(connection.get());

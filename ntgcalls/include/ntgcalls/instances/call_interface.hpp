@@ -80,7 +80,7 @@ namespace ntgcalls {
         template<typename DestCallType, typename BaseCallType>
         static DestCallType* Safe(const std::shared_ptr<BaseCallType>& call) {
             if (!call) {
-                return nullptr;
+                throw std::runtime_error("Null pointer exception");
             }
             if (auto* derivedCall = dynamic_cast<DestCallType*>(call.get())) {
                 return derivedCall;
