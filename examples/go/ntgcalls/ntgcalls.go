@@ -239,11 +239,11 @@ func (ctx *Client) GetConnectionMode(chatId int64) (ConnectionMode, error) {
 	}
 }
 
-func (ctx *Client) CreateCall(chatId int64, desc MediaDescription) (string, error) {
+func (ctx *Client) CreateCall(chatId int64) (string, error) {
 	var buffer [1024]C.char
 	size := C.int(len(buffer))
 	f := CreateFuture()
-	C.ntg_create(C.uintptr_t(ctx.ptr), C.int64_t(chatId), desc.ParseToC(), &buffer[0], size, f.ParseToC())
+	C.ntg_create(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer[0], size, f.ParseToC())
 	f.wait()
 	return C.GoString(&buffer[0]), parseErrorCode(f)
 }
@@ -279,9 +279,9 @@ func (ctx *Client) RemoveIncomingVideo(chatId int64, endpoint string) error {
 	return parseErrorCode(f)
 }
 
-func (ctx *Client) CreateP2PCall(chatId int64, desc MediaDescription) error {
+func (ctx *Client) CreateP2PCall(chatId int64) error {
 	f := CreateFuture()
-	C.ntg_create_p2p(C.uintptr_t(ctx.ptr), C.int64_t(chatId), desc.ParseToC(), f.ParseToC())
+	C.ntg_create_p2p(C.uintptr_t(ctx.ptr), C.int64_t(chatId), f.ParseToC())
 	f.wait()
 	return parseErrorCode(f)
 }

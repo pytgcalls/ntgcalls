@@ -74,7 +74,8 @@ func joinGroupCall(client *ntgcalls.Client, mtproto *tg.Client, username, url st
 	}
 	channel := rawChannel.(*tg.Channel)
 	mediaDescription := getMediaDescription(url)
-	jsonParams, err := client.CreateCall(channel.ID, mediaDescription)
+	jsonParams, err := client.CreateCall(channel.ID)
+	_ = client.SetStreamSources(channel.ID, ntgcalls.CaptureStream, mediaDescription)
 	if err != nil {
 		panic(err)
 	}
@@ -301,7 +302,8 @@ func outgoingCall(client *ntgcalls.Client, mtproto *tg.Client, username string, 
 	user := rawUser.(*tg.UserObj)
 	dhConfigRaw, _ := mtproto.MessagesGetDhConfig(0, 256)
 	dhConfig := dhConfigRaw.(*tg.MessagesDhConfigObj)
-	_ = client.CreateP2PCall(user.ID, getMediaDescription(url))
+	_ = client.CreateP2PCall(user.ID)
+	_ = client.SetStreamSources(user.ID, ntgcalls.CaptureStream, getMediaDescription(url))
 	gAHash, _ := client.InitExchange(user.ID, ntgcalls.DhConfig{
 		G:      dhConfig.G,
 		P:      dhConfig.P,
