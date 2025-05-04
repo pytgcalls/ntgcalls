@@ -28,5 +28,4 @@ build_and_install "llvm-project/llvm" cmake \
     -DLLVM_INCLUDE_BENCHMARKS=OFF \
     -DCMAKE_BUILD_TYPE=Release
 
-ln -s /usr/bin/clang++ /usr/bin/clang++-20 >&/dev/null
 ln -s /usr/local/bin/python3.13 /usr/local/bin/python3 >&/dev/null
