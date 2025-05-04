@@ -186,6 +186,10 @@ namespace ntgcalls {
         return false;
     }
 
+    bool StreamManager::hasReaders() const {
+        return !readers.empty();
+    }
+
     void StreamManager::onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback) {
         framesCallback = callback;
     }

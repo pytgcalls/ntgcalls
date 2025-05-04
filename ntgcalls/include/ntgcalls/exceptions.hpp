@@ -23,6 +23,10 @@ namespace ntgcalls {
         using BaseRTCException::BaseRTCException;
     };
 
+    class RTMPStreamingUnsupported final : public wrtc::BaseRTCException {
+        using BaseRTCException::BaseRTCException;
+    };
+
     class SignalingUnsupported final : public wrtc::BaseRTCException {
         using BaseRTCException::BaseRTCException;
     };

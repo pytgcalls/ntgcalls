@@ -78,6 +78,8 @@ namespace ntgcalls {
 
         bool hasDevice(Mode mode, Device device) const;
 
+        bool hasReaders() const;
+
         void onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback);
 
         void sendExternalFrame(Device device, const bytes::binary& data, wrtc::FrameData frameData);

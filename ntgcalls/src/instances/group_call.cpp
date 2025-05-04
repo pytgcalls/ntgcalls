@@ -95,7 +95,7 @@ namespace ntgcalls {
         }
 
         const auto currentConnectionMode = conn->getConnectionMode();
-        if (currentConnectionMode == connectionMode) {
+        if (currentConnectionMode == connectionMode || currentConnectionMode == wrtc::GroupConnection::Mode::Rtmp) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
@@ -103,6 +103,11 @@ namespace ntgcalls {
         if (currentConnectionMode == wrtc::GroupConnection::Mode::Rtc && connectionMode != wrtc::GroupConnection::Mode::Stream) {
             RTC_LOG(LS_ERROR) << "Cannot switch connection mode from RTC to MTProto";
             throw ConnectionError("Cannot switch connection mode from RTC to MTProto");
+        }
+
+        if (connectionMode == wrtc::GroupConnection::Mode::Rtmp && streamManager->hasReaders()) {
+            RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP";
+            throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
         }
 
         Safe<wrtc::GroupConnection>(conn)->setConnectionMode(connectionMode);
@@ -198,8 +203,8 @@ namespace ntgcalls {
 
     void GroupCall::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
         if (mode == StreamManager::Mode::Capture && getConnectionMode() == wrtc::GroupConnection::Mode::Rtmp) {
-            RTC_LOG(LS_ERROR) << "Media capture is not allowed during an RTMP connection";
-            throw ConnectionError("Media capture is not allowed during an RTMP connection");
+            RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP";
+            throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
         }
         CallInterface::setStreamSources(mode, config);
         if (mode == StreamManager::Mode::Playback && presentationConnection) {
