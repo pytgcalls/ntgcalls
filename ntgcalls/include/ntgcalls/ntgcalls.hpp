@@ -99,7 +99,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(MediaState) getState(int64_t chatId);
 
-        ASYNC_RETURN(wrtc::NetworkInterface::Mode) getConnectionMode(int64_t chatId);
+        ASYNC_RETURN(wrtc::ConnectionMode) getConnectionMode(int64_t chatId);
 
         ASYNC_RETURN(double) cpuUsage() const;
 

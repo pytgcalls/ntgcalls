@@ -121,7 +121,7 @@ webrtc::ScopedJavaLocalRef<jobject> parseJMediaSegmentQuality(JNIEnv *env, const
 
 wrtc::MediaSegment::Part::Status parseSegmentPartStatus(JNIEnv *env, jobject status);
 
-webrtc::ScopedJavaLocalRef<jobject> parseJConnectionMode(JNIEnv *env, wrtc::NetworkInterface::Mode mode);
+webrtc::ScopedJavaLocalRef<jobject> parseJConnectionMode(JNIEnv *env, wrtc::ConnectionMode mode);
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 

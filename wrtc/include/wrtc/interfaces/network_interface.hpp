@@ -29,13 +29,6 @@ namespace wrtc {
         static webrtc::IceCandidateInterface* parseIceCandidate(const IceCandidate& rawCandidate);
 
     public:
-        enum class Mode {
-            None,
-            Rtc,
-            Stream,
-            Rtmp,
-        };
-
         NetworkInterface();
 
         virtual void open() = 0;
@@ -70,7 +63,7 @@ namespace wrtc {
 
         virtual void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink, bool isScreenCast) = 0;
 
-        virtual Mode getConnectionMode() const = 0;
+        virtual ConnectionMode getConnectionMode() const = 0;
 
         bool isDataChannelOpen() const;
 

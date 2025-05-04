@@ -132,7 +132,7 @@ namespace wrtc {
 
         std::vector<std::string> getEndpoints() const;
 
-        Mode getConnectionMode() const override;
+        ConnectionMode getConnectionMode() const override;
 
         void enableAudioIncoming(bool enable) override;
 

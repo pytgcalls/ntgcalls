@@ -74,16 +74,13 @@ namespace ntgcalls {
         if (mode == Capture && (wasCamera != hasDevice(mode, Camera) || wasScreen != hasDevice(mode, Screen) || wasIdling) && initialized) {
             checkUpgrade();
         }
-
-        if (!initialized && mode == Capture) {
-            initialized = true;
-        }
     }
 
-    void StreamManager::optimizeSources(wrtc::NetworkInterface* pc) const {
+    void StreamManager::optimizeSources(wrtc::NetworkInterface* pc) {
         pc->enableAudioIncoming(writers.contains(Microphone) || externalWriters.contains(Microphone));
         pc->enableVideoIncoming(writers.contains(Camera) || externalWriters.contains(Camera), false);
         pc->enableVideoIncoming(writers.contains(Screen) || externalWriters.contains(Screen), true);
+        initialized = pc->getConnectionMode() != wrtc::ConnectionMode::None;
     }
 
     MediaState StreamManager::getState() {

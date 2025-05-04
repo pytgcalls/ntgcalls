@@ -49,7 +49,7 @@ namespace ntgcalls {
     }
 
     std::string GroupCall::initPresentation() {
-        if (getConnectionMode() != wrtc::GroupConnection::Mode::Rtc) {
+        if (getConnectionMode() != wrtc::ConnectionMode::Rtc) {
             RTC_LOG(LS_ERROR) << "Presentation connection requires RTC connection";
             throw RTCConnectionNeeded("Presentation connection requires RTC connection");
         }
@@ -85,33 +85,33 @@ namespace ntgcalls {
         }
 
         wrtc::ResponsePayload payload(jsonData);
-        wrtc::GroupConnection::Mode connectionMode;
+        wrtc::ConnectionMode connectionMode;
         if (payload.isRtmp) {
-            connectionMode = wrtc::GroupConnection::Mode::Rtmp;
+            connectionMode = wrtc::ConnectionMode::Rtmp;
         } else if (payload.isStream) {
-            connectionMode = wrtc::GroupConnection::Mode::Stream;
+            connectionMode = wrtc::ConnectionMode::Stream;
         } else {
-            connectionMode = wrtc::GroupConnection::Mode::Rtc;
+            connectionMode = wrtc::ConnectionMode::Rtc;
         }
 
         const auto currentConnectionMode = conn->getConnectionMode();
-        if (currentConnectionMode == connectionMode || currentConnectionMode == wrtc::GroupConnection::Mode::Rtmp) {
+        if (currentConnectionMode == connectionMode || currentConnectionMode == wrtc::ConnectionMode::Rtmp) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
 
-        if (currentConnectionMode == wrtc::GroupConnection::Mode::Rtc && connectionMode != wrtc::GroupConnection::Mode::Stream) {
+        if (currentConnectionMode == wrtc::ConnectionMode::Rtc && connectionMode != wrtc::ConnectionMode::Stream) {
             RTC_LOG(LS_ERROR) << "Cannot switch connection mode from RTC to MTProto";
             throw ConnectionError("Cannot switch connection mode from RTC to MTProto");
         }
 
-        if (connectionMode == wrtc::GroupConnection::Mode::Rtmp && streamManager->hasReaders()) {
+        if (connectionMode == wrtc::ConnectionMode::Rtmp && streamManager->hasReaders()) {
             RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP";
             throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
         }
 
         Safe<wrtc::GroupConnection>(conn)->setConnectionMode(connectionMode);
-        if (connectionMode == wrtc::GroupConnection::Mode::Rtc) {
+        if (connectionMode == wrtc::ConnectionMode::Rtc) {
             Safe<wrtc::GroupConnection>(conn)->setRemoteParams(payload.remoteIceParameters, std::move(payload.fingerprint));
             for (const auto& rawCandidate : payload.candidates) {
                 webrtc::JsepIceCandidate iceCandidate{std::string(), 0, rawCandidate};
@@ -173,7 +173,7 @@ namespace ntgcalls {
             throw ConnectionError("Connection not initialized");
         }
         const auto ssrc = conn->addIncomingVideo(endpoint, ssrcGroup);
-        if (getConnectionMode() == wrtc::GroupConnection::Mode::Rtc) updateRemoteVideoConstraints(conn);
+        if (getConnectionMode() == wrtc::ConnectionMode::Rtc) updateRemoteVideoConstraints(conn);
         return ssrc;
     }
 
@@ -198,7 +198,7 @@ namespace ntgcalls {
     }
 
     void GroupCall::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
-        if (mode == StreamManager::Mode::Capture && getConnectionMode() == wrtc::GroupConnection::Mode::Rtmp) {
+        if (mode == StreamManager::Mode::Capture && getConnectionMode() == wrtc::ConnectionMode::Rtmp) {
             RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP";
             throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
         }

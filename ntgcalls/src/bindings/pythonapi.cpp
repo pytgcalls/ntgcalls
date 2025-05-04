@@ -266,10 +266,10 @@ PYBIND11_MODULE(ntgcalls, m) {
         .value("SUCCESS", wrtc::MediaSegment::Part::Status::Success)
         .export_values();
 
-    py::enum_<wrtc::NetworkInterface::Mode>(m, "ConnectionMode")
-        .value("RTC", wrtc::NetworkInterface::Mode::Rtc)
-        .value("STREAM", wrtc::NetworkInterface::Mode::Stream)
-        .value("RTMP", wrtc::NetworkInterface::Mode::Rtmp)
+    py::enum_<wrtc::ConnectionMode>(m, "ConnectionMode")
+        .value("RTC", wrtc::ConnectionMode::Rtc)
+        .value("STREAM", wrtc::ConnectionMode::Stream)
+        .value("RTMP", wrtc::ConnectionMode::Rtmp)
         .export_values();
 
     // Exceptions

@@ -202,11 +202,11 @@ namespace wrtc {
         }, webrtc::TimeDelta::Millis(500));
     }
 
-    void GroupConnection::setConnectionMode(const Mode kind) {
+    void GroupConnection::setConnectionMode(const ConnectionMode kind) {
         connectionMode = kind;
         std::weak_ptr weak(shared_from_this());
         switch (kind) {
-        case Mode::Rtc:
+        case ConnectionMode::Rtc:
             if (mtprotoStream) {
                 RTC_LOG(LS_INFO) << "Migrating to RTC connection";
                 mtprotoStream->close();
@@ -225,9 +225,9 @@ namespace wrtc {
                 strong->start();
             });
             break;
-        case Mode::Stream:
-        case Mode::Rtmp:
-            mtprotoStream = std::make_shared<MTProtoStream>(signalingThread(), connectionMode == Mode::Rtmp);
+        case ConnectionMode::Stream:
+        case ConnectionMode::Rtmp:
+            mtprotoStream = std::make_shared<MTProtoStream>(signalingThread(), connectionMode == ConnectionMode::Rtmp);
             mtprotoStream->onAudioFrame([weak](std::unique_ptr<AudioFrame> frame) {
                 const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
                 if (!strong) {
@@ -303,11 +303,11 @@ namespace wrtc {
     void GroupConnection::updateIsConnected() {
         bool isEffectivelyConnected = false;
         switch (connectionMode) {
-            case Mode::Rtc:
+            case ConnectionMode::Rtc:
                 isEffectivelyConnected = isRtcConnected;
                 break;
-            case Mode::Stream:
-            case Mode::Rtmp:
+            case ConnectionMode::Stream:
+            case ConnectionMode::Rtmp:
                 isEffectivelyConnected = isStreamConnected;
                 break;
             default:
@@ -494,7 +494,7 @@ namespace wrtc {
         return mediaConfig;
     }
 
-    NetworkInterface::Mode GroupConnection::getConnectionMode() const {
+    ConnectionMode GroupConnection::getConnectionMode() const {
         return connectionMode;
     }
 

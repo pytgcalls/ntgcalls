@@ -652,20 +652,20 @@ wrtc::MediaSegment::Part::Status parseSegmentPartStatus(JNIEnv *env, jobject sta
     return wrtc::MediaSegment::Part::Status::NotReady;
 }
 
-webrtc::ScopedJavaLocalRef<jobject> parseJConnectionMode(JNIEnv *env, wrtc::NetworkInterface::Mode mode) {
+webrtc::ScopedJavaLocalRef<jobject> parseJConnectionMode(JNIEnv *env, wrtc::ConnectionMode mode) {
     const webrtc::ScopedJavaLocalRef<jclass> connectionModeClass = webrtc::GetClass(env, "io/github/pytgcalls/ConnectionMode");
     jfieldID rtcField = env->GetStaticFieldID(connectionModeClass.obj(), "RTC", "Lio/github/pytgcalls/ConnectionMode;");
     jfieldID streamField = env->GetStaticFieldID(connectionModeClass.obj(), "STREAM", "Lio/github/pytgcalls/ConnectionMode;");
     jfieldID rtmpField = env->GetStaticFieldID(connectionModeClass.obj(), "RTMP", "Lio/github/pytgcalls/ConnectionMode;");
 
     switch (mode) {
-        case wrtc::NetworkInterface::Mode::Rtc:
+        case wrtc::ConnectionMode::Rtc:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionModeClass.obj(), rtcField)};
-        case wrtc::NetworkInterface::Mode::Stream:
+        case wrtc::ConnectionMode::Stream:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionModeClass.obj(), streamField)};
-        case wrtc::NetworkInterface::Mode::Rtmp:
+        case wrtc::ConnectionMode::Rtmp:
             return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionModeClass.obj(), rtmpField)};
-        case wrtc::NetworkInterface::Mode::None:
+        case wrtc::ConnectionMode::None:
             break;
     }
     return nullptr;

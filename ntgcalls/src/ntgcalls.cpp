@@ -302,7 +302,7 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(wrtc::NetworkInterface::Mode) NTgCalls::getConnectionMode(int64_t chatId) {
+    ASYNC_RETURN(wrtc::ConnectionMode) NTgCalls::getConnectionMode(int64_t chatId) {
         SMART_ASYNC(this, chatId)
         return safeConnection(chatId)->getConnectionMode();
         END_ASYNC

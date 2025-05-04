@@ -52,7 +52,7 @@ namespace ntgcalls {
 
         void setStreamSources(Mode mode, const MediaDescription& desc = MediaDescription());
 
-        void optimizeSources(wrtc::NetworkInterface* pc) const;
+        void optimizeSources(wrtc::NetworkInterface* pc);
 
         MediaState getState();
 

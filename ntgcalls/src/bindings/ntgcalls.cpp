@@ -382,15 +382,15 @@ wrtc::MediaSegment::Part::Status parseSegmentStatus(const ntg_media_segment_stat
     return {};
 }
 
-ntg_connection_mode_enum parseCConnectionMode(const wrtc::NetworkInterface::Mode mode) {
+ntg_connection_mode_enum parseCConnectionMode(const wrtc::ConnectionMode mode) {
     switch (mode) {
-    case wrtc::NetworkInterface::Mode::None:
+    case wrtc::ConnectionMode::None:
         return NTG_CONNECTION_MODE_NONE;
-    case wrtc::NetworkInterface::Mode::Rtc:
+    case wrtc::ConnectionMode::Rtc:
         return NTG_CONNECTION_MODE_RTC;
-    case wrtc::NetworkInterface::Mode::Stream:
+    case wrtc::ConnectionMode::Stream:
         return NTG_CONNECTION_MODE_STREAM;
-    case wrtc::NetworkInterface::Mode::Rtmp:
+    case wrtc::ConnectionMode::Rtmp:
         return NTG_CONNECTION_MODE_RTMP;
     }
     return {};
@@ -641,7 +641,7 @@ int ntg_get_state(const uintptr_t ptr, const int64_t chatID, ntg_media_state_str
 
 int ntg_get_connection_mode(const uintptr_t ptr, const int64_t chatID, ntg_connection_mode_enum* mode, ntg_async_struct future) {
     PREPARE_ASYNC(getConnectionMode, chatID)
-    [future, mode](const wrtc::NetworkInterface::Mode m) {
+    [future, mode](const wrtc::ConnectionMode m) {
         *mode = parseCConnectionMode(m);
         *future.errorCode = 0;
         future.promise(future.userData);

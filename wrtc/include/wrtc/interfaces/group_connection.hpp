@@ -25,7 +25,7 @@ namespace wrtc {
 
         void connectMediaStream();
 
-        void setConnectionMode(Mode kind);
+        void setConnectionMode(ConnectionMode kind);
 
         void sendBroadcastPart(int64_t segmentID, int32_t partID, MediaSegment::Part::Status status, bool qualityUpdate, const std::optional<bytes::binary>& data) const;
 
@@ -47,7 +47,7 @@ namespace wrtc {
 
         ResponsePayload::Media getMediaConfig() const;
 
-        Mode getConnectionMode() const override;
+        ConnectionMode getConnectionMode() const override;
 
     private:
         int64_t lastNetworkActivityMs = 0;
@@ -56,7 +56,7 @@ namespace wrtc {
         bool isPresentation = false;
         bool isRtcConnected = false, isStreamConnected = false;
         bool lastEffectivelyConnected = false;
-        Mode connectionMode = Mode::None;
+        ConnectionMode connectionMode = ConnectionMode::None;
         ResponsePayload::Media mediaConfig;
         std::shared_ptr<MTProtoStream> mtprotoStream;
 

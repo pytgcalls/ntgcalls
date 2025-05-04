@@ -28,7 +28,7 @@ namespace ntgcalls {
         });
     }
 
-    wrtc::NetworkInterface::Mode CallInterface::getConnectionMode() const {
+    wrtc::ConnectionMode CallInterface::getConnectionMode() const {
         return connection->getConnectionMode();
     }
 

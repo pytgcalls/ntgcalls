@@ -47,7 +47,7 @@ namespace ntgcalls {
 
         virtual void stop();
 
-        wrtc::NetworkInterface::Mode getConnectionMode() const;
+        wrtc::ConnectionMode getConnectionMode() const;
 
         bool pause() const;
 
