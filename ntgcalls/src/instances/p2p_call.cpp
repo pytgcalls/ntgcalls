@@ -24,11 +24,11 @@ namespace ntgcalls {
         }
     }
 
-    void P2PCall::init(const MediaDescription &media) const {
+    void P2PCall::init() const {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
         streamManager->enableVideoSimulcast(false);
-        streamManager->setStreamSources(StreamManager::Mode::Capture, media);
-        streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
+        streamManager->setStreamSources(StreamManager::Mode::Capture);
+        streamManager->setStreamSources(StreamManager::Mode::Playback);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
     }
 

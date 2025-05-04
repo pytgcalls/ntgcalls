@@ -17,7 +17,7 @@ namespace ntgcalls {
         CallInterface::stop();
     }
 
-    std::string GroupCall::init(const MediaDescription& config) {
+    std::string GroupCall::init() {
         RTC_LOG(LS_INFO) << "Initializing group call";
         if (connection) {
             RTC_LOG(LS_ERROR) << "Connection already made";
@@ -26,8 +26,8 @@ namespace ntgcalls {
         connection = std::make_shared<wrtc::GroupConnection>(false);
         connection->open();
         RTC_LOG(LS_INFO) << "Group call initialized";
-        streamManager->setStreamSources(StreamManager::Mode::Capture, config);
-        streamManager->setStreamSources(StreamManager::Mode::Playback, MediaDescription());
+        streamManager->setStreamSources(StreamManager::Mode::Capture);
+        streamManager->setStreamSources(StreamManager::Mode::Playback);
         streamManager->optimizeSources(connection.get());
 
         std::weak_ptr weak(shared_from_this());
@@ -143,11 +143,7 @@ namespace ntgcalls {
             });
             Safe<wrtc::GroupConnection>(conn)->connectMediaStream();
             streamManager->optimizeSources(conn.get());
-            streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, conn.get());
             RTC_LOG(LS_VERBOSE) << "MTProto stream attached";
-        }
-        if (connectionMode == wrtc::GroupConnection::Mode::Rtmp) {
-            streamManager->setStreamSources(StreamManager::Mode::Capture, MediaDescription());
         }
         setConnectionObserver(
             conn,

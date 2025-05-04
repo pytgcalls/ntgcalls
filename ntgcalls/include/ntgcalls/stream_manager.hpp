@@ -50,7 +50,7 @@ namespace ntgcalls {
 
         void enableVideoSimulcast(bool enable);
 
-        void setStreamSources(Mode mode, const MediaDescription& desc);
+        void setStreamSources(Mode mode, const MediaDescription& desc = MediaDescription());
 
         void optimizeSources(wrtc::NetworkInterface* pc) const;
 

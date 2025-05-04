@@ -22,7 +22,7 @@ namespace ntgcalls {
 
         void stop() override;
 
-        std::string init(const MediaDescription& config);
+        std::string init();
 
         std::string initPresentation();
 
