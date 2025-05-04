@@ -18,7 +18,7 @@ add_custom_target(clean_objects
     COMMENT "Removing all object (.o) files"
 )
 
-project(ntgcalls VERSION 1.3.5.4 LANGUAGES C CXX)
+project(ntgcalls VERSION 1.3.5.5 LANGUAGES C CXX)
 
 if (MACOS)
     enable_language(OBJCXX)
