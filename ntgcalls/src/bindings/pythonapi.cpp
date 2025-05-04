@@ -16,13 +16,13 @@ namespace py = pybind11;
 PYBIND11_MODULE(ntgcalls, m) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
-    wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"), py::arg("media"));
+    wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"));
     wrapper.def("init_exchange", &ntgcalls::NTgCalls::initExchange, py::arg("user_id"), py::arg("dh_config"), py::arg("g_a_hash"));
     wrapper.def("exchange_keys", &ntgcalls::NTgCalls::exchangeKeys, py::arg("user_id"), py::arg("g_a_or_b"), py::arg("fingerprint"));
     wrapper.def("skip_exchange", &ntgcalls::NTgCalls::skipExchange, py::arg("user_id"), py::arg("encryption_key"), py::arg("is_outgoing"));
     wrapper.def("connect_p2p", &ntgcalls::NTgCalls::connectP2P, py::arg("user_id"), py::arg("servers"), py::arg("versions"), py::arg("p2p_allowed"));
     wrapper.def("send_signaling", &ntgcalls::NTgCalls::sendSignalingData, py::arg("chat_id"), py::arg("msg_key"));
-    wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
+    wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"));
     wrapper.def("init_presentation", &ntgcalls::NTgCalls::initPresentation, py::arg("chat_id"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"), py::arg("is_presentation"));
     wrapper.def("set_stream_sources", &ntgcalls::NTgCalls::setStreamSources, py::arg("chat_id"), py::arg("direction"), py::arg("media"));
@@ -289,6 +289,7 @@ PYBIND11_MODULE(ntgcalls, m) {
     pybind11::register_exception<ntgcalls::MediaDeviceError>(m, "MediaDeviceError", baseExc);
     pybind11::register_exception<ntgcalls::SignalingUnsupported>(m, "SignalingUnsupported", baseExc);
     pybind11::register_exception<ntgcalls::RTCConnectionNeeded>(m, "RTCConnectionNeeded", baseExc);
+    pybind11::register_exception<ntgcalls::RTMPStreamingUnsupported>(m, "RTMPStreamingUnsupported", baseExc);
 
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 }
