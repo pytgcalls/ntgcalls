@@ -10,9 +10,6 @@
 
 namespace py = pybind11;
 
-#define STRINGIFY(x) #x
-#define MACRO_STRINGIFY(x) STRINGIFY(x)
-
 PYBIND11_MODULE(ntgcalls, m) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
@@ -291,5 +288,5 @@ PYBIND11_MODULE(ntgcalls, m) {
     pybind11::register_exception<ntgcalls::RTCConnectionNeeded>(m, "RTCConnectionNeeded", baseExc);
     pybind11::register_exception<ntgcalls::RTMPStreamingUnsupported>(m, "RTMPStreamingUnsupported", baseExc);
 
-    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+    m.attr("__version__") = NTG_VERSION;
 }

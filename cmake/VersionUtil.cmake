@@ -1,0 +1,38 @@
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+string(REPLACE "." ";" VERSION_PARTS ${PROJECT_VERSION})
+list(GET VERSION_PARTS 0 MAJOR)
+list(GET VERSION_PARTS 1 MINOR)
+list(GET VERSION_PARTS 2 PATCH)
+list(LENGTH VERSION_PARTS VERSION_PARTS_LENGTH)
+
+if(VERSION_PARTS_LENGTH EQUAL 4)
+    list(GET VERSION_PARTS 3 EXTRA)
+    set(VERSION "${MAJOR}.${MINOR}.${PATCH}b${EXTRA}")
+else()
+    set(VERSION "${MAJOR}.${MINOR}.${PATCH}")
+endif()
+
+if(GIT_BRANCH MATCHES "^.*/")
+    set(VERSION "${VERSION}+canary.${GIT_COMMIT}")
+elseif(GIT_BRANCH MATCHES "^dev")
+    set(VERSION "${VERSION}+dev.${GIT_COMMIT}")
+endif()
+
+if(DEFINED CMAKE_PARENT_LIST_FILE)
+    add_compile_definitions(NTG_VERSION="${VERSION}")
+else ()
+    message("${VERSION}")
+endif ()
