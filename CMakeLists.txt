@@ -9,7 +9,7 @@ include(ExternalProject)
 option(STATIC_BUILD "Build static libraries" ON)
 option(USE_LIBCXX   "Use libc++" ON)
 
-if(DEFINED PY_VERSION_INFO)
+if(DEFINED PYTHON_EXECUTABLE)
     set(IS_PYTHON TRUE)
 endif()
 
@@ -19,12 +19,11 @@ add_custom_target(clean_objects
 )
 
 project(ntgcalls VERSION 1.4.0.3 LANGUAGES C CXX)
+include(cmake/VersionUtil.cmake)
 
 if (MACOS)
     enable_language(OBJCXX)
 endif ()
-
-add_compile_definitions(NTG_VERSION="${CMAKE_PROJECT_VERSION}")
 
 find_package(Threads REQUIRED)
 
