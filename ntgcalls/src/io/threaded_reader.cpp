@@ -4,21 +4,31 @@
 
 #include <thread>
 #include <ntgcalls/io/threaded_reader.hpp>
+#include <rtc_base/logging.h>
+#include <rtc_base/unique_id_generator.h>
 
 namespace ntgcalls {
     ThreadedReader::ThreadedReader(BaseSink *sink, const size_t threadCount): BaseReader(sink), SyncHelper(sink->frameTime()) {
+        uniqueID = rtc::UniqueRandomIdGenerator().GenerateId();
+        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ThreadedReader created";
         bufferThreads.reserve(threadCount);
     }
 
     void ThreadedReader::close() {
         {
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ThreadedReader close";
             std::lock_guard lock(mtx);
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ThreadedReader close lock acquired";
             dataCallback = nullptr;
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ThreadedReader close dataCallback";
             eofCallback = nullptr;
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ThreadedReader close eofCallback";
             running = false;
             cv.notify_all();
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ThreadedReader close notify_all";
         }
         for (auto& thread : bufferThreads) {
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ThreadedReader close thread";
             thread.Finalize();
         }
     }

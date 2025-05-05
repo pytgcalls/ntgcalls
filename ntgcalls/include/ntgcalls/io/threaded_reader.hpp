@@ -26,6 +26,7 @@ namespace ntgcalls {
 
     protected:
         int64_t readChunks = 0;
+        uint32_t uniqueID;
 
         void run(const std::function<bytes::unique_binary(int64_t)>& readCallback);
 

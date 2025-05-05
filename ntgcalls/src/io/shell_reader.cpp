@@ -19,12 +19,16 @@ namespace ntgcalls {
     }
 
     ShellReader::~ShellReader() {
-        close();
         boost::system::error_code ec;
+        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader terminate";
         shellProcess.terminate(ec);
+        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader terminated: " << ec.message();
         shellProcess.wait(ec);
+        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader waited: " << ec.message();
         shellProcess.detach();
-        RTC_LOG(LS_VERBOSE) << "ShellReader closed";
+        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader detached";
+        close();
+        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader closed";
     }
 
     void ShellReader::open() {
@@ -33,7 +37,7 @@ namespace ntgcalls {
             boost::system::error_code ec;
             asio::read(stdOut, asio::buffer(file_data.get(), size), ec);
             if (ec || !stdOut.is_open() || !shellProcess.running()) {
-                RTC_LOG(LS_WARNING) << "Reached end of the file";
+                RTC_LOG(LS_WARNING) << "[" << uniqueID << "] Reached end of the file";
                 throw EOFError("Reached end of the stream");
             }
             return std::move(file_data);
