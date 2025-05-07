@@ -65,7 +65,6 @@ namespace ntgcalls {
                                 if (!running) break;
                                 dataCallback(std::move(chunk), {});
                                 waitNextFrame();
-                                frameSent++;
                             }
                             activeBuffer = (activeBuffer + 1) % bufferCount;
                             cv.notify_all();

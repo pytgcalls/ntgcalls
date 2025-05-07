@@ -15,7 +15,6 @@ namespace ntgcalls {
         std::vector<rtc::PlatformThread> bufferThreads;
         size_t activeBuffer = 0;
         size_t activeBufferCount = 0;
-        uint64_t frameSent = 0;
         std::condition_variable cv;
         std::mutex mtx;
 
