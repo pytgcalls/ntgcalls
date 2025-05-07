@@ -9,10 +9,6 @@ include(ExternalProject)
 option(STATIC_BUILD "Build static libraries" ON)
 option(USE_LIBCXX   "Use libc++" ON)
 
-if(DEFINED PYTHON_EXECUTABLE)
-    set(IS_PYTHON TRUE)
-endif()
-
 add_custom_target(clean_objects
     COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/CleanObjects.cmake"
     COMMENT "Removing all object (.o) files"
