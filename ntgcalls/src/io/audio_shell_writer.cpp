@@ -19,7 +19,7 @@ namespace ntgcalls {
     AudioShellWriter::~AudioShellWriter() {
         boost::system::error_code ec;
         if (stdIn.is_open()) {
-            stdIn.close(ec);
+            ec = stdIn.close(ec);
         }
         shellProcess.terminate(ec);
         shellProcess.wait(ec);

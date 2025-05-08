@@ -28,6 +28,10 @@ namespace ntgcalls {
         });
     }
 
+    wrtc::ConnectionMode CallInterface::getConnectionMode() const {
+        return connection->getConnectionMode();
+    }
+
     bool CallInterface::pause() const {
         return streamManager->pause();
     }
@@ -84,7 +88,7 @@ namespace ntgcalls {
     }
 
     void CallInterface::setConnectionObserver(const std::shared_ptr<wrtc::NetworkInterface>& conn, NetworkInfo::Kind kind) {
-        RTC_LOG(LS_INFO) << "Connecting...";
+        RTC_LOG(LS_VERBOSE) << "Connecting...";
         (void) connectionChangeCallback({NetworkInfo::ConnectionState::Connecting, kind});
         std::weak_ptr weak(shared_from_this());
         conn->onConnectionChange([weak, kind, conn](const wrtc::ConnectionState state, bool wasConnected) {
@@ -101,14 +105,14 @@ namespace ntgcalls {
                 switch (state) {
                 case wrtc::ConnectionState::Connecting:
                     if (wasConnected) {
-                        RTC_LOG(LS_INFO) << "Reconnecting...";
+                        RTC_LOG(LS_VERBOSE) << "Reconnecting...";
                     }
                     return;
                 case wrtc::ConnectionState::Connected:
-                    RTC_LOG(LS_INFO) << "Connection established";
+                    RTC_LOG(LS_VERBOSE) << "Connection established";
                     if (!wasConnected && strongUpdate->streamManager) {
                         strongUpdate->streamManager->start();
-                        RTC_LOG(LS_INFO) << "Stream started";
+                        RTC_LOG(LS_VERBOSE) << "Stream started";
                         (void) strongUpdate->connectionChangeCallback({NetworkInfo::ConnectionState::Connected, kind});
                     }
                     break;
@@ -122,7 +126,7 @@ namespace ntgcalls {
                         RTC_LOG(LS_ERROR) << "Connection failed";
                         (void) strongUpdate->connectionChangeCallback({NetworkInfo::ConnectionState::Failed, kind});
                     } else {
-                        RTC_LOG(LS_INFO) << "Connection closed";
+                        RTC_LOG(LS_VERBOSE) << "Connection closed";
                         (void) strongUpdate->connectionChangeCallback({NetworkInfo::ConnectionState::Closed, kind});
                     }
                     break;

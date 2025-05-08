@@ -32,49 +32,49 @@ DownloadProject(
 )
 
 if(NOT TARGET gnu::expat)
-    add_library(gnu::expat UNKNOWN IMPORTED)
+    add_library(gnu::expat STATIC IMPORTED)
     set_target_properties(gnu::expat PROPERTIES
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${EXPAT_LIB}")
 endif ()
 
 if(NOT TARGET gnu::libffi)
-    add_library(gnu::libffi UNKNOWN IMPORTED)
+    add_library(gnu::libffi STATIC IMPORTED)
     set_target_properties(gnu::libffi PROPERTIES
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${FFI_LIB}")
 endif ()
 
 if(NOT TARGET gnu::pcre2)
-    add_library(gnu::pcre2 UNKNOWN IMPORTED)
+    add_library(gnu::pcre2 STATIC IMPORTED)
     set_target_properties(gnu::pcre2 PROPERTIES
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${PCRE2_LIB}")
 endif ()
 
 if(NOT TARGET gnome::gmodule-2.0)
-    add_library(gnome::gmodule-2.0 UNKNOWN IMPORTED)
+    add_library(gnome::gmodule-2.0 STATIC IMPORTED)
     set_target_properties(gnome::gmodule-2.0 PROPERTIES
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${GMODULE_2_0_LIB}")
 endif ()
 
 if(NOT TARGET gnome::glib-2.0)
-    add_library(gnome::glib-2.0 UNKNOWN IMPORTED)
+    add_library(gnome::glib-2.0 STATIC IMPORTED)
     set_target_properties(gnome::glib-2.0 PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${GLIB_SRC}/include"
+            INTERFACE_INCLUDE_DIRECTORIES "${GLIB_SRC}/include/glib-2.0"
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${GLIB_2_0_LIB}")
     target_link_libraries(gnome::glib-2.0 INTERFACE gnu::pcre2)
 endif ()
 
 if(NOT TARGET gnome::gio-2.0)
-    add_library(gnome::gio-2.0 UNKNOWN IMPORTED)
+    add_library(gnome::gio-2.0 STATIC IMPORTED)
     set_target_properties(gnome::gio-2.0 PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${GLIB_SRC}/include"
+            INTERFACE_INCLUDE_DIRECTORIES "${GLIB_SRC}/include/glib-2.0"
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${GIO_2_0_LIB}")
     target_link_libraries(gnome::gio-2.0 INTERFACE gnome::gmodule-2.0)
 endif ()
 
 if(NOT TARGET gnome::gobject-2.0)
-    add_library(gnome::gobject-2.0 UNKNOWN IMPORTED)
+    add_library(gnome::gobject-2.0 STATIC IMPORTED)
     set_target_properties(gnome::gobject-2.0 PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${GLIB_SRC}/include"
+            INTERFACE_INCLUDE_DIRECTORIES "${GLIB_SRC}/include/glib-2.0"
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${GOBJECT_2_0_LIB}")
     target_link_libraries(gnome::gobject-2.0 INTERFACE gnu::libffi gnome::glib-2.0)
 endif ()

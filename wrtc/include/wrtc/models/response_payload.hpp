@@ -26,6 +26,7 @@ namespace wrtc {
         Media media;
 
         bool isRtmp = false;
+        bool isStream = false;
 
         explicit ResponsePayload(const std::string& payload);
     };

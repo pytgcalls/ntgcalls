@@ -3,7 +3,6 @@ target_compile_definitions(${target_name} PUBLIC
     WEBRTC_MAC
     NDEBUG
 )
-enable_language(OBJCXX)
 target_compile_options(${target_name} PRIVATE -fconstant-string-class=NSConstantString)
 target_link_options(${target_name} PUBLIC -ObjC)
 set_target_properties(${target_name} PROPERTIES CXX_VISIBILITY_PRESET hidden)
@@ -23,5 +22,7 @@ if (import_libraries)
         "-framework IOSurface"
         "-framework ScreenCaptureKit"
         "iconv"
+        "z"
+        "bz2"
     )
 endif ()

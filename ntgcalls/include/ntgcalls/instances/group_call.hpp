@@ -12,25 +12,25 @@ namespace ntgcalls {
 
     class GroupCall final : public CallInterface {
         std::shared_ptr<wrtc::GroupConnection> presentationConnection;
-        std::map<std::string, bool> endpointsKind;
-        std::map<std::string, std::vector<wrtc::SsrcGroup>> pendingIncomingPresentations;
+        wrtc::synchronized_callback<void> broadcastTimestampCallback;
+        wrtc::synchronized_callback<wrtc::SegmentPartRequest> segmentPartRequestCallback;
 
-        static void updateRemoteVideoConstraints(const std::shared_ptr<wrtc::NetworkInterface>& conn) ;
+        static void updateRemoteVideoConstraints(const wrtc::GroupConnection* conn) ;
 
     public:
         explicit GroupCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
 
         void stop() override;
 
-        std::string init(const MediaDescription& config);
+        std::string init();
 
         std::string initPresentation();
 
         void connect(const std::string& jsonData, bool isPresentation);
 
-        uint32_t addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup);
+        uint32_t addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const;
 
-        bool removeIncomingVideo(const std::string& endpoint);
+        bool removeIncomingVideo(const std::string& endpoint) const;
 
         void stopPresentation(bool force = false);
 
@@ -39,6 +39,14 @@ namespace ntgcalls {
         Type type() const override;
 
         void onUpgrade(const std::function<void(MediaState)> &callback) const;
+
+        void sendBroadcastPart(int64_t segmentID, int32_t partID, wrtc::MediaSegment::Part::Status status, bool qualityUpdate, const std::optional<bytes::binary>& data) const;
+
+        void onRequestedBroadcastPart(const std::function<void(wrtc::SegmentPartRequest)>& callback);
+
+        void sendBroadcastTimestamp(int64_t timestamp) const;
+
+        void onRequestedBroadcastTimestamp(const std::function<void()>& callback);
     };
 
 } // ntgcalls

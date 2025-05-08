@@ -28,7 +28,7 @@
 </p>
 
 # NTgCalls [![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/) [![Downloads](https://img.shields.io/pepy/dt/ntgcalls?logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)](https://pepy.tech/project/ntgcalls)
-NTgCalls is a lightweight open-source library for media streaming in Telegram calls. Built from scratch in C++ with WebRTC & Boost, it prioritises accessibility to developers and resource efficiency.
+NTgCalls is a lightweight open-source library for media streaming in Telegram calls. Built from scratch in C++ with WebRTC & Boost, it prioritizes accessibility to developers and resource efficiency.
 
 |                                                                                     Powerful                                                                                      |                                                                                            Simple                                                                                            |                                                                                                   Light                                                                                                    |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
@@ -44,9 +44,9 @@ NTgCalls is a lightweight open-source library for media streaming in Telegram ca
 - Pre-built binaries for macOS (arm64-v8a), Linux (x86_64, arm64-v8a), Windows (x86_64), and Android (x86, 86_64, arm64-v8a, armv7)
 - Call flexibility: Group and private call support
 - Media controls: pause/resume and mute/unmute
-- Codec compatibility: H.264, VP8, VP9, AV1
+- Codec compatibility: H.264, HEVC (H.265), VP8, VP9, AV1, AAC, MP3, Opus
 - Content sharing: Screen streaming, Microphone and Camera streaming
-- Pre-built wheels for python & AAR SDK library for Android
+- Pre-built wheels for Python & AAR SDK library for Android
 
 ## Compiling
 
@@ -65,7 +65,7 @@ NTgCalls includes Python bindings for seamless integration. Follow these steps t
 
 NTgCalls includes Go Bindings, enabling seamless integration with Go. Follow these steps to compile it with Go Bindings:
 1. There is an example project for Go in `./examples/go/` directory, ensure you are in that directory
-2. Prerequisites for building are the same as for building library itself and can be found [here](https://pytgcalls.github.io/NTgCalls/Build%20Guide#Installing=Prerequisites)
+2. Prerequisites for building are the same as for building a library itself and can be found [here](https://pytgcalls.github.io/NTgCalls/Build%20Guide#Installing=Prerequisites)
 3. Download **shared** or **static** release of the library from https://github.com/pytgcalls/ntgcalls/releases
 4. Copy `ntgcalls.h` file into `./examples/go/ntgcalls/` directory
 5. The rest of the files should be copied to `./examples/go/` directory
@@ -91,7 +91,7 @@ For developers looking to use NTgCalls with C and C++, we provide C Bindings. Fo
 3. Upon successful execution, a library will be generated in the "shared-output" or "static-output" directory, depending on the chosen option.
    Now you can use this library to develop applications with NTgCalls.
 4. To include the necessary headers in your C/C++ projects, you will find the "include" folder in the "shared-output" or "static-output" directory.
-   Utilize this folder for including the required header files.
+   Use this folder by including the required header files.
 
 ## Key Contributors
 * <b><a href="https://github.com/Laky-64">@Laky-64</a> (DevOps Engineer, Software Architect, Porting Engineer):</b>
@@ -125,7 +125,7 @@ For developers looking to use NTgCalls with C and C++, we provide C Bindings. Fo
 ## Special Thanks
 * <b><a href="https://github.com/shiguredo">@shiguredo</a>:</b>
   We extend our special thanks to 時雨堂 (shiguredo) for their invaluable assistance in integrating the WebRTC component. Their contributions,
-  utilizing the Sora C++ SDK, have been instrumental in enhancing the functionality of our library.
+  using the Sora C++ SDK, have been instrumental in enhancing the functionality of our library.
 
 * <b><a href="https://github.com/evgeny-nadymov">@evgeny-nadymov</a>:</b>
   A heartfelt thank you to Evgeny Nadymov for graciously allowing us to use their code from telegram-react.

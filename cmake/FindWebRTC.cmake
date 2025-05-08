@@ -34,7 +34,7 @@ if(NOT TARGET WebRTC::webrtc)
         set(ARCHIVE_FORMAT .tar.gz)
         set(ARCH ${ANDROID_ABI})
     elseif (LINUX)
-        set(PLATFORM ubuntu-20.04)
+        set(PLATFORM ubuntu-22.04)
         set(ARCHIVE_FORMAT .tar.gz)
         if (LINUX_x86_64)
             set(ARCH x86_64)
@@ -62,7 +62,7 @@ if(NOT TARGET WebRTC::webrtc)
         SOURCE_DIR ${WEBRTC_SRC}
     )
 
-    add_library(WebRTC::webrtc UNKNOWN IMPORTED)
+    add_library(WebRTC::webrtc STATIC IMPORTED)
 
     target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_PATCH_LOCATION})
 
@@ -74,9 +74,10 @@ if(NOT TARGET WebRTC::webrtc)
         ${WEBRTC_INCLUDE}/third_party/zlib
     )
     if (MACOS)
-        list(APPEND WEBRTC_INCLUDE
+        list(APPEND _DIRS
             ${WEBRTC_INCLUDE}/sdk/objc
             ${WEBRTC_INCLUDE}/sdk/objc/base
+            ${WEBRTC_INCLUDE}/sdk/objc/components/video_codec
         )
     endif()
 

@@ -50,9 +50,9 @@ namespace ntgcalls {
 
         void enableVideoSimulcast(bool enable);
 
-        void setStreamSources(Mode mode, const MediaDescription& desc);
+        void setStreamSources(Mode mode, const MediaDescription& desc = MediaDescription());
 
-        void optimizeSources(wrtc::NetworkInterface* pc) const;
+        void optimizeSources(wrtc::NetworkInterface* pc);
 
         MediaState getState();
 
@@ -77,6 +77,8 @@ namespace ntgcalls {
         void start();
 
         bool hasDevice(Mode mode, Device device) const;
+
+        bool hasReaders() const;
 
         void onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback);
 

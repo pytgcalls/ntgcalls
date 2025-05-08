@@ -1,4 +1,8 @@
+//
+// Created by Laky64 on 23/04/2025.
 // This header file provides compatibility for the glibc >= 2.28 version for _dn_expand and __res_nquery functions.
+
+#pragma once
 
 #ifdef __GLIBC__
     #if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 28)

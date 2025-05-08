@@ -92,6 +92,8 @@ namespace openh264 {
                 return WEBRTC_VIDEO_CODEC_ERROR;
             }
             RTC_DCHECK(openh264Encoder);
+            int32_t iTraceLevel = WELS_LOG_QUIET;
+            openh264Encoder->SetOption(ENCODER_OPTION_TRACE_LEVEL, &iTraceLevel);
             encoders[i] = openh264Encoder;
 
             configurations[i].simulcastIdx = idx;
@@ -122,8 +124,6 @@ namespace openh264 {
             }
             int video_format = videoFormatI420;
             openh264Encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &video_format);
-            int32_t iTraceLevel = WELS_LOG_QUIET;
-            openh264Encoder->SetOption(ENCODER_OPTION_TRACE_LEVEL, &iTraceLevel);
             const size_t new_capacity = CalcBufferSize(
                 webrtc::VideoType::kI420,
                 codec.simulcastStream[idx].width,
@@ -187,7 +187,7 @@ namespace openh264 {
             return WEBRTC_VIDEO_CODEC_UNINITIALIZED;
         }
         if (!encodedImageCallback) {
-            RTC_LOG(LS_INFO)
+            RTC_LOG(LS_VERBOSE)
                 << "InitEncode() has been called, but a callback function "
                    "has not been set with RegisterEncodeCompleteCallback()";
             ReportError();
@@ -312,7 +312,7 @@ namespace openh264 {
                             RTC_DCHECK_EQ(layerFrames[0].IsKeyframe(), true);
                         }
                         if (layerFrames[0].TemporalId() != tid) {
-                            RTC_LOG(LS_INFO)
+                            RTC_LOG(LS_VERBOSE)
                                 << "Encoder produced a frame with temporal id " << tid
                                 << ", expected " << layerFrames[0].TemporalId() << ".";
                             continue;
@@ -341,12 +341,12 @@ namespace openh264 {
 
     void H264Encoder::SetRates(const RateControlParameters& parameters) {
         if (encoders.empty()) {
-            RTC_LOG(LS_INFO) << "SetRates() while uninitialized.";
+            RTC_LOG(LS_VERBOSE) << "SetRates() while uninitialized.";
             return;
         }
 
         if (parameters.framerate_fps < 1.0) {
-            RTC_LOG(LS_INFO) << "Invalid frame rate: " << parameters.framerate_fps;
+            RTC_LOG(LS_VERBOSE) << "Invalid frame rate: " << parameters.framerate_fps;
             return;
         }
 
@@ -425,13 +425,13 @@ namespace openh264 {
         }
         const auto buffer = webrtc::EncodedImageBuffer::Create(requiredCapacity);
         encodedImage->SetEncodedData(buffer);
-        constexpr uint8_t startCode[4] = {0, 0, 0, 1};
         size_t frag = 0;
         encodedImage->set_size(0);
         for (int layer = 0; layer < info->iLayerNum; ++layer) {
             const auto& [uiTemporalId, uiSpatialId, uiQualityId, eFrameType, uiLayerType, iSubSeqId, iNalCount, pNalLengthInByte, pBsBuf, rPsnr] = info->sLayerInfo[layer];
             size_t layer_len = 0;
             for (int nal = 0; nal < iNalCount; ++nal, ++frag) {
+                constexpr uint8_t startCode[4] = {0, 0, 0, 1};
                 RTC_DCHECK_GE(pNalLengthInByte[nal], 4);
                 RTC_DCHECK_EQ(pBsBuf[layer_len + 0], startCode[0]);
                 RTC_DCHECK_EQ(pBsBuf[layer_len + 1], startCode[1]);
@@ -467,7 +467,7 @@ namespace openh264 {
         return std::nullopt;
     }
 
-    SEncParamExt H264Encoder::CreateEncoderParams(size_t i) const {
+    SEncParamExt H264Encoder::CreateEncoderParams(const size_t i) const {
         SEncParamExt encoderParams;
         encoders[i]->GetDefaultParams(&encoderParams);
         if (codec.mode == webrtc::VideoCodecMode::kRealtimeVideo) {
@@ -502,13 +502,13 @@ namespace openh264 {
         if (encoderParams.iTemporalLayerNum > 1) {
             encoderParams.iNumRefFrame = encoderParams.iTemporalLayerNum - 1;
         }
-        RTC_LOG(LS_INFO) << "OpenH264 version is " << OPENH264_MAJOR << "." << OPENH264_MINOR;
+        RTC_LOG(LS_VERBOSE) << "OpenH264 version is " << OPENH264_MAJOR << "." << OPENH264_MINOR;
         switch (packetizationMode) {
         case webrtc::H264PacketizationMode::SingleNalUnit:
             encoderParams.sSpatialLayers[0].sSliceArgument.uiSliceNum = 1;
             encoderParams.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_SIZELIMITED_SLICE;
             encoderParams.sSpatialLayers[0].sSliceArgument.uiSliceSizeConstraint = static_cast<unsigned int>(maxPayloadSize);
-            RTC_LOG(LS_INFO) << "Encoder is configured with NALU constraint: " << maxPayloadSize << " bytes";
+            RTC_LOG(LS_VERBOSE) << "Encoder is configured with NALU constraint: " << maxPayloadSize << " bytes";
             break;
         case webrtc::H264PacketizationMode::NonInterleaved:
             encoderParams.sSpatialLayers[0].sSliceArgument.uiSliceNum = 1;

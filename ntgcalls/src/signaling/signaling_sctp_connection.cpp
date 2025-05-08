@@ -22,7 +22,11 @@ namespace signaling {
             sctpTransport = sctpTransportFactory->CreateSctpTransport(env, packetTransport.get());
             sctpTransport->OpenStream(0, webrtc::PriorityValue(webrtc::Priority::kVeryLow));
             sctpTransport->SetDataChannelSink(this);
-            sctpTransport->Start(5000, 5000, 262144);
+            sctpTransport->Start({
+                5000,
+                5000,
+                262144
+            });
         });
     }
     void SignalingSctpConnection::close() {

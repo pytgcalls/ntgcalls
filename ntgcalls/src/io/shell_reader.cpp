@@ -19,11 +19,11 @@ namespace ntgcalls {
     }
 
     ShellReader::~ShellReader() {
-        close();
         boost::system::error_code ec;
         shellProcess.terminate(ec);
         shellProcess.wait(ec);
         shellProcess.detach();
+        close();
         RTC_LOG(LS_VERBOSE) << "ShellReader closed";
     }
 

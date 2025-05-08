@@ -16,21 +16,6 @@ CMAKE_VERSION = '3.30.5'
 TOOLS_PATH = Path(Path.cwd(), 'build_tools')
 
 
-with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
-    regex = re.compile(r'VERSION ([A-Za-z0-9.]+)', re.MULTILINE)
-    version = re.findall(regex, f.read())[1]
-
-    if version.count('.') == 3:
-        major, minor, patch, tweak = version.split('.')
-        version = f'{major}.{minor}.{patch}b{tweak}'
-
-
-class CMakeExtension(Extension):
-    def __init__(self, name: str, sourcedir: str = '') -> None:
-        super().__init__(name, sources=[])
-        self.sourcedir = os.fspath(Path(sourcedir).resolve())
-
-
 def cmake_path():
     return Path(TOOLS_PATH, f'cmake_{CMAKE_VERSION.replace(".", "_")}')
 
@@ -39,10 +24,6 @@ def cmake_bin():
     if sys.platform.startswith('linux'):
         return Path(cmake_path(), 'bin', 'cmake')
     return 'cmake'
-
-
-def release_kind():
-    return 'RelWithDebInfo' if sys.platform.startswith('linux') else 'Release'
 
 
 def install_cmake(cmake_version: str):
@@ -65,10 +46,31 @@ def install_cmake(cmake_version: str):
     )
 
 
+with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
+    if sys.platform.startswith('linux'):
+        install_cmake(CMAKE_VERSION)
+    regex = re.compile(r'VERSION ([0-9.]+)', re.MULTILINE)
+    cmake_command = [
+        str(cmake_bin()),
+        f'-DPROJECT_VERSION={re.findall(regex, f.read())[1]}',
+        '-P',
+        'cmake/VersionUtil.cmake',
+    ]
+    version = subprocess.run(cmake_command, capture_output=True, text=True).stderr.strip()
+    version = re.sub(r'\x1b\[[0-9;]*m', '', version)
+
+class CMakeExtension(Extension):
+    def __init__(self, name: str, sourcedir: str = '') -> None:
+        super().__init__(name, sources=[])
+        self.sourcedir = os.fspath(Path(sourcedir).resolve())
+
+
+def release_kind():
+    return 'RelWithDebInfo' if sys.platform.startswith('linux') else 'Release'
+
+
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
-        if sys.platform.startswith('linux'):
-            install_cmake(CMAKE_VERSION)
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
         cfg = release_kind()
@@ -76,7 +78,7 @@ class CMakeBuild(build_ext):
             f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}',
             f'-DPYTHON_EXECUTABLE={sys.executable}',
             f'-DCMAKE_BUILD_TYPE={cfg}',
-            f'-DPY_VERSION_INFO={version}',
+            f'-DIS_PYTHON=ON',
             f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}',
             f'-DCMAKE_TOOLCHAIN_FILE={Path(Path.cwd(), "cmake", "Toolchain.cmake")}',
         ]
@@ -119,14 +121,14 @@ class SharedCommand(Command):
 
     # noinspection PyMethodMayBeStatic
     def run(self):
-        if sys.platform.startswith('linux'):
-            install_cmake(CMAKE_VERSION)
         arch_outputs = [
             'auto',
         ]
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={release_kind()}',
             f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
+            f'-DIS_PYTHON=OFF',
+            f'-DPYTHON_EXECUTABLE={sys.executable}',
             f'-DCMAKE_TOOLCHAIN_FILE={Path(Path.cwd(), "cmake", "Toolchain.cmake")}',
         ]
         build_args = [
@@ -166,10 +168,6 @@ class SharedCommand(Command):
             )
         if self.no_preserve_cache:
             shutil.rmtree(build_temp)
-            boost_dir = Path(source_dir, 'deps', 'boost')
-            for boost_build in os.listdir(boost_dir):
-                if boost_build.startswith('boost_'):
-                    shutil.rmtree(Path(boost_dir, boost_build))
             print('Cleanup successfully')
 
 

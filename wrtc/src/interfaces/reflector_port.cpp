@@ -8,6 +8,7 @@
 #include <memory>
 #include <utility>
 #include <random>
+#include <ranges>
 #include <sstream>
 #include <absl/memory/memory.h>
 
@@ -19,10 +20,10 @@
 #include <rtc_base/async_packet_socket.h>
 #include <rtc_base/checks.h>
 #include <rtc_base/logging.h>
+#include <rtc_base/net_helper.h>
 #include <rtc_base/net_helpers.h>
 #include <rtc_base/socket_address.h>
 #include <rtc_base/strings/string_builder.h>
-#include <system_wrappers/include/field_trial.h>
 
 namespace wrtc {
     ReflectorPort::ReflectorPort(const cricket::CreateRelayPortArgs& args,
@@ -185,7 +186,7 @@ namespace wrtc {
                 return;
             }
             attemptedServerAddresses.insert(serverAddress.address);
-            RTC_LOG(LS_INFO) << ToString() << ": Trying to connect to REFLECTOR server via " << ProtoToString(serverAddress.proto) << " @ " << serverAddress.address.ToSensitiveString();
+            RTC_LOG(LS_VERBOSE) << ToString() << ": Trying to connect to REFLECTOR server via " << cricket::ProtoToString(serverAddress.proto) << " @ " << serverAddress.address.ToSensitiveString();
             if (!CreateReflectorClientSocket()) {
                 RTC_LOG(LS_ERROR) << "Failed to create REFLECTOR client socket";
                 OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE,
@@ -204,7 +205,7 @@ namespace wrtc {
         }
         RTC_LOG(LS_WARNING) << ToString() << ": REFLECTOR sending ping to " << serverAddress.address.ToString();
         rtc::ByteBufferWriter bufferWriter;
-        bufferWriter.WriteBytes(peerTag.data(), peerTag.size());
+        bufferWriter.Write(rtc::MakeArrayView(peerTag.data(), peerTag.size()));
         for (int i = 0; i < 12; i++) {
             bufferWriter.WriteUInt8(0xffu);
         }
@@ -313,7 +314,7 @@ namespace wrtc {
         if (serverAddress.address.IsUnresolvedIP()) {
             serverAddress.address = socket->GetRemoteAddress();
         }
-        RTC_LOG(LS_INFO) << "ReflectorPort connected to " << socket->GetRemoteAddress().ToSensitiveString() << " using tcp.";
+        RTC_LOG(LS_VERBOSE) << "ReflectorPort connected to " << socket->GetRemoteAddress().ToSensitiveString() << " using tcp.";
     }
 
     void ReflectorPort::OnSocketClose(rtc::AsyncPacketSocket* socket, const int error) {
@@ -407,11 +408,11 @@ namespace wrtc {
         targetPeerTag.AppendData(reinterpret_cast<uint8_t*>(&resolvedPeerTag), 4);
 
         rtc::ByteBufferWriter bufferWriter;
-        bufferWriter.WriteBytes(targetPeerTag.data(), targetPeerTag.size());
-        bufferWriter.WriteBytes(reinterpret_cast<const uint8_t*>(&randomTag), 4);
+        bufferWriter.Write(rtc::MakeArrayView(targetPeerTag.data(), targetPeerTag.size()));
+        bufferWriter.Write(rtc::MakeArrayView(reinterpret_cast<const uint8_t*>(&randomTag), 4));
 
         bufferWriter.WriteUInt32(static_cast<uint32_t>(size));
-        bufferWriter.WriteBytes(static_cast<const uint8_t*>(data), size);
+        bufferWriter.Write(rtc::MakeArrayView(static_cast<const uint8_t*>(data), size));
         while (bufferWriter.Length() % 4 != 0) {
             bufferWriter.WriteUInt8(0);
         }
@@ -467,7 +468,7 @@ namespace wrtc {
         if (state != STATE_READY) {
             state = STATE_READY;
 
-            RTC_LOG(LS_INFO) << ToString() << ": REFLECTOR " << serverAddress.address.ToString() << " is now ready";
+            RTC_LOG(LS_VERBOSE) << ToString() << ": REFLECTOR " << serverAddress.address.ToString() << " is now ready";
 
             const auto ipFormat = "reflector-" + std::to_string(static_cast<uint32_t>(serverId)) + "-" + std::to_string(randomTag) + ".reflector";
             rtc::SocketAddress candidateAddress(ipFormat, serverAddress.address.port());
@@ -479,7 +480,7 @@ namespace wrtc {
                 serverAddress.address,
                 rtc::SocketAddress(),
                 cricket::UDP_PROTOCOL_NAME,
-                ProtoToString(serverAddress.proto),
+                cricket::ProtoToString(serverAddress.proto),
                 "",
                 webrtc::IceCandidateType::kRelay,
                 GetRelayPreference(serverAddress.proto),
@@ -550,7 +551,7 @@ namespace wrtc {
     void ReflectorPort::ResolveTurnAddress(const rtc::SocketAddress& address) {
         if (resolver)
             return;
-        RTC_LOG(LS_INFO) << ToString() << ": Starting TURN host lookup for " << address.ToSensitiveString();
+        RTC_LOG(LS_VERBOSE) << ToString() << ": Starting TURN host lookup for " << address.ToSensitiveString();
         resolver = socket_factory()->CreateAsyncDnsResolver();
         resolver->Start(address, [this] {
             auto& result = resolver->result();
@@ -607,8 +608,8 @@ namespace wrtc {
             OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE, "");
         }
         state = STATE_DISCONNECTED;
-        for (auto [fst, snd] : connections()) {
-            snd->Destroy();
+        for (const auto connection : connections() | std::views::values) {
+            connection->Destroy();
         }
         SignalReflectorPortClosed(this);
     }

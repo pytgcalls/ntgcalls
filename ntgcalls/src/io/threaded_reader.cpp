@@ -6,7 +6,7 @@
 #include <ntgcalls/io/threaded_reader.hpp>
 
 namespace ntgcalls {
-    ThreadedReader::ThreadedReader(BaseSink *sink, const size_t threadCount): BaseReader(sink), SyncHelper(sink) {
+    ThreadedReader::ThreadedReader(BaseSink *sink, const size_t threadCount): BaseReader(sink), SyncHelper(sink->frameTime()) {
         bufferThreads.reserve(threadCount);
     }
 
@@ -65,7 +65,6 @@ namespace ntgcalls {
                                 if (!running) break;
                                 dataCallback(std::move(chunk), {});
                                 waitNextFrame();
-                                frameSent++;
                             }
                             activeBuffer = (activeBuffer + 1) % bufferCount;
                             cv.notify_all();

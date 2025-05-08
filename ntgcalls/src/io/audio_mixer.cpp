@@ -26,7 +26,7 @@ namespace ntgcalls {
             // Audio normalization
             mixedSample /= static_cast<int32_t>(numSources);
 
-            // Clipping to 16-bit signed integer range
+            // Clipping to a 16-bit signed integer range
             const auto mixedOutputSamples = reinterpret_cast<int16_t*>(mixedOutput.get());
             mixedOutputSamples[i] = static_cast<int16_t>(std::clamp(mixedSample, -32768, 32767));
         }

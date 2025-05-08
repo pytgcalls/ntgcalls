@@ -125,17 +125,4 @@ namespace wrtc {
         );
     }
 
-    void ChannelManager::DestroyChannel(cricket::ChannelInterface* channel) {
-        RTC_DCHECK(channel);
-        if (!workerThread->IsCurrent()) {
-            workerThread->BlockingCall([&] { DestroyChannel(channel); });
-            return;
-        }
-        if (channel->media_type() == cricket::MEDIA_TYPE_AUDIO) {
-            //DestroyVoiceChannel(static_cast<cricket::VoiceChannel*>(channel));
-        } else {
-            RTC_DCHECK_EQ(channel->media_type(), cricket::MEDIA_TYPE_VIDEO);
-            //DestroyVideoChannel(dynamic_cast<cricket::VideoChannel*>(channel));
-        }
-    }
 } // wrtc

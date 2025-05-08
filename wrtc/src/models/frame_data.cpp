@@ -13,4 +13,4 @@ namespace wrtc {
         const uint16_t height
     ): absoluteCaptureTimestampMs(absoluteCaptureTimestampMs), rotation(rotation), width(width), height(height) {}
 
-} // ntgcalls
+} // wrtc

@@ -1,149 +1,106 @@
-GetProperty("version.boost" BOOST_REVISION)
-string(REPLACE "." "_" BOOST_REVISION_UNDERSCORE ${BOOST_REVISION})
 set(BOOST_DIR ${deps_loc}/boost)
-set(BOOST_WORKDIR ${BOOST_DIR}/src)
-set(BOOST_ROOT ${BOOST_WORKDIR}/install)
+set(BOOST_SRC ${BOOST_DIR}/src)
+set(BOOST_GIT https://github.com/pytgcalls/boost)
+set(BOOST_ATOMIC_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_atomic${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(BOOST_CONTEXT_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_context${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(BOOST_DATE_TIME_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_date_time${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(BOOST_SYSTEM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_system${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(BOOST_FILESYSTEM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_filesystem${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(BOOST_PROCESS_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_process${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-# BUILD CONFIGS
-set(B2_EXECUTABLE ./b2)
-set(BOOST_LINK shared)
-set(BOOST_VISIBILITY global)
-set(BOOST_ARCH x86)
-set(BOOST_TOOLSET clang)
-if (WINDOWS_x86_64)
-    set(B2_EXECUTABLE b2)
-    set(BOOST_TARGET windows)
-    set(BOOST_TOOLSET msvc)
-    set(BOOST_CXX_FLAGS -D_ITERATOR_DEBUG_LEVEL=0)
-    set(BOOST_LINK static)
-elseif (LINUX_x86_64 OR LINUX_ARM64)
-    set(BOOST_TARGET linux)
-    set(BOOST_CXX_FLAGS
-            -D_LIBCPP_ABI_NAMESPACE=Cr
-            -D_LIBCPP_ABI_VERSION=2
-            -D_LIBCPP_DISABLE_AVAILABILITY
-            -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE
-            -nostdinc++
-            -isystem${LIBCXX_INCLUDE}/include
-            -fPIC
-    )
-    if (LINUX_ARM64)
-        set(BOOST_ARCH arm)
-    endif ()
+if (LINUX_ARM64)
+    set(PLATFORM linux)
+    set(ARCHIVE_FORMAT .tar.gz)
+    set(ARCH arm64)
+elseif (LINUX_x86_64)
+    set(PLATFORM linux)
+    set(ARCHIVE_FORMAT .tar.gz)
+    set(ARCH x86_64)
 elseif (MACOS_ARM64)
-    set(BOOST_TARGET darwin)
-    execute_process(COMMAND xcrun --sdk macosx --show-sdk-path
-        OUTPUT_VARIABLE MAC_SYS_ROOT
-        ERROR_QUIET
-    )
-    string(STRIP "${MAC_SYS_ROOT}" MAC_SYS_ROOT)
-    set(BOOST_C_FLAGS
-            --sysroot=${MAC_SYS_ROOT}
-            -target aarch64-apple-darwin
-    )
-    set(BOOST_CXX_FLAGS
-            -fPIC
-            --sysroot=${MAC_SYS_ROOT}
-            -std=gnu++17
-            -target aarch64-apple-darwin
-    )
-    set(BOOST_VISIBILITY hidden)
-    set(BOOST_ARCH arm)
+    set(PLATFORM macos)
+    set(ARCHIVE_FORMAT .tar.gz)
+    set(ARCH arm64)
+elseif (WINDOWS_x86_64)
+    set(PLATFORM windows)
+    set(ARCHIVE_FORMAT .zip)
+    set(ARCH x86_64)
 else ()
-    message(STATUS "[BOOST] ${CMAKE_SYSTEM_NAME} with ${CMAKE_HOST_SYSTEM_PROCESSOR} is not supported yet")
+    message(STATUS "Boost is not supported on ${CMAKE_SYSTEM_NAME} with ${CMAKE_HOST_SYSTEM_PROCESSOR}")
     return()
 endif ()
 
-if(NOT DEFINED LAST_BOOST_LIBS OR
-        NOT "${LAST_BOOST_LIBS}" STREQUAL "${BOOST_LIBS}" OR
-        NOT EXISTS ${BOOST_DIR} OR
-        NOT EXISTS ${BOOST_WORKDIR} OR
-        NOT EXISTS ${BOOST_ROOT})
+GetProperty("version.boost" BOOST_VERSION)
+message(STATUS "boost v${BOOST_VERSION}")
 
-    set(BOOST_DOWNLOAD_DIR ${BOOST_DIR}/download)
-    DownloadProject(
-        URL https://archives.boost.io/release/${BOOST_REVISION}/source/boost_${BOOST_REVISION_UNDERSCORE}.tar.gz
-        DOWNLOAD_DIR ${BOOST_DOWNLOAD_DIR}
-        SOURCE_DIR ${BOOST_WORKDIR}
+set(FILE_NAME boost.${PLATFORM}-${ARCH}${ARCHIVE_FORMAT})
+
+DownloadProject(
+    URL ${BOOST_GIT}/releases/download/v${BOOST_VERSION}/${FILE_NAME}
+    DOWNLOAD_DIR ${BOOST_DIR}/download
+    SOURCE_DIR ${BOOST_SRC}
+)
+
+if (NOT TARGET Boost::atomic)
+    add_library(Boost::atomic STATIC IMPORTED)
+    set_target_properties(Boost::atomic PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
+        IMPORTED_LINK_INTERFACE_LANGUAGES CXX
+        IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_ATOMIC_LIB}"
+        INTERFACE_COMPILE_DEFINITIONS "BOOST_ATOMIC_NO_LIB"
     )
-    if (NOT EXISTS ${BOOST_WORKDIR}/b2.exe OR NOT EXISTS ${BOOST_WORKDIR}/b2)
-        if (WINDOWS)
-            set(BOOTSTRAP_EXECUTABLE .\\bootstrap.bat)
-        else ()
-            set(BOOTSTRAP_EXECUTABLE ./bootstrap.sh)
-        endif ()
-
-        message(STATUS "[BOOST] Executing bootstrap...")
-        execute_process(COMMAND ${BOOTSTRAP_EXECUTABLE}
-            WORKING_DIRECTORY ${BOOST_WORKDIR}
-            RESULT_VARIABLE rv
-            OUTPUT_QUIET
-            ERROR_QUIET
-        )
-
-        if(NOT rv EQUAL 0)
-            file(REMOVE_RECURSE ${BOOST_WORKDIR})
-            message(FATAL_ERROR "[BOOST] Error while executing bootstrap, cleaning up")
-        endif ()
-    endif ()
-
-    if (EXISTS ${BOOST_ROOT})
-        message(STATUS "[BOOST] Cleaning up old Boost build...")
-        file(REMOVE_RECURSE ${BOOST_ROOT})
-    endif ()
-
-    if (NOT WINDOWS)
-        file(WRITE ${BOOST_WORKDIR}/project-config.jam "using ${BOOST_TOOLSET} : : ${CMAKE_CXX_COMPILER} : ;")
-    endif ()
-
-    foreach(lib ${BOOST_LIBS})
-        list(APPEND BOOST_LIBS_OPTIONS --with-${lib})
-    endforeach()
-    string (REPLACE ";" " " BOOST_C_FLAGS "${BOOST_C_FLAGS}")
-    string (REPLACE ";" " " BOOST_CXX_FLAGS "${BOOST_CXX_FLAGS}")
-    set(BUILD_COMMAND
-        ${B2_EXECUTABLE}
-        install
-        -d+0
-        --prefix=${BOOST_ROOT}
-        ${BOOST_LIBS_OPTIONS}
-        --layout=system
-        --ignore-site-config
-        variant=release
-        cflags=${BOOST_C_FLAGS}
-        cxxflags=${BOOST_CXX_FLAGS}
-        toolset=${BOOST_TOOLSET}
-        visibility=${BOOST_VISIBILITY}
-        target-os=${BOOST_TARGET}
-        address-model=64
-        link=static
-        runtime-link=${BOOST_LINK}
-        threading=multi
-        architecture=${BOOST_ARCH}
-    )
-    message(STATUS "[BOOST] Executing build process...")
-    execute_process(COMMAND ${BUILD_COMMAND}
-        WORKING_DIRECTORY ${BOOST_WORKDIR}
-        RESULT_VARIABLE rv
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
-    if(NOT rv EQUAL 0)
-        file(REMOVE_RECURSE ${BOOST_ROOT})
-        string (REPLACE ";" " " BUILD_COMMAND "${BUILD_COMMAND}")
-        message(FATAL_ERROR "[BOOST] Error while executing ${BUILD_COMMAND}, cleaning up")
-    endif ()
-    set(LAST_BOOST_LIBS ${BOOST_LIBS} CACHE STRING "Last boost libs" FORCE)
-    message(STATUS "[BOOST] Build done")
 endif ()
-message(STATUS "boost v${BOOST_REVISION}")
 
-set(Boost_USE_STATIC_LIBS ON)
-if (WINDOWS)
-    set(Boost_USE_STATIC_RUNTIME ON)
-endif()
+if (NOT TARGET Boost::context)
+    add_library(Boost::context STATIC IMPORTED)
+    set_target_properties(Boost::context PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
+        IMPORTED_LINK_INTERFACE_LANGUAGES CXX
+        IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_CONTEXT_LIB}"
+        INTERFACE_COMPILE_DEFINITIONS "BOOST_CONTEXT_NO_LIB"
+    )
+endif ()
 
-find_package(Boost REQUIRED COMPONENTS ${BOOST_LIBS} NO_MODULE)
+if (NOT TARGET Boost::date_time)
+    add_library(Boost::date_time STATIC IMPORTED)
+    set_target_properties(Boost::date_time PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
+        IMPORTED_LINK_INTERFACE_LANGUAGES CXX
+        IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_DATE_TIME_LIB}"
+        INTERFACE_COMPILE_DEFINITIONS "BOOST_DATE_TIME_NO_LIB"
+    )
+endif ()
+
+if (NOT TARGET Boost::system)
+    add_library(Boost::system STATIC IMPORTED)
+    set_target_properties(Boost::system PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
+        IMPORTED_LINK_INTERFACE_LANGUAGES CXX
+        IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_SYSTEM_LIB}"
+        INTERFACE_COMPILE_DEFINITIONS "BOOST_SYSTEM_NO_LIB"
+    )
+endif ()
+
+if (NOT TARGET Boost::filesystem)
+    add_library(Boost::filesystem STATIC IMPORTED)
+    set_target_properties(Boost::filesystem PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
+        IMPORTED_LINK_INTERFACE_LANGUAGES CXX
+        IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_FILESYSTEM_LIB}"
+        INTERFACE_COMPILE_DEFINITIONS "BOOST_FILESYSTEM_NO_LIB"
+    )
+    target_link_libraries(Boost::filesystem INTERFACE Boost::atomic Boost::system)
+endif ()
+
+if(NOT TARGET Boost::process)
+    add_library(Boost::process STATIC IMPORTED)
+    set_target_properties(Boost::process PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
+        IMPORTED_LINK_INTERFACE_LANGUAGES CXX
+        IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_PROCESS_LIB}"
+        INTERFACE_COMPILE_DEFINITIONS "BOOST_PROCESS_NO_LIB"
+    )
+    target_link_libraries(Boost::process INTERFACE Boost::atomic Boost::context Boost::date_time Boost::filesystem Boost::system)
+endif ()
 
 add_compile_definitions(BOOST_ENABLED)
 set(BOOST_ENABLED TRUE)

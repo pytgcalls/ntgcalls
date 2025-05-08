@@ -34,17 +34,17 @@ jlong getInstancePtr(JNIEnv *env, jobject obj) {
 ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescription) {
     webrtc::ScopedJavaLocalRef<jclass> audioDescriptionClass{env, env->GetObjectClass(audioDescription)};
     jfieldID inputField = env->GetFieldID(audioDescriptionClass.obj(), "input", "Ljava/lang/String;");
-    jfieldID mediaSourceField = env->GetFieldID(audioDescriptionClass.obj(), "mediaSource", "I");
+    jfieldID mediaSourceField = env->GetFieldID(audioDescriptionClass.obj(), "mediaSource", "Lio/github/pytgcalls/media/MediaSource;");
     jfieldID sampleRateField = env->GetFieldID(audioDescriptionClass.obj(), "sampleRate", "I");
     jfieldID channelCountField = env->GetFieldID(audioDescriptionClass.obj(), "channelCount", "I");
 
     webrtc::ScopedJavaLocalRef<jstring> input{env, reinterpret_cast<jstring>(env->GetObjectField(audioDescription, inputField))};
-    auto mediaSource = env->GetIntField(audioDescription, mediaSourceField);
+    webrtc::ScopedJavaLocalRef<jobject> mediaSource{env,  env->GetObjectField(audioDescription, mediaSourceField)};
     auto sampleRate = static_cast<uint32_t>(env->GetIntField(audioDescription, sampleRateField));
     auto channelCount = static_cast<uint8_t>(env->GetIntField(audioDescription, channelCountField));
 
     return {
-        parseMediaSource(mediaSource),
+        parseMediaSource(env, mediaSource.obj()),
         sampleRate,
         channelCount,
         parseString(env, input.obj())
@@ -54,19 +54,19 @@ ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescr
 ntgcalls::VideoDescription parseVideoDescription(JNIEnv *env, jobject videoDescription) {
     webrtc::ScopedJavaLocalRef<jclass> videoDescriptionClass{env, env->GetObjectClass(videoDescription)};
     jfieldID inputField = env->GetFieldID(videoDescriptionClass.obj(), "input", "Ljava/lang/String;");
-    jfieldID mediaSourceField = env->GetFieldID(videoDescriptionClass.obj(), "mediaSource", "I");
+    jfieldID mediaSourceField = env->GetFieldID(videoDescriptionClass.obj(), "mediaSource", "Lio/github/pytgcalls/media/MediaSource;");
     jfieldID widthField = env->GetFieldID(videoDescriptionClass.obj(), "width", "I");
     jfieldID heightField = env->GetFieldID(videoDescriptionClass.obj(), "height", "I");
     jfieldID fpsField = env->GetFieldID(videoDescriptionClass.obj(), "fps", "I");
 
     webrtc::ScopedJavaLocalRef<jstring> input{env, reinterpret_cast<jstring>(env->GetObjectField(videoDescription, inputField))};
-    auto mediaSource = env->GetIntField(videoDescription, mediaSourceField);
+    webrtc::ScopedJavaLocalRef<jobject> mediaSource{env,  env->GetObjectField(videoDescription, mediaSourceField)};
     auto width = static_cast<int16_t>(env->GetIntField(videoDescription, widthField));
     auto height = static_cast<int16_t>(env->GetIntField(videoDescription, heightField));
     auto fps = static_cast<uint8_t>(env->GetIntField(videoDescription, fpsField));
 
     return {
-        parseMediaSource(mediaSource),
+        parseMediaSource(env, mediaSource.obj()),
         width,
         height,
         fps,
@@ -97,27 +97,35 @@ ntgcalls::MediaDescription parseMediaDescription(JNIEnv *env, jobject mediaDescr
     );
 }
 
-ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(jint mediaSource) {
-    ntgcalls::BaseMediaDescription::MediaSource res = ntgcalls::BaseMediaDescription::MediaSource::Unknown;
-    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::File;mediaSource == check) {
-        res |= check;
+ntgcalls::BaseMediaDescription::MediaSource parseMediaSource(JNIEnv *env, jobject mediaSource) {
+    const webrtc::ScopedJavaLocalRef<jclass> streamModeClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaSource");
+    jfieldID fileField = env->GetStaticFieldID(streamModeClass.obj(), "FILE", "Lio/github/pytgcalls/media/MediaSource;");
+    jfieldID shellField = env->GetStaticFieldID(streamModeClass.obj(), "SHELL", "Lio/github/pytgcalls/media/MediaSource;");
+    jfieldID ffmpegField = env->GetStaticFieldID(streamModeClass.obj(), "FFMPEG", "Lio/github/pytgcalls/media/MediaSource;");
+    jfieldID deviceField = env->GetStaticFieldID(streamModeClass.obj(), "DEVICE", "Lio/github/pytgcalls/media/MediaSource;");
+    jfieldID desktopField = env->GetStaticFieldID(streamModeClass.obj(), "DESKTOP", "Lio/github/pytgcalls/media/MediaSource;");
+    jfieldID externalField = env->GetStaticFieldID(streamModeClass.obj(), "EXTERNAL", "Lio/github/pytgcalls/media/MediaSource;");
+    const webrtc::ScopedJavaLocalRef<jobject> file{env, env->GetStaticObjectField(streamModeClass.obj(), fileField)};
+    const webrtc::ScopedJavaLocalRef<jobject> shell{env, env->GetStaticObjectField(streamModeClass.obj(), shellField)};
+    const webrtc::ScopedJavaLocalRef<jobject> ffmpeg{env, env->GetStaticObjectField(streamModeClass.obj(), ffmpegField)};
+    const webrtc::ScopedJavaLocalRef<jobject> device{env, env->GetStaticObjectField(streamModeClass.obj(), deviceField)};
+    const webrtc::ScopedJavaLocalRef<jobject> desktop{env, env->GetStaticObjectField(streamModeClass.obj(), desktopField)};
+    const webrtc::ScopedJavaLocalRef<jobject> external{env, env->GetStaticObjectField(streamModeClass.obj(), externalField)};
+
+    if (env->IsSameObject(mediaSource, file.obj())) {
+        return ntgcalls::BaseMediaDescription::MediaSource::File;
+    } else if (env->IsSameObject(mediaSource, shell.obj())) {
+        return ntgcalls::BaseMediaDescription::MediaSource::Shell;
+    } else if (env->IsSameObject(mediaSource, ffmpeg.obj())) {
+        return ntgcalls::BaseMediaDescription::MediaSource::FFmpeg;
+    } else if (env->IsSameObject(mediaSource, device.obj())) {
+        return ntgcalls::BaseMediaDescription::MediaSource::Device;
+    } else if (env->IsSameObject(mediaSource, desktop.obj())) {
+        return ntgcalls::BaseMediaDescription::MediaSource::Desktop;
+    } else if (env->IsSameObject(mediaSource, external.obj())) {
+        return ntgcalls::BaseMediaDescription::MediaSource::External;
     }
-    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::Shell;mediaSource == check) {
-        res |= check;
-    }
-    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::FFmpeg;mediaSource == check) {
-        res |= check;
-    }
-    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::Device;mediaSource == check) {
-        res |= check;
-    }
-    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::Desktop;mediaSource == check) {
-        res |= check;
-    }
-    if (auto check = ntgcalls::BaseMediaDescription::MediaSource::External;mediaSource == check) {
-        res |= check;
-    }
-    return res;
+    throw ntgcalls::InvalidParams("Unknown media source");
 }
 
 ntgcalls::DhConfig parseDhConfig(JNIEnv *env, jobject dhConfig) {
@@ -175,6 +183,18 @@ webrtc::ScopedJavaLocalRef<jbyteArray> parseJByteArray(JNIEnv *env, const bytes:
 bytes::binary parseBinary(JNIEnv *env, jbyteArray byteArray) {
     if (byteArray == nullptr) {
         return {};
+    }
+    jsize length = env->GetArrayLength(byteArray);
+    auto byteBuffer =  (uint8_t *) env->GetByteArrayElements(byteArray, nullptr);
+    bytes::binary result(length);
+    memcpy(&result[0], byteBuffer, length);
+    env->ReleaseByteArrayElements(byteArray, (jbyte *) byteBuffer, JNI_ABORT);
+    return result;
+}
+
+std::optional<bytes::binary> parseOptionalBinary(JNIEnv *env, jbyteArray byteArray) {
+    if (byteArray == nullptr) {
+        return std::nullopt;
     }
     jsize length = env->GetArrayLength(byteArray);
     auto byteBuffer =  (uint8_t *) env->GetByteArrayElements(byteArray, nullptr);
@@ -585,6 +605,70 @@ webrtc::ScopedJavaLocalRef<jobject> parseJFrames(JNIEnv *env, const std::vector<
         env->CallBooleanMethod(result.obj(), addMethod, jFrame.obj());
     }
     return result;
+}
+
+webrtc::ScopedJavaLocalRef<jobject> parseJSegmentPartRequest(JNIEnv *env, const wrtc::SegmentPartRequest& request) {
+    const webrtc::ScopedJavaLocalRef<jclass> segmentPartRequestCalls = webrtc::GetClass(env,"io/github/pytgcalls/media/SegmentPartRequest");
+    jmethodID constructor = env->GetMethodID(segmentPartRequestCalls.obj(), "<init>", "(JIIJZILio/github/pytgcalls/media/MediaSegmentQuality;)V");
+    auto quality = parseJMediaSegmentQuality(env, request.quality);
+    return webrtc::ScopedJavaLocalRef<jobject>{env, env->NewObject(segmentPartRequestCalls.obj(), constructor, request.segmentId, request.partId, request.limit, request.timestamp, request.qualityUpdate, request.channelId, quality.obj())};
+}
+
+webrtc::ScopedJavaLocalRef<jobject> parseJMediaSegmentQuality(JNIEnv *env, const wrtc::MediaSegment::Quality& quality) {
+    const webrtc::ScopedJavaLocalRef<jclass> streamStatusClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaSegmentQuality");
+    jfieldID noneField = env->GetStaticFieldID(streamStatusClass.obj(), "NONE", "Lio/github/pytgcalls/media/MediaSegmentQuality;");
+    jfieldID thumbnailField = env->GetStaticFieldID(streamStatusClass.obj(), "THUMBNAIL", "Lio/github/pytgcalls/media/MediaSegmentQuality;");
+    jfieldID mediumField = env->GetStaticFieldID(streamStatusClass.obj(), "MEDIUM", "Lio/github/pytgcalls/media/MediaSegmentQuality;");
+    jfieldID fullField = env->GetStaticFieldID(streamStatusClass.obj(), "FULL", "Lio/github/pytgcalls/media/MediaSegmentQuality;");
+
+    switch (quality) {
+        case wrtc::MediaSegment::Quality::None:
+            return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(streamStatusClass.obj(), noneField)};
+        case wrtc::MediaSegment::Quality::Thumbnail:
+            return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(streamStatusClass.obj(), thumbnailField)};
+        case wrtc::MediaSegment::Quality::Medium:
+            return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(streamStatusClass.obj(), mediumField)};
+        case wrtc::MediaSegment::Quality::Full:
+            return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(streamStatusClass.obj(), fullField)};
+    }
+    return nullptr;
+}
+
+wrtc::MediaSegment::Part::Status parseSegmentPartStatus(JNIEnv *env, jobject status) {
+    const webrtc::ScopedJavaLocalRef<jclass> streamModeClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaSegmentStatus");
+    jfieldID fileField = env->GetStaticFieldID(streamModeClass.obj(), "NOT_READY", "Lio/github/pytgcalls/media/MediaSegmentStatus;");
+    jfieldID resyncNeededField = env->GetStaticFieldID(streamModeClass.obj(), "RESYNC_NEEDED", "Lio/github/pytgcalls/media/MediaSegmentStatus;");
+    jfieldID successField = env->GetStaticFieldID(streamModeClass.obj(), "SUCCESS", "Lio/github/pytgcalls/media/MediaSegmentStatus;");
+    const webrtc::ScopedJavaLocalRef<jobject> notReady{env, env->GetStaticObjectField(streamModeClass.obj(), fileField)};
+    const webrtc::ScopedJavaLocalRef<jobject> resyncNeeded{env, env->GetStaticObjectField(streamModeClass.obj(), resyncNeededField)};
+    const webrtc::ScopedJavaLocalRef<jobject> success{env, env->GetStaticObjectField(streamModeClass.obj(), successField)};
+    if (env->IsSameObject(status, notReady.obj())) {
+        return wrtc::MediaSegment::Part::Status::NotReady;
+    } else if (env->IsSameObject(status, resyncNeeded.obj())) {
+        return wrtc::MediaSegment::Part::Status::ResyncNeeded;
+    } else if (env->IsSameObject(status, success.obj())) {
+        return wrtc::MediaSegment::Part::Status::Success;
+    }
+    return wrtc::MediaSegment::Part::Status::NotReady;
+}
+
+webrtc::ScopedJavaLocalRef<jobject> parseJConnectionMode(JNIEnv *env, wrtc::ConnectionMode mode) {
+    const webrtc::ScopedJavaLocalRef<jclass> connectionModeClass = webrtc::GetClass(env, "io/github/pytgcalls/ConnectionMode");
+    jfieldID rtcField = env->GetStaticFieldID(connectionModeClass.obj(), "RTC", "Lio/github/pytgcalls/ConnectionMode;");
+    jfieldID streamField = env->GetStaticFieldID(connectionModeClass.obj(), "STREAM", "Lio/github/pytgcalls/ConnectionMode;");
+    jfieldID rtmpField = env->GetStaticFieldID(connectionModeClass.obj(), "RTMP", "Lio/github/pytgcalls/ConnectionMode;");
+
+    switch (mode) {
+        case wrtc::ConnectionMode::Rtc:
+            return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionModeClass.obj(), rtcField)};
+        case wrtc::ConnectionMode::Stream:
+            return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionModeClass.obj(), streamField)};
+        case wrtc::ConnectionMode::Rtmp:
+            return webrtc::ScopedJavaLocalRef<jobject>{env, env->GetStaticObjectField(connectionModeClass.obj(), rtmpField)};
+        case wrtc::ConnectionMode::None:
+            break;
+    }
+    return nullptr;
 }
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message) {

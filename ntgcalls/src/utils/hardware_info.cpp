@@ -4,13 +4,19 @@
 
 #include <ntgcalls/utils/hardware_info.hpp>
 
+#if defined(IS_LINUX) || defined(IS_ANDROID)
+#include <unistd.h>
+#elif IS_MACOS
+#include <sys/resource.h>
+#endif
+
 namespace ntgcalls {
     HardwareInfo::HardwareInfo() {
-#ifdef _WIN32
+#ifdef IS_WINDOWS
         FILETIME ftime, fsys, fuser;
         SYSTEM_INFO sysInfo;
         GetSystemInfo(&sysInfo);
-        numProcessors = sysInfo.dwNumberOfProcessors;
+        numProcessors = static_cast<int>(sysInfo.dwNumberOfProcessors);
         GetSystemTimeAsFileTime(&ftime);
         memcpy(&lastCPU, &ftime, sizeof(FILETIME));
 
@@ -18,7 +24,7 @@ namespace ntgcalls {
         GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
         memcpy(&lastSysCPU, &fsys, sizeof(FILETIME));
         memcpy(&lastUserCPU, &fuser, sizeof(FILETIME));
-#elif __APPLE__
+#elif IS_MACOS
         size_t len = sizeof(numProcessors);
         sysctlbyname("hw.ncpu", &numProcessors, &len, NULL, 0);
         struct rusage usage;
@@ -27,8 +33,8 @@ namespace ntgcalls {
         lastSysCPU = usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
         lastUserCPU = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec;
 #else
-        numProcessors = sysconf(_SC_NPROCESSORS_ONLN);
-        struct tms timeSample;
+        numProcessors = static_cast<int>(sysconf(_SC_NPROCESSORS_ONLN));
+        tms timeSample{};
         lastCPU = times(&timeSample);
         lastSysCPU = timeSample.tms_stime;
         lastUserCPU = timeSample.tms_utime;
@@ -37,7 +43,7 @@ namespace ntgcalls {
 
     double HardwareInfo::getCpuUsage() {
         double percent;
-#ifdef _WIN32
+#ifdef IS_WINDOWS
         FILETIME ftime, fsys, fuser;
         ULARGE_INTEGER now, sys, user;
 
@@ -53,7 +59,7 @@ namespace ntgcalls {
         lastCPU = now;
         lastUserCPU = user;
         lastSysCPU = sys;
-#elif __APPLE__
+#elif IS_MACOS
         struct rusage usage;
         getrusage(RUSAGE_SELF, &usage);
         clock_t now = (usage.ru_utime.tv_sec + usage.ru_stime.tv_sec) * 1000000 + (usage.ru_utime.tv_usec + usage.ru_stime.tv_usec);
@@ -69,9 +75,8 @@ namespace ntgcalls {
         lastSysCPU = usage.ru_stime.tv_sec;
         lastUserCPU = usage.ru_utime.tv_sec;
 #else
-        struct tms timeSample;
-        clock_t now;
-        now = times(&timeSample);
+        tms timeSample{};
+        auto now = times(&timeSample);
         if (now <= lastCPU || timeSample.tms_stime < lastSysCPU || timeSample.tms_utime < lastUserCPU) {
             percent = -1.0;
         } else{

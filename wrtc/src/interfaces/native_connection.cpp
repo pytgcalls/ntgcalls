@@ -226,16 +226,7 @@ namespace wrtc {
         removeChannel(incomingAudioChannels);
         removeChannel(incomingVideoChannels);
         for (const auto &content : coordinatedState->incomingContents) {
-            switch (content.type) {
-            case MediaContent::Type::Audio:
-                addIncomingSmartSource(std::to_string(content.ssrc), content);
-                break;
-            case MediaContent::Type::Video:
-                addIncomingSmartSource(std::to_string(content.ssrc), content);
-                break;
-            default:
-                RTC_LOG(LS_WARNING) << "NativeNetworkingImpl unsupported incoming content type";
-            }
+            addIncomingSmartSource(std::to_string(content.ssrc), content);
         }
     }
 
@@ -282,10 +273,10 @@ namespace wrtc {
     void NativeConnection::transportRouteChanged(std::optional<rtc::NetworkRoute> route) {
         assert(networkThread()->IsCurrent());
         if (route.has_value()) {
-            RTC_LOG(LS_INFO) << "NativeNetworkingImpl route changed: " << route->DebugString();
+            RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl route changed: " << route->DebugString();
             const bool localIsWifi = route->local.adapter_type() == rtc::AdapterType::ADAPTER_TYPE_WIFI;
             const bool remoteIsWifi = route->remote.adapter_type() == rtc::AdapterType::ADAPTER_TYPE_WIFI;
-            RTC_LOG(LS_INFO) << "NativeNetworkingImpl is wifi: local=" << localIsWifi << ", remote=" << remoteIsWifi;
+            RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl is wifi: local=" << localIsWifi << ", remote=" << remoteIsWifi;
             const std::string localDescription = route->local.uses_turn() ? "turn" : "p2p";
             const std::string remoteDescription = route->remote.uses_turn() ? "turn" : "p2p";
             if (RouteDescription routeDescription(localDescription, remoteDescription); !currentRouteDescription || routeDescription != currentRouteDescription.value()) {
@@ -342,6 +333,7 @@ namespace wrtc {
     void NativeConnection::close() {
         NativeNetworkInterface::close();
         contentNegotiationContext = nullptr;
+        relayPortFactory = nullptr;
     }
 
     void NativeConnection::addIceCandidate(const IceCandidate& rawCandidate) const {
@@ -414,19 +406,21 @@ namespace wrtc {
 
     void NativeConnection::checkConnectionTimeout() {
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostDelayedTask([weak] {
-            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
-            if (!strong) {
-                return;
-            }
-            const int64_t currentTimestamp = rtc::TimeMillis();
-            if (constexpr int64_t maxTimeout = 20000; !strong->connected && strong->lastDisconnectedTimestamp + maxTimeout < currentTimestamp) {
-                RTC_LOG(LS_INFO) << "NativeNetworkingImpl timeout " << currentTimestamp - strong->lastDisconnectedTimestamp << " ms";
-                strong->failed = true;
-                strong->notifyStateUpdated();
-                return;
-            }
-            strong->checkConnectionTimeout();
-        }, webrtc::TimeDelta::Millis(1000));
+        if (factory != nullptr) {
+            networkThread()->PostDelayedTask([weak] {
+                const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                const int64_t currentTimestamp = rtc::TimeMillis();
+                if (constexpr int64_t maxTimeout = 20000; !strong->connected && strong->lastDisconnectedTimestamp + maxTimeout < currentTimestamp) {
+                    RTC_LOG(LS_INFO) << "NativeNetworkingImpl timeout " << currentTimestamp - strong->lastDisconnectedTimestamp << " ms";
+                    strong->failed = true;
+                    strong->notifyStateUpdated();
+                    return;
+                }
+                strong->checkConnectionTimeout();
+            }, webrtc::TimeDelta::Millis(1000));
+        }
     }
 } // wrtc

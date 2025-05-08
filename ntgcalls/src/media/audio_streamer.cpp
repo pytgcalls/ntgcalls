@@ -17,7 +17,7 @@ namespace ntgcalls {
         return audio->createTrack();
     }
 
-    void AudioStreamer::sendData(uint8_t* sample, const wrtc::FrameData additionalData) {
+    void AudioStreamer::sendData(uint8_t* sample, size_t size, const wrtc::FrameData additionalData) {
         frames++;
         auto event = wrtc::RTCOnDataEvent(sample, frameSize() / (2 * description->channelCount));
         event.channelCount = description->channelCount;

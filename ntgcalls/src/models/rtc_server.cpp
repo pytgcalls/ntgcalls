@@ -68,7 +68,7 @@ namespace ntgcalls {
                     rtcServer.isTurn = true;
                     rtcServer.isTcp = server.tcp;
                     wrtcServers.push_back(rtcServer);
-                    RTC_LOG(LS_INFO) << "PHONE server: turn:" << rtcServer.host << ":" << rtcServer.port << " username: " << rtcServer.login << " password: " << rtcServer.password;
+                    RTC_LOG(LS_VERBOSE) << "PHONE server: turn:" << rtcServer.host << ":" << rtcServer.port << " username: " << rtcServer.login << " password: " << rtcServer.password;
                 };
                 pushPhone(server.ipv4);
                 pushPhone(server.ipv6);
@@ -79,7 +79,7 @@ namespace ntgcalls {
                         rtcServer.host = host;
                         rtcServer.port = server.port;
                         wrtcServers.push_back(rtcServer);
-                        RTC_LOG(LS_INFO) << "STUN server: stun:" << rtcServer.host << ":" << rtcServer.port;
+                        RTC_LOG(LS_VERBOSE) << "STUN server: stun:" << rtcServer.host << ":" << rtcServer.port;
                     };
                     pushStun(server.ipv4);
                     pushStun(server.ipv6);
@@ -93,7 +93,7 @@ namespace ntgcalls {
                         rtcServer.password = *server.password;
                         rtcServer.isTurn = true;
                         wrtcServers.push_back(rtcServer);
-                        RTC_LOG(LS_INFO) << "TURN server: turn:" << rtcServer.host << ":" << rtcServer.port << " username: " << rtcServer.login << " password: " << rtcServer.password;
+                        RTC_LOG(LS_VERBOSE) << "TURN server: turn:" << rtcServer.host << ":" << rtcServer.port << " username: " << rtcServer.login << " password: " << rtcServer.password;
                     };
                     pushTurn(server.ipv4);
                     pushTurn(server.ipv6);

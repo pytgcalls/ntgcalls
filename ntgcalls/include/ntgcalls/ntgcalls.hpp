@@ -18,6 +18,7 @@
 #include <ntgcalls/devices/media_devices.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
 #include <wrtc/models/media_content.hpp>
+#include <wrtc/models/segment_part_request.hpp>
 
 #define CHECK_AND_THROW_IF_EXISTS(chatId) \
 if (exists(chatId)) { \
@@ -36,6 +37,8 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t, NetworkInfo> connectionChangeCallback;
         wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
         wrtc::synchronized_callback<int64_t, RemoteSource> remoteSourceCallback;
+        wrtc::synchronized_callback<int64_t> broadcastTimestampCallback;
+        wrtc::synchronized_callback<int64_t, wrtc::SegmentPartRequest> segmentPartRequestCallback;
         wrtc::synchronized_callback<int64_t, StreamManager::Mode, StreamManager::Device, std::vector<wrtc::Frame>> framesCallback;
         std::unique_ptr<rtc::Thread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
@@ -58,7 +61,7 @@ namespace ntgcalls {
 
         ~NTgCalls();
 
-        ASYNC_RETURN(void) createP2PCall(int64_t userId, const MediaDescription& media);
+        ASYNC_RETURN(void) createP2PCall(int64_t userId);
 
         ASYNC_RETURN(bytes::vector) initExchange(int64_t userId, const DhConfig& dhConfig, const std::optional<BYTES(bytes::vector)> &g_a_hash);
 
@@ -68,7 +71,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) connectP2P(int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
 
-        ASYNC_RETURN(std::string) createCall(int64_t chatId, const MediaDescription& media);
+        ASYNC_RETURN(std::string) createCall(int64_t chatId);
 
         ASYNC_RETURN(std::string) initPresentation(int64_t chatId);
 
@@ -96,7 +99,9 @@ namespace ntgcalls {
 
         ASYNC_RETURN(MediaState) getState(int64_t chatId);
 
-        ASYNC_RETURN(double) cpuUsage();
+        ASYNC_RETURN(wrtc::ConnectionMode) getConnectionMode(int64_t chatId);
+
+        ASYNC_RETURN(double) cpuUsage() const;
 
         static std::string ping();
 
@@ -106,8 +111,6 @@ namespace ntgcalls {
 
 #ifndef IS_ANDROID
         static void enableGlibLoop(bool enable);
-
-        static void enableH264Encoder(bool enable);
 #endif
 
         void onUpgrade(const std::function<void(int64_t, MediaState)>& callback);
@@ -121,6 +124,14 @@ namespace ntgcalls {
         void onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
 
         void onRemoteSourceChange(const std::function<void(int64_t, RemoteSource)>& callback);
+
+        void onRequestBroadcastPart(const std::function<void(int64_t, wrtc::SegmentPartRequest)>& callback);
+
+        void onRequestBroadcastTimestamp(const std::function<void(int64_t)>& callback);
+
+        ASYNC_RETURN(void) sendBroadcastTimestamp(int64_t chatId, int64_t timestamp);
+
+        ASYNC_RETURN(void) sendBroadcastPart(int64_t chatId, int64_t segmentId, int32_t partId, wrtc::MediaSegment::Part::Status status, bool qualityUpdate, const std::optional<BYTES(bytes::binary)> &data);
 
         ASYNC_RETURN(void) sendSignalingData(int64_t chatId, const BYTES(bytes::binary) &msgKey);
 

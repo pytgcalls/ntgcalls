@@ -6,16 +6,15 @@
 
 #include <condition_variable>
 #include <ntgcalls/io/base_reader.hpp>
-#include <ntgcalls/io/sync_helper.hpp>
+#include <wrtc/utils/sync_helper.hpp>
 #include <rtc_base/platform_thread.h>
 
 namespace ntgcalls {
 
-    class ThreadedReader: public BaseReader, public SyncHelper {
+    class ThreadedReader: public BaseReader, public wrtc::SyncHelper {
         std::vector<rtc::PlatformThread> bufferThreads;
         size_t activeBuffer = 0;
         size_t activeBufferCount = 0;
-        uint64_t frameSent = 0;
         std::condition_variable cv;
         std::mutex mtx;
 

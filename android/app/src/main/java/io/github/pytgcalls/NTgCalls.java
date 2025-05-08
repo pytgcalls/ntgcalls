@@ -7,6 +7,7 @@ import io.github.pytgcalls.exceptions.ConnectionNotFoundException;
 import io.github.pytgcalls.media.FrameData;
 import io.github.pytgcalls.media.MediaDescription;
 import io.github.pytgcalls.media.MediaDevices;
+import io.github.pytgcalls.media.MediaSegmentStatus;
 import io.github.pytgcalls.media.MediaState;
 import io.github.pytgcalls.media.CallInfo;
 import io.github.pytgcalls.media.SsrcGroup;
@@ -48,13 +49,7 @@ public class NTgCalls {
 
     private static native String pingNative();
 
-    @RequiresPermission(allOf = {android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.CAMERA})
-    public native void createP2PCall(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
-
-    @RequiresPermission(allOf = {android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.CAMERA})
-    public void createP2PCall(long chatId) throws FileNotFoundException, ConnectionException {
-        createP2PCall(chatId, null);
-    }
+    public native void createP2PCall(long chatId) throws FileNotFoundException, ConnectionException;
 
     public native byte[] initExchange(long chatId, DhConfig dhConfig, byte[] g_a_hash) throws ConnectionException;
 
@@ -64,13 +59,7 @@ public class NTgCalls {
 
     public native void connectP2P(long chatId, List<RTCServer> rtcServers, List<String> versions, boolean p2pAllowed) throws ConnectionException;
 
-    @RequiresPermission(allOf = {android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.CAMERA})
-    public native String createCall(long chatId, MediaDescription mediaDescription) throws FileNotFoundException, ConnectionException;
-
-    @RequiresPermission(allOf = {android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.CAMERA})
-    public String createCall(long chatId) throws FileNotFoundException, ConnectionException {
-        return createCall(chatId, null);
-    }
+    public native String createCall(long chatId) throws FileNotFoundException, ConnectionException;
 
     public native void connect(long chatId, String params, boolean isPresentation) throws ConnectionException;
 
@@ -113,6 +102,10 @@ public class NTgCalls {
 
     public native void setRemoteSourceChangeCallback(RemoteSourceChangeCallback callback);
 
+    public native void setRequestBroadcastTimestampCallback(RequestBroadcastTimestampCallback callback);
+
+    public native void setRequestBroadcastPartCallback(RequestBroadcastPartCallback callback);
+
     public native void sendSignalingData(long chatId, byte[] data) throws ConnectionNotFoundException;
 
     public native void sendExternalFrame(long chatId, StreamDevice device, byte[] data, FrameData frameData);
@@ -120,6 +113,12 @@ public class NTgCalls {
     public native void addIncomingVideo(long chatId, String endpoint, List<SsrcGroup> ssrcGroups);
 
     public native void removeIncomingVideo(long chatId, String endpoint);
+
+    public native void sendBroadcastTimestamp(long chatId, long timestamp);
+
+    public native void sendBroadcastPart(long chatId, long segmentId, int partId, MediaSegmentStatus status, boolean qualityUpdate, byte[] data);
+
+    public native ConnectionMode getConnectionMode(long chatId) throws ConnectionNotFoundException;
 
     public native Map<Long, CallInfo> calls();
 }

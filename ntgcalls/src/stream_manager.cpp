@@ -52,9 +52,9 @@ namespace ntgcalls {
     }
 
     void StreamManager::setStreamSources(const Mode mode, const MediaDescription& desc) {
-        RTC_LOG(LS_INFO) << "Setting Configuration, Acquiring lock";
+        RTC_LOG(LS_VERBOSE) << "Setting Configuration, Acquiring lock";
         std::lock_guard lock(mutex);
-        RTC_LOG(LS_INFO) << "Setting Configuration, Lock acquired";
+        RTC_LOG(LS_VERBOSE) << "Setting Configuration, Lock acquired";
 
         const bool wasIdling = isPaused();
 
@@ -74,16 +74,13 @@ namespace ntgcalls {
         if (mode == Capture && (wasCamera != hasDevice(mode, Camera) || wasScreen != hasDevice(mode, Screen) || wasIdling) && initialized) {
             checkUpgrade();
         }
-
-        if (!initialized && mode == Capture) {
-            initialized = true;
-        }
     }
 
-    void StreamManager::optimizeSources(wrtc::NetworkInterface* pc) const {
+    void StreamManager::optimizeSources(wrtc::NetworkInterface* pc) {
         pc->enableAudioIncoming(writers.contains(Microphone) || externalWriters.contains(Microphone));
         pc->enableVideoIncoming(writers.contains(Camera) || externalWriters.contains(Camera), false);
         pc->enableVideoIncoming(writers.contains(Screen) || externalWriters.contains(Screen), true);
+        initialized = pc->getConnectionMode() != wrtc::ConnectionMode::None;
     }
 
     MediaState StreamManager::getState() {
@@ -102,7 +99,7 @@ namespace ntgcalls {
         return MediaState{
             muted,
             (paused || muted),
-            !hasDevice(Capture, Camera) && !hasDevice(Capture, Screen),
+            !hasDevice(Capture, Camera),
             (paused || muted),
         };
     }
@@ -186,6 +183,10 @@ namespace ntgcalls {
         return false;
     }
 
+    bool StreamManager::hasReaders() const {
+        return !readers.empty();
+    }
+
     void StreamManager::onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback) {
         framesCallback = callback;
     }
@@ -198,7 +199,7 @@ namespace ntgcalls {
         if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
             const auto uniqueData = bytes::make_unique_binary(data.size());
             memcpy(uniqueData.get(), data.data(), data.size());
-            stream->sendData(uniqueData.get(), frameData);
+            stream->sendData(uniqueData.get(), data.size(), frameData);
         }
     }
 
@@ -223,12 +224,12 @@ namespace ntgcalls {
     bool StreamManager::updatePause(const bool isPaused) {
         std::lock_guard lock(mutex);
         auto res = false;
-        const auto now = std::chrono::milliseconds(rtc::TimeMillis());
+        const auto now = std::chrono::steady_clock::now();
         for (const auto& reader : readers | std::views::values) {
             if (reader->set_enabled(!isPaused)) {
                 res = true;
             }
-            if (const auto threadedReader = dynamic_cast<SyncHelper*>(reader.get())) {
+            if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(reader.get())) {
                 threadedReader->synchronizeTime(now);
             }
         }
@@ -332,11 +333,12 @@ namespace ntgcalls {
                                 strong->cancelSyncReaders.erase(id.second);
                                 return;
                             }
-                            if (const auto threadedReader = dynamic_cast<SyncHelper*>(strong->readers[id.second].get())) {
+                            if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(strong->readers[id.second].get())) {
                                 threadedReader->synchronizeTime();
                             }
                         }
                         if (strong->streams.contains(id)) {
+                            const auto frameSize = strong->streams[id]->frameSize();
                             if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
                                 frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
                                 if (streamType == Video && isShared) {
@@ -346,13 +348,13 @@ namespace ntgcalls {
                                         {
                                             {
                                                 0,
-                                                {data.get(), data.get() + strong->streams[id]->frameSize()},
+                                                {data.get(), data.get() + frameSize},
                                                 frameData
                                             }
                                         }
                                     );
                                 }
-                                stream->sendData(data.get(), frameData);
+                                stream->sendData(data.get(), frameSize, frameData);
                             }
                         }
                     });
@@ -375,7 +377,7 @@ namespace ntgcalls {
                     });
                     if (initialized) {
                         readers[device]->open();
-                        RTC_LOG(LS_INFO) << "Reader opened";
+                        RTC_LOG(LS_VERBOSE) << "Reader opened";
                     }
                 } else {
                     const bool isExternal = desc.value().mediaSource == DescriptionType::MediaSource::External;

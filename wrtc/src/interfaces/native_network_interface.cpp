@@ -303,6 +303,10 @@ namespace wrtc {
         return endpoints;
     }
 
+    ConnectionMode NativeNetworkInterface::getConnectionMode() const {
+        return ConnectionMode::Rtc;
+    }
+
     void NativeNetworkInterface::enableAudioIncoming(const bool enable) {
         if (audioIncoming == enable) {
             return;
@@ -404,7 +408,7 @@ namespace wrtc {
                 }
                 strong->call = nullptr;
             });
-            RTC_LOG(LS_INFO) << "Removed call";
+            RTC_LOG(LS_VERBOSE) << "Removed call";
             networkThread()->BlockingCall([weak] {
                 const auto strong = weak.lock();
                 if (!strong) {

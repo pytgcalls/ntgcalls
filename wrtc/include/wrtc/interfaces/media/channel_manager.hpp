@@ -40,7 +40,5 @@ namespace wrtc {
             const cricket::VideoOptions& options,
             webrtc::VideoBitrateAllocatorFactory* bitrateAllocatorFactory
         );
-
-        void DestroyChannel(cricket::ChannelInterface* channel);
     };
 } // wrtc

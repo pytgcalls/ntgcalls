@@ -9,6 +9,7 @@
 #include <ntgcalls/models/call_network_state.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
 #include <ntgcalls/signaling/messages/media_state_message.hpp>
+#include <wrtc/interfaces/network_interface.hpp>
 
 namespace ntgcalls {
 
@@ -46,6 +47,8 @@ namespace ntgcalls {
 
         virtual void stop();
 
+        wrtc::ConnectionMode getConnectionMode() const;
+
         bool pause() const;
 
         bool resume() const;
@@ -77,7 +80,7 @@ namespace ntgcalls {
         template<typename DestCallType, typename BaseCallType>
         static DestCallType* Safe(const std::shared_ptr<BaseCallType>& call) {
             if (!call) {
-                return nullptr;
+                throw std::runtime_error("Null pointer exception");
             }
             if (auto* derivedCall = dynamic_cast<DestCallType*>(call.get())) {
                 return derivedCall;

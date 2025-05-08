@@ -10,19 +10,16 @@
 
 namespace py = pybind11;
 
-#define STRINGIFY(x) #x
-#define MACRO_STRINGIFY(x) STRINGIFY(x)
-
 PYBIND11_MODULE(ntgcalls, m) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
-    wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"), py::arg("media"));
+    wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"));
     wrapper.def("init_exchange", &ntgcalls::NTgCalls::initExchange, py::arg("user_id"), py::arg("dh_config"), py::arg("g_a_hash"));
     wrapper.def("exchange_keys", &ntgcalls::NTgCalls::exchangeKeys, py::arg("user_id"), py::arg("g_a_or_b"), py::arg("fingerprint"));
     wrapper.def("skip_exchange", &ntgcalls::NTgCalls::skipExchange, py::arg("user_id"), py::arg("encryption_key"), py::arg("is_outgoing"));
     wrapper.def("connect_p2p", &ntgcalls::NTgCalls::connectP2P, py::arg("user_id"), py::arg("servers"), py::arg("versions"), py::arg("p2p_allowed"));
     wrapper.def("send_signaling", &ntgcalls::NTgCalls::sendSignalingData, py::arg("chat_id"), py::arg("msg_key"));
-    wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"), py::arg("media"));
+    wrapper.def("create_call", &ntgcalls::NTgCalls::createCall, py::arg("chat_id"));
     wrapper.def("init_presentation", &ntgcalls::NTgCalls::initPresentation, py::arg("chat_id"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"), py::arg("is_presentation"));
     wrapper.def("set_stream_sources", &ntgcalls::NTgCalls::setStreamSources, py::arg("chat_id"), py::arg("direction"), py::arg("media"));
@@ -42,14 +39,18 @@ PYBIND11_MODULE(ntgcalls, m) {
     wrapper.def("on_signaling", &ntgcalls::NTgCalls::onSignalingData, py::arg("callback"));
     wrapper.def("on_frames", &ntgcalls::NTgCalls::onFrames, py::arg("callback"));
     wrapper.def("on_remote_source_change", &ntgcalls::NTgCalls::onRemoteSourceChange, py::arg("callback"));
+    wrapper.def("on_request_broadcast_part", &ntgcalls::NTgCalls::onRequestBroadcastPart, py::arg("callback"));
+    wrapper.def("on_request_broadcast_timestamp", &ntgcalls::NTgCalls::onRequestBroadcastTimestamp, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def("send_external_frame", &ntgcalls::NTgCalls::sendExternalFrame, py::arg("chat_id"), py::arg("device"), py::arg("frame"), py::arg("frame_data"));
+    wrapper.def("send_broadcast_part", &ntgcalls::NTgCalls::sendBroadcastPart, py::arg("chat_id"), py::arg("segment_id"), py::arg("part_id"), py::arg("status"), py::arg("quality_update"), py::arg("data"));
+    wrapper.def("send_broadcast_timestamp", &ntgcalls::NTgCalls::sendBroadcastTimestamp, py::arg("chat_id"), py::arg("timestamp"));
+    wrapper.def("get_connection_mode", &ntgcalls::NTgCalls::getConnectionMode, py::arg("chat_id"));
     wrapper.def_static("ping", &ntgcalls::NTgCalls::ping);
     wrapper.def_static("get_protocol", &ntgcalls::NTgCalls::getProtocol);
     wrapper.def_static("get_media_devices", &ntgcalls::NTgCalls::getMediaDevices);
     wrapper.def_static("enable_glib_loop", &ntgcalls::NTgCalls::enableGlibLoop, py::arg("enable"));
-    wrapper.def_static("enable_h264_encoder", &ntgcalls::NTgCalls::enableH264Encoder, py::arg("enable"));
 
     py::enum_<ntgcalls::StreamManager::Type>(m, "StreamType")
         .value("AUDIO", ntgcalls::StreamManager::Type::Audio)
@@ -240,12 +241,39 @@ PYBIND11_MODULE(ntgcalls, m) {
     });
     frameWrapper.def_readonly("frame_data", &wrtc::Frame::frameData);
 
+    py::class_<wrtc::SegmentPartRequest> segmentPartRequestWrapper(m, "SegmentPartRequest");
+    segmentPartRequestWrapper.def_readonly("segment_id", &wrtc::SegmentPartRequest::segmentId);
+    segmentPartRequestWrapper.def_readonly("part_id", &wrtc::SegmentPartRequest::partId);
+    segmentPartRequestWrapper.def_readonly("limit", &wrtc::SegmentPartRequest::limit);
+    segmentPartRequestWrapper.def_readonly("quality_update", &wrtc::SegmentPartRequest::qualityUpdate);
+    segmentPartRequestWrapper.def_readonly("timestamp", &wrtc::SegmentPartRequest::timestamp);
+    segmentPartRequestWrapper.def_readonly("channel_id", &wrtc::SegmentPartRequest::channelId);
+    segmentPartRequestWrapper.def_readonly("quality", &wrtc::SegmentPartRequest::quality);
+
+    py::enum_<wrtc::MediaSegment::Quality>(m, "MediaSegmentQuality")
+        .value("NONE", wrtc::MediaSegment::Quality::None)
+        .value("THUMBNAIL", wrtc::MediaSegment::Quality::Thumbnail)
+        .value("MEDIUM", wrtc::MediaSegment::Quality::Medium)
+        .value("FULL", wrtc::MediaSegment::Quality::Full)
+        .export_values();
+
+    py::enum_<wrtc::MediaSegment::Part::Status>(m, "MediaSegmentStatus")
+        .value("NOT_READY", wrtc::MediaSegment::Part::Status::NotReady)
+        .value("RESYNC_NEEDED", wrtc::MediaSegment::Part::Status::ResyncNeeded)
+        .value("SUCCESS", wrtc::MediaSegment::Part::Status::Success)
+        .export_values();
+
+    py::enum_<wrtc::ConnectionMode>(m, "ConnectionMode")
+        .value("RTC", wrtc::ConnectionMode::Rtc)
+        .value("STREAM", wrtc::ConnectionMode::Stream)
+        .value("RTMP", wrtc::ConnectionMode::Rtmp)
+        .export_values();
+
     // Exceptions
     const pybind11::exception<wrtc::BaseRTCException> baseExc(m, "BaseRTCException");
     pybind11::register_exception<wrtc::SdpParseException>(m, "SdpParseException", baseExc);
     pybind11::register_exception<wrtc::RTCException>(m, "RTCException", baseExc);
     pybind11::register_exception<wrtc::TransportParseException>(m, "TransportParseException", baseExc);
-    pybind11::register_exception<wrtc::RTMPNeeded>(m, "RTMPNeeded", baseExc);
     pybind11::register_exception<ntgcalls::ConnectionError>(m, "ConnectionError", baseExc);
     pybind11::register_exception<ntgcalls::TelegramServerError>(m, "TelegramServerError", baseExc);
     pybind11::register_exception<ntgcalls::ConnectionNotFound>(m, "ConnectionNotFound", baseExc);
@@ -257,6 +285,8 @@ PYBIND11_MODULE(ntgcalls, m) {
     pybind11::register_exception<ntgcalls::SignalingError>(m, "SignalingError", baseExc);
     pybind11::register_exception<ntgcalls::MediaDeviceError>(m, "MediaDeviceError", baseExc);
     pybind11::register_exception<ntgcalls::SignalingUnsupported>(m, "SignalingUnsupported", baseExc);
+    pybind11::register_exception<ntgcalls::RTCConnectionNeeded>(m, "RTCConnectionNeeded", baseExc);
+    pybind11::register_exception<ntgcalls::RTMPStreamingUnsupported>(m, "RTMPStreamingUnsupported", baseExc);
 
-    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+    m.attr("__version__") = NTG_VERSION;
 }

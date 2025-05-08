@@ -42,4 +42,11 @@ namespace wrtc {
         Failed,
         Closed,
     };
+
+    enum class ConnectionMode {
+        None,
+        Rtc,
+        Stream,
+        Rtmp,
+    };
 }

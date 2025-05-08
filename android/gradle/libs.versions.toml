@@ -1,0 +1,8 @@
+[versions]
+agp = "8.9.2"
+maven_publish = "0.31.0"
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "agp" }
+vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven_publish" }
+signing = { id = "org.gradle.signing" }
