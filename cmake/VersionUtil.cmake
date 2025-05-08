@@ -1,4 +1,11 @@
 execute_process(
+    COMMAND git config --global --add safe.directory ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_QUIET
+    ERROR_QUIET
+)
+
+execute_process(
     COMMAND git rev-parse --short HEAD
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_COMMIT
