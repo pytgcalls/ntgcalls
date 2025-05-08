@@ -32,7 +32,7 @@ abstract class VersionInfoProvider implements ValueSource<Details, Params> {
 
         def versionOutput = new ByteArrayOutputStream()
         execOperations.exec { execSpec ->
-            execSpec.commandLine "cmake", "-DANDROID=ON", "-DPROJECT_VERSION=$versionNameRaw", "-P", "$path/../../cmake/VersionUtil.cmake"
+            execSpec.commandLine "cmake", "-DANDROID_TAGS=ON", "-DPROJECT_VERSION=$versionNameRaw", "-P", "$path/../../cmake/VersionUtil.cmake"
             execSpec.errorOutput = versionOutput
         }
 
