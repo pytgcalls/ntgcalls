@@ -358,10 +358,14 @@ namespace ntgcalls {
                         }
                         if (strong->syncReaders.contains(device)) {
                             strong->syncReaders.erase(device);
+                            strong->cancelSyncReaders.insert(device);
                             strong->syncCV.notify_all();
                         }
                         if (strong->readers.contains(device)) {
                             strong->readers.erase(device);
+                        }
+                        if (strong->cancelSyncReaders.contains(device)) {
+                            strong->cancelSyncReaders.erase(device);
                         }
                         (void) strong->onEOF(getStreamType(device), device);
                     });
