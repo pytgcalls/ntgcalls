@@ -360,6 +360,9 @@ namespace ntgcalls {
                             strong->syncReaders.erase(device);
                             strong->syncCV.notify_all();
                         }
+                        if (strong->readers.contains(device)) {
+                            strong->readers.erase(device);
+                        }
                         (void) strong->onEOF(getStreamType(device), device);
                     });
                     if (initialized) {
