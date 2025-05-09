@@ -18,33 +18,28 @@
 
 namespace ntgcalls {
 
-    StreamManager::StreamManager(rtc::Thread* workerThread): workerThread(workerThread) {}
-
     void StreamManager::close() {
-        workerThread->BlockingCall([this] {
-            std::lock_guard lock(mutex);
-            syncReaders.clear();
-            syncCV.notify_all();
-            onEOF = nullptr;
-            framesCallback = nullptr;
-            onChangeStatus = nullptr;
-            for (const auto& reader : readers | std::views::values) {
-                reader->onData(nullptr);
-                reader->onEof(nullptr);
+        std::lock_guard lock(mutex);
+        syncReaders.clear();
+        syncCV.notify_all();
+        onEOF = nullptr;
+        framesCallback = nullptr;
+        onChangeStatus = nullptr;
+        for (const auto& reader : readers | std::views::values) {
+            reader->onData(nullptr);
+            reader->onEof(nullptr);
+        }
+        readers.clear();
+        writers.clear();
+        for (const auto& stream : streams | std::views::values) {
+            if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
+                audioReceiver->onFrames(nullptr);
+            } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
+                videoReceiver->onFrame(nullptr);
             }
-            readers.clear();
-            writers.clear();
-            for (const auto& stream : streams | std::views::values) {
-                if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
-                    audioReceiver->onFrames(nullptr);
-                } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
-                    videoReceiver->onFrame(nullptr);
-                }
-            }
-            streams.clear();
-            tracks.clear();
-        });
-        workerThread = nullptr;
+        }
+        streams.clear();
+        tracks.clear();
     }
 
     void StreamManager::enableVideoSimulcast(const bool enable) {
@@ -264,9 +259,7 @@ namespace ntgcalls {
     }
 
     void StreamManager::checkUpgrade() {
-        workerThread->PostTask([&] {
-            (void) onChangeStatus(getState());
-        });
+        (void) onChangeStatus(getState());
     }
 
     template <typename SinkType, typename DescriptionType>
@@ -363,17 +356,11 @@ namespace ntgcalls {
                         if (!strong) {
                             return;
                         }
-                        strong->workerThread->PostTask([weak, device] {
-                            const auto strongThread = weak.lock();
-                            if (!strongThread) {
-                                return;
-                            }
-                            if (strongThread->syncReaders.contains(device)) {
-                                strongThread->syncReaders.erase(device);
-                                strongThread->syncCV.notify_all();
-                            }
-                            (void) strongThread->onEOF(getStreamType(device), device);
-                        });
+                        if (strong->syncReaders.contains(device)) {
+                            strong->syncReaders.erase(device);
+                            strong->syncCV.notify_all();
+                        }
+                        (void) strong->onEOF(getStreamType(device), device);
                     });
                     if (initialized) {
                         readers[device]->open();

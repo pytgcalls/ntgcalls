@@ -44,8 +44,6 @@ namespace ntgcalls {
             Screen,
         };
 
-        explicit StreamManager(rtc::Thread* workerThread);
-
         void close();
 
         void enableVideoSimulcast(bool enable);
@@ -85,7 +83,6 @@ namespace ntgcalls {
         void sendExternalFrame(Device device, const bytes::binary& data, wrtc::FrameData frameData);
 
     private:
-        rtc::Thread* workerThread;
         bool initialized = false, videoSimulcast = true;
         std::map<std::pair<Mode, Device>, std::unique_ptr<BaseSink>> streams;
         std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
