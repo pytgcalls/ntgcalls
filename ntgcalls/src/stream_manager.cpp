@@ -48,7 +48,7 @@ namespace ntgcalls {
 
     void StreamManager::setStreamSources(const Mode mode, const MediaDescription& desc) {
         RTC_LOG(LS_VERBOSE) << "Setting Configuration, Acquiring lock";
-        std::lock_guard lock(mutex);
+        std::unique_lock lock(mutex);
         RTC_LOG(LS_VERBOSE) << "Setting Configuration, Lock acquired";
 
         const bool wasIdling = isPaused();
@@ -67,6 +67,7 @@ namespace ntgcalls {
         setConfig<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
         if (mode == Capture && (wasCamera != hasDeviceInternal(mode, Camera) || wasScreen != hasDeviceInternal(mode, Screen) || wasIdling) && initialized) {
+            lock.unlock();
             checkUpgrade();
         }
     }
@@ -198,7 +199,7 @@ namespace ntgcalls {
     }
 
     bool StreamManager::updateMute(const bool isMuted) {
-        std::lock_guard lock(mutex);
+        std::unique_lock lock(mutex);
         bool changed = false;
         for (const auto& [key, track] : tracks) {
             if (key.first == Playback || key.second == Camera || key.second == Screen) {
@@ -210,13 +211,14 @@ namespace ntgcalls {
             }
         }
         if (changed) {
+            lock.unlock();
             checkUpgrade();
         }
         return changed;
     }
 
     bool StreamManager::updatePause(const bool isPaused) {
-        std::lock_guard lock(mutex);
+        std::unique_lock lock(mutex);
         auto res = false;
         const auto now = std::chrono::steady_clock::now();
         for (const auto& reader : readers | std::views::values) {
@@ -228,6 +230,7 @@ namespace ntgcalls {
             }
         }
         if (res) {
+            lock.unlock();
             checkUpgrade();
         }
         return res;
