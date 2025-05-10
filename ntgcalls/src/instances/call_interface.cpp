@@ -6,7 +6,7 @@
 
 namespace ntgcalls {
     CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {
-        streamManager = std::make_shared<StreamManager>(updateThread);
+        streamManager = std::make_shared<StreamManager>();
     }
 
     void CallInterface::stop() {

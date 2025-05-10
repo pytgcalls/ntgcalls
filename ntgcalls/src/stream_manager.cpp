@@ -18,33 +18,28 @@
 
 namespace ntgcalls {
 
-    StreamManager::StreamManager(rtc::Thread* workerThread): workerThread(workerThread) {}
-
     void StreamManager::close() {
-        workerThread->BlockingCall([this] {
-            std::lock_guard lock(mutex);
-            syncReaders.clear();
-            syncCV.notify_all();
-            onEOF = nullptr;
-            framesCallback = nullptr;
-            onChangeStatus = nullptr;
-            for (const auto& reader : readers | std::views::values) {
-                reader->onData(nullptr);
-                reader->onEof(nullptr);
+        std::lock_guard lock(mutex);
+        syncReaders.clear();
+        syncCV.notify_all();
+        onEOF = nullptr;
+        framesCallback = nullptr;
+        onChangeStatus = nullptr;
+        for (const auto& reader : readers | std::views::values) {
+            reader->onData(nullptr);
+            reader->onEof(nullptr);
+        }
+        readers.clear();
+        writers.clear();
+        for (const auto& stream : streams | std::views::values) {
+            if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
+                audioReceiver->onFrames(nullptr);
+            } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
+                videoReceiver->onFrame(nullptr);
             }
-            readers.clear();
-            writers.clear();
-            for (const auto& stream : streams | std::views::values) {
-                if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
-                    audioReceiver->onFrames(nullptr);
-                } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
-                    videoReceiver->onFrame(nullptr);
-                }
-            }
-            streams.clear();
-            tracks.clear();
-        });
-        workerThread = nullptr;
+        }
+        streams.clear();
+        tracks.clear();
     }
 
     void StreamManager::enableVideoSimulcast(const bool enable) {
@@ -53,7 +48,7 @@ namespace ntgcalls {
 
     void StreamManager::setStreamSources(const Mode mode, const MediaDescription& desc) {
         RTC_LOG(LS_VERBOSE) << "Setting Configuration, Acquiring lock";
-        std::lock_guard lock(mutex);
+        std::unique_lock lock(mutex);
         RTC_LOG(LS_VERBOSE) << "Setting Configuration, Lock acquired";
 
         const bool wasIdling = isPaused();
@@ -61,8 +56,8 @@ namespace ntgcalls {
         setConfig<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
         setConfig<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
 
-        const bool wasCamera = hasDevice(mode, Camera);
-        const bool wasScreen = hasDevice(mode, Screen);
+        const bool wasCamera = hasDeviceInternal(mode, Camera);
+        const bool wasScreen = hasDeviceInternal(mode, Screen);
 
         if (!videoSimulcast && desc.camera && desc.screen && mode == Capture) {
             throw InvalidParams("Cannot mix camera and screen sources");
@@ -71,7 +66,8 @@ namespace ntgcalls {
         setConfig<VideoSink, VideoDescription>(mode, Camera, desc.camera);
         setConfig<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
-        if (mode == Capture && (wasCamera != hasDevice(mode, Camera) || wasScreen != hasDevice(mode, Screen) || wasIdling) && initialized) {
+        if (mode == Capture && (wasCamera != hasDeviceInternal(mode, Camera) || wasScreen != hasDeviceInternal(mode, Screen) || wasIdling) && initialized) {
+            lock.unlock();
             checkUpgrade();
         }
     }
@@ -99,7 +95,7 @@ namespace ntgcalls {
         return MediaState{
             muted,
             (paused || muted),
-            !hasDevice(Capture, Camera),
+            !hasDeviceInternal(Capture, Camera),
             (paused || muted),
         };
     }
@@ -176,14 +172,13 @@ namespace ntgcalls {
         }
     }
 
-    bool StreamManager::hasDevice(const Mode mode, const Device device) const {
-        if (mode == Capture) {
-            return readers.contains(device);
-        }
-        return false;
+    bool StreamManager::hasDevice(const Mode mode, const Device device) {
+        std::lock_guard lock(mutex);
+        return hasDeviceInternal(mode, device);
     }
 
-    bool StreamManager::hasReaders() const {
+    bool StreamManager::hasReaders() {
+        std::lock_guard lock(mutex);
         return !readers.empty();
     }
 
@@ -204,7 +199,7 @@ namespace ntgcalls {
     }
 
     bool StreamManager::updateMute(const bool isMuted) {
-        std::lock_guard lock(mutex);
+        std::unique_lock lock(mutex);
         bool changed = false;
         for (const auto& [key, track] : tracks) {
             if (key.first == Playback || key.second == Camera || key.second == Screen) {
@@ -216,13 +211,14 @@ namespace ntgcalls {
             }
         }
         if (changed) {
+            lock.unlock();
             checkUpgrade();
         }
         return changed;
     }
 
     bool StreamManager::updatePause(const bool isPaused) {
-        std::lock_guard lock(mutex);
+        std::unique_lock lock(mutex);
         auto res = false;
         const auto now = std::chrono::steady_clock::now();
         for (const auto& reader : readers | std::views::values) {
@@ -234,6 +230,7 @@ namespace ntgcalls {
             }
         }
         if (res) {
+            lock.unlock();
             checkUpgrade();
         }
         return res;
@@ -247,6 +244,13 @@ namespace ntgcalls {
             }
         }
         return res;
+    }
+
+    bool StreamManager::hasDeviceInternal(const Mode mode, const Device device) const {
+        if (mode == Capture) {
+            return readers.contains(device) || externalReaders.contains(device);
+        }
+        return writers.contains(device) || externalWriters.contains(device);
     }
 
     StreamManager::Type StreamManager::getStreamType(const Device device) {
@@ -264,9 +268,7 @@ namespace ntgcalls {
     }
 
     void StreamManager::checkUpgrade() {
-        workerThread->PostTask([&] {
-            (void) onChangeStatus(getState());
-        });
+        (void) onChangeStatus(getState());
     }
 
     template <typename SinkType, typename DescriptionType>
@@ -363,17 +365,19 @@ namespace ntgcalls {
                         if (!strong) {
                             return;
                         }
-                        strong->workerThread->PostTask([weak, device] {
-                            const auto strongThread = weak.lock();
-                            if (!strongThread) {
-                                return;
-                            }
-                            if (strongThread->syncReaders.contains(device)) {
-                                strongThread->syncReaders.erase(device);
-                                strongThread->syncCV.notify_all();
-                            }
-                            (void) strongThread->onEOF(getStreamType(device), device);
-                        });
+                        std::lock_guard lock(strong->mutex);
+                        if (strong->syncReaders.contains(device)) {
+                            strong->syncReaders.erase(device);
+                            strong->cancelSyncReaders.insert(device);
+                            strong->syncCV.notify_all();
+                        }
+                        if (strong->readers.contains(device)) {
+                            strong->readers.erase(device);
+                        }
+                        if (strong->cancelSyncReaders.contains(device)) {
+                            strong->cancelSyncReaders.erase(device);
+                        }
+                        (void) strong->onEOF(getStreamType(device), device);
                     });
                     if (initialized) {
                         readers[device]->open();

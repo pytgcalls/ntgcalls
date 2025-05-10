@@ -238,27 +238,19 @@ jobs:
         run: |
           VERSION=$(grep -oP -m 1 'ntgcalls VERSION \K[A-Za-z0-9.]+' CMakeLists.txt)
           echo "Library Version: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "raw_version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Patch version number
         id: patch-version
         run: |
-          version="${{ steps.get-library-version.outputs.version }}"
-          if [[ "$version" == *.*.*.* ]]; then
-            echo "Version contains three dots"
-            major=$(echo "$version" | cut -d. -f1)
-            minor=$(echo "$version" | cut -d. -f2)
-            patch=$(echo "$version" | cut -d. -f3)
-            tweak=$(echo "$version" | cut -d. -f4)
-            new_version="${major}.${minor}.${patch}.dev${tweak}"
-            echo $new_version
-            echo "new_version=$new_version" >> $GITHUB_OUTPUT
-            echo "is_dev=true" >> $GITHUB_OUTPUT
-          else
-            echo "Version does not contain three dots"
-            echo "new_version=${{ steps.get-library-version.outputs.version }}" >> $GITHUB_OUTPUT
-            echo "is_dev=false" >> $GITHUB_OUTPUT
-          fi
+          version="${{ steps.get-library-version.outputs.raw_version }}"
+          fancy_version="$(cmake -DPROJECT_VERSION="$version" -DGITHUB_TAGS=ON -P cmake/VersionUtil.cmake 2>&1)"
+          is_dev=false
+          [[ "$version" == *.*.*.* ]] && is_dev=true
+          {
+            echo "version=$fancy_version"
+            echo "is_dev=$is_dev"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -288,8 +280,8 @@ jobs:
         with:
           files: |
             ./releases/*
-          tag_name: "v${{ steps.patch-version.outputs.new_version }}"
-          name: "NTgCalls auto build v${{ steps.patch-version.outputs.new_version }}"
+          tag_name: "v${{ steps.patch-version.outputs.version }}"
+          name: "NTgCalls auto build v${{ steps.patch-version.outputs.version }}"
           body: "These are the build files for the commit [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}).\nThese files were built during [this workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           prerelease: ${{ steps.patch-version.outputs.is_dev }}
 

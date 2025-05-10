@@ -44,8 +44,6 @@ namespace ntgcalls {
             Screen,
         };
 
-        explicit StreamManager(rtc::Thread* workerThread);
-
         void close();
 
         void enableVideoSimulcast(bool enable);
@@ -76,16 +74,15 @@ namespace ntgcalls {
 
         void start();
 
-        bool hasDevice(Mode mode, Device device) const;
+        bool hasDevice(Mode mode, Device device);
 
-        bool hasReaders() const;
+        bool hasReaders();
 
         void onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback);
 
         void sendExternalFrame(Device device, const bytes::binary& data, wrtc::FrameData frameData);
 
     private:
-        rtc::Thread* workerThread;
         bool initialized = false, videoSimulcast = true;
         std::map<std::pair<Mode, Device>, std::unique_ptr<BaseSink>> streams;
         std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
@@ -111,6 +108,8 @@ namespace ntgcalls {
         bool updatePause(bool isPaused);
 
         bool isPaused();
+
+        bool hasDeviceInternal(Mode mode, Device device) const;
 
         static Type getStreamType(Device device);
     };

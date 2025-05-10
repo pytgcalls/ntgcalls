@@ -29,7 +29,6 @@ namespace wrtc {
         requestCurrentTimeCallback = nullptr;
         requestBroadcastPartCallback = nullptr;
         updateAudioSourceCountCallback = nullptr;
-        isWaitingCurrentTime = false;
         running = false;
         mediaThread->BlockingCall([&] {});
     }
@@ -446,6 +445,9 @@ namespace wrtc {
     }
 
     void MTProtoStream::checkPendingSegments() {
+        if (!running) {
+            return;
+        }
         const auto absoluteTimestamp = rtc::TimeMillis();
         int64_t minDelayedRequestTimeout = INT_MAX;
 
