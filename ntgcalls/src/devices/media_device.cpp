@@ -14,6 +14,7 @@
 #include <ntgcalls/devices/win_core_device_module.hpp>
 #elif IS_ANDROID
 #include <wrtc/utils/java_context.hpp>
+#include <ntgcalls/devices/oboe_device_module.hpp>
 #include <ntgcalls/devices/open_sles_device_module.hpp>
 #include <ntgcalls/devices/java_audio_device_module.hpp>
 #include <ntgcalls/devices/java_video_capturer_module.hpp>
@@ -124,6 +125,10 @@ namespace ntgcalls {
             return std::make_unique<WinCoreDeviceModule>(desc, isCapture, sink);
         }
 #elif IS_ANDROID
+        if (OboeDeviceModule::isSupported()) {
+            RTC_LOG(LS_INFO) << "Using Oboe module for input";
+            return std::make_unique<OboeDeviceModule>(desc, isCapture, sink);
+        }
         if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), isCapture)) {
             RTC_LOG(LS_INFO) << "Using OpenSLES module for input";
             return std::make_unique<OpenSLESDeviceModule>(desc, isCapture, sink);

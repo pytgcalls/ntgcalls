@@ -5,3 +5,7 @@
 [submodule "deps/json"]
 	path = deps/json
 	url = https://github.com/nlohmann/json
+[submodule "deps/oboe"]
+	path = deps/oboe
+	url = https://github.com/google/oboe.git
+	branch = 1.9-stable

@@ -27,5 +27,5 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE IS_ANDROID)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE NTgCalls::ntgcalls nlohmann_json::nlohmann_json android log OpenSLES EGL)
 target_link_options(${CMAKE_PROJECT_NAME}
     PRIVATE
-    ${WEBRTC_ANDROID_LDFLAGS}
+    "${WEBRTC_ANDROID_LDFLAGS} -Wl,-z,max-page-size=16384"
 )

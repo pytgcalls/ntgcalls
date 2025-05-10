@@ -67,6 +67,10 @@ if (BOOST_ENABLED)
     target_link_libraries(${NTG_LIB_NAME} PRIVATE Boost::process)
 endif ()
 
+if (ANDROID)
+    target_link_libraries(${NTG_LIB_NAME} PRIVATE oboe)
+endif ()
+
 if (STATIC_BUILD OR ANDROID AND NOT IS_PYTHON)
     set(OUTPUT_ARCHIVE_DIR "${ARCHIVE_DIR}/lib")
     if (ANDROID)

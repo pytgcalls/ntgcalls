@@ -40,6 +40,15 @@ include(cmake/FindFFmpeg.cmake)
 # pybind11
 add_subdirectory(deps/pybind11)
 
+# Oboe
+if (ANDROID)
+    add_subdirectory(deps/oboe)
+    target_compile_options(oboe PRIVATE
+        -nostdinc++
+        -isystem${LIBCXX_INCLUDE}/include
+    )
+endif ()
+
 # nlohmann/json
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(deps/json EXCLUDE_FROM_ALL)
