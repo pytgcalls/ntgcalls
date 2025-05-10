@@ -74,9 +74,9 @@ namespace ntgcalls {
 
         void start();
 
-        bool hasDevice(Mode mode, Device device) const;
+        bool hasDevice(Mode mode, Device device);
 
-        bool hasReaders() const;
+        bool hasReaders();
 
         void onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback);
 
@@ -108,6 +108,8 @@ namespace ntgcalls {
         bool updatePause(bool isPaused);
 
         bool isPaused();
+
+        bool hasDeviceInternal(Mode mode, Device device) const;
 
         static Type getStreamType(Device device);
     };

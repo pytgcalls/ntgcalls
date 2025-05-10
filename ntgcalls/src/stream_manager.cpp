@@ -56,8 +56,8 @@ namespace ntgcalls {
         setConfig<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
         setConfig<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
 
-        const bool wasCamera = hasDevice(mode, Camera);
-        const bool wasScreen = hasDevice(mode, Screen);
+        const bool wasCamera = hasDeviceInternal(mode, Camera);
+        const bool wasScreen = hasDeviceInternal(mode, Screen);
 
         if (!videoSimulcast && desc.camera && desc.screen && mode == Capture) {
             throw InvalidParams("Cannot mix camera and screen sources");
@@ -66,7 +66,7 @@ namespace ntgcalls {
         setConfig<VideoSink, VideoDescription>(mode, Camera, desc.camera);
         setConfig<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
-        if (mode == Capture && (wasCamera != hasDevice(mode, Camera) || wasScreen != hasDevice(mode, Screen) || wasIdling) && initialized) {
+        if (mode == Capture && (wasCamera != hasDeviceInternal(mode, Camera) || wasScreen != hasDeviceInternal(mode, Screen) || wasIdling) && initialized) {
             checkUpgrade();
         }
     }
@@ -94,7 +94,7 @@ namespace ntgcalls {
         return MediaState{
             muted,
             (paused || muted),
-            !hasDevice(Capture, Camera),
+            !hasDeviceInternal(Capture, Camera),
             (paused || muted),
         };
     }
@@ -171,14 +171,13 @@ namespace ntgcalls {
         }
     }
 
-    bool StreamManager::hasDevice(const Mode mode, const Device device) const {
-        if (mode == Capture) {
-            return readers.contains(device);
-        }
-        return false;
+    bool StreamManager::hasDevice(const Mode mode, const Device device) {
+        std::lock_guard lock(mutex);
+        return hasDeviceInternal(mode, device);
     }
 
-    bool StreamManager::hasReaders() const {
+    bool StreamManager::hasReaders() {
+        std::lock_guard lock(mutex);
         return !readers.empty();
     }
 
@@ -242,6 +241,13 @@ namespace ntgcalls {
             }
         }
         return res;
+    }
+
+    bool StreamManager::hasDeviceInternal(const Mode mode, const Device device) const {
+        if (mode == Capture) {
+            return readers.contains(device) || externalReaders.contains(device);
+        }
+        return writers.contains(device) || externalWriters.contains(device);
     }
 
     StreamManager::Type StreamManager::getStreamType(const Device device) {
@@ -356,6 +362,7 @@ namespace ntgcalls {
                         if (!strong) {
                             return;
                         }
+                        std::lock_guard lock(strong->mutex);
                         if (strong->syncReaders.contains(device)) {
                             strong->syncReaders.erase(device);
                             strong->cancelSyncReaders.insert(device);
