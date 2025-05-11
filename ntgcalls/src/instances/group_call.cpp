@@ -160,7 +160,7 @@ namespace ntgcalls {
         };
         for (const auto& endpoint : conn->getEndpoints()) {
             jsonRes["constraints"][endpoint] = {
-                {"maxHeight", 360},
+                {"maxHeight", 720},
                 {"minHeight", 180},
             };
         }
