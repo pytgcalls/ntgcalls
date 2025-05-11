@@ -1,4 +1,7 @@
 name: Build CLang Image
+permissions:
+  contents: read
+  packages: write
 on:
   workflow_dispatch:
 
