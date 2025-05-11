@@ -14,8 +14,6 @@
 namespace ntgcalls {
 
     class CallInterface: public std::enable_shared_from_this<CallInterface> {
-        std::atomic_bool isExiting;
-
     protected:
         std::shared_ptr<wrtc::NetworkInterface> connection;
         std::shared_ptr<StreamManager> streamManager;

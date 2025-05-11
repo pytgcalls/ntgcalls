@@ -5,7 +5,7 @@
 #pragma once
 
 // PCM16L AUDIO CODEC SPECIFICATION
-// Frame Time: 10ms
+// Frame Time: 10 ms
 // Max SampleRate: 96000
 // Max BitsPerSample: 16
 // Max Channels: 2
