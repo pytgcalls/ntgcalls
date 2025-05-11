@@ -2,10 +2,10 @@
 // Created by Laky64 on 30/08/2023.
 //
 
+#ifdef BOOST_ENABLED
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/shell_reader.hpp>
 
-#ifdef BOOST_ENABLED
 namespace ntgcalls {
 
     ShellReader::ShellReader(const std::string &command, BaseSink *sink):
