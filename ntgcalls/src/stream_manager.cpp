@@ -266,6 +266,23 @@ namespace ntgcalls {
         }
     }
 
+    void StreamManager::removeReader(const Device device) {
+        if (syncReaders.contains(device)) {
+            syncReaders.erase(device);
+            cancelSyncReaders.insert(device);
+            syncCV.notify_all();
+        }
+        if (readers.contains(device)) {
+            readers[device]->onData(nullptr);
+            readers[device]->onEof(nullptr);
+        }
+        readers.erase(device);
+        externalReaders.erase(device);
+        if (cancelSyncReaders.contains(device)) {
+            cancelSyncReaders.erase(device);
+        }
+    }
+
     void StreamManager::checkUpgrade() {
         std::weak_ptr weak(shared_from_this());
         workerThread->PostTask([weak] {
@@ -307,16 +324,7 @@ namespace ntgcalls {
             if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device) && desc.value().mediaSource == DescriptionType::MediaSource::External) {
                 if (mode == Capture) {
                     const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device;
-                    if (readers.contains(device)) {
-                        cancelSyncReaders.insert(device);
-                        syncCV.notify_all();
-                        readers[device]->onData(nullptr);
-                        readers[device]->onEof(nullptr);
-                    }
-                    readers.erase(device);
-                    if (cancelSyncReaders.contains(device)) {
-                        cancelSyncReaders.erase(device);
-                    }
+                    removeReader(device);
                     if (desc.value().mediaSource == DescriptionType::MediaSource::External) {
                         externalReaders.insert(device);
                         syncReaders.insert(device);
@@ -377,19 +385,7 @@ namespace ntgcalls {
                                 return;
                             }
                             std::lock_guard lock(strongThread->mutex);
-                            if (strongThread->syncReaders.contains(device)) {
-                                strongThread->syncReaders.erase(device);
-                                strongThread->cancelSyncReaders.insert(device);
-                                strongThread->syncCV.notify_all();
-                            }
-                            if (strongThread->readers.contains(device)) {
-                                strongThread->readers[device]->onData(nullptr);
-                                strongThread->readers[device]->onEof(nullptr);
-                                strongThread->readers.erase(device);
-                            }
-                            if (strongThread->cancelSyncReaders.contains(device)) {
-                                strongThread->cancelSyncReaders.erase(device);
-                            }
+                            strongThread->removeReader(device);
                             (void) strongThread->onEOF(getStreamType(device), device);
                         });
                     });
@@ -469,16 +465,7 @@ namespace ntgcalls {
                 }
             }
         } else if (mode == Capture) {
-            if (syncReaders.contains(device)) {
-                syncReaders.erase(device);
-                syncCV.notify_all();
-            }
-            if (readers.contains(device)) {
-                readers[device]->onData(nullptr);
-                readers[device]->onEof(nullptr);
-            }
-            readers.erase(device);
-            externalReaders.erase(device);
+            removeReader(device);
         } else {
             writers.erase(device);
             externalWriters.erase(device);

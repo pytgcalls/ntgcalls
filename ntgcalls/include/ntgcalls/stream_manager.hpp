@@ -115,5 +115,7 @@ namespace ntgcalls {
         bool hasDeviceInternal(Mode mode, Device device) const;
 
         static Type getStreamType(Device device);
+
+        void removeReader(Device device);
     };
 } // ntgcalls
