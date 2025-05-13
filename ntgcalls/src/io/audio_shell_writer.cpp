@@ -21,7 +21,7 @@ namespace ntgcalls {
         if (stdIn.is_open()) {
             stdIn.close(ec);
         }
-        if (shellProcess.running()) {
+        if (shellProcess.running(ec)) {
             shellProcess.terminate(ec);
             shellProcess.wait(ec);
         }

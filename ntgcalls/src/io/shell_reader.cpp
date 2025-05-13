@@ -20,7 +20,7 @@ namespace ntgcalls {
 
     ShellReader::~ShellReader() {
         boost::system::error_code ec;
-        if (shellProcess.running()) {
+        if (shellProcess.running(ec)) {
             shellProcess.terminate(ec);
             shellProcess.wait(ec);
         }
