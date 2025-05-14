@@ -10,6 +10,9 @@
 #include <wrtc/interfaces/group_connection.hpp>
 #include <wrtc/models/response_payload.hpp>
 
+#define RTMP_UNSUPPORTED_THROW RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP"; \
+    throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
+
 namespace ntgcalls {
 
     void GroupCall::stop() {
@@ -106,8 +109,7 @@ namespace ntgcalls {
         }
 
         if (connectionMode == wrtc::ConnectionMode::Rtmp && streamManager->hasReaders()) {
-            RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP";
-            throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
+            RTMP_UNSUPPORTED_THROW
         }
 
         Safe<wrtc::GroupConnection>(conn)->setConnectionMode(connectionMode);
@@ -160,7 +162,7 @@ namespace ntgcalls {
         };
         for (const auto& endpoint : conn->getEndpoints()) {
             jsonRes["constraints"][endpoint] = {
-                {"maxHeight", 360},
+                {"maxHeight", 720},
                 {"minHeight", 180},
             };
         }
@@ -199,8 +201,7 @@ namespace ntgcalls {
 
     void GroupCall::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
         if (mode == StreamManager::Mode::Capture && getConnectionMode() == wrtc::ConnectionMode::Rtmp) {
-            RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP";
-            throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
+            RTMP_UNSUPPORTED_THROW
         }
         CallInterface::setStreamSources(mode, config);
         if (mode == StreamManager::Mode::Playback && presentationConnection) {

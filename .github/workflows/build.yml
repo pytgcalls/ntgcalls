@@ -1,4 +1,6 @@
 name: Build And Publish
+permissions:
+  contents: read
 on:
   workflow_dispatch:
     inputs:
@@ -78,6 +80,8 @@ jobs:
     if: github.event.inputs.build-wheels == 'true' || github.event.inputs.build-shared-libs == 'true' || github.event.inputs.build-static-libs == 'true'
     needs: setup
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix: ${{fromJson(needs.setup.outputs.matrix)}}
 
@@ -178,6 +182,9 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     if: github.event.inputs.android-build == 'true'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4

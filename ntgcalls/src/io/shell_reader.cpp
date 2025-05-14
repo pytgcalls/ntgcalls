@@ -2,10 +2,10 @@
 // Created by Laky64 on 30/08/2023.
 //
 
+#ifdef BOOST_ENABLED
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/shell_reader.hpp>
 
-#ifdef BOOST_ENABLED
 namespace ntgcalls {
 
     ShellReader::ShellReader(const std::string &command, BaseSink *sink):
@@ -21,12 +21,16 @@ namespace ntgcalls {
     ShellReader::~ShellReader() {
         boost::system::error_code ec;
         RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader terminate";
-        shellProcess.terminate(ec);
-        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader terminated: " << ec.message();
-        shellProcess.wait(ec);
-        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader waited: " << ec.message();
-        shellProcess.detach();
-        RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader detached";
+        if (shellProcess.running(ec)) {
+            shellProcess.terminate(ec);
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader terminated: " << ec.message();
+            shellProcess.wait(ec);
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader waited: " << ec.message();
+        }
+        if (stdOut.is_open()) {
+            stdOut.close(ec);
+            RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader stdout closed";
+        }
         close();
         RTC_LOG(LS_VERBOSE) << "[" << uniqueID << "] ShellReader closed";
     }
