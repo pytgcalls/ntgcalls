@@ -1,6 +1,7 @@
 package ntgcalls
 
 //#include "ntgcalls.h"
+//#include <stdlib.h>
 import "C"
 import (
 	"fmt"
@@ -53,8 +54,11 @@ func parseBytes(data []byte) (*C.uint8_t, C.int) {
 func parseStringVector(data unsafe.Pointer, size C.int) []string {
 	result := make([]string, size)
 	for i := 0; i < int(size); i++ {
-		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(data) + uintptr(i)*unsafe.Sizeof(uintptr(0)))))
+		pointer := *(**C.char)(unsafe.Pointer(uintptr(data) + uintptr(i)*unsafe.Sizeof(uintptr(0))))
+		result[i] = C.GoString(pointer)
+		C.free(unsafe.Pointer(pointer))
 	}
+	defer C.free(data)
 	return result
 }
 
@@ -162,6 +166,9 @@ func parseDeviceInfoVector(devices unsafe.Pointer, size C.int) []DeviceInfo {
 			Name:     C.GoString(device.name),
 			Metadata: C.GoString(device.metadata),
 		}
+		C.free(unsafe.Pointer(device.name))
+		C.free(unsafe.Pointer(device.metadata))
 	}
+	defer C.free(devices)
 	return rawDevices
 }

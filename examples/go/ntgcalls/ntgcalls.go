@@ -1,6 +1,7 @@
 package ntgcalls
 
 //#include "ntgcalls.h"
+//#include <stdlib.h>
 //extern void handleStreamEnd(uintptr_t ptr, int64_t chatID, ntg_stream_type_enum streamType, ntg_stream_device_enum streamDevice, void*);
 //extern void handleUpgrade(uintptr_t ptr, int64_t chatID, ntg_media_state_struct state, void*);
 //extern void handleConnectionChange(uintptr_t ptr, int64_t chatID, ntg_network_info_struct networkInfo, void*);
@@ -240,21 +241,21 @@ func (ctx *Client) GetConnectionMode(chatId int64) (ConnectionMode, error) {
 }
 
 func (ctx *Client) CreateCall(chatId int64) (string, error) {
-	var buffer [1024]C.char
-	size := C.int(len(buffer))
+	var buffer *C.char
 	f := CreateFuture()
-	C.ntg_create(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer[0], size, f.ParseToC())
+	C.ntg_create(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer, f.ParseToC())
 	f.wait()
-	return C.GoString(&buffer[0]), parseErrorCode(f)
+	defer C.free(unsafe.Pointer(buffer))
+	return C.GoString(buffer), parseErrorCode(f)
 }
 
 func (ctx *Client) InitPresentation(chatId int64) (string, error) {
-	var buffer [1024]C.char
-	size := C.int(len(buffer))
+	var buffer *C.char
 	f := CreateFuture()
-	C.ntg_init_presentation(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer[0], size, f.ParseToC())
+	C.ntg_init_presentation(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer, f.ParseToC())
 	f.wait()
-	return C.GoString(&buffer[0]), parseErrorCode(f)
+	defer C.free(unsafe.Pointer(buffer))
+	return C.GoString(buffer), parseErrorCode(f)
 }
 
 func (ctx *Client) StopPresentation(chatId int64) error {
@@ -287,14 +288,15 @@ func (ctx *Client) CreateP2PCall(chatId int64) error {
 }
 
 func (ctx *Client) InitExchange(chatId int64, dhConfig DhConfig, gAHash []byte) ([]byte, error) {
-	var buffer [32]C.uint8_t
-	size := C.int(len(buffer))
+	var buffer *C.uint8_t
+	var size C.int
 	gAHashC, gAHashSize := parseBytes(gAHash)
 	dhConfigC := dhConfig.ParseToC()
 	f := CreateFuture()
-	C.ntg_init_exchange(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &dhConfigC, gAHashC, gAHashSize, &buffer[0], size, f.ParseToC())
+	C.ntg_init_exchange(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &dhConfigC, gAHashC, gAHashSize, &buffer, &size, f.ParseToC())
 	f.wait()
-	return C.GoBytes(unsafe.Pointer(&buffer[0]), size), parseErrorCode(f)
+	defer C.free(unsafe.Pointer(buffer))
+	return C.GoBytes(unsafe.Pointer(buffer), size), parseErrorCode(f)
 }
 
 func (ctx *Client) ExchangeKeys(chatId int64, gAB []byte, fingerprint int64) (AuthParams, error) {
@@ -452,33 +454,28 @@ func (ctx *Client) EnableGLibLoop(enable bool) {
 
 func (ctx *Client) Calls() map[int64]CallInfo {
 	mapReturn := make(map[int64]CallInfo)
-
 	f := CreateFuture()
-	var callSize C.uint64_t
-	_ = C.ntg_calls_count(C.uintptr_t(ctx.ptr), &callSize, f.ParseToC())
+	var buffer *C.ntg_call_info_struct
+	var size C.int
+	C.ntg_calls(C.uintptr_t(ctx.ptr), &buffer, &size, f.ParseToC())
 	f.wait()
-	f = CreateFuture()
-	if callSize == 0 {
-		return mapReturn
-	}
-	buffer := make([]C.ntg_call_info_struct, callSize)
-	C.ntg_calls(C.uintptr_t(ctx.ptr), &buffer[0], callSize, f.ParseToC())
-	f.wait()
-	for _, call := range buffer {
-		mapReturn[int64(call.chatId)] = CallInfo{
-			Playback: parseStreamStatus(call.playback),
-			Capture:  parseStreamStatus(call.capture),
+	for i := 0; i < int(size); i++ {
+		rawCall := *(*C.ntg_call_info_struct)(unsafe.Pointer(uintptr(unsafe.Pointer(buffer)) + uintptr(i)*unsafe.Sizeof(C.ntg_call_info_struct{})))
+		mapReturn[int64(rawCall.chatId)] = CallInfo{
+			Playback: parseStreamStatus(rawCall.playback),
+			Capture:  parseStreamStatus(rawCall.capture),
 		}
 	}
+	defer C.free(unsafe.Pointer(buffer))
 	return mapReturn
 }
 
 //goland:noinspection GoUnusedExportedFunction
 func Version() string {
-	var buffer [20]C.char
-	size := C.int(len(buffer))
-	C.ntg_get_version(&buffer[0], size)
-	return C.GoString(&buffer[0])
+	var buffer *C.char
+	C.ntg_get_version(&buffer)
+	defer C.free(unsafe.Pointer(buffer))
+	return C.GoString(buffer)
 }
 
 func (ctx *Client) Free() {
