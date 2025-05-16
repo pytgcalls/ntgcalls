@@ -30,7 +30,6 @@ namespace wrtc {
         requestBroadcastPartCallback = nullptr;
         updateAudioSourceCountCallback = nullptr;
         running = false;
-        mediaThread->BlockingCall([&] {});
     }
 
     void MTProtoStream::sendBroadcastTimestamp(const int64_t timestamp) {
@@ -148,40 +147,26 @@ namespace wrtc {
         if (isRtmp) {
             return;
         }
-        std::weak_ptr weak(shared_from_this());
-        mediaThread->BlockingCall([weak, endpoint, ssrc, isScreenCast] {
-            const auto strong = weak.lock();
-            if (!strong) {
-                return;
-            }
-            std::lock_guard lock(strong->segmentMutex);
-            strong->videoChannels[endpoint] = VideoChannel(
-                ssrc,
-                isScreenCast,
-                isScreenCast ? MediaSegment::Quality::Full : MediaSegment::Quality::Medium
-            );
-            strong->checkPendingVideoQualityUpdate();
-        });
+        std::lock_guard lock(segmentMutex);
+        videoChannels[endpoint] = VideoChannel(
+            ssrc,
+            isScreenCast,
+            isScreenCast ? MediaSegment::Quality::Full : MediaSegment::Quality::Medium
+        );
+        checkPendingVideoQualityUpdate();
     }
 
     bool MTProtoStream::removeIncomingVideo(const std::string& endpoint) {
         if (isRtmp) {
             return false;
         }
-        std::weak_ptr weak(shared_from_this());
-        return mediaThread->BlockingCall([weak, endpoint] {
-            const auto strong = weak.lock();
-            if (!strong) {
-                return false;
-            }
-            std::lock_guard lock(strong->segmentMutex);
-            if (strong->videoChannels.contains(endpoint)) {
-                strong->videoChannels.erase(endpoint);
-                strong->checkPendingVideoQualityUpdate();
-                return true;
-            }
-            return false;
-        });
+        std::lock_guard lock(segmentMutex);
+        if (videoChannels.contains(endpoint)) {
+            videoChannels.erase(endpoint);
+            checkPendingVideoQualityUpdate();
+            return true;
+        }
+        return false;
     }
 
     void MTProtoStream::enableAudioIncoming(const bool enable) {
