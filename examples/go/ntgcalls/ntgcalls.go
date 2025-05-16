@@ -10,11 +10,17 @@ package ntgcalls
 //extern void handleRemoteSourceChange(uintptr_t ptr, int64_t chatID, ntg_remote_source_struct remoteSource, void*);
 //extern void handleRequestBroadcastTimestamp(uintptr_t ptr, int64_t chatID, void*);
 //extern void handleRequestBroadcastPart(uintptr_t ptr, int64_t chatID, ntg_segment_part_request_struct segmentPartRequest, void*);
+//extern void handleLogs(ntg_log_message_struct logMessage);
 import "C"
 import (
 	"fmt"
+	"github.com/Laky-64/gologging"
 	"unsafe"
 )
+
+func init() {
+	C.ntg_register_logger((C.ntg_log_message_callback)(unsafe.Pointer(C.handleLogs)))
+}
 
 func NTgCalls() *Client {
 	instance := &Client{
@@ -30,6 +36,33 @@ func NTgCalls() *Client {
 	C.ntg_on_request_broadcast_timestamp(C.uintptr_t(instance.ptr), (C.ntg_broadcast_timestamp_callback)(unsafe.Pointer(C.handleRequestBroadcastTimestamp)), selfPointer)
 	C.ntg_on_request_broadcast_part(C.uintptr_t(instance.ptr), (C.ntg_broadcast_part_callback)(unsafe.Pointer(C.handleRequestBroadcastPart)), selfPointer)
 	return instance
+}
+
+//export handleLogs
+func handleLogs(logMessage C.ntg_log_message_struct) {
+	message := fmt.Sprintf(
+		"(%s:%d) %s",
+		string(C.GoString(logMessage.file)),
+		uint32(logMessage.line),
+		string(C.GoString(logMessage.message)),
+	)
+	var loggerName string
+	if logMessage.source == C.NTG_LOG_WEBRTC {
+		loggerName = "webrtc"
+	} else {
+		loggerName = "ntgcalls"
+	}
+	loggerInstance := gologging.GetLogger(loggerName)
+	switch logMessage.level {
+	case C.NTG_LOG_DEBUG:
+		loggerInstance.Debug(message)
+	case C.NTG_LOG_INFO:
+		loggerInstance.Info(message)
+	case C.NTG_LOG_WARNING:
+		loggerInstance.Warn(message)
+	case C.NTG_LOG_ERROR:
+		loggerInstance.Error(message)
+	}
 }
 
 //export handleStreamEnd

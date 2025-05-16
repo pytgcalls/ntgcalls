@@ -16,6 +16,7 @@ package main
 import "C"
 import (
 	"fmt"
+	"github.com/Laky-64/gologging"
 	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ntgcalls"
 )
@@ -26,6 +27,9 @@ var pendingPresentation map[int64]bool
 var urlVideoTest = "https://docs.evostream.com/sample_content/assets/sintel1m720p.mp4"
 
 func main() {
+	gologging.SetLevel(gologging.FatalLevel)
+	gologging.GetLogger("ntgcalls").SetLevel(gologging.DebugLevel)
+	
 	client := ntgcalls.NTgCalls()
 	defer client.Free()
 	mutedByAdmin = make(map[int64]bool)
