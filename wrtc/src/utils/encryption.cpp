@@ -54,7 +54,7 @@ namespace openssl {
     void Aes::ProcessCtr(const bytes::memory_span from, void *to, KeyIv& keyIv) {
         auto aes = AES_KEY();
         AES_set_encrypt_key(keyIv.key.data(), keyIv.key.size() * CHAR_BIT, &aes);
-        uint8_t ecountBuf[16] = {};
+        uint8_t eCountBuf[16] = {};
         uint32_t offsetInBlock = 0;
         AES_ctr128_encrypt(
             static_cast<const unsigned char*>(from.data),
@@ -62,7 +62,7 @@ namespace openssl {
             from.size,
             &aes,
             keyIv.iv.data(),
-            ecountBuf,
+            eCountBuf,
             &offsetInBlock
         );
     }
