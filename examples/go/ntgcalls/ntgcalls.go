@@ -485,8 +485,8 @@ func (ctx *Client) EnableGLibLoop(enable bool) {
 	C.ntg_enable_g_lib_loop(C.bool(enable))
 }
 
-func (ctx *Client) Calls() map[int64]CallInfo {
-	mapReturn := make(map[int64]CallInfo)
+func (ctx *Client) Calls() map[int64]*CallInfo {
+	mapReturn := make(map[int64]*CallInfo)
 	f := CreateFuture()
 	var buffer *C.ntg_call_info_struct
 	var size C.int
@@ -494,7 +494,7 @@ func (ctx *Client) Calls() map[int64]CallInfo {
 	f.wait()
 	for i := 0; i < int(size); i++ {
 		rawCall := *(*C.ntg_call_info_struct)(unsafe.Pointer(uintptr(unsafe.Pointer(buffer)) + uintptr(i)*unsafe.Sizeof(C.ntg_call_info_struct{})))
-		mapReturn[int64(rawCall.chatId)] = CallInfo{
+		mapReturn[int64(rawCall.chatId)] = &CallInfo{
 			Playback: parseStreamStatus(rawCall.playback),
 			Capture:  parseStreamStatus(rawCall.capture),
 		}
