@@ -13,7 +13,7 @@ namespace ntgcalls {
     class BaseReader: public virtual BaseIO {
     protected:
         wrtc::synchronized_callback<bytes::unique_binary, wrtc::FrameData> dataCallback;
-        bool enabled = true;
+        bool status = true;
 
     public:
         explicit BaseReader(BaseSink *sink);
@@ -22,7 +22,7 @@ namespace ntgcalls {
 
         void onData(const std::function<void(bytes::unique_binary, wrtc::FrameData)> &callback);
 
-        virtual bool set_enabled(bool status);
+        virtual bool set_enabled(bool enable);
 
         bool is_enabled() const;
     };

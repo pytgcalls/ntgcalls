@@ -12,11 +12,11 @@ namespace ntgcalls {
         dataCallback = callback;
     }
 
-    bool BaseReader::set_enabled(const bool status) {
-        return !std::exchange(enabled, status);
+    bool BaseReader::set_enabled(const bool enable) {
+        return std::exchange(status, enable) != enable;
     }
 
     bool BaseReader::is_enabled() const {
-        return enabled;
+        return status;
     }
 } // ntgcalls
