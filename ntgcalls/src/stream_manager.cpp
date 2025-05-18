@@ -219,9 +219,7 @@ namespace ntgcalls {
         auto changed = false;
         const auto now = std::chrono::steady_clock::now();
         for (const auto& reader : readers | std::views::values) {
-            RTC_LOG(LS_VERBOSE) << "Reader:" << (isPaused ? "paused" : "resumed");
             changed |= reader->set_enabled(!isPaused);
-            RTC_LOG(LS_VERBOSE) << "Reader:" << (reader->is_enabled() ? "enabled" : "disabled");
         }
         if (changed) {
             if (!isPaused) {
