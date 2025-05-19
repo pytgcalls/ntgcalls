@@ -41,7 +41,7 @@ namespace ntgcalls {
     }
 
     void DesktopCapturerModule::OnCaptureResult(const webrtc::DesktopCapturer::Result result, const std::unique_ptr<webrtc::DesktopFrame> frame) {
-        if (!enabled) return;
+        if (!status) return;
         if (result == webrtc::DesktopCapturer::Result::SUCCESS) {
             const int width = frame->size().width();
             const int height = frame->size().height();

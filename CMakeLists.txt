@@ -14,7 +14,7 @@ add_custom_target(clean_objects
     COMMENT "Removing all object (.o) files"
 )
 
-project(ntgcalls VERSION 2.0.0.5 LANGUAGES C CXX)
+project(ntgcalls VERSION 2.0.0.7 LANGUAGES C CXX)
 include(cmake/VersionUtil.cmake)
 
 if (MACOS)

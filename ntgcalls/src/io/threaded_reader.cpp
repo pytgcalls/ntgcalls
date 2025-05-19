@@ -67,7 +67,7 @@ namespace ntgcalls {
                             {
                                 std::unique_lock lock(mtx);
                                 cv.wait(lock, [this, i] {
-                                    return !running || (activeBuffer == i && enabled);
+                                    return !running || (activeBuffer == i && status);
                                 });
                             }
                             if (!running) break;
@@ -92,8 +92,8 @@ namespace ntgcalls {
         }
     }
 
-    bool ThreadedReader::set_enabled(const bool status) {
-        const auto res = BaseReader::set_enabled(status);
+    bool ThreadedReader::set_enabled(const bool enable) {
+        const auto res = BaseReader::set_enabled(enable);
         cv.notify_all();
         return res;
     }

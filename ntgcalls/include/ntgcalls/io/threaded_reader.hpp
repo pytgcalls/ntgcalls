@@ -29,7 +29,7 @@ namespace ntgcalls {
 
         void run(const std::function<bytes::unique_binary(int64_t)>& readCallback);
 
-        bool set_enabled(bool status) override;
+        bool set_enabled(bool enable) override;
     };
 
 } // ntgcalls

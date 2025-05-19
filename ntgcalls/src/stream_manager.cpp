@@ -206,10 +206,7 @@ namespace ntgcalls {
             if (key.first == Playback || key.second == Camera || key.second == Screen) {
                 continue;
             }
-            if (!track->enabled() != isMuted) {
-                track->set_enabled(!isMuted);
-                changed = true;
-            }
+            changed |= track->set_enabled(!isMuted);
         }
         if (changed) {
             checkUpgrade();
@@ -219,20 +216,22 @@ namespace ntgcalls {
 
     bool StreamManager::updatePause(const bool isPaused) {
         std::lock_guard lock(mutex);
-        auto res = false;
+        auto changed = false;
         const auto now = std::chrono::steady_clock::now();
         for (const auto& reader : readers | std::views::values) {
-            if (reader->set_enabled(!isPaused)) {
-                res = true;
-            }
-            if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(reader.get())) {
-                threadedReader->synchronizeTime(now);
-            }
+            changed |= reader->set_enabled(!isPaused);
         }
-        if (res) {
+        if (changed) {
+            if (!isPaused) {
+                for (const auto& reader : readers | std::views::values) {
+                    if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(reader.get())) {
+                        threadedReader->synchronizeTime(now);
+                    }
+                }
+            }
             checkUpgrade();
         }
-        return res;
+        return changed;
     }
 
     bool StreamManager::isPaused() {

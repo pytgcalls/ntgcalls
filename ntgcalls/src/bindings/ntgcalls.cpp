@@ -53,44 +53,51 @@ return NTG_ERROR_UNKNOWN;\
 }\
 return 0;
 
-int copyAndReturn(const std::vector<std::byte>& b, uint8_t *buffer, const int size) {
+void copyAndReturn(const std::vector<std::byte>& b, uint8_t* buffer, const int size) {
     if (!buffer)
-        return static_cast<int>(b.size());
-
+        return;
     if (size < static_cast<int>(b.size()))
-        return NTG_ERROR_TOO_SMALL;
+        return;
     const auto *bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
     std::copy_n(bufferTemp, b.size(), buffer);
-    return static_cast<int>(b.size());
 }
 
-bytes::vector copyAndReturn(const uint8_t *buffer, const int size) {
+int copyAndReturn(const std::vector<std::byte>& b, uint8_t** buffer, int* size) {
+    if (!buffer || !size)
+        return NTG_ERROR_NULL_POINTER;
+    auto* output = new uint8_t[b.size()];
+    const auto *bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
+    std::copy_n(bufferTemp, b.size(), output);
+    *size = static_cast<int>(b.size());
+    *buffer = output;
+    return 0;
+}
+
+int copyAndReturn(std::string s, char** buffer) {
+    if (!buffer)
+        return NTG_ERROR_NULL_POINTER;
+    auto *output = new char[s.size() + 1];
+    std::ranges::copy(s, output);
+    output[s.size()] = '\0';
+    *buffer = output;
+    return 0;
+}
+
+template <typename T>
+void copyAndReturn(std::vector<T> b, T **buffer, int* size) {
+    if (!buffer || !size)
+        return;
+    auto *output = new T[b.size()];
+    std::copy(b.begin(), b.end(), output);
+    *buffer = output;
+    *size = static_cast<int>(b.size());
+}
+
+bytes::vector copyAndReturn(const uint8_t* buffer, const int size) {
     bytes::vector b(size);
     const auto *bufferTemp = reinterpret_cast<const std::byte*>(buffer);
     std::copy_n(bufferTemp, size, b.begin());
     return b;
-}
-
-int copyAndReturn(std::string s, char *buffer, const int size) {
-    if (!buffer)
-        return static_cast<int>(s.size() + 1);
-
-    if (size < static_cast<int>(s.size() + 1))
-        return NTG_ERROR_TOO_SMALL;
-    std::ranges::copy(s, buffer);
-    buffer[s.size()] = '\0';
-    return static_cast<int>(s.size() + 1);
-}
-
-template <typename T>
-int copyAndReturn(std::vector<T> b, T *buffer, const int size) {
-    if (!buffer)
-        return static_cast<int>(b.size());
-
-    if (size < static_cast<int>(b.size()))
-        return NTG_ERROR_TOO_SMALL;
-    std::copy(b.begin(), b.end(), buffer);
-    return static_cast<int>(b.size());
 }
 
 ntgcalls::NTgCalls* getInstance(const uintptr_t ptr) {
@@ -229,8 +236,7 @@ std::vector<std::string> copyAndReturn(char** versions, const int size) {
 std::pair<char**, int> copyAndReturn(const std::vector<std::string>& versions) {
     auto versionsCpp = new char*[versions.size()];
     for (int i = 0; i < versions.size(); i++) {
-        versionsCpp[i] = new char[versions[i].size() + 1];
-        copyAndReturn(versions[i], versionsCpp[i], static_cast<int>(versions[i].size() + 1));
+        copyAndReturn(versions[i], &versionsCpp[i]);
     }
     return {versionsCpp, static_cast<int>(versions.size())};
 }
@@ -239,10 +245,8 @@ std::pair<ntg_device_info_struct*, int> copyAndReturn(const std::vector<ntgcalls
     auto cDevices = new ntg_device_info_struct[devices.size()];
     for (int i = 0; i < devices.size(); i++) {
         ntg_device_info_struct result{};
-        result.name = new char[devices[i].name.size() + 1];
-        copyAndReturn(devices[i].name, result.name, static_cast<int>(devices[i].name.size() + 1));
-        result.metadata = new char[devices[i].metadata.size() + 1];
-        copyAndReturn(devices[i].metadata, result.metadata, static_cast<int>(devices[i].metadata.size() + 1));
+        copyAndReturn(devices[i].name, &result.name);
+        copyAndReturn(devices[i].metadata, &result.metadata);
         cDevices[i] = result;
     }
     return {cDevices, static_cast<int>(devices.size())};
@@ -439,10 +443,10 @@ int ntg_destroy(const uintptr_t ptr) {
     }
 }
 
-int ntg_init_presentation(const uintptr_t ptr, const int64_t chatId, char* buffer, const int size, ntg_async_struct future) {
+int ntg_init_presentation(const uintptr_t ptr, const int64_t chatId, char** buffer, ntg_async_struct future) {
     PREPARE_ASYNC(initPresentation, chatId)
-    [future, buffer, size] (const std::string& s) {
-        *future.errorCode = copyAndReturn(s, buffer, size);
+    [future, buffer] (const std::string& s) {
+        *future.errorCode = copyAndReturn(s, buffer);
         future.promise(future.userData);
     }
     PREPARE_ASYNC_END
@@ -485,7 +489,7 @@ int ntg_create_p2p(const uintptr_t ptr, const int64_t userId, ntg_async_struct f
     PREPARE_ASYNC_END
 }
 
-int ntg_init_exchange(const uintptr_t ptr, const int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, const int sizeGAHash, uint8_t* buffer, const int size, ntg_async_struct future) {
+int ntg_init_exchange(const uintptr_t ptr, const int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, const int sizeGAHash, uint8_t** buffer, int* size, ntg_async_struct future) {
     PREPARE_ASYNC(initExchange, userId, parseDhConfig(dhConfig), sizeGAHash ? std::optional(copyAndReturn(g_a_hash, sizeGAHash)) : std::nullopt)
     [future, buffer, size] (const bytes::vector& s){
         *future.errorCode = copyAndReturn(s, buffer, size);
@@ -494,7 +498,7 @@ int ntg_init_exchange(const uintptr_t ptr, const int64_t userId, ntg_dh_config_s
     PREPARE_ASYNC_END
 }
 
-int ntg_exchange_keys(const uintptr_t ptr, const int64_t userId, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct *buffer, ntg_async_struct future) {
+int ntg_exchange_keys(const uintptr_t ptr, const int64_t userId, const uint8_t* g_a_or_b, const int sizeGAB, const int64_t fingerprint, ntg_auth_params_struct* buffer, ntg_async_struct future) {
     PREPARE_ASYNC(exchangeKeys, userId, copyAndReturn(g_a_or_b, sizeGAB), fingerprint)
     [future, buffer](const ntgcalls::AuthParams& params) {
         buffer->key_fingerprint = params.key_fingerprint;
@@ -546,10 +550,10 @@ int ntg_get_protocol(ntg_protocol_struct* buffer) {
     return 0;
 }
 
-int ntg_create(const uintptr_t ptr, const int64_t chatID, char* buffer, const int size, ntg_async_struct future) {
+int ntg_create(const uintptr_t ptr, const int64_t chatID, char** buffer, ntg_async_struct future) {
     PREPARE_ASYNC(createCall, chatID)
-    [future, buffer, size](const std::string& s) {
-        *future.errorCode = copyAndReturn(s, buffer, size);
+    [future, buffer](const std::string& s) {
+        *future.errorCode = copyAndReturn(s, buffer);
         future.promise(future.userData);
     }
     PREPARE_ASYNC_END
@@ -693,7 +697,7 @@ int ntg_get_media_devices(ntg_media_devices_struct* buffer) {
     return 0;
 }
 
-int ntg_calls(const uintptr_t ptr, ntg_call_info_struct *buffer, const uint64_t size, ntg_async_struct future) {
+int ntg_calls(const uintptr_t ptr, ntg_call_info_struct** buffer, int* size, ntg_async_struct future) {
     PREPARE_ASYNC(calls)
     [future, buffer, size](const auto& callsCpp) {
         std::vector<ntg_call_info_struct> groupCalls;
@@ -705,7 +709,7 @@ int ntg_calls(const uintptr_t ptr, ntg_call_info_struct *buffer, const uint64_t 
                 parseCStatus(status.playback)
             });
         }
-        *future.errorCode = copyAndReturn(groupCalls, buffer, static_cast<int>(size));
+        copyAndReturn(groupCalls, buffer, size);
         future.promise(future.userData);
     }
     PREPARE_ASYNC_END
@@ -721,7 +725,7 @@ int ntg_calls_count(const uintptr_t ptr, uint64_t* size, ntg_async_struct future
     PREPARE_ASYNC_END
 }
 
-int ntg_cpu_usage(const uintptr_t ptr, double *buffer, ntg_async_struct future) {
+int ntg_cpu_usage(const uintptr_t ptr, double* buffer, ntg_async_struct future) {
     PREPARE_ASYNC(cpuUsage)
     [future, buffer](const double usage) {
         *buffer = usage;
@@ -782,9 +786,11 @@ int ntg_on_connection_change(const uintptr_t ptr, ntg_connection_callback callba
 int ntg_on_signaling_data(uintptr_t ptr, ntg_signaling_callback callback, void* userData) {
     try {
         getInstance(ptr)->onSignalingData([ptr, callback, userData](const int64_t userId, const bytes::binary& data) {
-            auto* buffer = new uint8_t[data.size()];
-            const auto bufferSize = copyAndReturn(data, buffer, static_cast<int>(data.size()));
+            uint8_t* buffer;
+            int bufferSize;
+            copyAndReturn(data, &buffer, &bufferSize);
             callback(ptr, userId, buffer, bufferSize, userData);
+            delete[] buffer;
         });
     } catch (ntgcalls::NullPointer&) {
         return NTG_ERROR_NULL_POINTER;
@@ -799,12 +805,14 @@ int ntg_on_frames(uintptr_t ptr, ntg_frame_callback callback, void* userData) {
             for (int i = 0; i < frames.size(); i++) {
                 ntg_frame_struct frame{};
                 frame.ssrc = frames[i].ssrc;
-                frame.data =  new uint8_t[frames[i].data.size()];
-                frame.sizeData = copyAndReturn(frames[i].data, frame.data, static_cast<int>(frames[i].data.size()));
+                copyAndReturn(frames[i].data, &frame.data, &frame.sizeData);
                 frame.frameData = parseCFrameData(frames[i].frameData);
                 buffer[i] = frame;
             }
             callback(ptr, chatId, parseCStreamMode(mode), parseCStreamDevice(device), buffer, frames.size(), userData);
+            for (int i = 0; i < frames.size(); i++) {
+                delete[] buffer[i].data;
+            }
         });
     } catch (ntgcalls::NullPointer&) {
         return NTG_ERROR_NULL_POINTER;
@@ -857,16 +865,15 @@ int ntg_on_request_broadcast_part(uintptr_t ptr, ntg_broadcast_part_callback cal
     return 0;
 }
 
-int ntg_get_version(char* buffer, const int size) {
-    return copyAndReturn(NTG_VERSION, buffer, size);
+int ntg_get_version(char** buffer) {
+    return copyAndReturn(NTG_VERSION, buffer);
 }
 
 void ntg_register_logger(ntg_log_message_callback callback) {
     ntgcalls::LogSink::registerLogger([callback](const ntgcalls::LogSink::LogMessage &message) {
-        auto* fileName = new char[message.file.size()];
-        copyAndReturn(message.file, fileName, static_cast<int>(message.file.size()));
-        auto* messageContent = new char[message.message.size()];
-        copyAndReturn(message.message, messageContent, static_cast<int>(message.message.size()));
+        char *fileName, *messageContent;
+        copyAndReturn(message.file, &fileName);
+        copyAndReturn(message.message, &messageContent);
         callback({
             parseCLevel(message.level),
             parseCSource(message.source),

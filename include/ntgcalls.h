@@ -300,7 +300,7 @@ NTG_C_EXPORT int ntg_destroy(uintptr_t ptr);
 
 NTG_C_EXPORT int ntg_create_p2p(uintptr_t ptr, int64_t userId, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_init_presentation(uintptr_t ptr, int64_t chatId, char* buffer, int size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_init_presentation(uintptr_t ptr, int64_t chatId, char** buffer, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_stop_presentation(uintptr_t ptr, int64_t chatId, ntg_async_struct future);
 
@@ -308,9 +308,9 @@ NTG_C_EXPORT int ntg_add_incoming_video(uintptr_t ptr, int64_t chatId, char* end
 
 NTG_C_EXPORT int ntg_remove_incoming_video(uintptr_t ptr, int64_t chatId, char* endpoint, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_init_exchange(uintptr_t ptr, int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, int sizeGAHash, uint8_t* buffer, int size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_init_exchange(uintptr_t ptr, int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, int sizeGAHash, uint8_t** buffer, int* size, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_exchange_keys(uintptr_t ptr, int64_t userId, const uint8_t* g_a_or_b, int sizeGAB, int64_t fingerprint, ntg_auth_params_struct *buffer, ntg_async_struct future);
+NTG_C_EXPORT int ntg_exchange_keys(uintptr_t ptr, int64_t userId, const uint8_t* g_a_or_b, int sizeGAB, int64_t fingerprint, ntg_auth_params_struct* buffer, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_skip_exchange(uintptr_t ptr, int64_t userId, const uint8_t* encryptionKey, int size, bool isOutgoing, ntg_async_struct future);
 
@@ -318,9 +318,9 @@ NTG_C_EXPORT int ntg_connect_p2p(uintptr_t ptr, int64_t userId, ntg_rtc_server_s
 
 NTG_C_EXPORT int ntg_send_signaling_data(uintptr_t ptr, int64_t userId, uint8_t* buffer, int size, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_get_protocol(ntg_protocol_struct *buffer);
+NTG_C_EXPORT int ntg_get_protocol(ntg_protocol_struct* buffer);
 
-NTG_C_EXPORT int ntg_create(uintptr_t ptr, int64_t chatID, char* buffer, int size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_create(uintptr_t ptr, int64_t chatID, char** buffer, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_connect(uintptr_t ptr, int64_t chatID, char* params, bool isPresentation, ntg_async_struct future);
 
@@ -338,7 +338,7 @@ NTG_C_EXPORT int ntg_stop(uintptr_t ptr, int64_t chatID, ntg_async_struct future
 
 NTG_C_EXPORT int ntg_time(uintptr_t ptr, int64_t chatID, ntg_stream_mode_enum streamMode, int64_t* time, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_get_state(uintptr_t ptr, int64_t chatID, ntg_media_state_struct *mediaState, ntg_async_struct future);
+NTG_C_EXPORT int ntg_get_state(uintptr_t ptr, int64_t chatID, ntg_media_state_struct* mediaState, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_get_connection_mode(uintptr_t ptr, int64_t chatID, ntg_connection_mode_enum* mode, ntg_async_struct future);
 
@@ -348,11 +348,9 @@ NTG_C_EXPORT int ntg_send_broadcast_timestamp(uintptr_t ptr, int64_t chatId, int
 
 NTG_C_EXPORT int ntg_send_broadcast_part(uintptr_t ptr, int64_t chatId, int64_t segmentId, int32_t partId, ntg_media_segment_status_enum status, bool qualityUpdate, const uint8_t* frame, int frameSize, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_get_media_devices(ntg_media_devices_struct *buffer);
+NTG_C_EXPORT int ntg_get_media_devices(ntg_media_devices_struct* buffer);
 
-NTG_C_EXPORT int ntg_calls(uintptr_t ptr, ntg_call_info_struct *buffer, uint64_t size, ntg_async_struct future);
-
-NTG_C_EXPORT int ntg_calls_count(uintptr_t ptr, uint64_t* size, ntg_async_struct future);
+NTG_C_EXPORT int ntg_calls(uintptr_t ptr, ntg_call_info_struct** buffer, int* size, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_on_stream_end(uintptr_t ptr, ntg_stream_callback callback, void* userData);
 
@@ -370,9 +368,9 @@ NTG_C_EXPORT int ntg_on_request_broadcast_timestamp(uintptr_t ptr, ntg_broadcast
 
 NTG_C_EXPORT int ntg_on_request_broadcast_part(uintptr_t ptr, ntg_broadcast_part_callback callback, void* userData);
 
-NTG_C_EXPORT int ntg_get_version(char* buffer, int size);
+NTG_C_EXPORT int ntg_get_version(char** buffer);
 
-NTG_C_EXPORT int ntg_cpu_usage(uintptr_t ptr, double *buffer, ntg_async_struct future);
+NTG_C_EXPORT int ntg_cpu_usage(uintptr_t ptr, double* buffer, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_enable_g_lib_loop(bool enable);
 
