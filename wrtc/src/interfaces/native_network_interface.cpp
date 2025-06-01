@@ -401,13 +401,6 @@ namespace wrtc {
         });
         channelManager = nullptr;
         if (factory) {
-            workerThread()->BlockingCall([weak] {
-                const auto strong = weak.lock();
-                if (!strong) {
-                    return;
-                }
-                strong->call = nullptr;
-            });
             RTC_LOG(LS_VERBOSE) << "Removed call";
             networkThread()->BlockingCall([weak] {
                 const auto strong = weak.lock();
