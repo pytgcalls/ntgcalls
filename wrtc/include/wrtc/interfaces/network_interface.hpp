@@ -21,7 +21,7 @@ namespace wrtc {
         synchronized_callback<IceCandidate> iceCandidateCallback;
         synchronized_callback<ConnectionState, bool> connectionChangeCallback;
         synchronized_callback<bytes::binary> dataChannelMessageCallback;
-        ConnectionState currentState = ConnectionState::New;
+        ConnectionState currentState = ConnectionState::Connecting;
         bool dataChannelOpen = false;
         bool alreadyConnected = false;
         bool audioIncoming = false, cameraIncoming = false, screenIncoming = false;
