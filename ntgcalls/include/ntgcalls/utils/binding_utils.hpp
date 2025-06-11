@@ -98,11 +98,11 @@ py::gil_scoped_release release;
 
 template <typename T>
 class AsyncPromise {
-    rtc::Thread* worker;
+    webrtc::Thread* worker;
     std::function<T()> callable;
 
 public:
-    AsyncPromise(rtc::Thread* worker, std::function<T()> callable): worker(worker), callable(std::move(callable)) {}
+    AsyncPromise(webrtc::Thread* worker, std::function<T()> callable): worker(worker), callable(std::move(callable)) {}
 
     void then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject) {
         worker->PostTask([this, resolve, reject, callable = callable]{
@@ -117,10 +117,10 @@ public:
 
 template <>
 class AsyncPromise<void> {
-    rtc::Thread* worker;
+    webrtc::Thread* worker;
     std::function<void()> callable;
 public:
-    AsyncPromise(rtc::Thread* worker, std::function<void()> callable): worker(worker), callable(std::move(callable)) {};
+    AsyncPromise(webrtc::Thread* worker, std::function<void()> callable): worker(worker), callable(std::move(callable)) {};
 
     void then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const{
         worker->PostTask([this, resolve, reject, callable = callable]{
@@ -135,14 +135,14 @@ public:
 };
 
 #define INIT_ASYNC \
-    asyncWorker = rtc::Thread::Create();\
+    asyncWorker = webrtc::Thread::Create();\
     asyncWorker->Start();
 
 #define DESTROY_ASYNC \
     asyncWorker->Stop();\
     asyncWorker = nullptr;
 
-#define ASYNC_ARGS std::unique_ptr<rtc::Thread> asyncWorker;
+#define ASYNC_ARGS std::unique_ptr<webrtc::Thread> asyncWorker;
 
 #define THREAD_SAFE {
 

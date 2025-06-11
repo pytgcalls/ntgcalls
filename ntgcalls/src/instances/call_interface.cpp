@@ -5,7 +5,7 @@
 #include <ntgcalls/instances/call_interface.hpp>
 
 namespace ntgcalls {
-    CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {
+    CallInterface::CallInterface(webrtc::Thread* updateThread): updateThread(updateThread) {
         streamManager = std::make_shared<StreamManager>(updateThread);
     }
 

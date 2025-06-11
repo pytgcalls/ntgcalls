@@ -19,7 +19,7 @@ namespace wrtc {
         }
     }
 
-    void LocalVideoAdapter::AddOrUpdateSink(VideoSinkInterface* sink, const rtc::VideoSinkWants& wants){
+    void LocalVideoAdapter::AddOrUpdateSink(VideoSinkInterface* sink, const webrtc::VideoSinkWants& wants){
         webrtc::MutexLock lock(&lock_);
         RTC_DCHECK(!sink || !_sink.has_value());
         _sink = SinkPair(sink, wants);

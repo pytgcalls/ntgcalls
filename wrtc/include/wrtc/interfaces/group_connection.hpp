@@ -21,7 +21,7 @@ namespace wrtc {
 
         void addIceCandidate(const IceCandidate& rawCandidate) const override;
 
-        void setRemoteParams(PeerIceParameters remoteIceParameters, std::unique_ptr<rtc::SSLFingerprint> fingerprint);
+        void setRemoteParams(PeerIceParameters remoteIceParameters, std::unique_ptr<webrtc::SSLFingerprint> fingerprint);
 
         void connectMediaStream();
 
@@ -62,23 +62,23 @@ namespace wrtc {
 
         bool supportsRenomination() const override;
 
-        cricket::IceRole iceRole() const override;
+        webrtc::IceRole iceRole() const override;
 
-        cricket::IceMode iceMode() const override;
+        webrtc::IceMode iceMode() const override;
 
-        std::optional<rtc::SSLRole> dtlsRole() const override;
+        std::optional<webrtc::SSLRole> dtlsRole() const override;
 
-        std::pair<cricket::ServerAddresses, std::vector<cricket::RelayServerConfig>> getStunAndTurnServers() override;
+        std::pair<webrtc::ServerAddresses, std::vector<webrtc::RelayServerConfig>> getStunAndTurnServers() override;
 
-        cricket::RelayPortFactoryInterface* getRelayPortFactory() override;
+        webrtc::RelayPortFactoryInterface* getRelayPortFactory() override;
 
-        void registerTransportCallbacks(cricket::P2PTransportChannel* transportChannel) override;
+        void registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) override;
 
         int getRegatherOnFailedNetworksInterval() override;
 
         bool getCustomParameterBool(const std::string& name) const override;
 
-        void setPortAllocatorFlags(cricket::BasicPortAllocator* portAllocator) override;
+        void setPortAllocatorFlags(webrtc::BasicPortAllocator* portAllocator) override;
 
         void start() override;
 

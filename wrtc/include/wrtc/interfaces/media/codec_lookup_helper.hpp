@@ -7,14 +7,14 @@
 
 namespace wrtc {
 
-    class CodecLookupHelper final: public cricket::CodecLookupHelper {
-        std::unique_ptr<cricket::CodecVendor> codecVendor;
+    class CodecLookupHelper final: public webrtc::CodecLookupHelper {
+        std::unique_ptr<webrtc::CodecVendor> codecVendor;
         webrtc::PayloadTypeSuggester *payloadTypeSuggester;
 
     public:
         CodecLookupHelper(
-            cricket::MediaEngineInterface *mediaEngine,
-            const cricket::TransportDescriptionFactory *transportDescriptionFactory,
+            webrtc::MediaEngineInterface *mediaEngine,
+            const webrtc::TransportDescriptionFactory *transportDescriptionFactory,
             webrtc::PayloadTypeSuggester *payloadTypeSuggester
         );
 
@@ -22,7 +22,7 @@ namespace wrtc {
 
         webrtc::PayloadTypeSuggester* PayloadTypeSuggester() override;
 
-        cricket::CodecVendor* CodecVendor(const std::string& mid) override;
+        webrtc::CodecVendor* GetCodecVendor() override;
     };
 
 } // wrtc

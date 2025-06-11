@@ -136,13 +136,13 @@ namespace ntgcalls {
 
         WAVEFORMATEX* f = &format.Format;
         f->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-        f->nChannels = rtc::dchecked_cast<WORD>(params.channels());
-        f->nSamplesPerSec = rtc::dchecked_cast<DWORD>(params.sample_rate());
-        f->wBitsPerSample = rtc::dchecked_cast<WORD>(params.bits_per_sample());
+        f->nChannels = webrtc::dchecked_cast<WORD>(params.channels());
+        f->nSamplesPerSec = webrtc::dchecked_cast<DWORD>(params.sample_rate());
+        f->wBitsPerSample = webrtc::dchecked_cast<WORD>(params.bits_per_sample());
         f->nBlockAlign = f->wBitsPerSample / 8 * f->nChannels;
         f->nAvgBytesPerSec = f->nSamplesPerSec * f->nBlockAlign;
         f->cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
-        format.Samples.wValidBitsPerSample = rtc::dchecked_cast<WORD>(params.bits_per_sample());
+        format.Samples.wValidBitsPerSample = webrtc::dchecked_cast<WORD>(params.bits_per_sample());
         format.dwChannelMask = f->nChannels == 1 ? KSAUDIO_SPEAKER_MONO : KSAUDIO_SPEAKER_STEREO;
         format.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
 
@@ -292,7 +292,7 @@ namespace ntgcalls {
     }
 
     void WinCoreDeviceModule::runDataListener() {
-        thread = rtc::PlatformThread::SpawnJoinable(
+        thread = webrtc::PlatformThread::SpawnJoinable(
             [this] {
                 bool streaming = true;
                 bool error = false;
@@ -324,7 +324,7 @@ namespace ntgcalls {
                 }
             },
             "WinCoreAudio",
-            rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
+            webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime)
         );
     }
 
@@ -355,7 +355,7 @@ namespace ntgcalls {
                 return false;
             }
             if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
-                rtc::ExplicitZeroMemory(audioData, format.Format.nBlockAlign * numFramesToRead);
+                webrtc::ExplicitZeroMemory(audioData, format.Format.nBlockAlign * numFramesToRead);
                 RTC_DLOG(LS_WARNING) << "Captured audio is replaced by silence";
             } else {
                 auto buffer = bytes::make_unique_binary(format.Format.nBlockAlign * numFramesToRead);

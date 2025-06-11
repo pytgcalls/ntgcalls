@@ -40,7 +40,7 @@ namespace wrtc {
         int64_t nextSegmentTimestamp = -1;
         int64_t serverTimeMs = 0;
         int64_t serverTimeMsGotAt = 0;
-        rtc::Thread* mediaThread;
+        webrtc::Thread* mediaThread;
         std::atomic_bool running;
 
         AudioStreamingPartPersistentDecoder persistentAudioDecoder;
@@ -78,7 +78,7 @@ namespace wrtc {
         void requestPendingVideoQualityUpdate(int64_t segmentId, int32_t partID, MediaSegment::Video* segment, int64_t timestamp);
 
     public:
-        explicit MTProtoStream(rtc::Thread* mediaThread, bool isRtmp);
+        explicit MTProtoStream(webrtc::Thread* mediaThread, bool isRtmp);
 
         void connect();
 

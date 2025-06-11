@@ -15,13 +15,13 @@ namespace wrtc {
     ContentNegotiationContext::ContentNegotiationContext(
         const webrtc::FieldTrialsView& fieldTrials,
         const bool isOutgoing,
-        cricket::MediaEngineInterface *mediaEngine,
-        rtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
+        webrtc::MediaEngineInterface *mediaEngine,
+        webrtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
         webrtc::PayloadTypeSuggester *payloadTypeSuggester
     ) :isOutgoing(isOutgoing), uniqueRandomIdGenerator(uniqueRandomIdGenerator) {
-        transportDescriptionFactory = std::make_unique<cricket::TransportDescriptionFactory>(fieldTrials);
-        const auto tempCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(
-            rtc::KeyParams(rtc::KT_ECDSA),
+        transportDescriptionFactory = std::make_unique<webrtc::TransportDescriptionFactory>(fieldTrials);
+        const auto tempCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(
+            webrtc::KeyParams(webrtc::KT_ECDSA),
             std::nullopt
         );
         transportDescriptionFactory->set_certificate(tempCertificate);
@@ -30,7 +30,7 @@ namespace wrtc {
             transportDescriptionFactory.get(),
             payloadTypeSuggester
         );
-        sessionDescriptionFactory = std::make_unique<cricket::MediaSessionDescriptionFactory>(
+        sessionDescriptionFactory = std::make_unique<webrtc::MediaSessionDescriptionFactory>(
             mediaEngine,
             true,
             uniqueRandomIdGenerator,
@@ -54,7 +54,7 @@ namespace wrtc {
         pendingOutgoingOffer.reset();
     }
 
-    void ContentNegotiationContext::copyCodecsFromChannelManager(cricket::MediaEngineInterface *mediaEngine, const bool randomize) {
+    void ContentNegotiationContext::copyCodecsFromChannelManager(webrtc::MediaEngineInterface *mediaEngine, const bool randomize) {
         int absSendTimeUriId = 2;
         int transportSequenceNumberUriId = 3;
         int videoRotationUri = 13;
@@ -82,12 +82,12 @@ namespace wrtc {
             mappedMediaType = webrtc::MediaType::VIDEO;
             rtpExtensions = rtpVideoExtensions;
         }
-        cricket::MediaDescriptionOptions offerDescription(mappedMediaType, channelId, webrtc::RtpTransceiverDirection::kSendOnly, false);
+        webrtc::MediaDescriptionOptions offerDescription(mappedMediaType, channelId, webrtc::RtpTransceiverDirection::kSendOnly, false);
         offerDescription.header_extensions = rtpExtensions;
         if (track->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) {
             offerDescription.AddAudioSender(channelId, {channelId});
         } else {
-            const cricket::SimulcastLayerList simulcastLayers;
+            const webrtc::SimulcastLayerList simulcastLayers;
             offerDescription.AddVideoSender(channelId, {channelId}, {}, simulcastLayers, 1);
         }
         outgoingChannelDescriptions.emplace_back(std::move(offerDescription));
@@ -106,7 +106,7 @@ namespace wrtc {
         pendingOutgoingOffer = std::make_unique<PendingOutgoingOffer>();
         pendingOutgoingOffer->exchangeId = uniqueRandomIdGenerator->GenerateId();
         auto currentSessionDescription = currentSessionDescriptionFromCoordinatedState();
-        cricket::MediaSessionOptions offerOptions;
+        webrtc::MediaSessionOptions offerOptions;
         offerOptions.offer_extmap_allow_mixed = true;
         offerOptions.bundle_enabled = true;
         for (const auto &id : channelIdOrder) {
@@ -127,7 +127,7 @@ namespace wrtc {
                 }
             }
             if (!found) {
-                cricket::MediaDescriptionOptions contentDescription(webrtc::MediaType::AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
+                webrtc::MediaDescriptionOptions contentDescription(webrtc::MediaType::AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
                 offerOptions.media_description_options.push_back(contentDescription);
             }
         }
@@ -222,32 +222,32 @@ namespace wrtc {
         return std::nullopt;
     }
 
-    std::unique_ptr<cricket::SessionDescription> ContentNegotiationContext::currentSessionDescriptionFromCoordinatedState() const {
+    std::unique_ptr<webrtc::SessionDescription> ContentNegotiationContext::currentSessionDescriptionFromCoordinatedState() const {
         if (channelIdOrder.empty()) {
             return nullptr;
         }
-        auto sessionDescription = std::make_unique<cricket::SessionDescription>();
+        auto sessionDescription = std::make_unique<webrtc::SessionDescription>();
         for (const auto &id : channelIdOrder) {
             bool found = false;
             for (const auto &channel : incomingChannels) {
                 if (std::to_string(channel.ssrc) == id) {
                     found = true;
                     auto mappedContent = convertSignalingContentToContentInfo(std::to_string(channel.ssrc), channel, webrtc::RtpTransceiverDirection::kRecvOnly);
-                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
-                    std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                    auto localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                    std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                     if (localCertificate) {
-                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
+                        fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                     }
                     std::vector<std::string> transportOptions;
-                    cricket::TransportDescription transportDescription(
+                    webrtc::TransportDescription transportDescription(
                         transportOptions,
                         "ufrag",
                         "pwd",
-                        cricket::IceMode::ICEMODE_FULL,
-                        cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
+                        webrtc::IceMode::ICEMODE_FULL,
+                        webrtc::ConnectionRole::CONNECTIONROLE_ACTPASS,
                         fingerprint.get()
                     );
-                    cricket::TransportInfo transportInfo(std::to_string(channel.ssrc), transportDescription);
+                    webrtc::TransportInfo transportInfo(std::to_string(channel.ssrc), transportDescription);
                     sessionDescription->AddTransportInfo(transportInfo);
                     sessionDescription->AddContent(std::move(mappedContent));
                     break;
@@ -257,21 +257,21 @@ namespace wrtc {
                 if (channel.id == id) {
                     found = true;
                     auto mappedContent = convertSignalingContentToContentInfo(channel.id, channel.content, webrtc::RtpTransceiverDirection::kSendOnly);
-                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
-                    std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                    auto localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                    std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                     if (localCertificate) {
-                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
+                        fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                     }
                     std::vector<std::string> transportOptions;
-                    cricket::TransportDescription transportDescription(
+                    webrtc::TransportDescription transportDescription(
                         transportOptions,
                         "ufrag",
                         "pwd",
-                        cricket::IceMode::ICEMODE_FULL,
-                        cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
+                        webrtc::IceMode::ICEMODE_FULL,
+                        webrtc::ConnectionRole::CONNECTIONROLE_ACTPASS,
                         fingerprint.get()
                     );
-                    cricket::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
+                    webrtc::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
                     sessionDescription->AddTransportInfo(transportInfo);
                     sessionDescription->AddContent(std::move(mappedContent));
                     break;
@@ -280,21 +280,21 @@ namespace wrtc {
 
             if (!found) {
                 auto mappedContent = createInactiveContentInfo("_" + id);
-                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
-                std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                auto localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                 if (localCertificate) {
-                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
+                    fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                 }
                 std::vector<std::string> transportOptions;
-                cricket::TransportDescription transportDescription(
+                webrtc::TransportDescription transportDescription(
                     transportOptions,
                     "ufrag",
                     "pwd",
-                    cricket::IceMode::ICEMODE_FULL,
-                    cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
+                    webrtc::IceMode::ICEMODE_FULL,
+                    webrtc::ConnectionRole::CONNECTIONROLE_ACTPASS,
                     fingerprint.get()
                 );
-                cricket::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
+                webrtc::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
                 sessionDescription->AddTransportInfo(transportInfo);
                 sessionDescription->AddContent(std::move(mappedContent));
             }
@@ -302,13 +302,13 @@ namespace wrtc {
         return sessionDescription;
     }
 
-    cricket::ContentInfo ContentNegotiationContext::convertSignalingContentToContentInfo(const std::string &contentId, const MediaContent &content, webrtc::RtpTransceiverDirection direction) {
-        std::unique_ptr<cricket::MediaContentDescription> contentDescription;
+    webrtc::ContentInfo ContentNegotiationContext::convertSignalingContentToContentInfo(const std::string &contentId, const MediaContent &content, webrtc::RtpTransceiverDirection direction) {
+        std::unique_ptr<webrtc::MediaContentDescription> contentDescription;
         switch (content.type) {
             case MediaContent::Type::Audio: {
-                auto audioDescription = std::make_unique<cricket::AudioContentDescription>();
+                auto audioDescription = std::make_unique<webrtc::AudioContentDescription>();
                 for (const auto &[id, name, clockrate, channels, feedbackTypes, parameters] : content.payloadTypes) {
-                    auto mappedCodec = cricket::CreateAudioCodec(
+                    auto mappedCodec = webrtc::CreateAudioCodec(
                         static_cast<int>(id),
                         name,
                         static_cast<int>(clockrate),
@@ -318,7 +318,7 @@ namespace wrtc {
                         mappedCodec.params.insert(parameter);
                     }
                     for (const auto &[type, subtype] : feedbackTypes) {
-                        mappedCodec.AddFeedbackParam(cricket::FeedbackParam(type, subtype));
+                        mappedCodec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
                     }
                     audioDescription->AddCodec(mappedCodec);
                 }
@@ -326,19 +326,19 @@ namespace wrtc {
                 break;
             }
             case MediaContent::Type::Video: {
-                auto videoDescription = std::make_unique<cricket::VideoContentDescription>();
+                auto videoDescription = std::make_unique<webrtc::VideoContentDescription>();
                 for (const auto &[id, name, clockrate, channels, feedbackTypes, parameters] : content.payloadTypes) {
                     webrtc::SdpVideoFormat videoFormat(name);
                     for (const auto &parameter : parameters) {
                         videoFormat.parameters.insert(parameter);
                     }
-                    cricket::Codec mappedCodec = cricket::CreateVideoCodec(videoFormat);
+                    webrtc::Codec mappedCodec = webrtc::CreateVideoCodec(videoFormat);
                     mappedCodec.id = static_cast<int>(id);
                     for (const auto &parameter : parameters) {
                         mappedCodec.params.insert(parameter);
                     }
                     for (const auto &[type, subtype] : feedbackTypes) {
-                        mappedCodec.AddFeedbackParam(cricket::FeedbackParam(type, subtype));
+                        mappedCodec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
                     }
                     videoDescription->AddCodec(mappedCodec);
                 }
@@ -349,7 +349,7 @@ namespace wrtc {
                 throw RTCException("Unknown media type");
             }
         }
-        cricket::StreamParams streamParams;
+        webrtc::StreamParams streamParams;
         streamParams.id = contentId;
         streamParams.set_stream_ids({ contentId });
         streamParams.add_ssrc(content.ssrc);
@@ -368,13 +368,13 @@ namespace wrtc {
         contentDescription->set_direction(direction);
         contentDescription->set_rtcp_mux(true);
         return {
-            cricket::MediaProtocolType::kRtp,
+            webrtc::MediaProtocolType::kRtp,
             contentId,
             std::move(contentDescription),
         };
     }
 
-    MediaContent ContentNegotiationContext::convertContentInfoToSignalingContent(const cricket::ContentInfo &content) {
+    MediaContent ContentNegotiationContext::convertContentInfoToSignalingContent(const webrtc::ContentInfo &content) {
         MediaContent mappedContent;
         switch (content.media_description()->type()) {
             case webrtc::MediaType::AUDIO:
@@ -441,21 +441,21 @@ namespace wrtc {
         return mappedContent;
     }
 
-    cricket::ContentInfo ContentNegotiationContext::createInactiveContentInfo(std::string const &contentId) {
-        auto audioDescription = std::make_unique<cricket::AudioContentDescription>();
+    webrtc::ContentInfo ContentNegotiationContext::createInactiveContentInfo(std::string const &contentId) {
+        auto audioDescription = std::make_unique<webrtc::AudioContentDescription>();
         auto contentDescription = std::move(audioDescription);
         contentDescription->set_direction(webrtc::RtpTransceiverDirection::kInactive);
         contentDescription->set_rtcp_mux(true);
         return {
-            cricket::MediaProtocolType::kRtp,
+            webrtc::MediaProtocolType::kRtp,
             contentId,
             std::move(contentDescription),
         };
     }
 
-    cricket::MediaDescriptionOptions ContentNegotiationContext::getIncomingContentDescription(const MediaContent &content) {
+    webrtc::MediaDescriptionOptions ContentNegotiationContext::getIncomingContentDescription(const MediaContent &content) {
         auto mappedContent = convertSignalingContentToContentInfo(std::to_string(content.ssrc), content, webrtc::RtpTransceiverDirection::kSendOnly);
-        cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kRecvOnly, false);
+        webrtc::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kRecvOnly, false);
         for (const auto &extension : mappedContent.media_description()->rtp_header_extensions()) {
             contentDescription.header_extensions.emplace_back(extension.uri, extension.id);
         }
@@ -486,8 +486,8 @@ namespace wrtc {
 
     std::unique_ptr<ContentNegotiationContext::NegotiationContents> ContentNegotiationContext::getAnswer(std::unique_ptr<NegotiationContents> &&offer) {
         auto currentSessionDescription = currentSessionDescriptionFromCoordinatedState();
-        auto mappedOffer = std::make_unique<cricket::SessionDescription>();
-        cricket::MediaSessionOptions answerOptions;
+        auto mappedOffer = std::make_unique<webrtc::SessionDescription>();
+        webrtc::MediaSessionOptions answerOptions;
         answerOptions.offer_extmap_allow_mixed = true;
         answerOptions.bundle_enabled = true;
         for (const auto &id : channelIdOrder) {
@@ -497,26 +497,26 @@ namespace wrtc {
                 if (channel.id == id) {
                     found = true;
                     auto mappedContent = convertSignalingContentToContentInfo(channel.id, channel.content, webrtc::RtpTransceiverDirection::kRecvOnly);
-                    cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kSendOnly, false);
+                    webrtc::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kSendOnly, false);
                     for (const auto &extension : mappedContent.media_description()->rtp_header_extensions()) {
                         contentDescription.header_extensions.emplace_back(extension.uri, extension.id);
                     }
                     answerOptions.media_description_options.push_back(contentDescription);
-                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
-                    std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                    auto localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                    std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                     if (localCertificate) {
-                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
+                        fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                     }
                     std::vector<std::string> transportOptions;
-                    cricket::TransportDescription transportDescription(
+                    webrtc::TransportDescription transportDescription(
                         transportOptions,
                         "ufrag",
                         "pwd",
-                        cricket::IceMode::ICEMODE_FULL,
-                        cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
+                        webrtc::IceMode::ICEMODE_FULL,
+                        webrtc::ConnectionRole::CONNECTIONROLE_ACTPASS,
                         fingerprint.get()
                     );
-                    cricket::TransportInfo transportInfo(channel.id, transportDescription);
+                    webrtc::TransportInfo transportInfo(channel.id, transportDescription);
                     mappedOffer->AddTransportInfo(transportInfo);
                     mappedOffer->AddContent(std::move(mappedContent));
                     break;
@@ -526,26 +526,26 @@ namespace wrtc {
                 if (std::to_string(content.ssrc) == id) {
                     found = true;
                     auto mappedContent = convertSignalingContentToContentInfo(std::to_string(content.ssrc), content, webrtc::RtpTransceiverDirection::kSendOnly);
-                    cricket::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kRecvOnly, false);
+                    webrtc::MediaDescriptionOptions contentDescription(mappedContent.media_description()->type(), mappedContent.mid(), webrtc::RtpTransceiverDirection::kRecvOnly, false);
                     for (const auto &extension : mappedContent.media_description()->rtp_header_extensions()) {
                         contentDescription.header_extensions.emplace_back(extension.uri, extension.id);
                     }
                     answerOptions.media_description_options.push_back(contentDescription);
-                    auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
-                    std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                    auto localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                    std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                     if (localCertificate) {
-                        fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
+                        fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                     }
                     std::vector<std::string> transportOptions;
-                    cricket::TransportDescription transportDescription(
+                    webrtc::TransportDescription transportDescription(
                         transportOptions,
                         "ufrag",
                         "pwd",
-                        cricket::IceMode::ICEMODE_FULL,
-                        cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
+                        webrtc::IceMode::ICEMODE_FULL,
+                        webrtc::ConnectionRole::CONNECTIONROLE_ACTPASS,
                         fingerprint.get()
                     );
-                    cricket::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
+                    webrtc::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
                     mappedOffer->AddTransportInfo(transportInfo);
                     mappedOffer->AddContent(std::move(mappedContent));
                     break;
@@ -553,23 +553,23 @@ namespace wrtc {
             }
             if (!found) {
                 auto mappedContent = createInactiveContentInfo("_" + id);
-                cricket::MediaDescriptionOptions contentDescription(webrtc::MediaType::AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
+                webrtc::MediaDescriptionOptions contentDescription(webrtc::MediaType::AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
                 answerOptions.media_description_options.push_back(contentDescription);
-                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
-                std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                auto localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                 if (localCertificate) {
-                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
+                    fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                 }
                 std::vector<std::string> transportOptions;
-                cricket::TransportDescription transportDescription(
+                webrtc::TransportDescription transportDescription(
                     transportOptions,
                     "ufrag",
                     "pwd",
-                    cricket::IceMode::ICEMODE_FULL,
-                    cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
+                    webrtc::IceMode::ICEMODE_FULL,
+                    webrtc::ConnectionRole::CONNECTIONROLE_ACTPASS,
                     fingerprint.get()
                 );
-                cricket::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
+                webrtc::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
                 mappedOffer->AddTransportInfo(transportInfo);
                 mappedOffer->AddContent(std::move(mappedContent));
             }
@@ -579,22 +579,22 @@ namespace wrtc {
                 channelIdOrder.push_back(std::to_string(content.ssrc));
                 answerOptions.media_description_options.push_back(getIncomingContentDescription(content));
                 auto mappedContent = convertSignalingContentToContentInfo(std::to_string(content.ssrc), content, webrtc::RtpTransceiverDirection::kSendOnly);
-                auto localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(rtc::KeyParams(rtc::KT_ECDSA), std::nullopt);
-                std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                auto localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                 if (localCertificate) {
-                    fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
+                    fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*localCertificate);
                 }
 
                 std::vector<std::string> transportOptions;
-                cricket::TransportDescription transportDescription(
+                webrtc::TransportDescription transportDescription(
                     transportOptions,
                     "ufrag",
                     "pwd",
-                    cricket::IceMode::ICEMODE_FULL,
-                    cricket::ConnectionRole::CONNECTIONROLE_ACTPASS,
+                    webrtc::IceMode::ICEMODE_FULL,
+                    webrtc::ConnectionRole::CONNECTIONROLE_ACTPASS,
                     fingerprint.get()
                 );
-                cricket::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
+                webrtc::TransportInfo transportInfo(mappedContent.mid(), transportDescription);
                 mappedOffer->AddTransportInfo(transportInfo);
 
                 mappedOffer->AddContent(std::move(mappedContent));

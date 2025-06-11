@@ -261,7 +261,7 @@ namespace wrtc {
     void AudioDeviceModule::UpdateProcessing(const bool start) {
         if (start) {
             if (!processThread) {
-                processThread = rtc::Thread::Create();
+                processThread = webrtc::Thread::Create();
                 processThread->Start();
             }
             processThread->PostTask([this] { StartProcessP(); });
@@ -292,7 +292,7 @@ namespace wrtc {
         {
             webrtc::MutexLock lock(&mutex);
             if (!started) {
-                nextFrameTime = rtc::TimeMillis();
+                nextFrameTime = webrtc::TimeMillis();
                 started = true;
             }
 
@@ -302,7 +302,7 @@ namespace wrtc {
         }
 
         nextFrameTime += 10;
-        const int64_t current_time = rtc::TimeMillis();
+        const int64_t current_time = webrtc::TimeMillis();
         const int64_t wait_time = nextFrameTime > current_time ? nextFrameTime - current_time : 0;
         processThread->PostDelayedTask([this] { ProcessFrameP(); },webrtc::TimeDelta::Millis(wait_time));
     }

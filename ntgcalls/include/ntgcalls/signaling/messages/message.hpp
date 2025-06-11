@@ -28,7 +28,7 @@ namespace signaling {
 
         static Type type(const bytes::binary& data);
 
-        static std::optional<rtc::CopyOnWriteBuffer> deserializeRaw(rtc::ByteBufferReader &reader);
+        static std::optional<webrtc::CopyOnWriteBuffer> deserializeRaw(webrtc::ByteBufferReader &reader);
 
         static uint32_t stringToUInt32(std::string const &string);
     };

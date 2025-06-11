@@ -42,7 +42,7 @@ namespace wrtc {
         contents = nullptr;
     }
 
-    rtc::scoped_refptr<webrtc::I420Buffer> i420ImageData::buffer() const {
+    webrtc::scoped_refptr<webrtc::I420Buffer> i420ImageData::buffer() const {
         auto buffer = webrtc::I420Buffer::Create(width, height);
         memcpy(buffer->MutableDataY(), dataY(), sizeOfLuminancePlane());
         memcpy(buffer->MutableDataU(), dataU(), sizeOfChromaPlane());

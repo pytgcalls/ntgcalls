@@ -10,15 +10,15 @@
 
 namespace wrtc {
 
-    MTProtoStream::MTProtoStream(rtc::Thread* mediaThread, const bool isRtmp) : isRtmp(isRtmp), mediaThread(mediaThread) {}
+    MTProtoStream::MTProtoStream(webrtc::Thread* mediaThread, const bool isRtmp) : isRtmp(isRtmp), mediaThread(mediaThread) {}
 
     void MTProtoStream::connect() {
         if (running) {
             throw RTCException("MTProto Connection already made");
         }
         running = true;
-        serverTimeMs = rtc::TimeUTCMillis();
-        serverTimeMsGotAt = rtc::TimeMillis();
+        serverTimeMs = webrtc::TimeUTCMillis();
+        serverTimeMsGotAt = webrtc::TimeMillis();
         render();
     }
 
@@ -99,7 +99,7 @@ namespace wrtc {
             } else {
                 part = segment->parts[partID].get();
             }
-            const auto responseTimestamp = rtc::TimeMillis();
+            const auto responseTimestamp = webrtc::TimeMillis();
             const auto responseTimestampMilliseconds = static_cast<int64_t>(static_cast<double>(responseTimestamp) * 1000.0);
             const auto responseTimestampBoundary = responseTimestampMilliseconds / strong->segmentDuration * strong->segmentDuration;
 
@@ -123,7 +123,7 @@ namespace wrtc {
                     strong->requestSegmentsIfNeeded();
                     strong->checkPendingSegments();
                 } else {
-                    part->minRequestTimestamp = rtc::TimeMillis() + 100;
+                    part->minRequestTimestamp = webrtc::TimeMillis() + 100;
                     strong->checkPendingSegments();
                 }
                 break;
@@ -382,7 +382,7 @@ namespace wrtc {
                     if (isRtmp) {
                         (void) requestCurrentTimeCallback();
                     } else {
-                        sendBroadcastTimestamp(serverTimeMs + (rtc::TimeMillis() - serverTimeMsGotAt));
+                        sendBroadcastTimestamp(serverTimeMs + (webrtc::TimeMillis() - serverTimeMsGotAt));
                     }
                 }
                 break;
@@ -433,7 +433,7 @@ namespace wrtc {
         if (!running) {
             return;
         }
-        const auto absoluteTimestamp = rtc::TimeMillis();
+        const auto absoluteTimestamp = webrtc::TimeMillis();
         int64_t minDelayedRequestTimeout = INT_MAX;
 
         bool shouldRequestMoreSegments = false;

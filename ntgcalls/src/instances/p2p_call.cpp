@@ -228,10 +228,10 @@ namespace ntgcalls {
                 remoteIceParameters.pwd = message->pwd;
                 remoteIceParameters.supportsRenomination = message->supportsRenomination;
 
-                std::unique_ptr<rtc::SSLFingerprint> fingerprint;
+                std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                 std::string sslSetup;
                 if (!message->fingerprints.empty()) {
-                    fingerprint = rtc::SSLFingerprint::CreateUniqueFromRfc4572(message->fingerprints[0].hash, message->fingerprints[0].fingerprint);
+                    fingerprint = webrtc::SSLFingerprint::CreateUniqueFromRfc4572(message->fingerprints[0].hash, message->fingerprints[0].fingerprint);
                     sslSetup = message->fingerprints[0].setup;
                 }
                 Safe<wrtc::NativeConnection>(connection)->setRemoteParams(remoteIceParameters, std::move(fingerprint), sslSetup);

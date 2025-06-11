@@ -59,7 +59,7 @@ namespace wrtc {
                     std::string result;
                     size_t data_used = 0;
                     std::string sourceBase64 = entry->value;
-                    rtc::Base64::Decode(sourceBase64, rtc::Base64::DO_LAX, &result, &data_used);
+                    webrtc::Base64::Decode(sourceBase64, webrtc::Base64::DO_LAX, &result, &data_used);
 
                     if (!result.empty()) {
                         int offset = 0;

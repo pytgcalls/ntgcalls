@@ -29,6 +29,6 @@ namespace wrtc {
 
         ~i420ImageData();
 
-        [[nodiscard]] rtc::scoped_refptr<webrtc::I420Buffer> buffer() const;
+        [[nodiscard]] webrtc::scoped_refptr<webrtc::I420Buffer> buffer() const;
     };
 }

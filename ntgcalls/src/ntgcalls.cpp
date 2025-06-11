@@ -13,7 +13,7 @@
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
-        updateThread = rtc::Thread::Create();
+        updateThread = webrtc::Thread::Create();
         updateThread->Start();
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC

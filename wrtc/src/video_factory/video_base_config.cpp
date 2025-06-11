@@ -25,14 +25,14 @@ namespace wrtc {
     {
         std::vector<webrtc::SdpVideoFormat> r;
         if (codec == webrtc::kVideoCodecVP8) {
-            r.emplace_back(cricket::kVp8CodecName);
+            r.emplace_back(webrtc::kVp8CodecName);
         } else if (codec == webrtc::kVideoCodecVP9) {
             for (const webrtc::SdpVideoFormat& format : webrtc::SupportedVP9Codecs(true)) {
                 r.push_back(format);
             }
         } else if (codec == webrtc::kVideoCodecAV1) {
             r.emplace_back(
-                cricket::kAv1CodecName,
+                webrtc::kAv1CodecName,
                 webrtc::CodecParameterMap(),
                 webrtc::LibaomAv1EncoderSupportedScalabilityModes()
             );
@@ -70,7 +70,7 @@ namespace wrtc {
                     )
             );
         } else if (codec == webrtc::kVideoCodecH265) {
-            r.emplace_back(cricket::kH265CodecName);
+            r.emplace_back(webrtc::kH265CodecName);
         }
         return r;
     }

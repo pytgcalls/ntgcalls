@@ -28,7 +28,7 @@ namespace signaling {
         return Type::Unknown;
     }
 
-    std::optional<rtc::CopyOnWriteBuffer> Message::deserializeRaw(rtc::ByteBufferReader &reader) {
+    std::optional<webrtc::CopyOnWriteBuffer> Message::deserializeRaw(webrtc::ByteBufferReader &reader) {
         if (!reader.Length()) {
             return std::nullopt;
         }
@@ -39,9 +39,9 @@ namespace signaling {
         if (length > 1024 * 1024) {
             return std::nullopt;
         }
-        rtc::CopyOnWriteBuffer result;
+        webrtc::CopyOnWriteBuffer result;
         result.SetSize(length);
-        if (!reader.ReadBytes(rtc::MakeArrayView(result.MutableData(), result.size()))) {
+        if (!reader.ReadBytes(webrtc::MakeArrayView(result.MutableData(), result.size()))) {
             return std::nullopt;
         }
         return result;

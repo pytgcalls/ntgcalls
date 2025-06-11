@@ -109,7 +109,7 @@ namespace ntgcalls {
             if (isTcp) {
                 continue;
             }
-            rtc::SocketAddress address(host, port);
+            webrtc::SocketAddress address(host, port);
             if (!address.IsComplete()) {
                 RTC_LOG(LS_ERROR) << "Invalid ICE server host: " << host;
                 continue;

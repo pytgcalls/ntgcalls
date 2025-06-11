@@ -7,15 +7,15 @@
 #include <wrtc/models/outgoing_video_format.hpp>
 
 namespace wrtc {
-    OutgoingVideoFormat::OutgoingVideoFormat(cricket::Codec videoCodec_, std::optional<cricket::Codec> rtxCodec_) :
+    OutgoingVideoFormat::OutgoingVideoFormat(webrtc::Codec videoCodec_, std::optional<webrtc::Codec> rtxCodec_) :
     videoCodec(std::move(videoCodec_)), rtxCodec(std::move(rtxCodec_)){}
 
-    std::vector<cricket::Codec> OutgoingVideoFormat::getVideoCodecs(
+    std::vector<webrtc::Codec> OutgoingVideoFormat::getVideoCodecs(
         const std::vector<webrtc::SdpVideoFormat>& formats,
         const std::vector<PayloadType>& payloadTypes,
         const bool isGroupConnection
     ) {
-        std::vector<cricket::Codec> codecs;
+        std::vector<webrtc::Codec> codecs;
         if (isGroupConnection) {
             for (auto assignedPayloads = assignPayloadTypes(formats); const auto &payloadType : assignedPayloads) {
                 codecs.push_back(payloadType.videoCodec);
@@ -25,12 +25,12 @@ namespace wrtc {
             }
         } else {
             for (const auto &payloadType : payloadTypes) {
-                cricket::Codec codec = cricket::CreateVideoCodec(payloadType.id, payloadType.name);
+                webrtc::Codec codec = webrtc::CreateVideoCodec(payloadType.id, payloadType.name);
                 for (const auto & [fst, snd] : payloadType.parameters) {
                     codec.SetParam(fst, snd);
                 }
                 for (const auto & [type, subtype] : payloadType.feedbackTypes) {
-                    codec.AddFeedbackParam(cricket::FeedbackParam(type, subtype));
+                    codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
                 }
                 codecs.push_back(std::move(codec));
             }
@@ -50,9 +50,9 @@ namespace wrtc {
         std::vector<OutgoingVideoFormat> result;
 
         const std::vector<std::string> filterCodecNames = {
-            cricket::kVp8CodecName,
-            cricket::kVp9CodecName,
-            cricket::kH264CodecName,
+            webrtc::kVp8CodecName,
+            webrtc::kVp9CodecName,
+            webrtc::kH264CodecName,
         };
 
         for (const auto &codecName : filterCodecNames) {
@@ -62,7 +62,7 @@ namespace wrtc {
                     continue;
                 }
 
-                cricket::Codec codec = cricket::CreateVideoCodec(format);
+                webrtc::Codec codec = webrtc::CreateVideoCodec(format);
                 codec.id = payload_type;
                 addDefaultFeedbackParams(&codec);
 
@@ -72,9 +72,9 @@ namespace wrtc {
                     break;
                 }
 
-                std::optional<cricket::Codec> rtxCodec;
-                if (!absl::EqualsIgnoreCase(codec.name, cricket::kUlpfecCodecName) && !absl::EqualsIgnoreCase(codec.name, cricket::kFlexfecCodecName)) {
-                    rtxCodec = cricket::CreateVideoRtxCodec(payload_type, codec.id);
+                std::optional<webrtc::Codec> rtxCodec;
+                if (!absl::EqualsIgnoreCase(codec.name, webrtc::kUlpfecCodecName) && !absl::EqualsIgnoreCase(codec.name, webrtc::kFlexfecCodecName)) {
+                    rtxCodec = webrtc::CreateVideoRtxCodec(payload_type, codec.id);
 
                     ++payload_type;
                     if (payload_type > kLastDynamicPayloadType) {
@@ -92,17 +92,17 @@ namespace wrtc {
         return result;
     }
 
-    void OutgoingVideoFormat::addDefaultFeedbackParams(cricket::Codec* codec) {
-        if (codec->name == cricket::kRedCodecName || codec->name == cricket::kUlpfecCodecName) {
+    void OutgoingVideoFormat::addDefaultFeedbackParams(webrtc::Codec* codec) {
+        if (codec->name == webrtc::kRedCodecName || codec->name == webrtc::kUlpfecCodecName) {
             return;
         }
-        codec->AddFeedbackParam(cricket::FeedbackParam(cricket::kRtcpFbParamRemb, cricket::kParamValueEmpty));
-        codec->AddFeedbackParam(cricket::FeedbackParam(cricket::kRtcpFbParamTransportCc, cricket::kParamValueEmpty));
-        if (codec->name == cricket::kFlexfecCodecName) {
+        codec->AddFeedbackParam(webrtc::FeedbackParam(webrtc::kRtcpFbParamRemb, webrtc::kParamValueEmpty));
+        codec->AddFeedbackParam(webrtc::FeedbackParam(webrtc::kRtcpFbParamTransportCc, webrtc::kParamValueEmpty));
+        if (codec->name == webrtc::kFlexfecCodecName) {
             return;
         }
-        codec->AddFeedbackParam(cricket::FeedbackParam(cricket::kRtcpFbParamCcm, cricket::kRtcpFbCcmParamFir));
-        codec->AddFeedbackParam(cricket::FeedbackParam(cricket::kRtcpFbParamNack, cricket::kParamValueEmpty));
-        codec->AddFeedbackParam(cricket::FeedbackParam(cricket::kRtcpFbParamNack, cricket::kRtcpFbNackParamPli));
+        codec->AddFeedbackParam(webrtc::FeedbackParam(webrtc::kRtcpFbParamCcm, webrtc::kRtcpFbCcmParamFir));
+        codec->AddFeedbackParam(webrtc::FeedbackParam(webrtc::kRtcpFbParamNack, webrtc::kParamValueEmpty));
+        codec->AddFeedbackParam(webrtc::FeedbackParam(webrtc::kRtcpFbParamNack, webrtc::kRtcpFbNackParamPli));
     }
 } // wrtc

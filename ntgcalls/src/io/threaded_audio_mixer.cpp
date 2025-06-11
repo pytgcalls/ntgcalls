@@ -22,7 +22,7 @@ namespace ntgcalls {
         running = true;
         auto frameSize = sink->frameSize();
         auto frameTime = sink->frameTime();
-        thread = rtc::PlatformThread::SpawnJoinable(
+        thread = webrtc::PlatformThread::SpawnJoinable(
         [this, frameSize, frameTime] {
                 while (running) {
                     std::unique_lock lock(mtx);
@@ -49,7 +49,7 @@ namespace ntgcalls {
                 (void) eofCallback();
             },
             "ThreadedMixer",
-            rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
+            webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime)
         );
     }
 

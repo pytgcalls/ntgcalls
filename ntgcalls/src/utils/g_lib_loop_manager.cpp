@@ -11,7 +11,7 @@ namespace ntgcalls {
     bool GLibLoopManager::allowEventloop = true;
 #ifdef IS_LINUX
     GMainLoop *GLibLoopManager::loop = nullptr;
-    rtc::PlatformThread GLibLoopManager::thread;
+    webrtc::PlatformThread GLibLoopManager::thread;
 #endif
 
     bool GLibLoopManager::isEventLoopRunning()  {
@@ -39,9 +39,9 @@ namespace ntgcalls {
                 return;
             }
             loop = g_main_loop_new(nullptr, false);
-            thread = rtc::PlatformThread::SpawnJoinable([] {
+            thread = webrtc::PlatformThread::SpawnJoinable([] {
                 g_main_loop_run(loop);
-            },"GLibLoopManager", rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime));
+            },"GLibLoopManager", webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime));
 #endif
         }
     }

@@ -12,11 +12,11 @@ namespace wrtc {
         ChannelManager *channelManager,
         webrtc::RtpTransport* rtpTransport,
         const MediaContent& mediaContent,
-        rtc::Thread *workerThread,
-        rtc::Thread* networkThread,
+        webrtc::Thread *workerThread,
+        webrtc::Thread* networkThread,
         webrtc::LocalAudioSinkAdapter* sink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
-        cricket::AudioOptions audioOptions;
+        webrtc::AudioOptions audioOptions;
         audioOptions.echo_cancellation = false;
         audioOptions.noise_suppression = false;
         audioOptions.auto_gain_control = false;
@@ -24,7 +24,7 @@ namespace wrtc {
 
         channel = channelManager->CreateVoiceChannel(
             call,
-            cricket::MediaConfig(),
+            webrtc::MediaConfig(),
             std::to_string(_ssrc),
             false,
             NativeNetworkInterface::getDefaultCryptoOptions(),
@@ -33,20 +33,20 @@ namespace wrtc {
         networkThread->BlockingCall([&] {
             channel->SetRtpTransport(rtpTransport);
         });
-        std::vector<cricket::Codec> codecs;
+        std::vector<webrtc::Codec> codecs;
         for (const auto &[id, name, clockrate, channels, feedbackTypes, parameters] : mediaContent.payloadTypes) {
             if (name == "opus") {
-                cricket::Codec codec = cricket::CreateAudioCodec(static_cast<int>(id), name, static_cast<int>(clockrate), channels);
-                codec.SetParam(cricket::kCodecParamUseInbandFec, 1);
-                codec.SetParam(cricket::kCodecParamPTime, 60);
+                webrtc::Codec codec = webrtc::CreateAudioCodec(static_cast<int>(id), name, static_cast<int>(clockrate), channels);
+                codec.SetParam(webrtc::kCodecParamUseInbandFec, 1);
+                codec.SetParam(webrtc::kCodecParamPTime, 60);
                 for (const auto &[type, subtype] : feedbackTypes) {
-                    codec.AddFeedbackParam(cricket::FeedbackParam(type, subtype));
+                    codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
                 }
                 codecs.push_back(std::move(codec));
                 break;
             }
         }
-        const auto outgoingDescription = std::make_unique<cricket::AudioContentDescription>();
+        const auto outgoingDescription = std::make_unique<webrtc::AudioContentDescription>();
         for (const auto &rtpExtension : mediaContent.rtpExtensions) {
             outgoingDescription->AddRtpHeaderExtension(webrtc::RtpExtension(rtpExtension.uri, rtpExtension.id));
         }
@@ -55,8 +55,8 @@ namespace wrtc {
         outgoingDescription->set_direction(webrtc::RtpTransceiverDirection::kSendOnly);
         outgoingDescription->set_codecs(codecs);
         outgoingDescription->set_bandwidth(-1);
-        outgoingDescription->AddStream(cricket::StreamParams::CreateLegacy(_ssrc));
-        const auto incomingDescription = std::make_unique<cricket::AudioContentDescription>();
+        outgoingDescription->AddStream(webrtc::StreamParams::CreateLegacy(_ssrc));
+        const auto incomingDescription = std::make_unique<webrtc::AudioContentDescription>();
         for (const auto &rtpExtension : mediaContent.rtpExtensions) {
             incomingDescription->AddRtpHeaderExtension(webrtc::RtpExtension(rtpExtension.uri, rtpExtension.id));
         }

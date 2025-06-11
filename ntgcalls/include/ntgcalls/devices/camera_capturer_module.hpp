@@ -16,10 +16,10 @@
 namespace ntgcalls {
     using nlohmann::json;
 
-    class CameraCapturerModule final: public BaseReader, public rtc::VideoSinkInterface<webrtc::VideoFrame> {
+    class CameraCapturerModule final: public BaseReader, public webrtc::VideoSinkInterface<webrtc::VideoFrame> {
         VideoDescription desc;
         webrtc::VideoCaptureCapability capability;
-        rtc::scoped_refptr<webrtc::VideoCaptureModule> capturer;
+        webrtc::scoped_refptr<webrtc::VideoCaptureModule> capturer;
 
         static std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> CreateDeviceInfo();
 

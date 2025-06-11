@@ -20,9 +20,9 @@ namespace wrtc {
             const std::function<void(webrtc::RtpPacketReceived)>& callback
         );
 
-        void OnRtpPacketReceived(const rtc::ReceivedPacket& packet) override;
+        void OnRtpPacketReceived(const webrtc::ReceivedIpPacket& packet) override;
 
-        void UpdateRtpHeaderExtensionMap(const cricket::RtpHeaderExtensions& headerExtensions) override;
+        void UpdateRtpHeaderExtensionMap(const webrtc::RtpHeaderExtensions& headerExtensions) override;
     };
 
 } // wrtc

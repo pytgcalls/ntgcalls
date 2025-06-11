@@ -14,15 +14,15 @@ namespace wrtc {
     class OutgoingVideoFormat {
         static std::vector<OutgoingVideoFormat> assignPayloadTypes(std::vector<webrtc::SdpVideoFormat> const &formats);
 
-        static void addDefaultFeedbackParams(cricket::Codec *codec);
+        static void addDefaultFeedbackParams(webrtc::Codec *codec);
 
     public:
-        cricket::Codec videoCodec;
-        std::optional<cricket::Codec> rtxCodec;
+        webrtc::Codec videoCodec;
+        std::optional<webrtc::Codec> rtxCodec;
 
-        OutgoingVideoFormat(cricket::Codec videoCodec_, std::optional<cricket::Codec> rtxCodec_);
+        OutgoingVideoFormat(webrtc::Codec videoCodec_, std::optional<webrtc::Codec> rtxCodec_);
 
-        static std::vector<cricket::Codec> getVideoCodecs(
+        static std::vector<webrtc::Codec> getVideoCodecs(
             const std::vector<webrtc::SdpVideoFormat>& formats,
             const std::vector<PayloadType>& payloadTypes,
             bool isGroupConnection

@@ -37,7 +37,7 @@ namespace wrtc {
             remoteIceParameters.pwd = transport["pwd"].get<std::string>();
             for (const auto& item : transport["candidates"].items()) {
                 auto candidate = item.value();
-                rtc::SocketAddress address(candidate["ip"].get<std::string>(), std::stoi(candidate["port"].get<std::string>()));
+                webrtc::SocketAddress address(candidate["ip"].get<std::string>(), std::stoi(candidate["port"].get<std::string>()));
                 webrtc::IceCandidateType candidateType;
                 if (auto rawCandidateType = candidate["type"].get<std::string>(); rawCandidateType == "srflx") {
                     candidateType = webrtc::IceCandidateType::kSrflx;
@@ -66,7 +66,7 @@ namespace wrtc {
                 );
             }
             if (!transport["fingerprints"].empty()) {
-                fingerprint = rtc::SSLFingerprint::CreateUniqueFromRfc4572(
+                fingerprint = webrtc::SSLFingerprint::CreateUniqueFromRfc4572(
                     transport["fingerprints"][0]["hash"].get<std::string>(),
                     transport["fingerprints"][0]["fingerprint"].get<std::string>()
                 );

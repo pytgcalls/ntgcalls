@@ -11,8 +11,8 @@ namespace signaling {
     class ExternalSignalingConnection final : public sigslot::has_slots<>, public SignalingInterface {
     public:
         ExternalSignalingConnection(
-            rtc::Thread* networkThread,
-            rtc::Thread* signalingThread,
+            webrtc::Thread* networkThread,
+            webrtc::Thread* signalingThread,
             const EncryptionKey &key,
             const DataEmitter& onEmitData,
             const DataReceiver& onSignalData

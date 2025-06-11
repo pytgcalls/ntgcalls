@@ -13,9 +13,9 @@
 namespace wrtc {
     class OutgoingVideoChannel final : public sigslot::has_slots<> {
         uint32_t _ssrc = 0;
-        std::unique_ptr<cricket::VideoChannel> channel;
-        rtc::Thread* workerThread;
-        rtc::Thread* networkThread;
+        std::unique_ptr<webrtc::VideoChannel> channel;
+        webrtc::Thread* workerThread;
+        webrtc::Thread* networkThread;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> bitrateAllocatorFactory;
         LocalVideoAdapter* sink;
 
@@ -25,8 +25,8 @@ namespace wrtc {
             ChannelManager* channelManager,
             webrtc::RtpTransport* rtpTransport,
             const MediaContent& mediaContent,
-            rtc::Thread* workerThread,
-            rtc::Thread* networkThread,
+            webrtc::Thread* workerThread,
+            webrtc::Thread* networkThread,
             LocalVideoAdapter* sink
         );
 

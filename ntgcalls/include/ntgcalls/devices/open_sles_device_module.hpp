@@ -22,7 +22,7 @@ namespace ntgcalls {
         std::unique_ptr<bytes::unique_binary[]> audioBuffers;
         std::mutex mutex;
         SLEngineItf engine = nullptr;
-        rtc::scoped_refptr<OpenSLEngineManager> engineManager;
+        webrtc::scoped_refptr<OpenSLEngineManager> engineManager;
         SLDataFormat_PCM pcmFormat{};
         ScopedSLObjectItf deviceObject;
         std::mutex queueMutex;

@@ -9,6 +9,7 @@
 #include <pc/media_factory.h>
 #include <rtc_base/crypto_random.h>
 #include <rtc_base/rtc_certificate_generator.h>
+#include <rtc_base/time_utils.h>
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
@@ -23,12 +24,12 @@ namespace wrtc {
                 return;
             }
             strong->localParameters = PeerIceParameters(
-                rtc::CreateRandomString(cricket::ICE_UFRAG_LENGTH),
-                rtc::CreateRandomString(cricket::ICE_PWD_LENGTH),
+                webrtc::CreateRandomString(webrtc::ICE_UFRAG_LENGTH),
+                webrtc::CreateRandomString(webrtc::ICE_PWD_LENGTH),
                 true
             );
-            strong->localCertificate = rtc::RTCCertificateGenerator::GenerateCertificate(
-                rtc::KeyParams(rtc::KT_ECDSA),
+            strong->localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(
+                webrtc::KeyParams(webrtc::KT_ECDSA),
                 std::nullopt
             );
             strong->asyncResolverFactory = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
@@ -58,7 +59,7 @@ namespace wrtc {
                 }
                 strongListener->DtlsReadyToSend(readyToSend);
             });
-            strong->dtlsSrtpTransport->SubscribeRtcpPacketReceived(strong.get(), [weak](const rtc::CopyOnWriteBuffer* packet, int64_t) {
+            strong->dtlsSrtpTransport->SubscribeRtcpPacketReceived(strong.get(), [weak](const webrtc::CopyOnWriteBuffer* packet, int64_t) {
                 const auto strongListener = weak.lock();
                 if (!strongListener) {
                     return;
@@ -72,7 +73,7 @@ namespace wrtc {
                 });
             });
             if (supportsPacketSending) {
-                strong->dtlsSrtpTransport->SubscribeSentPacket(strong.get(), [weak](const rtc::SentPacket& packet) {
+                strong->dtlsSrtpTransport->SubscribeSentPacket(strong.get(), [weak](const webrtc::SentPacketInfo& packet) {
                     const auto strongListener = weak.lock();
                     if (!strongListener) {
                         return;
@@ -127,7 +128,7 @@ namespace wrtc {
         if (isAddable && mediaContent.type == MediaContent::Type::Audio) {
             if (incomingAudioChannels.size() > 10) {
                 int64_t minActivity = INT64_MAX;
-                const auto timestamp = rtc::TimeMillis();
+                const auto timestamp = webrtc::TimeMillis();
                 std::string minActivityChannelId;
                 for (const auto& [channelId, channel] : incomingAudioChannels) {
                     if (const auto activity = channel->getActivity(); activity < minActivity && activity < timestamp - 1000) {
@@ -236,7 +237,8 @@ namespace wrtc {
     }
 
     void NativeNetworkInterface::resetDtlsSrtpTransport() {
-        portAllocator = std::make_unique<cricket::BasicPortAllocator>(
+        portAllocator = std::make_unique<webrtc::BasicPortAllocator>(
+            factory->environment(),
             factory->networkManager(),
             factory->socketFactory(),
             nullptr,
@@ -250,10 +252,10 @@ namespace wrtc {
         webrtc::IceTransportInit iceTransportInit;
         iceTransportInit.set_port_allocator(portAllocator.get());
         iceTransportInit.set_async_dns_resolver_factory(asyncResolverFactory.get());
-        transportChannel = cricket::P2PTransportChannel::Create("transport", 0, std::move(iceTransportInit));
+        transportChannel = webrtc::P2PTransportChannel::Create("transport", 0, std::move(iceTransportInit));
 
-        cricket::IceConfig iceConfig;
-        iceConfig.continual_gathering_policy = cricket::GATHER_CONTINUALLY;
+        webrtc::IceConfig iceConfig;
+        iceConfig.continual_gathering_policy = webrtc::GATHER_CONTINUALLY;
         iceConfig.prioritize_most_likely_candidate_pairs = true;
         iceConfig.regather_on_failed_networks_interval = getRegatherOnFailedNetworksInterval();
         if (getCustomParameterBool("network_skip_initial_ping")) {
@@ -261,7 +263,7 @@ namespace wrtc {
         }
         transportChannel->SetIceConfig(iceConfig);
 
-        const cricket::IceParameters localIceParameters(
+        const webrtc::IceParameters localIceParameters(
             localParameters.ufrag,
             localParameters.pwd,
             supportsRenomination()
@@ -271,7 +273,7 @@ namespace wrtc {
         transportChannel->SignalIceTransportStateChanged.connect(this, &NativeNetworkInterface::transportStateChanged);
         registerTransportCallbacks(transportChannel.get());
 
-        dtlsTransport = std::make_unique<cricket::DtlsTransport>(transportChannel.get(), getDefaultCryptoOptions(), nullptr);
+        dtlsTransport = std::make_unique<webrtc::DtlsTransportInternalImpl>(transportChannel.get(), getDefaultCryptoOptions(), nullptr);
         dtlsTransport->SignalWritableState.connect(this, &NativeNetworkInterface::OnTransportWritableState_n);
         dtlsTransport->SignalReceivingState.connect(this, &NativeNetworkInterface::OnTransportReceivingState_n);
         if (const auto role = dtlsRole(); role.has_value()) {
@@ -282,7 +284,7 @@ namespace wrtc {
     }
 
 
-    void NativeNetworkInterface::transportStateChanged(cricket::IceTransportInternal*) {
+    void NativeNetworkInterface::transportStateChanged(webrtc::IceTransportInternal*) {
         UpdateAggregateStates_n();
     }
 
@@ -365,22 +367,22 @@ namespace wrtc {
         });
     }
 
-    void NativeNetworkInterface::OnTransportWritableState_n(rtc::PacketTransportInternal*) {
+    void NativeNetworkInterface::OnTransportWritableState_n(webrtc::PacketTransportInternal*) {
         assert(networkThread()->IsCurrent());
         UpdateAggregateStates_n();
     }
 
-    void NativeNetworkInterface::OnTransportReceivingState_n(rtc::PacketTransportInternal*){
+    void NativeNetworkInterface::OnTransportReceivingState_n(webrtc::PacketTransportInternal*){
         assert(networkThread()->IsCurrent());
         UpdateAggregateStates_n();
     }
 
-    std::unique_ptr<rtc::SSLFingerprint> NativeNetworkInterface::localFingerprint() const {
+    std::unique_ptr<webrtc::SSLFingerprint> NativeNetworkInterface::localFingerprint() const {
         const auto certificate = localCertificate;
         if (!certificate) {
             return nullptr;
         }
-        return rtc::SSLFingerprint::CreateFromCertificate(*certificate);
+        return webrtc::SSLFingerprint::CreateFromCertificate(*certificate);
     }
 
     void NativeNetworkInterface::close() {
@@ -442,7 +444,7 @@ namespace wrtc {
         }
     }
 
-    std::unique_ptr<MediaTrackInterface> NativeNetworkInterface::addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
+    std::unique_ptr<MediaTrackInterface> NativeNetworkInterface::addOutgoingTrack(const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
         std::weak_ptr weak(shared_from_this());
         if (const auto audioTrack = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
             audioTrack->AddSink(&audioSink);
@@ -457,7 +459,7 @@ namespace wrtc {
             });
         }
         if (const auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
-            videoTrack->AddOrUpdateSink(&videoSink, rtc::VideoSinkWants());
+            videoTrack->AddOrUpdateSink(&videoSink, webrtc::VideoSinkWants());
             return std::make_unique<MediaTrackInterface>([weak](const bool enable) {
                 const auto strong = weak.lock();
                 if (!strong) {
@@ -492,9 +494,9 @@ namespace wrtc {
         std::vector<webrtc::SdpVideoFormat> filteredFormats;
 
         std::vector<std::string> filterCodecNames = {
-            cricket::kVp8CodecName,
-            cricket::kVp9CodecName,
-            cricket::kH264CodecName
+            webrtc::kVp8CodecName,
+            webrtc::kVp9CodecName,
+            webrtc::kH264CodecName
         };
 
         std::vector<webrtc::SdpVideoFormat> vp9Formats;
@@ -505,9 +507,9 @@ namespace wrtc {
                 continue;
             }
 
-            if (format.name == cricket::kVp9CodecName) {
+            if (format.name == webrtc::kVp9CodecName) {
                 vp9Formats.push_back(format);
-            } else if (format.name == cricket::kH264CodecName) {
+            } else if (format.name == webrtc::kH264CodecName) {
                 h264Formats.push_back(format);
             } else {
                 filteredFormats.push_back(format);
@@ -583,10 +585,10 @@ namespace wrtc {
     }
 
     int NativeNetworkInterface::getH264ProfileLevelIdPriority(std::string const& profileLevelId) {
-        if (profileLevelId == cricket::kH264ProfileLevelConstrainedHigh) {
+        if (profileLevelId == webrtc::kH264ProfileLevelConstrainedHigh) {
             return 0;
         }
-        if (profileLevelId == cricket::kH264ProfileLevelConstrainedBaseline) {
+        if (profileLevelId == webrtc::kH264ProfileLevelConstrainedBaseline) {
             return 1;
         }
         return 2;

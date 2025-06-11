@@ -26,20 +26,20 @@
 #include <rtc_base/strings/string_builder.h>
 
 namespace wrtc {
-    ReflectorPort::ReflectorPort(const cricket::CreateRelayPortArgs& args,
-        rtc::AsyncPacketSocket* socket,
+    ReflectorPort::ReflectorPort(const webrtc::CreateRelayPortArgs& args,
+        webrtc::AsyncPacketSocket* socket,
         const uint8_t serverId,
         const int serverPriority,
         const bool standaloneReflectorMode,
         const uint32_t standaloneReflectorRoleId):
     Port(
         PortParametersRef{
+            args.env,
             args.network_thread,
             args.socket_factory,
             args.network,
             args.username,
             args.password,
-            args.field_trials
         },
         webrtc::IceCandidateType::kRelay
     ),
@@ -50,7 +50,7 @@ namespace wrtc {
     state(STATE_CONNECTING),
     standaloneReflectorMode(standaloneReflectorMode),
     standaloneReflectorRoleId(standaloneReflectorRoleId),
-    stunDscpValue(rtc::DSCP_NO_CHANGE),
+    stunDscpValue(webrtc::DSCP_NO_CHANGE),
     credentials(args.config->credentials),
     serverPriority(serverPriority) {
         const auto rawPeerTag = parseHex(args.config->credentials.password);
@@ -67,7 +67,7 @@ namespace wrtc {
         peerTag.AppendData(reinterpret_cast<uint8_t*>(&randomTag), 4);
     }
 
-    ReflectorPort::ReflectorPort(const cricket::CreateRelayPortArgs& args,
+    ReflectorPort::ReflectorPort(const webrtc::CreateRelayPortArgs& args,
         const uint16_t min_port,
         const uint16_t max_port,
         const uint8_t serverId,
@@ -76,16 +76,16 @@ namespace wrtc {
         const uint32_t standaloneReflectorRoleId):
     Port(
         PortParametersRef{
+            args.env,
             args.network_thread,
             args.socket_factory,
             args.network,
             args.username,
             args.password,
-            args.field_trials
         },
         webrtc::IceCandidateType::kRelay,
         min_port,
-        max_port // TODO: Check if "Shared" is needed
+        max_port
     ),
     serverAddress(*args.server_address),
     serverId(serverId),
@@ -94,7 +94,7 @@ namespace wrtc {
     state(STATE_CONNECTING),
     standaloneReflectorMode(standaloneReflectorMode),
     standaloneReflectorRoleId(standaloneReflectorRoleId),
-    stunDscpValue(rtc::DSCP_NO_CHANGE),
+    stunDscpValue(webrtc::DSCP_NO_CHANGE),
     credentials(args.config->credentials),
     serverPriority(serverPriority) {
         const auto rawPeerTag = parseHex(args.config->credentials.password);
@@ -126,8 +126,8 @@ namespace wrtc {
         delete socket;
     }
 
-    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const cricket::CreateRelayPortArgs &args,
-        rtc::AsyncPacketSocket *socket,
+    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const webrtc::CreateRelayPortArgs &args,
+        webrtc::AsyncPacketSocket *socket,
         const uint8_t serverId,
         const int serverPriority,
         const bool standaloneReflectorMode,
@@ -140,7 +140,7 @@ namespace wrtc {
     }
 
     std::unique_ptr<ReflectorPort> ReflectorPort::Create(
-        const cricket::CreateRelayPortArgs &args,
+        const webrtc::CreateRelayPortArgs &args,
         const uint16_t minPort,
         const uint16_t maxPort,
         const uint8_t serverId,
@@ -155,23 +155,23 @@ namespace wrtc {
         return absl::WrapUnique(new ReflectorPort(args, minPort, maxPort, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
     }
 
-    rtc::SocketAddress ReflectorPort::GetLocalAddress() const {
-        return socket ? socket->GetLocalAddress() : rtc::SocketAddress();
+    webrtc::SocketAddress ReflectorPort::GetLocalAddress() const {
+        return socket ? socket->GetLocalAddress() : webrtc::SocketAddress();
     }
 
-    cricket::ProtocolType ReflectorPort::GetProtocol() const {
+    webrtc::ProtocolType ReflectorPort::GetProtocol() const {
         return serverAddress.proto;
     }
 
     void ReflectorPort::PrepareAddress() {
         if (peerTag.size() != 16) {
             RTC_LOG(LS_ERROR) << "Allocation can't be started without setting the peer tag.";
-            OnAllocateError(cricket::STUN_ERROR_UNAUTHORIZED, "Missing REFLECTOR server credentials.");
+            OnAllocateError(webrtc::STUN_ERROR_UNAUTHORIZED, "Missing REFLECTOR server credentials.");
             return;
         }
         if (serverId == 0) {
             RTC_LOG(LS_ERROR) << "Allocation can't be started without setting the server id.";
-            OnAllocateError(cricket::STUN_ERROR_UNAUTHORIZED, "Missing REFLECTOR server id.");
+            OnAllocateError(webrtc::STUN_ERROR_UNAUTHORIZED, "Missing REFLECTOR server id.");
             return;
         }
         if (!serverAddress.address.port()) {
@@ -182,18 +182,18 @@ namespace wrtc {
         } else {
             if (!IsCompatibleAddress(serverAddress.address)) {
                 RTC_LOG(LS_ERROR) << "IP address family does not match. server: " << serverAddress.address.family() << " local: " << Network()->GetBestIP().family();
-                OnAllocateError(cricket::STUN_ERROR_GLOBAL_FAILURE, "IP address family does not match.");
+                OnAllocateError(webrtc::STUN_ERROR_GLOBAL_FAILURE, "IP address family does not match.");
                 return;
             }
             attemptedServerAddresses.insert(serverAddress.address);
-            RTC_LOG(LS_VERBOSE) << ToString() << ": Trying to connect to REFLECTOR server via " << cricket::ProtoToString(serverAddress.proto) << " @ " << serverAddress.address.ToSensitiveString();
+            RTC_LOG(LS_VERBOSE) << ToString() << ": Trying to connect to REFLECTOR server via " << webrtc::ProtoToString(serverAddress.proto) << " @ " << serverAddress.address.ToSensitiveString();
             if (!CreateReflectorClientSocket()) {
                 RTC_LOG(LS_ERROR) << "Failed to create REFLECTOR client socket";
-                OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE,
+                OnAllocateError(webrtc::STUN_ERROR_SERVER_NOT_REACHABLE,
                                 "Failed to create REFLECTOR client socket.");
                 return;
             }
-            if (serverAddress.proto == cricket::PROTO_UDP) {
+            if (serverAddress.proto == webrtc::PROTO_UDP) {
                 SendReflectorHello();
             }
         }
@@ -204,8 +204,8 @@ namespace wrtc {
             return;
         }
         RTC_LOG(LS_WARNING) << ToString() << ": REFLECTOR sending ping to " << serverAddress.address.ToString();
-        rtc::ByteBufferWriter bufferWriter;
-        bufferWriter.Write(rtc::MakeArrayView(peerTag.data(), peerTag.size()));
+        webrtc::ByteBufferWriter bufferWriter;
+        bufferWriter.Write(webrtc::MakeArrayView(peerTag.data(), peerTag.size()));
         for (int i = 0; i < 12; i++) {
             bufferWriter.WriteUInt8(0xffu);
         }
@@ -217,7 +217,7 @@ namespace wrtc {
         while (bufferWriter.Length() % 4 != 0) {
             bufferWriter.WriteUInt8(0);
         }
-        const rtc::PacketOptions options;
+        const webrtc::AsyncSocketPacketOptions options;
         (void) Send(bufferWriter.Data(), bufferWriter.Length(), options);
         if (!isRunningPingTask) {
             isRunningPingTask = true;
@@ -234,20 +234,20 @@ namespace wrtc {
 
     bool ReflectorPort::CreateReflectorClientSocket() {
         RTC_DCHECK(!socket || SharedSocket());
-        if (serverAddress.proto == cricket::PROTO_UDP && !SharedSocket()) {
+        if (serverAddress.proto == webrtc::PROTO_UDP && !SharedSocket()) {
             if (standaloneReflectorMode && Network()->name() == "shared-reflector-network") {
-                const rtc::IPAddress ipv4_any_address(INADDR_ANY);
-                socket = socket_factory()->CreateUdpSocket(rtc::SocketAddress(ipv4_any_address, 12345), min_port(), max_port());
+                const webrtc::IPAddress ipv4_any_address(INADDR_ANY);
+                socket = socket_factory()->CreateUdpSocket(webrtc::SocketAddress(ipv4_any_address, 12345), min_port(), max_port());
             } else {
-                socket = socket_factory()->CreateUdpSocket(rtc::SocketAddress(Network()->GetBestIP(), 0), min_port(), max_port());
+                socket = socket_factory()->CreateUdpSocket(webrtc::SocketAddress(Network()->GetBestIP(), 0), min_port(), max_port());
             }
-        } else if (serverAddress.proto == cricket::PROTO_TCP) {
+        } else if (serverAddress.proto == webrtc::PROTO_TCP) {
             RTC_DCHECK(!SharedSocket());
-            constexpr int opts = rtc::PacketSocketFactory::OPT_STUN;
-            rtc::PacketSocketTcpOptions tcp_options;
+            constexpr int opts = webrtc::PacketSocketFactory::OPT_STUN;
+            webrtc::PacketSocketTcpOptions tcp_options;
             tcp_options.opts = opts;
             socket = socket_factory()->CreateClientTcpSocket(
-                rtc::SocketAddress(Network()->GetBestIP(), 0),
+                webrtc::SocketAddress(Network()->GetBestIP(), 0),
                 serverAddress.address,
                 get_proxy(),
                 get_user_agent(),
@@ -262,15 +262,15 @@ namespace wrtc {
             socket->SetOption(fst, snd);
         }
         if (!SharedSocket()) {
-            socket->RegisterReceivedPacketCallback([this](rtc::AsyncPacketSocket* socket, const rtc::ReceivedPacket& packet) {
+            socket->RegisterReceivedPacketCallback([this](webrtc::AsyncPacketSocket* socket, const webrtc::ReceivedIpPacket& packet) {
                 OnReadPacket(socket, packet);
             });
         }
         socket->SignalReadyToSend.connect(this, &ReflectorPort::OnReadyToSend);
         socket->SignalSentPacket.connect(this, &ReflectorPort::OnSentPacket);
-        if (serverAddress.proto == cricket::PROTO_TCP || serverAddress.proto == cricket::PROTO_TLS) {
+        if (serverAddress.proto == webrtc::PROTO_TCP || serverAddress.proto == webrtc::PROTO_TLS) {
             socket->SignalConnect.connect(this, &ReflectorPort::OnSocketConnect);
-            socket->SubscribeCloseEvent(this, [this](rtc::AsyncPacketSocket* socket, const int error) {
+            socket->SubscribeCloseEvent(this, [this](webrtc::AsyncPacketSocket* socket, const int error) {
                 OnSocketClose(socket, error);
             });
         } else {
@@ -280,9 +280,9 @@ namespace wrtc {
     }
 
     // ReSharper disable once CppParameterMayBeConstPtrOrRef
-    void ReflectorPort::OnSocketConnect(rtc::AsyncPacketSocket* socket) {
-        RTC_DCHECK(serverAddress.proto == cricket::PROTO_TCP || serverAddress.proto == cricket::PROTO_TLS);
-        if (const rtc::SocketAddress& socket_address = socket->GetLocalAddress(); absl::c_none_of(Network()->GetIPs(), [socket_address](const rtc::InterfaceAddress& addr) {
+    void ReflectorPort::OnSocketConnect(webrtc::AsyncPacketSocket* socket) {
+        RTC_DCHECK(serverAddress.proto == webrtc::PROTO_TCP || serverAddress.proto == webrtc::PROTO_TLS);
+        if (const webrtc::SocketAddress& socket_address = socket->GetLocalAddress(); absl::c_none_of(Network()->GetIPs(), [socket_address](const webrtc::InterfaceAddress& addr) {
             return socket_address.ipaddr() == addr;
         })) {
             if (socket->GetLocalAddress().IsLoopbackIP()) {
@@ -304,7 +304,7 @@ namespace wrtc {
                 << ", rather than an address associated with network:"
                 << Network()->ToString() << ". Discarding REFLECTOR port.";
                 OnAllocateError(
-                    cricket::STUN_ERROR_GLOBAL_FAILURE,
+                    webrtc::STUN_ERROR_GLOBAL_FAILURE,
                     "Address not associated with the desired network interface."
                 );
                 return;
@@ -317,13 +317,13 @@ namespace wrtc {
         RTC_LOG(LS_VERBOSE) << "ReflectorPort connected to " << socket->GetRemoteAddress().ToSensitiveString() << " using tcp.";
     }
 
-    void ReflectorPort::OnSocketClose(rtc::AsyncPacketSocket* socket, const int error) {
+    void ReflectorPort::OnSocketClose(webrtc::AsyncPacketSocket* socket, const int error) {
         RTC_LOG(LS_WARNING) << ToString() << ": Connection with server failed with error: " << error;
         RTC_DCHECK(socket == this->socket);
         Close();
     }
 
-    cricket::Connection* ReflectorPort::CreateConnection(const cricket::Candidate& remote_candidate, CandidateOrigin origin) {
+    webrtc::Connection* ReflectorPort::CreateConnection(const webrtc::Candidate& remote_candidate, CandidateOrigin origin) {
         if (!SupportsProtocol(remote_candidate.protocol())) {
             return nullptr;
         }
@@ -341,22 +341,22 @@ namespace wrtc {
         if (state == STATE_DISCONNECTED || state == STATE_RECEIVEONLY) {
             return nullptr;
         }
-        auto* conn = new cricket::ProxyConnection(NewWeakPtr(), 0, remote_candidate);
+        auto* conn = new webrtc::ProxyConnection(NewWeakPtr(), 0, remote_candidate);
         AddOrReplaceConnection(conn);
         return conn;
     }
 
-    bool ReflectorPort::FailAndPruneConnection(const rtc::SocketAddress& address) {
-        if (cricket::Connection* conn = GetConnection(address); conn != nullptr) {
+    bool ReflectorPort::FailAndPruneConnection(const webrtc::SocketAddress& address) {
+        if (webrtc::Connection* conn = GetConnection(address); conn != nullptr) {
             conn->FailAndPrune();
             return true;
         }
         return false;
     }
 
-    int ReflectorPort::SetOption(const rtc::Socket::Option opt, int value) {
-        if (opt == rtc::Socket::OPT_DSCP) {
-            stunDscpValue = static_cast<rtc::DiffServCodePoint>(value);
+    int ReflectorPort::SetOption(const webrtc::Socket::Option opt, int value) {
+        if (opt == webrtc::Socket::OPT_DSCP) {
+            stunDscpValue = static_cast<webrtc::DiffServCodePoint>(value);
         }
         if (!socket) {
             socketOptions[opt] = value;
@@ -365,7 +365,7 @@ namespace wrtc {
         return socket->SetOption(opt, value);
     }
 
-    int ReflectorPort::GetOption(const rtc::Socket::Option opt, int* value) {
+    int ReflectorPort::GetOption(const webrtc::Socket::Option opt, int* value) {
         if (!socket) {
             const auto it = socketOptions.find(opt);
             if (it == socketOptions.end()) {
@@ -381,8 +381,8 @@ namespace wrtc {
         return error;
     }
 
-    int ReflectorPort::SendTo(const void* data, size_t size, const rtc::SocketAddress& addr, const rtc::PacketOptions& options, bool payload) {
-        rtc::CopyOnWriteBuffer targetPeerTag;
+    int ReflectorPort::SendTo(const void* data, size_t size, const webrtc::SocketAddress& addr, const webrtc::AsyncSocketPacketOptions& options, bool payload) {
+        webrtc::CopyOnWriteBuffer targetPeerTag;
         auto syntheticHostname = addr.hostname();
         uint32_t resolvedPeerTag = 0;
         if (auto resolvedPeerTagIt = resolvedPeerTagsByHostname.find(syntheticHostname); resolvedPeerTagIt != resolvedPeerTagsByHostname.end()) {
@@ -407,33 +407,33 @@ namespace wrtc {
         targetPeerTag.AppendData(peerTag.data(), peerTag.size() - 4);
         targetPeerTag.AppendData(reinterpret_cast<uint8_t*>(&resolvedPeerTag), 4);
 
-        rtc::ByteBufferWriter bufferWriter;
-        bufferWriter.Write(rtc::MakeArrayView(targetPeerTag.data(), targetPeerTag.size()));
-        bufferWriter.Write(rtc::MakeArrayView(reinterpret_cast<const uint8_t*>(&randomTag), 4));
+        webrtc::ByteBufferWriter bufferWriter;
+        bufferWriter.Write(webrtc::MakeArrayView(targetPeerTag.data(), targetPeerTag.size()));
+        bufferWriter.Write(webrtc::MakeArrayView(reinterpret_cast<const uint8_t*>(&randomTag), 4));
 
         bufferWriter.WriteUInt32(static_cast<uint32_t>(size));
-        bufferWriter.Write(rtc::MakeArrayView(static_cast<const uint8_t*>(data), size));
+        bufferWriter.Write(webrtc::MakeArrayView(static_cast<const uint8_t*>(data), size));
         while (bufferWriter.Length() % 4 != 0) {
             bufferWriter.WriteUInt8(0);
         }
-        rtc::PacketOptions modified_options(options);
+        webrtc::AsyncSocketPacketOptions modified_options(options);
         CopyPortInformationToPacketInfo(&modified_options.info_signaled_after_sent);
         modified_options.info_signaled_after_sent.turn_overhead_bytes = bufferWriter.Length() - size;
         (void) Send(bufferWriter.Data(), bufferWriter.Length(), modified_options);
         return static_cast<int>(size);
     }
 
-    bool ReflectorPort::CanHandleIncomingPacketsFrom(const rtc::SocketAddress& addr) const {
+    bool ReflectorPort::CanHandleIncomingPacketsFrom(const webrtc::SocketAddress& addr) const {
         return serverAddress.address == addr;
     }
 
-    bool ReflectorPort::HandleIncomingPacket(rtc::AsyncPacketSocket* socket, rtc::ReceivedPacket const &packet) {
+    bool ReflectorPort::HandleIncomingPacket(webrtc::AsyncPacketSocket* socket, webrtc::ReceivedIpPacket const &packet) {
         if (socket != this->socket) {
             return false;
         }
         uint8_t const *data = packet.payload().begin();
         size_t size = packet.payload().size();
-        rtc::SocketAddress const &remote_addr = packet.source_address();
+        webrtc::SocketAddress const &remote_addr = packet.source_address();
         auto packet_time_us = packet.arrival_time();
 
         if (remote_addr != serverAddress.address) {
@@ -471,16 +471,16 @@ namespace wrtc {
             RTC_LOG(LS_VERBOSE) << ToString() << ": REFLECTOR " << serverAddress.address.ToString() << " is now ready";
 
             const auto ipFormat = "reflector-" + std::to_string(static_cast<uint32_t>(serverId)) + "-" + std::to_string(randomTag) + ".reflector";
-            rtc::SocketAddress candidateAddress(ipFormat, serverAddress.address.port());
+            webrtc::SocketAddress candidateAddress(ipFormat, serverAddress.address.port());
             if (standaloneReflectorMode) {
                 candidateAddress.SetResolvedIP(serverAddress.address.ipaddr());
             }
             AddAddress(
                 candidateAddress,
                 serverAddress.address,
-                rtc::SocketAddress(),
-                cricket::UDP_PROTOCOL_NAME,
-                cricket::ProtoToString(serverAddress.proto),
+                webrtc::SocketAddress(),
+                webrtc::UDP_PROTOCOL_NAME,
+                webrtc::ProtoToString(serverAddress.proto),
                 "",
                 webrtc::IceCandidateType::kRelay,
                 GetRelayPreference(serverAddress.proto),
@@ -517,55 +517,55 @@ namespace wrtc {
                     << ": Received data packet with invalid size tag";
                 } else {
                     const auto ipFormat = "reflector-" + std::to_string(static_cast<uint32_t>(serverId)) + "-" + std::to_string(senderTag) + ".reflector";
-                    rtc::SocketAddress candidateAddress(ipFormat, serverAddress.address.port());
+                    webrtc::SocketAddress candidateAddress(ipFormat, serverAddress.address.port());
                     candidateAddress.SetResolvedIP(serverAddress.address.ipaddr());
                     int64_t packet_timestamp = -1;
                     if (packet_time_us.has_value()) {
                         packet_timestamp = packet_time_us->us_or(-1);
                     }
-                    DispatchPacket(rtc::ReceivedPacket::CreateFromLegacy(data + 16 + 4 + 4, dataSize, packet_timestamp, candidateAddress));
+                    DispatchPacket(webrtc::ReceivedIpPacket::CreateFromLegacy(data + 16 + 4 + 4, dataSize, packet_timestamp, candidateAddress));
                 }
             }
         }
         return true;
     }
 
-    void ReflectorPort::OnReadPacket(rtc::AsyncPacketSocket* socket, const rtc::ReceivedPacket& packet) {
+    void ReflectorPort::OnReadPacket(webrtc::AsyncPacketSocket* socket, const webrtc::ReceivedIpPacket& packet) {
         HandleIncomingPacket(socket, packet);
     }
 
-    void ReflectorPort::OnSentPacket(rtc::AsyncPacketSocket* socket, const rtc::SentPacket& sent_packet) {
+    void ReflectorPort::OnSentPacket(webrtc::AsyncPacketSocket* socket, const webrtc::SentPacketInfo& sent_packet) {
         SignalSentPacket(sent_packet);
     }
 
-    void ReflectorPort::OnReadyToSend(rtc::AsyncPacketSocket*) {
+    void ReflectorPort::OnReadyToSend(webrtc::AsyncPacketSocket*) {
         if (ready()) {
             Port::OnReadyToSend();
         }
     }
 
     bool ReflectorPort::SupportsProtocol(const absl::string_view protocol) const {
-        return protocol == cricket::UDP_PROTOCOL_NAME;
+        return protocol == webrtc::UDP_PROTOCOL_NAME;
     }
 
-    void ReflectorPort::ResolveTurnAddress(const rtc::SocketAddress& address) {
+    void ReflectorPort::ResolveTurnAddress(const webrtc::SocketAddress& address) {
         if (resolver)
             return;
         RTC_LOG(LS_VERBOSE) << ToString() << ": Starting TURN host lookup for " << address.ToSensitiveString();
         resolver = socket_factory()->CreateAsyncDnsResolver();
         resolver->Start(address, [this] {
             auto& result = resolver->result();
-            if (result.GetError() != 0 && (serverAddress.proto == cricket::PROTO_TCP || serverAddress.proto == cricket::PROTO_TLS)) {
+            if (result.GetError() != 0 && (serverAddress.proto == webrtc::PROTO_TCP || serverAddress.proto == webrtc::PROTO_TLS)) {
                 if (!CreateReflectorClientSocket()) {
-                    OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE, "TURN host lookup received error.");
+                    OnAllocateError(webrtc::STUN_ERROR_SERVER_NOT_REACHABLE, "TURN host lookup received error.");
                 }
                 return;
             }
-            rtc::SocketAddress resolved_address = serverAddress.address;
+            webrtc::SocketAddress resolved_address = serverAddress.address;
             if (result.GetError() != 0 || !result.GetResolvedAddress(Network()->GetBestIP().family(), &resolved_address)) {
                 RTC_LOG(LS_WARNING) << ToString() << ": TURN host lookup received error " << result.GetError();
                 error = result.GetError();
-                OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE, "TURN host lookup received error.");
+                OnAllocateError(webrtc::STUN_ERROR_SERVER_NOT_REACHABLE, "TURN host lookup received error.");
                 return;
             }
             SignalResolvedServerAddress(this, serverAddress.address, resolved_address);
@@ -575,10 +575,10 @@ namespace wrtc {
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst
-    void ReflectorPort::OnSendStunPacket(const void* data, const size_t size, cricket::StunRequest* _) {
+    void ReflectorPort::OnSendStunPacket(const void* data, const size_t size, webrtc::StunRequest* _) {
         RTC_DCHECK(connected());
-        rtc::PacketOptions options(StunDscpValue());
-        options.info_signaled_after_sent.packet_type = rtc::PacketType::kTurnMessage;
+        webrtc::AsyncSocketPacketOptions options(StunDscpValue());
+        options.info_signaled_after_sent.packet_type = webrtc::PacketType::kTurnMessage;
         CopyPortInformationToPacketInfo(&options.info_signaled_after_sent);
         if (Send(data, size, options) < 0) {
             RTC_LOG(LS_ERROR) << ToString() << ": Failed to send TURN message, error: "
@@ -592,11 +592,11 @@ namespace wrtc {
         }));
         std::string address = GetLocalAddress().HostAsSensitiveURIString();
         int port = GetLocalAddress().port();
-        if (serverAddress.proto == cricket::PROTO_TCP && serverAddress.address.IsPrivateIP()) {
+        if (serverAddress.proto == webrtc::PROTO_TCP && serverAddress.address.IsPrivateIP()) {
             address.clear();
             port = 0;
         }
-        SignalCandidateError(this, cricket::IceCandidateErrorEvent(address, port, ReconstructedServerUrl(true), error_code, reason));
+        SignalCandidateError(this, webrtc::IceCandidateErrorEvent(address, port, ReconstructedServerUrl(true), error_code, reason));
     }
 
     void ReflectorPort::Release() {
@@ -605,7 +605,7 @@ namespace wrtc {
 
     void ReflectorPort::Close() {
         if (!ready()) {
-            OnAllocateError(cricket::STUN_ERROR_SERVER_NOT_REACHABLE, "");
+            OnAllocateError(webrtc::STUN_ERROR_SERVER_NOT_REACHABLE, "");
         }
         state = STATE_DISCONNECTED;
         for (const auto connection : connections() | std::views::values) {
@@ -614,32 +614,32 @@ namespace wrtc {
         SignalReflectorPortClosed(this);
     }
 
-    int ReflectorPort::GetRelayPreference(const cricket::ProtocolType proto) {
+    int ReflectorPort::GetRelayPreference(const webrtc::ProtocolType proto) {
         switch (proto) {
-            case cricket::PROTO_TCP:
-                return cricket::ICE_TYPE_PREFERENCE_RELAY_TCP;
-            case cricket::PROTO_TLS:
-                return cricket::ICE_TYPE_PREFERENCE_RELAY_TLS;
+            case webrtc::PROTO_TCP:
+                return webrtc::ICE_TYPE_PREFERENCE_RELAY_TCP;
+            case webrtc::PROTO_TLS:
+                return webrtc::ICE_TYPE_PREFERENCE_RELAY_TLS;
             default:
-                RTC_DCHECK(proto == cricket::PROTO_UDP);
-            return cricket::ICE_TYPE_PREFERENCE_RELAY_UDP;
+                RTC_DCHECK(proto == webrtc::PROTO_UDP);
+            return webrtc::ICE_TYPE_PREFERENCE_RELAY_UDP;
         }
     }
 
-    rtc::DiffServCodePoint ReflectorPort::StunDscpValue() const {
+    webrtc::DiffServCodePoint ReflectorPort::StunDscpValue() const {
         return stunDscpValue;
     }
 
-    void ReflectorPort::DispatchPacket(const rtc::ReceivedPacket& packet) {
-        if (cricket::Connection* conn = GetConnection(packet.source_address())) {
+    void ReflectorPort::DispatchPacket(const webrtc::ReceivedIpPacket& packet) {
+        if (webrtc::Connection* conn = GetConnection(packet.source_address())) {
             conn->OnReadPacket(packet);
         } else {
-            Port::OnReadPacket(packet, cricket::ProtocolType::PROTO_UDP);
+            Port::OnReadPacket(packet, webrtc::ProtocolType::PROTO_UDP);
         }
     }
 
-    rtc::CopyOnWriteBuffer ReflectorPort::parseHex(std::string const &string) {
-        rtc::CopyOnWriteBuffer result;
+    webrtc::CopyOnWriteBuffer ReflectorPort::parseHex(std::string const &string) {
+        webrtc::CopyOnWriteBuffer result;
         for (size_t i = 0; i < string.length(); i += 2) {
             std::string byteString = string.substr(i, 2);
             char byte = static_cast<char>(strtol(byteString.c_str(), nullptr, 16));
@@ -648,27 +648,27 @@ namespace wrtc {
         return result;
     }
 
-    int ReflectorPort::Send(const void* data, const size_t size, const rtc::PacketOptions& options) const {
+    int ReflectorPort::Send(const void* data, const size_t size, const webrtc::AsyncSocketPacketOptions& options) const {
         return socket->SendTo(data, size, serverAddress.address, options);
     }
 
-    void ReflectorPort::HandleConnectionDestroyed(cricket::Connection* conn) {}
+    void ReflectorPort::HandleConnectionDestroyed(webrtc::Connection* conn) {}
 
     std::string ReflectorPort::ReconstructedServerUrl(const bool useHostname) const {
         std::string scheme = "turn";
         std::string transport = "tcp";
         switch (serverAddress.proto) {
-            case cricket::PROTO_SSLTCP:
-            case cricket::PROTO_TLS:
+            case webrtc::PROTO_SSLTCP:
+            case webrtc::PROTO_TLS:
                 scheme = "turns";
                 break;
-            case cricket::PROTO_UDP:
+            case webrtc::PROTO_UDP:
                 transport = "udp";
                 break;
-            case cricket::PROTO_TCP:
+            case webrtc::PROTO_TCP:
                 break;
         }
-        rtc::StringBuilder url;
+        webrtc::StringBuilder url;
         url << scheme << ":"
         << (useHostname ? serverAddress.address.hostname() : serverAddress.address.ipaddr().ToString())
         << ":" << serverAddress.address.port() << "?transport=" << transport;

@@ -26,7 +26,7 @@ extern "C" {
 namespace wrtc {
     std::mutex PeerConnectionFactory::_mutex{};
     bool PeerConnectionFactory::initialized = false;
-    rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::_default = nullptr;
+    webrtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::_default = nullptr;
 
     PeerConnectionFactory::PeerConnectionFactory() {
         webrtc::field_trial::InitFieldTrialsFromString(
@@ -36,13 +36,13 @@ namespace wrtc {
             "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
         );
         av_log_set_level(AV_LOG_QUIET);
-        network_thread_ = rtc::Thread::CreateWithSocketServer();
+        network_thread_ = webrtc::Thread::CreateWithSocketServer();
         network_thread_->SetName("ntg-net", nullptr);
         network_thread_->Start();
-        worker_thread_ = rtc::Thread::Create();
+        worker_thread_ = webrtc::Thread::Create();
         worker_thread_->SetName("ntg-work", nullptr);
         worker_thread_->Start();
-        signaling_thread_ = rtc::Thread::Create();
+        signaling_thread_ = webrtc::Thread::Create();
         signaling_thread_->SetName("ntg-media", nullptr);
         signaling_thread_->Start();
 
@@ -59,7 +59,7 @@ namespace wrtc {
         jniEnv = GetJNIEnv();
         dependencies.adm = worker_thread_->BlockingCall([&] {
             if (!_audioDeviceModule)
-                _audioDeviceModule = rtc::make_ref_counted<AudioDeviceModule>();
+                _audioDeviceModule = webrtc::make_ref_counted<AudioDeviceModule>();
             return _audioDeviceModule;
         });
         dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
@@ -98,35 +98,35 @@ namespace wrtc {
         network_thread_->Stop();
     }
 
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> PeerConnectionFactory::factory() {
+    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> PeerConnectionFactory::factory() {
         return factory_;
     }
 
-    rtc::Thread* PeerConnectionFactory::networkThread() const {
+    webrtc::Thread* PeerConnectionFactory::networkThread() const {
         return network_thread_.get();
     }
 
-    rtc::Thread* PeerConnectionFactory::signalingThread() const {
+    webrtc::Thread* PeerConnectionFactory::signalingThread() const {
         return signaling_thread_.get();
     }
 
-    rtc::Thread* PeerConnectionFactory::workerThread() const {
+    webrtc::Thread* PeerConnectionFactory::workerThread() const {
         return worker_thread_.get();
     }
 
-    rtc::NetworkManager* PeerConnectionFactory::networkManager() const {
+    webrtc::NetworkManager* PeerConnectionFactory::networkManager() const {
         return connection_context_->default_network_manager();
     }
 
-    rtc::PacketSocketFactory* PeerConnectionFactory::socketFactory() const {
+    webrtc::PacketSocketFactory* PeerConnectionFactory::socketFactory() const {
         return connection_context_->default_socket_factory();
     }
 
-    rtc::UniqueRandomIdGenerator* PeerConnectionFactory::ssrcGenerator() const {
+    webrtc::UniqueRandomIdGenerator* PeerConnectionFactory::ssrcGenerator() const {
         return connection_context_->ssrc_generator();
     }
 
-    cricket::MediaEngineInterface* PeerConnectionFactory::mediaEngine() const {
+    webrtc::MediaEngineInterface* PeerConnectionFactory::mediaEngine() const {
         return connection_context_->media_engine();
     }
 
@@ -146,14 +146,14 @@ namespace wrtc {
         return supportedVideoFormats;
     }
 
-    rtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
+    webrtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
         std::lock_guard lock(_mutex);
         if (initialized == false) {
 #ifndef IS_ANDROID
-            rtc::InitializeSSL();
+            webrtc::InitializeSSL();
 #endif
             initialized = true;
-            _default = rtc::scoped_refptr<PeerConnectionFactory>(new rtc::RefCountedObject<PeerConnectionFactory>());
+            _default = webrtc::scoped_refptr<PeerConnectionFactory>(new webrtc::RefCountedObject<PeerConnectionFactory>());
         }
         return _default;
     }

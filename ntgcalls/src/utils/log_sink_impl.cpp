@@ -8,7 +8,7 @@
 #include <rtc_base/ref_counted_object.h>
 
 namespace ntgcalls {
-    rtc::scoped_refptr<LogSink> LogSink::instance = nullptr;
+    webrtc::scoped_refptr<LogSink> LogSink::instance = nullptr;
     std::mutex LogSink::mutex{};
     uint32_t LogSink::references = 0;
 #ifndef PYTHON_ENABLED
@@ -16,16 +16,16 @@ namespace ntgcalls {
 #endif
 
     LogSink::LogSink() {
-        thread = rtc::Thread::Create();
+        thread = webrtc::Thread::Create();
         thread->SetName("LogSink", nullptr);
         thread->Start();
 #ifdef DEBUG
-        rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
+        webrtc::LogMessage::LogToDebug(webrtc::LS_VERBOSE);
 #else
-        rtc::LogMessage::LogToDebug(rtc::LS_INFO);
+        webrtc::LogMessage::LogToDebug(webrtc::LS_INFO);
 #endif
-        rtc::LogMessage::SetLogToStderr(false);
-        rtc::LogMessage::AddLogToStream(this, rtc::LS_VERBOSE);
+        webrtc::LogMessage::SetLogToStderr(false);
+        webrtc::LogMessage::AddLogToStream(this, webrtc::LS_VERBOSE);
 #ifdef PYTHON_ENABLED
         THREAD_SAFE
         const auto loggingLib = py::module::import("logging");
@@ -42,23 +42,23 @@ namespace ntgcalls {
     }
 
     LogSink::~LogSink() {
-        rtc::LogMessage::RemoveLogToStream(this);
+        webrtc::LogMessage::RemoveLogToStream(this);
         thread->Stop();
         thread = nullptr;
     }
 
 #ifdef PYTHON_ENABLED
-    py::object LogSink::parseSeverity(const rtc::LoggingSeverity severity) {
+    py::object LogSink::parseSeverity(const webrtc::LoggingSeverity severity) {
         THREAD_SAFE
         const auto loggingLib = py::module::import("logging");
         switch (severity) {
-            case rtc::LS_VERBOSE:
+            case webrtc::LS_VERBOSE:
                 return loggingLib.attr("DEBUG");
-            case rtc::LS_INFO:
+            case webrtc::LS_INFO:
                 return loggingLib.attr("INFO");
-            case rtc::LS_WARNING:
+            case webrtc::LS_WARNING:
                 return loggingLib.attr("WARNING");
-            case rtc::LS_ERROR:
+            case webrtc::LS_ERROR:
                 return loggingLib.attr("ERROR");
             default:
                 return loggingLib.attr("NOTSET");
@@ -66,15 +66,15 @@ namespace ntgcalls {
         END_THREAD_SAFE
     }
 #else
-    LogSink::Level LogSink::parseSeverity(const rtc::LoggingSeverity severity) {
+    LogSink::Level LogSink::parseSeverity(const webrtc::LoggingSeverity severity) {
         switch (severity) {
-            case rtc::LS_VERBOSE:
+            case webrtc::LS_VERBOSE:
                 return Level::Debug;
-            case rtc::LS_INFO:
+            case webrtc::LS_INFO:
                 return Level::Info;
-            case rtc::LS_WARNING:
+            case webrtc::LS_WARNING:
                 return Level::Warning;
-            case rtc::LS_ERROR:
+            case webrtc::LS_ERROR:
                 return Level::Error;
             default:
                 return Level::Unknown;
@@ -89,7 +89,7 @@ namespace ntgcalls {
         return port;
     }
 
-    void LogSink::registerLogMessage(const std::string &message, const rtc::LoggingSeverity severity) const {
+    void LogSink::registerLogMessage(const std::string &message, const webrtc::LoggingSeverity severity) const {
         thread->PostTask([this, message, severity] {
 #ifdef PYTHON_ENABLED
             if (!Py_IsInitialized()) {
@@ -124,16 +124,16 @@ namespace ntgcalls {
         });
     }
 
-    void LogSink::OnLogMessage(const std::string& msg, const rtc::LoggingSeverity severity, const char* tag) {
+    void LogSink::OnLogMessage(const std::string& msg, const webrtc::LoggingSeverity severity, const char* tag) {
         OnLogMessage(std::string(tag) + ": " + msg, severity);
     }
 
-    void LogSink::OnLogMessage(const std::string& message, const rtc::LoggingSeverity severity) {
+    void LogSink::OnLogMessage(const std::string& message, const webrtc::LoggingSeverity severity) {
         registerLogMessage(message, severity);
     }
 
     void LogSink::OnLogMessage(const std::string& message) {
-        registerLogMessage(message, rtc::LS_NONE);
+        registerLogMessage(message, webrtc::LS_NONE);
     }
 
 #ifndef PYTHON_ENABLED
@@ -146,7 +146,7 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         references++;
         if (references == 1) {
-            instance = rtc::scoped_refptr<LogSink>(new rtc::RefCountedObject<LogSink>());
+            instance = webrtc::scoped_refptr<LogSink>(new webrtc::RefCountedObject<LogSink>());
         }
     }
 

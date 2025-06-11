@@ -10,7 +10,7 @@
 
 namespace wrtc {
 
-    class ReflectorRelayPortFactory final : public cricket::RelayPortFactoryInterface {
+    class ReflectorRelayPortFactory final : public webrtc::RelayPortFactoryInterface {
         std::vector<RTCServer> servers;
         bool standaloneReflectorMode;
         uint32_t standaloneReflectorRoleId;
@@ -19,9 +19,9 @@ namespace wrtc {
 
         ~ReflectorRelayPortFactory() override = default;
 
-        std::unique_ptr<cricket::Port> Create(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* udp_socket) override;
+        std::unique_ptr<webrtc::Port> Create(const webrtc::CreateRelayPortArgs& args, webrtc::AsyncPacketSocket* udp_socket) override;
 
-        std::unique_ptr<cricket::Port> Create(const cricket::CreateRelayPortArgs& args, int min_port, int max_port) override;
+        std::unique_ptr<webrtc::Port> Create(const webrtc::CreateRelayPortArgs& args, int min_port, int max_port) override;
     };
 
 } // wrtc

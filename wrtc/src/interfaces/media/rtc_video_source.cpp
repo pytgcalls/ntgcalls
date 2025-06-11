@@ -8,7 +8,7 @@
 namespace wrtc {
     RTCVideoSource::RTCVideoSource() {
         factory = PeerConnectionFactory::GetOrCreateDefault();
-        source = new rtc::RefCountedObject<VideoTrackSource>();
+        source = new webrtc::RefCountedObject<VideoTrackSource>();
     }
 
     RTCVideoSource::~RTCVideoSource() {
@@ -16,8 +16,8 @@ namespace wrtc {
         source = nullptr;
     }
 
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> RTCVideoSource::createTrack() const {
-        return factory->factory()->CreateVideoTrack(source, rtc::CreateRandomUuid());
+    webrtc::scoped_refptr<webrtc::VideoTrackInterface> RTCVideoSource::createTrack() const {
+        return factory->factory()->CreateVideoTrack(source, webrtc::CreateRandomUuid());
     }
 
     void RTCVideoSource::OnFrame(const i420ImageData& data, const FrameData additionalData) const {

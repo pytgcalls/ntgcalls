@@ -17,13 +17,13 @@ namespace wrtc {
 
         ~RTCAudioSource();
 
-        [[nodiscard]] rtc::scoped_refptr<webrtc::AudioTrackInterface> createTrack() const;
+        [[nodiscard]] webrtc::scoped_refptr<webrtc::AudioTrackInterface> createTrack() const;
 
         void OnData(const RTCOnDataEvent &, FrameData additionalData) const;
 
     private:
-        rtc::scoped_refptr<AudioTrackSource> source;
-        rtc::scoped_refptr<PeerConnectionFactory> factory;
+        webrtc::scoped_refptr<AudioTrackSource> source;
+        webrtc::scoped_refptr<PeerConnectionFactory> factory;
     };
 
 } // wrtc

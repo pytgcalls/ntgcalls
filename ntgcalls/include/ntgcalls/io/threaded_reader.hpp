@@ -12,7 +12,7 @@
 namespace ntgcalls {
 
     class ThreadedReader: public BaseReader, public wrtc::SyncHelper {
-        std::vector<rtc::PlatformThread> bufferThreads;
+        std::vector<webrtc::PlatformThread> bufferThreads;
         size_t activeBuffer = 0;
         size_t activeBufferCount = 0;
         std::condition_variable cv;

@@ -21,15 +21,15 @@ namespace wrtc {
         factory = PeerConnectionFactory::GetOrCreateDefault();
     }
 
-    rtc::Thread* NetworkInterface::networkThread() const {
+    webrtc::Thread* NetworkInterface::networkThread() const {
         return factory->networkThread();
     }
 
-    rtc::Thread* NetworkInterface::signalingThread() const {
+    webrtc::Thread* NetworkInterface::signalingThread() const {
         return factory->signalingThread();
     }
 
-    rtc::Thread* NetworkInterface::workerThread() const {
+    webrtc::Thread* NetworkInterface::workerThread() const {
         return factory->workerThread();
     }
 

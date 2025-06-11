@@ -118,7 +118,7 @@ namespace wrtc {
             return VideoStreamingPartFrame(endpointId, videoFrame, frame->pts(stream, firstFramePts), frameIndex);
         }
 #endif
-        const rtc::scoped_refptr<webrtc::I420Buffer> i420Buffer = webrtc::I420Buffer::Copy(
+        const webrtc::scoped_refptr<webrtc::I420Buffer> i420Buffer = webrtc::I420Buffer::Copy(
             frame->getFrame()->width,
             frame->getFrame()->height,
             frame->getFrame()->data[0],

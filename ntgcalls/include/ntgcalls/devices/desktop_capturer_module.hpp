@@ -19,7 +19,7 @@ namespace ntgcalls {
     class DesktopCapturerModule final: public BaseReader, public wrtc::SyncHelper, public webrtc::DesktopCapturer::Callback {
         std::unique_ptr<webrtc::DesktopCapturer> capturer;
         VideoDescription desc;
-        rtc::PlatformThread thread;
+        webrtc::PlatformThread thread;
 
         static std::unique_ptr<webrtc::DesktopCapturer> CreateCapturer();
 

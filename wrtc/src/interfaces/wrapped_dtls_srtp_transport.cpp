@@ -12,7 +12,7 @@ namespace wrtc {
     };
 
     struct tag_SrtpTransport_UnprotectRtp {
-        using pfn_t = bool (webrtc::SrtpTransport::*)(rtc::CopyOnWriteBuffer& buffer);
+        using pfn_t = bool (webrtc::SrtpTransport::*)(webrtc::CopyOnWriteBuffer& buffer);
         friend constexpr pfn_t pfn_of(tag_SrtpTransport_UnprotectRtp);
     };
     template struct tag_bind_pfn<tag_SrtpTransport_UnprotectRtp, &webrtc::SrtpTransport::UnprotectRtp>;
@@ -27,13 +27,13 @@ namespace wrtc {
         rtpPacketCallback = callback;
     }
 
-    void WrappedDtlsSrtpTransport::OnRtpPacketReceived(const rtc::ReceivedPacket& packet) {
+    void WrappedDtlsSrtpTransport::OnRtpPacketReceived(const webrtc::ReceivedIpPacket& packet) {
         if (!IsSrtpActive()) {
             RTC_LOG(LS_WARNING) << "Inactive SRTP transport received an RTP packet. Drop it.";
             return;
         }
 
-        rtc::CopyOnWriteBuffer payload(packet.payload());
+        webrtc::CopyOnWriteBuffer payload(packet.payload());
         if (!(this->*c_pfn_SrtpTransport_UnprotectRtp)(payload)) {
             if (decryptionFailureCount % 100 == 0) {
                 RTC_LOG(LS_ERROR) << "Failed to unprotect RTP packet: size=" << payload.size()
@@ -57,7 +57,7 @@ namespace wrtc {
         DemuxPacket(payload, packet.arrival_time().value_or(webrtc::Timestamp::MinusInfinity()), packet.ecn());
     }
 
-    void WrappedDtlsSrtpTransport::UpdateRtpHeaderExtensionMap(const cricket::RtpHeaderExtensions& headerExtensions) {
+    void WrappedDtlsSrtpTransport::UpdateRtpHeaderExtensionMap(const webrtc::RtpHeaderExtensions& headerExtensions) {
         headerExtensionMap = webrtc::RtpHeaderExtensionMap(headerExtensions);
         DtlsSrtpTransport::UpdateRtpHeaderExtensionMap(headerExtensions);
     }

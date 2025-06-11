@@ -15,10 +15,10 @@ namespace wrtc {
 
     class IncomingVideoChannel final : public sigslot::has_slots<> {
         uint32_t _ssrc = 0;
-        std::unique_ptr<cricket::VideoChannel> channel;
+        std::unique_ptr<webrtc::VideoChannel> channel;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> videoBitrateAllocatorFactory;
-        rtc::Thread* workerThread;
-        rtc::Thread* networkThread;
+        webrtc::Thread* workerThread;
+        webrtc::Thread* networkThread;
         std::unique_ptr<RawVideoSink> sink;
 
     public:
@@ -27,10 +27,10 @@ namespace wrtc {
             ChannelManager *channelManager,
             webrtc::RtpTransport* rtpTransport,
             std::vector<SsrcGroup> ssrcGroups,
-            rtc::UniqueRandomIdGenerator *randomIdGenerator,
-            const std::vector<cricket::Codec>& codecs,
-            rtc::Thread *workerThread,
-            rtc::Thread* networkThread,
+            webrtc::UniqueRandomIdGenerator *randomIdGenerator,
+            const std::vector<webrtc::Codec>& codecs,
+            webrtc::Thread *workerThread,
+            webrtc::Thread* networkThread,
             std::weak_ptr<RemoteVideoSink> remoteVideoSink
         );
 

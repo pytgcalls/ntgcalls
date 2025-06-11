@@ -31,7 +31,7 @@ namespace ntgcalls {
         const auto frameTime = sink->frameTime();
         for (size_t i = 0; i < bufferCount; ++i) {
             bufferThreads.push_back(
-                rtc::PlatformThread::SpawnJoinable(
+                webrtc::PlatformThread::SpawnJoinable(
                     [this, i, bufferCount, frameSize = sink->frameSize(), maxBufferSize = std::chrono::seconds(1) / frameTime / 10, readCallback] {
                         activeBufferCount++;
                         std::vector<bytes::unique_binary> frames;
@@ -76,7 +76,7 @@ namespace ntgcalls {
                         }
                     },
                     "ThreadedReader_" + std::to_string(bufferCount),
-                    rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
+                    webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime)
                 )
             );
         }

@@ -29,21 +29,21 @@ namespace wrtc {
             std::string levelAssymetryAllowed;
         };
 
-        std::unique_ptr<cricket::BasicPortAllocator> portAllocator;
-        rtc::scoped_refptr<rtc::RTCCertificate> localCertificate;
+        std::unique_ptr<webrtc::BasicPortAllocator> portAllocator;
+        webrtc::scoped_refptr<webrtc::RTCCertificate> localCertificate;
         std::unique_ptr<webrtc::AsyncDnsResolverFactoryInterface> asyncResolverFactory;
 
         void DtlsReadyToSend(bool isReadyToSend);
 
         void resetDtlsSrtpTransport();
 
-        void OnTransportWritableState_n(rtc::PacketTransportInternal*);
+        void OnTransportWritableState_n(webrtc::PacketTransportInternal*);
 
-        void OnTransportReceivingState_n(rtc::PacketTransportInternal*);
+        void OnTransportReceivingState_n(webrtc::PacketTransportInternal*);
 
         void UpdateAggregateStates_n();
 
-        void transportStateChanged(cricket::IceTransportInternal *transport);
+        void transportStateChanged(webrtc::IceTransportInternal *transport);
 
         static std::vector<webrtc::SdpVideoFormat> filterSupportedVideoFormats(std::vector<webrtc::SdpVideoFormat> const &formats);
 
@@ -67,9 +67,9 @@ namespace wrtc {
         std::unique_ptr<OutgoingAudioChannel> audioChannel;
         std::unique_ptr<OutgoingVideoChannel> videoChannel;
         PeerIceParameters localParameters, remoteParameters;
-        std::unique_ptr<cricket::DtlsTransport> dtlsTransport;
+        std::unique_ptr<webrtc::DtlsTransportInternal> dtlsTransport;
         std::unique_ptr<webrtc::DtlsSrtpTransport> dtlsSrtpTransport;
-        std::unique_ptr<cricket::P2PTransportChannel> transportChannel;
+        std::unique_ptr<webrtc::P2PTransportChannel> transportChannel;
         std::vector<webrtc::SdpVideoFormat> availableVideoFormats;
         std::unique_ptr<SctpDataChannelProviderInterfaceImpl> dataChannelInterface;
         std::map<std::string, std::unique_ptr<IncomingAudioChannel>> incomingAudioChannels;
@@ -77,11 +77,11 @@ namespace wrtc {
         std::map<std::string, MediaContent> pendingContent;
         bool connected = false, failed = false;
 
-        virtual std::pair<cricket::ServerAddresses, std::vector<cricket::RelayServerConfig>> getStunAndTurnServers() = 0;
+        virtual std::pair<webrtc::ServerAddresses, std::vector<webrtc::RelayServerConfig>> getStunAndTurnServers() = 0;
 
-        virtual cricket::RelayPortFactoryInterface* getRelayPortFactory() = 0;
+        virtual webrtc::RelayPortFactoryInterface* getRelayPortFactory() = 0;
 
-        virtual void setPortAllocatorFlags(cricket::BasicPortAllocator* portAllocator) = 0;
+        virtual void setPortAllocatorFlags(webrtc::BasicPortAllocator* portAllocator) = 0;
 
         virtual int getRegatherOnFailedNetworksInterval() = 0;
 
@@ -89,17 +89,17 @@ namespace wrtc {
 
         virtual bool supportsRenomination() const = 0;
 
-        virtual cricket::IceRole iceRole() const = 0;
+        virtual webrtc::IceRole iceRole() const = 0;
 
-        virtual cricket::IceMode iceMode() const = 0;
+        virtual webrtc::IceMode iceMode() const = 0;
 
         virtual int candidatePoolSize() const = 0;
 
         virtual bool isGroupConnection() const = 0;
 
-        virtual std::optional<rtc::SSLRole> dtlsRole() const = 0;
+        virtual std::optional<webrtc::SSLRole> dtlsRole() const = 0;
 
-        virtual void registerTransportCallbacks(cricket::P2PTransportChannel* transportChannel) = 0;
+        virtual void registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) = 0;
 
         virtual void stateUpdated(bool isConnected) = 0;
 
@@ -109,7 +109,7 @@ namespace wrtc {
 
         void close() override;
 
-        std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
+        std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
 
         void addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) override;
 
@@ -124,7 +124,7 @@ namespace wrtc {
     public:
         PeerIceParameters localIceParameters();
 
-        std::unique_ptr<rtc::SSLFingerprint> localFingerprint() const;
+        std::unique_ptr<webrtc::SSLFingerprint> localFingerprint() const;
 
         void sendDataChannelMessage(const bytes::binary& data) const override;
 

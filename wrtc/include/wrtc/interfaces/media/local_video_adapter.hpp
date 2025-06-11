@@ -6,7 +6,7 @@
 #include <media/base/video_source_base.h>
 
 namespace wrtc {
-    class LocalVideoAdapter final : public rtc::VideoSinkInterface<webrtc::VideoFrame>, public rtc::VideoSourceBaseGuarded {
+    class LocalVideoAdapter final : public webrtc::VideoSinkInterface<webrtc::VideoFrame>, public webrtc::VideoSourceBaseGuarded {
         std::optional<SinkPair> _sink;
         webrtc::Mutex lock_;
 
@@ -17,6 +17,6 @@ namespace wrtc {
 
         void OnFrame(const webrtc::VideoFrame& frame) override;
 
-        void AddOrUpdateSink(VideoSinkInterface* sink, const rtc::VideoSinkWants& wants) override;
+        void AddOrUpdateSink(VideoSinkInterface* sink, const webrtc::VideoSinkWants& wants) override;
     };
 } // wrtc

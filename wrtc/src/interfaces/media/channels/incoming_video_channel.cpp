@@ -13,10 +13,10 @@ namespace wrtc {
         ChannelManager* channelManager,
         webrtc::RtpTransport* rtpTransport,
         std::vector<SsrcGroup> ssrcGroups,
-        rtc::UniqueRandomIdGenerator *randomIdGenerator,
-        const std::vector<cricket::Codec>& codecs,
-        rtc::Thread* workerThread,
-        rtc::Thread* networkThread,
+        webrtc::UniqueRandomIdGenerator *randomIdGenerator,
+        const std::vector<webrtc::Codec>& codecs,
+        webrtc::Thread* workerThread,
+        webrtc::Thread* networkThread,
         std::weak_ptr<RemoteVideoSink> remoteVideoSink
     ) : workerThread(workerThread), networkThread(networkThread) {
         sink = std::make_unique<RawVideoSink>();
@@ -26,11 +26,11 @@ namespace wrtc {
 
         channel = channelManager->CreateVideoChannel(
             call,
-            cricket::MediaConfig(),
+            webrtc::MediaConfig(),
             streamId,
             false,
             NativeNetworkInterface::getDefaultCryptoOptions(),
-            cricket::VideoOptions(),
+            webrtc::VideoOptions(),
             videoBitrateAllocatorFactory.get()
         );
 
@@ -38,7 +38,7 @@ namespace wrtc {
             channel->SetRtpTransport(rtpTransport);
         });
 
-        auto outgoingVideoDescription = std::make_unique<cricket::VideoContentDescription>();
+        auto outgoingVideoDescription = std::make_unique<webrtc::VideoContentDescription>();
         outgoingVideoDescription->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri, 2));
         outgoingVideoDescription->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri, 3));
         outgoingVideoDescription->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kVideoRotationUri, 13));
@@ -49,7 +49,7 @@ namespace wrtc {
         outgoingVideoDescription->set_bandwidth(-1);
 
         std::vector<uint32_t> allSsrcs;
-        cricket::StreamParams videoRecvStreamParams;
+        webrtc::StreamParams videoRecvStreamParams;
         for (const auto & [semantics, ssrcs] : ssrcGroups) {
             for (auto ssrc : ssrcs) {
                 if (std::ranges::find(allSsrcs, ssrc) == allSsrcs.end()) {
@@ -63,7 +63,7 @@ namespace wrtc {
                 }
             }
 
-            cricket::SsrcGroup parsedGroup(semantics, ssrcs);
+            webrtc::SsrcGroup parsedGroup(semantics, ssrcs);
             videoRecvStreamParams.ssrc_groups.push_back(parsedGroup);
         }
 
@@ -75,7 +75,7 @@ namespace wrtc {
         videoRecvStreamParams.cname = "cname";
         videoRecvStreamParams.set_stream_ids({ streamId });
 
-        auto incomingVideoDescription = std::make_unique<cricket::VideoContentDescription>();
+        auto incomingVideoDescription = std::make_unique<webrtc::VideoContentDescription>();
         incomingVideoDescription->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri, 2));
         incomingVideoDescription->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri, 3));
         incomingVideoDescription->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kVideoRotationUri, 13));

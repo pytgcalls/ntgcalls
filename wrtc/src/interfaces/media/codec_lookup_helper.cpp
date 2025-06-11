@@ -6,11 +6,11 @@
 
 namespace wrtc {
     CodecLookupHelper::CodecLookupHelper(
-        cricket::MediaEngineInterface* mediaEngine,
-        const cricket::TransportDescriptionFactory *transportDescriptionFactory,
+        webrtc::MediaEngineInterface* mediaEngine,
+        const webrtc::TransportDescriptionFactory *transportDescriptionFactory,
         webrtc::PayloadTypeSuggester *payloadTypeSuggester
     ) : payloadTypeSuggester(payloadTypeSuggester) {
-        codecVendor = std::make_unique<cricket::CodecVendor>(
+        codecVendor = std::make_unique<webrtc::CodecVendor>(
             mediaEngine,
             true,
             transportDescriptionFactory->trials()
@@ -26,7 +26,7 @@ namespace wrtc {
         return payloadTypeSuggester;
     }
 
-    cricket::CodecVendor* CodecLookupHelper::CodecVendor(const std::string& mid) {
+    webrtc::CodecVendor* CodecLookupHelper::GetCodecVendor() {
         return codecVendor.get();
     }
 } // wrtc

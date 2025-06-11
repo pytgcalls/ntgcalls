@@ -8,8 +8,8 @@
 
 namespace signaling {
     SignalingSctpConnection::SignalingSctpConnection(
-        rtc::Thread* networkThread,
-        rtc::Thread* signalingThread,
+        webrtc::Thread* networkThread,
+        webrtc::Thread* signalingThread,
         const webrtc::Environment& env,
         const EncryptionKey &key,
         const DataEmitter& onEmitData,
@@ -18,7 +18,7 @@ namespace signaling {
     ): SignalingInterface(networkThread, signalingThread, key, onEmitData, onSignalData), allowCompression(allowCompression) {
         networkThread->BlockingCall([&] {
             packetTransport = std::make_unique<SignalingPacketTransport>(onEmitData);
-            sctpTransportFactory = std::make_unique<cricket::SctpTransportFactory>(networkThread);
+            sctpTransportFactory = std::make_unique<webrtc::SctpTransportFactory>(networkThread);
             sctpTransport = sctpTransportFactory->CreateSctpTransport(env, packetTransport.get());
             sctpTransport->OpenStream(0, webrtc::PriorityValue(webrtc::Priority::kVeryLow));
             sctpTransport->SetDataChannelSink(this);
@@ -52,7 +52,7 @@ namespace signaling {
                 params.type = webrtc::DataMessageType::kBinary;
                 params.ordered = true;
 
-                rtc::CopyOnWriteBuffer payload;
+                webrtc::CopyOnWriteBuffer payload;
                 payload.AppendData(encryptedData.data(), encryptedData.size());
 
                 if (const auto result = sctpTransport->SendData(0, params, payload); !result.ok()) {
@@ -73,7 +73,7 @@ namespace signaling {
             webrtc::SendDataParams params;
             params.type = webrtc::DataMessageType::kBinary;
             params.ordered = true;
-            rtc::CopyOnWriteBuffer payload;
+            webrtc::CopyOnWriteBuffer payload;
             payload.AppendData(data.data(), data.size());
             if (const auto result = sctpTransport->SendData(0, params, payload); !result.ok()) {
                 RTC_LOG(LS_ERROR) << "Failed to send data: " << result.message();
@@ -84,7 +84,7 @@ namespace signaling {
         pendingData.clear();
     }
 
-    void SignalingSctpConnection::OnDataReceived(int channel_id, webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) {
+    void SignalingSctpConnection::OnDataReceived(int channel_id, webrtc::DataMessageType type, const webrtc::CopyOnWriteBuffer& buffer) {
         assert(networkThread->IsCurrent());
         signalingThread->PostTask([this, buffer] {
             onSignalData(preReadData({buffer.data(), buffer.data() + buffer.size()}));

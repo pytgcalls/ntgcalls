@@ -17,7 +17,7 @@
 #include <rtc_base/logging.h>
 
 namespace ntgcalls {
-    StreamManager::StreamManager(rtc::Thread* workerThread): workerThread(workerThread) {}
+    StreamManager::StreamManager(webrtc::Thread* workerThread): workerThread(workerThread) {}
 
     void StreamManager::close() {
         std::lock_guard lock(mutex);
@@ -355,7 +355,7 @@ namespace ntgcalls {
                         if (strong->streams.contains(id)) {
                             const auto frameSize = strong->streams[id]->frameSize();
                             if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
-                                frameData.absoluteCaptureTimestampMs = rtc::TimeMillis();
+                                frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
                                 if (streamType == Video && isShared) {
                                     (void) strong->framesCallback(
                                         id.first,

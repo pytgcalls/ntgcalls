@@ -40,7 +40,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<int64_t> broadcastTimestampCallback;
         wrtc::synchronized_callback<int64_t, wrtc::SegmentPartRequest> segmentPartRequestCallback;
         wrtc::synchronized_callback<int64_t, StreamManager::Mode, StreamManager::Device, std::vector<wrtc::Frame>> framesCallback;
-        std::unique_ptr<rtc::Thread> updateThread;
+        std::unique_ptr<webrtc::Thread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
         ASYNC_ARGS

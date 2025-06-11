@@ -18,8 +18,8 @@ namespace signaling {
     }
 
     SignalingInterface::SignalingInterface(
-        rtc::Thread* networkThread,
-        rtc::Thread* signalingThread,
+        webrtc::Thread* networkThread,
+        webrtc::Thread* signalingThread,
         const EncryptionKey& key,
         DataEmitter onEmitData,
         DataReceiver onSignalData
@@ -63,7 +63,7 @@ namespace signaling {
     std::vector<bytes::binary> SignalingInterface::preReadData(const bytes::binary &data, const bool isRaw) {
         std::lock_guard lock(mutex);
         RTC_LOG(LS_VERBOSE) << "Decrypting packets";
-        const auto raw = signalingEncryption->decrypt(rtc::CopyOnWriteBuffer(data.data(), data.size()), isRaw);
+        const auto raw = signalingEncryption->decrypt(webrtc::CopyOnWriteBuffer(data.data(), data.size()), isRaw);
         if (raw.empty()) {
             return {};
         }
@@ -93,7 +93,7 @@ namespace signaling {
             packetData = std::move(bytes::GZip::zip(packetData));
         }
         RTC_LOG(LS_VERBOSE) << "Encrypting packet";
-        const auto packet = signalingEncryption->encrypt(rtc::CopyOnWriteBuffer(packetData.data(), packetData.size()), isRaw);
+        const auto packet = signalingEncryption->encrypt(webrtc::CopyOnWriteBuffer(packetData.data(), packetData.size()), isRaw);
         if (!packet.has_value()) {
             RTC_LOG(LS_ERROR) << "Failed to encrypt packet";
             return {};

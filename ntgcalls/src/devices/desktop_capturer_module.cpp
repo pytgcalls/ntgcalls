@@ -125,7 +125,7 @@ namespace ntgcalls {
         GLibLoopManager::AddInstance();
         capturer->Start(this);
         capturer->CaptureFrame();
-        thread = rtc::PlatformThread::SpawnJoinable(
+        thread = webrtc::PlatformThread::SpawnJoinable(
             [this] {
                 while (running) {
                     waitNextFrame();
@@ -133,7 +133,7 @@ namespace ntgcalls {
                 }
             },
             "DesktopCapturerModule",
-            rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
+            webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime)
         );
     }
 

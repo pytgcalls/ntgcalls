@@ -21,8 +21,8 @@ namespace wrtc {
         };
 
         PeerIceParameters remoteIceParameters;
-        std::unique_ptr<rtc::SSLFingerprint> fingerprint;
-        std::vector<cricket::Candidate> candidates;
+        std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
+        std::vector<webrtc::Candidate> candidates;
         Media media;
 
         bool isRtmp = false;

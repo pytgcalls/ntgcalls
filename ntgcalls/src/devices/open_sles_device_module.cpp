@@ -20,7 +20,7 @@ namespace ntgcalls {
         BaseReader(sink),
         AudioMixer(sink)
     {
-        engineManager = rtc::make_ref_counted<OpenSLEngineManager>();
+        engineManager = webrtc::make_ref_counted<OpenSLEngineManager>();
         pcmFormat.formatType = SL_DATAFORMAT_PCM;
         pcmFormat.numChannels = desc->channelCount;
         pcmFormat.samplesPerSec = desc->sampleRate * 1000;

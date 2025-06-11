@@ -11,7 +11,7 @@
 
 namespace ntgcalls {
 
-    class LogSink: public rtc::LogSink, public webrtc::RefCountInterface {
+    class LogSink: public webrtc::LogSink, public webrtc::RefCountInterface {
     public:
 #ifndef PYTHON_ENABLED
         enum class Level {
@@ -42,9 +42,9 @@ namespace ntgcalls {
 
         ~LogSink() override;
 
-        void OnLogMessage(const std::string &msg, rtc::LoggingSeverity severity, const char *tag) override;
+        void OnLogMessage(const std::string &msg, webrtc::LoggingSeverity severity, const char *tag) override;
 
-        void OnLogMessage(const std::string &message, rtc::LoggingSeverity severity) override;
+        void OnLogMessage(const std::string &message, webrtc::LoggingSeverity severity) override;
 
         void OnLogMessage(const std::string &message) override;
 
@@ -54,16 +54,16 @@ namespace ntgcalls {
 
     private:
 #ifdef PYTHON_ENABLED
-        static py::object parseSeverity(rtc::LoggingSeverity severity);
+        static py::object parseSeverity(webrtc::LoggingSeverity severity);
 #else
-        static Level parseSeverity(rtc::LoggingSeverity severity);
+        static Level parseSeverity(webrtc::LoggingSeverity severity);
 #endif
 
         static uint32_t parseLineNumber(const std::string &message);
 
-        void registerLogMessage(const std::string &message, rtc::LoggingSeverity severity) const;
+        void registerLogMessage(const std::string &message, webrtc::LoggingSeverity severity) const;
 
-        static rtc::scoped_refptr<LogSink> instance;
+        static webrtc::scoped_refptr<LogSink> instance;
         static std::mutex mutex;
         static uint32_t references;
 #ifdef PYTHON_ENABLED
@@ -72,7 +72,7 @@ namespace ntgcalls {
 #else
         static wrtc::synchronized_callback<LogMessage> onLogMessage;
 #endif
-        std::unique_ptr<rtc::Thread> thread;
+        std::unique_ptr<webrtc::Thread> thread;
     };
 
 } // ntgcalls
