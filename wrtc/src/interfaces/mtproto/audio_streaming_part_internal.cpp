@@ -4,7 +4,7 @@
 
 #include <bitset>
 #include <rtc_base/checks.h>
-#include <rtc_base/third_party/base64/base64.h>
+#include <rtc_base/base64.h>
 #include <wrtc/interfaces/mtproto/audio_streaming_part_internal.hpp>
 
 namespace wrtc {
@@ -56,14 +56,9 @@ namespace wrtc {
             if (inStream->metadata) {
                 AVDictionaryEntry *entry = av_dict_get(inStream->metadata, "TG_META", nullptr, 0);
                 if (entry && entry->value) {
-                    std::string result;
-                    size_t data_used = 0;
-                    std::string sourceBase64 = entry->value;
-                    webrtc::Base64::Decode(sourceBase64, webrtc::Base64::DO_LAX, &result, &data_used);
-
-                    if (!result.empty()) {
+                    if (std::optional<std::string> result = webrtc::Base64Decode(entry->value, webrtc::Base64DecodeOptions::kForgiving); result.has_value()) {
                         int offset = 0;
-                        channelUpdates = parseChannelUpdates(result, offset);
+                        channelUpdates = parseChannelUpdates(result.value(), offset);
                     }
                 }
 
