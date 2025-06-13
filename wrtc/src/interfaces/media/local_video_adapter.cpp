@@ -14,7 +14,7 @@ namespace wrtc {
 
     void LocalVideoAdapter::OnFrame(const webrtc::VideoFrame& frame) {
         webrtc::MutexLock lock(&lock_);
-        if(_sink.has_value()){
+        if(_sink.has_value() && _sink.value().sink != nullptr) {
             _sink.value().sink->OnFrame(frame);
         }
     }
