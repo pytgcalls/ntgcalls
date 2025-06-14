@@ -16,7 +16,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/GitUtils.cmake)
 
 if (ANDROID_ABI)
     include(${CMAKE_CURRENT_LIST_DIR}/FindNDK.cmake)
-    set(JUST_INSTALL_CLANG ON)
     include(${CMAKE_CURRENT_LIST_DIR}/FindClang.cmake)
 else ()
     if (LINUX)
