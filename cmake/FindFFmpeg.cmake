@@ -1,4 +1,4 @@
-set(FFMPEG_DIR ${deps_loc}/ffmpeg)
+set(FFMPEG_DIR ${DEPS_DIR}/ffmpeg)
 set(FFMPEG_SRC ${FFMPEG_DIR}/src)
 set(FFMPEG_GIT https://github.com/pytgcalls/ffmpeg)
 set(FFMPEG_LIB_DIR ${FFMPEG_SRC}/lib)

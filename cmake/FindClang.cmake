@@ -1,6 +1,6 @@
 GetProperty("version.clang" CLANG_VERSION)
 if (LINUX_x86_64 OR ANDROID_ABI)
-    set(CLANG_DIR ${deps_loc}/clang)
+    set(CLANG_DIR ${DEPS_DIR}/clang)
     set(CLANG_BIN_DIR ${CLANG_DIR}/bin)
     set(CLANG_UPDATE ${CLANG_DIR}/update.py)
     set(CLANG_API_DIR ${CLANG_DIR}/result.xml)

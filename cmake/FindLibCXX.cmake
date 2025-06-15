@@ -1,5 +1,5 @@
-set(LIBCXX_INCLUDE ${deps_loc}/libcxx)
-set(LIBCXXABI_INCLUDE ${deps_loc}/libcxxabi)
+set(LIBCXX_INCLUDE ${DEPS_DIR}/libcxx)
+set(LIBCXXABI_INCLUDE ${DEPS_DIR}/libcxxabi)
 
 if((LINUX OR ANDROID) AND USE_LIBCXX)
     GitClone(

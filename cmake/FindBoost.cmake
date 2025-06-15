@@ -1,4 +1,4 @@
-set(BOOST_DIR ${deps_loc}/boost)
+set(BOOST_DIR ${DEPS_DIR}/boost)
 set(BOOST_SRC ${BOOST_DIR}/src)
 set(BOOST_GIT https://github.com/pytgcalls/boost)
 set(BOOST_ATOMIC_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_atomic${CMAKE_STATIC_LIBRARY_SUFFIX})

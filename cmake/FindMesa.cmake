@@ -1,4 +1,4 @@
-set(MESA_DIR ${deps_loc}/mesa)
+set(MESA_DIR ${DEPS_DIR}/mesa)
 set(MESA_SRC ${MESA_DIR}/src)
 set(MESA_GIT https://github.com/pytgcalls/mesa)
 set(GBM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}gbm${CMAKE_STATIC_LIBRARY_SUFFIX})

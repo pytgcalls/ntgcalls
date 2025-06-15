@@ -1,4 +1,4 @@
-set(X11_DIR ${deps_loc}/libx11)
+set(X11_DIR ${DEPS_DIR}/libx11)
 set(X11_SRC ${X11_DIR}/src)
 set(X11_GIT https://github.com/pytgcalls/libx11)
 set(X11_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}X11${CMAKE_STATIC_LIBRARY_SUFFIX})

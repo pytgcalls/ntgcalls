@@ -1,5 +1,5 @@
 if (ANDROID_ABI)
-    set(NDK_DIR ${deps_loc}/ndk)
+    set(NDK_DIR ${DEPS_DIR}/ndk)
     set(NDK_SRC ${NDK_DIR}/src)
 
     GetProperty("version.ndk" NDK_VERSION)
