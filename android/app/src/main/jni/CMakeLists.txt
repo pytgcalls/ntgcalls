@@ -5,7 +5,12 @@ project("ntgcalls" C CXX)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory("${DEPS_DIR}/json" "deps/json" EXCLUDE_FROM_ALL)
 
+set(CLANG_BIN_DIR ${DEPS_DIR}/clang/bin)
+set(CMAKE_C_COMPILER "${CLANG_BIN_DIR}/clang")
+set(CMAKE_CXX_COMPILER "${CLANG_BIN_DIR}/clang++")
+
 include(cmake/CompileUtils.cmake)
+include(${NDK_CMAKE_DIR})
 include(cmake/FindNTgCalls.cmake)
 
 find_package(Threads REQUIRED)

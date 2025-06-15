@@ -90,6 +90,7 @@ def ndkDir = "$depsDir/ndk/src"
 def ntgcallsIncludeDir = "$baseDir/ntgcalls/include"
 def wrtcIncludeDir = "$baseDir/wrtc/include"
 def androidCmakeDir = "$baseDir/cmake/Android.cmake"
+def ndkCmakeDir = "$baseDir/cmake/FindNDK.cmake"
 def versionProps = new Properties()
 new File("$baseDir/version.properties").withInputStream {
     versionProps.load(it)
@@ -122,19 +123,16 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags '-std=gnu++20'
-                arguments "-DANDROID_STL=none",
-                        "-DANDROID_NATIVE_API_LEVEL=${versionProps.getProperty('version.sdk_compile')}",
+                arguments "-DANDROID_NATIVE_API_LEVEL=${versionProps.getProperty('version.sdk_compile')}",
                         "-DANDROID_PLATFORM=${versionProps.getProperty('version.sdk_compile')}",
-                        "-DANDROID_CPP_FEATURES=exceptions rtti",
                         "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
                         "-DLIBCXX_INCLUDE_DIR=$depsDir/libcxx/include",
-                        "-DCMAKE_TOOLCHAIN_FILE=$ndkDir/build/cmake/android.toolchain.cmake",
                         "-DANDROID_NDK=$ndkDir",
                         "-DDEPS_DIR=$depsDir",
                         "-DNTGCALLS_INCLUDE_DIR=$ntgcallsIncludeDir",
                         "-DWRTC_INCLUDE_DIR=$wrtcIncludeDir",
                         "-DANDROID_CMAKE_DIR=$androidCmakeDir",
-                        "-DCMAKE_ANDROID_EXCEPTIONS=ON"
+                        "-DNDK_CMAKE_DIR=$ndkCmakeDir"
             }
         }
         ndk {
