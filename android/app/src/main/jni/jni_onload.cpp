@@ -15,13 +15,13 @@ namespace webrtc::jni {
         RTC_DCHECK_GE(ret, 0);
         if (ret < 0)
             return -1;
-        RTC_CHECK(rtc::InitializeSSL()) << "Failed to InitializeSSL()";
+        RTC_CHECK(webrtc::InitializeSSL()) << "Failed to InitializeSSL()";
         webrtc::InitClassLoader(GetEnv());
         RTC_LOG(LS_INFO) << "JNI_OnLoad ret=" << ret;
         return ret;
     }
 
     extern "C" void JNIEXPORT JNICALL JNI_OnUnLoad(JavaVM*, void*) {
-        RTC_CHECK(rtc::CleanupSSL()) << "Failed to CleanupSSL()";
+        RTC_CHECK(webrtc::CleanupSSL()) << "Failed to CleanupSSL()";
     }
 }  // namespace webrtc::jni
