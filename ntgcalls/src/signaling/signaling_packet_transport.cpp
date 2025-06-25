@@ -117,4 +117,8 @@ namespace signaling {
     webrtc::IceTransportInternal* SignalingPacketTransport::ice_transport() {
         return nullptr;
     }
+
+    uint16_t SignalingPacketTransport::GetSslGroupId() const {
+        return 0;
+    }
 } // signaling

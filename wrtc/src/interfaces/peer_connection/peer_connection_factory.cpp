@@ -51,10 +51,11 @@ namespace wrtc {
         worker_thread_->AllowInvokesToThread(network_thread_.get());
 
         webrtc::PeerConnectionFactoryDependencies dependencies;
+        auto env = webrtc::CreateEnvironment();
         dependencies.network_thread = network_thread_.get();
         dependencies.worker_thread = worker_thread_.get();
         dependencies.signaling_thread = signaling_thread_.get();
-        dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
+        dependencies.env = env;
         dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>();
         jniEnv = GetJNIEnv();
         dependencies.adm = worker_thread_->BlockingCall([&] {

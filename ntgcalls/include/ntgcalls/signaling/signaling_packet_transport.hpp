@@ -67,6 +67,8 @@ namespace signaling {
         webrtc::RTCError SetRemoteParameters(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len, std::optional<webrtc::SSLRole> role) override;
 
         webrtc::IceTransportInternal* ice_transport() override;
+
+        uint16_t GetSslGroupId() const override;
     };
 
 } // signaling
