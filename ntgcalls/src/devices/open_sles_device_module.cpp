@@ -7,6 +7,7 @@
 
 #ifdef IS_ANDROID
 #include <SLES/OpenSLES.h>
+#include <rtc_base/arraysize.h>
 #include <api/make_ref_counted.h>
 #include <sdk/android/native_api/jni/application_context_provider.h>
 #include <sdk/android/src/jni/audio_device/audio_device_module.h>

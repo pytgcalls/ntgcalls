@@ -7,6 +7,7 @@
 
 #ifdef IS_WINDOWS
 
+#include <rtc_base/arraysize.h>
 #include <ntgcalls/exceptions.hpp>
 #include <cmath>
 
