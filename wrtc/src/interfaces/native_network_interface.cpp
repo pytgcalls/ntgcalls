@@ -396,10 +396,14 @@ namespace wrtc {
             if (!strong) {
                 return;
             }
+            strong->pendingContent.clear();
             strong->audioChannel = nullptr;
             strong->videoChannel = nullptr;
             strong->incomingAudioChannels.clear();
             strong->incomingVideoChannels.clear();
+            strong->remoteAudioSink.reset();
+            strong->remoteVideoSink.reset();
+            strong->remoteScreenCastSink.reset();
         });
         channelManager = nullptr;
         if (factory) {
