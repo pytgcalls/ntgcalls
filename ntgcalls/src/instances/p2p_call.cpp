@@ -244,17 +244,21 @@ namespace ntgcalls {
             }
             case signaling::Message::Type::Candidates: {
                 for (const auto message = signaling::CandidatesMessage::deserialize(buffer); const auto&[sdpString] : message->iceCandidates) {
-                    webrtc::JsepIceCandidate parseCandidate{ std::string(), 0 };
-                    if (!parseCandidate.Initialize(sdpString, nullptr)) {
-                        RTC_LOG(LS_ERROR) << "Could not parse candidate: " << sdpString;
+                    webrtc::SdpParseError error;
+                    std::unique_ptr<webrtc::IceCandidate> parseCandidate = webrtc::IceCandidate::Create(
+                        "",
+                        0,
+                        sdpString,
+                        &error
+                    );
+                    if (!parseCandidate) {
+                        RTC_LOG(LS_ERROR) << "Failed to parse ICE candidate: " << error.description;
                         continue;
                     }
-                    std::string sdp;
-                    parseCandidate.ToString(&sdp);
                     pendingIceCandidates.emplace_back(
-                        parseCandidate.sdp_mid(),
-                        parseCandidate.sdp_mline_index(),
-                        sdp
+                        parseCandidate->sdp_mid(),
+                        parseCandidate->sdp_mline_index(),
+                        parseCandidate->ToString()
                     );
                 }
                 if (handshakeCompleted) {
