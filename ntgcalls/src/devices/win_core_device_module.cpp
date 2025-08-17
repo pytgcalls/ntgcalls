@@ -7,7 +7,6 @@
 
 #ifdef IS_WINDOWS
 
-#include <rtc_base/arraysize.h>
 #include <ntgcalls/exceptions.hpp>
 #include <cmath>
 
@@ -299,7 +298,7 @@ namespace ntgcalls {
                 bool error = false;
                 HANDLE waitArray[] = {stopEvent.Get(), restartEvent.Get(), audioSamplesEvent.Get()};
                 while (streaming && !error) {
-                    switch (WaitForMultipleObjects(arraysize(waitArray), waitArray, false, INFINITE)) {
+                    switch (WaitForMultipleObjects(std::size(waitArray), waitArray, false, INFINITE)) {
                     case WAIT_OBJECT_0 + 0:
                         streaming = false;
                         break;

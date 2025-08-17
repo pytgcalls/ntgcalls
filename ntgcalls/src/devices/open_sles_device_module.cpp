@@ -7,7 +7,6 @@
 
 #ifdef IS_ANDROID
 #include <SLES/OpenSLES.h>
-#include <rtc_base/arraysize.h>
 #include <api/make_ref_counted.h>
 #include <sdk/android/native_api/jni/application_context_provider.h>
 #include <sdk/android/src/jni/audio_device/audio_device_module.h>
@@ -80,7 +79,7 @@ namespace ntgcalls {
             static_cast<SLuint32>(kNumOfOpenSLESBuffers)
         };
         SLDataSink audioSink = {&bufferQueue, &pcmFormat};
-        SLInterfaceID interfaceId[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_ANDROIDCONFIGURATION};
+        const SLInterfaceID interfaceId[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_ANDROIDCONFIGURATION};
         constexpr SLboolean interfaceRequired[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
         const auto createRecorderResult = (*engine)->CreateAudioRecorder(
@@ -88,7 +87,7 @@ namespace ntgcalls {
             deviceObject.Receive(),
             &audioSource,
             &audioSink,
-            arraysize(interfaceId),
+            std::size(interfaceId),
             interfaceId,
             interfaceRequired
         );
@@ -143,7 +142,7 @@ namespace ntgcalls {
             deviceObject.Receive(),
             &audioSource,
             &audioSink,
-            arraysize(interfaceIds),
+            std::size(interfaceIds),
             interfaceIds,
             interfaceRequired
         );
