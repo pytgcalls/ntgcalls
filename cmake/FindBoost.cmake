@@ -4,7 +4,6 @@ set(BOOST_GIT https://github.com/pytgcalls/boost)
 set(BOOST_ATOMIC_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_atomic${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(BOOST_CONTEXT_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_context${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(BOOST_DATE_TIME_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_date_time${CMAKE_STATIC_LIBRARY_SUFFIX})
-set(BOOST_SYSTEM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_system${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(BOOST_FILESYSTEM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_filesystem${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(BOOST_PROCESS_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}boost_process${CMAKE_STATIC_LIBRARY_SUFFIX})
 
@@ -70,16 +69,6 @@ if (NOT TARGET Boost::date_time)
     )
 endif ()
 
-if (NOT TARGET Boost::system)
-    add_library(Boost::system STATIC IMPORTED)
-    set_target_properties(Boost::system PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
-        IMPORTED_LINK_INTERFACE_LANGUAGES CXX
-        IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_SYSTEM_LIB}"
-        INTERFACE_COMPILE_DEFINITIONS "BOOST_SYSTEM_NO_LIB"
-    )
-endif ()
-
 if (NOT TARGET Boost::filesystem)
     add_library(Boost::filesystem STATIC IMPORTED)
     set_target_properties(Boost::filesystem PROPERTIES
@@ -88,7 +77,7 @@ if (NOT TARGET Boost::filesystem)
         IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_FILESYSTEM_LIB}"
         INTERFACE_COMPILE_DEFINITIONS "BOOST_FILESYSTEM_NO_LIB"
     )
-    target_link_libraries(Boost::filesystem INTERFACE Boost::atomic Boost::system)
+    target_link_libraries(Boost::filesystem INTERFACE Boost::atomic)
 endif ()
 
 if(NOT TARGET Boost::process)
@@ -99,7 +88,7 @@ if(NOT TARGET Boost::process)
         IMPORTED_LOCATION "${BOOST_SRC}/lib/${BOOST_PROCESS_LIB}"
         INTERFACE_COMPILE_DEFINITIONS "BOOST_PROCESS_NO_LIB"
     )
-    target_link_libraries(Boost::process INTERFACE Boost::atomic Boost::context Boost::date_time Boost::filesystem Boost::system)
+    target_link_libraries(Boost::process INTERFACE Boost::atomic Boost::context Boost::date_time Boost::filesystem)
 endif ()
 
 add_compile_definitions(BOOST_ENABLED)
