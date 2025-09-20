@@ -14,8 +14,13 @@ jobs:
         platform:
           - name: x86_64
             host: ubuntu-latest
+            gcc_suffix: manylinux
           - name: arm64
             host: arm64-server
+            gcc_suffix: manylinux
+          - name: x86_64
+            host: ubuntu-latest
+            gcc_suffix: muslinux
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -31,6 +36,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: docker
-          file: docker/Clang.${{ matrix.platform.name }}.dockerfile
+          file: docker/Clang.${{ matrix.platform.gcc_suffix }}.${{ matrix.platform.name }}.dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/${{ matrix.platform.name }}:latest
+          tags: ghcr.io/${{ github.repository }}/${{ matrix.platform.gcc_suffix }}-${{ matrix.platform.name }}:latest
