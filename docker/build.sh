@@ -26,7 +26,8 @@ else
       pulseaudio-dev \
       flex \
       elfutils-dev \
-      texinfo
+      texinfo \
+      findutils
 fi
 
 build_and_install "nasm" configure --setup-commands="patch_nasm"
