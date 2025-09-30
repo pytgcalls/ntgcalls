@@ -2,10 +2,11 @@ package ubot
 
 import (
 	"fmt"
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ntgcalls"
 	"gotgcalls/ubot/types"
 	"time"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDescription, jsonParams string) error {
@@ -127,16 +128,19 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 		var err error
 		jsonParams, err = ctx.binding.CreateCall(chatId)
 		if err != nil {
+			_ = ctx.binding.Stop(chatId)
 			return err
 		}
 
 		err = ctx.binding.SetStreamSources(chatId, ntgcalls.CaptureStream, mediaDescription)
 		if err != nil {
+			_ = ctx.binding.Stop(chatId)
 			return err
 		}
 
 		inputGroupCall, err := ctx.getInputGroupCall(chatId)
 		if err != nil {
+			_ = ctx.binding.Stop(chatId)
 			return err
 		}
 

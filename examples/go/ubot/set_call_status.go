@@ -1,11 +1,12 @@
 package ubot
 
 import (
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ntgcalls"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
-func (ctx *Context) setCallStatus(call *tg.InputGroupCall, state ntgcalls.MediaState) error {
+func (ctx *Context) setCallStatus(call tg.InputGroupCall, state ntgcalls.MediaState) error {
 	_, err := ctx.app.PhoneEditGroupCallParticipant(
 		&tg.PhoneEditGroupCallParticipantParams{
 			Call: call,

@@ -1,11 +1,12 @@
 package ubot
 
 import (
-	"github.com/Laky-64/gologging"
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ntgcalls"
 	"gotgcalls/ubot/types"
 	"sync"
+
+	"github.com/Laky-64/gologging"
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 type Context struct {
@@ -16,7 +17,7 @@ type Context struct {
 	pendingPresentation   map[int64]bool
 	p2pConfigs            map[int64]*types.P2PConfig
 	inputCalls            map[int64]*tg.InputPhoneCall
-	inputGroupCalls       map[int64]*tg.InputGroupCall
+	inputGroupCalls       map[int64]tg.InputGroupCall
 	participantsMutex     sync.Mutex
 	callParticipants      map[int64]*types.CallParticipantsCache
 	pendingConnections    map[int64]*types.PendingConnection
@@ -35,7 +36,7 @@ func NewInstance(app *tg.Client) *Context {
 		pendingPresentation: make(map[int64]bool),
 		p2pConfigs:          make(map[int64]*types.P2PConfig),
 		inputCalls:          make(map[int64]*tg.InputPhoneCall),
-		inputGroupCalls:     make(map[int64]*tg.InputGroupCall),
+		inputGroupCalls:     make(map[int64]tg.InputGroupCall),
 		pendingConnections:  make(map[int64]*types.PendingConnection),
 		callParticipants:    make(map[int64]*types.CallParticipantsCache),
 		callSources:         make(map[int64]*types.CallSources),

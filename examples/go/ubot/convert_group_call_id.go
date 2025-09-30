@@ -1,11 +1,17 @@
 package ubot
 
-import "fmt"
+import (
+	"fmt"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
+)
 
 func (ctx *Context) convertGroupCallId(callId int64) (int64, error) {
-	for chatId, inputCall := range ctx.inputGroupCalls {
-		if inputCall.ID == callId {
-			return chatId, nil
+	for chatId, inputCallInterface := range ctx.inputGroupCalls {
+		if inputCall, ok := inputCallInterface.(*tg.InputGroupCallObj); ok {
+			if inputCall.ID == callId {
+				return chatId, nil
+			}
 		}
 	}
 	return 0, fmt.Errorf("group call id %d not found", callId)

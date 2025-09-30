@@ -2,11 +2,12 @@ package ubot
 
 import (
 	"fmt"
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ntgcalls"
 	"gotgcalls/ubot/types"
 	"slices"
 	"time"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 func (ctx *Context) handleUpdates() {
@@ -96,7 +97,7 @@ func (ctx *Context) handleUpdates() {
 
 	ctx.app.AddRawHandler(&tg.UpdateGroupCallParticipants{}, func(m tg.Update, c *tg.Client) error {
 		participantsUpdate := m.(*tg.UpdateGroupCallParticipants)
-		chatId, err := ctx.convertGroupCallId(participantsUpdate.Call.ID)
+		chatId, err := ctx.convertGroupCallId(participantsUpdate.Call.(*tg.InputGroupCallObj).ID)
 		if err == nil {
 			ctx.participantsMutex.Lock()
 			if ctx.callParticipants[chatId] == nil {

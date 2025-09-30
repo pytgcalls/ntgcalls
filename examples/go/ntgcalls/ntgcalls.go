@@ -14,8 +14,9 @@ package ntgcalls
 import "C"
 import (
 	"fmt"
-	"github.com/Laky-64/gologging"
 	"unsafe"
+
+	"github.com/Laky-64/gologging"
 )
 
 func init() {

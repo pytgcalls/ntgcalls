@@ -16,10 +16,11 @@ package main
 import "C"
 import (
 	"fmt"
-	"github.com/Laky-64/gologging"
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ntgcalls"
 	"gotgcalls/ubot"
+
+	"github.com/Laky-64/gologging"
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 var urlVideoTest = "https://docs.evostream.com/sample_content/assets/sintel1m720p.mp4"
@@ -27,14 +28,14 @@ var urlVideoTest = "https://docs.evostream.com/sample_content/assets/sintel1m720
 func main() {
 	gologging.SetLevel(gologging.FatalLevel)
 	gologging.GetLogger("ntgcalls").SetLevel(gologging.DebugLevel)
-	mtproto, _ := tg.NewClient(tg.ClientConfig{
+	mtProto, _ := tg.NewClient(tg.ClientConfig{
 		AppID:   10029733,
 		AppHash: "d0d81009d46e774f78c0e0e622f5fa21",
 		Session: "session",
 	})
-	_ = mtproto.Start()
+	_ = mtProto.Start()
 
-	uBotInstance := ubot.NewInstance(mtproto)
+	uBotInstance := ubot.NewInstance(mtProto)
 	defer uBotInstance.Close()
 
 	uBotInstance.OnIncomingCall(func(client *ubot.Context, chatId int64) {
@@ -49,7 +50,7 @@ func main() {
 	uBotInstance.OnFrame(func(chatId int64, mode ntgcalls.StreamMode, device ntgcalls.StreamDevice, frames []ntgcalls.Frame) {
 		fmt.Println("Received frames for chatId:", chatId, "mode:", mode, "device:", device)
 	})
-	mtproto.On("message:[!/.]play", func(message *tg.NewMessage) error {
+	mtProto.On("message:[!/.]play", func(message *tg.NewMessage) error {
 		err := uBotInstance.Play(message.ChannelID(), getMediaDescription(urlVideoTest))
 		if err != nil {
 			return err
@@ -60,7 +61,7 @@ func main() {
 		}
 		return nil
 	})
-	mtproto.On("message:[!/.]record", func(message *tg.NewMessage) error {
+	mtProto.On("message:[!/.]record", func(message *tg.NewMessage) error {
 		err := uBotInstance.Record(message.ChannelID(), ntgcalls.MediaDescription{
 			Microphone: &ntgcalls.AudioDescription{
 				MediaSource:  ntgcalls.MediaSourceExternal,
@@ -77,7 +78,7 @@ func main() {
 		}
 		return nil
 	})
-	mtproto.On("message:[!/.]stop", func(message *tg.NewMessage) error {
+	mtProto.On("message:[!/.]stop", func(message *tg.NewMessage) error {
 		err := uBotInstance.Stop(message.ChannelID())
 		if err != nil {
 			return err
@@ -88,7 +89,7 @@ func main() {
 		}
 		return nil
 	})
-	mtproto.On("message:[!/.]pause", func(message *tg.NewMessage) error {
+	mtProto.On("message:[!/.]pause", func(message *tg.NewMessage) error {
 		paused, err := uBotInstance.Pause(message.ChannelID())
 		if err != nil {
 			return err
@@ -101,7 +102,7 @@ func main() {
 		}
 		return nil
 	})
-	mtproto.On("message:[!/.]resume", func(message *tg.NewMessage) error {
+	mtProto.On("message:[!/.]resume", func(message *tg.NewMessage) error {
 		resumed, err := uBotInstance.Resume(message.ChannelID())
 		if err != nil {
 			return err
@@ -114,7 +115,7 @@ func main() {
 		}
 		return nil
 	})
-	mtproto.Idle()
+	mtProto.Idle()
 }
 
 func getMediaDescription(url string) ntgcalls.MediaDescription {
