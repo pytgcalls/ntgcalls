@@ -192,6 +192,26 @@ func (ctx *Context) handleUpdates() {
 		return nil
 	})
 
+	ctx.app.AddRawHandler(&tg.UpdateGroupCall{}, func(m tg.Update, c *tg.Client) error {
+		updateGroupCall := m.(*tg.UpdateGroupCall)
+		if groupCallRaw := updateGroupCall.Call; groupCallRaw != nil {
+			switch groupCallRaw.(type) {
+			case *tg.GroupCallObj:
+				groupCall := groupCallRaw.(*tg.GroupCallObj)
+				ctx.inputGroupCalls[updateGroupCall.ChatID] = &tg.InputGroupCallObj{
+					ID:         groupCall.ID,
+					AccessHash: groupCall.AccessHash,
+				}
+				return nil
+			case *tg.GroupCallDiscarded:
+				delete(ctx.inputGroupCalls, updateGroupCall.ChatID)
+				_ = ctx.binding.Stop(updateGroupCall.ChatID)
+				return nil
+			}
+		}
+		return nil
+	})
+
 	ctx.binding.OnRequestBroadcastTimestamp(func(chatId int64) {
 		if ctx.inputGroupCalls[chatId] != nil {
 			channels, err := ctx.app.PhoneGetGroupCallStreamChannels(ctx.inputGroupCalls[chatId])

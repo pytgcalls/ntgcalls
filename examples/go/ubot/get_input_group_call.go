@@ -38,8 +38,11 @@ func (ctx *Context) getInputGroupCall(chatId int64) (tg.InputGroupCall, error) {
 	default:
 		return nil, fmt.Errorf("chatId %d is not a group call", chatId)
 	}
-	if _, ok := ctx.inputGroupCalls[chatId]; ok {
+	if call, ok := ctx.inputGroupCalls[chatId]; ok && call == nil {
 		return nil, fmt.Errorf("group call for chatId %d is closed", chatId)
+	} else if ok {
+		return call, nil
+	} else {
+		return nil, fmt.Errorf("group call for chatId %d not found", chatId)
 	}
-	return ctx.inputGroupCalls[chatId], nil
 }
