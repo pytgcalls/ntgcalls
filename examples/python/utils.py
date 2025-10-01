@@ -1,8 +1,5 @@
 import asyncio
-
-from asyncio import AbstractEventLoop
-from typing import Any
-from typing import Callable
+from typing import Tuple
 
 from pyrogram import Client
 from pyrogram.raw.functions.channels import GetFullChannel
@@ -35,9 +32,10 @@ async def connect_call(client: Client, chat_id: int, call_params: str) -> str:
     for update in result.updates:
         if isinstance(update, UpdateGroupCallConnection):
             return update.params.data
+    raise Exception("Failed to get call connection parameters")
 
 
-async def get_youtube_stream(link: str) -> (str, str):
+async def get_youtube_stream(link: str) -> Tuple[str, str]:
     proc = await asyncio.create_subprocess_exec(
         'yt-dlp',
         '-g',
