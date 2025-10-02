@@ -1,11 +1,12 @@
 package ubot
 
 import (
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ubot/types"
 	"maps"
 	"slices"
 	"time"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 func (ctx *Context) GetParticipants(chatId int64) ([]*tg.GroupCallParticipant, error) {

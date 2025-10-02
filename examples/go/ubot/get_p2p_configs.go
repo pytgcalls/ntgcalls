@@ -1,8 +1,9 @@
 package ubot
 
 import (
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ubot/types"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 func (ctx *Context) getP2PConfigs(GAorB []byte) (*types.P2PConfig, error) {

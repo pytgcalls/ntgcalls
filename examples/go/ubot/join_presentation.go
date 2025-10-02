@@ -1,9 +1,10 @@
 package ubot
 
 import (
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ntgcalls"
 	"slices"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 func (ctx *Context) joinPresentation(chatId int64, join bool) error {

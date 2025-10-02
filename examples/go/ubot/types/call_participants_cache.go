@@ -1,8 +1,9 @@
 package types
 
 import (
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"time"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 type CallParticipantsCache struct {

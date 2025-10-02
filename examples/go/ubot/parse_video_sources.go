@@ -1,8 +1,9 @@
 package ubot
 
 import (
-	tg "github.com/amarnathcjd/gogram/telegram"
 	"gotgcalls/ntgcalls"
+
+	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
 func parseVideoSources(sources []*tg.GroupCallParticipantVideoSourceGroup) []ntgcalls.SsrcGroup {
