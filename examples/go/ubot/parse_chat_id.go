@@ -35,5 +35,21 @@ func (ctx *Context) parseChatId(chatId any) (int64, error) {
 	default:
 		return 0, fmt.Errorf("unsupported chatId type: %T", chatId)
 	}
+
+	switch chatId.(type) {
+	case int64, int, int32, int16, int8:
+		rawChat, err := ctx.app.GetInputPeer(parsedChatId)
+		if err != nil {
+			return 0, fmt.Errorf("failed to resolve peer: %w", err)
+		}
+		switch rawChat.(type) {
+		case *tg.InputPeerUser:
+			parsedChatId = rawChat.(*tg.InputPeerUser).UserID
+		case *tg.InputPeerChat:
+			parsedChatId = -rawChat.(*tg.InputPeerChat).ChatID
+		case *tg.InputPeerChannel:
+			parsedChatId = -1000000000000 - rawChat.(*tg.InputPeerChannel).ChannelID
+		}
+	}
 	return parsedChatId, nil
 }

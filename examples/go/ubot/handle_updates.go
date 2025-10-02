@@ -195,17 +195,21 @@ func (ctx *Context) handleUpdates() {
 	ctx.app.AddRawHandler(&tg.UpdateGroupCall{}, func(m tg.Update, c *tg.Client) error {
 		updateGroupCall := m.(*tg.UpdateGroupCall)
 		if groupCallRaw := updateGroupCall.Call; groupCallRaw != nil {
+			chatID, err := ctx.parseChatId(updateGroupCall.ChatID)
+			if err != nil {
+				return err
+			}
 			switch groupCallRaw.(type) {
 			case *tg.GroupCallObj:
 				groupCall := groupCallRaw.(*tg.GroupCallObj)
-				ctx.inputGroupCalls[updateGroupCall.ChatID] = &tg.InputGroupCallObj{
+				ctx.inputGroupCalls[chatID] = &tg.InputGroupCallObj{
 					ID:         groupCall.ID,
 					AccessHash: groupCall.AccessHash,
 				}
 				return nil
 			case *tg.GroupCallDiscarded:
-				delete(ctx.inputGroupCalls, updateGroupCall.ChatID)
-				_ = ctx.binding.Stop(updateGroupCall.ChatID)
+				delete(ctx.inputGroupCalls, chatID)
+				_ = ctx.binding.Stop(chatID)
 				return nil
 			}
 		}
@@ -281,7 +285,6 @@ func (ctx *Context) handleUpdates() {
 	})
 
 	ctx.binding.OnUpgrade(func(chatId int64, state ntgcalls.MediaState) {
-		fmt.Println(state)
 		err := ctx.setCallStatus(ctx.inputGroupCalls[chatId], state)
 		if err != nil {
 			fmt.Println(err)
