@@ -10,13 +10,13 @@
 
 namespace wrtc {
 
-    class PeerConnectionFactory: public webrtc::RefCountInterface {
+    class PeerConnectionFactory {
     public:
         PeerConnectionFactory();
 
-        ~PeerConnectionFactory() override;
+        ~PeerConnectionFactory();
 
-        static webrtc::scoped_refptr<PeerConnectionFactory> GetOrCreateDefault();
+        static PeerConnectionFactory* GetOrCreateDefault();
 
         webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory();
 
@@ -46,7 +46,7 @@ namespace wrtc {
         static std::mutex _mutex;
         static bool initialized;
         void *jniEnv;
-        static webrtc::scoped_refptr<PeerConnectionFactory> _default;
+        static std::unique_ptr<PeerConnectionFactory> _default;
 
         std::unique_ptr<webrtc::Thread> network_thread_;
         std::unique_ptr<webrtc::Thread> worker_thread_;

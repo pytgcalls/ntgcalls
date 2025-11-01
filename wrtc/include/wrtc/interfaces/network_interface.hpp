@@ -16,7 +16,7 @@ namespace wrtc {
 
     class NetworkInterface {
     protected:
-        webrtc::scoped_refptr<PeerConnectionFactory> factory;
+        PeerConnectionFactory* factory;
         synchronized_callback<void> dataChannelOpenedCallback;
         synchronized_callback<IceCandidate> iceCandidateCallback;
         synchronized_callback<ConnectionState, bool> connectionChangeCallback;

@@ -8,11 +8,12 @@
 
 namespace wrtc {
     ChannelManager::ChannelManager(
+        const webrtc::Environment& environment,
         webrtc::MediaEngineInterface *mediaEngine,
         webrtc::Thread* workerThread,
         webrtc::Thread* networkThread,
         webrtc::Thread* signalingThread
-    ): mediaEngine(mediaEngine), signalingThread(signalingThread), workerThread(workerThread), networkThread(networkThread) {
+    ): environment(environment), mediaEngine(mediaEngine), signalingThread(signalingThread), workerThread(workerThread), networkThread(networkThread) {
         RTC_DCHECK_RUN_ON(signalingThread);
         RTC_DCHECK(workerThread);
         RTC_DCHECK(networkThread);
@@ -37,6 +38,7 @@ namespace wrtc {
         }
         RTC_DCHECK_RUN_ON(workerThread);
         auto sendMediaChannel = mediaEngine->voice().CreateSendChannel(
+            environment,
             call,
             mediaConfig,
             options,
@@ -47,6 +49,7 @@ namespace wrtc {
             return nullptr;
         }
         auto receiveMediaChannel = mediaEngine->voice().CreateReceiveChannel(
+            environment,
             call,
             mediaConfig,
             options,
@@ -97,6 +100,7 @@ namespace wrtc {
         }
         RTC_DCHECK_RUN_ON(workerThread);
         std::unique_ptr<webrtc::VideoMediaSendChannelInterface> sendMediaChannel = mediaEngine->video().CreateSendChannel(
+            environment,
             call,
             mediaConfig,
             options,
@@ -107,6 +111,7 @@ namespace wrtc {
             return nullptr;
         }
         std::unique_ptr<webrtc::VideoMediaReceiveChannelInterface> receiveMediaChannel = mediaEngine->video().CreateReceiveChannel(
+            environment,
             call,
             mediaConfig,
             options,

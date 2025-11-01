@@ -21,7 +21,12 @@ namespace wrtc {
 
     void NativeConnection::open() {
         initConnection();
-        contentNegotiationContext = std::make_unique<ContentNegotiationContext>(factory->fieldTrials(), isOutgoing, factory->mediaEngine(), factory->ssrcGenerator(), call->GetPayloadTypeSuggester());
+        contentNegotiationContext = std::make_unique<ContentNegotiationContext>(
+            factory->fieldTrials(),
+            isOutgoing, factory->mediaEngine(),
+            factory->ssrcGenerator(),
+            call->GetPayloadTypeSuggester()
+        );
         contentNegotiationContext->copyCodecsFromChannelManager(factory->mediaEngine(), false);
         std::weak_ptr weak(shared_from_this());
         networkThread()->PostTask([weak] {

@@ -23,6 +23,7 @@ if((LINUX OR ANDROID) AND USE_LIBCXX)
     add_compile_options(
         "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
         "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:LIBCXX_INCLUDE_DIR>>:-isystem${LIBCXX_INCLUDE}/include>"
+        "$<$<COMPILE_LANGUAGE:OBJCXX>:-nostdinc++>"
         "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:LIBCXXABI_INCLUDE_DIR>>:-isystem${LIBCXXABI_INCLUDE}/include>"
     )
 endif ()

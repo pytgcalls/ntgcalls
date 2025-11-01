@@ -127,7 +127,7 @@ namespace wrtc {
     }
 
     std::unique_ptr<ReflectorPort> ReflectorPort::Create(const webrtc::CreateRelayPortArgs &args,
-        webrtc::AsyncPacketSocket *socket,
+        webrtc::AsyncPacketSocket *s,
         const uint8_t serverId,
         const int serverPriority,
         const bool standaloneReflectorMode,
@@ -136,7 +136,7 @@ namespace wrtc {
             RTC_LOG(LS_ERROR) << "Attempt to use REFLECTOR with a too long username of length " << args.config->credentials.username.size();
             return nullptr;
         }
-        return absl::WrapUnique(new ReflectorPort(args, socket, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
+        return absl::WrapUnique(new ReflectorPort(args, s, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
     }
 
     std::unique_ptr<ReflectorPort> ReflectorPort::Create(
@@ -262,16 +262,16 @@ namespace wrtc {
             socket->SetOption(fst, snd);
         }
         if (!SharedSocket()) {
-            socket->RegisterReceivedPacketCallback([this](webrtc::AsyncPacketSocket* socket, const webrtc::ReceivedIpPacket& packet) {
-                OnReadPacket(socket, packet);
+            socket->RegisterReceivedPacketCallback([this](webrtc::AsyncPacketSocket* s, const webrtc::ReceivedIpPacket& packet) {
+                OnReadPacket(s, packet);
             });
         }
         socket->SignalReadyToSend.connect(this, &ReflectorPort::OnReadyToSend);
         socket->SignalSentPacket.connect(this, &ReflectorPort::OnSentPacket);
         if (serverAddress.proto == webrtc::PROTO_TCP || serverAddress.proto == webrtc::PROTO_TLS) {
             socket->SignalConnect.connect(this, &ReflectorPort::OnSocketConnect);
-            socket->SubscribeCloseEvent(this, [this](webrtc::AsyncPacketSocket* socket, const int error) {
-                OnSocketClose(socket, error);
+            socket->SubscribeCloseEvent(this, [this](webrtc::AsyncPacketSocket* s, const int e) {
+                OnSocketClose(s, e);
             });
         } else {
             state = STATE_CONNECTED;
@@ -280,12 +280,12 @@ namespace wrtc {
     }
 
     // ReSharper disable once CppParameterMayBeConstPtrOrRef
-    void ReflectorPort::OnSocketConnect(webrtc::AsyncPacketSocket* socket) {
+    void ReflectorPort::OnSocketConnect(webrtc::AsyncPacketSocket* s) {
         RTC_DCHECK(serverAddress.proto == webrtc::PROTO_TCP || serverAddress.proto == webrtc::PROTO_TLS);
-        if (const webrtc::SocketAddress& socket_address = socket->GetLocalAddress(); absl::c_none_of(Network()->GetIPs(), [socket_address](const webrtc::InterfaceAddress& addr) {
+        if (const webrtc::SocketAddress& socket_address = s->GetLocalAddress(); absl::c_none_of(Network()->GetIPs(), [socket_address](const webrtc::InterfaceAddress& addr) {
             return socket_address.ipaddr() == addr;
         })) {
-            if (socket->GetLocalAddress().IsLoopbackIP()) {
+            if (s->GetLocalAddress().IsLoopbackIP()) {
                 RTC_LOG(LS_WARNING) << "Socket is bound to the address:" << socket_address.ipaddr().ToSensitiveString()
                 << ", rather than an address associated with network:"
                 << Network()->ToString()
@@ -312,14 +312,14 @@ namespace wrtc {
         }
         state = STATE_CONNECTED;
         if (serverAddress.address.IsUnresolvedIP()) {
-            serverAddress.address = socket->GetRemoteAddress();
+            serverAddress.address = s->GetRemoteAddress();
         }
-        RTC_LOG(LS_VERBOSE) << "ReflectorPort connected to " << socket->GetRemoteAddress().ToSensitiveString() << " using tcp.";
+        RTC_LOG(LS_VERBOSE) << "ReflectorPort connected to " << s->GetRemoteAddress().ToSensitiveString() << " using tcp.";
     }
 
-    void ReflectorPort::OnSocketClose(webrtc::AsyncPacketSocket* socket, const int error) {
-        RTC_LOG(LS_WARNING) << ToString() << ": Connection with server failed with error: " << error;
-        RTC_DCHECK(socket == this->socket);
+    void ReflectorPort::OnSocketClose(webrtc::AsyncPacketSocket* s, const int e) {
+        RTC_LOG(LS_WARNING) << ToString() << ": Connection with server failed with error: " << e;
+        RTC_DCHECK(s == socket);
         Close();
     }
 
@@ -341,7 +341,7 @@ namespace wrtc {
         if (state == STATE_DISCONNECTED || state == STATE_RECEIVEONLY) {
             return nullptr;
         }
-        auto* conn = new webrtc::ProxyConnection(NewWeakPtr(), 0, remote_candidate);
+        auto* conn = new webrtc::ProxyConnection(env(), NewWeakPtr(), 0, remote_candidate);
         AddOrReplaceConnection(conn);
         return conn;
     }
@@ -427,8 +427,8 @@ namespace wrtc {
         return serverAddress.address == addr;
     }
 
-    bool ReflectorPort::HandleIncomingPacket(webrtc::AsyncPacketSocket* socket, webrtc::ReceivedIpPacket const &packet) {
-        if (socket != this->socket) {
+    bool ReflectorPort::HandleIncomingPacket(webrtc::AsyncPacketSocket* s, webrtc::ReceivedIpPacket const &packet) {
+        if (s != socket) {
             return false;
         }
         uint8_t const *data = packet.payload().begin();
@@ -530,11 +530,11 @@ namespace wrtc {
         return true;
     }
 
-    void ReflectorPort::OnReadPacket(webrtc::AsyncPacketSocket* socket, const webrtc::ReceivedIpPacket& packet) {
-        HandleIncomingPacket(socket, packet);
+    void ReflectorPort::OnReadPacket(webrtc::AsyncPacketSocket* s, const webrtc::ReceivedIpPacket& packet) {
+        HandleIncomingPacket(s, packet);
     }
 
-    void ReflectorPort::OnSentPacket(webrtc::AsyncPacketSocket* socket, const webrtc::SentPacketInfo& sent_packet) {
+    void ReflectorPort::OnSentPacket(webrtc::AsyncPacketSocket* s, const webrtc::SentPacketInfo& sent_packet) {
         SignalSentPacket(sent_packet);
     }
 
@@ -596,7 +596,7 @@ namespace wrtc {
             address.clear();
             port = 0;
         }
-        SignalCandidateError(this, webrtc::IceCandidateErrorEvent(address, port, ReconstructedServerUrl(true), error_code, reason));
+        SendCandidateError(webrtc::IceCandidateErrorEvent(address, port, ReconstructedServerUrl(true), error_code, reason));
     }
 
     void ReflectorPort::Release() {

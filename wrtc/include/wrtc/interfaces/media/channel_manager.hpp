@@ -8,6 +8,7 @@
 
 namespace wrtc {
     class ChannelManager {
+        const webrtc::Environment& environment;
         webrtc::MediaEngineInterface* mediaEngine;
         webrtc::Thread* signalingThread;
         webrtc::Thread* workerThread;
@@ -16,6 +17,7 @@ namespace wrtc {
 
     public:
         ChannelManager(
+            const webrtc::Environment& environment,
             webrtc::MediaEngineInterface* mediaEngine,
             webrtc::Thread* workerThread,
             webrtc::Thread* networkThread,

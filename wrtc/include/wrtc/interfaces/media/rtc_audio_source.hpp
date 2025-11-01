@@ -23,7 +23,7 @@ namespace wrtc {
 
     private:
         webrtc::scoped_refptr<AudioTrackSource> source;
-        webrtc::scoped_refptr<PeerConnectionFactory> factory;
+        PeerConnectionFactory* factory;
     };
 
 } // wrtc

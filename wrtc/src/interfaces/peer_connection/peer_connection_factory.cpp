@@ -4,15 +4,14 @@
 
 #include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
 #include <api/enable_media.h>
+#include <api/field_trials.h>
 #include <rtc_base/ssl_adapter.h>
 #include <api/audio/builtin_audio_processing_builder.h>
 #include <api/create_peerconnection_factory.h>
 #include <api/rtc_event_log/rtc_event_log_factory.h>
-#include <api/task_queue/default_task_queue_factory.h>
 #include <api/audio_codecs/builtin_audio_encoder_factory.h>
 #include <api/audio_codecs/builtin_audio_decoder_factory.h>
 #include <pc/media_factory.h>
-#include <system_wrappers/include/field_trial.h>
 #include <wrtc/interfaces/media/audio_device_module.hpp>
 #include <wrtc/utils/java_context.hpp>
 
@@ -26,15 +25,9 @@ extern "C" {
 namespace wrtc {
     std::mutex PeerConnectionFactory::_mutex{};
     bool PeerConnectionFactory::initialized = false;
-    webrtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::_default = nullptr;
+    std::unique_ptr<PeerConnectionFactory> PeerConnectionFactory::_default = nullptr;
 
     PeerConnectionFactory::PeerConnectionFactory() {
-        webrtc::field_trial::InitFieldTrialsFromString(
-            "WebRTC-DataChannel-Dcsctp/Enabled/"
-            "WebRTC-Audio-MinimizeResamplingOnMobile/Enabled/"
-            "WebRTC-Audio-iOS-Holding/Enabled/"
-            "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
-        );
         av_log_set_level(AV_LOG_QUIET);
         network_thread_ = webrtc::Thread::CreateWithSocketServer();
         network_thread_->SetName("ntg-net", nullptr);
@@ -51,12 +44,19 @@ namespace wrtc {
         worker_thread_->AllowInvokesToThread(network_thread_.get());
 
         webrtc::PeerConnectionFactoryDependencies dependencies;
-        auto env = webrtc::CreateEnvironment();
+        auto env = webrtc::CreateEnvironment(
+            webrtc::FieldTrials::Create(
+                "WebRTC-DataChannel-Dcsctp/Enabled/"
+                "WebRTC-Audio-MinimizeResamplingOnMobile/Enabled/"
+                "WebRTC-Audio-iOS-Holding/Enabled/"
+                "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
+            )
+        );
         dependencies.network_thread = network_thread_.get();
         dependencies.worker_thread = worker_thread_.get();
         dependencies.signaling_thread = signaling_thread_.get();
         dependencies.env = env;
-        dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>();
+        dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(&env.task_queue_factory());
         jniEnv = GetJNIEnv();
         dependencies.adm = worker_thread_->BlockingCall([&] {
             if (!_audioDeviceModule)
@@ -79,10 +79,6 @@ namespace wrtc {
         if (!factory_) {
             factory_ = CreateModularPeerConnectionFactoryWithContext(std::move(dependencies), connection_context_);
         }
-        webrtc::PeerConnectionFactoryInterface::Options options;
-        options.crypto_options.srtp.enable_gcm_crypto_suites = true;
-        options.crypto_options.srtp.enable_aes128_sha1_80_crypto_cipher = true;
-        factory_->SetOptions(options);
     }
 
     PeerConnectionFactory::~PeerConnectionFactory() {
@@ -147,15 +143,15 @@ namespace wrtc {
         return supportedVideoFormats;
     }
 
-    webrtc::scoped_refptr<PeerConnectionFactory> PeerConnectionFactory::GetOrCreateDefault() {
+    PeerConnectionFactory* PeerConnectionFactory::GetOrCreateDefault() {
         std::lock_guard lock(_mutex);
         if (initialized == false) {
 #ifndef IS_ANDROID
             webrtc::InitializeSSL();
 #endif
             initialized = true;
-            _default = webrtc::scoped_refptr<PeerConnectionFactory>(new webrtc::RefCountedObject<PeerConnectionFactory>());
+            _default = std::make_unique<PeerConnectionFactory>();
         }
-        return _default;
+        return _default.get();
     }
 } // wrtc

@@ -30,7 +30,7 @@ namespace wrtc {
 
         static std::unique_ptr<ReflectorPort> Create(
             const webrtc::CreateRelayPortArgs& args,
-            webrtc::AsyncPacketSocket* socket,
+            webrtc::AsyncPacketSocket* s,
             uint8_t serverId,
             int serverPriority,
             bool standaloneReflectorMode,
@@ -53,13 +53,13 @@ namespace wrtc {
 
         void PrepareAddress() override;
 
-        void OnReadyToSend(webrtc::AsyncPacketSocket* socket);
+        void OnReadyToSend(webrtc::AsyncPacketSocket* s);
 
-        void OnReadPacket(webrtc::AsyncPacketSocket* socket, const webrtc::ReceivedIpPacket& packet);
+        void OnReadPacket(webrtc::AsyncPacketSocket* s, const webrtc::ReceivedIpPacket& packet);
 
         webrtc::Connection* CreateConnection(const webrtc::Candidate& remote_candidate, CandidateOrigin origin) override;
 
-        bool HandleIncomingPacket(webrtc::AsyncPacketSocket* socket, const webrtc::ReceivedIpPacket& packet) override;
+        bool HandleIncomingPacket(webrtc::AsyncPacketSocket* s, const webrtc::ReceivedIpPacket& packet) override;
 
         int SetOption(webrtc::Socket::Option opt, int value) override;
 
@@ -71,7 +71,7 @@ namespace wrtc {
 
         int SendTo(const void* data, size_t size, const webrtc::SocketAddress& addr, const webrtc::AsyncSocketPacketOptions& options, bool payload) override;
 
-        void OnSentPacket(webrtc::AsyncPacketSocket* socket, const webrtc::SentPacketInfo& sent_packet) override;
+        void OnSentPacket(webrtc::AsyncPacketSocket* s, const webrtc::SentPacketInfo& sent_packet) override;
 
         bool CanHandleIncomingPacketsFrom(const webrtc::SocketAddress& addr) const override;
 
@@ -141,9 +141,9 @@ namespace wrtc {
 
         bool CreateReflectorClientSocket();
 
-        void OnSocketConnect(webrtc::AsyncPacketSocket* socket);
+        void OnSocketConnect(webrtc::AsyncPacketSocket* s);
 
-        void OnSocketClose(webrtc::AsyncPacketSocket* socket, int error);
+        void OnSocketClose(webrtc::AsyncPacketSocket* s, int e);
 
         void Release();
 

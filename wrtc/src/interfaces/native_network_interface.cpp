@@ -90,6 +90,7 @@ namespace wrtc {
             strong->resetDtlsSrtpTransport();
         });
         channelManager = std::make_unique<ChannelManager>(
+            factory->environment(),
             factory->mediaEngine(),
             workerThread(),
             networkThread(),
@@ -249,7 +250,7 @@ namespace wrtc {
         auto [stunServers, turnServers] = getStunAndTurnServers();
         portAllocator->SetConfiguration(stunServers, turnServers, candidatePoolSize(), webrtc::NO_PRUNE);
 
-        webrtc::IceTransportInit iceTransportInit;
+        webrtc::IceTransportInit iceTransportInit(factory->environment());
         iceTransportInit.set_port_allocator(portAllocator.get());
         iceTransportInit.set_async_dns_resolver_factory(asyncResolverFactory.get());
         transportChannel = webrtc::P2PTransportChannel::Create("transport", 0, std::move(iceTransportInit));
@@ -273,7 +274,7 @@ namespace wrtc {
         transportChannel->SignalIceTransportStateChanged.connect(this, &NativeNetworkInterface::transportStateChanged);
         registerTransportCallbacks(transportChannel.get());
 
-        dtlsTransport = std::make_unique<webrtc::DtlsTransportInternalImpl>(transportChannel.get(), getDefaultCryptoOptions(), nullptr);
+        dtlsTransport = std::make_unique<webrtc::DtlsTransportInternalImpl>(factory->environment(), transportChannel.get(), getDefaultCryptoOptions());
         dtlsTransport->SignalWritableState.connect(this, &NativeNetworkInterface::OnTransportWritableState_n);
         dtlsTransport->SignalReceivingState.connect(this, &NativeNetworkInterface::OnTransportReceivingState_n);
         if (const auto role = dtlsRole(); role.has_value()) {
