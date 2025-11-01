@@ -129,14 +129,14 @@ jobs:
       - name: Build Shared Libs (Linux)
         if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-shared-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/manylinux-${{ matrix.image_arch }}:latest bash -c "
             python3.12 -m pip install setuptools
             python3.12 setup.py build_lib"
 
       - name: Build Static Libs (Linux)
         if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-static-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/manylinux-${{ matrix.image_arch }}:latest bash -c "
             python3.12 -m pip install setuptools
             python3.12 setup.py build_lib --static"
 
@@ -167,8 +167,9 @@ jobs:
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp38-* cp314t-*
           CIBW_TEST_COMMAND: python -m unittest discover -s {package}/tests
-          CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
-          CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/x86_64:latest
+          CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest
+          CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest
+          CIBW_MUSLLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/musllinux-x86_64:latest
           MACOSX_DEPLOYMENT_TARGET: 12.0
 
       - uses: actions/upload-artifact@v4
