@@ -1,7 +1,7 @@
 set(LIBCXX_INCLUDE ${DEPS_DIR}/libcxx)
 set(LIBCXXABI_INCLUDE ${DEPS_DIR}/libcxxabi)
 
-if((LINUX OR ANDROID) AND USE_LIBCXX)
+if((LINUX OR MACOS OR ANDROID) AND USE_LIBCXX)
     GitClone(
         URL https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxx.git
         COMMIT ${LIBCXX_COMMIT}
@@ -23,7 +23,9 @@ if((LINUX OR ANDROID) AND USE_LIBCXX)
     add_compile_options(
         "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
         "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:LIBCXX_INCLUDE_DIR>>:-isystem${LIBCXX_INCLUDE}/include>"
-        "$<$<COMPILE_LANGUAGE:OBJCXX>:-nostdinc++>"
         "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:LIBCXXABI_INCLUDE_DIR>>:-isystem${LIBCXXABI_INCLUDE}/include>"
+        "$<$<COMPILE_LANGUAGE:OBJCXX>:-nostdinc++>"
+        "$<$<AND:$<COMPILE_LANGUAGE:OBJCXX>,$<BOOL:LIBCXX_INCLUDE_DIR>>:-isystem${LIBCXX_INCLUDE}/include>"
+        "$<$<AND:$<COMPILE_LANGUAGE:OBJCXX>,$<BOOL:LIBCXXABI_INCLUDE_DIR>>:-isystem${LIBCXXABI_INCLUDE}/include>"
     )
 endif ()
