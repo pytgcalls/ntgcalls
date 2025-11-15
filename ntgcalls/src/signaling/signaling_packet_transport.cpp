@@ -30,7 +30,7 @@ namespace signaling {
         emitData(bytes::binary(data, data + len));
         webrtc::SentPacketInfo sentPacket;
         sentPacket.packet_id = options.packet_id;
-        SignalSentPacket.emit(this, sentPacket);
+        NotifySentPacket(this, sentPacket);
         return static_cast<int>(len);
     }
 

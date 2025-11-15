@@ -22,12 +22,13 @@ namespace wrtc {
     void NativeConnection::open() {
         initConnection();
         contentNegotiationContext = std::make_unique<ContentNegotiationContext>(
-            factory->fieldTrials(),
-            isOutgoing, factory->mediaEngine(),
+            environment(),
+            isOutgoing,
+            factory->mediaEngine(),
             factory->ssrcGenerator(),
             call->GetPayloadTypeSuggester()
         );
-        contentNegotiationContext->copyCodecsFromChannelManager(factory->mediaEngine(), false);
+        contentNegotiationContext->copyCodecsFromChannelManager(false);
         std::weak_ptr weak(shared_from_this());
         networkThread()->PostTask([weak] {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
@@ -97,8 +98,8 @@ namespace wrtc {
         portAllocator->set_flags(flags);
     }
 
-    int NativeConnection::getRegatherOnFailedNetworksInterval() {
-        return 8000;
+    webrtc::TimeDelta NativeConnection::getRegatherOnFailedNetworksInterval() {
+        return webrtc::TimeDelta::Seconds(8);
     }
 
     webrtc::IceRole NativeConnection::iceRole() const {
@@ -110,8 +111,25 @@ namespace wrtc {
     }
 
     void NativeConnection::registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) {
-        transportChannel->SignalCandidateGathered.connect(this, &NativeConnection::candidateGathered);
         std::weak_ptr weak(shared_from_this());
+        transportChannel->SubscribeCandidateGathered([weak](webrtc::IceTransportInternal*, const webrtc::Candidate &candidate) {
+            assert(networkThread()->IsCurrent());
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->signalingThread()->PostTask([weak, candidate] {
+                const auto strongSignaling = std::static_pointer_cast<NativeConnection>(weak.lock());
+                if (!strongSignaling) {
+                    return;
+                }
+                webrtc::Candidate patchedCandidate = candidate;
+                patchedCandidate.set_component(1);
+                webrtc::JsepIceCandidate iceCandidate{std::string(),0, patchedCandidate};
+                (void) strongSignaling->iceCandidateCallback(IceCandidate(&iceCandidate));
+            });
+        });
+
         transportChannel->SetCandidatePairChangeCallback([weak](webrtc::CandidatePairChangeEvent const &event) {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
@@ -119,6 +137,7 @@ namespace wrtc {
             }
             strong->candidatePairChanged(event);
         });
+
         transportChannel->SignalNetworkRouteChanged.connect(this, &NativeConnection::transportRouteChanged);
     }
 
@@ -256,22 +275,6 @@ namespace wrtc {
             if (newValue == ConnectionState::Connected && !strong->alreadyConnected) {
                 strong->alreadyConnected = true;
             }
-        });
-    }
-
-    // ReSharper disable once CppMemberFunctionMayBeConst
-    void NativeConnection::candidateGathered(webrtc::IceTransportInternal*, const webrtc::Candidate& candidate) {
-        assert(networkThread()->IsCurrent());
-        std::weak_ptr weak(shared_from_this());
-        signalingThread()->PostTask([weak, candidate] {
-            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
-            if (!strong) {
-                return;
-            }
-            webrtc::Candidate patchedCandidate = candidate;
-            patchedCandidate.set_component(1);
-            webrtc::JsepIceCandidate iceCandidate{std::string(),0, patchedCandidate};
-            (void) strong->iceCandidateCallback(IceCandidate(&iceCandidate));
         });
     }
 

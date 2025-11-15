@@ -62,6 +62,8 @@ namespace wrtc {
 
         void onMessageReceived(const std::function<void(const bytes::binary&)>& callback);
 
+        webrtc::SctpTransportFactoryInterface* sctp_transport_factory() const;
+
         // Unused
         void OnChannelClosing(int channel_id) override {}
         void OnChannelClosed(int channel_id) override{}

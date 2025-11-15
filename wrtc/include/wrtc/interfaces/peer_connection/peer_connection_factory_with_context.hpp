@@ -13,18 +13,22 @@ namespace wrtc {
     class PeerConnectionFactoryWithContext : public webrtc::PeerConnectionFactory {
     public:
         static webrtc::scoped_refptr<PeerConnectionFactoryInterface> Create(
+                const webrtc::Environment &env,
                 webrtc::PeerConnectionFactoryDependencies dependencies,
                 webrtc::scoped_refptr<webrtc::ConnectionContext>& context);
 
         explicit PeerConnectionFactoryWithContext(
+                const webrtc::Environment &env,
                 webrtc::PeerConnectionFactoryDependencies dependencies);
 
         PeerConnectionFactoryWithContext(
+            const webrtc::Environment &env,
             const webrtc::scoped_refptr<webrtc::ConnectionContext>& context,
                 webrtc::PeerConnectionFactoryDependencies* dependencies);
 
         static webrtc::scoped_refptr<PeerConnectionFactoryWithContext> Create(
-        webrtc::PeerConnectionFactoryDependencies dependencies);
+            const webrtc::Environment &env,
+            webrtc::PeerConnectionFactoryDependencies dependencies);
 
         [[nodiscard]] webrtc::scoped_refptr<webrtc::ConnectionContext> GetContext() const;
 
@@ -33,6 +37,7 @@ namespace wrtc {
     };
 
     webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> CreateModularPeerConnectionFactoryWithContext(
+        const webrtc::Environment &env,
         webrtc::PeerConnectionFactoryDependencies dependencies,
         webrtc::scoped_refptr<webrtc::ConnectionContext>& context
     );

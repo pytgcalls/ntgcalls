@@ -112,7 +112,7 @@ namespace wrtc {
         webrtc::ProtocolAddress serverAddress;
         uint8_t serverId = 0;
         webrtc::ScopedTaskSafety taskSafety;
-        webrtc::AsyncPacketSocket* socket;
+        std::unique_ptr<webrtc::AsyncPacketSocket> socket;
         SocketOptionsMap socketOptions;
         std::unique_ptr<webrtc::AsyncDnsResolverInterface> resolver;
         int error;

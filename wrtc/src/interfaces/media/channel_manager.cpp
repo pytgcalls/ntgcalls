@@ -9,7 +9,7 @@
 namespace wrtc {
     ChannelManager::ChannelManager(
         const webrtc::Environment& environment,
-        webrtc::MediaEngineInterface *mediaEngine,
+        webrtc::MediaEngineInterface* mediaEngine,
         webrtc::Thread* workerThread,
         webrtc::Thread* networkThread,
         webrtc::Thread* signalingThread

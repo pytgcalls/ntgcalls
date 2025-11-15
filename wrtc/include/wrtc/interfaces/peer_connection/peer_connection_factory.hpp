@@ -32,11 +32,9 @@ namespace wrtc {
 
         [[nodiscard]] webrtc::UniqueRandomIdGenerator* ssrcGenerator() const;
 
-        [[nodiscard]] webrtc::MediaEngineInterface* mediaEngine() const;
+        [[nodiscard]] webrtc::MediaEngineInterface* mediaEngine();
 
-        [[nodiscard]] const webrtc::FieldTrialsView &fieldTrials() const;
-
-        [[nodiscard]] const webrtc::Environment& environment() const;
+        static webrtc::Environment environment();
 
         [[nodiscard]] webrtc::MediaFactory* mediaFactory() const;
 
@@ -51,6 +49,8 @@ namespace wrtc {
         std::unique_ptr<webrtc::Thread> network_thread_;
         std::unique_ptr<webrtc::Thread> worker_thread_;
         std::unique_ptr<webrtc::Thread> signaling_thread_;
+        std::unique_ptr<webrtc::ConnectionContext::MediaEngineReference> media_engine_ref RTC_GUARDED_BY(worker_thread_);
+
         webrtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
 
         webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;

@@ -35,7 +35,7 @@ namespace wrtc {
             strong->asyncResolverFactory = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
             strong->dtlsSrtpTransport = std::make_unique<WrappedDtlsSrtpTransport>(
                 true,
-                strong->factory->fieldTrials(),
+                strong->environment().field_trials(),
                 [weak](const webrtc::RtpPacketReceived& packet) {
                     const auto strongListener = weak.lock();
                     if (!strongListener) {
@@ -90,7 +90,7 @@ namespace wrtc {
             strong->resetDtlsSrtpTransport();
         });
         channelManager = std::make_unique<ChannelManager>(
-            factory->environment(),
+            environment(),
             factory->mediaEngine(),
             workerThread(),
             networkThread(),
@@ -101,7 +101,7 @@ namespace wrtc {
             if (!strong) {
                 return;
             }
-            webrtc::CallConfig callConfig(strong->factory->environment(), strong->networkThread());
+            webrtc::CallConfig callConfig(strong->environment(), strong->networkThread());
             callConfig.audio_state = strong->factory->mediaEngine()->voice().GetAudioState();
             strong->call = strong->factory->mediaFactory()->CreateCall(std::move(callConfig));
         });
@@ -239,7 +239,7 @@ namespace wrtc {
 
     void NativeNetworkInterface::resetDtlsSrtpTransport() {
         portAllocator = std::make_unique<webrtc::BasicPortAllocator>(
-            factory->environment(),
+            environment(),
             factory->networkManager(),
             factory->socketFactory(),
             nullptr,
@@ -250,7 +250,7 @@ namespace wrtc {
         auto [stunServers, turnServers] = getStunAndTurnServers();
         portAllocator->SetConfiguration(stunServers, turnServers, candidatePoolSize(), webrtc::NO_PRUNE);
 
-        webrtc::IceTransportInit iceTransportInit(factory->environment());
+        webrtc::IceTransportInit iceTransportInit(environment());
         iceTransportInit.set_port_allocator(portAllocator.get());
         iceTransportInit.set_async_dns_resolver_factory(asyncResolverFactory.get());
         transportChannel = webrtc::P2PTransportChannel::Create("transport", 0, std::move(iceTransportInit));
@@ -264,6 +264,7 @@ namespace wrtc {
         }
         transportChannel->SetIceConfig(iceConfig);
 
+        std::weak_ptr weak(shared_from_this());
         const webrtc::IceParameters localIceParameters(
             localParameters.ufrag,
             localParameters.pwd,
@@ -271,22 +272,37 @@ namespace wrtc {
         );
         transportChannel->SetIceParameters(localIceParameters);
         transportChannel->SetIceRole(iceRole());
-        transportChannel->SignalIceTransportStateChanged.connect(this, &NativeNetworkInterface::transportStateChanged);
+        transportChannel->SubscribeIceTransportStateChanged([weak](webrtc::IceTransportInternal*) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            strong->UpdateAggregateStates_n();
+        });
         registerTransportCallbacks(transportChannel.get());
 
-        dtlsTransport = std::make_unique<webrtc::DtlsTransportInternalImpl>(factory->environment(), transportChannel.get(), getDefaultCryptoOptions());
-        dtlsTransport->SignalWritableState.connect(this, &NativeNetworkInterface::OnTransportWritableState_n);
-        dtlsTransport->SignalReceivingState.connect(this, &NativeNetworkInterface::OnTransportReceivingState_n);
+        dtlsTransport = std::make_unique<webrtc::DtlsTransportInternalImpl>(environment(), transportChannel.get(), getDefaultCryptoOptions());
+        dtlsTransport->SubscribeReceivingState([weak](webrtc::PacketTransportInternal*) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            assert(strong->networkThread()->IsCurrent());
+            strong->UpdateAggregateStates_n();
+        });
+        dtlsTransport->SubscribeWritableState(this,[weak](webrtc::PacketTransportInternal*) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            assert(strong->networkThread()->IsCurrent());
+            strong->UpdateAggregateStates_n();
+        });
         if (const auto role = dtlsRole(); role.has_value()) {
             dtlsTransport->SetDtlsRole(role.value());
         }
         dtlsTransport->SetLocalCertificate(localCertificate);
         dtlsSrtpTransport->SetDtlsTransports(dtlsTransport.get(), nullptr);
-    }
-
-
-    void NativeNetworkInterface::transportStateChanged(webrtc::IceTransportInternal*) {
-        UpdateAggregateStates_n();
     }
 
     webrtc::CryptoOptions NativeNetworkInterface::getDefaultCryptoOptions() {
@@ -368,16 +384,6 @@ namespace wrtc {
         });
     }
 
-    void NativeNetworkInterface::OnTransportWritableState_n(webrtc::PacketTransportInternal*) {
-        assert(networkThread()->IsCurrent());
-        UpdateAggregateStates_n();
-    }
-
-    void NativeNetworkInterface::OnTransportReceivingState_n(webrtc::PacketTransportInternal*){
-        assert(networkThread()->IsCurrent());
-        UpdateAggregateStates_n();
-    }
-
     std::unique_ptr<webrtc::SSLFingerprint> NativeNetworkInterface::localFingerprint() const {
         const auto certificate = localCertificate;
         if (!certificate) {
@@ -415,14 +421,11 @@ namespace wrtc {
                     return;
                 }
                 if (strong->transportChannel) {
-                    strong->transportChannel->SignalCandidateGathered.disconnect(strong.get());
-                    strong->transportChannel->SignalIceTransportStateChanged.disconnect(strong.get());
                     strong->transportChannel->SignalNetworkRouteChanged.disconnect(strong.get());
                 }
                 strong->dataChannelInterface = nullptr;
                 if (strong->dtlsTransport) {
-                    strong->dtlsTransport->SignalWritableState.disconnect(strong.get());
-                    strong->dtlsTransport->SignalReceivingState.disconnect(strong.get());
+                    strong->dtlsTransport->UnsubscribeWritableState(strong.get());
                 }
                 if (strong->dtlsSrtpTransport) {
                     strong->dtlsSrtpTransport->UnsubscribeSentPacket(strong.get());

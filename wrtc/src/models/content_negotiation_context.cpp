@@ -13,13 +13,13 @@
 
 namespace wrtc {
     ContentNegotiationContext::ContentNegotiationContext(
-        const webrtc::FieldTrialsView& fieldTrials,
+        const webrtc::Environment& env,
         const bool isOutgoing,
         webrtc::MediaEngineInterface *mediaEngine,
         webrtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
         webrtc::PayloadTypeSuggester *payloadTypeSuggester
     ) :isOutgoing(isOutgoing), uniqueRandomIdGenerator(uniqueRandomIdGenerator) {
-        transportDescriptionFactory = std::make_unique<webrtc::TransportDescriptionFactory>(fieldTrials);
+        transportDescriptionFactory = std::make_unique<webrtc::TransportDescriptionFactory>(env.field_trials());
         const auto tempCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(
             webrtc::KeyParams(webrtc::KT_ECDSA),
             std::nullopt
@@ -31,10 +31,12 @@ namespace wrtc {
             payloadTypeSuggester
         );
         sessionDescriptionFactory = std::make_unique<webrtc::MediaSessionDescriptionFactory>(
+            env,
             mediaEngine,
             true,
             uniqueRandomIdGenerator,
             transportDescriptionFactory.get(),
+            nullptr,
             codecLookupHelper.get()
         );
         needNegotiation = true;
@@ -54,7 +56,7 @@ namespace wrtc {
         pendingOutgoingOffer.reset();
     }
 
-    void ContentNegotiationContext::copyCodecsFromChannelManager(webrtc::MediaEngineInterface *mediaEngine, const bool randomize) {
+    void ContentNegotiationContext::copyCodecsFromChannelManager(const bool randomize) {
         int absSendTimeUriId = 2;
         int transportSequenceNumberUriId = 3;
         int videoRotationUri = 13;
@@ -611,7 +613,7 @@ namespace wrtc {
 
         mappedAnswer->exchangeId = offer->exchangeId;
 
-        std::vector<MediaContent> incomingChannels;
+        std::vector<MediaContent> tempIncomingChannels;
 
         for (const auto &content : answer->contents()) {
             auto mappedContent = convertContentInfoToSignalingContent(content);
@@ -624,11 +626,11 @@ namespace wrtc {
                         break;
                     }
                 }
-                incomingChannels.push_back(mappedContent);
+                tempIncomingChannels.push_back(mappedContent);
                 mappedAnswer->contents.push_back(std::move(mappedContent));
             }
         }
-        this->incomingChannels = incomingChannels;
+        incomingChannels = tempIncomingChannels;
         return mappedAnswer;
     }
 } // wrtc

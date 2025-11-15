@@ -17,7 +17,7 @@ namespace wrtc {
         return candidate;
     }
 
-    NetworkInterface::NetworkInterface() {
+    NetworkInterface::NetworkInterface(): env(PeerConnectionFactory::environment()) {
         factory = PeerConnectionFactory::GetOrCreateDefault();
     }
 
@@ -34,7 +34,7 @@ namespace wrtc {
     }
 
     const webrtc::Environment& NetworkInterface::environment() const {
-        return factory->environment();
+        return env;
     }
 
     void NetworkInterface::onDataChannelOpened(const std::function<void()>& callback) {

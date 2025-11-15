@@ -44,14 +44,7 @@ namespace wrtc {
         worker_thread_->AllowInvokesToThread(network_thread_.get());
 
         webrtc::PeerConnectionFactoryDependencies dependencies;
-        auto env = webrtc::CreateEnvironment(
-            webrtc::FieldTrials::Create(
-                "WebRTC-DataChannel-Dcsctp/Enabled/"
-                "WebRTC-Audio-MinimizeResamplingOnMobile/Enabled/"
-                "WebRTC-Audio-iOS-Holding/Enabled/"
-                "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
-            )
-        );
+        auto env = environment();
         dependencies.network_thread = network_thread_.get();
         dependencies.worker_thread = worker_thread_.get();
         dependencies.signaling_thread = signaling_thread_.get();
@@ -77,7 +70,7 @@ namespace wrtc {
         supportedVideoFormats = dependencies.video_encoder_factory->GetSupportedFormats();
         EnableMedia(dependencies);
         if (!factory_) {
-            factory_ = CreateModularPeerConnectionFactoryWithContext(std::move(dependencies), connection_context_);
+            factory_ = CreateModularPeerConnectionFactoryWithContext(env, std::move(dependencies), connection_context_);
         }
     }
 
@@ -123,16 +116,24 @@ namespace wrtc {
         return connection_context_->ssrc_generator();
     }
 
-    webrtc::MediaEngineInterface* PeerConnectionFactory::mediaEngine() const {
-        return connection_context_->media_engine();
+    webrtc::MediaEngineInterface* PeerConnectionFactory::mediaEngine() {
+        if (!media_engine_ref) {
+            media_engine_ref = std::make_unique<webrtc::ConnectionContext::MediaEngineReference>(
+                webrtc::scoped_refptr(connection_context_)
+            );
+        }
+        return media_engine_ref->media_engine();
     }
 
-    const webrtc::FieldTrialsView& PeerConnectionFactory::fieldTrials() const {
-        return connection_context_->env().field_trials();
-    }
-
-    const webrtc::Environment& PeerConnectionFactory::environment() const {
-        return connection_context_->env();
+    webrtc::Environment PeerConnectionFactory::environment() {
+        return webrtc::CreateEnvironment(
+            webrtc::FieldTrials::Create(
+                "WebRTC-DataChannel-Dcsctp/Enabled/"
+                "WebRTC-Audio-MinimizeResamplingOnMobile/Enabled/"
+                "WebRTC-Audio-iOS-Holding/Enabled/"
+                "WebRTC-IceFieldTrials/skip_relay_to_non_relay_connections:true/"
+            )
+        );
     }
 
     webrtc::MediaFactory* PeerConnectionFactory::mediaFactory() const {

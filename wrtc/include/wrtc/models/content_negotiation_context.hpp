@@ -73,7 +73,7 @@ namespace wrtc {
 
     public:
         ContentNegotiationContext(
-            const webrtc::FieldTrialsView& fieldTrials,
+            const webrtc::Environment& env,
             bool isOutgoing,
             webrtc::MediaEngineInterface *mediaEngine,
             webrtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
@@ -82,7 +82,7 @@ namespace wrtc {
 
         ~ContentNegotiationContext();
 
-        void copyCodecsFromChannelManager(webrtc::MediaEngineInterface *mediaEngine, bool randomize);
+        void copyCodecsFromChannelManager(bool randomize);
 
         std::string addOutgoingChannel(const webrtc::MediaStreamTrackInterface* track);
 

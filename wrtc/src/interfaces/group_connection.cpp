@@ -539,7 +539,7 @@ namespace wrtc {
         });
     }
 
-    int GroupConnection::getRegatherOnFailedNetworksInterval() {
-        return 2000;
+    webrtc::TimeDelta GroupConnection::getRegatherOnFailedNetworksInterval() {
+        return webrtc::TimeDelta::Seconds(2);
     }
 } // wrtc

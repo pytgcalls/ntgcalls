@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <pc/dtls_transport.h>
 #include <api/scoped_refptr.h>
 #include <pc/dtls_srtp_transport.h>
 #include <p2p/base/dtls_transport.h>
@@ -37,13 +36,7 @@ namespace wrtc {
 
         void resetDtlsSrtpTransport();
 
-        void OnTransportWritableState_n(webrtc::PacketTransportInternal*);
-
-        void OnTransportReceivingState_n(webrtc::PacketTransportInternal*);
-
         void UpdateAggregateStates_n();
-
-        void transportStateChanged(webrtc::IceTransportInternal *transport);
 
         static std::vector<webrtc::SdpVideoFormat> filterSupportedVideoFormats(std::vector<webrtc::SdpVideoFormat> const &formats);
 
@@ -83,7 +76,7 @@ namespace wrtc {
 
         virtual void setPortAllocatorFlags(webrtc::BasicPortAllocator* portAllocator) = 0;
 
-        virtual int getRegatherOnFailedNetworksInterval() = 0;
+        virtual webrtc::TimeDelta getRegatherOnFailedNetworksInterval() = 0;
 
         virtual bool getCustomParameterBool(const std::string& name) const = 0;
 

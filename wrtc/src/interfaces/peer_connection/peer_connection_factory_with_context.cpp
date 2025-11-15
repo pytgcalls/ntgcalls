@@ -7,14 +7,15 @@
 namespace wrtc {
     webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
     PeerConnectionFactoryWithContext::Create(
+            const webrtc::Environment &env,
             webrtc::PeerConnectionFactoryDependencies dependencies,
             webrtc::scoped_refptr<webrtc::ConnectionContext> &context) {
         using result_type =
                 std::pair<webrtc::scoped_refptr<PeerConnectionFactoryInterface>,
                         webrtc::scoped_refptr<webrtc::ConnectionContext>>;
-        auto [fst, snd] = dependencies.signaling_thread->BlockingCall([&dependencies] {
+        auto [fst, snd] = dependencies.signaling_thread->BlockingCall([&dependencies, env] {
             const auto factory =
-                Create(std::move(dependencies));
+                Create(env, std::move(dependencies));
             if (factory == nullptr) {
                 return result_type(nullptr, nullptr);
             }
@@ -28,8 +29,9 @@ namespace wrtc {
     }
 
     webrtc::scoped_refptr<PeerConnectionFactoryWithContext>
-    PeerConnectionFactoryWithContext::Create(webrtc::PeerConnectionFactoryDependencies dependencies) {
+    PeerConnectionFactoryWithContext::Create(const webrtc::Environment &env, webrtc::PeerConnectionFactoryDependencies dependencies) {
         return webrtc::make_ref_counted<PeerConnectionFactoryWithContext>(
+                env,
                 std::move(dependencies));
     }
 
@@ -38,24 +40,28 @@ namespace wrtc {
     }
 
     PeerConnectionFactoryWithContext::PeerConnectionFactoryWithContext(
+        const webrtc::Environment &env,
         const webrtc::scoped_refptr<webrtc::ConnectionContext>& context,
             webrtc::PeerConnectionFactoryDependencies *dependencies)
-            : PeerConnectionFactory(context, dependencies),
+            : PeerConnectionFactory(env, context, dependencies),
               conn_context_(context) {}
 
     PeerConnectionFactoryWithContext::PeerConnectionFactoryWithContext(
+            const webrtc::Environment &env,
             webrtc::PeerConnectionFactoryDependencies dependencies)
             : PeerConnectionFactoryWithContext(
-            webrtc::ConnectionContext::Create(webrtc::CreateEnvironment(), &dependencies),
+                env,
+                webrtc::ConnectionContext::Create(env, &dependencies),
             &dependencies) {}
 
     webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> CreateModularPeerConnectionFactoryWithContext(
+        const webrtc::Environment &env,
         webrtc::PeerConnectionFactoryDependencies dependencies,
         webrtc::scoped_refptr<webrtc::ConnectionContext>& context
     ) {
         using result_type =std::pair<webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>, webrtc::scoped_refptr<webrtc::ConnectionContext>>;
-        auto [fst, snd] = dependencies.signaling_thread->BlockingCall([&dependencies]() {
-            const auto factory = PeerConnectionFactoryWithContext::Create(std::move(dependencies));
+        auto [fst, snd] = dependencies.signaling_thread->BlockingCall([&dependencies, env] {
+            const auto factory = PeerConnectionFactoryWithContext::Create(env, std::move(dependencies));
             if (factory == nullptr) {
               return result_type(nullptr, nullptr);
             }

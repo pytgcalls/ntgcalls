@@ -123,7 +123,7 @@ namespace wrtc {
         if (ready()) {
             Release();
         }
-        delete socket;
+        socket = nullptr;
     }
 
     std::unique_ptr<ReflectorPort> ReflectorPort::Create(const webrtc::CreateRelayPortArgs &args,
@@ -237,9 +237,9 @@ namespace wrtc {
         if (serverAddress.proto == webrtc::PROTO_UDP && !SharedSocket()) {
             if (standaloneReflectorMode && Network()->name() == "shared-reflector-network") {
                 const webrtc::IPAddress ipv4_any_address(INADDR_ANY);
-                socket = socket_factory()->CreateUdpSocket(webrtc::SocketAddress(ipv4_any_address, 12345), min_port(), max_port());
+                socket = socket_factory()->CreateUdpSocket(env(), webrtc::SocketAddress(ipv4_any_address, 12345), min_port(), max_port());
             } else {
-                socket = socket_factory()->CreateUdpSocket(webrtc::SocketAddress(Network()->GetBestIP(), 0), min_port(), max_port());
+                socket = socket_factory()->CreateUdpSocket(env(), webrtc::SocketAddress(Network()->GetBestIP(), 0), min_port(), max_port());
             }
         } else if (serverAddress.proto == webrtc::PROTO_TCP) {
             RTC_DCHECK(!SharedSocket());
@@ -247,6 +247,7 @@ namespace wrtc {
             webrtc::PacketSocketTcpOptions tcp_options;
             tcp_options.opts = opts;
             socket = socket_factory()->CreateClientTcpSocket(
+                env(),
                 webrtc::SocketAddress(Network()->GetBestIP(), 0),
                 serverAddress.address,
                 get_proxy(),
@@ -319,7 +320,7 @@ namespace wrtc {
 
     void ReflectorPort::OnSocketClose(webrtc::AsyncPacketSocket* s, const int e) {
         RTC_LOG(LS_WARNING) << ToString() << ": Connection with server failed with error: " << e;
-        RTC_DCHECK(s == socket);
+        RTC_DCHECK(s == socket.get());
         Close();
     }
 
@@ -428,7 +429,7 @@ namespace wrtc {
     }
 
     bool ReflectorPort::HandleIncomingPacket(webrtc::AsyncPacketSocket* s, webrtc::ReceivedIpPacket const &packet) {
-        if (s != socket) {
+        if (s != socket.get()) {
             return false;
         }
         uint8_t const *data = packet.payload().begin();
@@ -588,7 +589,7 @@ namespace wrtc {
 
     void ReflectorPort::OnAllocateError(const int error_code, const std::string& reason) {
         thread()->PostTask(SafeTask(taskSafety.flag(), [this] {
-            SignalPortError(this);
+            NotifyPortError(this);
         }));
         std::string address = GetLocalAddress().HostAsSensitiveURIString();
         int port = GetLocalAddress().port();

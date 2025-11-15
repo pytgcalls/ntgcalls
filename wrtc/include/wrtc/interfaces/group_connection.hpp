@@ -74,7 +74,7 @@ namespace wrtc {
 
         void registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) override;
 
-        int getRegatherOnFailedNetworksInterval() override;
+        webrtc::TimeDelta getRegatherOnFailedNetworksInterval() override;
 
         bool getCustomParameterBool(const std::string& name) const override;
 

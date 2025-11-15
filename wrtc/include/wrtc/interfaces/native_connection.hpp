@@ -32,8 +32,6 @@ namespace wrtc {
 
         void notifyStateUpdated();
 
-        void candidateGathered(webrtc::IceTransportInternal *transport, const webrtc::Candidate &candidate);
-
         void transportRouteChanged(std::optional<webrtc::NetworkRoute> route);
 
         void candidatePairChanged(webrtc::CandidatePairChangeEvent const &event);
@@ -52,7 +50,7 @@ namespace wrtc {
 
         void setPortAllocatorFlags(webrtc::BasicPortAllocator* portAllocator) override;
 
-        int getRegatherOnFailedNetworksInterval() override;
+        webrtc::TimeDelta getRegatherOnFailedNetworksInterval() override;
 
         webrtc::IceRole iceRole() const override;
 
