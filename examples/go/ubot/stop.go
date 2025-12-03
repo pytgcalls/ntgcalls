@@ -6,7 +6,6 @@ func (ctx *Context) Stop(chatId any) error {
 		return err
 	}
 	ctx.presentations = stdRemove(ctx.presentations, parsedChatId)
-	delete(ctx.pendingPresentation, parsedChatId)
 	delete(ctx.callSources, parsedChatId)
 	err = ctx.binding.Stop(parsedChatId)
 	if err != nil {
