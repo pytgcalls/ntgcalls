@@ -258,7 +258,8 @@ ntgcalls::AudioDescription parseAudioDescription(const ntg_audio_description_str
             parseMediaSource(desc.mediaSource),
             desc.sampleRate,
             desc.channelCount,
-            std::string(desc.input)
+            std::string(desc.input),
+            desc.keepOpen,
         };
     }
     throw ntgcalls::FFmpegError("Not supported");
@@ -271,7 +272,8 @@ ntgcalls::VideoDescription parseVideoDescription(const ntg_video_description_str
             desc.width,
             desc.height,
             desc.fps,
-            std::string(desc.input)
+            std::string(desc.input),
+            desc.keepOpen,
         };
     }
     throw ntgcalls::FFmpegError("Not supported");

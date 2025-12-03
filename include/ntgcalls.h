@@ -127,6 +127,7 @@ typedef struct {
     char* input;
     uint32_t sampleRate;
     uint8_t channelCount;
+    bool keepOpen;
 } ntg_audio_description_struct;
 
 typedef struct {
@@ -134,6 +135,7 @@ typedef struct {
     char* input;
     int16_t width, height;
     uint8_t fps;
+    bool keepOpen;
 } ntg_video_description_struct;
 
 typedef struct {
