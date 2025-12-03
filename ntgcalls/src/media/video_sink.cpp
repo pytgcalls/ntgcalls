@@ -24,7 +24,8 @@ namespace ntgcalls {
 
     bool VideoSink::setConfig(const std::optional<VideoDescription>& desc) {
         const bool changed = description != desc;
-        if (changed) {
+        const bool forceChange = desc && !desc->keepOpen;
+        if (changed || forceChange) {
             description = desc;
             clear();
             if (desc -> width <= 0 && desc -> height <= 0 && desc -> fps == 0) {
@@ -33,7 +34,7 @@ namespace ntgcalls {
                 RTC_LOG(LS_INFO) << "VideoSink configured with " << desc->width << "x" << desc->height << "@" << desc->fps << "fps";
             }
         }
-        return changed;
+        return changed || forceChange;
     }
 
     std::optional<VideoDescription> VideoSink::getConfig() {

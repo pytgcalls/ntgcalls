@@ -55,8 +55,8 @@ namespace ntgcalls {
 
         const bool wasIdling = isPaused();
 
-        setConfig<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
-        setConfig<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
+        maybeReconfigureDevice<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
+        maybeReconfigureDevice<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
 
         const bool wasCamera = hasDeviceInternal(mode, Camera);
         const bool wasScreen = hasDeviceInternal(mode, Screen);
@@ -65,8 +65,8 @@ namespace ntgcalls {
             throw InvalidParams("Cannot mix camera and screen sources");
         }
 
-        setConfig<VideoSink, VideoDescription>(mode, Camera, desc.camera);
-        setConfig<VideoSink, VideoDescription>(mode, Screen, desc.screen);
+        maybeReconfigureDevice<VideoSink, VideoDescription>(mode, Camera, desc.camera);
+        maybeReconfigureDevice<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
         if (mode == Capture && (wasCamera != hasDeviceInternal(mode, Camera) || wasScreen != hasDeviceInternal(mode, Screen) || wasIdling) && initialized) {
             checkUpgrade();
@@ -151,7 +151,7 @@ namespace ntgcalls {
     }
 
     void StreamManager::addTrack(Mode mode, Device device, wrtc::NetworkInterface* pc) {
-        const std::pair id(mode, device);
+        const StreamId id(mode, device);
         if (mode == Capture) {
             tracks[id] = pc->addOutgoingTrack(dynamic_cast<BaseStreamer*>(streams[id].get())->createTrack());
         } else {
@@ -188,7 +188,7 @@ namespace ntgcalls {
     }
 
     void StreamManager::sendExternalFrame(Device device, const bytes::binary& data, const wrtc::FrameData frameData) {
-        const std::pair id(Capture, device);
+        const StreamId id(Capture, device);
         if (!externalReaders.contains(device) || !streams.contains(id)) {
             throw InvalidParams("External source not initialized");
         }
@@ -293,12 +293,14 @@ namespace ntgcalls {
         });
     }
 
-    template <typename SinkType, typename DescriptionType>
-    void StreamManager::setConfig(Mode mode, Device device, const std::optional<DescriptionType>& desc) {
-        std::pair id(mode, device);
-        if (!videoSimulcast && (device == Camera || device == Screen)) {
-            id = std::make_pair(mode, Camera);
-        }
+    template<typename SinkType, typename DescriptionType>
+    void StreamManager::maybeReconfigureDevice(Mode mode, Device device, const std::optional<DescriptionType> &desc) {
+        const StreamId id(
+            mode,
+            !videoSimulcast && (device == Camera || device == Screen) ?
+            Camera : device
+        );
+
         const auto streamType = getStreamType(device);
 
         if (!streams.contains(id)) {
@@ -318,156 +320,245 @@ namespace ntgcalls {
             }
         }
 
-        if (desc) {
-            auto sink = dynamic_cast<SinkType*>(streams[id].get());
-            if (sink && sink->setConfig(desc) || !readers.contains(device) || !writers.contains(device) || !externalWriters.contains(device) && desc.value().mediaSource == DescriptionType::MediaSource::External) {
-                if (mode == Capture) {
-                    const bool isShared = desc.value().mediaSource == DescriptionType::MediaSource::Device;
-                    removeReader(device);
-                    if (desc.value().mediaSource == DescriptionType::MediaSource::External) {
-                        externalReaders.insert(device);
-                        syncReaders.insert(device);
-                        return;
-                    }
-                    readers[device] = MediaSourceFactory::fromInput(desc.value(), streams[id].get());
-                    syncReaders.insert(device);
-                    std::weak_ptr weak(shared_from_this());
-                    readers[device]->onData([weak, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
-                        const auto strong = weak.lock();
-                        if (!strong) {
-                            return;
-                        }
-                        if (strong->syncReaders.contains(id.second)) {
-                            std::unique_lock lock(strong->syncMutex);
-                            strong->syncReaders.erase(id.second);
-                            strong->syncCV.notify_all();
-                            strong->syncCV.wait(lock, [strong, id] {
-                                return strong->syncReaders.empty() || strong->cancelSyncReaders.contains(id.second);
-                            });
-                            if (strong->cancelSyncReaders.contains(id.second)) {
-                                strong->cancelSyncReaders.erase(id.second);
-                                return;
-                            }
-                            if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(strong->readers[id.second].get())) {
-                                threadedReader->synchronizeTime();
-                            }
-                        }
-                        if (strong->streams.contains(id)) {
-                            const auto frameSize = strong->streams[id]->frameSize();
-                            if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
-                                frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
-                                if (streamType == Video && isShared) {
-                                    (void) strong->framesCallback(
-                                        id.first,
-                                        id.second,
-                                        {
-                                            {
-                                                0,
-                                                {data.get(), data.get() + frameSize},
-                                                frameData
-                                            }
-                                        }
-                                    );
+        if (!desc) {
+            handleNoDescription(mode, device);
+            return;
+        }
+
+        const auto& d = desc.value();
+        const auto isExternal = d.mediaSource == DescriptionType::MediaSource::External;
+        const auto reason = detectReconfigureReason<SinkType, DescriptionType>(id, d, isExternal);
+
+        if (reason == ReconfigureReason::None) {
+            return;
+        }
+
+        switch (mode) {
+            case Capture:
+                handleCaptureConfig(id, d, reason, streamType, isExternal);
+                break;
+            case Playback:
+                handlePlaybackConfig(id, d, reason, streamType, isExternal);
+                break;
+        }
+    }
+
+    void StreamManager::handleNoDescription(const Mode mode, const Device device) {
+        if (mode == Capture) {
+            removeReader(device);
+            return;
+        }
+        writers.erase(device);
+        externalWriters.erase(device);
+    }
+
+    template<typename SinkType, typename DescriptionType>
+    StreamManager::ReconfigureReason StreamManager::detectReconfigureReason(
+        const StreamId& id,
+        const DescriptionType& desc,
+        const bool isExternal
+    ) {
+        auto* sink = dynamic_cast<SinkType*>(streams[id].get());
+        if (sink && sink->setConfig(desc)) {
+            return ReconfigureReason::SinkConfigChanged;
+        }
+        if (id.first == Capture) {
+            if (!readers.contains(id.second)) {
+                return ReconfigureReason::ReaderMissing;
+            }
+        } else {
+            if (!writers.contains(id.second)) {
+                return ReconfigureReason::WriterMissing;
+            }
+        }
+        if (isExternal && !externalWriters.contains(id.second)) {
+            return ReconfigureReason::ExternalStateChanged;
+        }
+        return ReconfigureReason::None;
+    }
+
+    template<typename DescriptionType>
+    void StreamManager::handleCaptureConfig(
+        const StreamId &id,
+        const DescriptionType &desc,
+        ReconfigureReason reason,
+        const Type streamType,
+        const bool isExternal
+    ) {
+        const auto& device = id.second;
+        RTC_LOG(LS_INFO) << "Reconfiguring CAPTURE for device " << device << " reason=" << static_cast<int>(reason);
+        const bool isShared   = desc.mediaSource == DescriptionType::MediaSource::Device;
+
+        removeReader(device);
+
+        if (isExternal) {
+            externalReaders.insert(device);
+            syncReaders.insert(device);
+            return;
+        }
+
+        readers[device] = MediaSourceFactory::fromInput(desc, streams[id].get());
+
+        setupCaptureCallbacks(id, streamType, isShared);
+
+        if (initialized) {
+            readers[device]->open();
+            RTC_LOG(LS_VERBOSE) << "Reader opened";
+        }
+    }
+
+    void StreamManager::setupCaptureCallbacks(const StreamId &id, Type streamType, bool isShared) {
+        const auto& device = id.second;
+        std::weak_ptr weak(shared_from_this());
+
+        readers[device]->onData([weak, id, streamType, isShared](const bytes::unique_binary& data, wrtc::FrameData frameData) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            if (strong->syncReaders.contains(id.second)) {
+                std::unique_lock lock(strong->syncMutex);
+                strong->syncReaders.erase(id.second);
+                strong->syncCV.notify_all();
+                strong->syncCV.wait(lock, [strong, id] {
+                    return strong->syncReaders.empty() || strong->cancelSyncReaders.contains(id.second);
+                });
+                if (strong->cancelSyncReaders.contains(id.second)) {
+                    strong->cancelSyncReaders.erase(id.second);
+                    return;
+                }
+                if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(strong->readers[id.second].get())) {
+                    threadedReader->synchronizeTime();
+                }
+            }
+            if (strong->streams.contains(id)) {
+                const auto frameSize = strong->streams[id]->frameSize();
+                if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
+                    frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
+                    if (streamType == Video && isShared) {
+                        (void) strong->framesCallback(
+                            id.first,
+                            id.second,
+                            {
+                                {
+                                    0,
+                                    {data.get(), data.get() + frameSize},
+                                    frameData
                                 }
-                                stream->sendData(data.get(), frameSize, frameData);
                             }
-                        }
-                    });
-                    readers[device]->onEof([weak, device] {
-                        const auto strong = weak.lock();
-                        if (!strong) {
-                            return;
-                        }
-                        strong->workerThread->PostTask([weak, device] {
-                            const auto strongThread = weak.lock();
-                            if (!strongThread) {
-                                return;
-                            }
-                            std::lock_guard lock(strongThread->mutex);
-                            strongThread->removeReader(device);
-                            (void) strongThread->onEOF(getStreamType(device), device);
-                        });
-                    });
-                    if (initialized) {
-                        readers[device]->open();
-                        RTC_LOG(LS_VERBOSE) << "Reader opened";
+                        );
                     }
-                } else {
-                    const bool isExternal = desc.value().mediaSource == DescriptionType::MediaSource::External;
-                    if (isExternal) {
-                        externalWriters.insert(device);
-                    }
-                    if (streamType == Audio) {
-                        if (!isExternal) {
-                            writers.erase(device);
-                            writers[device] = MediaSourceFactory::fromAudioOutput(desc.value(), streams[id].get());
-                        }
-                        std::weak_ptr weak(shared_from_this());
-                        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([weak, id, isExternal](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
-                            const auto strong = weak.lock();
-                            if (!strong) {
-                                return;
-                            }
-                            if (isExternal) {
-                                std::vector<wrtc::Frame> externalFrames;
-                                for (const auto& [ssrc, data] : frames) {
-                                    if (strong->externalWriters.contains(id.second)) {
-                                        externalFrames.push_back({
-                                            ssrc,
-                                            {data.first.get(), data.first.get() + data.second},
-                                            {}
-                                        });
-                                    }
-                                }
-                                (void) strong->framesCallback(
-                                    id.first,
-                                    id.second,
-                                    externalFrames
-                                );
-                            } else {
-                                if (strong->writers.contains(id.second)) {
-                                    if (const auto audioWriter = dynamic_cast<AudioWriter*>(strong->writers[id.second].get())) {
-                                        audioWriter->sendFrames(frames);
-                                    }
-                                }
-                            }
+                    stream->sendData(data.get(), frameSize, frameData);
+                }
+            }
+        });
+
+        readers[device]->onEof([weak, device] {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            strong->workerThread->PostTask([weak, device] {
+                const auto strongThread = weak.lock();
+                if (!strongThread) {
+                    return;
+                }
+                std::lock_guard lock(strongThread->mutex);
+                strongThread->removeReader(device);
+                (void) strongThread->onEOF(getStreamType(device), device);
+            });
+        });
+    }
+
+    template<typename DescriptionType>
+    void StreamManager::handlePlaybackConfig(
+        const StreamId &id,
+        const DescriptionType &desc,
+        ReconfigureReason reason,
+        const Type streamType,
+        const bool isExternal
+    ) {
+        const auto& device = id.second;
+        RTC_LOG(LS_INFO) << "Reconfiguring PLAYBACK for device " << device << " reason=" << static_cast<int>(reason);
+
+        if (isExternal) {
+            externalWriters.insert(device);
+        }
+
+        if (streamType == Audio) {
+            if (!isExternal) {
+                writers.erase(device);
+                writers[device] = MediaSourceFactory::fromAudioOutput(desc, streams[id].get());
+            }
+            setupAudioPlaybackCallbacks(id, isExternal);
+        } else if (isExternal) {
+            setupVideoPlaybackCallbacks(id);
+        } else {
+            throw InvalidParams("Invalid input mode");
+        }
+
+        if (!isExternal) {
+            if (initialized) {
+                writers[device]->open();
+            }
+        }
+    }
+
+
+    void StreamManager::setupAudioPlaybackCallbacks(const StreamId &id, bool isExternal) {
+        std::weak_ptr weak(shared_from_this());
+        dynamic_cast<AudioReceiver*>(streams[id].get())->onFrames([weak, id, isExternal](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            if (isExternal) {
+                std::vector<wrtc::Frame> externalFrames;
+                for (const auto& [ssrc, data] : frames) {
+                    if (strong->externalWriters.contains(id.second)) {
+                        externalFrames.push_back({
+                            ssrc,
+                            {data.first.get(), data.first.get() + data.second},
+                            {}
                         });
-                    } else if (isExternal) {
-                        std::weak_ptr weak(shared_from_this());
-                        dynamic_cast<VideoReceiver*>(streams[id].get())->onFrame([weak, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::FrameData frameData) {
-                            const auto strong = weak.lock();
-                            if (!strong) {
-                                return;
-                            }
-                            if (strong->externalWriters.contains(id.second)) {
-                                (void) strong->framesCallback(
-                                    id.first,
-                                    id.second,
-                                    {
-                                        {
-                                            ssrc,
-                                            {frame.get(), frame.get() + size},
-                                            frameData
-                                        }
-                                    }
-                                );
-                            }
-                        });
-                    } else {
-                        throw InvalidParams("Invalid input mode");
                     }
-                    if (!isExternal) {
-                        if (initialized) {
-                            writers[device]->open();
-                        }
+                }
+                (void) strong->framesCallback(
+                    id.first,
+                    id.second,
+                    externalFrames
+                );
+            } else {
+                if (strong->writers.contains(id.second)) {
+                    if (const auto audioWriter = dynamic_cast<AudioWriter*>(strong->writers[id.second].get())) {
+                        audioWriter->sendFrames(frames);
                     }
                 }
             }
-        } else if (mode == Capture) {
-            removeReader(device);
-        } else {
-            writers.erase(device);
-            externalWriters.erase(device);
-        }
+        });
     }
+
+    void StreamManager::setupVideoPlaybackCallbacks(const StreamId &id) {
+        std::weak_ptr weak(shared_from_this());
+        dynamic_cast<VideoReceiver*>(streams[id].get())->onFrame([weak, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::FrameData frameData) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            if (strong->externalWriters.contains(id.second)) {
+                (void) strong->framesCallback(
+                    id.first,
+                    id.second,
+                    {
+                        {
+                            ssrc,
+                            {frame.get(), frame.get() + size},
+                            frameData
+                        }
+                    }
+                );
+            }
+        });
+    }
+
 } // ntgcalls
