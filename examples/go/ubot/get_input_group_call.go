@@ -7,7 +7,10 @@ import (
 )
 
 func (ctx *Context) getInputGroupCall(chatId int64) (tg.InputGroupCall, error) {
-	if call, ok := ctx.inputGroupCalls[chatId]; ok {
+	ctx.inputGroupCallsMutex.RLock()
+	call, ok := ctx.inputGroupCalls[chatId]
+	ctx.inputGroupCallsMutex.RUnlock()
+	if ok {
 		if call == nil {
 			return nil, fmt.Errorf("group call for chatId %d is closed", chatId)
 		}
@@ -28,17 +31,24 @@ func (ctx *Context) getInputGroupCall(chatId int64) (tg.InputGroupCall, error) {
 		if err != nil {
 			return nil, err
 		}
+		ctx.inputGroupCallsMutex.Lock()
 		ctx.inputGroupCalls[chatId] = fullChat.FullChat.(*tg.ChannelFull).Call
+		ctx.inputGroupCallsMutex.Unlock()
 	case *tg.InputPeerChat:
 		fullChat, err := ctx.app.MessagesGetFullChat(chatPeer.ChatID)
 		if err != nil {
 			return nil, err
 		}
+		ctx.inputGroupCallsMutex.Lock()
 		ctx.inputGroupCalls[chatId] = fullChat.FullChat.(*tg.ChatFullObj).Call
+		ctx.inputGroupCallsMutex.Unlock()
 	default:
 		return nil, fmt.Errorf("chatId %d is not a group call", chatId)
 	}
-	if call, ok := ctx.inputGroupCalls[chatId]; ok && call == nil {
+	ctx.inputGroupCallsMutex.RLock()
+	call, ok = ctx.inputGroupCalls[chatId]
+	ctx.inputGroupCallsMutex.RUnlock()
+	if ok && call == nil {
 		return nil, fmt.Errorf("group call for chatId %d is closed", chatId)
 	} else if ok {
 		return call, nil
