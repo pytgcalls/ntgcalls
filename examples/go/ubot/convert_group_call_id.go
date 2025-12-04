@@ -7,6 +7,8 @@ import (
 )
 
 func (ctx *Context) convertGroupCallId(callId int64) (int64, error) {
+	ctx.inputGroupCallsMutex.RLock()
+	defer ctx.inputGroupCallsMutex.RUnlock()
 	for chatId, inputCallInterface := range ctx.inputGroupCalls {
 		if inputCall, ok := inputCallInterface.(*tg.InputGroupCallObj); ok {
 			if inputCall.ID == callId {
