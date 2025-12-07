@@ -18,7 +18,10 @@ namespace android {
         const webrtc::ScopedJavaLocalRef<jclass> factoryClass = webrtc::GetClass(env, "org/webrtc/DefaultVideoEncoderFactory");
         // ReSharper disable once CppLocalVariableMayBeConst
         jmethodID factoryConstructor = env->GetMethodID(factoryClass.obj(), "<init>", "(Lorg/webrtc/EglBase$Context;ZZ)V");
-        const webrtc::ScopedJavaLocalRef factoryObject(env, env->NewObject(factoryClass.obj(), factoryConstructor, eglContext, false, true));
+        const auto factoryObject = webrtc::ScopedJavaLocalRef<>::Adopt(
+            env,
+            env->NewObject(factoryClass.obj(), factoryConstructor, eglContext, false, true)
+        );
         return webrtc::JavaToNativeVideoEncoderFactory(env, factoryObject.obj());
     }
 
@@ -31,7 +34,10 @@ namespace android {
         const webrtc::ScopedJavaLocalRef<jclass> factoryClass = webrtc::GetClass(env, "org/webrtc/DefaultVideoDecoderFactory");
         // ReSharper disable once CppLocalVariableMayBeConst
         jmethodID factoryConstructor = env->GetMethodID(factoryClass.obj(), "<init>", "(Lorg/webrtc/EglBase$Context;)V");
-        const webrtc::ScopedJavaLocalRef factoryObject(env, env->NewObject(factoryClass.obj(), factoryConstructor, eglContext));
+        const auto factoryObject = webrtc::ScopedJavaLocalRef<>::Adopt(
+            env,
+            env->NewObject(factoryClass.obj(), factoryConstructor, eglContext)
+        );
         return webrtc::JavaToNativeVideoDecoderFactory(env, factoryObject.obj());
     }
 } // android

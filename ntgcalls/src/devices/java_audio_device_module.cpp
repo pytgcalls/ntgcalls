@@ -17,15 +17,18 @@ namespace ntgcalls {
         AudioMixer(sink)
     {
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        const webrtc::ScopedJavaLocalRef<jclass> audioRecordClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaAudioDeviceModule");
-        webrtc::ScopedJavaLocalRef localJavaModule{env, env->NewObject(
-            audioRecordClass.obj(),
-            env->GetMethodID(audioRecordClass.obj(), "<init>", "(ZIIJ)V"),
-            isCapture,
-            desc->sampleRate,
-            desc->channelCount,
-            reinterpret_cast<jlong>(this)
-        )};
+        const auto audioRecordClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaAudioDeviceModule");
+        auto localJavaModule = webrtc::ScopedJavaLocalRef<>::Adopt(
+            env,
+            env->NewObject(
+                audioRecordClass.obj(),
+                env->GetMethodID(audioRecordClass.obj(), "<init>", "(ZIIJ)V"),
+                isCapture,
+                desc->sampleRate,
+                desc->channelCount,
+                reinterpret_cast<jlong>(this)
+            )
+        );
         javaModule = env->NewGlobalRef(localJavaModule.Release());
     }
 
@@ -34,7 +37,10 @@ namespace ntgcalls {
         running = false;
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
         // ReSharper disable once CppLocalVariableMayBeConst
-        const webrtc::ScopedJavaLocalRef javaModuleClass(env, env->GetObjectClass(javaModule));
+        const auto javaModuleClass = webrtc::ScopedJavaLocalRef<jclass>::Adopt(
+            env,
+            env->GetObjectClass(javaModule)
+        );
         env->CallVoidMethod(javaModule, env->GetMethodID(javaModuleClass.obj(), "release", "()V"));
         env->DeleteGlobalRef(javaModule);
     }
@@ -49,13 +55,19 @@ namespace ntgcalls {
     }
 
     void JavaAudioDeviceModule::getPlaybackData() {
-        auto frameSize = sink->frameSize();
+        const auto frameSize = sink->frameSize();
         if (queue.empty()) return;
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        const webrtc::ScopedJavaLocalRef javaModuleClass{env, env->GetObjectClass(javaModule)};
+        const auto javaModuleClass = webrtc::ScopedJavaLocalRef<jclass>::Adopt(
+            env,
+            env->GetObjectClass(javaModule)
+        );
         // ReSharper disable once CppLocalVariableMayBeConst
         jfieldID byteBufferFieldID = env->GetFieldID(javaModuleClass.obj(), "byteBuffer", "Ljava/nio/ByteBuffer;");
-        const webrtc::ScopedJavaLocalRef byteBufferObject{env, env->GetObjectField(javaModule, byteBufferFieldID)};
+        const auto byteBufferObject = webrtc::ScopedJavaLocalRef<>::Adopt(
+            env,
+            env->GetObjectField(javaModule, byteBufferFieldID)
+        );
 
         auto* buffer = static_cast<uint8_t*>(env->GetDirectBufferAddress(byteBufferObject.obj()));
         if (buffer == nullptr) {
@@ -75,7 +87,10 @@ namespace ntgcalls {
         running = true;
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
         // ReSharper disable once CppLocalVariableMayBeConst
-        const webrtc::ScopedJavaLocalRef javaModuleClass(env, env->GetObjectClass(javaModule));
+        const auto javaModuleClass = webrtc::ScopedJavaLocalRef<jclass>::Adopt(
+            env,
+            env->GetObjectClass(javaModule)
+        );
         env->CallVoidMethod(javaModule, env->GetMethodID(javaModuleClass.obj(), "open", "()V"));
     }
 

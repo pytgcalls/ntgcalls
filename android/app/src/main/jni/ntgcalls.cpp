@@ -8,7 +8,7 @@ std::mutex callbacksMutex;
 
 extern "C"
 JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_init(JNIEnv *env, jobject thiz) {
-    webrtc::ScopedJavaLocalRef<jclass> clazz(env, env->GetObjectClass(thiz));
+    auto clazz = webrtc::ScopedJavaLocalRef<jclass>::Adopt(env, env->GetObjectClass(thiz));
     jfieldID fid = env->GetFieldID(clazz.obj(), "nativePointer", "J");
     env->SetLongField(thiz, fid, reinterpret_cast<jlong>(new ntgcalls::NTgCalls()));
 
@@ -118,7 +118,7 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_init(JNIEnv *env, jobje
 extern "C"
 JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_destroy(JNIEnv *env, jobject thiz) {
     std::lock_guard lock(callbacksMutex);
-    webrtc::ScopedJavaLocalRef<jclass> clazz(env, env->GetObjectClass(thiz));
+    auto clazz = webrtc::ScopedJavaLocalRef<jclass>::Adopt(env, env->GetObjectClass(thiz));
     jfieldID fid = env->GetFieldID(clazz.obj(), "nativePointer", "J");
     jlong ptr = env->GetLongField(thiz, fid);
     if (ptr != 0) {
@@ -392,6 +392,6 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaVideoCapturerModule_
 extern "C"
 JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaVideoCapturerModule_nativeOnFrame(JNIEnv *env, jobject thiz, jobject jFrame) {
     auto instance = getInstanceVideoCapture(env, thiz);
-    webrtc::ScopedJavaLocalRef<jobject> frame(env, jFrame);
+    auto frame = webrtc::ScopedJavaLocalRef<>::Adopt(env, jFrame);
     instance->onFrame(webrtc::jni::JavaToNativeFrame(env, frame, 0));
 }

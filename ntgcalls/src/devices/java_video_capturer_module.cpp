@@ -24,17 +24,20 @@ namespace ntgcalls {
             throw MediaDeviceError("Wrong device type");
         }
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        const webrtc::ScopedJavaLocalRef<jclass> videoCapturerClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
-        webrtc::ScopedJavaLocalRef localJavaModule{env, env->NewObject(
-            videoCapturerClass.obj(),
-            env->GetMethodID(videoCapturerClass.obj(), "<init>", "(ZLjava/lang/String;IIIJ)V"),
-            isScreencast,
-            env->NewStringUTF(deviceName.c_str()),
-            desc.width,
-            desc.height,
-            desc.fps,
-            reinterpret_cast<jlong>(this)
-        )};
+        const auto videoCapturerClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
+        auto localJavaModule = webrtc::ScopedJavaLocalRef<>::Adopt(
+            env,
+            env->NewObject(
+                videoCapturerClass.obj(),
+                env->GetMethodID(videoCapturerClass.obj(), "<init>", "(ZLjava/lang/String;IIIJ)V"),
+                isScreencast,
+                env->NewStringUTF(deviceName.c_str()),
+                desc.width,
+                desc.height,
+                desc.fps,
+                reinterpret_cast<jlong>(this)
+            )
+        );
         javaModule = env->NewGlobalRef(localJavaModule.Release());
     }
 
@@ -42,7 +45,10 @@ namespace ntgcalls {
         running = false;
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
         // ReSharper disable once CppLocalVariableMayBeConst
-        const webrtc::ScopedJavaLocalRef javaModuleClass(env, env->GetObjectClass(javaModule));
+        const auto javaModuleClass = webrtc::ScopedJavaLocalRef<jclass>::Adopt(
+            env,
+            env->GetObjectClass(javaModule)
+        );
         env->CallVoidMethod(javaModule, env->GetMethodID(javaModuleClass.obj(), "release", "()V"));
         env->DeleteGlobalRef(javaModule);
     }
@@ -56,11 +62,14 @@ namespace ntgcalls {
 
     std::vector<DeviceInfo> JavaVideoCapturerModule::getDevices() {
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        const webrtc::ScopedJavaLocalRef<jclass> videoCapturerClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
+        const auto videoCapturerClass = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
         // ReSharper disable once CppLocalVariableMayBeConst
         jmethodID getDevicesMethod = env->GetStaticMethodID(videoCapturerClass.obj(), "getDevices", "()Ljava/util/List;");
-        const webrtc::ScopedJavaLocalRef deviceList(env, env->CallStaticObjectMethod(videoCapturerClass.obj(), getDevicesMethod));
-        const webrtc::ScopedJavaLocalRef<jclass> listClass = webrtc::GetClass(env, "java/util/List");
+        const auto deviceList = webrtc::ScopedJavaLocalRef<>::Adopt(
+            env,
+            env->CallStaticObjectMethod(videoCapturerClass.obj(), getDevicesMethod)
+        );
+        const auto listClass = webrtc::GetClass(env, "java/util/List");
         // ReSharper disable once CppLocalVariableMayBeConst
         jmethodID listSizeMethod = env->GetMethodID(listClass.obj(), "size", "()I");
         // ReSharper disable once CppLocalVariableMayBeConst
@@ -69,14 +78,26 @@ namespace ntgcalls {
 
         std::vector<DeviceInfo> devices;
         for (jint i = 0; i < listSize; i++) {
-            webrtc::ScopedJavaLocalRef deviceInfoObj(env, env->CallObjectMethod(deviceList.obj(), listGetMethod, i));
-            webrtc::ScopedJavaLocalRef deviceInfoClass(env, env->GetObjectClass(deviceInfoObj.obj()));
+            auto deviceInfoObj = webrtc::ScopedJavaLocalRef<>::Adopt(
+                env,
+                env->CallObjectMethod(deviceList.obj(), listGetMethod, i)
+            );
+            auto deviceInfoClass = webrtc::ScopedJavaLocalRef<jclass>::Adopt(
+                env,
+                env->GetObjectClass(deviceInfoObj.obj())
+            );
             // ReSharper disable once CppLocalVariableMayBeConst
             jfieldID nameFieldID = env->GetFieldID(deviceInfoClass.obj(), "name", "Ljava/lang/String;");
             // ReSharper disable once CppLocalVariableMayBeConst
             jfieldID metadataFieldID = env->GetFieldID(deviceInfoClass.obj(), "metadata", "Ljava/lang/String;");
-            webrtc::ScopedJavaLocalRef nameObj(env, reinterpret_cast<jstring>(env->GetObjectField(deviceInfoObj.obj(), nameFieldID)));
-            webrtc::ScopedJavaLocalRef metadataObj(env, reinterpret_cast<jstring>(env->GetObjectField(deviceInfoObj.obj(), metadataFieldID)));
+            auto nameObj = webrtc::ScopedJavaLocalRef<jstring>::Adopt(
+                env,
+                reinterpret_cast<jstring>(env->GetObjectField(deviceInfoObj.obj(), nameFieldID))
+            );
+            auto metadataObj = webrtc::ScopedJavaLocalRef<jstring>::Adopt(
+                env,
+                reinterpret_cast<jstring>(env->GetObjectField(deviceInfoObj.obj(), metadataFieldID))
+            );
             const auto name = env->GetStringUTFChars(nameObj.obj(), nullptr);
             const auto metadata = env->GetStringUTFChars(metadataObj.obj(), nullptr);
             devices.emplace_back(std::string(name), std::string(metadata));
@@ -129,7 +150,10 @@ namespace ntgcalls {
         if (running) return;
         running = true;
         const auto env = static_cast<JNIEnv*>(wrtc::GetJNIEnv());
-        const webrtc::ScopedJavaLocalRef javaModuleClass(env, env->GetObjectClass(javaModule));
+        const auto javaModuleClass = webrtc::ScopedJavaLocalRef<jclass>::Adopt(
+            env,
+            env->GetObjectClass(javaModule)
+        );
         env->CallVoidMethod(javaModule, env->GetMethodID(javaModuleClass.obj(), "open", "()V"));
     }
 } // ntgcalls
