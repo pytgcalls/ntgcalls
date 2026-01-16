@@ -8,7 +8,7 @@ if (LINUX_x86_64 OR MACOS_ARM64 OR ANDROID_ABI)
 
     if (MACOS_ARM64)
         set(CLANG_OS_PREFIX Mac_arm64)
-    elseif (LINUX_x86_64)
+    elseif (LINUX_x86_64 OR ANDROID)
         set(CLANG_OS_PREFIX Linux_x64)
     endif ()
 
