@@ -6,6 +6,8 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory("${DEPS_DIR}/json" "deps/json" EXCLUDE_FROM_ALL)
 
 set(CLANG_BIN_DIR ${DEPS_DIR}/clang/bin)
+set(CMAKE_AR "${CLANG_BIN_DIR}/llvm-ar")
+set(CMAKE_STRIP "${CLANG_BIN_DIR}/llvm-strip")
 set(CMAKE_C_COMPILER "${CLANG_BIN_DIR}/clang")
 set(CMAKE_CXX_COMPILER "${CLANG_BIN_DIR}/clang++")
 
