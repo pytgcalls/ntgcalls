@@ -12,6 +12,7 @@
 #include <p2p/client/basic_port_allocator.h>
 #include <wrtc/models/peer_ice_parameters.hpp>
 #include <wrtc/interfaces/network_interface.hpp>
+#include <rtc_base/third_party/sigslot/sigslot.h>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 #include <wrtc/interfaces/sctp_data_channel_provider_interface_impl.hpp>
 #include <wrtc/interfaces/media/channels/outgoing_audio_channel.hpp>

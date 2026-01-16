@@ -90,10 +90,6 @@ namespace signaling {
         return 0;
     }
 
-    webrtc::scoped_refptr<webrtc::RTCCertificate> SignalingPacketTransport::GetLocalCertificate() const {
-        return nullptr;
-    }
-
     bool SignalingPacketTransport::SetLocalCertificate(const webrtc::scoped_refptr<webrtc::RTCCertificate>& certificate) {
         return false;
     }
@@ -104,10 +100,6 @@ namespace signaling {
 
     bool SignalingPacketTransport::ExportSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<uint8_t>& keying_material) {
         return false;
-    }
-
-    bool SignalingPacketTransport::SetRemoteFingerprint(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len) {
-        return true;
     }
 
     webrtc::RTCError SignalingPacketTransport::SetRemoteParameters(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len, std::optional<webrtc::SSLRole> role) {

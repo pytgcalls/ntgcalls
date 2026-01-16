@@ -138,7 +138,25 @@ namespace wrtc {
             strong->candidatePairChanged(event);
         });
 
-        transportChannel->SignalNetworkRouteChanged.connect(this, &NativeConnection::transportRouteChanged);
+        transportChannel->SubscribeNetworkRouteChanged(this, [weak](const std::optional<webrtc::NetworkRoute> &route) {
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            assert(strong->networkThread()->IsCurrent());
+            if (route.has_value()) {
+                RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl route changed: " << route->DebugString();
+                const bool localIsWifi = route->local.adapter_type() == webrtc::AdapterType::ADAPTER_TYPE_WIFI;
+                const bool remoteIsWifi = route->remote.adapter_type() == webrtc::AdapterType::ADAPTER_TYPE_WIFI;
+                RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl is wifi: local=" << localIsWifi << ", remote=" << remoteIsWifi;
+                const std::string localDescription = route->local.uses_turn() ? "turn" : "p2p";
+                const std::string remoteDescription = route->remote.uses_turn() ? "turn" : "p2p";
+                if (RouteDescription routeDescription(localDescription, remoteDescription); !strong->currentRouteDescription || routeDescription != strong->currentRouteDescription.value()) {
+                    strong->currentRouteDescription = std::move(routeDescription);
+                    strong->notifyStateUpdated();
+                }
+            }
+        });
     }
 
     std::optional<webrtc::SSLRole> NativeConnection::dtlsRole() const {
@@ -276,23 +294,6 @@ namespace wrtc {
                 strong->alreadyConnected = true;
             }
         });
-    }
-
-    // ReSharper disable once CppPassValueParameterByConstReference
-    void NativeConnection::transportRouteChanged(std::optional<webrtc::NetworkRoute> route) {
-        assert(networkThread()->IsCurrent());
-        if (route.has_value()) {
-            RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl route changed: " << route->DebugString();
-            const bool localIsWifi = route->local.adapter_type() == webrtc::AdapterType::ADAPTER_TYPE_WIFI;
-            const bool remoteIsWifi = route->remote.adapter_type() == webrtc::AdapterType::ADAPTER_TYPE_WIFI;
-            RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl is wifi: local=" << localIsWifi << ", remote=" << remoteIsWifi;
-            const std::string localDescription = route->local.uses_turn() ? "turn" : "p2p";
-            const std::string remoteDescription = route->remote.uses_turn() ? "turn" : "p2p";
-            if (RouteDescription routeDescription(localDescription, remoteDescription); !currentRouteDescription || routeDescription != currentRouteDescription.value()) {
-                currentRouteDescription = std::move(routeDescription);
-                notifyStateUpdated();
-            }
-        }
     }
 
     void NativeConnection::candidatePairChanged(webrtc::CandidatePairChangeEvent const& event) {

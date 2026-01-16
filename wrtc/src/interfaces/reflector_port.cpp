@@ -121,6 +121,9 @@ namespace wrtc {
 
     ReflectorPort::~ReflectorPort() {
         if (ready()) {
+            socket->UnsubscribeReadyToSend(this);
+            socket->UnsubscribeSentPacket(this);
+            socket->UnsubscribeSentPacket(this);
             Release();
         }
         socket = nullptr;
@@ -264,13 +267,21 @@ namespace wrtc {
         }
         if (!SharedSocket()) {
             socket->RegisterReceivedPacketCallback([this](webrtc::AsyncPacketSocket* s, const webrtc::ReceivedIpPacket& packet) {
-                OnReadPacket(s, packet);
+                HandleIncomingPacket(s, packet);
             });
         }
-        socket->SignalReadyToSend.connect(this, &ReflectorPort::OnReadyToSend);
-        socket->SignalSentPacket.connect(this, &ReflectorPort::OnSentPacket);
+        socket->SubscribeReadyToSend(this, [this](webrtc::AsyncPacketSocket*) {
+            if (ready()) {
+                OnReadyToSend();
+            }
+        });
+        socket->SubscribeSentPacket(this, [this](webrtc::AsyncPacketSocket* s, const webrtc::SentPacketInfo& packet) {
+            OnSentPacket(s, packet);
+        });
         if (serverAddress.proto == webrtc::PROTO_TCP || serverAddress.proto == webrtc::PROTO_TLS) {
-            socket->SignalConnect.connect(this, &ReflectorPort::OnSocketConnect);
+            socket->SubscribeConnect(this, [this](webrtc::AsyncPacketSocket* s) {
+                OnSocketConnect(s);
+            });
             socket->SubscribeCloseEvent(this, [this](webrtc::AsyncPacketSocket* s, const int e) {
                 OnSocketClose(s, e);
             });
@@ -531,18 +542,8 @@ namespace wrtc {
         return true;
     }
 
-    void ReflectorPort::OnReadPacket(webrtc::AsyncPacketSocket* s, const webrtc::ReceivedIpPacket& packet) {
-        HandleIncomingPacket(s, packet);
-    }
-
     void ReflectorPort::OnSentPacket(webrtc::AsyncPacketSocket* s, const webrtc::SentPacketInfo& sent_packet) {
-        SignalSentPacket(sent_packet);
-    }
-
-    void ReflectorPort::OnReadyToSend(webrtc::AsyncPacketSocket*) {
-        if (ready()) {
-            Port::OnReadyToSend();
-        }
+        NotifySentPacket(sent_packet);
     }
 
     bool ReflectorPort::SupportsProtocol(const absl::string_view protocol) const {

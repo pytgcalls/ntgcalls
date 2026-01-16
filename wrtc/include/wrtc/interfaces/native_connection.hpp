@@ -32,8 +32,6 @@ namespace wrtc {
 
         void notifyStateUpdated();
 
-        void transportRouteChanged(std::optional<webrtc::NetworkRoute> route);
-
         void candidatePairChanged(webrtc::CandidatePairChangeEvent const &event);
 
         void checkConnectionTimeout();

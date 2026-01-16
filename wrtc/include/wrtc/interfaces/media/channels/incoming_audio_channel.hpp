@@ -5,7 +5,6 @@
 #pragma once
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
-
 #include <wrtc/models/media_content.hpp>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 #include <wrtc/interfaces/media/remote_audio_sink.hpp>

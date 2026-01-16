@@ -6,6 +6,7 @@
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
 #include <pc/rtp_sender.h>
+#include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include <wrtc/models/media_content.hpp>
 #include <wrtc/interfaces/media/channel_manager.hpp>

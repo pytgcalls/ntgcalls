@@ -6,6 +6,7 @@
 #include <media/sctp/sctp_transport_factory.h>
 #include <ntgcalls/signaling/signaling_interface.hpp>
 #include <ntgcalls/signaling/signaling_packet_transport.hpp>
+#include <rtc_base/third_party/sigslot/sigslot.h>
 
 namespace signaling {
 

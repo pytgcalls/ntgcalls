@@ -51,7 +51,6 @@ namespace wrtc {
                 }
             );
             strong->dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
-            strong->dtlsSrtpTransport->SetActiveResetSrtpParams(false);
             strong->dtlsSrtpTransport->SubscribeReadyToSend(strong.get(), [weak](const bool readyToSend) {
                 const auto strongListener = weak.lock();
                 if (!strongListener) {
@@ -59,12 +58,12 @@ namespace wrtc {
                 }
                 strongListener->DtlsReadyToSend(readyToSend);
             });
-            strong->dtlsSrtpTransport->SubscribeRtcpPacketReceived(strong.get(), [weak](const webrtc::CopyOnWriteBuffer* packet, int64_t) {
+            strong->dtlsSrtpTransport->SubscribeRtcpPacketReceived(strong.get(), [weak](webrtc::CopyOnWriteBuffer packet, std::optional<webrtc::Timestamp> time, webrtc::EcnMarking) {
                 const auto strongListener = weak.lock();
                 if (!strongListener) {
                     return;
                 }
-                strongListener->workerThread()->PostTask([weak, packet = *packet] {
+                strongListener->workerThread()->PostTask([weak, packet] {
                     const auto strongWorker = weak.lock();
                     if (!strongWorker) {
                         return;
@@ -421,7 +420,7 @@ namespace wrtc {
                     return;
                 }
                 if (strong->transportChannel) {
-                    strong->transportChannel->SignalNetworkRouteChanged.disconnect(strong.get());
+                    strong->transportChannel->UnsubscribeNetworkRouteChanged(strong.get());
                 }
                 strong->dataChannelInterface = nullptr;
                 if (strong->dtlsTransport) {

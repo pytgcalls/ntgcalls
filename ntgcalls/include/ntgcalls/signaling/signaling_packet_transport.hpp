@@ -54,15 +54,11 @@ namespace signaling {
 
         uint16_t GetSslPeerSignatureAlgorithm() const override;
 
-        webrtc::scoped_refptr<webrtc::RTCCertificate> GetLocalCertificate() const override;
-
         bool SetLocalCertificate(const webrtc::scoped_refptr<webrtc::RTCCertificate>& certificate) override;
 
         std::unique_ptr<webrtc::SSLCertChain> GetRemoteSSLCertChain() const override;
 
         bool ExportSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<uint8_t>& keying_material) override;
-
-        bool SetRemoteFingerprint(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len) override;
 
         webrtc::RTCError SetRemoteParameters(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len, std::optional<webrtc::SSLRole> role) override;
 

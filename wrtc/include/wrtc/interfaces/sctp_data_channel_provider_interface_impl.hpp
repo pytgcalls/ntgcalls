@@ -7,6 +7,7 @@
 #include <api/data_channel_interface.h>
 #include <pc/sctp_data_channel.h>
 #include <media/sctp/sctp_transport_factory.h>
+#include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
