@@ -170,7 +170,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest
           CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest
           CIBW_MUSLLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/musllinux-x86_64:latest
-          MACOSX_DEPLOYMENT_TARGET: 12.0
+          MACOSX_DEPLOYMENT_TARGET: 14.0
 
       - uses: actions/upload-artifact@v4
         if: github.event.inputs.build-wheels == 'true'
