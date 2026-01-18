@@ -202,13 +202,17 @@ func (ctx *Context) handleUpdates() {
 			switch groupCallRaw.(type) {
 			case *tg.GroupCallObj:
 				groupCall := groupCallRaw.(*tg.GroupCallObj)
+				ctx.inputGroupCallsMutex.Lock()
 				ctx.inputGroupCalls[chatID] = &tg.InputGroupCallObj{
 					ID:         groupCall.ID,
 					AccessHash: groupCall.AccessHash,
 				}
+				ctx.inputGroupCallsMutex.Unlock()
 				return nil
 			case *tg.GroupCallDiscarded:
+				ctx.inputGroupCallsMutex.Lock()
 				delete(ctx.inputGroupCalls, chatID)
+				ctx.inputGroupCallsMutex.Unlock()
 				_ = ctx.binding.Stop(chatID)
 				return nil
 			}
@@ -217,8 +221,11 @@ func (ctx *Context) handleUpdates() {
 	})
 
 	ctx.binding.OnRequestBroadcastTimestamp(func(chatId int64) {
-		if ctx.inputGroupCalls[chatId] != nil {
-			channels, err := ctx.app.PhoneGetGroupCallStreamChannels(ctx.inputGroupCalls[chatId])
+		ctx.inputGroupCallsMutex.RLock()
+		inputGroupCall := ctx.inputGroupCalls[chatId]
+		ctx.inputGroupCallsMutex.RUnlock()
+		if inputGroupCall != nil {
+			channels, err := ctx.app.PhoneGetGroupCallStreamChannels(inputGroupCall)
 			if err == nil {
 				_ = ctx.binding.SendBroadcastTimestamp(chatId, channels.Channels[0].LastTimestampMs)
 			}
@@ -226,11 +233,14 @@ func (ctx *Context) handleUpdates() {
 	})
 
 	ctx.binding.OnRequestBroadcastPart(func(chatId int64, segmentPartRequest ntgcalls.SegmentPartRequest) {
-		if ctx.inputGroupCalls[chatId] != nil {
+		ctx.inputGroupCallsMutex.RLock()
+		inputGroupCall := ctx.inputGroupCalls[chatId]
+		ctx.inputGroupCallsMutex.RUnlock()
+		if inputGroupCall != nil {
 			file, err := ctx.app.UploadGetFile(
 				&tg.UploadGetFileParams{
 					Location: &tg.InputGroupCallStream{
-						Call:         ctx.inputGroupCalls[chatId],
+						Call:         inputGroupCall,
 						TimeMs:       segmentPartRequest.Timestamp,
 						Scale:        0,
 						VideoChannel: segmentPartRequest.ChannelID,
@@ -285,7 +295,10 @@ func (ctx *Context) handleUpdates() {
 	})
 
 	ctx.binding.OnUpgrade(func(chatId int64, state ntgcalls.MediaState) {
-		err := ctx.setCallStatus(ctx.inputGroupCalls[chatId], state)
+		ctx.inputGroupCallsMutex.RLock()
+		inputGroupCall := ctx.inputGroupCalls[chatId]
+		ctx.inputGroupCallsMutex.RUnlock()
+		err := ctx.setCallStatus(inputGroupCall, state)
 		if err != nil {
 			fmt.Println(err)
 		}

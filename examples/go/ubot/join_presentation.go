@@ -30,8 +30,11 @@ func (ctx *Context) joinPresentation(chatId int64, join bool) error {
 					return err
 				}
 				resultParams := "{\"transport\": null}"
+				ctx.inputGroupCallsMutex.RLock()
+				inputGroupCall := ctx.inputGroupCalls[chatId]
+				ctx.inputGroupCallsMutex.RUnlock()
 				callResRaw, err := ctx.app.PhoneJoinGroupCallPresentation(
-					ctx.inputGroupCalls[chatId],
+					inputGroupCall,
 					&tg.DataJson{
 						Data: jsonParams,
 					},
@@ -63,8 +66,11 @@ func (ctx *Context) joinPresentation(chatId int64, join bool) error {
 			if err != nil {
 				return err
 			}
+			ctx.inputGroupCallsMutex.RLock()
+			inputGroupCall := ctx.inputGroupCalls[chatId]
+			ctx.inputGroupCallsMutex.RUnlock()
 			_, err = ctx.app.PhoneLeaveGroupCallPresentation(
-				ctx.inputGroupCalls[chatId],
+				inputGroupCall,
 			)
 			if err != nil {
 				return err

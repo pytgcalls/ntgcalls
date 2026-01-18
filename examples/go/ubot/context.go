@@ -18,6 +18,7 @@ type Context struct {
 	p2pConfigs            map[int64]*types.P2PConfig
 	inputCalls            map[int64]*tg.InputPhoneCall
 	inputGroupCalls       map[int64]tg.InputGroupCall
+	inputGroupCallsMutex  sync.RWMutex
 	participantsMutex     sync.Mutex
 	callParticipants      map[int64]*types.CallParticipantsCache
 	pendingConnections    map[int64]*types.PendingConnection
