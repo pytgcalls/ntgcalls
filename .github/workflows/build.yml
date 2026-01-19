@@ -130,15 +130,15 @@ jobs:
         if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-shared-libs == 'true'
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/manylinux-${{ matrix.image_arch }}:latest bash -c "
-            python3.12 -m pip install setuptools
-            python3.12 setup.py build_lib"
+            python3.14 -m pip install setuptools
+            python3.14 setup.py build_lib"
 
       - name: Build Static Libs (Linux)
         if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-static-libs == 'true'
         run: |
           docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/manylinux-${{ matrix.image_arch }}:latest bash -c "
-            python3.12 -m pip install setuptools
-            python3.12 setup.py build_lib --static"
+            python3.14 -m pip install setuptools
+            python3.14 setup.py build_lib --static"
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v4
