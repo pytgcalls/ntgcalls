@@ -96,13 +96,13 @@ jobs:
         if: matrix.shared_name != 'linux-arm64'
         id: python
         with:
-          python-version: "3.9 - 3.13"
+          python-version: "3.10 - 3.14"
           update-environment: false
 
       - name: Set up Python (ARM64)
         if: matrix.shared_name == 'linux-arm64'
         id: python-arm64
-        run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
+        run: echo "python-path=python3.14" >> $GITHUB_OUTPUT
 
       - name: Install Python Requirements
         if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64'
@@ -163,7 +163,7 @@ jobs:
           python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_SKIP: cp38-* cp314t-*
           CIBW_TEST_COMMAND: python -m unittest discover -s {package}/tests
