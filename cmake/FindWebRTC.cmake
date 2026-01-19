@@ -62,8 +62,6 @@ if(NOT TARGET WebRTC::webrtc)
 
     add_library(WebRTC::webrtc STATIC IMPORTED)
 
-    target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_PATCH_LOCATION})
-
     set(_DIRS
         ${WEBRTC_INCLUDE}
         ${WEBRTC_INCLUDE}/third_party/abseil-cpp
