@@ -102,7 +102,7 @@ jobs:
       - name: Set up Python (ARM64)
         if: matrix.shared_name == 'linux-arm64'
         id: python-arm64
-        run: echo "python-path=python3.14" >> $GITHUB_OUTPUT
+        run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
 
       - name: Install Python Requirements
         if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64'
@@ -196,8 +196,11 @@ jobs:
         uses: actions/setup-python@v5
         id: python
         with:
-          python-version: "3.12"
+          python-version: "3.14"
           update-environment: false
+
+      - name: Install Python Development Headers
+        run: sudo apt install -y python3.14-dev
 
       - name: Install Python Requirements
         run: |
