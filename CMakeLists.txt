@@ -39,6 +39,7 @@ include(cmake/FindFFmpeg.cmake)
 
 if (IS_PYTHON)
     # pybind11
+    set(PYBIND11_FINDPYTHON "NEW")
     add_subdirectory(deps/pybind11)
 endif ()
 
