@@ -12,7 +12,7 @@ from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
-CMAKE_VERSION = '4.1.0'
+CMAKE_VERSION = '4.1.2'
 TOOLS_PATH = Path(Path.cwd(), 'build_tools')
 
 
