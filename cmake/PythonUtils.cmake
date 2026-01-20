@@ -18,7 +18,7 @@ function(PythonFindAllRegex)
     set(PYTHON_CONTENT "${PYTHON_CONTENT}    print(f\"--end-group--\")\n")
     file(WRITE ${TEMP_PYTHON_FILE} ${PYTHON_CONTENT})
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} ${TEMP_PYTHON_FILE}
+        COMMAND ${PYTHON_EXECUTABLE} ${TEMP_PYTHON_FILE}
         OUTPUT_VARIABLE RESULT
     )
     file(REMOVE ${TEMP_PYTHON_FILE})

@@ -90,7 +90,7 @@ if (LINUX_x86_64 OR MACOS_ARM64 OR ANDROID_ABI)
 
     if (NOT EXISTS ${CLANG_BIN_DIR})
         execute_process(
-            COMMAND ${Python3_EXECUTABLE} ${CLANG_UPDATE} --output-dir ${CLANG_DIR}
+            COMMAND ${PYTHON_EXECUTABLE} ${CLANG_UPDATE} --output-dir ${CLANG_DIR}
         )
     endif ()
     if (NOT JUST_INSTALL_CLANG)
