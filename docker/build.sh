@@ -14,7 +14,8 @@ if command -v yum >/dev/null 2>&1; then
       pulseaudio-libs-devel \
       flex \
       elfutils-libelf-devel \
-      texinfo
+      texinfo \
+      perl-Compress-Zlib
 else
   apk add --no-cache \
       bash \
@@ -27,7 +28,8 @@ else
       flex \
       elfutils-dev \
       texinfo \
-      findutils
+      findutils \
+      zlib-dev
 fi
 
 build_and_install "nasm" configure --setup-commands="patch_nasm"
