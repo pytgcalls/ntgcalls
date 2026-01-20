@@ -87,12 +87,12 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         if: matrix.shared_name != 'linux-arm64'
         id: python
         with:
@@ -140,7 +140,7 @@ jobs:
             python3.14 setup.py build_lib --static"
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: github.event.inputs.build-shared-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
@@ -148,7 +148,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload Static Libs for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: github.event.inputs.build-static-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-static_libs
@@ -171,7 +171,7 @@ jobs:
           CIBW_MUSLLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/musllinux-x86_64:latest
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: github.event.inputs.build-wheels == 'true'
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
@@ -187,12 +187,12 @@ jobs:
       packages: write
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         id: python
         with:
           python-version: "3.14"
@@ -235,7 +235,7 @@ jobs:
       contents: write
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -259,7 +259,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: tmp/
 
