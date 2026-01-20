@@ -37,8 +37,10 @@ include(cmake/FindBoost.cmake)
 include(cmake/FindOpenH264.cmake)
 include(cmake/FindFFmpeg.cmake)
 
-# pybind11
-add_subdirectory(deps/pybind11)
+if (IS_PYTHON)
+    # pybind11
+    add_subdirectory(deps/pybind11)
+endif ()
 
 # nlohmann/json
 set(JSON_BuildTests OFF CACHE INTERNAL "")
