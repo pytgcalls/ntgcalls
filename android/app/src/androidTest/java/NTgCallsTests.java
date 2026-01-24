@@ -13,6 +13,7 @@ import io.github.pytgcalls.media.AudioDescription;
 import io.github.pytgcalls.media.MediaDescription;
 import io.github.pytgcalls.media.MediaDevices;
 import io.github.pytgcalls.media.MediaSource;
+import io.github.pytgcalls.media.StreamMode;
 
 import java.io.FileNotFoundException;
 
@@ -26,17 +27,36 @@ public class NTgCallsTests {
     }
 
     @Test
+    public void mediaDevices() {
+        MediaDevices mediaDevices = NTgCalls.getMediaDevices();
+        for (var device : mediaDevices.microphone) {
+            Log.d("NTGCALLS", device.metadata);
+        }
+        for (var device : mediaDevices.camera) {
+            Log.d("NTGCALLS", device.metadata);
+        }
+        for (var device : mediaDevices.screen) {
+            Log.d("NTGCALLS", device.metadata);
+        }
+        for (var device : mediaDevices.screen) {
+            Log.d("NTGCALLS", device.metadata);
+        }
+    }
+
+    @Test
     public void crashWithFileNotFound() {
         var instance = new NTgCalls();
         try {
-            instance.createCall(
+            instance.createCall(CHAT_ID);
+            instance.setStreamSources(
                     CHAT_ID,
+                    StreamMode.CAPTURE,
                     new MediaDescription(
                             new AudioDescription(
                                     MediaSource.FILE,
                                     "input",
+                                    false,
                                     48000,
-                                    16,
                                     2
                             ),
                             null,
@@ -89,14 +109,16 @@ public class NTgCallsTests {
         NTgCalls instance = new NTgCalls();
         MediaDevices mediaDevices = NTgCalls.getMediaDevices();
         try {
-            instance.createP2PCall(
+            instance.createCall(CHAT_ID);
+            instance.setStreamSources(
                     CHAT_ID,
+                    StreamMode.CAPTURE,
                     new MediaDescription(
                             new AudioDescription(
                                     MediaSource.DEVICE,
-                                    mediaDevices.audio.get(0).metadata,
+                                    mediaDevices.microphone.get(0).metadata,
+                                    false,
                                     48000,
-                                    16,
                                     2
                             ),
                             null,
