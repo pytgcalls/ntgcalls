@@ -6,19 +6,18 @@
 
 #include <rtc_base/logging.h>
 #include <rtc_base/ssl_adapter.h>
+#include <sdk/android/native_api/base/init.h>
 #include <sdk/android/native_api/jni/class_loader.h>
+#include <modules/utility/include/jvm_android.h>
+#include <ntgcalls/utils/log_sink_impl.hpp>
 #include <sdk/android/src/jni/jni_helpers.h>
 
 namespace webrtc::jni {
     extern "C" jint JNIEXPORT JNICALL JNI_OnLoad(JavaVM* jvm, void*) {
-        jint ret = InitGlobalJniVariables(jvm);
-        RTC_DCHECK_GE(ret, 0);
-        if (ret < 0)
-            return -1;
+        webrtc::InitAndroid(jvm);
+        webrtc::JVM::Initialize(jvm);
         RTC_CHECK(webrtc::InitializeSSL()) << "Failed to InitializeSSL()";
-        webrtc::InitClassLoader(GetEnv());
-        RTC_LOG(LS_INFO) << "JNI_OnLoad ret=" << ret;
-        return ret;
+        return JNI_VERSION_1_6;
     }
 
     extern "C" void JNIEXPORT JNICALL JNI_OnUnLoad(JavaVM*, void*) {
