@@ -33,7 +33,7 @@ ntgcalls::JavaAudioDeviceModule* getInstanceAudioCapture(JNIEnv *env, jobject ob
 
 ntgcalls::JavaVideoCapturerModule* getInstanceVideoCapture(JNIEnv *env, jobject obj);
 
-jlong getInstancePtr(JNIEnv *env, jobject obj);
+jlong getInstancePtr(JNIEnv *env, jobject obj, const std::string& name = "io/github/pytgcalls/NTgCalls");
 
 ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescription);
 

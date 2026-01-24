@@ -10,7 +10,7 @@ ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj) {
 }
 
 ntgcalls::JavaAudioDeviceModule* getInstanceAudioCapture(JNIEnv *env, jobject obj) {
-    auto ptr = getInstancePtr(env, obj);
+    auto ptr = getInstancePtr(env, obj, "io/github/pytgcalls/devices/JavaAudioDeviceModule");
     if (ptr != 0) {
         return reinterpret_cast<ntgcalls::JavaAudioDeviceModule*>(ptr);
     }
@@ -18,17 +18,16 @@ ntgcalls::JavaAudioDeviceModule* getInstanceAudioCapture(JNIEnv *env, jobject ob
 }
 
 ntgcalls::JavaVideoCapturerModule* getInstanceVideoCapture(JNIEnv *env, jobject obj) {
-    auto ptr = getInstancePtr(env, obj);
+    auto ptr = getInstancePtr(env, obj, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
     if (ptr != 0) {
         return reinterpret_cast<ntgcalls::JavaVideoCapturerModule*>(ptr);
     }
     return nullptr;
 }
 
-jlong getInstancePtr(JNIEnv *env, jobject obj) {
-    const auto clazz = webrtc::GetClass(env, "io/github/pytgcalls/NTgCalls");
-    const jlong ptr = env->GetLongField(obj,  env->GetFieldID(clazz.obj(), "nativePointer", "J"));
-    return ptr;
+jlong getInstancePtr(JNIEnv *env, jobject obj, const std::string& name) {
+    const auto clazz = webrtc::GetClass(env, name.c_str());
+    return env->GetLongField(obj,  env->GetFieldID(clazz.obj(), "nativePointer", "J"));
 }
 
 ntgcalls::AudioDescription parseAudioDescription(JNIEnv *env, jobject audioDescription) {
