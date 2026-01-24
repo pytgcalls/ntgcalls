@@ -32,7 +32,7 @@ setup_platform_flags(${NTG_LIB_NAME} OFF)
 
 target_include_directories(${NTG_LIB_NAME} PRIVATE include)
 set_property(TARGET ${NTG_LIB_NAME} PROPERTY CXX_STANDARD 20 C_STANDARD 20)
-target_link_libraries(${NTG_LIB_NAME} PRIVATE wrtc nlohmann_json::nlohmann_json)
+target_link_libraries(${NTG_LIB_NAME} PRIVATE wrtc)
 
 if (NOT IS_PYTHON AND NOT ANDROID)
     set(ARCHIVE_TYPE)

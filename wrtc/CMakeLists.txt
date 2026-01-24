@@ -13,7 +13,7 @@ if (MACOS)
 endif ()
 
 target_link_libraries(wrtc PUBLIC WebRTC::webrtc)
-target_link_libraries(wrtc PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(wrtc PUBLIC nlohmann_json::nlohmann_json)
 
 setup_platform_flags(wrtc ON)
 
