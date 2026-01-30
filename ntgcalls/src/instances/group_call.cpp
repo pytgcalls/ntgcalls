@@ -5,7 +5,6 @@
 #include <ntgcalls/instances/group_call.hpp>
 
 #include <future>
-
 #include <ntgcalls/exceptions.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
 #include <wrtc/models/response_payload.hpp>
@@ -166,7 +165,7 @@ namespace ntgcalls {
                 {"minHeight", 180},
             };
         }
-        conn->sendDataChannelMessage(bytes::make_binary(to_string(jsonRes)));
+        conn->sendDataChannelMessage(bytes::make_binary(jsonRes.dump()));
     }
 
     uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const {

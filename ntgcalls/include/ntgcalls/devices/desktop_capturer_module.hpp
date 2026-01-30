@@ -5,7 +5,7 @@
 #pragma once
 
 #if !defined(IS_ANDROID) && !defined(IS_MACOS)
-#include <nlohmann/json.hpp>
+#include <wrtc/utils/json.hpp>
 #include <rtc_base/platform_thread.h>
 #include <ntgcalls/io/base_reader.hpp>
 #include <wrtc/utils/sync_helper.hpp>
@@ -14,7 +14,7 @@
 #include <modules/desktop_capture/desktop_and_cursor_composer.h>
 
 namespace ntgcalls {
-    using nlohmann::json;
+    using wrtc::json;
 
     class DesktopCapturerModule final: public BaseReader, public wrtc::SyncHelper, public webrtc::DesktopCapturer::Callback {
         std::unique_ptr<webrtc::DesktopCapturer> capturer;

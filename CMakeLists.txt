@@ -43,9 +43,5 @@ if (IS_PYTHON)
     add_subdirectory(deps/pybind11)
 endif ()
 
-# nlohmann/json
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-add_subdirectory(deps/json EXCLUDE_FROM_ALL)
-
 add_subdirectory(wrtc)
 add_subdirectory(ntgcalls)

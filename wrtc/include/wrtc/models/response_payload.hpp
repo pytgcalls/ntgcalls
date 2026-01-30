@@ -3,12 +3,10 @@
 //
 
 #pragma once
-#include <nlohmann/json.hpp>
+#include <wrtc/utils/json.hpp>
 #include <wrtc/models/media_content.hpp>
 
 namespace wrtc {
-    using nlohmann::json;
-
     class ResponsePayload {
         static std::vector<webrtc::RtpExtension> parseRtpExtensions(const json& data);
 

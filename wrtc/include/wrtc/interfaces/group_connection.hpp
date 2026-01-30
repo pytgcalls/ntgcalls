@@ -4,14 +4,12 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/models/response_payload.hpp>
 #include <wrtc/interfaces/mtproto/mtproto_stream.hpp>
 
 namespace wrtc {
-    using nlohmann::json;
 
     class GroupConnection final: public NativeNetworkInterface {
     public:

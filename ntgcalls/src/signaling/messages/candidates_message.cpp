@@ -16,7 +16,7 @@ namespace signaling {
             });
         }
         res["candidates"] = iceCandidatesJson;
-        return bytes::make_binary(to_string(res));
+        return bytes::make_binary(res.dump());
     }
 
     std::unique_ptr<CandidatesMessage> CandidatesMessage::deserialize(const bytes::binary &data) {

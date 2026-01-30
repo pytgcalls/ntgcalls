@@ -179,7 +179,7 @@ namespace wrtc {
     }
 
     bool NativeConnection::getCustomParameterBool(const std::string& name) const {
-        if (customParameters == nullptr) {
+        if (customParameters.is_null()) {
             return false;
         }
         return customParameters[name].is_boolean() && customParameters[name];

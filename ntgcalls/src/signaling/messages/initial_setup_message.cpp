@@ -21,7 +21,7 @@ namespace signaling {
             });
         }
         res["fingerprints"] = fingerprintsJson;
-        return bytes::make_binary(to_string(res));
+        return bytes::make_binary(res.dump());
     }
 
     std::unique_ptr<InitialSetupMessage> InitialSetupMessage::deserialize(const bytes::binary& data) {

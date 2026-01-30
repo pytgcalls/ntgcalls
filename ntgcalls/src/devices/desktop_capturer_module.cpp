@@ -110,7 +110,7 @@ namespace ntgcalls {
         capturer->GetSourceList(&sources);
         std::vector<DeviceInfo> devices;
         for (const auto& [id, title, display_id] : sources) {
-            const json metadata = {
+            const json metadata{
                 {"id", id},
                 {"display_id", display_id}
             };

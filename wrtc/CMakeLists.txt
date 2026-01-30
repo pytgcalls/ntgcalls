@@ -12,8 +12,7 @@ if (MACOS)
     target_sources(wrtc PRIVATE ${MODULE_SRC})
 endif ()
 
-target_link_libraries(wrtc PUBLIC WebRTC::webrtc)
-target_link_libraries(wrtc PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(wrtc PUBLIC WebRTC::webrtc Boost::json)
 
 setup_platform_flags(wrtc ON)
 

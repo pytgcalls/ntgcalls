@@ -3,14 +3,14 @@
 //
 
 #pragma once
-#include <nlohmann/json.hpp>
+#include <wrtc/utils/json.hpp>
 #include <rtc_base/byte_buffer.h>
 #include <rtc_base/copy_on_write_buffer.h>
 
 #include <wrtc/utils/binary.hpp>
 
 namespace signaling {
-    using nlohmann::json;
+    using wrtc::json;
 
     class Message {
     public:

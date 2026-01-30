@@ -10,13 +10,12 @@
 #include <wrtc/interfaces/media/channels/outgoing_audio_channel.hpp>
 #include <wrtc/models/content_negotiation_context.hpp>
 #include <wrtc/models/rtc_server.hpp>
-#include <nlohmann/json.hpp>
+#include <wrtc/utils/json.hpp>
 
 #include <wrtc/models/connection_description.hpp>
 #include <wrtc/models/route_description.hpp>
 
 namespace wrtc {
-    using nlohmann::json;
 
     class NativeConnection final : public NativeNetworkInterface {
         json customParameters;
