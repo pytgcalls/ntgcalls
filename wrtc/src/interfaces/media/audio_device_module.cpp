@@ -10,9 +10,9 @@ namespace wrtc {
         return 0;
     }
 
-    int32_t AudioDeviceModule::RegisterAudioCallback(webrtc::AudioTransport* audioCallback) {
+    int32_t AudioDeviceModule::RegisterAudioCallback(webrtc::AudioTransport* callback) {
         webrtc::MutexLock lock(&mutex);
-        this->audioCallback = audioCallback;
+        audioCallback = callback;
         return 0;
     }
 

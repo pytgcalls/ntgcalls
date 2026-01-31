@@ -37,7 +37,7 @@ namespace wrtc {
     public:
         int32_t ActiveAudioLayer(AudioLayer* audioLayer) const override;
 
-        int32_t RegisterAudioCallback(webrtc::AudioTransport* audioCallback) override;
+        int32_t RegisterAudioCallback(webrtc::AudioTransport* callback) override;
 
         int32_t Init() override;
 
