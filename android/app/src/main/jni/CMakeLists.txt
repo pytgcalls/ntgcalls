@@ -7,8 +7,8 @@ set(CMAKE_AR "${CLANG_BIN_DIR}/llvm-ar")
 set(CMAKE_STRIP "${CLANG_BIN_DIR}/llvm-strip")
 set(CMAKE_C_COMPILER "${CLANG_BIN_DIR}/clang")
 set(CMAKE_CXX_COMPILER "${CLANG_BIN_DIR}/clang++")
+set(target_name ${CMAKE_PROJECT_NAME})
 
-include(cmake/CompileUtils.cmake)
 include(${NDK_CMAKE_DIR})
 include(cmake/FindNTgCalls.cmake)
 
@@ -33,3 +33,4 @@ target_link_options(${CMAKE_PROJECT_NAME}
     PRIVATE
     ${WEBRTC_ANDROID_LDFLAGS}
 )
+include(${ANDROID_CMAKE_DIR})

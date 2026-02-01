@@ -1,5 +1,10 @@
-target_compile_options(${target_name} PUBLIC
-    -fexperimental-relative-c++-abi-vtables
+if (ANDROID_ABI STREQUAL "arm64-v8a")
+    target_compile_options(${target_name} PUBLIC
+        -fexperimental-relative-c++-abi-vtables
+    )
+endif ()
+target_link_options(${target_name} PRIVATE
+    -Wl,-z,max-page-size=16384
 )
 target_compile_definitions(${target_name} PUBLIC
     WEBRTC_POSIX
