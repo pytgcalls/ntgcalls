@@ -2,8 +2,6 @@
 // Created by Laky64 on 15/09/24.
 //
 #undef JNIEXPORT
-#define JNIEXPORT __attribute__((visibility("default")))
-
 #include <rtc_base/logging.h>
 #include <rtc_base/ssl_adapter.h>
 #include <sdk/android/native_api/base/init.h>
