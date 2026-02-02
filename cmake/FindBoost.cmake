@@ -38,6 +38,7 @@ else ()
     return()
 endif ()
 
+add_compile_definitions(BOOST_ALL_NO_LIB)
 GetProperty("version.boost" BOOST_VERSION)
 message(STATUS "boost v${BOOST_VERSION}")
 
@@ -59,7 +60,6 @@ if (NOT TARGET Boost::json)
         INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
         IMPORTED_LINK_INTERFACE_LANGUAGES CXX
         IMPORTED_LOCATION "${BOOST_LIB_DIR}/${BOOST_JSON_LIB}"
-        INTERFACE_COMPILE_DEFINITIONS "BOOST_JSON_LIB"
     )
 endif ()
 
@@ -70,7 +70,6 @@ if (NOT ANDROID)
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
             IMPORTED_LOCATION "${BOOST_LIB_DIR}/${BOOST_ATOMIC_LIB}"
-            INTERFACE_COMPILE_DEFINITIONS "BOOST_ATOMIC_NO_LIB"
         )
     endif ()
 
@@ -80,7 +79,6 @@ if (NOT ANDROID)
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
             IMPORTED_LOCATION "${BOOST_LIB_DIR}/${BOOST_CONTEXT_LIB}"
-            INTERFACE_COMPILE_DEFINITIONS "BOOST_CONTEXT_NO_LIB"
         )
     endif ()
 
@@ -90,7 +88,6 @@ if (NOT ANDROID)
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
             IMPORTED_LOCATION "${BOOST_LIB_DIR}/${BOOST_DATE_TIME_LIB}"
-            INTERFACE_COMPILE_DEFINITIONS "BOOST_DATE_TIME_NO_LIB"
         )
     endif ()
 
@@ -100,7 +97,6 @@ if (NOT ANDROID)
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
             IMPORTED_LOCATION "${BOOST_LIB_DIR}/${BOOST_FILESYSTEM_LIB}"
-            INTERFACE_COMPILE_DEFINITIONS "BOOST_FILESYSTEM_NO_LIB"
         )
         target_link_libraries(Boost::filesystem INTERFACE Boost::atomic)
     endif ()
@@ -111,7 +107,6 @@ if (NOT ANDROID)
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
             IMPORTED_LOCATION "${BOOST_LIB_DIR}/${BOOST_PROCESS_LIB}"
-            INTERFACE_COMPILE_DEFINITIONS "BOOST_PROCESS_NO_LIB"
         )
         target_link_libraries(Boost::process INTERFACE Boost::atomic Boost::context Boost::date_time Boost::filesystem)
     endif ()
