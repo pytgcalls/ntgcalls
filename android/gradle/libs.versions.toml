@@ -1,6 +1,6 @@
 [versions]
 agp = "9.0.0"
-maven_publish = "0.35.0"
+maven_publish = "0.36.0"
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
