@@ -61,7 +61,6 @@ if (NOT TARGET Boost::json)
         IMPORTED_LOCATION "${BOOST_LIB_DIR}/${BOOST_JSON_LIB}"
         INTERFACE_COMPILE_DEFINITIONS "BOOST_JSON_LIB"
     )
-    target_link_libraries(Boost::json INTERFACE atomic)
 endif ()
 
 if (NOT ANDROID)
