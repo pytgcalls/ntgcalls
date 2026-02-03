@@ -815,6 +815,7 @@ int ntg_on_frames(uintptr_t ptr, ntg_frame_callback callback, void* userData) {
             for (int i = 0; i < frames.size(); i++) {
                 delete[] buffer[i].data;
             }
+            delete[] buffer;
         });
     } catch (ntgcalls::NullPointer&) {
         return NTG_ERROR_NULL_POINTER;

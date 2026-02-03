@@ -13,6 +13,7 @@ namespace ntgcalls {
     }
 
     BaseIO::~BaseIO() {
+        eofCallback = nullptr;
         sink = nullptr;
     }
 

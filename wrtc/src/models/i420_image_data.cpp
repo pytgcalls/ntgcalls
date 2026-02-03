@@ -14,7 +14,7 @@ namespace wrtc {
     }
 
     uint8_t* i420ImageData::dataY() const {
-        return contents;
+        return contents.get();
     }
 
     uint8_t* i420ImageData::dataU() const {
@@ -29,18 +29,15 @@ namespace wrtc {
         this->width = width;
         this->height = height;
         const size_t dataSize = sizeOfLuminancePlane() + 2 * sizeOfChromaPlane();
-        this->contents = new uint8_t[dataSize];
+        this->contents = std::make_unique<uint8_t[]>(dataSize);
         if (contents && size == dataSize) {
-            memcpy(this->contents, contents, dataSize);
+            memcpy(this->contents.get(), contents, dataSize);
         } else {
-            memset(this->contents, 0, dataSize);
+            memset(this->contents.get(), 0, dataSize);
         }
     }
 
-    i420ImageData::~i420ImageData() {
-        delete[] contents;
-        contents = nullptr;
-    }
+    i420ImageData::~i420ImageData() = default;
 
     webrtc::scoped_refptr<webrtc::I420Buffer> i420ImageData::buffer() const {
         auto buffer = webrtc::I420Buffer::Create(width, height);

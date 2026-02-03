@@ -15,6 +15,8 @@ namespace wrtc {
     public:
         explicit RemoteVideoSink(const std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)>& callback);
 
+        ~RemoteVideoSink() override;
+
         void sendFrame(uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) const;
     };
 

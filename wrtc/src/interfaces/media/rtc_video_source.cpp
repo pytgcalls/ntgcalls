@@ -4,11 +4,12 @@
 
 #include <wrtc/interfaces/media/rtc_video_source.hpp>
 #include <rtc_base/crypto_random.h>
+#include <api/make_ref_counted.h>
 
 namespace wrtc {
     RTCVideoSource::RTCVideoSource() {
         factory = PeerConnectionFactory::GetOrCreateDefault();
-        source = new webrtc::RefCountedObject<VideoTrackSource>();
+        source = webrtc::make_ref_counted<VideoTrackSource>();
     }
 
     RTCVideoSource::~RTCVideoSource() {

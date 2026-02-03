@@ -54,6 +54,10 @@ namespace wrtc {
     }
 
     void NetworkInterface::close() {
+        dataChannelOpenedCallback = nullptr;
+        iceCandidateCallback = nullptr;
+        connectionChangeCallback = nullptr;
+        dataChannelMessageCallback = nullptr;
         if (factory) {
             factory = nullptr;
         }

@@ -32,6 +32,14 @@ namespace ntgcalls {
             connection->stop();
         }
         connections.clear();
+        onEof = nullptr;
+        mediaStateCallback = nullptr;
+        connectionChangeCallback = nullptr;
+        emitCallback = nullptr;
+        remoteSourceCallback = nullptr;
+        broadcastTimestampCallback = nullptr;
+        segmentPartRequestCallback = nullptr;
+        framesCallback = nullptr;
         hardwareInfo = nullptr;
         lock.unlock();
         updateThread->Stop();

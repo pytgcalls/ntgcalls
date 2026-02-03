@@ -27,6 +27,8 @@ namespace wrtc {
         inputFormatContext->pb = avIoContext->getContext();
 
         if (avformat_open_input(&inputFormatContext, "", inputFormat, nullptr) < 0) {
+            avformat_free_context(inputFormatContext);
+            inputFormatContext = nullptr;
             didReadToEnd = true;
             return;
         }

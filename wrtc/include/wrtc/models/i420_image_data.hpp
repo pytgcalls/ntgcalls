@@ -5,13 +5,14 @@
 #pragma once
 
 
+#include <memory>
 #include <api/scoped_refptr.h>
 #include <api/video/i420_buffer.h>
 
 namespace wrtc {
     class i420ImageData {
         uint16_t width, height;
-        uint8_t* contents;
+        std::unique_ptr<uint8_t[]> contents;
 
         [[nodiscard]] size_t sizeOfLuminancePlane() const;
 

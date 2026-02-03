@@ -28,6 +28,10 @@ namespace wrtc {
         rtpPacketCallback = callback;
     }
 
+    WrappedDtlsSrtpTransport::~WrappedDtlsSrtpTransport() {
+        rtpPacketCallback = nullptr;
+    }
+
     void WrappedDtlsSrtpTransport::OnRtpPacketReceived(const webrtc::ReceivedIpPacket& packet) {
         if (!IsSrtpActive()) {
             RTC_LOG(LS_WARNING) << "Inactive SRTP transport received an RTP packet. Drop it.";

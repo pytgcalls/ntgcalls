@@ -20,6 +20,8 @@ namespace wrtc {
             const std::function<void(webrtc::RtpPacketReceived)>& callback
         );
 
+        ~WrappedDtlsSrtpTransport() override;
+
         void OnRtpPacketReceived(const webrtc::ReceivedIpPacket& packet) override;
 
         void UpdateRtpHeaderExtensionMap(const webrtc::RtpHeaderExtensions& headerExtensions) override;

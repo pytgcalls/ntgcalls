@@ -5,6 +5,10 @@
 #include <ntgcalls/signaling/signaling_packet_transport.hpp>
 
 namespace signaling {
+    SignalingPacketTransport::~SignalingPacketTransport() {
+        emitData = nullptr;
+    }
+
     void SignalingPacketTransport::receiveData(const bytes::binary& data) {
         NotifyPacketReceived(
             webrtc::ReceivedIpPacket(

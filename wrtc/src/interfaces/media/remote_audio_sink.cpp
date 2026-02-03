@@ -10,6 +10,7 @@ namespace wrtc {
     }
 
     RemoteAudioSink::~RemoteAudioSink() {
+        framesCallback = nullptr;
         audioFrames.clear();
     }
 

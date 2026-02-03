@@ -18,6 +18,8 @@ namespace ntgcalls {
     public:
         explicit BaseReader(BaseSink *sink);
 
+        ~BaseReader() override;
+
         virtual void open() = 0;
 
         void onData(const std::function<void(bytes::unique_binary, wrtc::FrameData)> &callback);

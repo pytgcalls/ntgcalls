@@ -58,6 +58,10 @@ namespace ntgcalls {
         paUnLock();
     }
 
+    PulseConnection::~PulseConnection() {
+        disconnect();
+    }
+
     void PulseConnection::paLock() const {
         LATE(pa_threaded_mainloop_lock)(paMainloop);
     }
@@ -204,6 +208,9 @@ namespace ntgcalls {
     }
 
     void PulseConnection::disconnect() {
+        if (!paMainloop) {
+            return;
+        }
         paLock();
         if (running) {
             if (isCapture) disableReadCallback();
@@ -218,12 +225,16 @@ namespace ntgcalls {
                 RTC_LOG(LS_VERBOSE) << "Disconnected recording";
             }
             LATE(pa_stream_unref)(stream);
+            stream = nullptr;
         }
         LATE(pa_context_disconnect)(paContext);
         LATE(pa_context_unref)(paContext);
+        paContext = nullptr;
         paUnLock();
         LATE(pa_threaded_mainloop_stop)(paMainloop);
         LATE(pa_threaded_mainloop_free)(paMainloop);
+        paMainloop = nullptr;
+        dataCallback = nullptr;
     }
 
     void PulseConnection::setupStream(const pa_sample_spec& sampleSpec, std::string deviceId, const bool isCapture) {

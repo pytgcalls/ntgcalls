@@ -10,6 +10,10 @@ namespace wrtc {
         this->enableCallback = enableCallback;
     }
 
+    MediaTrackInterface::~MediaTrackInterface() {
+        enableCallback = nullptr;
+    }
+
     bool MediaTrackInterface::set_enabled(const bool enable) {
         (void) enableCallback(enable);
         return std::exchange(status, enable) != enable;

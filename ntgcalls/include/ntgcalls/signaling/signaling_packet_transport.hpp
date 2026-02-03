@@ -16,6 +16,8 @@ namespace signaling {
     public:
         explicit SignalingPacketTransport(const std::function<void(const bytes::binary&)>& emitData): emitData(emitData), transportName("signaling") {}
 
+        ~SignalingPacketTransport() override;
+
         void receiveData(const bytes::binary& data);
 
         [[nodiscard]] const std::string& transport_name() const override;

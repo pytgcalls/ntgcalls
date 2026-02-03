@@ -11,6 +11,7 @@ namespace ntgcalls {
 
     void CallInterface::stop() {
         connectionChangeCallback = nullptr;
+        remoteSourceCallback = nullptr;
         streamManager->close();
         streamManager = nullptr;
         if (connection) {

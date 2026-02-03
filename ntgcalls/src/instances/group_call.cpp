@@ -15,6 +15,8 @@
 namespace ntgcalls {
 
     void GroupCall::stop() {
+        broadcastTimestampCallback = nullptr;
+        segmentPartRequestCallback = nullptr;
         stopPresentation();
         CallInterface::stop();
     }

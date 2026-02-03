@@ -45,6 +45,9 @@ namespace ntgcalls {
         webrtc::LogMessage::RemoveLogToStream(this);
         thread->Stop();
         thread = nullptr;
+#ifndef PYTHON_ENABLED
+        onLogMessage = nullptr;
+#endif
     }
 
 #ifdef PYTHON_ENABLED

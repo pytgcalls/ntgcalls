@@ -8,6 +8,10 @@
 namespace ntgcalls {
     BaseReader::BaseReader(BaseSink *sink): BaseIO(sink) {}
 
+    BaseReader::~BaseReader() {
+        dataCallback = nullptr;
+    }
+
     void BaseReader::onData(const std::function<void(bytes::unique_binary, wrtc::FrameData)>& callback) {
         dataCallback = callback;
     }

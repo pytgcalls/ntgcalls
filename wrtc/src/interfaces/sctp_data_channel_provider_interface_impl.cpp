@@ -40,6 +40,8 @@ namespace wrtc {
     SctpDataChannelProviderInterfaceImpl::~SctpDataChannelProviderInterfaceImpl() {
         assert(networkThread->IsCurrent());
         weakFactory.InvalidateWeakPtrs();
+        onStateChangedCallback = nullptr;
+        onMessageReceivedCallback = nullptr;
         dataChannel->UnregisterObserver();
         dataChannel->Close();
         dataChannel = nullptr;

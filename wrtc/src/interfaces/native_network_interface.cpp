@@ -393,10 +393,6 @@ namespace wrtc {
 
     void NativeNetworkInterface::close() {
         std::weak_ptr weak(shared_from_this());
-        dataChannelOpenedCallback = nullptr;
-        iceCandidateCallback = nullptr;
-        connectionChangeCallback = nullptr;
-        dataChannelMessageCallback = nullptr;
         workerThread()->BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {
@@ -410,6 +406,7 @@ namespace wrtc {
             strong->remoteAudioSink.reset();
             strong->remoteVideoSink.reset();
             strong->remoteScreenCastSink.reset();
+            strong->call = nullptr;
         });
         channelManager = nullptr;
         if (factory) {
@@ -430,9 +427,12 @@ namespace wrtc {
                     strong->dtlsSrtpTransport->UnsubscribeSentPacket(strong.get());
                     strong->dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
                 }
+                strong->dtlsSrtpTransport = nullptr;
                 strong->dtlsTransport = nullptr;
                 strong->transportChannel = nullptr;
                 strong->portAllocator = nullptr;
+                strong->asyncResolverFactory = nullptr;
+                strong->localCertificate = nullptr;
             });
             signalingThread()->BlockingCall([] {});
         }

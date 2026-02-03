@@ -14,6 +14,8 @@ namespace wrtc {
     public:
         explicit MediaTrackInterface(const std::function<void(bool)>& enableCallback);
 
+        ~MediaTrackInterface();
+
         bool set_enabled(bool enable);
 
         bool enabled() const;

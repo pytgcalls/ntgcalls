@@ -20,6 +20,7 @@ namespace signaling {
 
     SignalingEncryption::~SignalingEncryption() {
         std::lock_guard lock(mutex);
+        requestSendServiceCallback = nullptr;
         counter = 0;
         largestIncomingCounters.clear();
     }

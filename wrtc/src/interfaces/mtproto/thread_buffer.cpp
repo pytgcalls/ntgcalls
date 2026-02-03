@@ -24,6 +24,9 @@ namespace wrtc {
         for (auto& thread : threads) {
             thread.Finalize();
         }
+        frameCallback = nullptr;
+        getSegmentCallback = nullptr;
+        requestCallback = nullptr;
         audioSync = nullptr;
         videoSync = nullptr;
     }

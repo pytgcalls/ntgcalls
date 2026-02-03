@@ -4,11 +4,12 @@
 
 #include <wrtc/interfaces/media/rtc_audio_source.hpp>
 #include <rtc_base/crypto_random.h>
+#include <api/make_ref_counted.h>
 
 namespace wrtc {
     RTCAudioSource::RTCAudioSource() {
         factory = PeerConnectionFactory::GetOrCreateDefault();
-        source = new webrtc::RefCountedObject<AudioTrackSource>();
+        source = webrtc::make_ref_counted<AudioTrackSource>();
     }
 
     RTCAudioSource::~RTCAudioSource() {

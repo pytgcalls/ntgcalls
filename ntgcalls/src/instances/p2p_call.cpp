@@ -17,6 +17,7 @@
 namespace ntgcalls {
 
     void P2PCall::stop() {
+        onEmitData = nullptr;
         CallInterface::stop();
         if (signaling) {
             signaling->close();
