@@ -31,7 +31,7 @@ endif ()
 setup_platform_flags(${NTG_LIB_NAME} OFF)
 
 target_include_directories(${NTG_LIB_NAME} PRIVATE include)
-set_property(TARGET ${NTG_LIB_NAME} PROPERTY CXX_STANDARD 20 C_STANDARD 20)
+set_target_properties(${NTG_LIB_NAME} PROPERTIES CXX_STANDARD 20 C_STANDARD 20)
 target_link_libraries(${NTG_LIB_NAME} PRIVATE wrtc)
 
 if (ANDROID)
