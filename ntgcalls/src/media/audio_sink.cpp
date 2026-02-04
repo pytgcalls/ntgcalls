@@ -19,7 +19,6 @@ namespace ntgcalls {
         return 100;
     }
 
-
     bool AudioSink::setConfig(const std::optional<AudioDescription>& desc) {
         const bool changed = description != desc;
         const bool forceChange = desc && !desc->keepOpen;

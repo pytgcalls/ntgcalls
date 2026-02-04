@@ -43,5 +43,11 @@ if (IS_PYTHON)
     add_subdirectory(deps/pybind11)
 endif ()
 
+# Oboe
+if (ANDROID)
+    add_subdirectory(deps/oboe)
+    setup_platform_flags(oboe OFF)
+endif ()
+
 add_subdirectory(wrtc)
 add_subdirectory(ntgcalls)

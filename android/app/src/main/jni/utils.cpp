@@ -9,14 +9,6 @@ ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj) {
     return nullptr;
 }
 
-ntgcalls::JavaAudioDeviceModule* getInstanceAudioCapture(JNIEnv *env, jobject obj) {
-    auto ptr = getInstancePtr(env, obj, "io/github/pytgcalls/devices/JavaAudioDeviceModule");
-    if (ptr != 0) {
-        return reinterpret_cast<ntgcalls::JavaAudioDeviceModule*>(ptr);
-    }
-    return nullptr;
-}
-
 ntgcalls::JavaVideoCapturerModule* getInstanceVideoCapture(JNIEnv *env, jobject obj) {
     auto ptr = getInstancePtr(env, obj, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
     if (ptr != 0) {

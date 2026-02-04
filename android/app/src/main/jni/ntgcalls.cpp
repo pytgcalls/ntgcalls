@@ -372,18 +372,6 @@ JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_calls(JNIEnv *env, j
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaAudioDeviceModule_onRecordedData(JNIEnv *env, jobject thiz, jbyteArray data) {
-    auto instance = getInstanceAudioCapture(env, thiz);
-    instance->onRecordedData(std::move(parseUniqueBinary(env, data)));
-}
-
-extern "C"
-JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaAudioDeviceModule_getPlaybackData(JNIEnv *env, jobject thiz) {
-    auto instance = getInstanceAudioCapture(env, thiz);
-    instance->getPlaybackData();
-}
-
-extern "C"
 JNIEXPORT void JNICALL Java_io_github_pytgcalls_devices_JavaVideoCapturerModule_nativeCapturerStopped(JNIEnv *env, jobject thiz) {
     auto instance = getInstanceVideoCapture(env, thiz);
     instance->onCapturerStopped();

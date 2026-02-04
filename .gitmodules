@@ -2,3 +2,7 @@
 	path = deps/pybind11
 	url = https://github.com/pybind/pybind11
 	branch = stable
+[submodule "deps/oboe"]
+	path = deps/oboe
+	url = https://github.com/google/oboe.git
+	branch = 1.10.0
