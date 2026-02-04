@@ -5,14 +5,13 @@
 #pragma once
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
-#include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include <wrtc/models/media_content.hpp>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 #include <wrtc/interfaces/media/local_video_adapter.hpp>
 
 namespace wrtc {
-    class OutgoingVideoChannel final : public sigslot::has_slots<> {
+    class OutgoingVideoChannel {
         uint32_t _ssrc = 0;
         std::unique_ptr<webrtc::VideoChannel> channel;
         webrtc::Thread* workerThread;
@@ -31,7 +30,7 @@ namespace wrtc {
             LocalVideoAdapter* sink
         );
 
-        ~OutgoingVideoChannel() override;
+        ~OutgoingVideoChannel();
 
         void set_enabled(bool enable) const;
 

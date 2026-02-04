@@ -42,8 +42,7 @@ namespace wrtc {
             call,
             mediaConfig,
             options,
-            cryptoOptions,
-            webrtc::AudioCodecPairId::Create()
+            cryptoOptions
         );
         if (!sendMediaChannel) {
             return nullptr;
@@ -53,8 +52,7 @@ namespace wrtc {
             call,
             mediaConfig,
             options,
-            cryptoOptions,
-            webrtc::AudioCodecPairId::Create()
+            cryptoOptions
         );
         if (!receiveMediaChannel) {
             return nullptr;

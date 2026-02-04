@@ -58,7 +58,7 @@ namespace wrtc {
                 }
                 strongListener->DtlsReadyToSend(readyToSend);
             });
-            strong->dtlsSrtpTransport->SubscribeRtcpPacketReceived(strong.get(), [weak](webrtc::CopyOnWriteBuffer packet, std::optional<webrtc::Timestamp> time, webrtc::EcnMarking) {
+            strong->dtlsSrtpTransport->SubscribeRtcpPacketReceived(strong.get(), [weak](const webrtc::CopyOnWriteBuffer& packet, std::optional<webrtc::Timestamp> time, webrtc::EcnMarking) {
                 const auto strongListener = weak.lock();
                 if (!strongListener) {
                     return;
@@ -103,6 +103,9 @@ namespace wrtc {
             webrtc::CallConfig callConfig(strong->environment(), strong->networkThread());
             callConfig.audio_state = strong->factory->mediaEngine()->voice().GetAudioState();
             strong->call = strong->factory->mediaFactory()->CreateCall(std::move(callConfig));
+            strong->payloadTypeSuggester = std::make_unique<webrtc::SdpPayloadTypeSuggester>(
+                webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle
+            );
         });
         availableVideoFormats = filterSupportedVideoFormats(factory->getSupportedVideoFormats());
     }
@@ -271,7 +274,7 @@ namespace wrtc {
         );
         transportChannel->SetIceParameters(localIceParameters);
         transportChannel->SetIceRole(iceRole());
-        transportChannel->SubscribeIceTransportStateChanged([weak](webrtc::IceTransportInternal*) {
+        transportChannel->SubscribeIceTransportStateChanged(this, [weak](webrtc::IceTransportInternal*) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -281,7 +284,7 @@ namespace wrtc {
         registerTransportCallbacks(transportChannel.get());
 
         dtlsTransport = std::make_unique<webrtc::DtlsTransportInternalImpl>(environment(), transportChannel.get(), getDefaultCryptoOptions());
-        dtlsTransport->SubscribeReceivingState([weak](webrtc::PacketTransportInternal*) {
+        dtlsTransport->SubscribeReceivingState(this, [weak](webrtc::PacketTransportInternal*) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;

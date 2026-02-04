@@ -5,7 +5,6 @@
 #pragma once
 #include <pc/channel.h>
 #include <pc/rtp_transport.h>
-#include <rtc_base/third_party/sigslot/sigslot.h>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 #include <wrtc/interfaces/media/raw_video_sink.hpp>
 #include <wrtc/interfaces/media/remote_video_sink.hpp>
@@ -13,7 +12,7 @@
 
 namespace wrtc {
 
-    class IncomingVideoChannel final : public sigslot::has_slots<> {
+    class IncomingVideoChannel {
         uint32_t _ssrc = 0;
         std::unique_ptr<webrtc::VideoChannel> channel;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> videoBitrateAllocatorFactory;
@@ -34,7 +33,7 @@ namespace wrtc {
             std::weak_ptr<RemoteVideoSink> remoteVideoSink
         );
 
-        ~IncomingVideoChannel() override;
+        ~IncomingVideoChannel();
 
         [[nodiscard]] uint32_t ssrc() const;
     };

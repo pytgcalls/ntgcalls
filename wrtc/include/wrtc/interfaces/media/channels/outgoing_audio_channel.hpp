@@ -6,14 +6,13 @@
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
 #include <pc/rtp_sender.h>
-#include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include <wrtc/models/media_content.hpp>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 
 namespace wrtc {
 
-    class OutgoingAudioChannel final : public sigslot::has_slots<> {
+    class OutgoingAudioChannel {
         uint32_t _ssrc = 0;
         std::unique_ptr<webrtc::VoiceChannel> channel;
         webrtc::Thread* workerThread;
@@ -33,7 +32,7 @@ namespace wrtc {
 
         void set_enabled(bool enable) const;
 
-        ~OutgoingAudioChannel() override;
+        ~OutgoingAudioChannel();
 
         [[nodiscard]] uint32_t ssrc() const;
     };

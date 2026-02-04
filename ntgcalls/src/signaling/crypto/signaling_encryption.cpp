@@ -83,8 +83,8 @@ namespace signaling {
         if (incomingCounter + kKeepIncomingCountersCount <= largest) {
             return false;
         }
-        const auto eraseTill = std::ranges::find_if(list, [&](const uint32_t counter) {
-            return counter + kKeepIncomingCountersCount > incomingCounter;
+        const auto eraseTill = std::ranges::find_if(list, [&](const uint32_t c) {
+            return c + kKeepIncomingCountersCount > incomingCounter;
         });
         const auto eraseCount = eraseTill - list.begin();
         const auto positionIndex = position - list.begin() - eraseCount;
@@ -116,18 +116,18 @@ namespace signaling {
         }
     }
 
-    bool SignalingEncryption::registerSentAck(const uint32_t counter, const bool firstInPacket) {
+    bool SignalingEncryption::registerSentAck(const uint32_t c, const bool firstInPacket) {
         auto &list = acksSentCounters;
-        const auto position = std::ranges::lower_bound(list, counter);
-        const auto already = position != list.end() && *position == counter;
+        const auto position = std::ranges::lower_bound(list, c);
+        const auto already = position != list.end() && *position == c;
         const auto was = list;
         if (firstInPacket) {
             list.erase(list.begin(), position);
             if (!already) {
-                list.insert(list.begin(), counter);
+                list.insert(list.begin(), c);
             }
         } else if (!already) {
-            list.insert(position, counter);
+            list.insert(position, c);
         }
         return !already;
     }
@@ -269,18 +269,18 @@ namespace signaling {
             const auto sent = lastSent;
             const auto when = sent ? sent + minDelayBeforeMessageResend : 0;
             assert(data.size() >= 5);
-            const auto counter = CounterFromSeq(ReadSeq(data.data()));
+            const auto c = CounterFromSeq(ReadSeq(data.data()));
             const auto type = static_cast<uint8_t>(data.data()[4]);
             if (when > now) {
-                RTC_LOG(LS_VERBOSE)<< "Skip RESEND:type" << type << "#" << counter << " (wait " << when - now << "ms).";
+                RTC_LOG(LS_VERBOSE)<< "Skip RESEND:type" << type << "#" << c << " (wait " << when - now << "ms).";
                 break;
             }
             if (enoughSpaceInPacket(buffer, data.size())) {
-                RTC_LOG(LS_VERBOSE) << "Add RESEND:type" << type << "#" << counter;
+                RTC_LOG(LS_VERBOSE) << "Add RESEND:type" << type << "#" << c;
                 buffer.AppendData(data);
                 lastSent = now;
             } else {
-                RTC_LOG(LS_VERBOSE) << "Skip RESEND:type" << type << "#" << counter << " (no space, length: " << data.size() << ", already: " << buffer.size() << ")";
+                RTC_LOG(LS_VERBOSE) << "Skip RESEND:type" << type << "#" << c << " (no space, length: " << data.size() << ", already: " << buffer.size() << ")";
                 break;
             }
         }
@@ -367,7 +367,7 @@ namespace signaling {
         const auto dataSize = buffer.size() - 16;
 
         auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, msgKey, x);
-        auto decryptionBuffer = webrtc::Buffer(dataSize);
+        auto decryptionBuffer = webrtc::Buffer::CreateUninitializedWithSize(dataSize);
         openssl::Aes::ProcessCtr(
             bytes::memory_span(encryptedData, dataSize),
             decryptionBuffer.data(),

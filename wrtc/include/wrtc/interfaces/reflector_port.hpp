@@ -4,7 +4,6 @@
 
 #pragma once
 #include <p2p/base/port.h>
-#include <rtc_base/third_party/sigslot/sigslot.h>
 #include <p2p/client/relay_port_factory_interface.h>
 #include <p2p/client/basic_port_allocator.h>
 #include <api/async_dns_resolver.h>
@@ -23,9 +22,9 @@ namespace wrtc {
             STATE_DISCONNECTED,
         };
 
-        bool ready() const;
+        [[nodiscard]] bool ready() const;
 
-        bool connected() const;
+        [[nodiscard]] bool connected() const;
 
         ~ReflectorPort() override;
 
@@ -48,9 +47,9 @@ namespace wrtc {
             uint32_t standaloneReflectorRoleId
        );
 
-        webrtc::SocketAddress GetLocalAddress() const;
+        [[nodiscard]] webrtc::SocketAddress GetLocalAddress() const;
 
-        bool SupportsProtocol(absl::string_view protocol) const override;
+        [[nodiscard]] bool SupportsProtocol(absl::string_view protocol) const override;
 
         void PrepareAddress() override;
 
@@ -113,8 +112,8 @@ namespace wrtc {
         SocketOptionsMap socketOptions;
         std::unique_ptr<webrtc::AsyncDnsResolverInterface> resolver;
         int error;
-        sigslot::signal1<ReflectorPort*> SignalReflectorPortClosed;
-        sigslot::signal3<ReflectorPort*, const webrtc::SocketAddress&, const webrtc::SocketAddress&> SignalResolvedServerAddress;
+        webrtc::CallbackList<ReflectorPort*> SignalReflectorPortClosed;
+        webrtc::CallbackList<ReflectorPort*, const webrtc::SocketAddress&, const webrtc::SocketAddress&> SignalResolvedServerAddress;
         PortState state;
         AttemptedServerSet attemptedServerAddresses;
         bool isRunningPingTask = false;

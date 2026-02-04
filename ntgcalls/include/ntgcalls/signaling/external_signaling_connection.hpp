@@ -3,12 +3,11 @@
 //
 
 #pragma once
-#include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include <ntgcalls/signaling/signaling_interface.hpp>
 
 namespace signaling {
-    class ExternalSignalingConnection final : public sigslot::has_slots<>, public SignalingInterface {
+    class ExternalSignalingConnection final : public SignalingInterface {
     public:
         ExternalSignalingConnection(
             webrtc::Thread* networkThread,

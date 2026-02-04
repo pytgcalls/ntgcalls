@@ -6,11 +6,10 @@
 #include <media/sctp/sctp_transport_factory.h>
 #include <ntgcalls/signaling/signaling_interface.hpp>
 #include <ntgcalls/signaling/signaling_packet_transport.hpp>
-#include <rtc_base/third_party/sigslot/sigslot.h>
 
 namespace signaling {
 
-    class SignalingSctpConnection final : public sigslot::has_slots<>, public SignalingInterface, public webrtc::DataChannelSink, public std::enable_shared_from_this<SignalingSctpConnection> {
+    class SignalingSctpConnection final : public SignalingInterface, public webrtc::DataChannelSink, public std::enable_shared_from_this<SignalingSctpConnection> {
         std::unique_ptr<webrtc::SctpTransportFactory> sctpTransportFactory;
         std::unique_ptr<SignalingPacketTransport> packetTransport;
         std::unique_ptr<webrtc::SctpTransportInternal> sctpTransport;
@@ -45,6 +44,7 @@ namespace signaling {
         void OnChannelClosing(int channel_id) override{}
         void OnChannelClosed(int channel_id) override{}
         void OnBufferedAmountLow(int channel_id) override{}
+        void OnTransportConnected() override{}
 
     protected:
         [[nodiscard]] bool supportsCompression() const override;

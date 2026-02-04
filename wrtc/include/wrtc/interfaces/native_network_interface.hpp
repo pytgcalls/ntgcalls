@@ -12,17 +12,17 @@
 #include <p2p/client/basic_port_allocator.h>
 #include <wrtc/models/peer_ice_parameters.hpp>
 #include <wrtc/interfaces/network_interface.hpp>
-#include <rtc_base/third_party/sigslot/sigslot.h>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 #include <wrtc/interfaces/sctp_data_channel_provider_interface_impl.hpp>
 #include <wrtc/interfaces/media/channels/outgoing_audio_channel.hpp>
 #include <wrtc/interfaces/media/channels/outgoing_video_channel.hpp>
 #include <wrtc/interfaces/media/channels/incoming_audio_channel.hpp>
 #include <wrtc/interfaces/media/channels/incoming_video_channel.hpp>
+#include <pc/sdp_payload_type_suggester.h>
 
 namespace wrtc {
 
-    class NativeNetworkInterface: public sigslot::has_slots<>, public NetworkInterface, public std::enable_shared_from_this<NativeNetworkInterface> {
+    class NativeNetworkInterface: public NetworkInterface, public std::enable_shared_from_this<NativeNetworkInterface> {
         struct H264FormatParameters {
             std::string profileLevelId;
             std::string packetizationMode;
@@ -52,6 +52,7 @@ namespace wrtc {
     protected:
         std::mutex mutex;
         std::unique_ptr<webrtc::Call> call;
+        std::unique_ptr<webrtc::SdpPayloadTypeSuggester> payloadTypeSuggester;
         webrtc::LocalAudioSinkAdapter audioSink;
         LocalVideoAdapter videoSink;
         std::weak_ptr<RemoteAudioSink> remoteAudioSink;

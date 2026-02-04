@@ -88,9 +88,10 @@ namespace wrtc {
         return sctpTransport->SendData(sid.stream_id_int(), params, payload);
     }
 
-    void SctpDataChannelProviderInterfaceImpl::AddSctpDataStream(const webrtc::StreamId sid, const webrtc::PriorityValue priority) {
+    webrtc::RTCError SctpDataChannelProviderInterfaceImpl::AddSctpDataStream(const webrtc::StreamId sid, const webrtc::PriorityValue priority) {
         assert(networkThread->IsCurrent());
         sctpTransport->OpenStream(sid.stream_id_int(), priority);
+        return webrtc::RTCError::OK();
     }
 
     void SctpDataChannelProviderInterfaceImpl::RemoveSctpDataStream(webrtc::StreamId sid) {

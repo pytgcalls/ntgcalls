@@ -570,7 +570,7 @@ namespace wrtc {
                 OnAllocateError(webrtc::STUN_ERROR_SERVER_NOT_REACHABLE, "TURN host lookup received error.");
                 return;
             }
-            SignalResolvedServerAddress(this, serverAddress.address, resolved_address);
+            SignalResolvedServerAddress.Send(this, serverAddress.address, resolved_address);
             serverAddress.address = resolved_address;
             PrepareAddress();
         });
@@ -613,7 +613,7 @@ namespace wrtc {
         for (const auto connection : connections() | std::views::values) {
             connection->Destroy();
         }
-        SignalReflectorPortClosed(this);
+        SignalReflectorPortClosed.Send(this);
     }
 
     int ReflectorPort::GetRelayPreference(const webrtc::ProtocolType proto) {

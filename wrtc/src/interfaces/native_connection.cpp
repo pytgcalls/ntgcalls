@@ -26,7 +26,7 @@ namespace wrtc {
             isOutgoing,
             factory->mediaEngine(),
             factory->ssrcGenerator(),
-            call->GetPayloadTypeSuggester()
+            payloadTypeSuggester.get()
         );
         contentNegotiationContext->copyCodecsFromChannelManager(false);
         std::weak_ptr weak(shared_from_this());
@@ -112,7 +112,7 @@ namespace wrtc {
 
     void NativeConnection::registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) {
         std::weak_ptr weak(shared_from_this());
-        transportChannel->SubscribeCandidateGathered([weak](webrtc::IceTransportInternal*, const webrtc::Candidate &candidate) {
+        transportChannel->SubscribeCandidateGathered(this, [weak](webrtc::IceTransportInternal*, const webrtc::Candidate &candidate) {
             assert(networkThread()->IsCurrent());
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {

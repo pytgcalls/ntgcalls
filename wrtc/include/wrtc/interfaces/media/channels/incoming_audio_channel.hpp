@@ -11,7 +11,7 @@
 
 namespace wrtc {
 
-    class IncomingAudioChannel final : public sigslot::has_slots<> {
+    class IncomingAudioChannel {
         uint32_t _ssrc = 0;
         std::unique_ptr<webrtc::VoiceChannel> channel;
         webrtc::Thread* workerThread;
@@ -29,13 +29,13 @@ namespace wrtc {
             std::weak_ptr<RemoteAudioSink> remoteAudioSink
         );
 
-        ~IncomingAudioChannel() override;
+        ~IncomingAudioChannel();
 
         void updateActivity();
 
         [[nodiscard]] int64_t getActivity() const;
 
-        uint32_t ssrc() const;
+        [[nodiscard]] uint32_t ssrc() const;
     };
 
 } // wrtc

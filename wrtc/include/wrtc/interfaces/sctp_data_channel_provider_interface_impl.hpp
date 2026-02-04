@@ -7,14 +7,13 @@
 #include <api/data_channel_interface.h>
 #include <pc/sctp_data_channel.h>
 #include <media/sctp/sctp_transport_factory.h>
-#include <rtc_base/third_party/sigslot/sigslot.h>
 
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
 
 namespace wrtc {
 
-    class SctpDataChannelProviderInterfaceImpl final : public sigslot::has_slots<>, public webrtc::SctpDataChannelControllerInterface, public webrtc::DataChannelObserver, public webrtc::DataChannelSink {
+    class SctpDataChannelProviderInterfaceImpl final : public webrtc::SctpDataChannelControllerInterface, public webrtc::DataChannelObserver, public webrtc::DataChannelSink {
         webrtc::WeakPtrFactory<SctpDataChannelProviderInterfaceImpl> weakFactory;
         std::unique_ptr<webrtc::SctpTransportFactory> sctpTransportFactory;
         std::unique_ptr<webrtc::SctpTransportInternal> sctpTransport;
@@ -49,7 +48,7 @@ namespace wrtc {
 
         webrtc::RTCError SendData(webrtc::StreamId sid, const webrtc::SendDataParams& params, const webrtc::CopyOnWriteBuffer& payload) override;
 
-        void AddSctpDataStream(webrtc::StreamId sid, webrtc::PriorityValue priority) override;
+        webrtc::RTCError AddSctpDataStream(webrtc::StreamId sid, webrtc::PriorityValue priority) override;
 
         void RemoveSctpDataStream(webrtc::StreamId sid) override;
 
@@ -73,6 +72,7 @@ namespace wrtc {
         size_t buffered_amount(webrtc::StreamId sid) const override { return 0; }
         size_t buffered_amount_low_threshold(webrtc::StreamId sid) const override { return 0;}
         void SetBufferedAmountLowThreshold(webrtc::StreamId sid, size_t bytes) override {}
+        void OnTransportConnected() override {}
     };
 
 } // wrtc
