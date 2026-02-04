@@ -17,9 +17,7 @@ namespace ntgcalls {
         updateThread->Start();
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC
-#ifndef IS_ANDROID
         LogSink::GetOrCreate();
-#endif
     }
 
     NTgCalls::~NTgCalls() {
@@ -46,9 +44,7 @@ namespace ntgcalls {
         updateThread = nullptr;
         DESTROY_ASYNC
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
-#ifndef IS_ANDROID
         LogSink::UnRef();
-#endif
     }
 
     void NTgCalls::setupListeners(const int64_t chatId) {
