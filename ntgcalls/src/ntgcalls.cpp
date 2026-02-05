@@ -21,6 +21,7 @@ namespace ntgcalls {
     }
 
     NTgCalls::~NTgCalls() {
+        DESTROY_ASYNC
 #ifdef PYTHON_ENABLED
         py::gil_scoped_release release;
 #endif
@@ -42,7 +43,6 @@ namespace ntgcalls {
         lock.unlock();
         updateThread->Stop();
         updateThread = nullptr;
-        DESTROY_ASYNC
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
         LogSink::UnRef();
     }
