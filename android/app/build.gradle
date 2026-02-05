@@ -110,7 +110,7 @@ android {
     }
 
     defaultConfig {
-        minSdk = 23
+        minSdk = 21
         targetSdk = 36
 
         buildConfigField 'String', 'GIT_COMMIT', "\"${versionInfoProvider.gitCommit}\""
