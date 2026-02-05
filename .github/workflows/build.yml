@@ -1,4 +1,6 @@
 name: Build And Publish
+permissions:
+  contents: read
 on:
   workflow_dispatch:
     inputs:
@@ -78,22 +80,23 @@ jobs:
     if: github.event.inputs.build-wheels == 'true' || github.event.inputs.build-shared-libs == 'true' || github.event.inputs.build-static-libs == 'true'
     needs: setup
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix: ${{fromJson(needs.setup.outputs.matrix)}}
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         if: matrix.shared_name != 'linux-arm64'
         id: python
         with:
-          python-version: "3.9 - 3.13"
-          update-environment: false
+          python-version: "3.10 - 3.14"
 
       - name: Set up Python (ARM64)
         if: matrix.shared_name == 'linux-arm64'
@@ -125,19 +128,19 @@ jobs:
       - name: Build Shared Libs (Linux)
         if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-shared-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
-            python3.12 -m pip install setuptools
-            python3.12 setup.py build_lib"
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/manylinux-${{ matrix.image_arch }}:latest bash -c "
+            python3.14 -m pip install setuptools
+            python3.14 setup.py build_lib"
 
       - name: Build Static Libs (Linux)
         if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-static-libs == 'true'
         run: |
-          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/${{ matrix.image_arch }}:latest bash -c "
-            python3.12 -m pip install setuptools
-            python3.12 setup.py build_lib --static"
+          docker run -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/manylinux-${{ matrix.image_arch }}:latest bash -c "
+            python3.14 -m pip install setuptools
+            python3.14 setup.py build_lib --static"
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: github.event.inputs.build-shared-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
@@ -145,7 +148,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload Static Libs for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: github.event.inputs.build-static-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-static_libs
@@ -159,15 +162,16 @@ jobs:
           python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
-          CIBW_SKIP: cp38-*
-          CIBW_TEST_COMMAND: python -c "from ntgcalls import NTgCalls; NTgCalls().ping()"
-          CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/arm64:latest
-          CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/x86_64:latest
-          MACOSX_DEPLOYMENT_TARGET: 12.0
+          CIBW_SKIP: cp314t-*
+          CIBW_TEST_COMMAND: python -m unittest discover -s {package}/tests
+          CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest
+          CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest
+          CIBW_MUSLLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/musllinux-x86_64:latest
+          MACOSX_DEPLOYMENT_TARGET: 14.0
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: github.event.inputs.build-wheels == 'true'
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
@@ -178,18 +182,20 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     if: github.event.inputs.android-build == 'true'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         id: python
         with:
-          python-version: "3.12"
-          update-environment: false
+          python-version: "3.14"
 
       - name: Install Python Requirements
         run: |
@@ -203,7 +209,7 @@ jobs:
         shell: bash
 
       - name: Set up Maven Central Repository
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -229,7 +235,7 @@ jobs:
       contents: write
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -238,30 +244,22 @@ jobs:
         run: |
           VERSION=$(grep -oP -m 1 'ntgcalls VERSION \K[A-Za-z0-9.]+' CMakeLists.txt)
           echo "Library Version: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "raw_version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Patch version number
         id: patch-version
         run: |
-          version="${{ steps.get-library-version.outputs.version }}"
-          if [[ "$version" == *.*.*.* ]]; then
-            echo "Version contains three dots"
-            major=$(echo "$version" | cut -d. -f1)
-            minor=$(echo "$version" | cut -d. -f2)
-            patch=$(echo "$version" | cut -d. -f3)
-            tweak=$(echo "$version" | cut -d. -f4)
-            new_version="${major}.${minor}.${patch}.dev${tweak}"
-            echo $new_version
-            echo "new_version=$new_version" >> $GITHUB_OUTPUT
-            echo "is_dev=true" >> $GITHUB_OUTPUT
-          else
-            echo "Version does not contain three dots"
-            echo "new_version=${{ steps.get-library-version.outputs.version }}" >> $GITHUB_OUTPUT
-            echo "is_dev=false" >> $GITHUB_OUTPUT
-          fi
+          version="${{ steps.get-library-version.outputs.raw_version }}"
+          fancy_version="$(cmake -DPROJECT_VERSION="$version" -DGITHUB_TAGS=ON -P cmake/VersionUtil.cmake 2>&1)"
+          is_dev=false
+          [[ "$version" == *.*.*.* ]] && is_dev=true
+          {
+            echo "version=$fancy_version"
+            echo "is_dev=$is_dev"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: tmp/
 
@@ -288,8 +286,8 @@ jobs:
         with:
           files: |
             ./releases/*
-          tag_name: "v${{ steps.patch-version.outputs.new_version }}"
-          name: "NTgCalls auto build v${{ steps.patch-version.outputs.new_version }}"
+          tag_name: "v${{ steps.patch-version.outputs.version }}"
+          name: "NTgCalls auto build v${{ steps.patch-version.outputs.version }}"
           body: "These are the build files for the commit [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}).\nThese files were built during [this workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           prerelease: ${{ steps.patch-version.outputs.is_dev }}
 

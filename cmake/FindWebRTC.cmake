@@ -2,7 +2,7 @@ GetProperty("version.webrtc" WEBRTC_REVISION)
 string(REGEX MATCH "[0-9]+\\.([0-9]+)" WEBRTC_BRANCH "${WEBRTC_REVISION}")
 set(WEBRTC_BRANCH branch-heads/${CMAKE_MATCH_1})
 set(WEBRTC_GIT https://github.com/pytgcalls/webrtc-build)
-set(WEBRTC_DIR ${deps_loc}/libwebrtc)
+set(WEBRTC_DIR ${DEPS_DIR}/libwebrtc)
 set(WEBRTC_SRC ${WEBRTC_DIR}/src)
 set(WEBRTC_INCLUDE ${WEBRTC_SRC}/include)
 set(WEBRTC_LIB_DIR ${WEBRTC_SRC}/lib)
@@ -10,8 +10,6 @@ if (ANDROID)
     set(WEBRTC_LIB_DIR ${WEBRTC_LIB_DIR}/${ANDROID_ABI})
 endif ()
 set(WEBRTC_LIB ${WEBRTC_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}webrtc${CMAKE_STATIC_LIBRARY_SUFFIX})
-set(WEBRTC_PATCH_FILE modules/audio_device/include/test_audio_device.cc)
-set(WEBRTC_PATCH_URL https://webrtc.googlesource.com/src.git/+/refs/${WEBRTC_BRANCH}/${WEBRTC_PATCH_FILE})
 
 if(NOT TARGET WebRTC::webrtc)
     message(STATUS "libwebrtc m${WEBRTC_REVISION}")
@@ -63,8 +61,6 @@ if(NOT TARGET WebRTC::webrtc)
     )
 
     add_library(WebRTC::webrtc STATIC IMPORTED)
-
-    target_sources(WebRTC::webrtc INTERFACE ${WEBRTC_PATCH_LOCATION})
 
     set(_DIRS
         ${WEBRTC_INCLUDE}

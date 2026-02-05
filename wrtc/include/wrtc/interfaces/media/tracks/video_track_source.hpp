@@ -8,7 +8,7 @@
 
 namespace wrtc {
 
-    class VideoTrackSource: public rtc::AdaptedVideoTrackSource {
+    class VideoTrackSource: public webrtc::AdaptedVideoTrackSource {
     public:
         explicit VideoTrackSource(bool is_screencast = false, std::optional<bool> needs_denoising = false);
 

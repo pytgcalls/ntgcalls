@@ -52,6 +52,8 @@ namespace ntgcalls {
     public:
         PulseConnection();
 
+        ~PulseConnection();
+
         std::string getVersion();
 
         void disconnect();

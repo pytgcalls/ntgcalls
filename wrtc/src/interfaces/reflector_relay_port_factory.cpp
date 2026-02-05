@@ -15,11 +15,11 @@ namespace wrtc {
     standaloneReflectorMode(standaloneReflectorMode),
     standaloneReflectorRoleId(standaloneReflectorRoleId) {}
 
-    std::unique_ptr<cricket::Port> ReflectorRelayPortFactory::Create(const cricket::CreateRelayPortArgs& args, rtc::AsyncPacketSocket* udp_socket) {
+    std::unique_ptr<webrtc::Port> ReflectorRelayPortFactory::Create(const webrtc::CreateRelayPortArgs& args, webrtc::AsyncPacketSocket* udp_socket) {
         if (args.config->credentials.username == "reflector") {
             uint8_t foundId = 0;
             for (const auto & [id, host, port, login, password, isTurn, isTcp] : servers) {
-                if (rtc::SocketAddress serverAddress(host, port); args.server_address->address == serverAddress) {
+                if (webrtc::SocketAddress serverAddress(host, port); args.server_address->address == serverAddress) {
                     foundId = id;
                     break;
                 }
@@ -33,7 +33,7 @@ namespace wrtc {
             }
             return port;
         }
-        auto port = cricket::TurnPort::Create(args, udp_socket);
+        auto port = webrtc::TurnPort::Create(args, udp_socket);
         if (!port) {
             return nullptr;
         }
@@ -42,11 +42,11 @@ namespace wrtc {
         return port;
     }
 
-    std::unique_ptr<cricket::Port> ReflectorRelayPortFactory::Create(const cricket::CreateRelayPortArgs& args, const int min_port, const int max_port) {
+    std::unique_ptr<webrtc::Port> ReflectorRelayPortFactory::Create(const webrtc::CreateRelayPortArgs& args, const int min_port, const int max_port) {
         if (args.config->credentials.username == "reflector") {
             uint8_t foundId = 0;
             for (const auto & [id, host, port, login, password, isTurn, isTcp] : servers) {
-                if (rtc::SocketAddress serverAddress(host, port); args.server_address->address == serverAddress) {
+                if (webrtc::SocketAddress serverAddress(host, port); args.server_address->address == serverAddress) {
                     foundId = id;
                     break;
                 }
@@ -60,7 +60,7 @@ namespace wrtc {
             }
             return port;
         }
-        auto port = cricket::TurnPort::Create(args, min_port, max_port);
+        auto port = webrtc::TurnPort::Create(args, min_port, max_port);
         if (!port) {
             return nullptr;
         }

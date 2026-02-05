@@ -1,4 +1,4 @@
-set(MESA_DIR ${deps_loc}/mesa)
+set(MESA_DIR ${DEPS_DIR}/mesa)
 set(MESA_SRC ${MESA_DIR}/src)
 set(MESA_GIT https://github.com/pytgcalls/mesa)
 set(GBM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}gbm${CMAKE_STATIC_LIBRARY_SUFFIX})
@@ -26,17 +26,17 @@ DownloadProject(
     SOURCE_DIR ${MESA_SRC}
 )
 
-if(NOT TARGET mesa::gbm)
-    add_library(mesa::gbm STATIC IMPORTED)
-    set_target_properties(mesa::gbm PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${MESA_SRC}/include"
-            IMPORTED_LOCATION "${MESA_SRC}/lib/${GBM_LIB}")
-    target_link_libraries(mesa::gbm INTERFACE gnu::expat)
-endif ()
-
 if(NOT TARGET mesa::drm)
     add_library(mesa::drm STATIC IMPORTED)
     set_target_properties(mesa::drm PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${MESA_SRC}/include"
             IMPORTED_LOCATION "${MESA_SRC}/lib/${DRM_LIB}")
+endif ()
+
+if(NOT TARGET mesa::gbm)
+    add_library(mesa::gbm STATIC IMPORTED)
+    set_target_properties(mesa::gbm PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${MESA_SRC}/include"
+            IMPORTED_LOCATION "${MESA_SRC}/lib/${GBM_LIB}")
+    target_link_libraries(mesa::gbm INTERFACE gnu::expat mesa::drm)
 endif ()

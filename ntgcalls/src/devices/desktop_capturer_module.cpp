@@ -41,7 +41,7 @@ namespace ntgcalls {
     }
 
     void DesktopCapturerModule::OnCaptureResult(const webrtc::DesktopCapturer::Result result, const std::unique_ptr<webrtc::DesktopFrame> frame) {
-        if (!enabled) return;
+        if (!status) return;
         if (result == webrtc::DesktopCapturer::Result::SUCCESS) {
             const int width = frame->size().width();
             const int height = frame->size().height();
@@ -110,7 +110,7 @@ namespace ntgcalls {
         capturer->GetSourceList(&sources);
         std::vector<DeviceInfo> devices;
         for (const auto& [id, title, display_id] : sources) {
-            const json metadata = {
+            const json metadata{
                 {"id", id},
                 {"display_id", display_id}
             };
@@ -125,7 +125,7 @@ namespace ntgcalls {
         GLibLoopManager::AddInstance();
         capturer->Start(this);
         capturer->CaptureFrame();
-        thread = rtc::PlatformThread::SpawnJoinable(
+        thread = webrtc::PlatformThread::SpawnJoinable(
             [this] {
                 while (running) {
                     waitNextFrame();
@@ -133,7 +133,7 @@ namespace ntgcalls {
                 }
             },
             "DesktopCapturerModule",
-            rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
+            webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime)
         );
     }
 

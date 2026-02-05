@@ -2,10 +2,10 @@
 // Created by Laky64 on 30/08/2023.
 //
 
+#ifdef BOOST_ENABLED
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/shell_reader.hpp>
 
-#ifdef BOOST_ENABLED
 namespace ntgcalls {
 
     ShellReader::ShellReader(const std::string &command, BaseSink *sink):
@@ -20,9 +20,13 @@ namespace ntgcalls {
 
     ShellReader::~ShellReader() {
         boost::system::error_code ec;
-        shellProcess.terminate(ec);
-        shellProcess.wait(ec);
-        shellProcess.detach();
+        if (shellProcess.running(ec)) {
+            shellProcess.terminate(ec);
+            shellProcess.wait(ec);
+        }
+        if (stdOut.is_open()) {
+            stdOut.close(ec);
+        }
         close();
         RTC_LOG(LS_VERBOSE) << "ShellReader closed";
     }

@@ -5,17 +5,18 @@
 #pragma once
 
 #include <wrtc/utils/synchronized_callback.hpp>
-#include <atomic>
 
 namespace wrtc {
     class MediaTrackInterface {
         synchronized_callback<bool> enableCallback;
-        std::atomic_bool status = true;
+        bool status = true;
 
     public:
         explicit MediaTrackInterface(const std::function<void(bool)>& enableCallback);
 
-        void set_enabled(bool status);
+        ~MediaTrackInterface();
+
+        bool set_enabled(bool enable);
 
         bool enabled() const;
     };

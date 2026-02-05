@@ -15,7 +15,7 @@ namespace ntgcalls {
 
         virtual void sendData(uint8_t* sample, size_t size, wrtc::FrameData additionalData) = 0;
 
-        virtual rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() = 0;
+        virtual webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() = 0;
     };
 
 } // ntgcalls

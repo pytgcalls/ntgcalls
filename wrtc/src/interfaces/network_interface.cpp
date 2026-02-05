@@ -17,24 +17,24 @@ namespace wrtc {
         return candidate;
     }
 
-    NetworkInterface::NetworkInterface() {
+    NetworkInterface::NetworkInterface(): env(PeerConnectionFactory::environment()) {
         factory = PeerConnectionFactory::GetOrCreateDefault();
     }
 
-    rtc::Thread* NetworkInterface::networkThread() const {
+    webrtc::Thread* NetworkInterface::networkThread() const {
         return factory->networkThread();
     }
 
-    rtc::Thread* NetworkInterface::signalingThread() const {
+    webrtc::Thread* NetworkInterface::signalingThread() const {
         return factory->signalingThread();
     }
 
-    rtc::Thread* NetworkInterface::workerThread() const {
+    webrtc::Thread* NetworkInterface::workerThread() const {
         return factory->workerThread();
     }
 
     const webrtc::Environment& NetworkInterface::environment() const {
-        return factory->environment();
+        return env;
     }
 
     void NetworkInterface::onDataChannelOpened(const std::function<void()>& callback) {
@@ -54,6 +54,10 @@ namespace wrtc {
     }
 
     void NetworkInterface::close() {
+        dataChannelOpenedCallback = nullptr;
+        iceCandidateCallback = nullptr;
+        connectionChangeCallback = nullptr;
+        dataChannelMessageCallback = nullptr;
         if (factory) {
             factory = nullptr;
         }

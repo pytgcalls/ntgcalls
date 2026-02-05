@@ -13,16 +13,16 @@ namespace wrtc {
         ChannelManager *channelManager,
         webrtc::RtpTransport *rtpTransport,
         const MediaContent &mediaContent,
-        rtc::Thread *workerThread,
-        rtc::Thread *networkThread,
+        webrtc::Thread *workerThread,
+        webrtc::Thread *networkThread,
         LocalVideoAdapter* sink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
-        cricket::VideoOptions videoOptions;
+        webrtc::VideoOptions videoOptions;
         videoOptions.is_screencast = mediaContent.isScreenCast();
         bitrateAllocatorFactory = webrtc::CreateBuiltinVideoBitrateAllocatorFactory();
         channel = channelManager->CreateVideoChannel(
             call,
-            cricket::MediaConfig(),
+            webrtc::MediaConfig(),
             std::to_string(_ssrc),
             false,
             NativeNetworkInterface::getDefaultCryptoOptions(),
@@ -32,21 +32,21 @@ namespace wrtc {
         networkThread->BlockingCall([&] {
             channel->SetRtpTransport(rtpTransport);
         });
-        std::vector<cricket::Codec> unsortedCodecs;
+        std::vector<webrtc::Codec> unsortedCodecs;
         for (const auto &[id, name, clockrate, channels, feedbackTypes, parameters] : mediaContent.payloadTypes) {
-            cricket::Codec codec = cricket::CreateVideoCodec(static_cast<int>(id), name);
+            webrtc::Codec codec = webrtc::CreateVideoCodec(static_cast<int>(id), name);
             for (const auto &[fst, snd] : parameters) {
                 codec.SetParam(fst, snd);
             }
             for (const auto &[type, subtype] : feedbackTypes) {
-                codec.AddFeedbackParam(cricket::FeedbackParam(type, subtype));
+                codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
             }
             unsortedCodecs.push_back(std::move(codec));
         }
         const std::vector<std::string> codecPreferences = {
-            cricket::kH264CodecName
+            webrtc::kH264CodecName
         };
-        std::vector<cricket::Codec> codecs;
+        std::vector<webrtc::Codec> codecs;
         for (const auto &name : codecPreferences) {
             for (const auto &codec : unsortedCodecs) {
                 if (codec.name == name) {
@@ -60,7 +60,7 @@ namespace wrtc {
             }
         }
 
-        auto outgoingVideoDescription = std::make_unique<cricket::VideoContentDescription>();
+        auto outgoingVideoDescription = std::make_unique<webrtc::VideoContentDescription>();
         for (const auto &rtpExtension : mediaContent.rtpExtensions) {
             outgoingVideoDescription->AddRtpHeaderExtension(rtpExtension);
         }
@@ -69,20 +69,20 @@ namespace wrtc {
         outgoingVideoDescription->set_direction(webrtc::RtpTransceiverDirection::kSendOnly);
         outgoingVideoDescription->set_codecs(codecs);
         outgoingVideoDescription->set_bandwidth(-1);
-        cricket::StreamParams videoSendStreamParams;
+        webrtc::StreamParams videoSendStreamParams;
         for (const auto &[semantics, ssrcs] : mediaContent.ssrcGroups) {
             for (auto ssrc : ssrcs) {
                 if (!videoSendStreamParams.has_ssrc(ssrc)) {
                     videoSendStreamParams.ssrcs.push_back(ssrc);
                 }
             }
-            cricket::SsrcGroup mappedGroup(semantics, ssrcs);
+            webrtc::SsrcGroup mappedGroup(semantics, ssrcs);
             videoSendStreamParams.ssrc_groups.push_back(std::move(mappedGroup));
         }
         videoSendStreamParams.cname = "cname";
         outgoingVideoDescription->AddStream(videoSendStreamParams);
 
-        auto incomingVideoDescription = std::make_unique<cricket::VideoContentDescription>();
+        auto incomingVideoDescription = std::make_unique<webrtc::VideoContentDescription>();
         for (const auto &rtpExtension : mediaContent.rtpExtensions) {
             incomingVideoDescription->AddRtpHeaderExtension(webrtc::RtpExtension(rtpExtension.uri, rtpExtension.id));
         }

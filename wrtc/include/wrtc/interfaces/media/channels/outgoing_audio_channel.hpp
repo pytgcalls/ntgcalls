@@ -12,11 +12,11 @@
 
 namespace wrtc {
 
-    class OutgoingAudioChannel final : public sigslot::has_slots<> {
+    class OutgoingAudioChannel {
         uint32_t _ssrc = 0;
-        std::unique_ptr<cricket::VoiceChannel> channel;
-        rtc::Thread* workerThread;
-        rtc::Thread* networkThread;
+        std::unique_ptr<webrtc::VoiceChannel> channel;
+        webrtc::Thread* workerThread;
+        webrtc::Thread* networkThread;
         webrtc::LocalAudioSinkAdapter* sink;
 
     public:
@@ -25,14 +25,14 @@ namespace wrtc {
             ChannelManager* channelManager,
             webrtc::RtpTransport* rtpTransport,
             const MediaContent& mediaContent,
-            rtc::Thread* workerThread,
-            rtc::Thread* networkThread,
+            webrtc::Thread* workerThread,
+            webrtc::Thread* networkThread,
             webrtc::LocalAudioSinkAdapter* sink
         );
 
         void set_enabled(bool enable) const;
 
-        ~OutgoingAudioChannel() override;
+        ~OutgoingAudioChannel();
 
         [[nodiscard]] uint32_t ssrc() const;
     };

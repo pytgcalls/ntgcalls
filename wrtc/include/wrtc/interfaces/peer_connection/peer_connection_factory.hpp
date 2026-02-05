@@ -10,33 +10,31 @@
 
 namespace wrtc {
 
-    class PeerConnectionFactory: public webrtc::RefCountInterface {
+    class PeerConnectionFactory {
     public:
         PeerConnectionFactory();
 
-        ~PeerConnectionFactory() override;
+        ~PeerConnectionFactory();
 
-        static rtc::scoped_refptr<PeerConnectionFactory> GetOrCreateDefault();
+        static PeerConnectionFactory* GetOrCreateDefault();
 
-        rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory();
+        webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory();
 
-        [[nodiscard]] rtc::Thread* networkThread() const;
+        [[nodiscard]] webrtc::Thread* networkThread() const;
 
-        [[nodiscard]] rtc::Thread* signalingThread() const;
+        [[nodiscard]] webrtc::Thread* signalingThread() const;
 
-        [[nodiscard]] rtc::Thread* workerThread() const;
+        [[nodiscard]] webrtc::Thread* workerThread() const;
 
-        [[nodiscard]] rtc::NetworkManager* networkManager() const;
+        [[nodiscard]] webrtc::NetworkManager* networkManager() const;
 
-        [[nodiscard]] rtc::PacketSocketFactory* socketFactory() const;
+        [[nodiscard]] webrtc::PacketSocketFactory* socketFactory() const;
 
-        [[nodiscard]] rtc::UniqueRandomIdGenerator* ssrcGenerator() const;
+        [[nodiscard]] webrtc::UniqueRandomIdGenerator* ssrcGenerator() const;
 
-        [[nodiscard]] cricket::MediaEngineInterface* mediaEngine() const;
+        [[nodiscard]] webrtc::MediaEngineInterface* mediaEngine();
 
-        [[nodiscard]] const webrtc::FieldTrialsView &fieldTrials() const;
-
-        [[nodiscard]] const webrtc::Environment& environment() const;
+        static webrtc::Environment environment();
 
         [[nodiscard]] webrtc::MediaFactory* mediaFactory() const;
 
@@ -46,15 +44,17 @@ namespace wrtc {
         static std::mutex _mutex;
         static bool initialized;
         void *jniEnv;
-        static rtc::scoped_refptr<PeerConnectionFactory> _default;
+        static std::unique_ptr<PeerConnectionFactory> _default;
 
-        std::unique_ptr<rtc::Thread> network_thread_;
-        std::unique_ptr<rtc::Thread> worker_thread_;
-        std::unique_ptr<rtc::Thread> signaling_thread_;
-        rtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
+        std::unique_ptr<webrtc::Thread> network_thread_;
+        std::unique_ptr<webrtc::Thread> worker_thread_;
+        std::unique_ptr<webrtc::Thread> signaling_thread_;
+        std::unique_ptr<webrtc::ConnectionContext::MediaEngineReference> media_engine_ref RTC_GUARDED_BY(worker_thread_);
 
-        rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;
-        rtc::scoped_refptr<webrtc::AudioDeviceModule> _audioDeviceModule;
+        webrtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
+
+        webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;
+        webrtc::scoped_refptr<webrtc::AudioDeviceModule> _audioDeviceModule;
 
         std::vector<webrtc::SdpVideoFormat> supportedVideoFormats;
     };

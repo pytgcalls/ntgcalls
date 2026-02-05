@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <cstdint>
 #include <string>
 #include <vector>
 #include <api/rtp_parameters.h>

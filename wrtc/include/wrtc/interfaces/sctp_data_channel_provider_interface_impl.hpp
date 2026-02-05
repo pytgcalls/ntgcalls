@@ -13,13 +13,13 @@
 
 namespace wrtc {
 
-    class SctpDataChannelProviderInterfaceImpl final : public sigslot::has_slots<>, public webrtc::SctpDataChannelControllerInterface, public webrtc::DataChannelObserver, public webrtc::DataChannelSink {
-        rtc::WeakPtrFactory<SctpDataChannelProviderInterfaceImpl> weakFactory;
-        std::unique_ptr<cricket::SctpTransportFactory> sctpTransportFactory;
-        std::unique_ptr<cricket::SctpTransportInternal> sctpTransport;
-        rtc::scoped_refptr<webrtc::SctpDataChannel> dataChannel;
+    class SctpDataChannelProviderInterfaceImpl final : public webrtc::SctpDataChannelControllerInterface, public webrtc::DataChannelObserver, public webrtc::DataChannelSink {
+        webrtc::WeakPtrFactory<SctpDataChannelProviderInterfaceImpl> weakFactory;
+        std::unique_ptr<webrtc::SctpTransportFactory> sctpTransportFactory;
+        std::unique_ptr<webrtc::SctpTransportInternal> sctpTransport;
+        webrtc::scoped_refptr<webrtc::SctpDataChannel> dataChannel;
         std::vector<bytes::binary> pendingMessages;
-        rtc::Thread* networkThread;
+        webrtc::Thread* networkThread;
         bool isOpen = false;
         bool isSctpTransportStarted = false;
 
@@ -29,16 +29,16 @@ namespace wrtc {
     public:
         SctpDataChannelProviderInterfaceImpl(
             const webrtc::Environment& env,
-            cricket::DtlsTransportInternal* transportChannel,
+            webrtc::DtlsTransportInternal* transportChannel,
             bool isOutgoing,
-            rtc::Thread* networkThread
+            webrtc::Thread* networkThread
         );
 
         ~SctpDataChannelProviderInterfaceImpl() override;
 
         bool IsOkToCallOnTheNetworkThread() override;
 
-        void OnDataReceived(int channel_id, webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) override;
+        void OnDataReceived(int channel_id, webrtc::DataMessageType type, const webrtc::CopyOnWriteBuffer& buffer) override;
 
         void OnReadyToSend() override;
 
@@ -46,9 +46,9 @@ namespace wrtc {
 
         void OnMessage(const webrtc::DataBuffer& buffer) override;
 
-        webrtc::RTCError SendData(webrtc::StreamId sid, const webrtc::SendDataParams& params, const rtc::CopyOnWriteBuffer& payload) override;
+        webrtc::RTCError SendData(webrtc::StreamId sid, const webrtc::SendDataParams& params, const webrtc::CopyOnWriteBuffer& payload) override;
 
-        void AddSctpDataStream(webrtc::StreamId sid, webrtc::PriorityValue priority) override;
+        webrtc::RTCError AddSctpDataStream(webrtc::StreamId sid, webrtc::PriorityValue priority) override;
 
         void RemoveSctpDataStream(webrtc::StreamId sid) override;
 
@@ -62,6 +62,8 @@ namespace wrtc {
 
         void onMessageReceived(const std::function<void(const bytes::binary&)>& callback);
 
+        webrtc::SctpTransportFactoryInterface* sctp_transport_factory() const;
+
         // Unused
         void OnChannelClosing(int channel_id) override {}
         void OnChannelClosed(int channel_id) override{}
@@ -70,6 +72,7 @@ namespace wrtc {
         size_t buffered_amount(webrtc::StreamId sid) const override { return 0; }
         size_t buffered_amount_low_threshold(webrtc::StreamId sid) const override { return 0;}
         void SetBufferedAmountLowThreshold(webrtc::StreamId sid, size_t bytes) override {}
+        void OnTransportConnected() override {}
     };
 
 } // wrtc

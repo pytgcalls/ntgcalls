@@ -10,15 +10,15 @@
 
 namespace wrtc {
 
-    MTProtoStream::MTProtoStream(rtc::Thread* mediaThread, const bool isRtmp) : isRtmp(isRtmp), mediaThread(mediaThread) {}
+    MTProtoStream::MTProtoStream(webrtc::Thread* mediaThread, const bool isRtmp) : isRtmp(isRtmp), mediaThread(mediaThread) {}
 
     void MTProtoStream::connect() {
         if (running) {
             throw RTCException("MTProto Connection already made");
         }
         running = true;
-        serverTimeMs = rtc::TimeUTCMillis();
-        serverTimeMsGotAt = rtc::TimeMillis();
+        serverTimeMs = webrtc::TimeUTCMillis();
+        serverTimeMsGotAt = webrtc::TimeMillis();
         render();
     }
 
@@ -30,7 +30,6 @@ namespace wrtc {
         requestBroadcastPartCallback = nullptr;
         updateAudioSourceCountCallback = nullptr;
         running = false;
-        mediaThread->BlockingCall([&] {});
     }
 
     void MTProtoStream::sendBroadcastTimestamp(const int64_t timestamp) {
@@ -100,7 +99,7 @@ namespace wrtc {
             } else {
                 part = segment->parts[partID].get();
             }
-            const auto responseTimestamp = rtc::TimeMillis();
+            const auto responseTimestamp = webrtc::TimeMillis();
             const auto responseTimestampMilliseconds = static_cast<int64_t>(static_cast<double>(responseTimestamp) * 1000.0);
             const auto responseTimestampBoundary = responseTimestampMilliseconds / strong->segmentDuration * strong->segmentDuration;
 
@@ -124,7 +123,7 @@ namespace wrtc {
                     strong->requestSegmentsIfNeeded();
                     strong->checkPendingSegments();
                 } else {
-                    part->minRequestTimestamp = rtc::TimeMillis() + 100;
+                    part->minRequestTimestamp = webrtc::TimeMillis() + 100;
                     strong->checkPendingSegments();
                 }
                 break;
@@ -148,40 +147,26 @@ namespace wrtc {
         if (isRtmp) {
             return;
         }
-        std::weak_ptr weak(shared_from_this());
-        mediaThread->BlockingCall([weak, endpoint, ssrc, isScreenCast] {
-            const auto strong = weak.lock();
-            if (!strong) {
-                return;
-            }
-            std::lock_guard lock(strong->segmentMutex);
-            strong->videoChannels[endpoint] = VideoChannel(
-                ssrc,
-                isScreenCast,
-                isScreenCast ? MediaSegment::Quality::Full : MediaSegment::Quality::Medium
-            );
-            strong->checkPendingVideoQualityUpdate();
-        });
+        std::lock_guard lock(segmentMutex);
+        videoChannels[endpoint] = VideoChannel(
+            ssrc,
+            isScreenCast,
+            isScreenCast ? MediaSegment::Quality::Full : MediaSegment::Quality::Medium
+        );
+        checkPendingVideoQualityUpdate();
     }
 
     bool MTProtoStream::removeIncomingVideo(const std::string& endpoint) {
         if (isRtmp) {
             return false;
         }
-        std::weak_ptr weak(shared_from_this());
-        return mediaThread->BlockingCall([weak, endpoint] {
-            const auto strong = weak.lock();
-            if (!strong) {
-                return false;
-            }
-            std::lock_guard lock(strong->segmentMutex);
-            if (strong->videoChannels.contains(endpoint)) {
-                strong->videoChannels.erase(endpoint);
-                strong->checkPendingVideoQualityUpdate();
-                return true;
-            }
-            return false;
-        });
+        std::lock_guard lock(segmentMutex);
+        if (videoChannels.contains(endpoint)) {
+            videoChannels.erase(endpoint);
+            checkPendingVideoQualityUpdate();
+            return true;
+        }
+        return false;
     }
 
     void MTProtoStream::enableAudioIncoming(const bool enable) {
@@ -397,7 +382,7 @@ namespace wrtc {
                     if (isRtmp) {
                         (void) requestCurrentTimeCallback();
                     } else {
-                        sendBroadcastTimestamp(serverTimeMs + (rtc::TimeMillis() - serverTimeMsGotAt));
+                        sendBroadcastTimestamp(serverTimeMs + (webrtc::TimeMillis() - serverTimeMsGotAt));
                     }
                 }
                 break;
@@ -448,7 +433,7 @@ namespace wrtc {
         if (!running) {
             return;
         }
-        const auto absoluteTimestamp = rtc::TimeMillis();
+        const auto absoluteTimestamp = webrtc::TimeMillis();
         int64_t minDelayedRequestTimeout = INT_MAX;
 
         bool shouldRequestMoreSegments = false;

@@ -13,7 +13,7 @@ namespace ntgcalls {
         audio = nullptr;
     }
 
-    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> AudioStreamer::createTrack() {
+    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> AudioStreamer::createTrack() {
         return audio->createTrack();
     }
 

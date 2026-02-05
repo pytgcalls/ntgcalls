@@ -40,7 +40,7 @@ namespace openh264 {
         std::vector<webrtc::EncodedImage> encodedImages;
         webrtc::H264PacketizationMode packetizationMode;
         webrtc::H264BitstreamParser h264BitstreamParser;
-        std::vector<rtc::scoped_refptr<webrtc::I420Buffer>> downscaledBuffers;
+        std::vector<webrtc::scoped_refptr<webrtc::I420Buffer>> downscaledBuffers;
         std::vector<std::unique_ptr<webrtc::ScalableVideoController>> svcControllers;
         std::vector<LayerConfig> configurations;
         webrtc::EncodedImageCallback* encodedImageCallback;

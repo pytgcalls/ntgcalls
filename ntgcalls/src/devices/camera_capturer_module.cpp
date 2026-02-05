@@ -84,7 +84,7 @@ namespace ntgcalls {
         for (int i = 0; i < count; i++) {
             char id[256];
             if (char name[256]; info->GetDeviceName(i, name, sizeof(name), id, sizeof(id)) != -1) {
-                const json metadata = {
+                const json metadata{
                     {"id", id},
                 };
                 result.emplace_back(name, metadata.dump());

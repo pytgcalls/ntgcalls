@@ -13,9 +13,7 @@
 #elif IS_WINDOWS
 #include <ntgcalls/devices/win_core_device_module.hpp>
 #elif IS_ANDROID
-#include <wrtc/utils/java_context.hpp>
-#include <ntgcalls/devices/open_sles_device_module.hpp>
-#include <ntgcalls/devices/java_audio_device_module.hpp>
+#include <ntgcalls/devices/oboe_device_module.hpp>
 #include <ntgcalls/devices/java_video_capturer_module.hpp>
 #endif
 
@@ -33,18 +31,16 @@ namespace ntgcalls {
             return WinCoreDeviceModule::getDevices();
         }
 #elif IS_ANDROID
-        if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), true) || JavaAudioDeviceModule::isSupported()) {
-            auto appendDevices = [](std::vector<DeviceInfo>& devices, const std::string& name, const bool& isCapture) {
-                const json data = {
-                    {"is_microphone", isCapture},
-                };
-                devices.emplace_back(name, data.dump());
+        auto appendDevices = [](std::vector<DeviceInfo>& devices, const std::string& name, const bool& isCapture) {
+            const json data = {
+                {"is_microphone", isCapture},
             };
-            std::vector<DeviceInfo> devices;
-            appendDevices(devices, "default", true);
-            appendDevices(devices, "default", false);
-            return devices;
-        }
+            devices.emplace_back(name, data.dump());
+        };
+        std::vector<DeviceInfo> devices;
+        appendDevices(devices, "default", true);
+        appendDevices(devices, "default", false);
+        return devices;
 #endif
         return {};
     }
@@ -124,14 +120,8 @@ namespace ntgcalls {
             return std::make_unique<WinCoreDeviceModule>(desc, isCapture, sink);
         }
 #elif IS_ANDROID
-        if (OpenSLESDeviceModule::isSupported(static_cast<JNIEnv*>(wrtc::GetJNIEnv()), isCapture)) {
-            RTC_LOG(LS_INFO) << "Using OpenSLES module for input";
-            return std::make_unique<OpenSLESDeviceModule>(desc, isCapture, sink);
-        }
-        if (JavaAudioDeviceModule::isSupported()) {
-            RTC_LOG(LS_INFO) << "Using Java Audio module for input";
-            return std::make_unique<JavaAudioDeviceModule>(desc, isCapture, sink);
-        }
+        RTC_LOG(LS_INFO) << "Using Oboe module for input";
+        return std::make_unique<OboeDeviceModule>(desc, isCapture, sink);
 #endif
         throw MediaDeviceError("Unsupported platform for audio device");
     }

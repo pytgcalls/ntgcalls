@@ -24,13 +24,16 @@ namespace wrtc {
         for (auto& thread : threads) {
             thread.Finalize();
         }
+        frameCallback = nullptr;
+        getSegmentCallback = nullptr;
+        requestCallback = nullptr;
         audioSync = nullptr;
         videoSync = nullptr;
     }
 
     void ThreadBuffer::startThread(webrtc::MediaType mediaType) {
         threads.push_back(
-            rtc::PlatformThread::SpawnJoinable(
+            webrtc::PlatformThread::SpawnJoinable(
                 [this, mediaType] {
                     while (running) {
                         std::unique_lock lock(mutex);
@@ -49,7 +52,7 @@ namespace wrtc {
                     }
                 },
                 "ThreadBuffer",
-                rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
+                webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime)
             )
         );
     }

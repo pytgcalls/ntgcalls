@@ -147,13 +147,13 @@ namespace openh264 {
             return ret;
         }
 
-        rtc::scoped_refptr<webrtc::PlanarYuvBuffer> frameBuffer;
-        rtc::scoped_refptr<webrtc::I444Buffer> i444Buffer;
-        rtc::scoped_refptr<webrtc::I420Buffer> i420Buffer;
-        rtc::scoped_refptr<webrtc::I422Buffer> i422Buffer;
-        rtc::scoped_refptr<webrtc::I010Buffer> i010Buffer;
-        rtc::scoped_refptr<webrtc::I210Buffer> i210Buffer;
-        rtc::scoped_refptr<webrtc::I410Buffer> i410Buffer;
+        webrtc::scoped_refptr<webrtc::PlanarYuvBuffer> frameBuffer;
+        webrtc::scoped_refptr<webrtc::I444Buffer> i444Buffer;
+        webrtc::scoped_refptr<webrtc::I420Buffer> i420Buffer;
+        webrtc::scoped_refptr<webrtc::I422Buffer> i422Buffer;
+        webrtc::scoped_refptr<webrtc::I010Buffer> i010Buffer;
+        webrtc::scoped_refptr<webrtc::I210Buffer> i210Buffer;
+        webrtc::scoped_refptr<webrtc::I410Buffer> i410Buffer;
         int bytes_per_pixel = 1;
         switch (context->pix_fmt) {
         case AV_PIX_FMT_YUV420P:
@@ -306,7 +306,7 @@ namespace openh264 {
 
         const auto* inputFrame = static_cast<webrtc::VideoFrame*>(av_buffer_get_opaque(avFrame->buf[0]));
         RTC_DCHECK(inputFrame);
-        rtc::scoped_refptr<webrtc::VideoFrameBuffer> frameBuffer = inputFrame->video_frame_buffer();
+        webrtc::scoped_refptr<webrtc::VideoFrameBuffer> frameBuffer = inputFrame->video_frame_buffer();
 
         const webrtc::PlanarYuvBuffer* planarYuvBuffer = nullptr;
         const webrtc::PlanarYuv8Buffer* planarYuv8Buffer = nullptr;
@@ -396,7 +396,7 @@ namespace openh264 {
             return WEBRTC_VIDEO_CODEC_ERROR;
         }
 
-        rtc::scoped_refptr<webrtc::VideoFrameBuffer> croppedBuffer;
+        webrtc::scoped_refptr<webrtc::VideoFrameBuffer> croppedBuffer;
         switch (videoFrameBufferType) {
         case webrtc::VideoFrameBuffer::Type::kI420:
             croppedBuffer = webrtc::WrapI420Buffer(

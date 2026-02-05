@@ -7,13 +7,13 @@
 #ifdef IS_ANDROID
 
 #include <jni.h>
-#include <nlohmann/json.hpp>
+#include <wrtc/utils/json.hpp>
 #include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/devices/device_info.hpp>
 #include <ntgcalls/models/media_description.hpp>
 
 namespace ntgcalls {
-    using nlohmann::json;
+    using wrtc::json;
 
     class JavaVideoCapturerModule final: public BaseReader {
         VideoDescription desc;

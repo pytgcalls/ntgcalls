@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include <wrtc/utils/json.hpp>
 #include <ntgcalls/models/media_description.hpp>
 
 namespace ntgcalls {
-    using nlohmann::json;
+    using wrtc::json;
 
     class BaseDeviceModule {
     protected:
         uint32_t rate = 0;
         uint8_t channels = 0;
-        json deviceMetadata = nullptr;
+        json deviceMetadata;
         bool isCapture;
 
     public:

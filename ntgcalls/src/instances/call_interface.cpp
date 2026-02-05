@@ -5,27 +5,20 @@
 #include <ntgcalls/instances/call_interface.hpp>
 
 namespace ntgcalls {
-    CallInterface::CallInterface(rtc::Thread* updateThread): updateThread(updateThread) {
+    CallInterface::CallInterface(webrtc::Thread* updateThread): updateThread(updateThread) {
         streamManager = std::make_shared<StreamManager>(updateThread);
     }
 
     void CallInterface::stop() {
-        isExiting = true;
-        std::weak_ptr weak(shared_from_this());
-        updateThread->BlockingCall([weak] {
-            const auto strong = weak.lock();
-            if (!strong) {
-                return;
-            }
-            strong->connectionChangeCallback = nullptr;
-            strong->streamManager->close();
-            strong->streamManager = nullptr;
-            if (strong->connection) {
-                strong->connection->close();
-                strong->connection = nullptr;
-            }
-            strong->updateThread = nullptr;
-        });
+        connectionChangeCallback = nullptr;
+        remoteSourceCallback = nullptr;
+        streamManager->close();
+        streamManager = nullptr;
+        if (connection) {
+            connection->close();
+            connection = nullptr;
+        }
+        updateThread = nullptr;
     }
 
     wrtc::ConnectionMode CallInterface::getConnectionMode() const {
@@ -101,7 +94,6 @@ namespace ntgcalls {
                 if (!strongUpdate) {
                     return;
                 }
-                if (strongUpdate->isExiting) return;
                 switch (state) {
                 case wrtc::ConnectionState::Connecting:
                     if (wasConnected) {

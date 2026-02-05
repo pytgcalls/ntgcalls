@@ -126,23 +126,25 @@ PYBIND11_MODULE(ntgcalls, m) {
 
     py::class_<ntgcalls::AudioDescription> audioWrapper(m, "AudioDescription", mediaWrapper);
     audioWrapper.def(
-        py::init<ntgcalls::BaseMediaDescription::MediaSource, uint32_t, uint8_t, std::string>(),
+        py::init<ntgcalls::BaseMediaDescription::MediaSource, uint32_t, uint8_t, std::string, bool>(),
         py::arg("media_source"),
         py::arg("sample_rate"),
         py::arg("channel_count"),
-        py::arg("input")
+        py::arg("input"),
+        py::arg("keep_open") = false
     );
     audioWrapper.def_readwrite("sample_rate", &ntgcalls::AudioDescription::sampleRate);
     audioWrapper.def_readwrite("channel_count", &ntgcalls::AudioDescription::channelCount);
 
     py::class_<ntgcalls::VideoDescription> videoWrapper(m, "VideoDescription", mediaWrapper);
     videoWrapper.def(
-        py::init<ntgcalls::BaseMediaDescription::MediaSource, int16_t, int16_t, uint8_t, std::string>(),
+        py::init<ntgcalls::BaseMediaDescription::MediaSource, int16_t, int16_t, uint8_t, std::string, bool>(),
         py::arg("media_source"),
         py::arg("width"),
         py::arg("height"),
         py::arg("fps"),
-        py::arg("input")
+        py::arg("input"),
+        py::arg("keep_open") = false
     );
     videoWrapper.def_readwrite("width", &ntgcalls::VideoDescription::width);
     videoWrapper.def_readwrite("height", &ntgcalls::VideoDescription::height);

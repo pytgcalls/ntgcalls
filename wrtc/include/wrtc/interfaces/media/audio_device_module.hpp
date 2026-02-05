@@ -21,7 +21,7 @@ namespace wrtc {
         mutable webrtc::Mutex mutex;
         webrtc::AudioTransport* audioCallback RTC_GUARDED_BY(mutex) = nullptr;
         bool started RTC_GUARDED_BY(mutex) = false;
-        std::unique_ptr<rtc::Thread> processThread;
+        std::unique_ptr<webrtc::Thread> processThread;
         webrtc::SequenceChecker processThreadChecker{webrtc::SequenceChecker::kDetached};
         int64_t nextFrameTime RTC_GUARDED_BY(processThreadChecker) = 0;
         char buffer[kNumberSamples * kNumberBytesPerSample * kNumberOfChannels]{};
@@ -37,7 +37,7 @@ namespace wrtc {
     public:
         int32_t ActiveAudioLayer(AudioLayer* audioLayer) const override;
 
-        int32_t RegisterAudioCallback(webrtc::AudioTransport* audioCallback) override;
+        int32_t RegisterAudioCallback(webrtc::AudioTransport* callback) override;
 
         int32_t Init() override;
 

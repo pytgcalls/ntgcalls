@@ -16,12 +16,13 @@ namespace wrtc {
 
     class NetworkInterface {
     protected:
-        rtc::scoped_refptr<PeerConnectionFactory> factory;
+        PeerConnectionFactory* factory;
+        webrtc::Environment env;
         synchronized_callback<void> dataChannelOpenedCallback;
         synchronized_callback<IceCandidate> iceCandidateCallback;
         synchronized_callback<ConnectionState, bool> connectionChangeCallback;
         synchronized_callback<bytes::binary> dataChannelMessageCallback;
-        ConnectionState currentState = ConnectionState::New;
+        ConnectionState currentState = ConnectionState::Connecting;
         bool dataChannelOpen = false;
         bool alreadyConnected = false;
         bool audioIncoming = false, cameraIncoming = false, screenIncoming = false;
@@ -35,11 +36,11 @@ namespace wrtc {
 
         virtual ~NetworkInterface() = default;
 
-        [[nodiscard]] rtc::Thread *networkThread() const;
+        [[nodiscard]] webrtc::Thread *networkThread() const;
 
-        [[nodiscard]] rtc::Thread *signalingThread() const;
+        [[nodiscard]] webrtc::Thread *signalingThread() const;
 
-        [[nodiscard]] rtc::Thread *workerThread() const;
+        [[nodiscard]] webrtc::Thread *workerThread() const;
 
         const webrtc::Environment& environment() const;
 
@@ -57,7 +58,7 @@ namespace wrtc {
 
         virtual void addIceCandidate(const IceCandidate& rawCandidate) const = 0;
 
-        virtual std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) = 0;
+        virtual std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) = 0;
 
         virtual void addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) = 0;
 

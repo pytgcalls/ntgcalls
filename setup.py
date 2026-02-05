@@ -12,7 +12,7 @@ from setuptools import Extension, setup, Command
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
-CMAKE_VERSION = '3.30.5'
+CMAKE_VERSION = '4.1.2'
 TOOLS_PATH = Path(Path.cwd(), 'build_tools')
 
 
@@ -76,7 +76,7 @@ class CMakeBuild(build_ext):
         cfg = release_kind()
         cmake_args = [
             f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}',
-            f'-DPYTHON_EXECUTABLE={sys.executable}',
+            f'-DPython_EXECUTABLE={sys.executable}',
             f'-DCMAKE_BUILD_TYPE={cfg}',
             f'-DIS_PYTHON=ON',
             f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}',
@@ -128,7 +128,7 @@ class SharedCommand(Command):
             f'-DCMAKE_BUILD_TYPE={release_kind()}',
             f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
             f'-DIS_PYTHON=OFF',
-            f'-DPYTHON_EXECUTABLE={sys.executable}',
+            f'-DPython_EXECUTABLE={sys.executable}',
             f'-DCMAKE_TOOLCHAIN_FILE={Path(Path.cwd(), "cmake", "Toolchain.cmake")}',
         ]
         build_args = [

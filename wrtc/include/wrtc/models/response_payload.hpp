@@ -3,12 +3,10 @@
 //
 
 #pragma once
-#include <nlohmann/json.hpp>
+#include <wrtc/utils/json.hpp>
 #include <wrtc/models/media_content.hpp>
 
 namespace wrtc {
-    using nlohmann::json;
-
     class ResponsePayload {
         static std::vector<webrtc::RtpExtension> parseRtpExtensions(const json& data);
 
@@ -21,8 +19,8 @@ namespace wrtc {
         };
 
         PeerIceParameters remoteIceParameters;
-        std::unique_ptr<rtc::SSLFingerprint> fingerprint;
-        std::vector<cricket::Candidate> candidates;
+        std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
+        std::vector<webrtc::Candidate> candidates;
         Media media;
 
         bool isRtmp = false;

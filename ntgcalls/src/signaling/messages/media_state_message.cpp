@@ -3,21 +3,18 @@
 //
 
 #include <ntgcalls/signaling/messages/media_state_message.hpp>
-
-#include <nlohmann/json.hpp>
-
 #include <ntgcalls/exceptions.hpp>
 
 namespace signaling {
     bytes::binary MediaStateMessage::serialize() const {
-        return bytes::make_binary(to_string(json{
+        return bytes::make_binary(json{
             {"@type", "MediaState"},
             {"muted", isMuted},
             {"lowBattery", isBatteryLow},
             {"videoState", parseVideoState(videoState)},
             {"videoRotation", videoRotation},
             {"screencastState", parseVideoState(screencastState)}
-        }));
+        }.dump());
     }
 
     std::unique_ptr<MediaStateMessage> MediaStateMessage::deserialize(const bytes::binary& data) {

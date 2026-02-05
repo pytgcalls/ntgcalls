@@ -31,7 +31,7 @@ namespace ntgcalls {
         const auto frameTime = sink->frameTime();
         for (size_t i = 0; i < bufferCount; ++i) {
             bufferThreads.push_back(
-                rtc::PlatformThread::SpawnJoinable(
+                webrtc::PlatformThread::SpawnJoinable(
                     [this, i, bufferCount, frameSize = sink->frameSize(), maxBufferSize = std::chrono::seconds(1) / frameTime / 10, readCallback] {
                         activeBufferCount++;
                         std::vector<bytes::unique_binary> frames;
@@ -57,7 +57,7 @@ namespace ntgcalls {
                             {
                                 std::unique_lock lock(mtx);
                                 cv.wait(lock, [this, i] {
-                                    return !running || (activeBuffer == i && enabled);
+                                    return !running || (activeBuffer == i && status);
                                 });
                             }
                             if (!running) break;
@@ -76,14 +76,14 @@ namespace ntgcalls {
                         }
                     },
                     "ThreadedReader_" + std::to_string(bufferCount),
-                    rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime)
+                    webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime)
                 )
             );
         }
     }
 
-    bool ThreadedReader::set_enabled(const bool status) {
-        const auto res = BaseReader::set_enabled(status);
+    bool ThreadedReader::set_enabled(const bool enable) {
+        const auto res = BaseReader::set_enabled(enable);
         cv.notify_all();
         return res;
     }

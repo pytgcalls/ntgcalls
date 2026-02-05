@@ -33,11 +33,10 @@ namespace wrtc {
                 throw TransportParseException("Transport not found");
             }
             auto transport = data["transport"];
-            remoteIceParameters.ufrag = transport["ufrag"].get<std::string>();
-            remoteIceParameters.pwd = transport["pwd"].get<std::string>();
-            for (const auto& item : transport["candidates"].items()) {
-                auto candidate = item.value();
-                rtc::SocketAddress address(candidate["ip"].get<std::string>(), std::stoi(candidate["port"].get<std::string>()));
+            remoteIceParameters.ufrag = transport["ufrag"];
+            remoteIceParameters.pwd = transport["pwd"];
+            for (const auto& candidate : transport["candidates"]) {
+                webrtc::SocketAddress address(candidate["ip"].get<std::string>(), std::stoi(candidate["port"].get<std::string>()));
                 webrtc::IceCandidateType candidateType;
                 if (auto rawCandidateType = candidate["type"].get<std::string>(); rawCandidateType == "srflx") {
                     candidateType = webrtc::IceCandidateType::kSrflx;
@@ -66,7 +65,7 @@ namespace wrtc {
                 );
             }
             if (!transport["fingerprints"].empty()) {
-                fingerprint = rtc::SSLFingerprint::CreateUniqueFromRfc4572(
+                fingerprint = webrtc::SSLFingerprint::CreateUniqueFromRfc4572(
                     transport["fingerprints"][0]["hash"].get<std::string>(),
                     transport["fingerprints"][0]["fingerprint"].get<std::string>()
                 );
@@ -86,11 +85,10 @@ namespace wrtc {
 
     std::vector<webrtc::RtpExtension> ResponsePayload::parseRtpExtensions(const json& data) {
         std::vector<webrtc::RtpExtension> result;
-        for (const auto& item : data["rtp-hdrexts"].items()) {
-            auto extension = item.value();
+        for (const auto& extension : data["rtp-hdrexts"]) {
             webrtc::RtpExtension rtpExtension;
-            rtpExtension.id =extension["id"].get<int>();
-            rtpExtension.uri = extension["uri"].get<std::string>();
+            rtpExtension.id =extension["id"];
+            rtpExtension.uri = extension["uri"];
             result.push_back(rtpExtension);
         }
         return result;
@@ -98,20 +96,19 @@ namespace wrtc {
 
     std::vector<PayloadType> ResponsePayload::parsePayloadTypes(const json& data) {
         std::vector<PayloadType> result;
-        for (const auto& item : data["payload-types"].items()) {
-            auto payload = item.value();
+        for (const auto& payload : data["payload-types"]) {
             PayloadType payloadType;
-            payloadType.id = payload["id"].get<int>();
-            payloadType.name = payload["name"].get<std::string>();
-            payloadType.clockrate = payload["clockrate"].get<int>();
+            payloadType.id = payload["id"];
+            payloadType.name = payload["name"];
+            payloadType.clockrate = payload["clockrate"];
             if (!payload["channels"].is_null()) {
-                payloadType.channels = payload["channels"].get<int>();
+                payloadType.channels = payload["channels"];
             }
             if (!payload["parameters"].is_null()) {
                 for (const auto& parameter : payload["parameters"].items()) {
                     std::string value;
                     if (parameter.value().is_string()) {
-                        value = parameter.value().get<std::string>();
+                        value = parameter.value();
                     } else {
                         value = std::to_string(parameter.value().get<int>());
                     }
@@ -119,13 +116,12 @@ namespace wrtc {
                 }
             }
             if (!payload["rtcp-fbs"].is_null()) {
-                for (const auto& feedbackType : payload["rtcp-fbs"].items()) {
-                    auto feedback = feedbackType.value();
+                for (const auto& feedback : payload["rtcp-fbs"]) {
                     std::string subType;
                     if (!feedback["subtype"].is_null()) {
-                        subType = feedback["subtype"].get<std::string>();
+                        subType = feedback["subtype"];
                     }
-                    payloadType.feedbackTypes.push_back({feedback["type"].get<std::string>(), subType});
+                    payloadType.feedbackTypes.push_back({feedback["type"], subType});
                 }
             }
             result.push_back(payloadType);

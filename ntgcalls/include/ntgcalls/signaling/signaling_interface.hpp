@@ -16,8 +16,8 @@ namespace signaling {
         virtual ~SignalingInterface() = default;
 
         SignalingInterface(
-            rtc::Thread* networkThread,
-            rtc::Thread* signalingThread,
+            webrtc::Thread* networkThread,
+            webrtc::Thread* signalingThread,
             const EncryptionKey &key,
             DataEmitter onEmitData,
             DataReceiver onSignalData
@@ -34,7 +34,7 @@ namespace signaling {
     protected:
         DataReceiver onSignalData;
         DataEmitter onEmitData;
-        rtc::Thread *networkThread, *signalingThread;
+        webrtc::Thread *networkThread, *signalingThread;
 
         std::vector<bytes::binary> preReadData(const bytes::binary &data, bool isRaw = false);
 

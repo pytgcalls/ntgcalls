@@ -6,6 +6,10 @@
 #include <wrtc/interfaces/media/raw_audio_sink.hpp>
 
 namespace wrtc {
+    RawAudioSink::~RawAudioSink() {
+        callbackData = nullptr;
+    }
+
     void RawAudioSink::OnData(const Data& audio) {
         if (callbackData) {
             auto frame = std::make_unique<AudioFrame>(ssrc);

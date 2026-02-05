@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.vanniktech.publish)
 }
 
-import com.vanniktech.maven.publish.SonatypeHost
 import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 import javax.inject.Inject
 
@@ -32,7 +31,7 @@ abstract class VersionInfoProvider implements ValueSource<Details, Params> {
 
         def versionOutput = new ByteArrayOutputStream()
         execOperations.exec { execSpec ->
-            execSpec.commandLine "cmake", "-DANDROID=ON", "-DPROJECT_VERSION=$versionNameRaw", "-P", "$path/../../cmake/VersionUtil.cmake"
+            execSpec.commandLine "cmake", "-DANDROID_TAGS=ON", "-DPROJECT_VERSION=$versionNameRaw", "-P", "$path/../../cmake/VersionUtil.cmake"
             execSpec.errorOutput = versionOutput
         }
 
@@ -46,21 +45,24 @@ abstract class VersionInfoProvider implements ValueSource<Details, Params> {
         def versionCode = (major * 10000000 + minor * 1000000 + patch * 10000)
 
         if (versionInfo.size() > 1) {
-            if (versionInfo[1].startsWith("rc")) {
-                versionCode += versionInfo[1].substring(2).toInteger() * 100
-            } else if (versionInfo[1].startsWith("beta")) {
-                versionCode += versionInfo[1].substring(4).toInteger()
+            def suffix = versionInfo[1]
+            if (suffix.startsWith("alpha")) {
+                versionCode += 1000 + suffix.substring(5).toInteger()
+            } else if (suffix.startsWith("beta")) {
+                versionCode += 2000 + suffix.substring(4).toInteger()
+            } else if (suffix.startsWith("rc")) {
+                versionCode += 3000 + suffix.substring(2).toInteger()
             } else {
-                throw new IllegalArgumentException("Invalid version format: ${versionInfo[1]}")
+                throw new IllegalArgumentException("Invalid version format: ${suffix}")
             }
         } else {
             versionCode += 9999
         }
 
         return new Details(
-            versionName,
-            versionCode,
-            new String(gitOutput.toByteArray()).trim()
+                versionName,
+                versionCode,
+                new String(gitOutput.toByteArray()).trim()
         )
     }
 
@@ -87,6 +89,7 @@ def ndkDir = "$depsDir/ndk/src"
 def ntgcallsIncludeDir = "$baseDir/ntgcalls/include"
 def wrtcIncludeDir = "$baseDir/wrtc/include"
 def androidCmakeDir = "$baseDir/cmake/Android.cmake"
+def ndkCmakeDir = "$baseDir/cmake/FindNDK.cmake"
 def versionProps = new Properties()
 new File("$baseDir/version.properties").withInputStream {
     versionProps.load(it)
@@ -98,7 +101,7 @@ def versionInfoProvider = providers.of(VersionInfoProvider) {
 
 android {
     namespace = "org.pytgcalls.ntgcalls"
-    compileSdk = 35
+    compileSdk = 36
     testBuildType = "release"
 
     compileOptions {
@@ -107,8 +110,8 @@ android {
     }
 
     defaultConfig {
-        minSdk = 16
-        targetSdk = 35
+        minSdk = 23
+        targetSdk = 36
 
         buildConfigField 'String', 'GIT_COMMIT', "\"${versionInfoProvider.gitCommit}\""
         buildConfigField 'int', 'VERSION_CODE', "${versionInfoProvider.versionCode}"
@@ -119,19 +122,16 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags '-std=gnu++20'
-                arguments "-DANDROID_STL=none",
-                        "-DANDROID_NATIVE_API_LEVEL=${versionProps.getProperty('version.sdk_compile')}",
+                arguments "-DANDROID_NATIVE_API_LEVEL=${versionProps.getProperty('version.sdk_compile')}",
                         "-DANDROID_PLATFORM=${versionProps.getProperty('version.sdk_compile')}",
-                        "-DANDROID_CPP_FEATURES=exceptions rtti",
                         "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
                         "-DLIBCXX_INCLUDE_DIR=$depsDir/libcxx/include",
-                        "-DCMAKE_TOOLCHAIN_FILE=$ndkDir/build/cmake/android.toolchain.cmake",
                         "-DANDROID_NDK=$ndkDir",
                         "-DDEPS_DIR=$depsDir",
                         "-DNTGCALLS_INCLUDE_DIR=$ntgcallsIncludeDir",
                         "-DWRTC_INCLUDE_DIR=$wrtcIncludeDir",
                         "-DANDROID_CMAKE_DIR=$androidCmakeDir",
-                        "-DCMAKE_ANDROID_EXCEPTIONS=ON"
+                        "-DNDK_CMAKE_DIR=$ndkCmakeDir"
             }
         }
         ndk {
@@ -143,7 +143,7 @@ android {
     externalNativeBuild {
         cmake {
             path = "src/main/jni/CMakeLists.txt"
-            version = "3.22.1"
+            version = "4.1.2"
         }
     }
 
@@ -193,7 +193,7 @@ mavenPublishing {
         }
     }
 
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
     configure(new AndroidSingleVariantLibrary("release", true, true))
     signAllPublications()
 }

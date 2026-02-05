@@ -8,28 +8,29 @@
 
 namespace wrtc {
     ChannelManager::ChannelManager(
-        cricket::MediaEngineInterface *mediaEngine,
-        rtc::Thread* workerThread,
-        rtc::Thread* networkThread,
-        rtc::Thread* signalingThread
-    ): mediaEngine(mediaEngine), signalingThread(signalingThread), workerThread(workerThread), networkThread(networkThread) {
+        const webrtc::Environment& environment,
+        webrtc::MediaEngineInterface* mediaEngine,
+        webrtc::Thread* workerThread,
+        webrtc::Thread* networkThread,
+        webrtc::Thread* signalingThread
+    ): environment(environment), mediaEngine(mediaEngine), signalingThread(signalingThread), workerThread(workerThread), networkThread(networkThread) {
         RTC_DCHECK_RUN_ON(signalingThread);
         RTC_DCHECK(workerThread);
         RTC_DCHECK(networkThread);
     }
 
-    std::unique_ptr<cricket::VoiceChannel> ChannelManager::CreateVoiceChannel(
+    std::unique_ptr<webrtc::VoiceChannel> ChannelManager::CreateVoiceChannel(
         webrtc::Call *call,
-        const cricket::MediaConfig &mediaConfig,
+        const webrtc::MediaConfig &mediaConfig,
         const std::string &mid,
         const bool srtpRequired,
         const webrtc::CryptoOptions &cryptoOptions,
-        const cricket::AudioOptions &options
+        const webrtc::AudioOptions &options
     ) {
         RTC_DCHECK(call);
         RTC_DCHECK(mediaEngine);
         if (!workerThread->IsCurrent()) {
-            std::unique_ptr<cricket::VoiceChannel> temp;
+            std::unique_ptr<webrtc::VoiceChannel> temp;
             workerThread->BlockingCall([&] {
                 temp = CreateVoiceChannel(call, mediaConfig, mid, srtpRequired, cryptoOptions, options);
             });
@@ -37,26 +38,26 @@ namespace wrtc {
         }
         RTC_DCHECK_RUN_ON(workerThread);
         auto sendMediaChannel = mediaEngine->voice().CreateSendChannel(
+            environment,
             call,
             mediaConfig,
             options,
-            cryptoOptions,
-            webrtc::AudioCodecPairId::Create()
+            cryptoOptions
         );
         if (!sendMediaChannel) {
             return nullptr;
         }
         auto receiveMediaChannel = mediaEngine->voice().CreateReceiveChannel(
+            environment,
             call,
             mediaConfig,
             options,
-            cryptoOptions,
-            webrtc::AudioCodecPairId::Create()
+            cryptoOptions
         );
         if (!receiveMediaChannel) {
             return nullptr;
         }
-        return std::make_unique<cricket::VoiceChannel>(
+        return std::make_unique<webrtc::VoiceChannel>(
             workerThread,
             networkThread,
             signalingThread,
@@ -69,19 +70,19 @@ namespace wrtc {
         );
     }
 
-    std::unique_ptr<cricket::VideoChannel> ChannelManager::CreateVideoChannel(
+    std::unique_ptr<webrtc::VideoChannel> ChannelManager::CreateVideoChannel(
         webrtc::Call *call,
-        const cricket::MediaConfig &mediaConfig,
+        const webrtc::MediaConfig &mediaConfig,
         const std::string &mid,
         const bool srtpRequired,
         const webrtc::CryptoOptions &cryptoOptions,
-        const cricket::VideoOptions &options,
+        const webrtc::VideoOptions &options,
         webrtc::VideoBitrateAllocatorFactory *bitrateAllocatorFactory
     ) {
         RTC_DCHECK(call);
         RTC_DCHECK(mediaEngine);
         if (!workerThread->IsCurrent()) {
-            std::unique_ptr<cricket::VideoChannel> temp = nullptr;
+            std::unique_ptr<webrtc::VideoChannel> temp = nullptr;
             workerThread->BlockingCall([&] {
               temp = CreateVideoChannel(
                   call,
@@ -96,7 +97,8 @@ namespace wrtc {
             return temp;
         }
         RTC_DCHECK_RUN_ON(workerThread);
-        std::unique_ptr<cricket::VideoMediaSendChannelInterface> sendMediaChannel = mediaEngine->video().CreateSendChannel(
+        std::unique_ptr<webrtc::VideoMediaSendChannelInterface> sendMediaChannel = mediaEngine->video().CreateSendChannel(
+            environment,
             call,
             mediaConfig,
             options,
@@ -106,13 +108,14 @@ namespace wrtc {
         if (!sendMediaChannel) {
             return nullptr;
         }
-        std::unique_ptr<cricket::VideoMediaReceiveChannelInterface> receiveMediaChannel = mediaEngine->video().CreateReceiveChannel(
+        std::unique_ptr<webrtc::VideoMediaReceiveChannelInterface> receiveMediaChannel = mediaEngine->video().CreateReceiveChannel(
+            environment,
             call,
             mediaConfig,
             options,
             cryptoOptions
         );
-        return std::make_unique<cricket::VideoChannel>(
+        return std::make_unique<webrtc::VideoChannel>(
             workerThread,
             networkThread,
             signalingThread,

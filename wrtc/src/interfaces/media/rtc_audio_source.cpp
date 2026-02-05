@@ -4,11 +4,12 @@
 
 #include <wrtc/interfaces/media/rtc_audio_source.hpp>
 #include <rtc_base/crypto_random.h>
+#include <api/make_ref_counted.h>
 
 namespace wrtc {
     RTCAudioSource::RTCAudioSource() {
         factory = PeerConnectionFactory::GetOrCreateDefault();
-        source = new rtc::RefCountedObject<AudioTrackSource>();
+        source = webrtc::make_ref_counted<AudioTrackSource>();
     }
 
     RTCAudioSource::~RTCAudioSource() {
@@ -16,8 +17,8 @@ namespace wrtc {
         source = nullptr;
     }
 
-    rtc::scoped_refptr<webrtc::AudioTrackInterface> RTCAudioSource::createTrack() const {
-        return factory->factory()->CreateAudioTrack(rtc::CreateRandomUuid(), source.get());
+    webrtc::scoped_refptr<webrtc::AudioTrackInterface> RTCAudioSource::createTrack() const {
+        return factory->factory()->CreateAudioTrack(webrtc::CreateRandomUuid(), source.get());
     }
 
     void RTCAudioSource::OnData(const RTCOnDataEvent &data, const FrameData additionalData) const {

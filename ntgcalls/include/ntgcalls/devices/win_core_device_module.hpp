@@ -28,7 +28,7 @@ namespace ntgcalls {
         std::atomic_bool isRestarting = false;
         webrtc::ScopedCOMInitializer comInitializer;
         ScopedMMCSSRegistration mmcssRegistration;
-        rtc::PlatformThread thread;
+        webrtc::PlatformThread thread;
         bool automaticRestart = false;
         int deviceIndex = -1;
         std::string deviceUID;

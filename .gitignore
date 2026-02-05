@@ -1,4 +1,5 @@
 .idea
+.claude
 .cxx
 .gradle
 venv
@@ -35,7 +36,7 @@ build_lib/
 shared-output/
 static-output/
 dist/
-tests/
+local_tests/
 __pycache__
 *.i420
 *.pcm

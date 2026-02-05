@@ -12,29 +12,34 @@ namespace wrtc {
 
     class PeerConnectionFactoryWithContext : public webrtc::PeerConnectionFactory {
     public:
-        static rtc::scoped_refptr<PeerConnectionFactoryInterface> Create(
+        static webrtc::scoped_refptr<PeerConnectionFactoryInterface> Create(
+                const webrtc::Environment &env,
                 webrtc::PeerConnectionFactoryDependencies dependencies,
-                rtc::scoped_refptr<webrtc::ConnectionContext>& context);
+                webrtc::scoped_refptr<webrtc::ConnectionContext>& context);
 
         explicit PeerConnectionFactoryWithContext(
+                const webrtc::Environment &env,
                 webrtc::PeerConnectionFactoryDependencies dependencies);
 
         PeerConnectionFactoryWithContext(
-            const rtc::scoped_refptr<webrtc::ConnectionContext>& context,
+            const webrtc::Environment &env,
+            const webrtc::scoped_refptr<webrtc::ConnectionContext>& context,
                 webrtc::PeerConnectionFactoryDependencies* dependencies);
 
-        static rtc::scoped_refptr<PeerConnectionFactoryWithContext> Create(
-        webrtc::PeerConnectionFactoryDependencies dependencies);
+        static webrtc::scoped_refptr<PeerConnectionFactoryWithContext> Create(
+            const webrtc::Environment &env,
+            webrtc::PeerConnectionFactoryDependencies dependencies);
 
-        [[nodiscard]] rtc::scoped_refptr<webrtc::ConnectionContext> GetContext() const;
+        [[nodiscard]] webrtc::scoped_refptr<webrtc::ConnectionContext> GetContext() const;
 
     private:
-        rtc::scoped_refptr<webrtc::ConnectionContext> conn_context_;
+        webrtc::scoped_refptr<webrtc::ConnectionContext> conn_context_;
     };
 
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> CreateModularPeerConnectionFactoryWithContext(
+    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> CreateModularPeerConnectionFactoryWithContext(
+        const webrtc::Environment &env,
         webrtc::PeerConnectionFactoryDependencies dependencies,
-        rtc::scoped_refptr<webrtc::ConnectionContext>& context
+        webrtc::scoped_refptr<webrtc::ConnectionContext>& context
     );
 } // wrtc
 

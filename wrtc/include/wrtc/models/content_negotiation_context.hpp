@@ -21,10 +21,10 @@ namespace wrtc {
         };
 
         struct PendingOutgoingChannel {
-            cricket::MediaDescriptionOptions description;
+            webrtc::MediaDescriptionOptions description;
             uint32_t ssrc = 0;
             std::vector<SsrcGroup> ssrcGroups;
-            explicit PendingOutgoingChannel(cricket::MediaDescriptionOptions &&description):description(std::move(description)) {}
+            explicit PendingOutgoingChannel(webrtc::MediaDescriptionOptions &&description):description(std::move(description)) {}
         };
 
         struct NegotiationContents {
@@ -44,9 +44,9 @@ namespace wrtc {
 
     private:
         bool isOutgoing, needNegotiation;
-        rtc::UniqueRandomIdGenerator* uniqueRandomIdGenerator;
-        std::unique_ptr<cricket::TransportDescriptionFactory> transportDescriptionFactory;
-        std::unique_ptr<cricket::MediaSessionDescriptionFactory> sessionDescriptionFactory;
+        webrtc::UniqueRandomIdGenerator* uniqueRandomIdGenerator;
+        std::unique_ptr<webrtc::TransportDescriptionFactory> transportDescriptionFactory;
+        std::unique_ptr<webrtc::MediaSessionDescriptionFactory> sessionDescriptionFactory;
         std::vector<webrtc::RtpHeaderExtensionCapability> rtpAudioExtensions;
         std::vector<webrtc::RtpHeaderExtensionCapability> rtpVideoExtensions;
         std::vector<PendingOutgoingChannel> outgoingChannelDescriptions;
@@ -57,15 +57,15 @@ namespace wrtc {
         std::vector<OutgoingChannel> outgoingChannels;
         int nextOutgoingChannelId = 0;
 
-        [[nodiscard]] std::unique_ptr<cricket::SessionDescription> currentSessionDescriptionFromCoordinatedState() const;
+        [[nodiscard]] std::unique_ptr<webrtc::SessionDescription> currentSessionDescriptionFromCoordinatedState() const;
 
-        static cricket::ContentInfo convertSignalingContentToContentInfo(const std::string &contentId, const MediaContent &content, webrtc::RtpTransceiverDirection direction);
+        static webrtc::ContentInfo convertSignalingContentToContentInfo(const std::string &contentId, const MediaContent &content, webrtc::RtpTransceiverDirection direction);
 
-        static MediaContent convertContentInfoToSignalingContent(const cricket::ContentInfo &content);
+        static MediaContent convertContentInfoToSignalingContent(const webrtc::ContentInfo &content);
 
-        static cricket::ContentInfo createInactiveContentInfo(const std::string &contentId);
+        static webrtc::ContentInfo createInactiveContentInfo(const std::string &contentId);
 
-        static cricket::MediaDescriptionOptions getIncomingContentDescription(const MediaContent &content);
+        static webrtc::MediaDescriptionOptions getIncomingContentDescription(const MediaContent &content);
 
         void setAnswer(std::unique_ptr<NegotiationContents> &&answer);
 
@@ -73,16 +73,16 @@ namespace wrtc {
 
     public:
         ContentNegotiationContext(
-            const webrtc::FieldTrialsView& fieldTrials,
+            const webrtc::Environment& env,
             bool isOutgoing,
-            cricket::MediaEngineInterface *mediaEngine,
-            rtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
+            webrtc::MediaEngineInterface *mediaEngine,
+            webrtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
             webrtc::PayloadTypeSuggester *payloadTypeSuggester
         );
 
         ~ContentNegotiationContext();
 
-        void copyCodecsFromChannelManager(cricket::MediaEngineInterface *mediaEngine, bool randomize);
+        void copyCodecsFromChannelManager(bool randomize);
 
         std::string addOutgoingChannel(const webrtc::MediaStreamTrackInterface* track);
 

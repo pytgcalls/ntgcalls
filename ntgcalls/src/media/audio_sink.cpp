@@ -19,15 +19,15 @@ namespace ntgcalls {
         return 100;
     }
 
-
     bool AudioSink::setConfig(const std::optional<AudioDescription>& desc) {
         const bool changed = description != desc;
-        if (changed) {
+        const bool forceChange = desc && !desc->keepOpen;
+        if (changed || forceChange) {
             description = desc;
             clear();
             RTC_LOG(LS_INFO) << "AudioSink configured with " << desc->sampleRate << "Hz, " << 16 << "bps, " << desc->channelCount << " channels";
         }
-        return changed;
+        return changed || forceChange;
     }
 
     std::optional<AudioDescription> AudioSink::getConfig() {

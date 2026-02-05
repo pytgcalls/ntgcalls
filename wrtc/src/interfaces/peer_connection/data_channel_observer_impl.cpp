@@ -7,6 +7,11 @@
 namespace wrtc {
     DataChannelObserverImpl::DataChannelObserverImpl(Parameters&& parameters): parameters(std::move(parameters)) {}
 
+    DataChannelObserverImpl::~DataChannelObserverImpl() {
+        parameters.onStateChange = nullptr;
+        parameters.onMessage = nullptr;
+    }
+
     void DataChannelObserverImpl::OnStateChange() {
         if (parameters.onStateChange) {
             parameters.onStateChange();

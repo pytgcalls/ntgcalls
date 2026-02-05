@@ -1,4 +1,4 @@
-set(GLIB_DIR ${deps_loc}/glib)
+set(GLIB_DIR ${DEPS_DIR}/glib)
 set(GLIB_SRC ${GLIB_DIR}/src)
 set(GLIB_GIT https://github.com/pytgcalls/glib)
 set(GIO_2_0_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}gio-2.0${CMAKE_STATIC_LIBRARY_SUFFIX})

@@ -2,12 +2,14 @@
 // Created by Laky64 on 01/10/24.
 //
 
+#include <random>
 #include <p2p/base/dtls_transport.h>
 #include <p2p/client/basic_port_allocator.h>
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
 #include <wrtc/models/simulcast_layer.hpp>
 #include <modules/rtp_rtcp/source/rtp_header_extensions.h>
+#include <rtc_base/time_utils.h>
 
 namespace wrtc {
     GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation) {}
@@ -32,10 +34,10 @@ namespace wrtc {
             outgoingVideoSsrcs.emplace_back(outgoingVideoSsrc + layerIndex * 2 + 0, outgoingVideoSsrc + layerIndex * 2 + 1);
         }
         std::vector<uint32_t> simulcastGroupSsrcs;
-        std::vector<cricket::SsrcGroup> fidGroups;
+        std::vector<webrtc::SsrcGroup> fidGroups;
         for (const auto &layer : outgoingVideoSsrcs) {
             simulcastGroupSsrcs.push_back(layer.ssrc);
-            cricket::SsrcGroup fidGroup(cricket::kFidSsrcGroupSemantics, { layer.ssrc, layer.fidSsrc });
+            webrtc::SsrcGroup fidGroup(webrtc::kFidSsrcGroupSemantics, { layer.ssrc, layer.fidSsrc });
             fidGroups.push_back(fidGroup);
         }
 
@@ -66,11 +68,11 @@ namespace wrtc {
         return 2;
     }
 
-    void GroupConnection::setPortAllocatorFlags(cricket::BasicPortAllocator* portAllocator) {
+    void GroupConnection::setPortAllocatorFlags(webrtc::BasicPortAllocator* portAllocator) {
         uint32_t flags = portAllocator->flags();
         flags |=
-            cricket::PORTALLOCATOR_ENABLE_IPV6 |
-            cricket::PORTALLOCATOR_ENABLE_IPV6_ON_WIFI;
+            webrtc::PORTALLOCATOR_ENABLE_IPV6 |
+            webrtc::PORTALLOCATOR_ENABLE_IPV6_ON_WIFI;
         portAllocator->set_flags(flags);
     }
 
@@ -165,7 +167,7 @@ namespace wrtc {
         });
     }
 
-    void GroupConnection::setRemoteParams(PeerIceParameters remoteIceParameters, std::unique_ptr<rtc::SSLFingerprint> fingerprint) {
+    void GroupConnection::setRemoteParams(PeerIceParameters remoteIceParameters, std::unique_ptr<webrtc::SSLFingerprint> fingerprint) {
         std::weak_ptr weak(shared_from_this());
         networkThread()->PostTask([weak, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint)] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
@@ -173,14 +175,14 @@ namespace wrtc {
                 return;
             }
             strong->remoteParameters = remoteIceParameters;
-            const cricket::IceParameters parameters(
+            const webrtc::IceParameters parameters(
                 remoteIceParameters.ufrag,
                 remoteIceParameters.pwd,
                 true
             );
             strong->transportChannel->SetRemoteIceParameters(parameters);
             if (fingerprint) {
-                strong->dtlsTransport->SetRemoteFingerprint(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size());
+                strong->dtlsTransport->SetRemoteParameters(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size(), std::nullopt);
             }
         });
     }
@@ -463,7 +465,7 @@ namespace wrtc {
                 return;
             }
             std::lock_guard lock(strong->mutex);
-            const auto timestamp = rtc::TimeMillis();
+            const auto timestamp = webrtc::TimeMillis();
             std::vector<std::string> removeChannels;
             for (const auto& [channelId, channel] : strong->incomingAudioChannels) {
                 if (channel->getActivity() < timestamp - 1000) {
@@ -506,38 +508,38 @@ namespace wrtc {
         return false;
     }
 
-    cricket::IceRole GroupConnection::iceRole() const {
-        return cricket::ICEROLE_CONTROLLED;
+    webrtc::IceRole GroupConnection::iceRole() const {
+        return webrtc::ICEROLE_CONTROLLED;
     }
 
-    cricket::IceMode GroupConnection::iceMode() const {
-        return cricket::ICEMODE_LITE;
+    webrtc::IceMode GroupConnection::iceMode() const {
+        return webrtc::ICEMODE_LITE;
     }
 
-    std::optional<rtc::SSLRole> GroupConnection::dtlsRole() const {
-        return rtc::SSLRole::SSL_SERVER;
+    std::optional<webrtc::SSLRole> GroupConnection::dtlsRole() const {
+        return webrtc::SSLRole::SSL_SERVER;
     }
 
-    std::pair<cricket::ServerAddresses, std::vector<cricket::RelayServerConfig>> GroupConnection::getStunAndTurnServers() {
+    std::pair<webrtc::ServerAddresses, std::vector<webrtc::RelayServerConfig>> GroupConnection::getStunAndTurnServers() {
         return {{}, {}};
     }
 
-    cricket::RelayPortFactoryInterface* GroupConnection::getRelayPortFactory() {
+    webrtc::RelayPortFactoryInterface* GroupConnection::getRelayPortFactory() {
         return nullptr;
     }
 
-    void GroupConnection::registerTransportCallbacks(cricket::P2PTransportChannel* transportChannel) {
+    void GroupConnection::registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) {
         std::weak_ptr weak(shared_from_this());
-        transportChannel->RegisterReceivedPacketCallback(this, [weak](rtc::PacketTransportInternal*, const rtc::ReceivedPacket&) {
+        transportChannel->RegisterReceivedPacketCallback(this, [weak](webrtc::PacketTransportInternal*, const webrtc::ReceivedIpPacket&) {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return;
             }
-            strong->lastNetworkActivityMs = rtc::TimeMillis();
+            strong->lastNetworkActivityMs = webrtc::TimeMillis();
         });
     }
 
-    int GroupConnection::getRegatherOnFailedNetworksInterval() {
-        return 2000;
+    webrtc::TimeDelta GroupConnection::getRegatherOnFailedNetworksInterval() {
+        return webrtc::TimeDelta::Seconds(2);
     }
 } // wrtc

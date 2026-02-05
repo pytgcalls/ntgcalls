@@ -20,7 +20,7 @@ namespace wrtc {
 
         void OnMessage(webrtc::DataBuffer const &buffer) override;
 
-        ~DataChannelObserverImpl() override = default;
+        ~DataChannelObserverImpl() override;
 
     private:
         Parameters parameters;

@@ -34,6 +34,8 @@ namespace wrtc {
         inputFormatContext->pb = avIoContext->getContext();
 
         if (avformat_open_input(&inputFormatContext, "", inputFormat, nullptr) < 0) {
+            avformat_free_context(inputFormatContext);
+            inputFormatContext = nullptr;
             didReadToEnd = true;
             return;
         }
@@ -118,7 +120,7 @@ namespace wrtc {
             return VideoStreamingPartFrame(endpointId, videoFrame, frame->pts(stream, firstFramePts), frameIndex);
         }
 #endif
-        const rtc::scoped_refptr<webrtc::I420Buffer> i420Buffer = webrtc::I420Buffer::Copy(
+        const webrtc::scoped_refptr<webrtc::I420Buffer> i420Buffer = webrtc::I420Buffer::Copy(
             frame->getFrame()->width,
             frame->getFrame()->height,
             frame->getFrame()->data[0],

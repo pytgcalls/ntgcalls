@@ -193,7 +193,7 @@ namespace openh264 {
             ReportError();
             return WEBRTC_VIDEO_CODEC_UNINITIALIZED;
         }
-        const rtc::scoped_refptr<webrtc::I420BufferInterface> frameBuffer = frame.video_frame_buffer()->ToI420();
+        const webrtc::scoped_refptr<webrtc::I420BufferInterface> frameBuffer = frame.video_frame_buffer()->ToI420();
         if (!frameBuffer) {
             RTC_LOG(LS_ERROR) << "Failed to convert "
                               << VideoFrameBufferTypeToString(frame.video_frame_buffer()->type())

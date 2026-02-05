@@ -9,18 +9,18 @@
 
 namespace signaling {
 
-    class SignalingSctpConnection final : public sigslot::has_slots<>, public SignalingInterface, public webrtc::DataChannelSink, public std::enable_shared_from_this<SignalingSctpConnection> {
-        std::unique_ptr<cricket::SctpTransportFactory> sctpTransportFactory;
+    class SignalingSctpConnection final : public SignalingInterface, public webrtc::DataChannelSink, public std::enable_shared_from_this<SignalingSctpConnection> {
+        std::unique_ptr<webrtc::SctpTransportFactory> sctpTransportFactory;
         std::unique_ptr<SignalingPacketTransport> packetTransport;
-        std::unique_ptr<cricket::SctpTransportInternal> sctpTransport;
+        std::unique_ptr<webrtc::SctpTransportInternal> sctpTransport;
         std::vector<bytes::binary> pendingData;
         bool allowCompression = false;
         bool isReadyToSend = false;
 
     public:
         SignalingSctpConnection(
-            rtc::Thread* networkThread,
-            rtc::Thread* signalingThread,
+            webrtc::Thread* networkThread,
+            webrtc::Thread* signalingThread,
             const webrtc::Environment& env,
             const EncryptionKey &key,
             const DataEmitter& onEmitData,
@@ -36,7 +36,7 @@ namespace signaling {
 
         void OnReadyToSend() override;
 
-        void OnDataReceived(int channel_id, webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) override;
+        void OnDataReceived(int channel_id, webrtc::DataMessageType type, const webrtc::CopyOnWriteBuffer& buffer) override;
 
         void OnTransportClosed(webrtc::RTCError error) override;
 
@@ -44,6 +44,7 @@ namespace signaling {
         void OnChannelClosing(int channel_id) override{}
         void OnChannelClosed(int channel_id) override{}
         void OnBufferedAmountLow(int channel_id) override{}
+        void OnTransportConnected() override{}
 
     protected:
         [[nodiscard]] bool supportsCompression() const override;

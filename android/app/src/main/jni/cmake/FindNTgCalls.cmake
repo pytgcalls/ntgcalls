@@ -8,6 +8,7 @@ add_library(NTgCalls::ntgcalls STATIC IMPORTED)
 set(_DIRS
     ${NTGCALLS_INCLUDE_DIR}
     ${WRTC_INCLUDE_DIR}
+    ${DEPS_DIR}/boost/src/include
     ${DEPS_DIR}/ffmpeg/src/include
     ${WEBRTC_INCLUDE}
     ${WEBRTC_INCLUDE}/third_party/abseil-cpp
@@ -18,8 +19,6 @@ set(_DIRS
 
 set_target_properties(
     NTgCalls::ntgcalls PROPERTIES
-    INTERFACE_COMPILE_DEFINITIONS "${BASE_COMPILE_DEFINITIONS}"
-    INTERFACE_COMPILE_OPTIONS "${BASE_COMPILE_OPTIONS}"
     INTERFACE_INCLUDE_DIRECTORIES "${_DIRS}"
     IMPORTED_LOCATION "${NTGCALLS_LIB}"
 )

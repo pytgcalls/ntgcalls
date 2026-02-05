@@ -17,7 +17,7 @@ namespace ntgcalls {
 
         ~AudioStreamer() override;
 
-        rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() override;
+        webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() override;
 
         void sendData(uint8_t* sample, size_t size, wrtc::FrameData additionalData) override;
     };

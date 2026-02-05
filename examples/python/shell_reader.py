@@ -1,6 +1,6 @@
 import asyncio
 
-from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, MediaSource
+from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, MediaSource, StreamMode
 from pyrogram import Client, idle
 
 from utils import connect_call
@@ -19,6 +19,10 @@ async def main():
     async with client:
         call_params = await wrtc.create_call(
             chat_id,
+        )
+        await wrtc.set_stream_sources(
+            chat_id,
+            StreamMode.CAPTURE,
             MediaDescription(
                 microphone=AudioDescription(
                     media_source=MediaSource.SHELL,

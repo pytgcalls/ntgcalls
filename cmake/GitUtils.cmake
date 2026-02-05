@@ -77,7 +77,7 @@ function(GitFile)
     endif ()
     if (BASE64)
         execute_process(
-            COMMAND ${Python3_EXECUTABLE} -c "import base64; import sys; sys.stdout.buffer.write(base64.b64decode('${FILE_CONTENT}'))"
+            COMMAND ${Python_EXECUTABLE} -c "import base64; import sys; sys.stdout.buffer.write(base64.b64decode('${FILE_CONTENT}'))"
             RESULT_VARIABLE GIT_RESULT_CODE
             OUTPUT_VARIABLE FILE_CONTENT
         )

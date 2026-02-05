@@ -14,7 +14,7 @@ runs:
   using: composite
   steps:
     - name: Check out the repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: "pypa/cibuildwheel"
         path: "${{ github.action_path }}/tmp"

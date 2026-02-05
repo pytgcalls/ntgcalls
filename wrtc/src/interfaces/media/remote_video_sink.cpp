@@ -7,6 +7,10 @@
 namespace wrtc {
     RemoteVideoSink::RemoteVideoSink(const std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)>& callback): frameCallback(callback) {}
 
+    RemoteVideoSink::~RemoteVideoSink() {
+        frameCallback = nullptr;
+    }
+
     void RemoteVideoSink::sendFrame(const uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) const {
         frameCallback(ssrc, std::move(frame));
     }

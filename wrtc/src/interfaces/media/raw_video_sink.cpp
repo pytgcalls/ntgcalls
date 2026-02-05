@@ -5,6 +5,10 @@
 #include <wrtc/interfaces/media/raw_video_sink.hpp>
 
 namespace wrtc {
+    RawVideoSink::~RawVideoSink() {
+        callbackData = nullptr;
+    }
+
     void RawVideoSink::OnFrame(const webrtc::VideoFrame& frame) {
         if (callbackData) {
             callbackData(ssrc, std::make_unique<webrtc::VideoFrame>(frame));

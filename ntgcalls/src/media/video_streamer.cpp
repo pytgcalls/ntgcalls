@@ -13,7 +13,7 @@ namespace ntgcalls {
         video = nullptr;
     }
 
-    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> VideoStreamer::createTrack() {
+    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> VideoStreamer::createTrack() {
         return video->createTrack();
     }
 

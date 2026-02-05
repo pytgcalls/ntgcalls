@@ -3,8 +3,6 @@
 //
 
 #pragma once
-#include <nlohmann/json.hpp>
-
 #include <ntgcalls/instances/call_interface.hpp>
 #include <ntgcalls/models/auth_params.hpp>
 #include <ntgcalls/signaling/signaling.hpp>
@@ -12,7 +10,6 @@
 #include <ntgcalls/models/dh_config.hpp>
 
 namespace ntgcalls {
-    using nlohmann::json;
 
     class P2PCall final: public CallInterface {
         bytes::vector randomPower, prime;
@@ -37,7 +34,7 @@ namespace ntgcalls {
         void sendInitialSetup() const;
 
     public:
-        explicit P2PCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
+        explicit P2PCall(webrtc::Thread* updateThread): CallInterface(updateThread) {}
 
         void stop() override;
 

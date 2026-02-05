@@ -5,15 +5,32 @@ ulimit -n 1048576
 import libraries.properties
 import patch-nasm.sh
 
-yum install -y \
-    git \
-    make \
-    wget \
-    alsa-lib-devel \
-    pulseaudio-libs-devel \
-    flex \
-    elfutils-libelf-devel \
-    texinfo
+if command -v yum >/dev/null 2>&1; then
+  yum install -y \
+      git \
+      make \
+      wget \
+      alsa-lib-devel \
+      pulseaudio-libs-devel \
+      flex \
+      elfutils-libelf-devel \
+      texinfo \
+      perl-Compress-Zlib
+else
+  apk add --no-cache \
+      bash \
+      build-base \
+      git \
+      make \
+      wget \
+      alsa-lib-dev \
+      pulseaudio-dev \
+      flex \
+      elfutils-dev \
+      texinfo \
+      findutils \
+      zlib-dev
+fi
 
 build_and_install "nasm" configure --setup-commands="patch_nasm"
 build_and_install "llvm-project/llvm" cmake \

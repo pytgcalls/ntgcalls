@@ -7,7 +7,7 @@ function(PythonFindAllRegex)
     string(REPLACE "'" "\\'" ARG_REGEX ${ARG_REGEX})
     string(REPLACE "\n" "\\n" ARG_STRING ${ARG_STRING})
     string(REPLACE "'" "\\'" ARG_STRING ${ARG_STRING})
-    set(TEMP_PYTHON_FILE ${deps_loc}/_tmp.py)
+    set(TEMP_PYTHON_FILE ${DEPS_DIR}/_tmp.py)
     set(PYTHON_CONTENT "import re\n")
     set(PYTHON_CONTENT "${PYTHON_CONTENT}found_res = re.findall(r'${ARG_REGEX}', '${ARG_STRING}')\n")
     set(PYTHON_CONTENT "${PYTHON_CONTENT}for res in found_res:\n")
@@ -18,7 +18,7 @@ function(PythonFindAllRegex)
     set(PYTHON_CONTENT "${PYTHON_CONTENT}    print(f\"--end-group--\")\n")
     file(WRITE ${TEMP_PYTHON_FILE} ${PYTHON_CONTENT})
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} ${TEMP_PYTHON_FILE}
+        COMMAND ${Python_EXECUTABLE} ${TEMP_PYTHON_FILE}
         OUTPUT_VARIABLE RESULT
     )
     file(REMOVE ${TEMP_PYTHON_FILE})

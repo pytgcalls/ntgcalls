@@ -14,7 +14,6 @@
 #include <wrtc/interfaces/network_interface.hpp>
 
 namespace ntgcalls {
-
     class StreamManager: public std::enable_shared_from_this<StreamManager> {
     public:
         enum Type {
@@ -44,7 +43,7 @@ namespace ntgcalls {
             Screen,
         };
 
-        explicit StreamManager(rtc::Thread* workerThread);
+        explicit StreamManager(webrtc::Thread* workerThread);
 
         void close();
 
@@ -76,19 +75,21 @@ namespace ntgcalls {
 
         void start();
 
-        bool hasDevice(Mode mode, Device device) const;
+        bool hasDevice(Mode mode, Device device);
 
-        bool hasReaders() const;
+        bool hasReaders();
 
         void onFrames(const std::function<void(Mode, Device, const std::vector<wrtc::Frame>&)>& callback);
 
         void sendExternalFrame(Device device, const bytes::binary& data, wrtc::FrameData frameData);
 
     private:
-        rtc::Thread* workerThread;
+        using StreamId = std::pair<Mode, Device>;
+
+        webrtc::Thread* workerThread;
         bool initialized = false, videoSimulcast = true;
-        std::map<std::pair<Mode, Device>, std::unique_ptr<BaseSink>> streams;
-        std::map<std::pair<Mode, Device>, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
+        std::map<StreamId, std::unique_ptr<BaseSink>> streams;
+        std::map<StreamId, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;
         std::map<Device, std::unique_ptr<BaseWriter>> writers;
         std::set<Device> externalWriters;
@@ -101,8 +102,54 @@ namespace ntgcalls {
         wrtc::synchronized_callback<MediaState> onChangeStatus;
         wrtc::synchronized_callback<Mode, Device, std::vector<wrtc::Frame>> framesCallback;
 
+        enum class ReconfigureReason {
+            None,
+            SinkConfigChanged,
+            ReaderMissing,
+            WriterMissing,
+            ExternalStateChanged
+        };
+
         template<typename SinkType, typename DescriptionType>
-        void setConfig(Mode mode, Device device, const std::optional<DescriptionType>& desc);
+        void maybeReconfigureDevice(Mode mode, Device device, const std::optional<DescriptionType>& desc);
+
+        template<class SinkType, class DescriptionType>
+        ReconfigureReason detectReconfigureReason(const StreamId &id, const DescriptionType &desc, bool isExternal);
+
+        template<typename DescriptionType>
+        void handleCaptureConfig(
+            const StreamId& id,
+            const DescriptionType& desc,
+            ReconfigureReason reason,
+            Type streamType,
+            bool isExternal
+        );
+
+        void setupCaptureCallbacks(
+            const StreamId& id,
+            Type streamType,
+            bool isShared
+        );
+
+        template<typename DescriptionType>
+        void handlePlaybackConfig(
+            const StreamId& id,
+            const DescriptionType& desc,
+            ReconfigureReason reason,
+            Type streamType,
+            bool isExternal
+        );
+
+        void setupAudioPlaybackCallbacks(
+            const StreamId& id,
+            bool isExternal
+        );
+
+        void setupVideoPlaybackCallbacks(
+            const StreamId &id
+        );
+
+        void handleNoDescription(Mode mode, Device device);
 
         void checkUpgrade();
 
@@ -112,6 +159,10 @@ namespace ntgcalls {
 
         bool isPaused();
 
+        bool hasDeviceInternal(Mode mode, Device device) const;
+
         static Type getStreamType(Device device);
+
+        void removeReader(Device device);
     };
 } // ntgcalls

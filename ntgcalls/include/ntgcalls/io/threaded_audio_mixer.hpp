@@ -16,7 +16,7 @@ namespace ntgcalls {
         std::queue<bytes::unique_binary> queue;
         std::mutex mtx;
         std::condition_variable cv;
-        rtc::PlatformThread thread;
+        webrtc::PlatformThread thread;
 
         void onData(bytes::unique_binary data) override;
 

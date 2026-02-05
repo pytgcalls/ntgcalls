@@ -12,8 +12,8 @@
 namespace signaling {
     std::shared_ptr<SignalingInterface> Signaling::Create(
         const Version version,
-        rtc::Thread* networkThread,
-        rtc::Thread* signalingThread,
+        webrtc::Thread* networkThread,
+        webrtc::Thread* signalingThread,
         const webrtc::Environment&,
         const EncryptionKey &key,
         const DataEmitter& onEmitData,

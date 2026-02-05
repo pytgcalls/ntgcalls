@@ -1,16 +1,23 @@
 GetProperty("version.clang" CLANG_VERSION)
-if (LINUX_x86_64 OR JUST_INSTALL_CLANG)
-    set(CLANG_DIR ${deps_loc}/clang)
+if (LINUX_x86_64 OR MACOS_ARM64 OR ANDROID_ABI)
+    set(CLANG_DIR ${DEPS_DIR}/clang)
+    set(CLANG_LIB_DIR ${CLANG_DIR}/lib)
     set(CLANG_BIN_DIR ${CLANG_DIR}/bin)
     set(CLANG_UPDATE ${CLANG_DIR}/update.py)
     set(CLANG_API_DIR ${CLANG_DIR}/result.xml)
+
+    if (MACOS_ARM64)
+        set(CLANG_OS_PREFIX Mac_arm64)
+    elseif (LINUX_x86_64 OR ANDROID)
+        set(CLANG_OS_PREFIX Linux_x64)
+    endif ()
 
     if (NOT EXISTS ${CLANG_UPDATE} AND NOT EXISTS ${CLANG_BIN_DIR})
         GitFile(
             URL https://chromium.googlesource.com/chromium/src/tools/+/refs/heads/main/clang/scripts/update.py
             DIRECTORY ${CLANG_UPDATE}
         )
-        set(URL_BASE "https://commondatastorage.googleapis.com/chromium-browser-clang/?delimiter=/&prefix=Linux_x64/")
+        set(URL_BASE "https://commondatastorage.googleapis.com/chromium-browser-clang/?delimiter=/&prefix=${CLANG_OS_PREFIX}/")
         set(URL_TMP ${URL_BASE})
         set(BEST_GENERATION 0)
         set(CLANG_REVISION)
@@ -20,7 +27,7 @@ if (LINUX_x86_64 OR JUST_INSTALL_CLANG)
             file(DOWNLOAD ${URL_TMP} ${CLANG_API_DIR})
             file(READ ${CLANG_API_DIR} CLANG_API_CONTENT)
             PythonFindAllRegex(
-                REGEX "<Key>Linux_x64/clang-(llvmorg-([0-9]+)-[\\w\-]+?)-([0-9]+)\.(tgz|tar\.xz)</Key><Generation>([0-9]+)</Generation>"
+                REGEX "<Key>${CLANG_OS_PREFIX}/clang-(llvmorg-([0-9]+)-[\\w\-]+?)-([0-9]+)\.(tgz|tar\.xz)</Key><Generation>([0-9]+)</Generation>"
                 STRING "${CLANG_API_CONTENT}"
                 VERSIONS
             )
@@ -83,7 +90,7 @@ if (LINUX_x86_64 OR JUST_INSTALL_CLANG)
 
     if (NOT EXISTS ${CLANG_BIN_DIR})
         execute_process(
-            COMMAND ${Python3_EXECUTABLE} ${CLANG_UPDATE} --output-dir ${CLANG_DIR}
+            COMMAND ${Python_EXECUTABLE} ${CLANG_UPDATE} --output-dir ${CLANG_DIR}
         )
     endif ()
     if (NOT JUST_INSTALL_CLANG)

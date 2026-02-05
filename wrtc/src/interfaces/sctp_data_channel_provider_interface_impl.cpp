@@ -10,12 +10,12 @@
 namespace wrtc {
     SctpDataChannelProviderInterfaceImpl::SctpDataChannelProviderInterfaceImpl(
         const webrtc::Environment& env,
-        cricket::DtlsTransportInternal* transportChannel,
+        webrtc::DtlsTransportInternal* transportChannel,
         const bool isOutgoing,
-        rtc::Thread* networkThread
+        webrtc::Thread* networkThread
     ): weakFactory(this), networkThread(networkThread) {
         assert(networkThread->IsCurrent());
-        sctpTransportFactory = std::make_unique<cricket::SctpTransportFactory>(networkThread);
+        sctpTransportFactory = std::make_unique<webrtc::SctpTransportFactory>(networkThread);
         sctpTransport = sctpTransportFactory->CreateSctpTransport(env, transportChannel);
         sctpTransport->SetDataChannelSink(this);
 
@@ -40,6 +40,8 @@ namespace wrtc {
     SctpDataChannelProviderInterfaceImpl::~SctpDataChannelProviderInterfaceImpl() {
         assert(networkThread->IsCurrent());
         weakFactory.InvalidateWeakPtrs();
+        onStateChangedCallback = nullptr;
+        onMessageReceivedCallback = nullptr;
         dataChannel->UnregisterObserver();
         dataChannel->Close();
         dataChannel = nullptr;
@@ -51,7 +53,7 @@ namespace wrtc {
         return true;
     }
 
-    void SctpDataChannelProviderInterfaceImpl::OnDataReceived(int channel_id, const webrtc::DataMessageType type, const rtc::CopyOnWriteBuffer& buffer) {
+    void SctpDataChannelProviderInterfaceImpl::OnDataReceived(int channel_id, const webrtc::DataMessageType type, const webrtc::CopyOnWriteBuffer& buffer) {
         assert(networkThread->IsCurrent());
         dataChannel->OnDataReceived(type, buffer);
     }
@@ -81,14 +83,15 @@ namespace wrtc {
         (void) onMessageReceivedCallback(bytes::binary(buffer.data.data(), buffer.data.data() + buffer.data.size()));
     }
 
-    webrtc::RTCError SctpDataChannelProviderInterfaceImpl::SendData(const webrtc::StreamId sid, const webrtc::SendDataParams& params, const rtc::CopyOnWriteBuffer& payload) {
+    webrtc::RTCError SctpDataChannelProviderInterfaceImpl::SendData(const webrtc::StreamId sid, const webrtc::SendDataParams& params, const webrtc::CopyOnWriteBuffer& payload) {
         assert(networkThread->IsCurrent());
         return sctpTransport->SendData(sid.stream_id_int(), params, payload);
     }
 
-    void SctpDataChannelProviderInterfaceImpl::AddSctpDataStream(const webrtc::StreamId sid, const webrtc::PriorityValue priority) {
+    webrtc::RTCError SctpDataChannelProviderInterfaceImpl::AddSctpDataStream(const webrtc::StreamId sid, const webrtc::PriorityValue priority) {
         assert(networkThread->IsCurrent());
         sctpTransport->OpenStream(sid.stream_id_int(), priority);
+        return webrtc::RTCError::OK();
     }
 
     void SctpDataChannelProviderInterfaceImpl::RemoveSctpDataStream(webrtc::StreamId sid) {

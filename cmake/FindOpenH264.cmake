@@ -1,4 +1,4 @@
-set(OPENH264_DIR ${deps_loc}/openh264)
+set(OPENH264_DIR ${DEPS_DIR}/openh264)
 set(OPENH264_SRC ${OPENH264_DIR}/src)
 set(OPENH264_GIT https://github.com/pytgcalls/openh264)
 set(OPENH264_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}openh264${CMAKE_STATIC_LIBRARY_SUFFIX})

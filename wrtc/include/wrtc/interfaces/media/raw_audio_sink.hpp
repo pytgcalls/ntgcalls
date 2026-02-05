@@ -13,6 +13,8 @@ namespace wrtc {
         uint32_t ssrc = 0;
 
     public:
+        ~RawAudioSink() override;
+
         void OnData(const Data& audio) override;
 
         void setRemoteAudioSink(uint32_t ssrc, std::function<void(std::unique_ptr<AudioFrame>)> callback);

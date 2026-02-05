@@ -16,13 +16,13 @@ namespace wrtc {
 
         ~RTCVideoSource();
 
-        [[nodiscard]] rtc::scoped_refptr<webrtc::VideoTrackInterface> createTrack() const;
+        [[nodiscard]] webrtc::scoped_refptr<webrtc::VideoTrackInterface> createTrack() const;
 
         void OnFrame(const i420ImageData& data, FrameData additionalData) const;
 
     private:
-        rtc::scoped_refptr<VideoTrackSource> source;
-        rtc::scoped_refptr<PeerConnectionFactory> factory;
+        webrtc::scoped_refptr<VideoTrackSource> source;
+        PeerConnectionFactory* factory;
     };
 
 } // wrtc

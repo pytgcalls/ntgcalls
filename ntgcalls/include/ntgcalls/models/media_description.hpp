@@ -22,8 +22,9 @@ namespace ntgcalls {
 
         std::string input;
         MediaSource mediaSource;
+        bool keepOpen;
 
-        BaseMediaDescription(std::string input, const MediaSource mediaSource): input(std::move(input)), mediaSource(mediaSource) {}
+        BaseMediaDescription(std::string input, const MediaSource mediaSource, const bool keepOpen): input(std::move(input)), mediaSource(mediaSource), keepOpen(keepOpen) {}
 
         virtual ~BaseMediaDescription() = default;
     };
@@ -33,8 +34,8 @@ namespace ntgcalls {
         uint32_t sampleRate;
         uint8_t channelCount;
 
-        AudioDescription(const MediaSource mediaSource, const uint32_t sampleRate, const uint8_t channelCount, const std::string& input):
-                BaseMediaDescription(input, mediaSource), sampleRate(sampleRate), channelCount(channelCount) {}
+        AudioDescription(const MediaSource mediaSource, const uint32_t sampleRate, const uint8_t channelCount, const std::string& input, const bool keepOpen):
+                BaseMediaDescription(input, mediaSource, keepOpen), sampleRate(sampleRate), channelCount(channelCount) {}
     };
 
     inline bool operator==(const AudioDescription& lhs, const AudioDescription& rhs) {
@@ -49,8 +50,8 @@ namespace ntgcalls {
         int16_t width, height;
         uint8_t fps;
 
-        VideoDescription(const MediaSource mediaSource, const int16_t width, const int16_t height, const uint8_t fps, const std::string& input):
-                BaseMediaDescription(input, mediaSource), width(width), height(height), fps(fps) {}
+        VideoDescription(const MediaSource mediaSource, const int16_t width, const int16_t height, const uint8_t fps, const std::string& input, const bool keepOpen):
+                BaseMediaDescription(input, mediaSource, keepOpen), width(width), height(height), fps(fps) {}
     };
 
     inline bool operator==(const VideoDescription& lhs, const VideoDescription& rhs) {

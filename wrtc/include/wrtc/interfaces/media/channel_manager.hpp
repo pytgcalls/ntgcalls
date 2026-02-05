@@ -8,36 +8,38 @@
 
 namespace wrtc {
     class ChannelManager {
-        cricket::MediaEngineInterface* mediaEngine;
-        rtc::Thread* signalingThread;
-        rtc::Thread* workerThread;
-        rtc::Thread* networkThread;
-        rtc::UniqueRandomIdGenerator ssrcGenerator;
+        const webrtc::Environment& environment;
+        webrtc::MediaEngineInterface* mediaEngine;
+        webrtc::Thread* signalingThread;
+        webrtc::Thread* workerThread;
+        webrtc::Thread* networkThread;
+        webrtc::UniqueRandomIdGenerator ssrcGenerator;
 
     public:
         ChannelManager(
-            cricket::MediaEngineInterface* mediaEngine,
-            rtc::Thread* workerThread,
-            rtc::Thread* networkThread,
-            rtc::Thread* signalingThread
+            const webrtc::Environment& environment,
+            webrtc::MediaEngineInterface* mediaEngine,
+            webrtc::Thread* workerThread,
+            webrtc::Thread* networkThread,
+            webrtc::Thread* signalingThread
         );
 
-        std::unique_ptr<cricket::VoiceChannel> CreateVoiceChannel(
+        std::unique_ptr<webrtc::VoiceChannel> CreateVoiceChannel(
             webrtc::Call* call,
-            const cricket::MediaConfig& mediaConfig,
+            const webrtc::MediaConfig& mediaConfig,
             const std::string& mid,
             bool srtpRequired,
             const webrtc::CryptoOptions& cryptoOptions,
-            const cricket::AudioOptions& options
+            const webrtc::AudioOptions& options
         );
 
-        std::unique_ptr<cricket::VideoChannel>  CreateVideoChannel(
+        std::unique_ptr<webrtc::VideoChannel>  CreateVideoChannel(
             webrtc::Call* call,
-            const cricket::MediaConfig& mediaConfig,
+            const webrtc::MediaConfig& mediaConfig,
             const std::string& mid,
             bool srtpRequired,
             const webrtc::CryptoOptions& cryptoOptions,
-            const cricket::VideoOptions& options,
+            const webrtc::VideoOptions& options,
             webrtc::VideoBitrateAllocatorFactory* bitrateAllocatorFactory
         );
     };

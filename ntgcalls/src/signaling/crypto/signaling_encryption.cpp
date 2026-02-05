@@ -20,11 +20,12 @@ namespace signaling {
 
     SignalingEncryption::~SignalingEncryption() {
         std::lock_guard lock(mutex);
+        requestSendServiceCallback = nullptr;
         counter = 0;
         largestIncomingCounters.clear();
     }
 
-    bytes::binary SignalingEncryption::encryptPrepared(const rtc::CopyOnWriteBuffer &buffer) {
+    bytes::binary SignalingEncryption::encryptPrepared(const webrtc::CopyOnWriteBuffer &buffer) {
         std::lock_guard lock(mutex);
         bytes::binary encrypted(16 + buffer.size());
         const auto x = (_key.isOutgoing ? 0 : 8) + 128;
@@ -45,15 +46,15 @@ namespace signaling {
     }
 
     void SignalingEncryption::WriteSeq(void *bytes, const uint32_t seq) {
-        *static_cast<uint32_t*>(bytes) = rtc::HostToNetwork32(seq);
+        *static_cast<uint32_t*>(bytes) = webrtc::HostToNetwork32(seq);
     }
 
     uint32_t SignalingEncryption::ReadSeq(const void* bytes) {
-        return rtc::NetworkToHost32(*static_cast<const uint32_t*>(bytes));
+        return webrtc::NetworkToHost32(*static_cast<const uint32_t*>(bytes));
     }
 
-    void SignalingEncryption::AppendSeq(rtc::CopyOnWriteBuffer &buffer, uint32_t seq) {
-        const auto bytes = rtc::HostToNetwork32(seq);
+    void SignalingEncryption::AppendSeq(webrtc::CopyOnWriteBuffer &buffer, uint32_t seq) {
+        const auto bytes = webrtc::HostToNetwork32(seq);
         buffer.AppendData(reinterpret_cast<const char*>(&bytes), sizeof(bytes));
     }
 
@@ -82,8 +83,8 @@ namespace signaling {
         if (incomingCounter + kKeepIncomingCountersCount <= largest) {
             return false;
         }
-        const auto eraseTill = std::ranges::find_if(list, [&](const uint32_t counter) {
-            return counter + kKeepIncomingCountersCount > incomingCounter;
+        const auto eraseTill = std::ranges::find_if(list, [&](const uint32_t c) {
+            return c + kKeepIncomingCountersCount > incomingCounter;
         });
         const auto eraseCount = eraseTill - list.begin();
         const auto positionIndex = position - list.begin() - eraseCount;
@@ -115,23 +116,23 @@ namespace signaling {
         }
     }
 
-    bool SignalingEncryption::registerSentAck(const uint32_t counter, const bool firstInPacket) {
+    bool SignalingEncryption::registerSentAck(const uint32_t c, const bool firstInPacket) {
         auto &list = acksSentCounters;
-        const auto position = std::ranges::lower_bound(list, counter);
-        const auto already = position != list.end() && *position == counter;
+        const auto position = std::ranges::lower_bound(list, c);
+        const auto already = position != list.end() && *position == c;
         const auto was = list;
         if (firstInPacket) {
             list.erase(list.begin(), position);
             if (!already) {
-                list.insert(list.begin(), counter);
+                list.insert(list.begin(), c);
             }
         } else if (!already) {
-            list.insert(position, counter);
+            list.insert(position, c);
         }
         return !already;
     }
 
-    std::vector<rtc::CopyOnWriteBuffer> SignalingEncryption::processRawPacket(const rtc::Buffer &fullBuffer, uint32_t packetSeq) {
+    std::vector<webrtc::CopyOnWriteBuffer> SignalingEncryption::processRawPacket(const webrtc::Buffer &fullBuffer, uint32_t packetSeq) {
         if (fullBuffer.size() < 4) {
             RTC_LOG(LS_ERROR) << "Bad incoming data size";
             return {};
@@ -143,8 +144,8 @@ namespace signaling {
 
         auto currentSeq = packetSeq;
         auto currentCounter = CounterFromSeq(currentSeq);
-        rtc::ByteBufferReader reader(rtc::MakeArrayView(fullBuffer.data() + 4, fullBuffer.size() - 4));
-        auto messages = std::vector<rtc::CopyOnWriteBuffer>();
+        webrtc::ByteBufferReader reader(webrtc::MakeArrayView(fullBuffer.data() + 4, fullBuffer.size() - 4));
+        auto messages = std::vector<webrtc::CopyOnWriteBuffer>();
         while (true) {
             const auto type = static_cast<uint8_t>(*reader.Data());
             const auto singleMessagePacket = (currentSeq & kSingleMessagePacketSeqBit) != 0;
@@ -234,52 +235,52 @@ namespace signaling {
         return static_cast<uint32_t>(++counter | (messageRequiresAck ? kMessageRequiresAckSeqBit : 0));
     }
 
-    bool SignalingEncryption::enoughSpaceInPacket(const rtc::CopyOnWriteBuffer &buffer, const size_t amount) {
+    bool SignalingEncryption::enoughSpaceInPacket(const webrtc::CopyOnWriteBuffer &buffer, const size_t amount) {
         return amount < kMaxSignalingPacketSize && 16 + buffer.size() + amount <= kMaxSignalingPacketSize;
     }
 
-    rtc::CopyOnWriteBuffer SignalingEncryption::SerializeEmptyMessageWithSeq(const uint32_t seq) {
-        auto result = rtc::CopyOnWriteBuffer(5);
+    webrtc::CopyOnWriteBuffer SignalingEncryption::SerializeEmptyMessageWithSeq(const uint32_t seq) {
+        auto result = webrtc::CopyOnWriteBuffer(5);
         const auto bytes = result.MutableData();
         WriteSeq(bytes, seq);
         bytes[4] = kEmptyId;
         return result;
     }
 
-    rtc::CopyOnWriteBuffer SignalingEncryption::SerializeRawMessageWithSeq(const rtc::CopyOnWriteBuffer &message, const uint32_t seq) {
-        rtc::ByteBufferWriter writer;
+    webrtc::CopyOnWriteBuffer SignalingEncryption::SerializeRawMessageWithSeq(const webrtc::CopyOnWriteBuffer &message, const uint32_t seq) {
+        webrtc::ByteBufferWriter writer;
         writer.WriteUInt32(seq);
         writer.WriteUInt8(kCustomId);
         writer.WriteUInt32(static_cast<uint32_t>(message.size()));
-        writer.Write(rtc::MakeArrayView(message.data(), message.size()));
-        auto result = rtc::CopyOnWriteBuffer();
+        writer.Write(webrtc::MakeArrayView(message.data(), message.size()));
+        auto result = webrtc::CopyOnWriteBuffer();
         result.AppendData(writer.Data(), writer.Length());
         return result;
     }
 
-    void SignalingEncryption::appendMessages(rtc::CopyOnWriteBuffer &buffer) {
+    void SignalingEncryption::appendMessages(webrtc::CopyOnWriteBuffer &buffer) {
         appendAcksToSend(buffer);
 
         if (myNotYetAckedMessages.empty()) {
             return;
         }
-        const auto now = rtc::TimeMillis();
+        const auto now = webrtc::TimeMillis();
         for (auto &[data, lastSent] : myNotYetAckedMessages) {
             const auto sent = lastSent;
             const auto when = sent ? sent + minDelayBeforeMessageResend : 0;
             assert(data.size() >= 5);
-            const auto counter = CounterFromSeq(ReadSeq(data.data()));
+            const auto c = CounterFromSeq(ReadSeq(data.data()));
             const auto type = static_cast<uint8_t>(data.data()[4]);
             if (when > now) {
-                RTC_LOG(LS_VERBOSE)<< "Skip RESEND:type" << type << "#" << counter << " (wait " << when - now << "ms).";
+                RTC_LOG(LS_VERBOSE)<< "Skip RESEND:type" << type << "#" << c << " (wait " << when - now << "ms).";
                 break;
             }
             if (enoughSpaceInPacket(buffer, data.size())) {
-                RTC_LOG(LS_VERBOSE) << "Add RESEND:type" << type << "#" << counter;
+                RTC_LOG(LS_VERBOSE) << "Add RESEND:type" << type << "#" << c;
                 buffer.AppendData(data);
                 lastSent = now;
             } else {
-                RTC_LOG(LS_VERBOSE) << "Skip RESEND:type" << type << "#" << counter << " (no space, length: " << data.size() << ", already: " << buffer.size() << ")";
+                RTC_LOG(LS_VERBOSE) << "Skip RESEND:type" << type << "#" << c << " (no space, length: " << data.size() << ", already: " << buffer.size() << ")";
                 break;
             }
         }
@@ -293,7 +294,7 @@ namespace signaling {
         }
     }
 
-    void SignalingEncryption::appendAcksToSend(rtc::CopyOnWriteBuffer &buffer) {
+    void SignalingEncryption::appendAcksToSend(webrtc::CopyOnWriteBuffer &buffer) {
         auto i = acksToSendSeqs.begin();
         while (i != acksToSendSeqs.end() && enoughSpaceInPacket(buffer, kAckSerializedSize)) {
             RTC_LOG(LS_VERBOSE) << "Add ACK#" << CounterFromSeq(*i);
@@ -311,7 +312,7 @@ namespace signaling {
         return !myNotYetAckedMessages.empty() || !acksToSendSeqs.empty();
     }
 
-    std::optional<bytes::binary> SignalingEncryption::prepareForSendingMessageInternal(rtc::CopyOnWriteBuffer &serialized, uint32_t seq) {
+    std::optional<bytes::binary> SignalingEncryption::prepareForSendingMessageInternal(webrtc::CopyOnWriteBuffer &serialized, uint32_t seq) {
         if (!enoughSpaceInPacket(serialized, 0)) {
             RTC_LOG(LS_ERROR) << "Too large packet: " << std::to_string(serialized.size());
             return std::nullopt;
@@ -325,7 +326,7 @@ namespace signaling {
             RTC_LOG(LS_VERBOSE) << "Add SEND:type" << type << "#" << CounterFromSeq(seq);
             appendMessages(serialized);
         }
-        myNotYetAckedMessages.push_back({notYetAckedCopy, rtc::TimeMillis()});
+        myNotYetAckedMessages.push_back({notYetAckedCopy, webrtc::TimeMillis()});
         if (!sendEnqueued) {
             return encryptPrepared(serialized);
         }
@@ -335,7 +336,7 @@ namespace signaling {
         return prepareForSendingService(0);
     }
 
-    std::optional<bytes::binary> SignalingEncryption::encrypt(const rtc::CopyOnWriteBuffer &buffer, const bool isRaw) {
+    std::optional<bytes::binary> SignalingEncryption::encrypt(const webrtc::CopyOnWriteBuffer &buffer, const bool isRaw) {
         if (isRaw) {
             const auto maybeSeq = computeNextSeq(true);
             if (!maybeSeq) {
@@ -346,15 +347,15 @@ namespace signaling {
             return prepareForSendingMessageInternal(serialized, seq);
         }
         const auto seq = ++counter;
-        rtc::ByteBufferWriter writer;
+        webrtc::ByteBufferWriter writer;
         writer.WriteUInt32(seq);
-        auto result = rtc::CopyOnWriteBuffer();
+        auto result = webrtc::CopyOnWriteBuffer();
         result.AppendData(writer.Data(), writer.Length());
         result.AppendData(buffer);
         return encryptPrepared(result);
     }
 
-    std::vector<rtc::CopyOnWriteBuffer> SignalingEncryption::decrypt(const rtc::CopyOnWriteBuffer &buffer, const bool isRaw) {
+    std::vector<webrtc::CopyOnWriteBuffer> SignalingEncryption::decrypt(const webrtc::CopyOnWriteBuffer &buffer, const bool isRaw) {
         if (buffer.size() < 21 || buffer.size() > kMaxIncomingPacketSize) {
             RTC_LOG(LS_ERROR) << "Bad incoming data size";
             return {};
@@ -366,7 +367,7 @@ namespace signaling {
         const auto dataSize = buffer.size() - 16;
 
         auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, msgKey, x);
-        auto decryptionBuffer = rtc::Buffer(dataSize);
+        auto decryptionBuffer = webrtc::Buffer::CreateUninitializedWithSize(dataSize);
         openssl::Aes::ProcessCtr(
             bytes::memory_span(encryptedData, dataSize),
             decryptionBuffer.data(),
@@ -390,7 +391,7 @@ namespace signaling {
         if (isRaw) {
             return processRawPacket(decryptionBuffer, incomingSeq);
         }
-        rtc::CopyOnWriteBuffer resultBuffer;
+        webrtc::CopyOnWriteBuffer resultBuffer;
         resultBuffer.AppendData(decryptionBuffer.data() + 4, decryptionBuffer.size() - 4);
         return {resultBuffer};
     }

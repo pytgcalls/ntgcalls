@@ -8,11 +8,13 @@
 
 namespace wrtc {
 
-    class RawVideoSink final: public rtc::VideoSinkInterface<webrtc::VideoFrame> {
+    class RawVideoSink final: public webrtc::VideoSinkInterface<webrtc::VideoFrame> {
         std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)> callbackData;
         uint32_t ssrc = 0;
 
     public:
+        ~RawVideoSink() override;
+
         void OnFrame(const webrtc::VideoFrame& frame) override;
 
         void setRemoteVideoSink(uint32_t ssrc, std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)> callback);

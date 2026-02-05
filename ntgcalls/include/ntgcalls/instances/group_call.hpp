@@ -4,11 +4,11 @@
 #pragma once
 #include <ntgcalls/instances/call_interface.hpp>
 #include <wrtc/models/media_content.hpp>
-#include <nlohmann/json.hpp>
+#include <wrtc/utils/json.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
 
 namespace ntgcalls {
-    using json = nlohmann::json;
+    using wrtc::json;
 
     class GroupCall final : public CallInterface {
         std::shared_ptr<wrtc::GroupConnection> presentationConnection;
@@ -18,7 +18,7 @@ namespace ntgcalls {
         static void updateRemoteVideoConstraints(const wrtc::GroupConnection* conn) ;
 
     public:
-        explicit GroupCall(rtc::Thread* updateThread): CallInterface(updateThread) {}
+        explicit GroupCall(webrtc::Thread* updateThread): CallInterface(updateThread) {}
 
         void stop() override;
 

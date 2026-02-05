@@ -13,7 +13,7 @@
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
-        updateThread = rtc::Thread::Create();
+        updateThread = webrtc::Thread::Create();
         updateThread->Start();
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC
@@ -21,6 +21,7 @@ namespace ntgcalls {
     }
 
     NTgCalls::~NTgCalls() {
+        DESTROY_ASYNC
 #ifdef PYTHON_ENABLED
         py::gil_scoped_release release;
 #endif
@@ -30,11 +31,18 @@ namespace ntgcalls {
             connection->stop();
         }
         connections.clear();
+        onEof = nullptr;
+        mediaStateCallback = nullptr;
+        connectionChangeCallback = nullptr;
+        emitCallback = nullptr;
+        remoteSourceCallback = nullptr;
+        broadcastTimestampCallback = nullptr;
+        segmentPartRequestCallback = nullptr;
+        framesCallback = nullptr;
         hardwareInfo = nullptr;
         lock.unlock();
         updateThread->Stop();
         updateThread = nullptr;
-        DESTROY_ASYNC
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
         LogSink::UnRef();
     }
