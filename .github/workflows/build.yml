@@ -164,7 +164,6 @@ jobs:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
-          CIBW_SKIP: cp314t-*
           CIBW_TEST_COMMAND: python -m unittest discover -s {package}/tests
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest
           CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest

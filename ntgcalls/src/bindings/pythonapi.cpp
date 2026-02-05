@@ -10,7 +10,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(ntgcalls, m) {
+PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
     wrapper.def(py::init<>());
     wrapper.def("create_p2p_call", &ntgcalls::NTgCalls::createP2PCall, py::arg("user_id"));
