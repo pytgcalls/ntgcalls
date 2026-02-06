@@ -6,7 +6,7 @@
 
 #define WEBRTC_INCLUDE_INTERNAL_AUDIO_DEVICE
 #include <modules/audio_device/audio_device_impl.h>
-#include <rtc_base/thread.h>
+#include <wrtc/utils/safe_thread.hpp>
 
 namespace wrtc {
     typedef uint16_t Sample;
@@ -21,7 +21,7 @@ namespace wrtc {
         mutable webrtc::Mutex mutex;
         webrtc::AudioTransport* audioCallback RTC_GUARDED_BY(mutex) = nullptr;
         bool started RTC_GUARDED_BY(mutex) = false;
-        std::unique_ptr<webrtc::Thread> processThread;
+        std::unique_ptr<SafeThread> processThread;
         webrtc::SequenceChecker processThreadChecker{webrtc::SequenceChecker::kDetached};
         int64_t nextFrameTime RTC_GUARDED_BY(processThreadChecker) = 0;
         char buffer[kNumberSamples * kNumberBytesPerSample * kNumberOfChannels]{};

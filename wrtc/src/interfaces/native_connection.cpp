@@ -30,7 +30,7 @@ namespace wrtc {
         );
         contentNegotiationContext->copyCodecsFromChannelManager(false);
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostTask([weak] {
+        networkThread().PostTask([weak] {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -113,12 +113,12 @@ namespace wrtc {
     void NativeConnection::registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) {
         std::weak_ptr weak(shared_from_this());
         transportChannel->SubscribeCandidateGathered(this, [weak](webrtc::IceTransportInternal*, const webrtc::Candidate &candidate) {
-            assert(networkThread()->IsCurrent());
+            assert(networkThread().IsCurrent());
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
             }
-            strong->signalingThread()->PostTask([weak, candidate] {
+            strong->signalingThread().PostTask([weak, candidate] {
                 const auto strongSignaling = std::static_pointer_cast<NativeConnection>(weak.lock());
                 if (!strongSignaling) {
                     return;
@@ -143,7 +143,7 @@ namespace wrtc {
             if (!strong) {
                 return;
             }
-            assert(strong->networkThread()->IsCurrent());
+            assert(strong->networkThread().IsCurrent());
             if (route.has_value()) {
                 RTC_LOG(LS_VERBOSE) << "NativeNetworkingImpl route changed: " << route->DebugString();
                 const bool localIsWifi = route->local.adapter_type() == webrtc::AdapterType::ADAPTER_TYPE_WIFI;
@@ -275,7 +275,7 @@ namespace wrtc {
 
     void NativeConnection::notifyStateUpdated() {
         std::weak_ptr weak(shared_from_this());
-        signalingThread()->PostTask([weak] {
+        signalingThread().PostTask([weak] {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -355,7 +355,7 @@ namespace wrtc {
             }
         }
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostTask([weak, candidate] {
+        networkThread().PostTask([weak, candidate] {
             const auto strong = std::static_pointer_cast<const NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -366,7 +366,7 @@ namespace wrtc {
 
     void NativeConnection::setRemoteParams(PeerIceParameters remoteIceParameters, std::unique_ptr<webrtc::SSLFingerprint> fingerprint, const std::string& sslSetup) {
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostTask([weak, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint), sslSetup] {
+        networkThread().PostTask([weak, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint), sslSetup] {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -417,7 +417,7 @@ namespace wrtc {
     void NativeConnection::checkConnectionTimeout() {
         std::weak_ptr weak(shared_from_this());
         if (factory != nullptr) {
-            networkThread()->PostDelayedTask([weak] {
+            networkThread().PostDelayedTask([weak] {
                 const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
                 if (!strong) {
                     return;

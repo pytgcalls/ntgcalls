@@ -15,8 +15,8 @@ namespace wrtc {
     class OutgoingAudioChannel {
         uint32_t _ssrc = 0;
         std::unique_ptr<webrtc::VoiceChannel> channel;
-        webrtc::Thread* workerThread;
-        webrtc::Thread* networkThread;
+        SafeThread& workerThread;
+        SafeThread& networkThread;
         webrtc::LocalAudioSinkAdapter* sink;
 
     public:
@@ -25,8 +25,8 @@ namespace wrtc {
             ChannelManager* channelManager,
             webrtc::RtpTransport* rtpTransport,
             const MediaContent& mediaContent,
-            webrtc::Thread* workerThread,
-            webrtc::Thread* networkThread,
+            SafeThread& workerThread,
+            SafeThread& networkThread,
             webrtc::LocalAudioSinkAdapter* sink
         );
 

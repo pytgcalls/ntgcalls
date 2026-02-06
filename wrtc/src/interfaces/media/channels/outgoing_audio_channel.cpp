@@ -12,8 +12,8 @@ namespace wrtc {
         ChannelManager* channelManager,
         webrtc::RtpTransport* rtpTransport,
         const MediaContent& mediaContent,
-        webrtc::Thread *workerThread,
-        webrtc::Thread* networkThread,
+        SafeThread& workerThread,
+        SafeThread& networkThread,
         webrtc::LocalAudioSinkAdapter* sink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
         webrtc::AudioOptions audioOptions;
@@ -30,7 +30,7 @@ namespace wrtc {
             NativeNetworkInterface::getDefaultCryptoOptions(),
             audioOptions
         );
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             channel->SetRtpTransport(rtpTransport);
         });
         std::vector<webrtc::Codec> codecs;
@@ -65,14 +65,14 @@ namespace wrtc {
         incomingDescription->set_direction(webrtc::RtpTransceiverDirection::kRecvOnly);
         incomingDescription->set_codecs(codecs);
         incomingDescription->set_bandwidth(-1);
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel->SetPayloadTypeDemuxingEnabled(false);
             std::string errorDesc;
             channel->SetLocalContent(outgoingDescription.get(), webrtc::SdpType::kOffer, errorDesc);
             channel->SetRemoteContent(incomingDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
         });
         set_enabled(true);
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             webrtc::RtpParameters initialParameters = channel->send_channel()->GetRtpSendParameters(_ssrc);
             webrtc::RtpParameters updatedParameters = initialParameters;
             if (updatedParameters.encodings.empty()) {
@@ -86,17 +86,17 @@ namespace wrtc {
 
     void OutgoingAudioChannel::set_enabled(const bool enable) const {
         channel->Enable(enable);
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel->send_channel()->SetAudioSend(_ssrc, enable, nullptr, sink);
         });
     }
 
     OutgoingAudioChannel::~OutgoingAudioChannel() {
         channel->Enable(false);
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             channel->SetRtpTransport(nullptr);
         });
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel = nullptr;
         });
         sink = nullptr;

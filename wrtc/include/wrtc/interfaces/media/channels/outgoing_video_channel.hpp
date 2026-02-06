@@ -14,8 +14,8 @@ namespace wrtc {
     class OutgoingVideoChannel {
         uint32_t _ssrc = 0;
         std::unique_ptr<webrtc::VideoChannel> channel;
-        webrtc::Thread* workerThread;
-        webrtc::Thread* networkThread;
+        SafeThread& workerThread;
+        SafeThread& networkThread;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> bitrateAllocatorFactory;
         LocalVideoAdapter* sink;
 
@@ -25,8 +25,8 @@ namespace wrtc {
             ChannelManager* channelManager,
             webrtc::RtpTransport* rtpTransport,
             const MediaContent& mediaContent,
-            webrtc::Thread* workerThread,
-            webrtc::Thread* networkThread,
+            SafeThread& workerThread,
+            SafeThread& networkThread,
             LocalVideoAdapter* sink
         );
 

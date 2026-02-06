@@ -17,7 +17,7 @@
 #include <rtc_base/logging.h>
 
 namespace ntgcalls {
-    StreamManager::StreamManager(webrtc::Thread* workerThread): workerThread(workerThread) {}
+    StreamManager::StreamManager(wrtc::SafeThread& workerThread): workerThread(workerThread) {}
 
     void StreamManager::close() {
         std::lock_guard lock(mutex);
@@ -41,7 +41,6 @@ namespace ntgcalls {
         }
         streams.clear();
         tracks.clear();
-        workerThread = nullptr;
     }
 
     void StreamManager::enableVideoSimulcast(const bool enable) {
@@ -458,7 +457,7 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            strong->workerThread->PostTask([weak, device] {
+            strong->workerThread.PostTask([weak, device] {
                 const auto strongThread = weak.lock();
                 if (!strongThread) {
                     return;

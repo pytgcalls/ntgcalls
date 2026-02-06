@@ -43,7 +43,7 @@ namespace ntgcalls {
             Screen,
         };
 
-        explicit StreamManager(webrtc::Thread* workerThread);
+        explicit StreamManager(wrtc::SafeThread& workerThread);
 
         void close();
 
@@ -86,7 +86,7 @@ namespace ntgcalls {
     private:
         using StreamId = std::pair<Mode, Device>;
 
-        webrtc::Thread* workerThread;
+        wrtc::SafeThread& workerThread;
         bool initialized = false, videoSimulcast = true;
         std::map<StreamId, std::unique_ptr<BaseSink>> streams;
         std::map<StreamId, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;

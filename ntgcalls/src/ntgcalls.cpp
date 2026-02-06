@@ -13,7 +13,7 @@
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
-        updateThread = webrtc::Thread::Create();
+        updateThread = wrtc::SafeThread::Create();
         updateThread->Start();
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC
@@ -125,7 +125,7 @@ namespace ntgcalls {
         SMART_ASYNC(this, userId)
         CHECK_AND_THROW_IF_EXISTS(userId)
         std::lock_guard lock(mutex);
-        connections[userId] = std::make_shared<P2PCall>(updateThread.get());
+        connections[userId] = std::make_shared<P2PCall>(*updateThread);
         setupListeners(userId);
         SafeCall<P2PCall>(connections[userId].get())->init();
         END_ASYNC
@@ -162,7 +162,7 @@ namespace ntgcalls {
         SMART_ASYNC(this, chatId)
         CHECK_AND_THROW_IF_EXISTS(chatId)
         std::lock_guard lock(mutex);
-        connections[chatId] = std::make_shared<GroupCall>(updateThread.get());
+        connections[chatId] = std::make_shared<GroupCall>(*updateThread);
         setupListeners(chatId);
         return SafeCall<GroupCall>(connections[chatId].get())->init();
         END_ASYNC

@@ -34,7 +34,7 @@ namespace ntgcalls {
         void sendInitialSetup() const;
 
     public:
-        explicit P2PCall(webrtc::Thread* updateThread): CallInterface(updateThread) {}
+        explicit P2PCall(wrtc::SafeThread& updateThread): CallInterface(updateThread) {}
 
         void stop() override;
 

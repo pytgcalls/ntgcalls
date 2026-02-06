@@ -5,7 +5,7 @@
 #include <ntgcalls/instances/call_interface.hpp>
 
 namespace ntgcalls {
-    CallInterface::CallInterface(webrtc::Thread* updateThread): updateThread(updateThread) {
+    CallInterface::CallInterface(wrtc::SafeThread& updateThread): updateThread(updateThread) {
         streamManager = std::make_shared<StreamManager>(updateThread);
     }
 
@@ -18,7 +18,6 @@ namespace ntgcalls {
             connection->close();
             connection = nullptr;
         }
-        updateThread = nullptr;
     }
 
     wrtc::ConnectionMode CallInterface::getConnectionMode() const {
@@ -89,7 +88,7 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            strong->updateThread->PostTask([weak, kind, conn, state, wasConnected] {
+            strong->updateThread.PostTask([weak, kind, conn, state, wasConnected] {
                 const auto strongUpdate = weak.lock();
                 if (!strongUpdate) {
                     return;
@@ -127,7 +126,7 @@ namespace ntgcalls {
                 }
             });
         });
-        updateThread->PostDelayedTask([weak, kind, conn] {
+        updateThread.PostDelayedTask([weak, kind, conn] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;

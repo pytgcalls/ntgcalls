@@ -5,7 +5,7 @@
 #pragma once
 #include <atomic>
 #include <shared_mutex>
-#include <rtc_base/thread.h>
+#include <wrtc/utils/safe_thread.hpp>
 #include <wrtc/models/audio_frame.hpp>
 #include <wrtc/models/media_segment.hpp>
 #include <wrtc/models/segment_part_request.hpp>
@@ -40,7 +40,7 @@ namespace wrtc {
         int64_t nextSegmentTimestamp = -1;
         int64_t serverTimeMs = 0;
         int64_t serverTimeMsGotAt = 0;
-        webrtc::Thread* mediaThread;
+        SafeThread& mediaThread;
         std::atomic_bool running;
 
         AudioStreamingPartPersistentDecoder persistentAudioDecoder;
@@ -78,7 +78,7 @@ namespace wrtc {
         void requestPendingVideoQualityUpdate(int64_t segmentId, int32_t partID, MediaSegment::Video* segment, int64_t timestamp);
 
     public:
-        explicit MTProtoStream(webrtc::Thread* mediaThread, bool isRtmp);
+        explicit MTProtoStream(SafeThread& mediaThread, bool isRtmp);
 
         void connect();
 

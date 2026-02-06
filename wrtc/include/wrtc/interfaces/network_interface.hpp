@@ -36,11 +36,11 @@ namespace wrtc {
 
         virtual ~NetworkInterface() = default;
 
-        [[nodiscard]] webrtc::Thread *networkThread() const;
+        [[nodiscard]] SafeThread& networkThread() const;
 
-        [[nodiscard]] webrtc::Thread *signalingThread() const;
+        [[nodiscard]] SafeThread& signalingThread() const;
 
-        [[nodiscard]] webrtc::Thread *workerThread() const;
+        [[nodiscard]] SafeThread& workerThread() const;
 
         const webrtc::Environment& environment() const;
 

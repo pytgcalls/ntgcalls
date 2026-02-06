@@ -13,8 +13,8 @@ namespace wrtc {
         ChannelManager* channelManager,
         webrtc::RtpTransport* rtpTransport,
         const MediaContent& mediaContent,
-        webrtc::Thread *workerThread,
-        webrtc::Thread* networkThread,
+        SafeThread& workerThread,
+        SafeThread& networkThread,
         std::weak_ptr<RemoteAudioSink> remoteAudioSink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread) {
         updateActivity();
@@ -33,7 +33,7 @@ namespace wrtc {
             NativeNetworkInterface::getDefaultCryptoOptions(),
             audioOptions
         );
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
            channel->SetRtpTransport(rtpTransport);
         });
         std::vector<webrtc::Codec> codecs;
@@ -72,14 +72,14 @@ namespace wrtc {
         streamParams.set_stream_ids({ streamId });
         incomingDescription->AddStream(streamParams);
 
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel->SetPayloadTypeDemuxingEnabled(true);
             std::string errorDesc;
             channel->SetLocalContent(outgoingDescription.get(), webrtc::SdpType::kOffer, errorDesc);
             channel->SetRemoteContent(incomingDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
         });
         channel->Enable(true);
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             auto rawSink = std::make_unique<RawAudioSink>();
             rawSink->setRemoteAudioSink(_ssrc, [remoteAudioSink](std::unique_ptr<AudioFrame> frame) {
                 if (const auto remoteAudio = remoteAudioSink.lock()) {
@@ -92,10 +92,10 @@ namespace wrtc {
 
     IncomingAudioChannel::~IncomingAudioChannel() {
         channel->Enable(false);
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
            channel->SetRtpTransport(nullptr);
         });
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel = nullptr;
         });
     }

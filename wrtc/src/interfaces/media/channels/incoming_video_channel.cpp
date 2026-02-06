@@ -15,8 +15,8 @@ namespace wrtc {
         std::vector<SsrcGroup> ssrcGroups,
         webrtc::UniqueRandomIdGenerator* randomIdGenerator,
         const std::vector<webrtc::Codec>& codecs,
-        webrtc::Thread* workerThread,
-        webrtc::Thread* networkThread,
+        SafeThread& workerThread,
+        SafeThread& networkThread,
         std::weak_ptr<RemoteVideoSink> remoteVideoSink
     ) : workerThread(workerThread), networkThread(networkThread) {
         sink = std::make_unique<RawVideoSink>();
@@ -34,7 +34,7 @@ namespace wrtc {
             videoBitrateAllocatorFactory.get()
         );
 
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             channel->SetRtpTransport(rtpTransport);
         });
 
@@ -87,7 +87,7 @@ namespace wrtc {
 
         incomingVideoDescription->AddStream(videoRecvStreamParams);
 
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel->SetPayloadTypeDemuxingEnabled(false);
             std::string errorDesc;
             channel->SetLocalContent(outgoingVideoDescription.get(), webrtc::SdpType::kOffer, errorDesc);
@@ -106,10 +106,10 @@ namespace wrtc {
 
     IncomingVideoChannel::~IncomingVideoChannel() {
         channel->Enable(false);
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
            channel->SetRtpTransport(nullptr);
         });
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel = nullptr;
         });
         sink = nullptr;

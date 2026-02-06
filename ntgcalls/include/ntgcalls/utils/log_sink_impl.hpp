@@ -4,8 +4,8 @@
 
 #pragma once
 #include <api/ref_count.h>
-#include <rtc_base/thread.h>
 #include <rtc_base/logging.h>
+#include <wrtc/utils/safe_thread.hpp>
 #include <ntgcalls/utils/binding_utils.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
 
@@ -72,7 +72,7 @@ namespace ntgcalls {
 #else
         static wrtc::synchronized_callback<LogMessage> onLogMessage;
 #endif
-        std::unique_ptr<webrtc::Thread> thread;
+        std::unique_ptr<wrtc::SafeThread> thread;
     };
 
 } // ntgcalls

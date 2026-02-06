@@ -10,12 +10,12 @@ namespace wrtc {
     ChannelManager::ChannelManager(
         const webrtc::Environment& environment,
         webrtc::MediaEngineInterface* mediaEngine,
-        webrtc::Thread* workerThread,
+        SafeThread& workerThread,
         webrtc::Thread* networkThread,
         webrtc::Thread* signalingThread
-    ): environment(environment), mediaEngine(mediaEngine), signalingThread(signalingThread), workerThread(workerThread), networkThread(networkThread) {
+    ): environment(environment), mediaEngine(mediaEngine), workerThread(workerThread), signalingThread(signalingThread), networkThread(networkThread) {
         RTC_DCHECK_RUN_ON(signalingThread);
-        RTC_DCHECK(workerThread);
+        RTC_DCHECK(&workerThread);
         RTC_DCHECK(networkThread);
     }
 
@@ -29,14 +29,14 @@ namespace wrtc {
     ) {
         RTC_DCHECK(call);
         RTC_DCHECK(mediaEngine);
-        if (!workerThread->IsCurrent()) {
+        if (!workerThread.IsCurrent()) {
             std::unique_ptr<webrtc::VoiceChannel> temp;
-            workerThread->BlockingCall([&] {
+            workerThread.BlockingCall([&] {
                 temp = CreateVoiceChannel(call, mediaConfig, mid, srtpRequired, cryptoOptions, options);
             });
             return std::move(temp);
         }
-        RTC_DCHECK_RUN_ON(workerThread);
+        RTC_DCHECK_RUN_ON(&workerThread);
         auto sendMediaChannel = mediaEngine->voice().CreateSendChannel(
             environment,
             call,
@@ -81,9 +81,9 @@ namespace wrtc {
     ) {
         RTC_DCHECK(call);
         RTC_DCHECK(mediaEngine);
-        if (!workerThread->IsCurrent()) {
+        if (!workerThread.IsCurrent()) {
             std::unique_ptr<webrtc::VideoChannel> temp = nullptr;
-            workerThread->BlockingCall([&] {
+            workerThread.BlockingCall([&] {
               temp = CreateVideoChannel(
                   call,
                   mediaConfig,
@@ -96,7 +96,7 @@ namespace wrtc {
             });
             return temp;
         }
-        RTC_DCHECK_RUN_ON(workerThread);
+        RTC_DCHECK_RUN_ON(&workerThread);
         std::unique_ptr<webrtc::VideoMediaSendChannelInterface> sendMediaChannel = mediaEngine->video().CreateSendChannel(
             environment,
             call,

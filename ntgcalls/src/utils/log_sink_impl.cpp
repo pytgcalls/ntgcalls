@@ -16,7 +16,7 @@ namespace ntgcalls {
 #endif
 
     LogSink::LogSink() {
-        thread = webrtc::Thread::Create();
+        thread = wrtc::SafeThread::Create();
         thread->SetName("LogSink", nullptr);
         thread->Start();
 #ifdef DEBUG

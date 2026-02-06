@@ -18,7 +18,7 @@
 namespace wrtc {
     void NativeNetworkInterface::initConnection(bool supportsPacketSending) {
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostTask([weak, supportsPacketSending] {
+        networkThread().PostTask([weak, supportsPacketSending] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -41,7 +41,7 @@ namespace wrtc {
                     if (!strongListener) {
                         return;
                     }
-                    strongListener->workerThread()->PostTask([weak, packet] {
+                    strongListener->workerThread().PostTask([weak, packet] {
                         const auto strongWorker = weak.lock();
                         if (!strongWorker) {
                             return;
@@ -63,7 +63,7 @@ namespace wrtc {
                 if (!strongListener) {
                     return;
                 }
-                strongListener->workerThread()->PostTask([weak, packet] {
+                strongListener->workerThread().PostTask([weak, packet] {
                     const auto strongWorker = weak.lock();
                     if (!strongWorker) {
                         return;
@@ -77,7 +77,7 @@ namespace wrtc {
                     if (!strongListener) {
                         return;
                     }
-                    strongListener->workerThread()->PostTask([weak, packet] {
+                    strongListener->workerThread().PostTask([weak, packet] {
                         const auto strongWorker = weak.lock();
                         if (!strongWorker) {
                             return;
@@ -95,7 +95,7 @@ namespace wrtc {
             networkThread(),
             signalingThread()
         );
-        workerThread()->BlockingCall([weak] {
+        workerThread().BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -206,7 +206,7 @@ namespace wrtc {
 
         if (isReadyToSend) {
             std::weak_ptr weak(shared_from_this());
-            networkThread()->PostTask([weak] {
+            networkThread().PostTask([weak] {
                 const auto strong = weak.lock();
                 if (!strong) {
                     return;
@@ -289,7 +289,7 @@ namespace wrtc {
             if (!strong) {
                 return;
             }
-            assert(strong->networkThread()->IsCurrent());
+            assert(strong->networkThread().IsCurrent());
             strong->UpdateAggregateStates_n();
         });
         dtlsTransport->SubscribeWritableState(this,[weak](webrtc::PacketTransportInternal*) {
@@ -297,7 +297,7 @@ namespace wrtc {
             if (!strong) {
                 return;
             }
-            assert(strong->networkThread()->IsCurrent());
+            assert(strong->networkThread().IsCurrent());
             strong->UpdateAggregateStates_n();
         });
         if (const auto role = dtlsRole(); role.has_value()) {
@@ -335,7 +335,7 @@ namespace wrtc {
         NetworkInterface::enableAudioIncoming(enable);
 
         std::weak_ptr weak(shared_from_this());
-        workerThread()->BlockingCall([weak, enable] {
+        workerThread().BlockingCall([weak, enable] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -365,7 +365,7 @@ namespace wrtc {
         }
         NetworkInterface::enableVideoIncoming(enable, isScreenCast);
         std::weak_ptr weak(shared_from_this());
-        workerThread()->BlockingCall([weak, enable, isScreenCast] {
+        workerThread().BlockingCall([weak, enable, isScreenCast] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -396,7 +396,7 @@ namespace wrtc {
 
     void NativeNetworkInterface::close() {
         std::weak_ptr weak(shared_from_this());
-        workerThread()->BlockingCall([weak] {
+        workerThread().BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -414,7 +414,7 @@ namespace wrtc {
         channelManager = nullptr;
         if (factory) {
             RTC_LOG(LS_VERBOSE) << "Removed call";
-            networkThread()->BlockingCall([weak] {
+            networkThread().BlockingCall([weak] {
                 const auto strong = weak.lock();
                 if (!strong) {
                     return;
@@ -437,7 +437,7 @@ namespace wrtc {
                 strong->asyncResolverFactory = nullptr;
                 strong->localCertificate = nullptr;
             });
-            signalingThread()->BlockingCall([] {});
+            signalingThread().BlockingCall([] {});
         }
         NetworkInterface::close();
     }
@@ -489,7 +489,7 @@ namespace wrtc {
 
     void NativeNetworkInterface::sendDataChannelMessage(const bytes::binary& data) const {
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostTask([weak, data] {
+        networkThread().PostTask([weak, data] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;

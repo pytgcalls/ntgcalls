@@ -10,8 +10,8 @@ namespace signaling {
     class ExternalSignalingConnection final : public SignalingInterface {
     public:
         ExternalSignalingConnection(
-            webrtc::Thread* networkThread,
-            webrtc::Thread* signalingThread,
+            wrtc::SafeThread& networkThread,
+            wrtc::SafeThread& signalingThread,
             const EncryptionKey &key,
             const DataEmitter& onEmitData,
             const DataReceiver& onSignalData

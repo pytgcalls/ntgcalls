@@ -261,7 +261,7 @@ namespace wrtc {
     void AudioDeviceModule::UpdateProcessing(const bool start) {
         if (start) {
             if (!processThread) {
-                processThread = webrtc::Thread::Create();
+                processThread = SafeThread::Create();
                 processThread->Start();
             }
             processThread->PostTask([this] { StartProcessP(); });

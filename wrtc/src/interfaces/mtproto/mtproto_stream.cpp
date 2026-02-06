@@ -10,7 +10,7 @@
 
 namespace wrtc {
 
-    MTProtoStream::MTProtoStream(webrtc::Thread* mediaThread, const bool isRtmp) : isRtmp(isRtmp), mediaThread(mediaThread) {}
+    MTProtoStream::MTProtoStream(SafeThread& mediaThread, const bool isRtmp) : isRtmp(isRtmp), mediaThread(mediaThread) {}
 
     void MTProtoStream::connect() {
         if (running) {
@@ -34,7 +34,7 @@ namespace wrtc {
 
     void MTProtoStream::sendBroadcastTimestamp(const int64_t timestamp) {
         std::weak_ptr weak(shared_from_this());
-        mediaThread->PostTask([weak, timestamp]{
+        mediaThread.PostTask([weak, timestamp]{
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -50,7 +50,7 @@ namespace wrtc {
                 strong->pendingRequestTimeDelayTaskId = taskId;
                 strong->nextPendingRequestTimeDelayTaskId++;
 
-                strong->mediaThread->PostDelayedTask([weak, taskId] {
+                strong->mediaThread.PostDelayedTask([weak, taskId] {
                     const auto strongMedia = weak.lock();
                     if (!strongMedia) {
                         return;
@@ -71,7 +71,7 @@ namespace wrtc {
 
     void MTProtoStream::sendBroadcastPart(const int64_t segmentID, const int32_t partID, const MediaSegment::Part::Status status, const bool qualityUpdate, std::optional<bytes::binary> data) {
         std::weak_ptr weak(shared_from_this());
-        mediaThread->PostTask([weak, segmentID, partID, status, qualityUpdate, data = std::move(data)] {
+        mediaThread.PostTask([weak, segmentID, partID, status, qualityUpdate, data = std::move(data)] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -514,7 +514,7 @@ namespace wrtc {
 
         if (minDelayedRequestTimeout < INT32_MAX) {
             std::weak_ptr weak(shared_from_this());
-            mediaThread->PostDelayedTask([weak] {
+            mediaThread.PostDelayedTask([weak] {
                 const auto strong = weak.lock();
                 if (!strong) {
                     return;

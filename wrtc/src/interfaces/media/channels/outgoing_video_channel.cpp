@@ -13,8 +13,8 @@ namespace wrtc {
         ChannelManager* channelManager,
         webrtc::RtpTransport* rtpTransport,
         const MediaContent &mediaContent,
-        webrtc::Thread *workerThread,
-        webrtc::Thread *networkThread,
+        SafeThread& workerThread,
+        SafeThread& networkThread,
         LocalVideoAdapter* sink
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
         webrtc::VideoOptions videoOptions;
@@ -29,7 +29,7 @@ namespace wrtc {
             videoOptions,
             bitrateAllocatorFactory.get()
         );
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             channel->SetRtpTransport(rtpTransport);
         });
         std::vector<webrtc::Codec> unsortedCodecs;
@@ -91,7 +91,7 @@ namespace wrtc {
         incomingVideoDescription->set_direction(webrtc::RtpTransceiverDirection::kRecvOnly);
         incomingVideoDescription->set_codecs(codecs);
         incomingVideoDescription->set_bandwidth(-1);
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel->SetPayloadTypeDemuxingEnabled(false);
             std::string errorDesc;
             channel->SetLocalContent(outgoingVideoDescription.get(), webrtc::SdpType::kOffer, errorDesc);
@@ -99,7 +99,7 @@ namespace wrtc {
         });
         channel->Enable(true);
         set_enabled(true);
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             webrtc::RtpParameters rtpParameters = channel->send_channel()->GetRtpSendParameters(_ssrc);
             rtpParameters.degradation_preference = webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
             channel->send_channel()->SetRtpSendParameters(_ssrc, rtpParameters);
@@ -108,10 +108,10 @@ namespace wrtc {
 
     OutgoingVideoChannel::~OutgoingVideoChannel() {
         channel->Enable(false);
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             channel->SetRtpTransport(nullptr);
         });
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel = nullptr;
             bitrateAllocatorFactory = nullptr;
         });
@@ -120,7 +120,7 @@ namespace wrtc {
 
     void OutgoingVideoChannel::set_enabled(const bool enable) const {
         channel->Enable(enable);
-        workerThread->BlockingCall([&] {
+        workerThread.BlockingCall([&] {
             channel->send_channel()->SetVideoSend(_ssrc, nullptr, enable ? sink:nullptr);
         });
     }

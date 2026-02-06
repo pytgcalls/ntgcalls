@@ -363,7 +363,7 @@ namespace ntgcalls {
 
     void P2PCall::sendInitialSetup() const {
         std::weak_ptr weak(shared_from_this());
-        connection->networkThread()->PostTask([weak] {
+        connection->networkThread().PostTask([weak] {
             const auto strong = std::static_pointer_cast<const P2PCall>(weak.lock());
             if (!strong) {
                 return;
@@ -383,7 +383,7 @@ namespace ntgcalls {
                 setup = "passive";
             }
             const auto localIceParams = connection->localIceParameters();
-            connection->signalingThread()->PostTask([weak, localIceParams, hash, fingerprint, setup] {
+            connection->signalingThread().PostTask([weak, localIceParams, hash, fingerprint, setup] {
                 const auto strongMessage = std::static_pointer_cast<const P2PCall>(weak.lock());
                 if (!strongMessage) {
                     return;
