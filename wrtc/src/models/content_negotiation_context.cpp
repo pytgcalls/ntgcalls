@@ -15,9 +15,9 @@ namespace wrtc {
     ContentNegotiationContext::ContentNegotiationContext(
         const webrtc::Environment& env,
         const bool isOutgoing,
-        webrtc::MediaEngineInterface *mediaEngine,
-        webrtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
-        webrtc::PayloadTypeSuggester *payloadTypeSuggester
+        webrtc::MediaEngineInterface* mediaEngine,
+        webrtc::UniqueRandomIdGenerator* uniqueRandomIdGenerator,
+        webrtc::PayloadTypeSuggester* payloadTypeSuggester
     ) :isOutgoing(isOutgoing), uniqueRandomIdGenerator(uniqueRandomIdGenerator) {
         transportDescriptionFactory = std::make_unique<webrtc::TransportDescriptionFactory>(env.field_trials());
         const auto tempCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(

@@ -14,13 +14,13 @@ namespace wrtc {
     class AudioStreamingPartPersistentDecoder {
         std::unique_ptr<AudioStreamingPartPersistentDecoderState> state;
 
-        void maybeReset(const AVCodecParameters *codecParameters, AVRational timeBase);
+        void maybeReset(const AVCodecParameters* codecParameters, AVRational timeBase);
     public:
         AudioStreamingPartPersistentDecoder() = default;
 
         ~AudioStreamingPartPersistentDecoder();
 
-        int decode(AVCodecParameters const *codecParameters, AVRational timeBase, const AVPacket &packet, AVFrame *frame);
+        int decode(AVCodecParameters const* codecParameters, AVRational timeBase, const AVPacket &packet, AVFrame* frame);
     };
 
 

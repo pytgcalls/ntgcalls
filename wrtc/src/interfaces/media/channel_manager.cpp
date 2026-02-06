@@ -20,7 +20,7 @@ namespace wrtc {
     }
 
     std::unique_ptr<webrtc::VoiceChannel> ChannelManager::CreateVoiceChannel(
-        webrtc::Call *call,
+        webrtc::Call* call,
         const webrtc::MediaConfig &mediaConfig,
         const std::string &mid,
         const bool srtpRequired,
@@ -71,13 +71,13 @@ namespace wrtc {
     }
 
     std::unique_ptr<webrtc::VideoChannel> ChannelManager::CreateVideoChannel(
-        webrtc::Call *call,
+        webrtc::Call* call,
         const webrtc::MediaConfig &mediaConfig,
         const std::string &mid,
         const bool srtpRequired,
         const webrtc::CryptoOptions &cryptoOptions,
         const webrtc::VideoOptions &options,
-        webrtc::VideoBitrateAllocatorFactory *bitrateAllocatorFactory
+        webrtc::VideoBitrateAllocatorFactory* bitrateAllocatorFactory
     ) {
         RTC_DCHECK(call);
         RTC_DCHECK(mediaEngine);

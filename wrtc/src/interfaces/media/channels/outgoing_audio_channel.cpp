@@ -8,8 +8,8 @@
 
 namespace wrtc {
     OutgoingAudioChannel::OutgoingAudioChannel(
-        webrtc::Call *call,
-        ChannelManager *channelManager,
+        webrtc::Call* call,
+        ChannelManager* channelManager,
         webrtc::RtpTransport* rtpTransport,
         const MediaContent& mediaContent,
         webrtc::Thread *workerThread,

@@ -42,7 +42,7 @@ namespace wrtc {
     PeerConnectionFactoryWithContext::PeerConnectionFactoryWithContext(
         const webrtc::Environment &env,
         const webrtc::scoped_refptr<webrtc::ConnectionContext>& context,
-            webrtc::PeerConnectionFactoryDependencies *dependencies)
+            webrtc::PeerConnectionFactoryDependencies* dependencies)
             : PeerConnectionFactory(env, context, dependencies),
               conn_context_(context) {}
 

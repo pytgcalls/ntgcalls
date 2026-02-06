@@ -21,7 +21,7 @@ namespace wrtc {
     public:
         IncomingAudioChannel(
             webrtc::Call* call,
-            ChannelManager *channelManager,
+            ChannelManager* channelManager,
             webrtc::RtpTransport* rtpTransport,
             const MediaContent& mediaContent,
             webrtc::Thread *workerThread,

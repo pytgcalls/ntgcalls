@@ -14,7 +14,7 @@ namespace wrtc {
     class OutgoingVideoFormat {
         static std::vector<OutgoingVideoFormat> assignPayloadTypes(std::vector<webrtc::SdpVideoFormat> const &formats);
 
-        static void addDefaultFeedbackParams(webrtc::Codec *codec);
+        static void addDefaultFeedbackParams(webrtc::Codec* codec);
 
     public:
         webrtc::Codec videoCodec;

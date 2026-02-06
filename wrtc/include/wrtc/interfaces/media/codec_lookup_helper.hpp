@@ -9,13 +9,13 @@ namespace wrtc {
 
     class CodecLookupHelper final: public webrtc::CodecLookupHelper {
         std::unique_ptr<webrtc::CodecVendor> codecVendor;
-        webrtc::PayloadTypeSuggester *payloadTypeSuggester;
+        webrtc::PayloadTypeSuggester* payloadTypeSuggester;
 
     public:
         CodecLookupHelper(
-            webrtc::MediaEngineInterface *mediaEngine,
-            const webrtc::TransportDescriptionFactory *transportDescriptionFactory,
-            webrtc::PayloadTypeSuggester *payloadTypeSuggester
+            webrtc::MediaEngineInterface* mediaEngine,
+            const webrtc::TransportDescriptionFactory* transportDescriptionFactory,
+            webrtc::PayloadTypeSuggester* payloadTypeSuggester
         );
 
         ~CodecLookupHelper() override;

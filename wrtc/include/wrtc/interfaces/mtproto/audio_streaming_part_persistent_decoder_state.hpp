@@ -11,15 +11,15 @@ namespace wrtc {
     class AudioStreamingPartPersistentDecoderState {
         AVRational timeBase;
         int channelCount = 0;
-        AVCodecContext *codecContext = nullptr;
+        AVCodecContext* codecContext = nullptr;
         std::unique_ptr<WrappedCodecParameters> wrappedCodecParameters;
 
     public:
-        AudioStreamingPartPersistentDecoderState(const AVCodecParameters *codecParameters, AVRational timeBase);
+        AudioStreamingPartPersistentDecoderState(const AVCodecParameters* codecParameters, AVRational timeBase);
 
         ~AudioStreamingPartPersistentDecoderState();
 
-        int decode(const AVPacket &packet, AVFrame *frame) const;
+        int decode(const AVPacket &packet, AVFrame* frame) const;
 
         AVRational getTimeBase() const;
 

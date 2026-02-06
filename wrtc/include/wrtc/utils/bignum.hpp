@@ -20,15 +20,15 @@ namespace openssl {
             }
         }
 
-        [[nodiscard]] BN_CTX *raw() const {
+        [[nodiscard]] BN_CTX* raw() const {
             return _data;
         }
     private:
-        BN_CTX *_data = nullptr;
+        BN_CTX* _data = nullptr;
     };
 
     class BigNum {
-        mutable BIGNUM *_data = nullptr;
+        mutable BIGNUM* _data = nullptr;
         mutable bool _failed = false;
 
         void clear() const;
@@ -55,7 +55,7 @@ namespace openssl {
 
         bytes::vector getBytes() const;
 
-        BIGNUM *raw() const;
+        BIGNUM* raw() const;
 
         bool isZero() const;
 

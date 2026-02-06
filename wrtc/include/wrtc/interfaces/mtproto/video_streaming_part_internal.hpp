@@ -17,12 +17,12 @@ namespace wrtc {
         int frameIndex = 0;
         std::string endpointId;
         bool didReadToEnd = false;
-        AVStream *stream = nullptr;
+        AVStream* stream = nullptr;
         double firstFramePts = -1.0;
         std::unique_ptr<VideoStreamingAVFrame> frame;
         std::unique_ptr<AVIOContextImpl> avIoContext;
-        AVFormatContext *inputFormatContext = nullptr;
-        AVCodecParameters *codecParameters = nullptr;
+        AVFormatContext* inputFormatContext = nullptr;
+        AVCodecParameters* codecParameters = nullptr;
         std::vector<VideoStreamingPartFrame> finalFrames;
         webrtc::VideoRotation rotation = webrtc::VideoRotation::kVideoRotation_0;
 

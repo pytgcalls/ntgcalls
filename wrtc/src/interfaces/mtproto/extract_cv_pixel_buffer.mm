@@ -8,7 +8,7 @@
 
 namespace wrtc {
 
-    webrtc::scoped_refptr<webrtc::VideoFrameBuffer> extractCVPixelBuffer(void *data) {
+    webrtc::scoped_refptr<webrtc::VideoFrameBuffer> extractCVPixelBuffer(void* data) {
         auto pixelBuffer = (CVPixelBufferRef)(void *)data;
         return webrtc::make_ref_counted<webrtc::ObjCFrameBuffer>([[RTCCVPixelBuffer alloc] initWithPixelBuffer:pixelBuffer]);
     }

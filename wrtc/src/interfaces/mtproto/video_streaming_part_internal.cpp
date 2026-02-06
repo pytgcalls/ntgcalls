@@ -19,7 +19,7 @@ namespace wrtc {
     ): endpointId(std::move(endpointId)), rotation(rotation) {
         frame = std::make_unique<VideoStreamingAVFrame>();
         avIoContext = std::make_unique<AVIOContextImpl>(std::move(fileData));
-        const AVInputFormat *inputFormat = av_find_input_format(container.c_str());
+        const AVInputFormat* inputFormat = av_find_input_format(container.c_str());
         if (!inputFormat) {
             didReadToEnd = true;
             return;
@@ -48,12 +48,12 @@ namespace wrtc {
             return;
         }
 
-        const AVCodecParameters *videoCodecParameters = nullptr;
-        AVStream *videoStream = nullptr;
+        const AVCodecParameters* videoCodecParameters = nullptr;
+        AVStream* videoStream = nullptr;
         for (int i = 0; i < inputFormatContext->nb_streams; i++) {
-            AVStream *inStream = inputFormatContext->streams[i];
+            AVStream* inStream = inputFormatContext->streams[i];
 
-            const AVCodecParameters *inCodecpar = inStream->codecpar;
+            const AVCodecParameters* inCodecpar = inStream->codecpar;
             if (inCodecpar->codec_type != AVMEDIA_TYPE_VIDEO) {
                 continue;
             }

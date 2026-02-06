@@ -51,7 +51,7 @@ namespace openssl {
         return result;
     }
 
-    void Aes::ProcessCtr(const bytes::memory_span from, void *to, KeyIv& keyIv) {
+    void Aes::ProcessCtr(const bytes::memory_span from, void* to, KeyIv& keyIv) {
         auto aes = AES_KEY();
         AES_set_encrypt_key(keyIv.key.data(), keyIv.key.size() * CHAR_BIT, &aes);
         uint8_t eCountBuf[16] = {};

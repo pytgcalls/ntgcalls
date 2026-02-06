@@ -12,7 +12,7 @@ namespace wrtc {
         avIoContext = std::make_unique<AVIOContextImpl>(std::move(data));
         frame = av_frame_alloc();
 
-        const AVInputFormat *inputFormat = av_find_input_format(container.c_str());
+        const AVInputFormat* inputFormat = av_find_input_format(container.c_str());
         if (!inputFormat) {
             didReadToEnd = true;
             return;
@@ -42,9 +42,9 @@ namespace wrtc {
         }
 
         for (int i = 0; i < inputFormatContext->nb_streams; i++) {
-            AVStream *inStream = inputFormatContext->streams[i];
+            AVStream* inStream = inputFormatContext->streams[i];
 
-            AVCodecParameters *inCodecpar = inStream->codecpar;
+            AVCodecParameters* inCodecpar = inStream->codecpar;
             if (inCodecpar->codec_type != AVMEDIA_TYPE_AUDIO) {
                 continue;
             }
@@ -56,7 +56,7 @@ namespace wrtc {
             durationInMilliseconds = static_cast<int>(static_cast<double>(inStream->duration) * av_q2d(inStream->time_base) * 1000);
 
             if (inStream->metadata) {
-                AVDictionaryEntry *entry = av_dict_get(inStream->metadata, "TG_META", nullptr, 0);
+                AVDictionaryEntry* entry = av_dict_get(inStream->metadata, "TG_META", nullptr, 0);
                 if (entry && entry->value) {
                     if (std::optional<std::string> result = webrtc::Base64Decode(entry->value, webrtc::Base64DecodeOptions::kForgiving); result.has_value()) {
                         int offset = 0;
@@ -290,25 +290,25 @@ namespace wrtc {
                 memcpy(pcmBuffer.data(), frame->data[0], frame->nb_samples * 2 * frame->ch_layout.nb_channels);
             } break;
             case AV_SAMPLE_FMT_S16P: {
-                int16_t *toPcm = pcmBuffer.data();
+                int16_t* toPcm = pcmBuffer.data();
                 for (int sample = 0; sample < frame->nb_samples; ++sample) {
                     for (int channel = 0; channel < frame->ch_layout.nb_channels; ++channel) {
-                        const auto *shortChannel = reinterpret_cast<int16_t*>(frame->data[channel]);
+                        const auto* shortChannel = reinterpret_cast<int16_t*>(frame->data[channel]);
                         *toPcm++ = shortChannel[sample];
                     }
                 }
             } break;
             case AV_SAMPLE_FMT_FLT: {
-                const auto *floatData = reinterpret_cast<float*>(&frame->data[0]);
+                const auto* floatData = reinterpret_cast<float*>(&frame->data[0]);
                 for (int i = 0; i < frame->nb_samples * frame->ch_layout.nb_channels; i++) {
                     pcmBuffer[i] = sampleFloatToInt16(floatData[i]);
                 }
             } break;
             case AV_SAMPLE_FMT_FLTP: {
-                int16_t *toPcm2 = pcmBuffer.data();
+                int16_t* toPcm2 = pcmBuffer.data();
                 for (int sample = 0; sample < frame->nb_samples; ++sample) {
                     for (int channel = 0; channel < frame->ch_layout.nb_channels; ++channel) {
-                        const auto *floatChannel = reinterpret_cast<float*>(frame->data[channel]);
+                        const auto* floatChannel = reinterpret_cast<float*>(frame->data[channel]);
                         *toPcm2++ = sampleFloatToInt16(floatChannel[sample]);
                     }
                 }

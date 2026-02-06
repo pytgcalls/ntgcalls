@@ -17,7 +17,7 @@ namespace wrtc {
 
         std::optional<std::string> getActiveEndpointId() const;
 
-        std::optional<VideoStreamingPartFrame> getFrameAtRelativeTimestamp(VideoStreamingSharedState *sharedState, double timestamp) const;
+        std::optional<VideoStreamingPartFrame> getFrameAtRelativeTimestamp(VideoStreamingSharedState* sharedState, double timestamp) const;
 
         std::vector<AudioStreamingPartState::Channel> getAudio10msPerChannel(AudioStreamingPartPersistentDecoder& persistentDecoder) const;
     };

@@ -13,7 +13,7 @@ namespace wrtc {
         ChannelManager* channelManager,
         webrtc::RtpTransport* rtpTransport,
         std::vector<SsrcGroup> ssrcGroups,
-        webrtc::UniqueRandomIdGenerator *randomIdGenerator,
+        webrtc::UniqueRandomIdGenerator* randomIdGenerator,
         const std::vector<webrtc::Codec>& codecs,
         webrtc::Thread* workerThread,
         webrtc::Thread* networkThread,

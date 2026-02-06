@@ -9,9 +9,9 @@
 
 namespace wrtc {
     OutgoingVideoChannel::OutgoingVideoChannel(
-        webrtc::Call *call,
-        ChannelManager *channelManager,
-        webrtc::RtpTransport *rtpTransport,
+        webrtc::Call* call,
+        ChannelManager* channelManager,
+        webrtc::RtpTransport* rtpTransport,
         const MediaContent &mediaContent,
         webrtc::Thread *workerThread,
         webrtc::Thread *networkThread,

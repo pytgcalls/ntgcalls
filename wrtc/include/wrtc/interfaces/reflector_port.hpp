@@ -131,7 +131,7 @@ namespace wrtc {
 
         void ResolveTurnAddress(const webrtc::SocketAddress& address);
 
-        void OnSendStunPacket(const void *data, size_t size, webrtc::StunRequest *_);
+        void OnSendStunPacket(const void* data, size_t size, webrtc::StunRequest* _);
 
         int Send(const void* data, size_t size, const webrtc::AsyncSocketPacketOptions& options) const;
 

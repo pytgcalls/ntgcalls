@@ -32,7 +32,7 @@ namespace openssl {
 
         static KeyIv PrepareKeyIv(const uint8_t* key, const uint8_t* msgKey, int x);
 
-        static void ProcessCtr(bytes::memory_span from, void *to, KeyIv& keyIv);
+        static void ProcessCtr(bytes::memory_span from, void* to, KeyIv& keyIv);
     };
 
 } // openssl

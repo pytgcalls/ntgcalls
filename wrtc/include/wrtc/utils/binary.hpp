@@ -47,7 +47,7 @@ namespace bytes {
         return { container.begin(), container.end() };
     }
 
-    inline std::optional<binary> make_binary_optional(const void *data, const size_t size) {
+    inline std::optional<binary> make_binary_optional(const void* data, const size_t size) {
         if (data == nullptr) {
             return std::nullopt;
         }
@@ -60,7 +60,7 @@ namespace bytes {
         const void* data = nullptr;
         size_t size = 0;
 
-        memory_span(const void *data, const size_t size) :data(data), size(size) {}
+        memory_span(const void* data, const size_t size) :data(data), size(size) {}
     };
 
     void set_with_const(span destination, byte value);
