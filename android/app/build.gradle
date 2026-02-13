@@ -5,6 +5,8 @@ plugins {
 }
 
 import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.SourcesJar
 import javax.inject.Inject
 
 abstract class VersionInfoProvider implements ValueSource<Details, Params> {
@@ -194,7 +196,7 @@ mavenPublishing {
     }
 
     publishToMavenCentral()
-    configure(new AndroidSingleVariantLibrary("release", true, true))
+    configure(new AndroidSingleVariantLibrary(new JavadocJar.Javadoc(), new SourcesJar.Sources(), "release"))
     signAllPublications()
 }
 
