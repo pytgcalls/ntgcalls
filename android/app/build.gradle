@@ -100,7 +100,7 @@ def versionInfoProvider = providers.of(VersionInfoProvider) {
 }.get()
 
 android {
-    namespace = "org.pytgcalls.ntgcalls"
+    namespace = "io.github.pytgcalls"
     compileSdk = 36
     testBuildType = "release"
 
