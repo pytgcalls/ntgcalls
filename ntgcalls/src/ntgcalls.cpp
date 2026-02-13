@@ -25,22 +25,25 @@ namespace ntgcalls {
 #ifdef PYTHON_ENABLED
         py::gil_scoped_release release;
 #endif
-        std::unique_lock lock(mutex);
-        RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
-        for (const auto& connection : connections | std::views::values) {
+        decltype(connections) localConnections;
+        {
+            std::lock_guard lock(mutex);
+            RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
+            localConnections = std::move(connections);
+            onEof = nullptr;
+            mediaStateCallback = nullptr;
+            connectionChangeCallback = nullptr;
+            emitCallback = nullptr;
+            remoteSourceCallback = nullptr;
+            broadcastTimestampCallback = nullptr;
+            segmentPartRequestCallback = nullptr;
+            framesCallback = nullptr;
+            hardwareInfo = nullptr;
+        }
+        for (const auto& connection : localConnections | std::views::values) {
             connection->stop();
         }
-        connections.clear();
-        onEof = nullptr;
-        mediaStateCallback = nullptr;
-        connectionChangeCallback = nullptr;
-        emitCallback = nullptr;
-        remoteSourceCallback = nullptr;
-        broadcastTimestampCallback = nullptr;
-        segmentPartRequestCallback = nullptr;
-        framesCallback = nullptr;
-        hardwareInfo = nullptr;
-        lock.unlock();
+        localConnections.clear();
         updateThread->Stop();
         updateThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
@@ -338,15 +341,18 @@ namespace ntgcalls {
 
     void NTgCalls::remove(const int64_t chatId) {
         RTC_LOG(LS_VERBOSE) << "Removing call " << chatId << ", Acquiring lock";
-        std::lock_guard lock(mutex);
-        RTC_LOG(LS_VERBOSE) << "Lock acquired, removing call " << chatId;
-        if (!exists(chatId)) {
-            RTC_LOG(LS_ERROR) << "Call " << chatId << " not found";
-            THROW_CONNECTION_NOT_FOUND(chatId)
+        std::shared_ptr<CallInterface> call;
+        {
+            std::lock_guard lock(mutex);
+            RTC_LOG(LS_VERBOSE) << "Lock acquired, removing call " << chatId;
+            if (!exists(chatId)) {
+                RTC_LOG(LS_WARNING) << "Call " << chatId << " not found, already removed";
+                return;
+            }
+            call = std::move(connections[chatId]);
+            connections.erase(chatId);
         }
-        const auto call = connections.find(chatId);
-        call->second->stop();
-        connections.erase(call);
+        call->stop();
         RTC_LOG(LS_VERBOSE) << "Call " << chatId << " removed";
     }
 

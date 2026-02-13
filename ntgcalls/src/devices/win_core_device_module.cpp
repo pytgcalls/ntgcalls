@@ -42,11 +42,8 @@ namespace ntgcalls {
     }
 
     WinCoreDeviceModule::~WinCoreDeviceModule() {
-        std::lock_guard queueLock(queueMutex);
         SetEvent(stopEvent.Get());
-        if (isCapture) {
-            thread.Finalize();
-        }
+        thread.Finalize();
         ResetEvent(stopEvent.Get());
         ResetEvent(restartEvent.Get());
         ResetEvent(audioSamplesEvent.Get());

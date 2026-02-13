@@ -66,8 +66,11 @@ namespace ntgcalls {
                                 dataCallback(std::move(chunk), {});
                                 waitNextFrame();
                             }
-                            activeBuffer = (activeBuffer + 1) % bufferCount;
-                            cv.notify_all();
+                            {
+                                std::lock_guard lock(mtx);
+                                activeBuffer = (activeBuffer + 1) % bufferCount;
+                                cv.notify_all();
+                            }
                         }
                         std::lock_guard lock(mtx);
                         activeBufferCount--;
@@ -83,6 +86,7 @@ namespace ntgcalls {
     }
 
     bool ThreadedReader::set_enabled(const bool enable) {
+        std::lock_guard lock(mtx);
         const auto res = BaseReader::set_enabled(enable);
         cv.notify_all();
         return res;
