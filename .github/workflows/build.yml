@@ -168,6 +168,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest
           CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest
           CIBW_MUSLLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/musllinux-x86_64:latest
+          CIBW_ENVIRONMENT: "PYPI_TAGS=1"
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
       - uses: actions/upload-artifact@v6
@@ -267,6 +268,8 @@ jobs:
         run: |
           python3 -m pip install --upgrade setuptools
           python3 setup.py sdist
+        env:
+          PYPI_TAGS: 1
 
       - name: Zip releases
         run: |
