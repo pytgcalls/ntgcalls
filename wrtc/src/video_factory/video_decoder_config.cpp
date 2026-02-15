@@ -15,11 +15,11 @@ namespace wrtc {
         this->decoder = std::move(createVideoDecoder);
     }
 
-    bool VideoDecoderConfig::isInternal() {
+    bool VideoDecoderConfig::isInternal() const {
         return factory != nullptr;
     }
 
-    std::vector<webrtc::SdpVideoFormat> VideoDecoderConfig::getInternalFormats() {
+    std::vector<webrtc::SdpVideoFormat> VideoDecoderConfig::getInternalFormats() const {
         return factory->GetSupportedFormats();
     }
 

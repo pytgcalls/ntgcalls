@@ -27,9 +27,9 @@ namespace wrtc {
         DecoderCallback decoder;
         std::shared_ptr<webrtc::VideoDecoderFactory> factory;
 
-        bool isInternal() override;
+        bool isInternal() const override;
 
-        std::vector<webrtc::SdpVideoFormat> getInternalFormats() override;
+        std::vector<webrtc::SdpVideoFormat> getInternalFormats() const override;
     };
 
 } // wrtc

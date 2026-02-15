@@ -18,11 +18,11 @@ namespace wrtc {
         this->alignment = alignment;
     }
 
-    bool VideoEncoderConfig::isInternal() {
+    bool VideoEncoderConfig::isInternal() const {
         return factory != nullptr;
     }
 
-    std::vector<webrtc::SdpVideoFormat> VideoEncoderConfig::getInternalFormats() {
+    std::vector<webrtc::SdpVideoFormat> VideoEncoderConfig::getInternalFormats() const {
         return factory->GetSupportedFormats();
     }
 
