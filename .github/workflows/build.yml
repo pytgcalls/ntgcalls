@@ -140,7 +140,7 @@ jobs:
             python3.14 setup.py build_lib --static"
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: github.event.inputs.build-shared-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-shared_libs
@@ -148,7 +148,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload Static Libs for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: github.event.inputs.build-static-libs == 'true'
         with:
           name: ntgcalls.${{ matrix.shared_name }}-static_libs
@@ -171,7 +171,7 @@ jobs:
           CIBW_MUSLLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/musllinux-x86_64:latest
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: github.event.inputs.build-wheels == 'true'
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
