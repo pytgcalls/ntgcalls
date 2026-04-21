@@ -85,20 +85,22 @@ namespace ntgcalls {
         }
         connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
+            THREAD_SAFE
+            (void) connectionChangeCallback(chatId, state);
+            END_THREAD_SAFE
             if (state.kind == NetworkInfo::Kind::Normal) {
                 switch (state.state) {
                     case NetworkInfo::ConnectionState::Closed:
                     case NetworkInfo::ConnectionState::Failed:
                     case NetworkInfo::ConnectionState::Timeout:
-                        remove(chatId);
+                        updateThread->PostTask([this, chatId] {
+                            remove(chatId);
+                        });
                         break;
                     default:
                         break;
                 }
             }
-            THREAD_SAFE
-            (void) connectionChangeCallback(chatId, state);
-            END_THREAD_SAFE
             END_WORKER
         });
         connections[chatId]->onFrames([this, chatId] (const StreamManager::Mode mode, const StreamManager::Device device, const std::vector<wrtc::Frame>& frames) {

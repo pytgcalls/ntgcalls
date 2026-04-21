@@ -446,24 +446,27 @@ namespace ntgcalls {
                     }
                 }
             }
-            if (strong->streams.contains(id)) {
-                const auto frameSize = strong->streams[id]->frameSize();
-                if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
-                    frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
-                    if (streamType == Video && isShared) {
-                        (void) strong->framesCallback(
-                            id.first,
-                            id.second,
-                            {
+            {
+                std::lock_guard lock(strong->mutex);
+                if (strong->streams.contains(id)) {
+                    const auto frameSize = strong->streams[id]->frameSize();
+                    if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
+                        frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
+                        if (streamType == Video && isShared) {
+                            (void) strong->framesCallback(
+                                id.first,
+                                id.second,
                                 {
-                                    0,
-                                    {data.get(), data.get() + frameSize},
-                                    frameData
+                                    {
+                                        0,
+                                        {data.get(), data.get() + frameSize},
+                                        frameData
+                                    }
                                 }
-                            }
-                        );
+                            );
+                        }
+                        stream->sendData(data.get(), frameSize, frameData);
                     }
-                    stream->sendData(data.get(), frameSize, frameData);
                 }
             }
         });
@@ -478,8 +481,10 @@ namespace ntgcalls {
                 if (!strongThread) {
                     return;
                 }
-                std::lock_guard lock(strongThread->mutex);
-                strongThread->removeReader(device);
+                {
+                    std::lock_guard lock(strongThread->mutex);
+                    strongThread->removeReader(device);
+                }
                 (void) strongThread->onEOF(getStreamType(device), device);
             });
         });
