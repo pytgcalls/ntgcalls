@@ -16,7 +16,7 @@ namespace wrtc {
 
         IceCandidate(std::string mid, int mLine, std::string sdp);
 
-        explicit IceCandidate(const webrtc::IceCandidateInterface *candidate);
+        explicit IceCandidate(const webrtc::IceCandidateInterface* candidate);
     };
 
 } // wrtc

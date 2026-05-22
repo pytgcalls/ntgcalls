@@ -13,7 +13,7 @@
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
-        updateThread = webrtc::Thread::Create();
+        updateThread = wrtc::SafeThread::Create();
         updateThread->Start();
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC
@@ -25,22 +25,25 @@ namespace ntgcalls {
 #ifdef PYTHON_ENABLED
         py::gil_scoped_release release;
 #endif
-        std::unique_lock lock(mutex);
-        RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
-        for (const auto& connection : connections | std::views::values) {
+        decltype(connections) localConnections;
+        {
+            std::lock_guard lock(mutex);
+            RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
+            localConnections = std::move(connections);
+            onEof = nullptr;
+            mediaStateCallback = nullptr;
+            connectionChangeCallback = nullptr;
+            emitCallback = nullptr;
+            remoteSourceCallback = nullptr;
+            broadcastTimestampCallback = nullptr;
+            segmentPartRequestCallback = nullptr;
+            framesCallback = nullptr;
+            hardwareInfo = nullptr;
+        }
+        for (const auto& connection : localConnections | std::views::values) {
             connection->stop();
         }
-        connections.clear();
-        onEof = nullptr;
-        mediaStateCallback = nullptr;
-        connectionChangeCallback = nullptr;
-        emitCallback = nullptr;
-        remoteSourceCallback = nullptr;
-        broadcastTimestampCallback = nullptr;
-        segmentPartRequestCallback = nullptr;
-        framesCallback = nullptr;
-        hardwareInfo = nullptr;
-        lock.unlock();
+        localConnections.clear();
         updateThread->Stop();
         updateThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
@@ -82,20 +85,22 @@ namespace ntgcalls {
         }
         connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
+            THREAD_SAFE
+            (void) connectionChangeCallback(chatId, state);
+            END_THREAD_SAFE
             if (state.kind == NetworkInfo::Kind::Normal) {
                 switch (state.state) {
                     case NetworkInfo::ConnectionState::Closed:
                     case NetworkInfo::ConnectionState::Failed:
                     case NetworkInfo::ConnectionState::Timeout:
-                        remove(chatId);
+                        updateThread->PostTask([this, chatId] {
+                            remove(chatId);
+                        });
                         break;
                     default:
                         break;
                 }
             }
-            THREAD_SAFE
-            (void) connectionChangeCallback(chatId, state);
-            END_THREAD_SAFE
             END_WORKER
         });
         connections[chatId]->onFrames([this, chatId] (const StreamManager::Mode mode, const StreamManager::Device device, const std::vector<wrtc::Frame>& frames) {
@@ -125,7 +130,7 @@ namespace ntgcalls {
         SMART_ASYNC(this, userId)
         CHECK_AND_THROW_IF_EXISTS(userId)
         std::lock_guard lock(mutex);
-        connections[userId] = std::make_shared<P2PCall>(updateThread.get());
+        connections[userId] = std::make_shared<P2PCall>(*updateThread);
         setupListeners(userId);
         SafeCall<P2PCall>(connections[userId].get())->init();
         END_ASYNC
@@ -162,7 +167,7 @@ namespace ntgcalls {
         SMART_ASYNC(this, chatId)
         CHECK_AND_THROW_IF_EXISTS(chatId)
         std::lock_guard lock(mutex);
-        connections[chatId] = std::make_shared<GroupCall>(updateThread.get());
+        connections[chatId] = std::make_shared<GroupCall>(*updateThread);
         setupListeners(chatId);
         return SafeCall<GroupCall>(connections[chatId].get())->init();
         END_ASYNC
@@ -338,15 +343,18 @@ namespace ntgcalls {
 
     void NTgCalls::remove(const int64_t chatId) {
         RTC_LOG(LS_VERBOSE) << "Removing call " << chatId << ", Acquiring lock";
-        std::lock_guard lock(mutex);
-        RTC_LOG(LS_VERBOSE) << "Lock acquired, removing call " << chatId;
-        if (!exists(chatId)) {
-            RTC_LOG(LS_ERROR) << "Call " << chatId << " not found";
-            THROW_CONNECTION_NOT_FOUND(chatId)
+        std::shared_ptr<CallInterface> call;
+        {
+            std::lock_guard lock(mutex);
+            RTC_LOG(LS_VERBOSE) << "Lock acquired, removing call " << chatId;
+            if (!exists(chatId)) {
+                RTC_LOG(LS_WARNING) << "Call " << chatId << " not found, already removed";
+                return;
+            }
+            call = std::move(connections[chatId]);
+            connections.erase(chatId);
         }
-        const auto call = connections.find(chatId);
-        call->second->stop();
-        connections.erase(call);
+        call->stop();
         RTC_LOG(LS_VERBOSE) << "Call " << chatId << " removed";
     }
 

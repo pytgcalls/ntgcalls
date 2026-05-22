@@ -20,7 +20,7 @@ namespace wrtc {
         AVPacket* getPacket() const;
 
     private:
-        AVPacket *packet = nullptr;
+        AVPacket* packet = nullptr;
     };
 
 } // wrtc

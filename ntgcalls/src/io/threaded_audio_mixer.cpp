@@ -11,7 +11,10 @@ namespace ntgcalls {
         eofCallback = nullptr;
         const bool wasRunning = running;
         if (running) {
-            running = false;
+            {
+                std::lock_guard lock(mtx);
+                running = false;
+            }
             cv.notify_all();
         }
         if (wasRunning) thread.Finalize();

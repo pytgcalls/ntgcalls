@@ -13,9 +13,11 @@ classifiers = [
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
     'Programming Language :: Python :: Implementation :: CPython',
+    'Programming Language :: Python :: Free Threading',
+    'Programming Language :: Python :: Free Threading :: 3 - Stable'
 ]
 authors = [
-    {name = "Laky-64", email = "iraci.matteo@gmail.com"},
+    {name = "Laky-64", email = "business@laky64.me"},
 ]
 keywords = [
     "audio", "python", "library", "video", "telegram", "stream",

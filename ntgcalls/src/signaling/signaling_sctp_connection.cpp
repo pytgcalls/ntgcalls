@@ -8,15 +8,15 @@
 
 namespace signaling {
     SignalingSctpConnection::SignalingSctpConnection(
-        webrtc::Thread* networkThread,
-        webrtc::Thread* signalingThread,
+        wrtc::SafeThread& networkThread,
+        wrtc::SafeThread& signalingThread,
         const webrtc::Environment& env,
         const EncryptionKey &key,
         const DataEmitter& onEmitData,
         const DataReceiver& onSignalData,
         const bool allowCompression
     ): SignalingInterface(networkThread, signalingThread, key, onEmitData, onSignalData), allowCompression(allowCompression) {
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             packetTransport = std::make_unique<SignalingPacketTransport>(onEmitData);
             sctpTransportFactory = std::make_unique<webrtc::SctpTransportFactory>(networkThread);
             sctpTransport = sctpTransportFactory->CreateSctpTransport(env, packetTransport.get());
@@ -31,7 +31,7 @@ namespace signaling {
     }
     void SignalingSctpConnection::close() {
         SignalingInterface::close();
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             sctpTransport = nullptr;
             sctpTransportFactory = nullptr;
             packetTransport = nullptr;
@@ -39,13 +39,13 @@ namespace signaling {
     }
 
     void SignalingSctpConnection::receive(const bytes::binary& data) {
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             packetTransport->receiveData(data);
         });
     }
 
     void SignalingSctpConnection::send(const bytes::binary& data) {
-        networkThread->BlockingCall([&] {
+        networkThread.BlockingCall([&] {
             const auto encryptedData = preSendData(data);
             if (isReadyToSend) {
                 webrtc::SendDataParams params;
@@ -67,7 +67,7 @@ namespace signaling {
     }
 
     void SignalingSctpConnection::OnReadyToSend() {
-        assert(networkThread->IsCurrent());
+        assert(networkThread.IsCurrent());
         isReadyToSend = true;
         for (const auto &data : pendingData) {
             webrtc::SendDataParams params;
@@ -85,14 +85,18 @@ namespace signaling {
     }
 
     void SignalingSctpConnection::OnDataReceived(int channel_id, webrtc::DataMessageType type, const webrtc::CopyOnWriteBuffer& buffer) {
-        assert(networkThread->IsCurrent());
-        signalingThread->PostTask([this, buffer] {
-            onSignalData(preReadData({buffer.data(), buffer.data() + buffer.size()}));
+        assert(networkThread.IsCurrent());
+        const auto signalDataCallback = onSignalData;
+        const auto decryptedData = preReadData({buffer.data(), buffer.data() + buffer.size()});
+        signalingThread.PostTask([signalDataCallback, decryptedData] {
+            if (signalDataCallback) {
+                signalDataCallback(decryptedData);
+            }
         });
     }
 
     void SignalingSctpConnection::OnTransportClosed(webrtc::RTCError error) {
-        assert(networkThread->IsCurrent());
+        assert(networkThread.IsCurrent());
     }
 
     bool SignalingSctpConnection::supportsCompression() const {

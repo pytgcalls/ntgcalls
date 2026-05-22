@@ -17,11 +17,14 @@
 #include <rtc_base/logging.h>
 
 namespace ntgcalls {
-    StreamManager::StreamManager(webrtc::Thread* workerThread): workerThread(workerThread) {}
+    StreamManager::StreamManager(wrtc::SafeThread& workerThread): workerThread(workerThread) {}
 
     void StreamManager::close() {
         std::lock_guard lock(mutex);
-        syncReaders.clear();
+        {
+            std::lock_guard syncLock(syncMutex);
+            syncReaders.clear();
+        }
         syncCV.notify_all();
         onEOF = nullptr;
         framesCallback = nullptr;
@@ -41,7 +44,6 @@ namespace ntgcalls {
         }
         streams.clear();
         tracks.clear();
-        workerThread = nullptr;
     }
 
     void StreamManager::enableVideoSimulcast(const bool enable) {
@@ -266,9 +268,16 @@ namespace ntgcalls {
     }
 
     void StreamManager::removeReader(const Device device) {
-        if (syncReaders.contains(device)) {
-            syncReaders.erase(device);
-            cancelSyncReaders.insert(device);
+        bool wasSyncing;
+        {
+            std::lock_guard syncLock(syncMutex);
+            wasSyncing = syncReaders.contains(device);
+            if (wasSyncing) {
+                syncReaders.erase(device);
+                cancelSyncReaders.insert(device);
+            }
+        }
+        if (wasSyncing) {
             syncCV.notify_all();
         }
         if (readers.contains(device)) {
@@ -277,14 +286,15 @@ namespace ntgcalls {
         }
         readers.erase(device);
         externalReaders.erase(device);
-        if (cancelSyncReaders.contains(device)) {
+        {
+            std::lock_guard syncLock(syncMutex);
             cancelSyncReaders.erase(device);
         }
     }
 
     void StreamManager::checkUpgrade() {
         std::weak_ptr weak(shared_from_this());
-        workerThread->PostTask([weak] {
+        workerThread.PostTask([weak] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -393,7 +403,10 @@ namespace ntgcalls {
 
         if (isExternal) {
             externalReaders.insert(device);
-            syncReaders.insert(device);
+            {
+                std::lock_guard syncLock(syncMutex);
+                syncReaders.insert(device);
+            }
             return;
         }
 
@@ -416,39 +429,44 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            if (strong->syncReaders.contains(id.second)) {
+            {
                 std::unique_lock lock(strong->syncMutex);
-                strong->syncReaders.erase(id.second);
-                strong->syncCV.notify_all();
-                strong->syncCV.wait(lock, [strong, id] {
-                    return strong->syncReaders.empty() || strong->cancelSyncReaders.contains(id.second);
-                });
-                if (strong->cancelSyncReaders.contains(id.second)) {
-                    strong->cancelSyncReaders.erase(id.second);
-                    return;
-                }
-                if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(strong->readers[id.second].get())) {
-                    threadedReader->synchronizeTime();
+                if (strong->syncReaders.contains(id.second)) {
+                    strong->syncReaders.erase(id.second);
+                    strong->syncCV.notify_all();
+                    strong->syncCV.wait(lock, [strong, id] {
+                        return strong->syncReaders.empty() || strong->cancelSyncReaders.contains(id.second);
+                    });
+                    if (strong->cancelSyncReaders.contains(id.second)) {
+                        strong->cancelSyncReaders.erase(id.second);
+                        return;
+                    }
+                    if (const auto threadedReader = dynamic_cast<wrtc::SyncHelper*>(strong->readers[id.second].get())) {
+                        threadedReader->synchronizeTime();
+                    }
                 }
             }
-            if (strong->streams.contains(id)) {
-                const auto frameSize = strong->streams[id]->frameSize();
-                if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
-                    frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
-                    if (streamType == Video && isShared) {
-                        (void) strong->framesCallback(
-                            id.first,
-                            id.second,
-                            {
+            {
+                std::lock_guard lock(strong->mutex);
+                if (strong->streams.contains(id)) {
+                    const auto frameSize = strong->streams[id]->frameSize();
+                    if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
+                        frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
+                        if (streamType == Video && isShared) {
+                            (void) strong->framesCallback(
+                                id.first,
+                                id.second,
                                 {
-                                    0,
-                                    {data.get(), data.get() + frameSize},
-                                    frameData
+                                    {
+                                        0,
+                                        {data.get(), data.get() + frameSize},
+                                        frameData
+                                    }
                                 }
-                            }
-                        );
+                            );
+                        }
+                        stream->sendData(data.get(), frameSize, frameData);
                     }
-                    stream->sendData(data.get(), frameSize, frameData);
                 }
             }
         });
@@ -458,13 +476,15 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            strong->workerThread->PostTask([weak, device] {
+            strong->workerThread.PostTask([weak, device] {
                 const auto strongThread = weak.lock();
                 if (!strongThread) {
                     return;
                 }
-                std::lock_guard lock(strongThread->mutex);
-                strongThread->removeReader(device);
+                {
+                    std::lock_guard lock(strongThread->mutex);
+                    strongThread->removeReader(device);
+                }
                 (void) strongThread->onEOF(getStreamType(device), device);
             });
         });

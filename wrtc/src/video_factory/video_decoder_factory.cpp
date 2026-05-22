@@ -23,7 +23,7 @@ namespace wrtc {
     std::vector<webrtc::SdpVideoFormat> VideoDecoderFactory::GetSupportedFormats() const {
         formats_.clear();
         std::vector<webrtc::SdpVideoFormat> r;
-        for (auto enc : decoders) {
+        for (const auto& enc : decoders) {
             auto formats = enc.GetSupportedFormats();
             r.insert(r.end(), formats.begin(), formats.end());
             formats_.push_back(formats);

@@ -18,9 +18,9 @@ namespace wrtc {
 
         [[nodiscard]] bool remote() const override;
 
-        void AddSink(webrtc::AudioTrackSinkInterface *sink) override;
+        void AddSink(webrtc::AudioTrackSinkInterface* sink) override;
 
-        void RemoveSink(webrtc::AudioTrackSinkInterface *sink) override;
+        void RemoveSink(webrtc::AudioTrackSinkInterface* sink) override;
 
         void PushData(const RTCOnDataEvent &, int64_t absoluteCaptureTimestampMs) const;
 

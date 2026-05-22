@@ -20,15 +20,15 @@ namespace wrtc {
     public:
         virtual ~VideoBaseConfig() = default;
 
-        std::vector<webrtc::SdpVideoFormat> GetSupportedFormats();
+        std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const;
 
     protected:
         webrtc::VideoCodecType codec = webrtc::VideoCodecType::kVideoCodecGeneric;
         FormatsRetriever formatsRetriever;
 
-        virtual bool isInternal() = 0;
+        virtual bool isInternal() const = 0;
 
-        virtual std::vector<webrtc::SdpVideoFormat> getInternalFormats() = 0;
+        virtual std::vector<webrtc::SdpVideoFormat> getInternalFormats() const = 0;
 
     private:
         [[nodiscard]] std::vector<webrtc::SdpVideoFormat> getDefaultFormats() const;

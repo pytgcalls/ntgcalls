@@ -311,7 +311,6 @@ namespace wrtc {
         explicit iteration_proxy_value(const json& v) : iteration_proxy_value("", v) {}
 
         [[nodiscard]] std::string key() const {
-            if (key_.empty()) throw json::exception("No key for this value");
             return key_;
         }
 

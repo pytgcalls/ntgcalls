@@ -76,11 +76,11 @@ namespace wrtc {
     }
 
     std::unique_ptr<VideoStreamingDecoderState> VideoStreamingDecoderState::create(const AVCodecParameters* codecParameters, AVRational pktTimebase) {
-        const AVCodec *codec = avcodec_find_decoder(codecParameters->codec_id);
+        const AVCodec* codec = avcodec_find_decoder(codecParameters->codec_id);
         if (!codec) {
             return nullptr;
         }
-        AVCodecContext *codecContext = avcodec_alloc_context3(codec);
+        AVCodecContext* codecContext = avcodec_alloc_context3(codec);
         int ret = avcodec_parameters_to_context(codecContext, codecParameters);
         if (ret < 0) {
             avcodec_free_context(&codecContext);

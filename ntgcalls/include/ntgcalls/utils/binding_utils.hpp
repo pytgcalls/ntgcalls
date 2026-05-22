@@ -97,20 +97,20 @@ py::gil_scoped_release release;
 #define END_ASYNC
 #else
 #include <functional>
-#include <rtc_base/thread.h>
+#include <wrtc/utils/safe_thread.hpp>
 
 template <typename T>
 class AsyncPromise {
-    webrtc::Thread* worker;
+    wrtc::SafeThread& worker;
     std::function<T()> callable;
 
 public:
-    AsyncPromise(webrtc::Thread* worker, std::function<T()> callable): worker(worker), callable(std::move(callable)) {}
+    AsyncPromise(wrtc::SafeThread& worker, std::function<T()> callable): worker(worker), callable(std::move(callable)) {}
 
     void then(const std::function<void(T)>& resolve, const std::function<void(const std::exception_ptr&)>& reject) {
-        worker->PostTask([this, resolve, reject, callable = callable]{
+        worker.PostTask([resolve, reject, c = callable]{
             try {
-                resolve(callable());
+                resolve(c());
             } catch (const std::exception&) {
                 reject(std::current_exception());
             }
@@ -120,15 +120,15 @@ public:
 
 template <>
 class AsyncPromise<void> {
-    webrtc::Thread* worker;
+    wrtc::SafeThread& worker;
     std::function<void()> callable;
 public:
-    AsyncPromise(webrtc::Thread* worker, std::function<void()> callable): worker(worker), callable(std::move(callable)) {};
+    AsyncPromise(wrtc::SafeThread& worker, std::function<void()> callable): worker(worker), callable(std::move(callable)) {};
 
     void then(const std::function<void()>& resolve, const std::function<void(const std::exception_ptr&)>& reject) const{
-        worker->PostTask([this, resolve, reject, callable = callable]{
+        worker.PostTask([resolve, reject, c = callable]{
             try {
-                callable();
+                c();
                 resolve();
             } catch (const std::exception&) {
                 reject(std::current_exception());
@@ -138,14 +138,14 @@ public:
 };
 
 #define INIT_ASYNC \
-    asyncWorker = webrtc::Thread::Create();\
+    asyncWorker = wrtc::SafeThread::Create();\
     asyncWorker->Start();
 
 #define DESTROY_ASYNC \
     asyncWorker->Stop();\
     asyncWorker = nullptr;
 
-#define ASYNC_ARGS std::unique_ptr<webrtc::Thread> asyncWorker;
+#define ASYNC_ARGS std::unique_ptr<wrtc::SafeThread> asyncWorker;
 
 #define THREAD_SAFE {
 
@@ -160,7 +160,7 @@ public:
 #define ASYNC_RETURN(...) AsyncPromise<__VA_ARGS__>
 
 #define SMART_ASYNC(...) \
-return { asyncWorker.get(), [__VA_ARGS__]{
+return { *asyncWorker, [__VA_ARGS__]{
 
 #define END_ASYNC }};
 

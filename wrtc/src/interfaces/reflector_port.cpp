@@ -130,7 +130,7 @@ namespace wrtc {
     }
 
     std::unique_ptr<ReflectorPort> ReflectorPort::Create(const webrtc::CreateRelayPortArgs &args,
-        webrtc::AsyncPacketSocket *s,
+        webrtc::AsyncPacketSocket* s,
         const uint8_t serverId,
         const int serverPriority,
         const bool standaloneReflectorMode,
@@ -443,7 +443,7 @@ namespace wrtc {
         if (s != socket.get()) {
             return false;
         }
-        uint8_t const *data = packet.payload().begin();
+        uint8_t const* data = packet.payload().begin();
         size_t size = packet.payload().size();
         webrtc::SocketAddress const &remote_addr = packet.source_address();
         auto packet_time_us = packet.arrival_time();

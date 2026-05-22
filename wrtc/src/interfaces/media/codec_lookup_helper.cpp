@@ -7,8 +7,8 @@
 namespace wrtc {
     CodecLookupHelper::CodecLookupHelper(
         webrtc::MediaEngineInterface* mediaEngine,
-        const webrtc::TransportDescriptionFactory *transportDescriptionFactory,
-        webrtc::PayloadTypeSuggester *payloadTypeSuggester
+        const webrtc::TransportDescriptionFactory* transportDescriptionFactory,
+        webrtc::PayloadTypeSuggester* payloadTypeSuggester
     ) : payloadTypeSuggester(payloadTypeSuggester) {
         codecVendor = std::make_unique<webrtc::CodecVendor>(
             mediaEngine,

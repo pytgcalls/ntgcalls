@@ -8,7 +8,7 @@
 namespace wrtc {
     AudioStreamingPartPersistentDecoderState::AudioStreamingPartPersistentDecoderState(const AVCodecParameters* codecParameters, const AVRational timeBase): timeBase(timeBase) {
         wrappedCodecParameters = std::make_unique<WrappedCodecParameters>(codecParameters);
-        if (const AVCodec *codec = avcodec_find_decoder(codecParameters->codec_id)) {
+        if (const AVCodec* codec = avcodec_find_decoder(codecParameters->codec_id)) {
             codecContext = avcodec_alloc_context3(codec);
             if (avcodec_parameters_to_context(codecContext, codecParameters) < 0) {
                 avcodec_free_context(&codecContext);

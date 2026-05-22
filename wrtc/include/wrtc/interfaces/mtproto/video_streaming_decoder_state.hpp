@@ -21,13 +21,13 @@ namespace wrtc {
         static bool areCodecParametersEqual(const AVCodecParameters& lhs, AVCodecParameters const &rhs);
 
     public:
-        VideoStreamingDecoderState(AVCodecContext *codecContext, const AVCodecParameters *codecParameters, AVRational pktTimebase);
+        VideoStreamingDecoderState(AVCodecContext* codecContext, const AVCodecParameters* codecParameters, AVRational pktTimebase);
 
         ~VideoStreamingDecoderState();
 
         static std::unique_ptr<VideoStreamingDecoderState> create(const AVCodecParameters* codecParameters, AVRational pktTimebase);
 
-        bool supportsDecoding(const AVCodecParameters *codecParameters, AVRational pktTimebase) const;
+        bool supportsDecoding(const AVCodecParameters* codecParameters, AVRational pktTimebase) const;
 
         int sendFrame(const DecodableFrame* frame) const;
 

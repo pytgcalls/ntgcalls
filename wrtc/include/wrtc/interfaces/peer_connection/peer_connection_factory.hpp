@@ -7,6 +7,7 @@
 #include <mutex>
 #include <api/peer_connection_interface.h>
 #include <wrtc/interfaces/peer_connection/peer_connection_factory_with_context.hpp>
+#include <wrtc/utils/safe_thread.hpp>
 
 namespace wrtc {
 
@@ -20,11 +21,11 @@ namespace wrtc {
 
         webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory();
 
-        [[nodiscard]] webrtc::Thread* networkThread() const;
+        [[nodiscard]] SafeThread& networkThread() const;
 
-        [[nodiscard]] webrtc::Thread* signalingThread() const;
+        [[nodiscard]] SafeThread& signalingThread() const;
 
-        [[nodiscard]] webrtc::Thread* workerThread() const;
+        [[nodiscard]] SafeThread& workerThread() const;
 
         [[nodiscard]] webrtc::NetworkManager* networkManager() const;
 
@@ -43,12 +44,12 @@ namespace wrtc {
     private:
         static std::mutex _mutex;
         static bool initialized;
-        void *jniEnv;
+        void* jniEnv;
         static std::unique_ptr<PeerConnectionFactory> _default;
 
-        std::unique_ptr<webrtc::Thread> network_thread_;
-        std::unique_ptr<webrtc::Thread> worker_thread_;
-        std::unique_ptr<webrtc::Thread> signaling_thread_;
+        std::unique_ptr<SafeThread> network_thread_;
+        std::unique_ptr<SafeThread> worker_thread_;
+        std::unique_ptr<SafeThread> signaling_thread_;
         std::unique_ptr<webrtc::ConnectionContext::MediaEngineReference> media_engine_ref RTC_GUARDED_BY(worker_thread_);
 
         webrtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;

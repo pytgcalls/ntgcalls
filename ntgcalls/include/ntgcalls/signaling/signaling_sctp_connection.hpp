@@ -19,8 +19,8 @@ namespace signaling {
 
     public:
         SignalingSctpConnection(
-            webrtc::Thread* networkThread,
-            webrtc::Thread* signalingThread,
+            wrtc::SafeThread& networkThread,
+            wrtc::SafeThread& signalingThread,
             const webrtc::Environment& env,
             const EncryptionKey &key,
             const DataEmitter& onEmitData,

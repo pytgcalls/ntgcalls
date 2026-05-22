@@ -5,7 +5,7 @@
 #include <wrtc/exceptions.hpp>
 
 namespace wrtc {
-    const char *BaseRTCException::what() const noexcept {
+    const char* BaseRTCException::what() const noexcept {
         return _msg.c_str();
     }
 

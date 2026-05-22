@@ -18,7 +18,7 @@ namespace ntgcalls {
         static void updateRemoteVideoConstraints(const wrtc::GroupConnection* conn) ;
 
     public:
-        explicit GroupCall(webrtc::Thread* updateThread): CallInterface(updateThread) {}
+        explicit GroupCall(wrtc::SafeThread& updateThread): CallInterface(updateThread) {}
 
         void stop() override;
 

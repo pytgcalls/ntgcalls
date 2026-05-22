@@ -29,25 +29,25 @@ namespace wrtc {
 
     PeerConnectionFactory::PeerConnectionFactory() {
         av_log_set_level(AV_LOG_QUIET);
-        network_thread_ = webrtc::Thread::CreateWithSocketServer();
+        network_thread_ = SafeThread::CreateWithSocketServer();
         network_thread_->SetName("ntg-net", nullptr);
         network_thread_->Start();
-        worker_thread_ = webrtc::Thread::Create();
+        worker_thread_ = SafeThread::Create();
         worker_thread_->SetName("ntg-work", nullptr);
         worker_thread_->Start();
-        signaling_thread_ = webrtc::Thread::Create();
+        signaling_thread_ = SafeThread::Create();
         signaling_thread_->SetName("ntg-media", nullptr);
         signaling_thread_->Start();
 
-        signaling_thread_->AllowInvokesToThread(worker_thread_.get());
-        signaling_thread_->AllowInvokesToThread(network_thread_.get());
-        worker_thread_->AllowInvokesToThread(network_thread_.get());
+        signaling_thread_->AllowInvokesToThread(*worker_thread_);
+        signaling_thread_->AllowInvokesToThread(*network_thread_);
+        worker_thread_->AllowInvokesToThread(*network_thread_);
 
         webrtc::PeerConnectionFactoryDependencies dependencies;
         auto env = environment();
-        dependencies.network_thread = network_thread_.get();
-        dependencies.worker_thread = worker_thread_.get();
-        dependencies.signaling_thread = signaling_thread_.get();
+        dependencies.network_thread = *network_thread_;
+        dependencies.worker_thread = *worker_thread_;
+        dependencies.signaling_thread = *signaling_thread_;
         dependencies.env = env;
         dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(&env.task_queue_factory());
         jniEnv = GetJNIEnv();
@@ -76,8 +76,7 @@ namespace wrtc {
 
     PeerConnectionFactory::~PeerConnectionFactory() {
         if (_audioDeviceModule) {
-            worker_thread_->BlockingCall([this]
-            {
+            worker_thread_->BlockingCall([this] {
                 if (_audioDeviceModule)
                     _audioDeviceModule = nullptr;
             });
@@ -92,16 +91,16 @@ namespace wrtc {
         return factory_;
     }
 
-    webrtc::Thread* PeerConnectionFactory::networkThread() const {
-        return network_thread_.get();
+    SafeThread& PeerConnectionFactory::networkThread() const {
+        return *network_thread_;
     }
 
-    webrtc::Thread* PeerConnectionFactory::signalingThread() const {
-        return signaling_thread_.get();
+    SafeThread& PeerConnectionFactory::signalingThread() const {
+        return *signaling_thread_;
     }
 
-    webrtc::Thread* PeerConnectionFactory::workerThread() const {
-        return worker_thread_.get();
+    SafeThread& PeerConnectionFactory::workerThread() const {
+        return *worker_thread_;
     }
 
     webrtc::NetworkManager* PeerConnectionFactory::networkManager() const {

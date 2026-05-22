@@ -56,6 +56,8 @@ with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f
         '-P',
         'cmake/VersionUtil.cmake',
     ]
+    if os.environ.get('PYPI_TAGS'):
+        cmake_command.insert(-2, '-DPYPI_TAGS=ON')
     version = subprocess.run(cmake_command, capture_output=True, text=True).stderr.strip()
     version = re.sub(r'\x1b\[[0-9;]*m', '', version)
 

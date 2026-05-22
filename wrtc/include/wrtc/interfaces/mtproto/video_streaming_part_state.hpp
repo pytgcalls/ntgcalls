@@ -46,7 +46,7 @@ namespace wrtc {
 
         ~VideoStreamingPartState();
 
-        std::optional<VideoStreamingPartFrame> getFrameAtRelativeTimestamp(VideoStreamingSharedState *sharedState, double timestamp);
+        std::optional<VideoStreamingPartFrame> getFrameAtRelativeTimestamp(VideoStreamingSharedState* sharedState, double timestamp);
 
         std::optional<std::string> getActiveEndpointId() const;
 

@@ -5,13 +5,14 @@
 #pragma once
 #include <pc/channel.h>
 #include <media/base/media_engine.h>
+#include <wrtc/utils/safe_thread.hpp>
 
 namespace wrtc {
     class ChannelManager {
         const webrtc::Environment& environment;
         webrtc::MediaEngineInterface* mediaEngine;
+        SafeThread& workerThread;
         webrtc::Thread* signalingThread;
-        webrtc::Thread* workerThread;
         webrtc::Thread* networkThread;
         webrtc::UniqueRandomIdGenerator ssrcGenerator;
 
@@ -19,7 +20,7 @@ namespace wrtc {
         ChannelManager(
             const webrtc::Environment& environment,
             webrtc::MediaEngineInterface* mediaEngine,
-            webrtc::Thread* workerThread,
+            SafeThread& workerThread,
             webrtc::Thread* networkThread,
             webrtc::Thread* signalingThread
         );

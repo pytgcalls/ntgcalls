@@ -75,9 +75,9 @@ namespace wrtc {
         ContentNegotiationContext(
             const webrtc::Environment& env,
             bool isOutgoing,
-            webrtc::MediaEngineInterface *mediaEngine,
-            webrtc::UniqueRandomIdGenerator *uniqueRandomIdGenerator,
-            webrtc::PayloadTypeSuggester *payloadTypeSuggester
+            webrtc::MediaEngineInterface* mediaEngine,
+            webrtc::UniqueRandomIdGenerator* uniqueRandomIdGenerator,
+            webrtc::PayloadTypeSuggester* payloadTypeSuggester
         );
 
         ~ContentNegotiationContext();

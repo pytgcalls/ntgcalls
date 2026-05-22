@@ -14,18 +14,18 @@ namespace wrtc {
     class IncomingAudioChannel {
         uint32_t _ssrc = 0;
         std::unique_ptr<webrtc::VoiceChannel> channel;
-        webrtc::Thread* workerThread;
-        webrtc::Thread* networkThread;
+        SafeThread& workerThread;
+        SafeThread& networkThread;
         int64_t activityTimestamp = 0;
 
     public:
         IncomingAudioChannel(
             webrtc::Call* call,
-            ChannelManager *channelManager,
+            ChannelManager* channelManager,
             webrtc::RtpTransport* rtpTransport,
             const MediaContent& mediaContent,
-            webrtc::Thread *workerThread,
-            webrtc::Thread* networkThread,
+            SafeThread& workerThread,
+            SafeThread& networkThread,
             std::weak_ptr<RemoteAudioSink> remoteAudioSink
         );
 

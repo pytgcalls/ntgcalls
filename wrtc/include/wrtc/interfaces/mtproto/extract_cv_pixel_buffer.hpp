@@ -8,6 +8,6 @@
 
 namespace wrtc {
 
-    webrtc::scoped_refptr<webrtc::VideoFrameBuffer> extractCVPixelBuffer(void *data);
+    webrtc::scoped_refptr<webrtc::VideoFrameBuffer> extractCVPixelBuffer(void* data);
 
 } // wrtc

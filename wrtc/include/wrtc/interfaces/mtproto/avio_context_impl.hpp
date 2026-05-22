@@ -16,18 +16,18 @@ namespace wrtc {
         bytes::binary fileData;
         int fileReadPosition = 0;
         bytes::binary buffer;
-        AVIOContext *context = nullptr;
+        AVIOContext* context = nullptr;
 
-        static int AVIOContextImplRead(void *opaque, unsigned char *buffer, int bufferSize);
+        static int AVIOContextImplRead(void* opaque, unsigned char* buffer, int bufferSize);
 
-        static int64_t AVIOContextImplSeek(void *opaque, int64_t offset, int whence);
+        static int64_t AVIOContextImplSeek(void* opaque, int64_t offset, int whence);
 
     public:
         explicit AVIOContextImpl(bytes::binary &&fileData);
 
         ~AVIOContextImpl();
 
-        AVIOContext *getContext() const;
+        AVIOContext* getContext() const;
     };
 
 } // wrtc

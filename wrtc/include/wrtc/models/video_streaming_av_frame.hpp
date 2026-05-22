@@ -11,7 +11,7 @@ extern "C" {
 namespace wrtc {
 
     class VideoStreamingAVFrame {
-        AVFrame *frame = nullptr;
+        AVFrame* frame = nullptr;
 
     public:
         VideoStreamingAVFrame();
@@ -20,9 +20,9 @@ namespace wrtc {
 
         ~VideoStreamingAVFrame();
 
-        AVFrame *getFrame() const;
+        AVFrame* getFrame() const;
 
-        double pts(const AVStream *stream, double &firstFramePts) const;
+        double pts(const AVStream* stream, double &firstFramePts) const;
     };
 
 } // wrtc

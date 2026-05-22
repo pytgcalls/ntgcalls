@@ -11,14 +11,14 @@ extern "C" {
 namespace wrtc {
 
     class WrappedCodecParameters {
-        AVCodecParameters *value = nullptr;
+        AVCodecParameters* value = nullptr;
 
     public:
-        explicit WrappedCodecParameters(const AVCodecParameters *codecParameters);
+        explicit WrappedCodecParameters(const AVCodecParameters* codecParameters);
 
         ~WrappedCodecParameters();
 
-        bool isEqual(const AVCodecParameters *other) const;
+        bool isEqual(const AVCodecParameters* other) const;
     };
 
 } // wrtc

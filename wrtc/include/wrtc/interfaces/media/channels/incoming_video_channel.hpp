@@ -16,20 +16,20 @@ namespace wrtc {
         uint32_t _ssrc = 0;
         std::unique_ptr<webrtc::VideoChannel> channel;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> videoBitrateAllocatorFactory;
-        webrtc::Thread* workerThread;
-        webrtc::Thread* networkThread;
+        SafeThread& workerThread;
+        SafeThread& networkThread;
         std::unique_ptr<RawVideoSink> sink;
 
     public:
         IncomingVideoChannel(
             webrtc::Call* call,
-            ChannelManager *channelManager,
+            ChannelManager* channelManager,
             webrtc::RtpTransport* rtpTransport,
             std::vector<SsrcGroup> ssrcGroups,
-            webrtc::UniqueRandomIdGenerator *randomIdGenerator,
+            webrtc::UniqueRandomIdGenerator* randomIdGenerator,
             const std::vector<webrtc::Codec>& codecs,
-            webrtc::Thread *workerThread,
-            webrtc::Thread* networkThread,
+            SafeThread& workerThread,
+            SafeThread& networkThread,
             std::weak_ptr<RemoteVideoSink> remoteVideoSink
         );
 

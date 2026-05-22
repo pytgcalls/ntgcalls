@@ -20,10 +20,10 @@ namespace wrtc {
 
         std::unique_ptr<AVIOContextImpl> avIoContext;
 
-        AVFormatContext *inputFormatContext = nullptr;
+        AVFormatContext* inputFormatContext = nullptr;
         AVPacket packet = {};
-        AVFrame *frame = nullptr;
-        AVCodecParameters *audioCodecParameters = nullptr;
+        AVFrame* frame = nullptr;
+        AVCodecParameters* audioCodecParameters = nullptr;
 
         bool didReadToEnd = false;
 

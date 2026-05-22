@@ -6,8 +6,8 @@
 
 namespace signaling {
     ExternalSignalingConnection::ExternalSignalingConnection(
-        webrtc::Thread* networkThread,
-        webrtc::Thread* signalingThread,
+        wrtc::SafeThread& networkThread,
+        wrtc::SafeThread& signalingThread,
         const EncryptionKey &key,
         const DataEmitter& onEmitData,
         const DataReceiver& onSignalData
@@ -18,8 +18,12 @@ namespace signaling {
     }
 
     void ExternalSignalingConnection::receive(const bytes::binary& data) {
-        signalingThread->PostTask([this, data] {
-            onSignalData(preReadData(data, true));
+        const auto signalDataCallback = onSignalData;
+        const auto decryptedData = preReadData(data, true);
+        signalingThread.PostTask([signalDataCallback, decryptedData] {
+            if (signalDataCallback) {
+                signalDataCallback(decryptedData);
+            }
         });
     }
 

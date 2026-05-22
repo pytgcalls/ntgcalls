@@ -11,7 +11,7 @@
 
 namespace wrtc {
 
-    std::vector<webrtc::SdpVideoFormat> VideoBaseConfig::GetSupportedFormats() {
+    std::vector<webrtc::SdpVideoFormat> VideoBaseConfig::GetSupportedFormats() const {
         if (isInternal()) {
             return getInternalFormats();
         }

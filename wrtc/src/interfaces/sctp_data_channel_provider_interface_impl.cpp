@@ -94,7 +94,7 @@ namespace wrtc {
         return webrtc::RTCError::OK();
     }
 
-    void SctpDataChannelProviderInterfaceImpl::RemoveSctpDataStream(webrtc::StreamId sid) {
+    void SctpDataChannelProviderInterfaceImpl::RemoveSctpDataStream(const webrtc::StreamId sid) {
         assert(networkThread->IsCurrent());
         networkThread->BlockingCall([this, sid] {
             sctpTransport->ResetStream(sid.stream_id_int());

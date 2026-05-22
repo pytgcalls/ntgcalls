@@ -4,7 +4,7 @@
 
 #pragma once
 #include <vector>
-#include <rtc_base/thread.h>
+#include <wrtc/utils/safe_thread.hpp>
 #include <ntgcalls/signaling/crypto/signaling_encryption.hpp>
 
 namespace signaling {
@@ -16,8 +16,8 @@ namespace signaling {
         virtual ~SignalingInterface() = default;
 
         SignalingInterface(
-            webrtc::Thread* networkThread,
-            webrtc::Thread* signalingThread,
+            wrtc::SafeThread& networkThread,
+            wrtc::SafeThread& signalingThread,
             const EncryptionKey &key,
             DataEmitter onEmitData,
             DataReceiver onSignalData
@@ -34,7 +34,7 @@ namespace signaling {
     protected:
         DataReceiver onSignalData;
         DataEmitter onEmitData;
-        webrtc::Thread *networkThread, *signalingThread;
+        wrtc::SafeThread& networkThread, &signalingThread;
 
         std::vector<bytes::binary> preReadData(const bytes::binary &data, bool isRaw = false);
 

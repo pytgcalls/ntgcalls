@@ -58,7 +58,7 @@ void copyAndReturn(const std::vector<std::byte>& b, uint8_t* buffer, const int s
         return;
     if (size < static_cast<int>(b.size()))
         return;
-    const auto *bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
+    const auto* bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
     std::copy_n(bufferTemp, b.size(), buffer);
 }
 
@@ -66,7 +66,7 @@ int copyAndReturn(const std::vector<std::byte>& b, uint8_t** buffer, int* size) 
     if (!buffer || !size)
         return NTG_ERROR_NULL_POINTER;
     auto* output = new uint8_t[b.size()];
-    const auto *bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
+    const auto* bufferTemp = reinterpret_cast<const uint8_t*>(b.data());
     std::copy_n(bufferTemp, b.size(), output);
     *size = static_cast<int>(b.size());
     *buffer = output;
@@ -76,7 +76,7 @@ int copyAndReturn(const std::vector<std::byte>& b, uint8_t** buffer, int* size) 
 int copyAndReturn(std::string s, char** buffer) {
     if (!buffer)
         return NTG_ERROR_NULL_POINTER;
-    auto *output = new char[s.size() + 1];
+    auto* output = new char[s.size() + 1];
     std::ranges::copy(s, output);
     output[s.size()] = '\0';
     *buffer = output;
@@ -87,7 +87,7 @@ template <typename T>
 void copyAndReturn(std::vector<T> b, T **buffer, int* size) {
     if (!buffer || !size)
         return;
-    auto *output = new T[b.size()];
+    auto* output = new T[b.size()];
     std::copy(b.begin(), b.end(), output);
     *buffer = output;
     *size = static_cast<int>(b.size());
@@ -95,7 +95,7 @@ void copyAndReturn(std::vector<T> b, T **buffer, int* size) {
 
 bytes::vector copyAndReturn(const uint8_t* buffer, const int size) {
     bytes::vector b(size);
-    const auto *bufferTemp = reinterpret_cast<const std::byte*>(buffer);
+    const auto* bufferTemp = reinterpret_cast<const std::byte*>(buffer);
     std::copy_n(bufferTemp, size, b.begin());
     return b;
 }

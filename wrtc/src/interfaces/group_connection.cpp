@@ -117,7 +117,7 @@ namespace wrtc {
     std::string GroupConnection::getJoinPayload() {
         RTC_LOG(LS_VERBOSE) << "Asking for join payload";
         std::weak_ptr weak(shared_from_this());
-        return networkThread()->BlockingCall([weak] {
+        return networkThread().BlockingCall([weak] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return std::string();
@@ -158,7 +158,7 @@ namespace wrtc {
     void GroupConnection::addIceCandidate(const IceCandidate& rawCandidate) const {
         const auto candidate = parseIceCandidate(rawCandidate)->candidate();
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostTask([weak, candidate] {
+        networkThread().PostTask([weak, candidate] {
             const auto strong = std::static_pointer_cast<const GroupConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -169,7 +169,7 @@ namespace wrtc {
 
     void GroupConnection::setRemoteParams(PeerIceParameters remoteIceParameters, std::unique_ptr<webrtc::SSLFingerprint> fingerprint) {
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostTask([weak, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint)] {
+        networkThread().PostTask([weak, remoteIceParameters = std::move(remoteIceParameters), fingerprint = std::move(fingerprint)] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -194,7 +194,7 @@ namespace wrtc {
         mtprotoStream->connect();
 
         std::weak_ptr weak(shared_from_this());
-        networkThread()->PostDelayedTask([weak] {
+        networkThread().PostDelayedTask([weak] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -219,7 +219,7 @@ namespace wrtc {
                 }
                 remoteScreenCastSink.reset();
             }
-            networkThread()->PostTask([weak] {
+            networkThread().PostTask([weak] {
                 const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
                 if (!strong) {
                     return;
@@ -318,7 +318,7 @@ namespace wrtc {
         if (isEffectivelyConnected != lastEffectivelyConnected) {
             lastEffectivelyConnected = isEffectivelyConnected;
             std::weak_ptr weak(shared_from_this());
-            signalingThread()->PostTask([weak, newValue = isEffectivelyConnected ? ConnectionState::Connected : ConnectionState::Connecting] {
+            signalingThread().PostTask([weak, newValue = isEffectivelyConnected ? ConnectionState::Connected : ConnectionState::Connecting] {
                 const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
                 if (!strong) {
                     return;
@@ -459,7 +459,7 @@ namespace wrtc {
             return;
         }
         std::weak_ptr weak(shared_from_this());
-        workerThread()->PostDelayedTask([weak] {
+        workerThread().PostDelayedTask([weak] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return;

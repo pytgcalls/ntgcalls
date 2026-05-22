@@ -13,13 +13,13 @@ namespace signaling {
         signalingEncryption->onServiceMessage(nullptr);
         onEmitData = nullptr;
         onSignalData = nullptr;
-        signalingThread->BlockingCall([&] {});
+        signalingThread.BlockingCall([&] {});
         signalingEncryption = nullptr;
     }
 
     SignalingInterface::SignalingInterface(
-        webrtc::Thread* networkThread,
-        webrtc::Thread* signalingThread,
+        wrtc::SafeThread& networkThread,
+        wrtc::SafeThread& signalingThread,
         const EncryptionKey& key,
         DataEmitter onEmitData,
         DataReceiver onSignalData
@@ -35,7 +35,7 @@ namespace signaling {
                 return;
             }
             if (delayMs == 0) {
-                strong->signalingThread->PostTask([weak, cause] {
+                strong->signalingThread.PostTask([weak, cause] {
                     const auto strongThread = weak.lock();
                     if (!strongThread) {
                         return;
@@ -46,7 +46,7 @@ namespace signaling {
                     }
                 });
             } else {
-                strong->signalingThread->PostDelayedTask([weak, cause] {
+                strong->signalingThread.PostDelayedTask([weak, cause] {
                     const auto strongThread = weak.lock();
                     if (!strongThread) {
                         return;
