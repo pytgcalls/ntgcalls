@@ -4,6 +4,7 @@ ulimit -n 1048576
 
 import libraries.properties
 import patch-nasm.sh
+import bison-setup.sh
 
 if command -v yum >/dev/null 2>&1; then
   yum install -y \
@@ -15,11 +16,16 @@ if command -v yum >/dev/null 2>&1; then
       flex \
       elfutils-libelf-devel \
       texinfo \
-      perl-Compress-Zlib
+      perl-Compress-Zlib \
+      gettext \
+      gettext-devel \
+      gperf \
+      help2man
 else
   apk add --no-cache \
       bash \
       build-base \
+      coreutils \
       git \
       make \
       wget \
@@ -29,10 +35,14 @@ else
       elfutils-dev \
       texinfo \
       findutils \
-      zlib-dev
+      zlib-dev  \
+      perl \
+      gperf \
+      help2man
 fi
 
 build_and_install "nasm" configure --setup-commands="patch_nasm"
+build_and_install "bison" make --update-submodules --setup-commands="bison_setup"
 build_and_install "llvm-project/llvm" cmake \
     -DLLVM_ENABLE_PROJECTS="libclc;clang" \
     -DLLVM_TARGETS_TO_BUILD="all" \
