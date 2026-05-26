@@ -13,7 +13,7 @@ namespace wrtc {
 
     class IncomingAudioChannel {
         uint32_t _ssrc = 0;
-        std::unique_ptr<webrtc::VoiceChannel> channel;
+        std::unique_ptr<webrtc::BaseChannel> channel;
         SafeThread& workerThread;
         SafeThread& networkThread;
         int64_t activityTimestamp = 0;

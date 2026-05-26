@@ -66,20 +66,19 @@ namespace wrtc {
         incomingDescription->set_codecs(codecs);
         incomingDescription->set_bandwidth(-1);
         workerThread.BlockingCall([&] {
-            channel->SetPayloadTypeDemuxingEnabled(false);
-            std::string errorDesc;
-            channel->SetLocalContent(outgoingDescription.get(), webrtc::SdpType::kOffer, errorDesc);
-            channel->SetRemoteContent(incomingDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
+            channel->rtp_transport()->SetActivePayloadTypeDemuxing(false);
+            channel->SetLocalContent(outgoingDescription.get(), webrtc::SdpType::kOffer);
+            channel->SetRemoteContent(incomingDescription.get(), webrtc::SdpType::kAnswer);
         });
         set_enabled(true);
         workerThread.BlockingCall([&] {
-            webrtc::RtpParameters initialParameters = channel->send_channel()->GetRtpSendParameters(_ssrc);
+            webrtc::RtpParameters initialParameters = channel->voice_media_send_channel()->GetRtpSendParameters(_ssrc);
             webrtc::RtpParameters updatedParameters = initialParameters;
             if (updatedParameters.encodings.empty()) {
                 updatedParameters.encodings.emplace_back();
             }
             if (initialParameters != updatedParameters) {
-                channel->send_channel()->SetRtpSendParameters(_ssrc, updatedParameters);
+                channel->voice_media_send_channel()->SetRtpSendParameters(_ssrc, updatedParameters);
             }
         });
     }
@@ -87,7 +86,7 @@ namespace wrtc {
     void OutgoingAudioChannel::set_enabled(const bool enable) const {
         channel->Enable(enable);
         workerThread.BlockingCall([&] {
-            channel->send_channel()->SetAudioSend(_ssrc, enable, nullptr, sink);
+            channel->voice_media_send_channel()->SetAudioSend(_ssrc, enable, nullptr, sink);
         });
     }
 

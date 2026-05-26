@@ -45,6 +45,7 @@ namespace signaling {
         void OnChannelClosed(int channel_id) override{}
         void OnBufferedAmountLow(int channel_id) override{}
         void OnTransportConnected() override{}
+        void OnMaxMessageSize(int max_message_size) override{}
 
     protected:
         [[nodiscard]] bool supportsCompression() const override;

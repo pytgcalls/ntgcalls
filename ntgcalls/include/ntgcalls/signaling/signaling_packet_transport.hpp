@@ -67,6 +67,8 @@ namespace signaling {
         webrtc::IceTransportInternal* ice_transport() override;
 
         uint16_t GetSslGroupId() const override;
+
+        bool AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char> &keying_material) override;
     };
 
 } // signaling

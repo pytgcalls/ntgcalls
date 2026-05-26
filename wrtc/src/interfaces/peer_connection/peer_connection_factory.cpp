@@ -49,7 +49,7 @@ namespace wrtc {
         dependencies.worker_thread = *worker_thread_;
         dependencies.signaling_thread = *signaling_thread_;
         dependencies.env = env;
-        dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(&env.task_queue_factory());
+        dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>();
         jniEnv = GetJNIEnv();
         dependencies.adm = worker_thread_->BlockingCall([&] {
             if (!_audioDeviceModule)

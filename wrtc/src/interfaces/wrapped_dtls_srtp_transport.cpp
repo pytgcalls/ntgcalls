@@ -9,7 +9,7 @@
 namespace wrtc {
     template <typename Tag, typename Tag::pfn_t pfn>
     struct tag_bind_pfn {
-        friend constexpr typename Tag::pfn_t pfn_of(Tag) { return pfn; }
+        friend constexpr Tag::pfn_t pfn_of(Tag) { return pfn; }
     };
 
     struct tag_SrtpTransport_UnprotectRtp {
@@ -19,6 +19,14 @@ namespace wrtc {
     template struct tag_bind_pfn<tag_SrtpTransport_UnprotectRtp, &webrtc::SrtpTransport::UnprotectRtp>;
 
     inline static auto c_pfn_SrtpTransport_UnprotectRtp = pfn_of(tag_SrtpTransport_UnprotectRtp{});
+
+    struct tag_RtpTransport_header_extension_map {
+        using pfn_t = webrtc::RtpHeaderExtensionMap webrtc::RtpTransport::*;
+        friend constexpr pfn_t pfn_of(tag_RtpTransport_header_extension_map);
+    };
+    template struct tag_bind_pfn<tag_RtpTransport_header_extension_map, &webrtc::RtpTransport::header_extension_map_>;
+
+    inline static auto c_ptr_RtpTransport_header_extension_map = pfn_of(tag_RtpTransport_header_extension_map{});
 
     WrappedDtlsSrtpTransport::WrappedDtlsSrtpTransport(
         const bool rtcpMuxEnabled,
@@ -51,7 +59,7 @@ namespace wrtc {
             return;
         }
 
-        webrtc::RtpPacketReceived parsedPacket(&headerExtensionMap);
+        webrtc::RtpPacketReceived parsedPacket(&(this->*c_ptr_RtpTransport_header_extension_map));
         parsedPacket.set_arrival_time(packet.arrival_time().value_or(webrtc::Timestamp::MinusInfinity()));
         parsedPacket.set_ecn(packet.ecn());
 
@@ -60,10 +68,5 @@ namespace wrtc {
         }
 
         DemuxPacket(payload, packet.arrival_time().value_or(webrtc::Timestamp::MinusInfinity()), packet.ecn());
-    }
-
-    void WrappedDtlsSrtpTransport::UpdateRtpHeaderExtensionMap(const webrtc::RtpHeaderExtensions& headerExtensions) {
-        headerExtensionMap = webrtc::RtpHeaderExtensionMap(headerExtensions);
-        DtlsSrtpTransport::UpdateRtpHeaderExtensionMap(headerExtensions);
     }
 } // wrtc

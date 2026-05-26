@@ -92,17 +92,16 @@ namespace wrtc {
         incomingVideoDescription->set_codecs(codecs);
         incomingVideoDescription->set_bandwidth(-1);
         workerThread.BlockingCall([&] {
-            channel->SetPayloadTypeDemuxingEnabled(false);
-            std::string errorDesc;
-            channel->SetLocalContent(outgoingVideoDescription.get(), webrtc::SdpType::kOffer, errorDesc);
-            channel->SetRemoteContent(incomingVideoDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
+            channel->rtp_transport()->SetActivePayloadTypeDemuxing(false);
+            channel->SetLocalContent(outgoingVideoDescription.get(), webrtc::SdpType::kOffer);
+            channel->SetRemoteContent(incomingVideoDescription.get(), webrtc::SdpType::kAnswer);
         });
         channel->Enable(true);
         set_enabled(true);
         workerThread.BlockingCall([&] {
-            webrtc::RtpParameters rtpParameters = channel->send_channel()->GetRtpSendParameters(_ssrc);
+            webrtc::RtpParameters rtpParameters = channel->video_media_send_channel()->GetRtpSendParameters(_ssrc);
             rtpParameters.degradation_preference = webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
-            channel->send_channel()->SetRtpSendParameters(_ssrc, rtpParameters);
+            channel->video_media_send_channel()->SetRtpSendParameters(_ssrc, rtpParameters);
         });
     }
 
@@ -121,7 +120,7 @@ namespace wrtc {
     void OutgoingVideoChannel::set_enabled(const bool enable) const {
         channel->Enable(enable);
         workerThread.BlockingCall([&] {
-            channel->send_channel()->SetVideoSend(_ssrc, nullptr, enable ? sink:nullptr);
+            channel->video_media_send_channel()->SetVideoSend(_ssrc, nullptr, enable ? sink:nullptr);
         });
     }
 

@@ -13,7 +13,7 @@
 namespace wrtc {
     class OutgoingVideoChannel {
         uint32_t _ssrc = 0;
-        std::unique_ptr<webrtc::VideoChannel> channel;
+        std::unique_ptr<webrtc::BaseChannel> channel;
         SafeThread& workerThread;
         SafeThread& networkThread;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> bitrateAllocatorFactory;

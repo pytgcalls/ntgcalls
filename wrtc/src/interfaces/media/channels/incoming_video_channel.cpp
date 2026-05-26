@@ -88,12 +88,11 @@ namespace wrtc {
         incomingVideoDescription->AddStream(videoRecvStreamParams);
 
         workerThread.BlockingCall([&] {
-            channel->SetPayloadTypeDemuxingEnabled(false);
-            std::string errorDesc;
-            channel->SetLocalContent(outgoingVideoDescription.get(), webrtc::SdpType::kOffer, errorDesc);
-            channel->SetRemoteContent(incomingVideoDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
+            channel->rtp_transport()->SetActivePayloadTypeDemuxing(false);
+            channel->SetLocalContent(outgoingVideoDescription.get(), webrtc::SdpType::kOffer);
+            channel->SetRemoteContent(incomingVideoDescription.get(), webrtc::SdpType::kAnswer);
 
-            channel->receive_channel()->SetSink(_ssrc, sink.get());
+            channel->video_media_receive_channel()->SetSink(_ssrc, sink.get());
 
             sink->setRemoteVideoSink(_ssrc, [remoteVideoSink](const uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) {
                 if (const auto sink = remoteVideoSink.lock()) {

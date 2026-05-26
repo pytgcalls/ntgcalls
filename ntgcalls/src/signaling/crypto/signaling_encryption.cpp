@@ -144,7 +144,7 @@ namespace signaling {
 
         auto currentSeq = packetSeq;
         auto currentCounter = CounterFromSeq(currentSeq);
-        webrtc::ByteBufferReader reader(webrtc::MakeArrayView(fullBuffer.data() + 4, fullBuffer.size() - 4));
+        webrtc::ByteBufferReader reader(std::span(fullBuffer.data() + 4, fullBuffer.size() - 4));
         auto messages = std::vector<webrtc::CopyOnWriteBuffer>();
         while (true) {
             const auto type = static_cast<uint8_t>(*reader.Data());
@@ -252,7 +252,7 @@ namespace signaling {
         writer.WriteUInt32(seq);
         writer.WriteUInt8(kCustomId);
         writer.WriteUInt32(static_cast<uint32_t>(message.size()));
-        writer.Write(webrtc::MakeArrayView(message.data(), message.size()));
+        writer.Write(std::span(message.data(), message.size()));
         auto result = webrtc::CopyOnWriteBuffer();
         result.AppendData(writer.Data(), writer.Length());
         return result;

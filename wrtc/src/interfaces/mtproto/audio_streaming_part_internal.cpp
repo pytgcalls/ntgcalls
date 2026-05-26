@@ -3,6 +3,7 @@
 //
 
 #include <bitset>
+#include <iterator>
 #include <rtc_base/checks.h>
 #include <rtc_base/base64.h>
 #include <wrtc/interfaces/mtproto/audio_streaming_part_internal.hpp>
