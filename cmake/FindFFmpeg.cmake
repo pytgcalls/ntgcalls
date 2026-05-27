@@ -11,7 +11,6 @@ set(AVUTIL_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}avutil${CMAKE_STATIC_LIBRARY_SUFFIX
 set(SWRESAMPLE_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}swresample${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(VA_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}va${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(VA_DRM_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}va-drm${CMAKE_STATIC_LIBRARY_SUFFIX})
-set(VA_X11_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}va-x11${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(VDPAU_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}vdpau${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 if (LINUX_ARM64)
@@ -60,14 +59,6 @@ if (LINUX)
                 IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${VA_DRM_LIB}")
     endif ()
 
-    if (LINUX_x86_64)
-        if (NOT TARGET intel::va-x11)
-            add_library(intel::va-x11 STATIC IMPORTED)
-            set_target_properties(intel::va-x11 PROPERTIES
-                    IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${VA_X11_LIB}")
-        endif ()
-    endif ()
-
     if (NOT TARGET intel::va)
         add_library(intel::va STATIC IMPORTED)
         set_target_properties(intel::va PROPERTIES
@@ -111,9 +102,6 @@ if(NOT TARGET ffmpeg::avutil)
             IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${AVUTIL_LIB}")
     if (LINUX AND NOT ANDROID)
         target_link_libraries(ffmpeg::avutil INTERFACE xorg::X11 mesa::vdpau intel::va intel::va-drm mesa::drm)
-        if (LINUX_x86_64)
-            target_link_libraries(ffmpeg::avutil INTERFACE intel::va-x11)
-        endif ()
         set_target_properties(ffmpeg::avutil PROPERTIES IMPORTED_LINK_INTERFACE_LIBRARIES "-Wl,-Bsymbolic")
     endif ()
 endif ()
