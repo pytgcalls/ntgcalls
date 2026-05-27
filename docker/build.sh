@@ -56,3 +56,7 @@ build_and_install "llvm-project/llvm" cmake \
     -DCMAKE_BUILD_TYPE=Release
 
 ln -s /usr/local/bin/python3.13 /usr/local/bin/python3 >&/dev/null
+
+if ! is_musl; then
+  ln -s /usr/lib64/libstdc++.so.6 /usr/lib64/libstdc++.so
+fi
