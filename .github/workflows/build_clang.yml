@@ -4,6 +4,12 @@ permissions:
   packages: write
 on:
   workflow_dispatch:
+    inputs:
+      use-blacksmith:
+        description: 'Use Blacksmith runners (faster builds)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -13,13 +19,13 @@ jobs:
       matrix:
         platform:
           - name: x86_64
-            host: ubuntu-latest
+            host: ${{ inputs.use-blacksmith == true && 'blacksmith-8vcpu-ubuntu-2404' || 'ubuntu-latest' }}
             gcc_suffix: manylinux
           - name: arm64
-            host: arm64-server
+            host: ${{ inputs.use-blacksmith == true && 'blacksmith-8vcpu-ubuntu-2404-arm' || 'arm64-server' }}
             gcc_suffix: manylinux
           - name: x86_64
-            host: ubuntu-latest
+            host: ${{ inputs.use-blacksmith == true && 'blacksmith-8vcpu-ubuntu-2404' || 'ubuntu-latest' }}
             gcc_suffix: muslinux
     steps:
       - name: Check out the repo

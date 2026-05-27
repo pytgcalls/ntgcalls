@@ -4,6 +4,11 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
+      use-blacksmith:
+        description: 'Use Blacksmith runners (faster builds)'
+        required: false
+        default: false
+        type: boolean
       build-shared-libs:
         description: 'Build shared libraries'
         required: false
@@ -60,16 +65,16 @@ jobs:
         run: |
           build_list=""
           if [[ "${{ github.event.inputs.linux-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"ubuntu-latest\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"x86_64\"}"
+            build_list+=",{\"os\":\"ubuntu-latest\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\",\"container_image\":\"ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest\"}"
           fi
           if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"arm64-server\",\"cibw_archs\":\"native\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"image_arch\":\"arm64\"}"
+            build_list+=",{\"os\":\"arm64-server\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404-arm\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"container_image\":\"ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest\"}"
           fi
           if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"macos-15\",\"cibw_archs\":\"native\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
+            build_list+=",{\"os\":\"macos-15\",\"blacksmith_os\":\"blacksmith-6vcpu-macos-15\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
           fi
           if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"windows-2022\",\"cibw_archs\":\"native\",\"shared_name\":\"windows-x86_64\"}"
+            build_list+=",{\"os\":\"windows-2022\",\"blacksmith_os\":\"blacksmith-4vcpu-windows-2025\",\"shared_name\":\"windows-x86_64\"}"
           fi
           if [[ -n "$build_list" ]]; then
             build_list="${build_list:1}"
@@ -79,7 +84,9 @@ jobs:
   build:
     if: github.event.inputs.build-wheels == 'true' || github.event.inputs.build-shared-libs == 'true' || github.event.inputs.build-static-libs == 'true'
     needs: setup
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ inputs.use-blacksmith == true && matrix.blacksmith_os || matrix.os }}
+    container:
+      image: ${{ matrix.container_image }}
     permissions:
       contents: read
     strategy:
@@ -93,51 +100,35 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v6
-        if: matrix.shared_name != 'linux-arm64'
-        id: python
+        if: ${{ !(startsWith(matrix.shared_name, 'linux')) }}
+        id: python-setup
         with:
           python-version: "3.10 - 3.14"
 
-      - name: Set up Python (ARM64)
-        if: matrix.shared_name == 'linux-arm64'
-        id: python-arm64
-        run: echo "python-path=python3.12" >> $GITHUB_OUTPUT
-
-      - name: Install Python Requirements
-        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64'
+      - name: Resolve Python path
+        id: python
         run: |
-          "${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}" -m pip install setuptools
+          if [[ -n "${{ steps.python-setup.outputs.python-path }}" ]]; then
+            echo "path=${{ steps.python-setup.outputs.python-path }}" >> $GITHUB_OUTPUT
+          else
+            echo "path=python3" >> $GITHUB_OUTPUT
+          fi
         shell: bash
 
-      - name: Set up QEMU
-        if: matrix.shared_name == 'linux-arm64'
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: arm64
+      - name: Install Python Requirements
+        run: |
+          "${{ steps.python.outputs.path }}" -m pip install setuptools
+        shell: bash
 
       - name: Build Shared Libs
-        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-shared-libs == 'true'
+        if: github.event.inputs.build-shared-libs == 'true'
         run: |
-          ${{ steps.python.outputs.python-path }} setup.py build_lib
+          ${{ steps.python.outputs.path }} setup.py build_lib
 
       - name: Build Static Libs
-        if: matrix.shared_name != 'linux-x86_64' && matrix.shared_name != 'linux-arm64' && github.event.inputs.build-static-libs == 'true'
+        if: github.event.inputs.build-static-libs == 'true'
         run: |
-          ${{ steps.python.outputs.python-path }} setup.py build_lib --static
-
-      - name: Build Shared Libs (Linux)
-        if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-shared-libs == 'true'
-        run: |
-          docker run --rm -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/manylinux-${{ matrix.image_arch }}:latest bash -c "
-            python3.14 -m pip install setuptools
-            python3.14 setup.py build_lib"
-
-      - name: Build Static Libs (Linux)
-        if: (matrix.shared_name == 'linux-x86_64' || matrix.shared_name == 'linux-arm64') && github.event.inputs.build-static-libs == 'true'
-        run: |
-          docker run --rm -v $(pwd):/app -w /app ghcr.io/pytgcalls/ntgcalls/manylinux-${{ matrix.image_arch }}:latest bash -c "
-            python3.14 -m pip install setuptools
-            python3.14 setup.py build_lib --static"
+          ${{ steps.python.outputs.path }} setup.py build_lib --static
 
       - name: Upload Shared Libs for ${{ matrix.shared_name }}
         uses: actions/upload-artifact@v7
@@ -159,9 +150,8 @@ jobs:
         uses: ./.github/cibuildwheel
         if: github.event.inputs.build-wheels == 'true'
         with:
-          python-path: ${{ steps.python.outputs.python-path || steps.python-arm64.outputs.python-path }}
+          python-path: ${{ steps.python.outputs.path }}
         env:
-          CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_TEST_COMMAND: python -m unittest discover -s {package}/tests
@@ -180,7 +170,7 @@ jobs:
 
   build-android:
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.use-blacksmith == true && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: github.event.inputs.android-build == 'true'
     permissions:
       contents: read
