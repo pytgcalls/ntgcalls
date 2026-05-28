@@ -56,33 +56,52 @@ on:
         type: boolean
 jobs:
   setup:
+    name: Generate Build Matrix
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      desktop-matrix: ${{ steps.set-matrix.outputs.desktop-matrix }}
+      mobile-matrix: ${{ steps.set-matrix.outputs.mobile-matrix }}
+      has-desktop: ${{ steps.set-matrix.outputs.has-desktop }}
+      has-mobile: ${{ steps.set-matrix.outputs.has-mobile }}
     steps:
       - name: Set matrix
         id: set-matrix
         run: |
-          build_list=""
+          desktop_list=""
           if [[ "${{ github.event.inputs.linux-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"ubuntu-latest\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\",\"container_image\":\"ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest\"}"
+            desktop_list+=",{\"os\":\"ubuntu-latest\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\",\"container_image\":\"ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest\"}"
           fi
           if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"arm64-server\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404-arm\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"container_image\":\"ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest\"}"
+            desktop_list+=",{\"os\":\"arm64-server\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404-arm\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"container_image\":\"ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest\"}"
           fi
           if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"macos-15\",\"blacksmith_os\":\"blacksmith-6vcpu-macos-15\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
+            desktop_list+=",{\"os\":\"macos-15\",\"blacksmith_os\":\"blacksmith-6vcpu-macos-15\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
           fi
           if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
-            build_list+=",{\"os\":\"windows-2022\",\"blacksmith_os\":\"blacksmith-4vcpu-windows-2025\",\"shared_name\":\"windows-x86_64\"}"
+            desktop_list+=",{\"os\":\"windows-2022\",\"blacksmith_os\":\"blacksmith-4vcpu-windows-2025\",\"shared_name\":\"windows-x86_64\"}"
           fi
-          if [[ -n "$build_list" ]]; then
-            build_list="${build_list:1}"
+          [[ -n "$desktop_list" ]] && desktop_list="${desktop_list:1}"
+          echo "desktop-matrix={\"include\":[$desktop_list]}" >> $GITHUB_OUTPUT
+          
+          mobile_list=""
+          if [[ "${{ github.event.inputs.android-build }}" == "true" ]]; then
+            mobile_list+=",{\"os\":\"ubuntu-latest\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404\",\"shared_name\":\"android\"}"
           fi
-          matrix=$(echo "{\"include\":[$build_list]}")
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
-  build:
-    if: github.event.inputs.build-wheels == 'true' || github.event.inputs.build-shared-libs == 'true' || github.event.inputs.build-static-libs == 'true'
+          [[ -n "$mobile_list" ]] && mobile_list="${mobile_list:1}"
+          echo "mobile-matrix={\"include\":[$mobile_list]}" >> $GITHUB_OUTPUT
+          
+          [[ -n "$desktop_list" ]] && echo "has-desktop=true" >> $GITHUB_OUTPUT || echo "has-desktop=false" >> $GITHUB_OUTPUT
+          [[ -n "$mobile_list"  ]] && echo "has-mobile=true"  >> $GITHUB_OUTPUT || echo "has-mobile=false"  >> $GITHUB_OUTPUT
+
+  build-desktop:
+    name: Build (${{ matrix.shared_name }}) [${{ inputs.use-blacksmith == true && 'Blacksmith' || 'GitHub' }}]
+    if: |
+        needs.setup.outputs.has-desktop == 'true' &&
+        (
+            github.event.inputs.build-wheels == 'true' || 
+            github.event.inputs.build-shared-libs == 'true' || 
+            github.event.inputs.build-static-libs == 'true'
+        )
     needs: setup
     runs-on: ${{ inputs.use-blacksmith == true && matrix.blacksmith_os || matrix.os }}
     container:
@@ -90,7 +109,7 @@ jobs:
     permissions:
       contents: read
     strategy:
-      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
+      matrix: ${{fromJson(needs.setup.outputs.desktop-matrix)}}
 
     steps:
       - name: Check out the repo
@@ -117,7 +136,7 @@ jobs:
 
       - name: Install Python Requirements
         run: |
-          "${{ steps.python.outputs.path }}" -m pip install setuptools
+          "${{ steps.python.outputs.path }}" -m pip install cibuildwheel setuptools
         shell: bash
 
       - name: Build Shared Libs
@@ -147,10 +166,8 @@ jobs:
           if-no-files-found: error
 
       - name: Build wheels
-        uses: ./.github/cibuildwheel
+        run: ${{ steps.python.outputs.path }} -m cibuildwheel --output-dir wheelhouse
         if: github.event.inputs.build-wheels == 'true'
-        with:
-          python-path: ${{ steps.python.outputs.path }}
         env:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
@@ -168,13 +185,16 @@ jobs:
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
-  build-android:
+  build-mobile:
+    name: Build (${{ matrix.shared_name }}) [${{ inputs.use-blacksmith == true && 'Blacksmith' || 'GitHub' }}]
+    if: needs.setup.outputs.has-mobile == 'true'
     needs: setup
-    runs-on: ${{ inputs.use-blacksmith == true && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
-    if: github.event.inputs.android-build == 'true'
+    runs-on: ${{ inputs.use-blacksmith == true && matrix.blacksmith_os || matrix.os }}
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix: ${{fromJson(needs.setup.outputs.mobile-matrix)}}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
@@ -217,8 +237,9 @@ jobs:
 
 
   publish:
+    name: Publish
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ build-desktop ]
     if: github.event.inputs.publish == 'true'
     permissions:
       id-token: write
