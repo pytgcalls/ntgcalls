@@ -136,7 +136,7 @@ jobs:
 
       - name: Install Python Requirements
         run: |
-          "${{ steps.python.outputs.path }}" -m pip install cibuildwheel setuptools
+          "${{ steps.python.outputs.path }}" -m pip install "git+https://github.com/pytgcalls/cibuildwheel.git" setuptools
         shell: bash
 
       - name: Build Shared Libs
@@ -172,9 +172,7 @@ jobs:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
           CIBW_TEST_COMMAND: python -m unittest discover -s {package}/tests
-          CIBW_MANYLINUX_AARCH64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest
-          CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest
-          CIBW_MUSLLINUX_X86_64_IMAGE: ghcr.io/pytgcalls/ntgcalls/musllinux-x86_64:latest
+          CIBW_CONTAINER_ENGINE: none
           CIBW_ENVIRONMENT: "PYPI_TAGS=1"
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
