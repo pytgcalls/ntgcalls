@@ -49,7 +49,12 @@ namespace wrtc {
                 standaloneReflectorRoleId = 2;
             }
         }
-        relayPortFactory = std::make_unique<ReflectorRelayPortFactory>(rtcServers, standaloneReflectorMode, standaloneReflectorRoleId);
+        relayPortFactory = std::make_unique<ReflectorRelayPortFactory>(
+            rtcServers,
+            standaloneReflectorMode,
+            standaloneReflectorRoleId,
+            underlyingSocketFactory
+         );
         return relayPortFactory.get();
     }
 
@@ -57,15 +62,12 @@ namespace wrtc {
         webrtc::ServerAddresses stunServers;
         std::vector<webrtc::RelayServerConfig> turnServers;
         for (auto &[id, host, port, login, password, isTurn, isTcp] : rtcServers) {
-            if (isTcp) {
-                continue;
-            }
             if (isTurn) {
                 turnServers.emplace_back(
                     webrtc::SocketAddress(host, port),
                     login,
                     password,
-                    webrtc::PROTO_UDP
+                    isTcp ? webrtc::PROTO_TCP : webrtc::PROTO_UDP
                 );
             } else {
                 auto stunAddress = webrtc::SocketAddress(host, port);

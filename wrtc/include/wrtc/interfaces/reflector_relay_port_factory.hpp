@@ -14,8 +14,15 @@ namespace wrtc {
         std::vector<RTCServer> servers;
         bool standaloneReflectorMode;
         uint32_t standaloneReflectorRoleId;
+        webrtc::SocketFactory *underlyingSocketFactory;
+
     public:
-        explicit ReflectorRelayPortFactory(const std::vector<RTCServer>& servers, bool standaloneReflectorMode, uint32_t standaloneReflectorRoleId);
+        explicit ReflectorRelayPortFactory(
+            const std::vector<RTCServer>& servers,
+            bool standaloneReflectorMode,
+            uint32_t standaloneReflectorRoleId,
+            webrtc::SocketFactory* underlyingSocketFactory
+        );
 
         ~ReflectorRelayPortFactory() override = default;
 
