@@ -68,6 +68,7 @@ namespace wrtc {
         }
         rtpAudioExtensions.emplace_back(webrtc::RtpExtension::kAbsSendTimeUri, absSendTimeUriId);
         rtpAudioExtensions.emplace_back(webrtc::RtpExtension::kTransportSequenceNumberUri, transportSequenceNumberUriId);
+        rtpVideoExtensions.emplace_back(webrtc::RtpExtension::kAudioLevelUri, 1);
         rtpVideoExtensions.emplace_back(webrtc::RtpExtension::kAbsSendTimeUri, absSendTimeUriId);
         rtpVideoExtensions.emplace_back(webrtc::RtpExtension::kTransportSequenceNumberUri, transportSequenceNumberUriId);
         rtpVideoExtensions.emplace_back(webrtc::RtpExtension::kVideoRotationUri, videoRotationUri);
