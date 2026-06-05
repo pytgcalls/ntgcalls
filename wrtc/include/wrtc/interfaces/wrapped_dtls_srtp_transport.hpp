@@ -9,7 +9,6 @@
 namespace wrtc {
 
     class WrappedDtlsSrtpTransport final : public webrtc::DtlsSrtpTransport {
-        webrtc::RtpHeaderExtensionMap headerExtensionMap;
         synchronized_callback<webrtc::RtpPacketReceived> rtpPacketCallback;
         int decryptionFailureCount = 0;
 
@@ -23,8 +22,6 @@ namespace wrtc {
         ~WrappedDtlsSrtpTransport() override;
 
         void OnRtpPacketReceived(const webrtc::ReceivedIpPacket& packet) override;
-
-        void UpdateRtpHeaderExtensionMap(const webrtc::RtpHeaderExtensions& headerExtensions) override;
     };
 
 } // wrtc

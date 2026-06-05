@@ -12,7 +12,7 @@ namespace signaling {
     void SignalingPacketTransport::receiveData(const bytes::binary& data) {
         NotifyPacketReceived(
             webrtc::ReceivedIpPacket(
-                webrtc::MakeArrayView(data.data(), data.size()),
+                std::span(data.data(), data.size()),
                 webrtc::SocketAddress()
             )
         );
@@ -116,5 +116,9 @@ namespace signaling {
 
     uint16_t SignalingPacketTransport::GetSslGroupId() const {
         return 0;
+    }
+
+    bool SignalingPacketTransport::AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char> &keying_material) {
+        return false;
     }
 } // signaling

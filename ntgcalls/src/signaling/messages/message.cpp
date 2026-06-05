@@ -41,7 +41,7 @@ namespace signaling {
         }
         webrtc::CopyOnWriteBuffer result;
         result.SetSize(length);
-        if (!reader.ReadBytes(webrtc::MakeArrayView(result.MutableData(), result.size()))) {
+        if (!reader.ReadBytes(std::span(result.MutableData(), result.size()))) {
             return std::nullopt;
         }
         return result;

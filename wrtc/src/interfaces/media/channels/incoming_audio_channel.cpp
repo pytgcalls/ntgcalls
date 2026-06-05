@@ -73,10 +73,9 @@ namespace wrtc {
         incomingDescription->AddStream(streamParams);
 
         workerThread.BlockingCall([&] {
-            channel->SetPayloadTypeDemuxingEnabled(true);
-            std::string errorDesc;
-            channel->SetLocalContent(outgoingDescription.get(), webrtc::SdpType::kOffer, errorDesc);
-            channel->SetRemoteContent(incomingDescription.get(), webrtc::SdpType::kAnswer, errorDesc);
+            channel->rtp_transport()->SetActivePayloadTypeDemuxing(true);
+            channel->SetLocalContent(outgoingDescription.get(), webrtc::SdpType::kOffer);
+            channel->SetRemoteContent(incomingDescription.get(), webrtc::SdpType::kAnswer);
         });
         channel->Enable(true);
         workerThread.BlockingCall([&] {
@@ -86,7 +85,7 @@ namespace wrtc {
                     remoteAudio->sendData(std::move(frame));
                 }
             });
-            channel->receive_channel()->SetRawAudioSink(_ssrc, std::move(rawSink));
+            channel->voice_media_receive_channel()->SetRawAudioSink(_ssrc, std::move(rawSink));
         });
     }
 

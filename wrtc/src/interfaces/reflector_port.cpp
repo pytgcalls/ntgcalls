@@ -208,7 +208,7 @@ namespace wrtc {
         }
         RTC_LOG(LS_WARNING) << ToString() << ": REFLECTOR sending ping to " << serverAddress.address.ToString();
         webrtc::ByteBufferWriter bufferWriter;
-        bufferWriter.Write(webrtc::MakeArrayView(peerTag.data(), peerTag.size()));
+        bufferWriter.Write(std::span(peerTag.data(), peerTag.size()));
         for (int i = 0; i < 12; i++) {
             bufferWriter.WriteUInt8(0xffu);
         }
@@ -420,11 +420,11 @@ namespace wrtc {
         targetPeerTag.AppendData(reinterpret_cast<uint8_t*>(&resolvedPeerTag), 4);
 
         webrtc::ByteBufferWriter bufferWriter;
-        bufferWriter.Write(webrtc::MakeArrayView(targetPeerTag.data(), targetPeerTag.size()));
-        bufferWriter.Write(webrtc::MakeArrayView(reinterpret_cast<const uint8_t*>(&randomTag), 4));
+        bufferWriter.Write(std::span(targetPeerTag.data(), targetPeerTag.size()));
+        bufferWriter.Write(std::span(reinterpret_cast<const uint8_t*>(&randomTag), 4));
 
         bufferWriter.WriteUInt32(static_cast<uint32_t>(size));
-        bufferWriter.Write(webrtc::MakeArrayView(static_cast<const uint8_t*>(data), size));
+        bufferWriter.Write(std::span(static_cast<const uint8_t*>(data), size));
         while (bufferWriter.Length() % 4 != 0) {
             bufferWriter.WriteUInt8(0);
         }
@@ -443,7 +443,7 @@ namespace wrtc {
         if (s != socket.get()) {
             return false;
         }
-        uint8_t const* data = packet.payload().begin();
+        uint8_t const* data = packet.payload().data();
         size_t size = packet.payload().size();
         webrtc::SocketAddress const &remote_addr = packet.source_address();
         auto packet_time_us = packet.arrival_time();
@@ -668,6 +668,10 @@ namespace wrtc {
                 transport = "udp";
                 break;
             case webrtc::PROTO_TCP:
+                break;
+            case webrtc::PROTO_DTLS:
+                scheme = "turns";
+                transport = "udp";
                 break;
         }
         webrtc::StringBuilder url;

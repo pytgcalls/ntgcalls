@@ -25,7 +25,7 @@ namespace wrtc {
             webrtc::Thread* signalingThread
         );
 
-        std::unique_ptr<webrtc::VoiceChannel> CreateVoiceChannel(
+        std::unique_ptr<webrtc::BaseChannel> CreateVoiceChannel(
             webrtc::Call* call,
             const webrtc::MediaConfig& mediaConfig,
             const std::string& mid,
@@ -34,7 +34,7 @@ namespace wrtc {
             const webrtc::AudioOptions& options
         );
 
-        std::unique_ptr<webrtc::VideoChannel>  CreateVideoChannel(
+        std::unique_ptr<webrtc::BaseChannel>  CreateVideoChannel(
             webrtc::Call* call,
             const webrtc::MediaConfig& mediaConfig,
             const std::string& mid,

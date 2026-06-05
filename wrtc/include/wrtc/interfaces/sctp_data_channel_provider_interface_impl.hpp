@@ -73,6 +73,7 @@ namespace wrtc {
         size_t buffered_amount_low_threshold(webrtc::StreamId sid) const override { return 0;}
         void SetBufferedAmountLowThreshold(webrtc::StreamId sid, size_t bytes) override {}
         void OnTransportConnected() override {}
+        void OnMaxMessageSize(int max_message_size) override {};
     };
 
 } // wrtc

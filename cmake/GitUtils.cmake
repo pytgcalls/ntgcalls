@@ -1,3 +1,5 @@
+include(${CMAKE_CURRENT_LIST_DIR}/Base64Utils.cmake)
+
 function(GitClone)
     cmake_parse_arguments(ARG "" "" "URL;COMMIT;DIRECTORY" ${ARGN})
     string(REPLACE "https" "" GIT_CACHE ${ARG_URL})
@@ -76,14 +78,7 @@ function(GitFile)
         message(FATAL_ERROR "Failed to fetch from remote origin.")
     endif ()
     if (BASE64)
-        execute_process(
-            COMMAND ${Python_EXECUTABLE} -c "import base64; import sys; sys.stdout.buffer.write(base64.b64decode('${FILE_CONTENT}'))"
-            RESULT_VARIABLE GIT_RESULT_CODE
-            OUTPUT_VARIABLE FILE_CONTENT
-        )
-        if(NOT GIT_RESULT_CODE EQUAL 0)
-            message(FATAL_ERROR "Failed to decrypt git file")
-        endif ()
+        base64_decode("${FILE_CONTENT}" FILE_CONTENT)
     endif ()
     file(WRITE ${ARG_DIRECTORY} "${FILE_CONTENT}")
 endfunction()
