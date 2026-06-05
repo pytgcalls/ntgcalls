@@ -69,7 +69,7 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) skipExchange(int64_t userId, const BYTES(bytes::vector) &encryptionKey, bool isOutgoing);
 
-        ASYNC_RETURN(void) connectP2P(int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
+        ASYNC_RETURN(void) connectP2P(int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed, std::optional<std::string> customParameters);
 
         ASYNC_RETURN(std::string) createCall(int64_t chatId);
 

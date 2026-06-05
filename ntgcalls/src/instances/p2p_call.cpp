@@ -114,7 +114,7 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "Exchange skipped";
     }
 
-    void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
+    void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed, std::optional<std::string> customParameters) {
         RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2pAllowed ? "true" : "false");
         if (connection) {
             RTC_LOG(LS_ERROR) << "Connection already made";
@@ -130,17 +130,18 @@ namespace ntgcalls {
         } else {
             memcpy(encryptionKey->data(), skipExchangeKey.data(), signaling::EncryptionKey::kSize);
         }
+        wrtc::json customParametersJson;
+        if (customParameters) {
+            customParametersJson = wrtc::json::parse(*customParameters);
+        }
         protocolVersion = signaling::Signaling::matchVersion(versions);
         std::weak_ptr weak(shared_from_this());
-        if (protocolVersion == signaling::Signaling::Version::V2) {
-            connection = std::make_shared<wrtc::NativeConnection>(
-                RTCServer::toRtcServers(servers),
-                p2pAllowed,
-                type() == Type::Outgoing
-            );
-        } else {
-            throw InvalidParams("Unsupported protocol version");
-        }
+        connection = std::make_shared<wrtc::NativeConnection>(
+            RTCServer::toRtcServers(servers),
+            p2pAllowed,
+            type() == Type::Outgoing,
+            customParametersJson
+        );
         connection->open();
         streamManager->optimizeSources(connection.get());
         signaling = signaling::Signaling::Create(
@@ -171,12 +172,13 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            bytes::binary message;
-            if (strong->protocolVersion == signaling::Signaling::Version::V2) {
-                signaling::CandidatesMessage candMess;
-                candMess.iceCandidates.push_back({candidate.sdp});
-                message = candMess.serialize();
-            }
+            signaling::CandidatesMessage candMess;
+            candMess.iceCandidates.push_back({
+                candidate.sdp,
+                candidate.mid,
+                candidate.mLine
+            });
+            const auto message = candMess.serialize();
             RTC_LOG(LS_VERBOSE) << "Sending candidate: " << bytes::to_string(message);
             strong->signaling->send(message);
         });
@@ -207,10 +209,8 @@ namespace ntgcalls {
             strong->sendMediaState(mediaState);
         });
         if (type() == Type::Outgoing) {
-            if (protocolVersion == signaling::Signaling::Version::V2) {
-                sendInitialSetup();
-                sendOfferIfNeeded();
-            }
+            sendInitialSetup();
+            sendOfferIfNeeded();
         }
         setConnectionObserver(connection);
     }
@@ -244,11 +244,11 @@ namespace ntgcalls {
                 break;
             }
             case signaling::Message::Type::Candidates: {
-                for (const auto message = signaling::CandidatesMessage::deserialize(buffer); const auto&[sdpString] : message->iceCandidates) {
+                for (const auto message = signaling::CandidatesMessage::deserialize(buffer); const auto&[sdpString, sdpMid, sdpMLineIndex] : message->iceCandidates) {
                     webrtc::SdpParseError error;
                     std::unique_ptr<webrtc::IceCandidate> parseCandidate = webrtc::IceCandidate::Create(
-                        "",
-                        0,
+                        sdpMid,
+                        sdpMLineIndex,
                         sdpString,
                         &error
                     );

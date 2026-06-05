@@ -46,7 +46,7 @@ namespace ntgcalls {
 
         void skipExchange(bytes::vector encryptionKey, bool isOutgoing);
 
-        void connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
+        void connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed, std::optional<std::string> customParameters);
 
         Type type() const override;
 

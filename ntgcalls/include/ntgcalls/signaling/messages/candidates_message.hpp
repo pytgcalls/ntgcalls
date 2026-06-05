@@ -13,6 +13,8 @@ namespace signaling {
     public:
         struct IceCandidate {
             std::string sdpString;
+            std::string sdpMid;
+            int sdpMLineIndex = 0;
         };
 
         std::vector<IceCandidate> iceCandidates;

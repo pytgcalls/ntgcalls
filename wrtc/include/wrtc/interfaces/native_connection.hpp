@@ -67,7 +67,7 @@ namespace wrtc {
 
         bool isGroupConnection() const override;
     public:
-        explicit NativeConnection(std::vector<RTCServer> rtcServers, bool enableP2P, bool isOutgoing);
+        explicit NativeConnection(std::vector<RTCServer> rtcServers, bool enableP2P, bool isOutgoing, json customParameters);
 
         void open() override;
 

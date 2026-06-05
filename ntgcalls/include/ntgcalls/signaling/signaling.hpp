@@ -15,7 +15,8 @@ namespace signaling {
             Unknown = 0,
             V1 = 1 << 0,
             V2 = 1 << 1,
-            V2Full = 1 << 2
+            V2Full = 1 << 2,
+            V3 = 1 << 3,
         };
 
         static std::shared_ptr<SignalingInterface> Create(
@@ -33,8 +34,6 @@ namespace signaling {
         static Version matchVersion(const std::vector<std::string> &versions);
 
     private:
-        static constexpr char defaultVersion[] = "8.0.0";
-
         static std::string bestMatch(std::vector<std::string> versions);
     };
 

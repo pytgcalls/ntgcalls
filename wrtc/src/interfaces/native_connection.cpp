@@ -13,7 +13,8 @@
 
 
 namespace wrtc {
-    NativeConnection::NativeConnection(std::vector<RTCServer> rtcServers, const bool enableP2P, const bool isOutgoing):
+    NativeConnection::NativeConnection(std::vector<RTCServer> rtcServers, const bool enableP2P, const bool isOutgoing, json customParameters):
+    customParameters(std::move(customParameters)),
     isOutgoing(isOutgoing),
     enableP2P(enableP2P),
     rtcServers(std::move(rtcServers)),

@@ -10,9 +10,11 @@ namespace signaling {
             {"@type", "Candidates"},
         };
         auto iceCandidatesJson = json::array();
-        for (const auto& [sdpString] : iceCandidates) {
+        for (const auto& [sdpString, sdpMid, sdpMLineIndex] : iceCandidates) {
             iceCandidatesJson.push_back(json{
                 {"sdpString", sdpString},
+                {"sdpMid", sdpMid},
+                {"sdpMLineIndex", sdpMLineIndex}
             });
         }
         res["candidates"] = iceCandidatesJson;
@@ -23,7 +25,21 @@ namespace signaling {
         json j = json::parse(data.begin(), data.end());
         auto message = std::make_unique<CandidatesMessage>();
         for (const auto& iceCandidate : j["candidates"]) {
-            message->iceCandidates.push_back(IceCandidate{iceCandidate["sdpString"]});
+            std::string sdpMid = "";
+            if (iceCandidate.contains("sdpMid")) {
+                sdpMid = iceCandidate["sdpMid"].get<std::string>();
+            }
+            // ReSharper disable once CppDFAUnreadVariable
+            int sdpMLineIndex = 0;
+            if (iceCandidate.contains("sdpMLineIndex")) {
+                // ReSharper disable once CppDFAUnusedValue
+                sdpMLineIndex = iceCandidate["sdpMLineIndex"].get<int>();
+            }
+            message->iceCandidates.push_back(IceCandidate{
+                iceCandidate["sdpString"],
+                std::move(sdpMid),
+                sdpMLineIndex
+            });
         }
         return std::move(message);
     }

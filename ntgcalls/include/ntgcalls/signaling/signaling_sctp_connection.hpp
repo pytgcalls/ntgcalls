@@ -9,7 +9,7 @@
 
 namespace signaling {
 
-    class SignalingSctpConnection final : public SignalingInterface, public webrtc::DataChannelSink, public std::enable_shared_from_this<SignalingSctpConnection> {
+    class SignalingSctpConnection final : public SignalingInterface, public webrtc::DataChannelSink {
         std::unique_ptr<webrtc::SctpTransportFactory> sctpTransportFactory;
         std::unique_ptr<SignalingPacketTransport> packetTransport;
         std::unique_ptr<webrtc::SctpTransportInternal> sctpTransport;
