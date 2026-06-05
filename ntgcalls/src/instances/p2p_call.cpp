@@ -34,7 +34,7 @@ namespace ntgcalls {
     }
 
     bytes::vector P2PCall::initExchange(const DhConfig& dhConfig, const std::optional<bytes::vector>& g_a_hash) {
-        if (g_a_or_b) {
+        if (_g_a_or_b) {
             RTC_LOG(LS_ERROR) << "Exchange already initialized";
             throw ConnectionError("Exchange already initialized");
         }
@@ -46,11 +46,11 @@ namespace ntgcalls {
         randomPower = std::move(first.randomPower);
         prime = dhConfig.p;
         if (g_a_hash) {
-            this->g_a_hash = g_a_hash;
+            _g_a_hash = g_a_hash;
         }
-        g_a_or_b = std::move(first.modexp);
+        _g_a_or_b = std::move(first.modexp);
         RTC_LOG(LS_INFO) << "P2P call initialized";
-        return g_a_hash ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
+        return g_a_hash ? _g_a_or_b.value() : openssl::Sha256::Digest(_g_a_or_b.value());
     }
 
     AuthParams P2PCall::exchangeKeys(const bytes::vector &g_a_or_b, const int64_t fingerprint) {
@@ -58,7 +58,7 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        if (!this->g_a_or_b) {
+        if (!_g_a_or_b) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionNotFound("Connection not initialized");
         }
@@ -66,12 +66,12 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Key already exchanged";
             throw ConnectionError("Key already exchanged");
         }
-        if (g_a_hash) {
+        if (_g_a_hash) {
             if (!fingerprint) {
                 RTC_LOG(LS_ERROR) << "Fingerprint not found";
                 throw InvalidParams("Fingerprint not found");
             }
-            if (g_a_hash != openssl::Sha256::Digest(g_a_or_b)) {
+            if (_g_a_hash != openssl::Sha256::Digest(g_a_or_b)) {
                 RTC_LOG(LS_ERROR) << "Hash mismatch";
                 throw CryptoError("Hash mismatch");
             }
@@ -88,7 +88,7 @@ namespace ntgcalls {
         signaling::RawKey authKey;
         signaling::AuthKey::FillData(authKey, computedAuthKey);
         const auto computedFingerprint = signaling::AuthKey::Fingerprint(authKey);
-        if (g_a_hash && computedFingerprint != static_cast<uint64_t>(fingerprint)) {
+        if (_g_a_hash && computedFingerprint != static_cast<uint64_t>(fingerprint)) {
             RTC_LOG(LS_ERROR) << "Fingerprint mismatch";
             throw CryptoError("Fingerprint mismatch");
         }
@@ -96,7 +96,7 @@ namespace ntgcalls {
         RTC_LOG(LS_INFO) << "Key exchanged, fingerprint: " << computedFingerprint;
         return AuthParams{
             static_cast<int64_t>(computedFingerprint),
-            this->g_a_or_b.value(),
+            _g_a_or_b.value(),
         };
     }
 
@@ -114,7 +114,7 @@ namespace ntgcalls {
         RTC_LOG(LS_VERBOSE) << "Exchange skipped";
     }
 
-    void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
+    void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed, std::optional<std::string> customParameters) {
         RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2pAllowed ? "true" : "false");
         if (connection) {
             RTC_LOG(LS_ERROR) << "Connection already made";
@@ -122,7 +122,7 @@ namespace ntgcalls {
         }
         auto encryptionKey = std::make_shared<std::array<uint8_t, signaling::EncryptionKey::kSize>>();
         if (skipExchangeKey.empty()) {
-            if (!g_a_or_b || !key) {
+            if (!_g_a_or_b || !key) {
                 RTC_LOG(LS_ERROR) << "Connection not initialized";
                 throw ConnectionNotFound("Connection not initialized");
             }
@@ -130,17 +130,18 @@ namespace ntgcalls {
         } else {
             memcpy(encryptionKey->data(), skipExchangeKey.data(), signaling::EncryptionKey::kSize);
         }
+        wrtc::json customParametersJson;
+        if (customParameters) {
+            customParametersJson = wrtc::json::parse(*customParameters);
+        }
         protocolVersion = signaling::Signaling::matchVersion(versions);
         std::weak_ptr weak(shared_from_this());
-        if (protocolVersion == signaling::Signaling::Version::V2) {
-            connection = std::make_shared<wrtc::NativeConnection>(
-                RTCServer::toRtcServers(servers),
-                p2pAllowed,
-                type() == Type::Outgoing
-            );
-        } else {
-            throw InvalidParams("Unsupported protocol version");
-        }
+        connection = std::make_shared<wrtc::NativeConnection>(
+            RTCServer::toRtcServers(servers),
+            p2pAllowed,
+            type() == Type::Outgoing,
+            customParametersJson
+        );
         connection->open();
         streamManager->optimizeSources(connection.get());
         signaling = signaling::Signaling::Create(
@@ -171,12 +172,13 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            bytes::binary message;
-            if (strong->protocolVersion == signaling::Signaling::Version::V2) {
-                signaling::CandidatesMessage candMess;
-                candMess.iceCandidates.push_back({candidate.sdp});
-                message = candMess.serialize();
-            }
+            signaling::CandidatesMessage candMess;
+            candMess.iceCandidates.push_back({
+                candidate.sdp,
+                candidate.mid,
+                candidate.mLine
+            });
+            const auto message = candMess.serialize();
             RTC_LOG(LS_VERBOSE) << "Sending candidate: " << bytes::to_string(message);
             strong->signaling->send(message);
         });
@@ -207,10 +209,8 @@ namespace ntgcalls {
             strong->sendMediaState(mediaState);
         });
         if (type() == Type::Outgoing) {
-            if (protocolVersion == signaling::Signaling::Version::V2) {
-                sendInitialSetup();
-                sendOfferIfNeeded();
-            }
+            sendInitialSetup();
+            sendOfferIfNeeded();
         }
         setConnectionObserver(connection);
     }
@@ -244,11 +244,11 @@ namespace ntgcalls {
                 break;
             }
             case signaling::Message::Type::Candidates: {
-                for (const auto message = signaling::CandidatesMessage::deserialize(buffer); const auto&[sdpString] : message->iceCandidates) {
+                for (const auto message = signaling::CandidatesMessage::deserialize(buffer); const auto&[sdpString, sdpMid, sdpMLineIndex] : message->iceCandidates) {
                     webrtc::SdpParseError error;
                     std::unique_ptr<webrtc::IceCandidate> parseCandidate = webrtc::IceCandidate::Create(
-                        "",
-                        0,
+                        sdpMid,
+                        sdpMLineIndex,
                         sdpString,
                         &error
                     );
@@ -417,8 +417,8 @@ namespace ntgcalls {
 
     CallInterface::Type P2PCall::type() const {
         if (skipExchangeKey.empty()) {
-            if (g_a_or_b) {
-                if (g_a_hash) {
+            if (_g_a_or_b) {
+                if (_g_a_hash) {
                     return Type::Incoming;
                 }
                 return Type::Outgoing;

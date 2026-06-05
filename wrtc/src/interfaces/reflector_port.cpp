@@ -24,9 +24,11 @@
 #include <rtc_base/net_helpers.h>
 #include <rtc_base/socket_address.h>
 #include <rtc_base/strings/string_builder.h>
+#include <wrtc/interfaces/raw_tcp_socket.hpp>
 
 namespace wrtc {
     ReflectorPort::ReflectorPort(const webrtc::CreateRelayPortArgs& args,
+        webrtc::SocketFactory* underlyingSocketFactory,
         webrtc::AsyncPacketSocket* socket,
         const uint8_t serverId,
         const int serverPriority,
@@ -46,6 +48,7 @@ namespace wrtc {
     serverAddress(*args.server_address),
     serverId(serverId),
     socket(socket),
+    underlyingSocketFactory(underlyingSocketFactory),
     error(0),
     state(STATE_CONNECTING),
     standaloneReflectorMode(standaloneReflectorMode),
@@ -53,8 +56,6 @@ namespace wrtc {
     stunDscpValue(webrtc::DSCP_NO_CHANGE),
     credentials(args.config->credentials),
     serverPriority(serverPriority) {
-        const auto rawPeerTag = parseHex(args.config->credentials.password);
-        peerTag.AppendData(rawPeerTag.data(), rawPeerTag.size() - 4);
         if (standaloneReflectorMode) {
             randomTag = standaloneReflectorRoleId;
         } else {
@@ -64,10 +65,19 @@ namespace wrtc {
                 randomTag = distribution(generator);
             } while (!randomTag);
         }
+        if (const auto rawPeerTag = parseHex(args.config->credentials.password); rawPeerTag.size() == 16) {
+            peerTag.AppendData(rawPeerTag.data(), rawPeerTag.size() - 4);
+        } else {
+            for (int i = 0; i < 16; i++) {
+                uint8_t zero = 0;
+                peerTag.AppendData(&zero, 1);
+            }
+        }
         peerTag.AppendData(reinterpret_cast<uint8_t*>(&randomTag), 4);
     }
 
     ReflectorPort::ReflectorPort(const webrtc::CreateRelayPortArgs& args,
+        webrtc::SocketFactory* underlyingSocketFactory,
         const uint16_t min_port,
         const uint16_t max_port,
         const uint8_t serverId,
@@ -90,6 +100,7 @@ namespace wrtc {
     serverAddress(*args.server_address),
     serverId(serverId),
     socket(nullptr),
+    underlyingSocketFactory(underlyingSocketFactory),
     error(0),
     state(STATE_CONNECTING),
     standaloneReflectorMode(standaloneReflectorMode),
@@ -97,8 +108,6 @@ namespace wrtc {
     stunDscpValue(webrtc::DSCP_NO_CHANGE),
     credentials(args.config->credentials),
     serverPriority(serverPriority) {
-        const auto rawPeerTag = parseHex(args.config->credentials.password);
-        peerTag.AppendData(rawPeerTag.data(), rawPeerTag.size() - 4);
         if (standaloneReflectorMode) {
             randomTag = standaloneReflectorRoleId;
         } else {
@@ -107,6 +116,14 @@ namespace wrtc {
                 std::uniform_int_distribution<uint32_t> distribution;
                 randomTag = distribution(generator);
             } while (!randomTag);
+        }
+        if (const auto rawPeerTag = parseHex(args.config->credentials.password); rawPeerTag.size() == 16) {
+            peerTag.AppendData(rawPeerTag.data(), rawPeerTag.size() - 4);
+        } else {
+            for (int i = 0; i < 16; i++) {
+                uint8_t zero = 0;
+                peerTag.AppendData(&zero, 1);
+            }
         }
         peerTag.AppendData(reinterpret_cast<uint8_t*>(&randomTag), 4);
     }
@@ -126,10 +143,15 @@ namespace wrtc {
             socket->UnsubscribeSentPacket(this);
             Release();
         }
+        if (serverAddress.proto == webrtc::PROTO_TCP) {
+            socket->UnsubscribeCloseEvent(this);
+        }
         socket = nullptr;
     }
 
-    std::unique_ptr<ReflectorPort> ReflectorPort::Create(const webrtc::CreateRelayPortArgs &args,
+    std::unique_ptr<ReflectorPort> ReflectorPort::Create(
+        const webrtc::CreateRelayPortArgs &args,
+        webrtc::SocketFactory *underlyingSocketFactory,
         webrtc::AsyncPacketSocket* s,
         const uint8_t serverId,
         const int serverPriority,
@@ -139,11 +161,12 @@ namespace wrtc {
             RTC_LOG(LS_ERROR) << "Attempt to use REFLECTOR with a too long username of length " << args.config->credentials.username.size();
             return nullptr;
         }
-        return absl::WrapUnique(new ReflectorPort(args, s, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
+        return absl::WrapUnique(new ReflectorPort(args, underlyingSocketFactory, s, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
     }
 
     std::unique_ptr<ReflectorPort> ReflectorPort::Create(
         const webrtc::CreateRelayPortArgs &args,
+        webrtc::SocketFactory *underlyingSocketFactory,
         const uint16_t minPort,
         const uint16_t maxPort,
         const uint8_t serverId,
@@ -155,7 +178,7 @@ namespace wrtc {
             RTC_LOG(LS_ERROR) << "Attempt to use TURN with a too long username of length " << args.config->credentials.username.size();
             return nullptr;
         }
-        return absl::WrapUnique(new ReflectorPort(args, minPort, maxPort, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
+        return absl::WrapUnique(new ReflectorPort(args, underlyingSocketFactory, minPort, maxPort, serverId, serverPriority, standaloneReflectorMode, standaloneReflectorRoleId));
     }
 
     webrtc::SocketAddress ReflectorPort::GetLocalAddress() const {
@@ -208,17 +231,25 @@ namespace wrtc {
         }
         RTC_LOG(LS_WARNING) << ToString() << ": REFLECTOR sending ping to " << serverAddress.address.ToString();
         webrtc::ByteBufferWriter bufferWriter;
-        bufferWriter.Write(std::span(peerTag.data(), peerTag.size()));
-        for (int i = 0; i < 12; i++) {
-            bufferWriter.WriteUInt8(0xffu);
-        }
-        bufferWriter.WriteUInt8(0xfeu);
-        for (int i = 0; i < 3; i++) {
-            bufferWriter.WriteUInt8(0xffu);
-        }
-        bufferWriter.WriteUInt64(123);
-        while (bufferWriter.Length() % 4 != 0) {
-            bufferWriter.WriteUInt8(0);
+        if (serverAddress.proto == webrtc::PROTO_TCP) {
+            bufferWriter.Write(std::span(peerTag.data(), peerTag.size()));
+            bufferWriter.WriteUInt32(0);
+            while (bufferWriter.Length() % 4 != 0) {
+                bufferWriter.WriteUInt8(0);
+            }
+        } else {
+            bufferWriter.Write(std::span(peerTag.data(), peerTag.size()));
+            for (int i = 0; i < 12; i++) {
+                bufferWriter.WriteUInt8(0xffu);
+            }
+            bufferWriter.WriteUInt8(0xfeu);
+            for (int i = 0; i < 3; i++) {
+                bufferWriter.WriteUInt8(0xffu);
+            }
+            bufferWriter.WriteUInt64(123);
+            while (bufferWriter.Length() % 4 != 0) {
+                bufferWriter.WriteUInt8(0);
+            }
         }
         const webrtc::AsyncSocketPacketOptions options;
         (void) Send(bufferWriter.Data(), bufferWriter.Length(), options);
@@ -246,16 +277,13 @@ namespace wrtc {
             }
         } else if (serverAddress.proto == webrtc::PROTO_TCP) {
             RTC_DCHECK(!SharedSocket());
-            constexpr int opts = webrtc::PacketSocketFactory::OPT_STUN;
+            constexpr int opts = 0;
             webrtc::PacketSocketTcpOptions tcp_options;
             tcp_options.opts = opts;
-            socket = socket_factory()->CreateClientTcpSocket(
-                env(),
+            socket = CreateClientRawTcpSocket(
+                underlyingSocketFactory,
                 webrtc::SocketAddress(Network()->GetBestIP(), 0),
-                serverAddress.address,
-                get_proxy(),
-                get_user_agent(),
-                tcp_options
+                serverAddress.address
             );
         }
         if (!socket) {
@@ -327,19 +355,45 @@ namespace wrtc {
             serverAddress.address = s->GetRemoteAddress();
         }
         RTC_LOG(LS_VERBOSE) << "ReflectorPort connected to " << s->GetRemoteAddress().ToSensitiveString() << " using tcp.";
+
+        // ReSharper disable once CppDFAConstantConditions
+        if (serverAddress.proto == webrtc::PROTO_TCP && state != STATE_READY) {
+            state = STATE_READY;
+            RTC_LOG(LS_INFO) << ToString() << ": REFLECTOR " << serverAddress.address.ToString() << " is now ready";
+
+            const auto ipFormat = "reflector-" + std::to_string(static_cast<uint32_t>(serverId)) + "-" + std::to_string(randomTag) + ".reflector";
+            webrtc::SocketAddress candidateAddress(ipFormat, serverAddress.address.port());
+            if (standaloneReflectorMode) {
+                candidateAddress.SetResolvedIP(serverAddress.address.ipaddr());
+            }
+
+            AddAddress(
+                candidateAddress,
+                serverAddress.address,
+                webrtc::SocketAddress(),
+                webrtc::UDP_PROTOCOL_NAME,
+                webrtc::ProtoToString(serverAddress.proto),
+                "",
+                webrtc::IceCandidateType::kRelay,
+                GetRelayPreference(serverAddress.proto),
+                serverPriority,
+                ReconstructedServerUrl(false),
+                true
+            );
+            SendReflectorHello();
+        }
     }
 
-    void ReflectorPort::OnSocketClose(webrtc::AsyncPacketSocket* s, const int e) {
+    void ReflectorPort::OnSocketClose(webrtc::AsyncPacketSocket* s, const int e) const {
         RTC_LOG(LS_WARNING) << ToString() << ": Connection with server failed with error: " << e;
         RTC_DCHECK(s == socket.get());
-        Close();
     }
 
-    webrtc::Connection* ReflectorPort::CreateConnection(const webrtc::Candidate& remote_candidate, CandidateOrigin origin) {
-        if (!SupportsProtocol(remote_candidate.protocol())) {
+    webrtc::Connection* ReflectorPort::CreateConnection(const webrtc::Candidate& remoteCandidate, CandidateOrigin origin) {
+        if (!SupportsProtocol(remoteCandidate.protocol())) {
             return nullptr;
         }
-        const auto remoteHostname = remote_candidate.address().hostname();
+        const auto remoteHostname = remoteCandidate.address().hostname();
         if (remoteHostname.empty()) {
             return nullptr;
         }
@@ -347,13 +401,21 @@ namespace wrtc {
         if (!absl::StartsWith(remoteHostname, ipFormat) || !absl::EndsWith(remoteHostname, ".reflector")) {
             return nullptr;
         }
-        if (remote_candidate.address().port() != serverAddress.address.port()) {
+        if (remoteCandidate.address().port() != serverAddress.address.port()) {
             return nullptr;
         }
         if (state == STATE_DISCONNECTED || state == STATE_RECEIVEONLY) {
             return nullptr;
         }
-        auto* conn = new webrtc::ProxyConnection(env(), NewWeakPtr(), 0, remote_candidate);
+
+        webrtc::Candidate updatedRemoteCandidate = remoteCandidate;
+        if (serverAddress.proto == webrtc::PROTO_TCP) {
+            webrtc::SocketAddress updated_address = updatedRemoteCandidate.address();
+            updated_address.SetResolvedIP(serverAddress.address.ipaddr());
+            updatedRemoteCandidate.set_address(updated_address);
+        }
+
+        auto* conn = new webrtc::ProxyConnection(env(), NewWeakPtr(), 0, updatedRemoteCandidate);
         AddOrReplaceConnection(conn);
         return conn;
     }
@@ -393,7 +455,7 @@ namespace wrtc {
         return error;
     }
 
-    int ReflectorPort::SendTo(const void* data, size_t size, const webrtc::SocketAddress& addr, const webrtc::AsyncSocketPacketOptions& options, bool payload) {
+    int ReflectorPort::SendTo(std::span<const uint8_t> data, const webrtc::SocketAddress& addr, const webrtc::AsyncSocketPacketOptions& options, bool payload) {
         webrtc::CopyOnWriteBuffer targetPeerTag;
         auto syntheticHostname = addr.hostname();
         uint32_t resolvedPeerTag = 0;
@@ -423,16 +485,16 @@ namespace wrtc {
         bufferWriter.Write(std::span(targetPeerTag.data(), targetPeerTag.size()));
         bufferWriter.Write(std::span(reinterpret_cast<const uint8_t*>(&randomTag), 4));
 
-        bufferWriter.WriteUInt32(static_cast<uint32_t>(size));
-        bufferWriter.Write(std::span(static_cast<const uint8_t*>(data), size));
+        bufferWriter.WriteUInt32(static_cast<uint32_t>(data.size()));
+        bufferWriter.Write(data);
         while (bufferWriter.Length() % 4 != 0) {
             bufferWriter.WriteUInt8(0);
         }
         webrtc::AsyncSocketPacketOptions modified_options(options);
         CopyPortInformationToPacketInfo(&modified_options.info_signaled_after_sent);
-        modified_options.info_signaled_after_sent.turn_overhead_bytes = bufferWriter.Length() - size;
+        modified_options.info_signaled_after_sent.turn_overhead_bytes = bufferWriter.Length() - data.size();
         (void) Send(bufferWriter.Data(), bufferWriter.Length(), modified_options);
-        return static_cast<int>(size);
+        return static_cast<int>(data.size());
     }
 
     bool ReflectorPort::CanHandleIncomingPacketsFrom(const webrtc::SocketAddress& addr) const {
@@ -648,6 +710,56 @@ namespace wrtc {
             result.AppendData(&byte, 1);
         }
         return result;
+    }
+
+    int ReflectorPort::BindSocket(
+        webrtc::Socket *socket,
+        const webrtc::SocketAddress &localAddress,
+        // ReSharper disable once CppDFAConstantParameter
+        const uint16_t minPort,
+        // ReSharper disable once CppDFAConstantParameter
+        const uint16_t maxPort
+    ) {
+        int ret = -1;
+        if (minPort == 0 && maxPort == 0) {
+            ret = socket->Bind(localAddress);
+        } else {
+            for (int port = minPort; ret < 0 && port <= maxPort; ++port) {
+                ret = socket->Bind(webrtc::SocketAddress(localAddress.ipaddr(), port));
+            }
+        }
+        return ret;
+    }
+
+    std::unique_ptr<webrtc::AsyncPacketSocket> ReflectorPort::CreateClientRawTcpSocket(
+        webrtc::SocketFactory* socketFactory,
+        const webrtc::SocketAddress& localAddress,
+        const webrtc::SocketAddress& remoteAddress
+    ) {
+        auto socket = socketFactory->Create(localAddress.family(), SOCK_STREAM);
+        if (!socket) {
+            return nullptr;
+        }
+        if (BindSocket(socket.get(), localAddress, 0, 0) < 0) {
+            if (localAddress.IsAnyIP()) {
+                RTC_LOG(LS_WARNING) << "TCP bind failed with error " << socket->GetError() << "; ignoring since socket is using 'any' address.";
+            } else {
+                RTC_LOG(LS_ERROR) << "TCP bind failed with error " << socket->GetError();
+                return nullptr;
+            }
+        }
+
+        if (socket->SetOption(webrtc::Socket::OPT_NODELAY, 1) != 0) {
+            RTC_LOG(LS_ERROR) << "Setting TCP_NODELAY option failed with error "
+            << socket->GetError();
+        }
+
+        if (socket->Connect(remoteAddress) < 0) {
+            RTC_LOG(LS_ERROR) << "TCP connect failed with error " << socket->GetError();
+            return nullptr;
+        }
+
+        return std::make_unique<webrtc::RawTcpSocket>(std::move(socket));
     }
 
     int ReflectorPort::Send(const void* data, const size_t size, const webrtc::AsyncSocketPacketOptions& options) const {

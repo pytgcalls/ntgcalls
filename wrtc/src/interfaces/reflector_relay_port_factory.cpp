@@ -10,8 +10,11 @@
 namespace wrtc {
     ReflectorRelayPortFactory::ReflectorRelayPortFactory(const std::vector<RTCServer>& servers,
         const bool standaloneReflectorMode,
-        const uint32_t standaloneReflectorRoleId):
+        const uint32_t standaloneReflectorRoleId,
+        webrtc::SocketFactory* underlyingSocketFactory
+    ):
     servers(servers),
+    underlyingSocketFactory(underlyingSocketFactory),
     standaloneReflectorMode(standaloneReflectorMode),
     standaloneReflectorRoleId(standaloneReflectorRoleId) {}
 
@@ -27,7 +30,15 @@ namespace wrtc {
             if (foundId == 0) {
                 return nullptr;
             }
-            auto port = ReflectorPort::Create(args, udp_socket, foundId, args.relative_priority, standaloneReflectorMode, standaloneReflectorRoleId);
+            auto port = ReflectorPort::Create(
+                args,
+                underlyingSocketFactory,
+                udp_socket,
+                foundId,
+                args.relative_priority,
+                standaloneReflectorMode,
+                standaloneReflectorRoleId
+            );
             if (!port) {
                 return nullptr;
             }
@@ -54,7 +65,16 @@ namespace wrtc {
             if (foundId == 0) {
                 return nullptr;
             }
-            auto port = ReflectorPort::Create(args, min_port, max_port, foundId, args.relative_priority, standaloneReflectorMode, standaloneReflectorRoleId);
+            auto port = ReflectorPort::Create(
+                args,
+                underlyingSocketFactory,
+                min_port,
+                max_port,
+                foundId,
+                args.relative_priority,
+                standaloneReflectorMode,
+                standaloneReflectorRoleId
+            );
             if (!port) {
                 return nullptr;
             }

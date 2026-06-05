@@ -16,7 +16,7 @@ namespace ntgcalls {
         std::optional<signaling::RawKey> key;
         bytes::vector skipExchangeKey;
         bool skipIsOutgoing = false;
-        std::optional<bytes::vector> g_a_hash, g_a_or_b;
+        std::optional<bytes::vector> _g_a_hash, _g_a_or_b;
         std::atomic_bool isMakingOffer = false, makingNegotation = false, handshakeCompleted = false;
         std::shared_ptr<signaling::SignalingInterface> signaling;
         wrtc::synchronized_callback<bytes::binary> onEmitData;
@@ -46,7 +46,7 @@ namespace ntgcalls {
 
         void skipExchange(bytes::vector encryptionKey, bool isOutgoing);
 
-        void connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed);
+        void connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed, std::optional<std::string> customParameters);
 
         Type type() const override;
 

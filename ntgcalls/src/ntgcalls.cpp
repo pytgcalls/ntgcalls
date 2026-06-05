@@ -157,9 +157,9 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(void) NTgCalls::connectP2P(const int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
-        SMART_ASYNC(this, userId, servers, versions, p2pAllowed)
-        SafeCall<P2PCall>(safeConnection(userId))->connect(servers, versions, p2pAllowed);
+    ASYNC_RETURN(void) NTgCalls::connectP2P(const int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed, std::optional<std::string> customParameters) {
+        SMART_ASYNC(this, userId, servers, versions, p2pAllowed, customParameters)
+        SafeCall<P2PCall>(safeConnection(userId))->connect(servers, versions, p2pAllowed, customParameters);
         END_ASYNC
     }
 
