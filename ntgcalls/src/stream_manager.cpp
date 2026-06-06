@@ -280,11 +280,17 @@ namespace ntgcalls {
         if (wasSyncing) {
             syncCV.notify_all();
         }
+        std::unique_ptr<BaseReader> readerToDestroy;
         if (readers.contains(device)) {
-            readers[device]->onData(nullptr);
-            readers[device]->onEof(nullptr);
+            readerToDestroy = std::move(readers[device]);
+            readers.erase(device);
         }
-        readers.erase(device);
+        if (readerToDestroy) {
+            mutex.unlock();
+            readerToDestroy->onData(nullptr);
+            readerToDestroy->onEof(nullptr);
+            mutex.lock();
+        }
         externalReaders.erase(device);
         {
             std::lock_guard syncLock(syncMutex);
