@@ -20,30 +20,36 @@ namespace ntgcalls {
     StreamManager::StreamManager(wrtc::SafeThread& workerThread): workerThread(workerThread) {}
 
     void StreamManager::close() {
-        std::lock_guard lock(mutex);
+        std::vector<std::unique_ptr<BaseReader>> readersToClose;
         {
-            std::lock_guard syncLock(syncMutex);
-            syncReaders.clear();
+            std::lock_guard lock(mutex);
+            {
+                std::lock_guard syncLock(syncMutex);
+                syncReaders.clear();
+            }
+            syncCV.notify_all();
+            onEOF = nullptr;
+            framesCallback = nullptr;
+            onChangeStatus = nullptr;
+            for (auto& reader : readers | std::views::values) {
+                readersToClose.push_back(std::move(reader));
+            }
+            readers.clear();
+            writers.clear();
+            for (const auto& stream : streams | std::views::values) {
+                if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
+                    audioReceiver->onFrames(nullptr);
+                } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
+                    videoReceiver->onFrame(nullptr);
+                }
+            }
+            streams.clear();
+            tracks.clear();
         }
-        syncCV.notify_all();
-        onEOF = nullptr;
-        framesCallback = nullptr;
-        onChangeStatus = nullptr;
-        for (const auto& reader : readers | std::views::values) {
+        for (const auto& reader : readersToClose) {
             reader->onData(nullptr);
             reader->onEof(nullptr);
         }
-        readers.clear();
-        writers.clear();
-        for (const auto& stream : streams | std::views::values) {
-            if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
-                audioReceiver->onFrames(nullptr);
-            } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
-                videoReceiver->onFrame(nullptr);
-            }
-        }
-        streams.clear();
-        tracks.clear();
     }
 
     void StreamManager::enableVideoSimulcast(const bool enable) {
