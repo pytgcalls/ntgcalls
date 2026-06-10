@@ -5,13 +5,14 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <mutex>
 
 namespace wrtc {
 
     template <typename... Args> class
     synchronized_callback final {
-        std::function<void(Args...)> callback;
+        std::shared_ptr<std::function<void(Args...)>> callback;
         mutable std::mutex mutex;
 
     public:
@@ -20,23 +21,28 @@ namespace wrtc {
         ~synchronized_callback() { *this = nullptr; }
 
         synchronized_callback &operator=(std::function<void(Args...)> func) {
+            auto next = func ? std::make_shared<std::function<void(Args...)>>(std::move(func)) : nullptr;
             std::lock_guard lock(mutex);
-            callback = std::move(func);
+            callback = std::move(next);
             return *this;
         }
 
         bool operator()(Args... args) const {
-            std::lock_guard lock(mutex);
-            if (!callback)
+            std::shared_ptr<std::function<void(Args...)>> snapshot;
+            {
+                std::lock_guard lock(mutex);
+                snapshot = callback;
+            }
+            if (!snapshot || !*snapshot)
                 return false;
-            callback(std::move(args)...);
+            (*snapshot)(std::move(args)...);
             return true;
         }
     };
 
     template <> class
     synchronized_callback<void> final {
-        std::function<void()> callback;
+        std::shared_ptr<std::function<void()>> callback;
         mutable std::mutex mutex;
 
     public:
@@ -45,16 +51,21 @@ namespace wrtc {
         ~synchronized_callback() { *this = nullptr; }
 
         synchronized_callback &operator=(std::function<void()> func) {
+            auto next = func ? std::make_shared<std::function<void()>>(std::move(func)) : nullptr;
             std::lock_guard lock(mutex);
-            callback = std::move(func);
+            callback = std::move(next);
             return *this;
         }
 
         bool operator()() const {
-            std::lock_guard lock(mutex);
-            if (!callback)
+            std::shared_ptr<std::function<void()>> snapshot;
+            {
+                std::lock_guard lock(mutex);
+                snapshot = callback;
+            }
+            if (!snapshot || !*snapshot)
                 return false;
-            callback();
+            (*snapshot)();
             return true;
         }
     };
