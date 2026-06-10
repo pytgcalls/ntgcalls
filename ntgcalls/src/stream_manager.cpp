@@ -458,6 +458,7 @@ namespace ntgcalls {
                     }
                 }
             }
+            std::vector<wrtc::Frame> framesToEmit;
             {
                 std::lock_guard lock(strong->mutex);
                 if (strong->streams.contains(id)) {
@@ -465,21 +466,14 @@ namespace ntgcalls {
                     if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
                         frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
                         if (streamType == Video && isShared) {
-                            (void) strong->framesCallback(
-                                id.first,
-                                id.second,
-                                {
-                                    {
-                                        0,
-                                        {data.get(), data.get() + frameSize},
-                                        frameData
-                                    }
-                                }
-                            );
+                            framesToEmit.push_back({0, {data.get(), data.get() + frameSize}, frameData});
                         }
                         stream->sendData(data.get(), frameSize, frameData);
                     }
                 }
+            }
+            if (!framesToEmit.empty()) {
+                (void) strong->framesCallback(id.first, id.second, std::move(framesToEmit));
             }
         });
 

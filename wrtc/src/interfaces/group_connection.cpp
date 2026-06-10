@@ -303,6 +303,10 @@ namespace wrtc {
     }
 
     void GroupConnection::updateIsConnected() {
+        const auto* currentFactory = factory;
+        if (!currentFactory) {
+            return;
+        }
         bool isEffectivelyConnected = false;
         switch (connectionMode) {
             case ConnectionMode::Rtc:
@@ -318,7 +322,7 @@ namespace wrtc {
         if (isEffectivelyConnected != lastEffectivelyConnected) {
             lastEffectivelyConnected = isEffectivelyConnected;
             std::weak_ptr weak(shared_from_this());
-            signalingThread().PostTask([weak, newValue = isEffectivelyConnected ? ConnectionState::Connected : ConnectionState::Connecting] {
+            currentFactory->signalingThread().PostTask([weak, newValue = isEffectivelyConnected ? ConnectionState::Connected : ConnectionState::Connecting] {
                 const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
                 if (!strong) {
                     return;
