@@ -139,6 +139,14 @@ jobs:
           "${{ steps.python.outputs.path }}" -m pip install "git+https://github.com/pytgcalls/cibuildwheel.git" setuptools
         shell: bash
 
+      - name: Install Media Foundation
+        if: startsWith(matrix.shared_name, 'windows')
+        run: |
+          if ((Get-WindowsFeature Server-Media-Foundation).InstallState -ne 'Installed') {
+            Install-WindowsFeature Server-Media-Foundation
+          }
+        shell: powershell
+
       - name: Build Shared Libs
         if: github.event.inputs.build-shared-libs == 'true'
         run: |
