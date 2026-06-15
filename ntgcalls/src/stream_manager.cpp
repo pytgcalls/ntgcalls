@@ -46,9 +46,10 @@ namespace ntgcalls {
             streams.clear();
             tracks.clear();
         }
-        for (const auto& reader : readersToClose) {
+        for (auto& reader : readersToClose) {
             reader->onData(nullptr);
             reader->onEof(nullptr);
+            reader.reset();
         }
     }
 
@@ -295,6 +296,7 @@ namespace ntgcalls {
             mutex.unlock();
             readerToDestroy->onData(nullptr);
             readerToDestroy->onEof(nullptr);
+            readerToDestroy.reset();
             mutex.lock();
         }
         externalReaders.erase(device);
