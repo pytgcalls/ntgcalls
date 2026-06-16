@@ -28,6 +28,8 @@ deps/ndk/
 deps/libx11/
 deps/mesa/
 deps/glib/
+ntgcalls/src/tl/e2e_api.cpp
+ntgcalls/include/ntgcalls/tl/e2e_api.hpp
 android/app/src/main/jni/ntgcalls/
 android/app/src/main/jni/wrtc/
 android/local.properties

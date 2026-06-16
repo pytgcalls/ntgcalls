@@ -36,6 +36,7 @@ include(cmake/FindLibCXX.cmake)
 include(cmake/FindBoost.cmake)
 include(cmake/FindOpenH264.cmake)
 include(cmake/FindFFmpeg.cmake)
+include(cmake/GenerateE2ETL.cmake)
 
 # pybind11
 if (IS_PYTHON)
