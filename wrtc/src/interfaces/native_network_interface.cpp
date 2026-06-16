@@ -32,6 +32,7 @@ namespace wrtc {
                 webrtc::KeyParams(webrtc::KT_ECDSA),
                 std::nullopt
             );
+            strong->underlyingSocketFactory = strong->networkThread().socketServer();
             strong->asyncResolverFactory = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
             strong->dtlsSrtpTransport = std::make_unique<WrappedDtlsSrtpTransport>(
                 true,
@@ -434,6 +435,7 @@ namespace wrtc {
                 strong->dtlsTransport = nullptr;
                 strong->transportChannel = nullptr;
                 strong->portAllocator = nullptr;
+                strong->underlyingSocketFactory = nullptr;
                 strong->asyncResolverFactory = nullptr;
                 strong->localCertificate = nullptr;
             });

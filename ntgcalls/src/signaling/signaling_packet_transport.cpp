@@ -13,7 +13,10 @@ namespace signaling {
         NotifyPacketReceived(
             webrtc::ReceivedIpPacket(
                 std::span(data.data(), data.size()),
-                webrtc::SocketAddress()
+                webrtc::SocketAddress(),
+                std::nullopt,
+                webrtc::EcnMarking::kNotEct,
+                webrtc::ReceivedIpPacket::kDtlsDecrypted
             )
         );
     }
@@ -100,10 +103,6 @@ namespace signaling {
 
     std::unique_ptr<webrtc::SSLCertChain> SignalingPacketTransport::GetRemoteSSLCertChain() const {
         return nullptr;
-    }
-
-    bool SignalingPacketTransport::ExportSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<uint8_t>& keying_material) {
-        return false;
     }
 
     webrtc::RTCError SignalingPacketTransport::SetRemoteParameters(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len, std::optional<webrtc::SSLRole> role) {

@@ -62,6 +62,7 @@ namespace wrtc {
         std::unique_ptr<OutgoingAudioChannel> audioChannel;
         std::unique_ptr<OutgoingVideoChannel> videoChannel;
         PeerIceParameters localParameters, remoteParameters;
+        webrtc::SocketFactory* underlyingSocketFactory = nullptr;
         std::unique_ptr<webrtc::DtlsTransportInternal> dtlsTransport;
         std::unique_ptr<webrtc::DtlsSrtpTransport> dtlsSrtpTransport;
         std::unique_ptr<webrtc::P2PTransportChannel> transportChannel;

@@ -60,8 +60,6 @@ namespace signaling {
 
         std::unique_ptr<webrtc::SSLCertChain> GetRemoteSSLCertChain() const override;
 
-        bool ExportSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<uint8_t>& keying_material) override;
-
         webrtc::RTCError SetRemoteParameters(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len, std::optional<webrtc::SSLRole> role) override;
 
         webrtc::IceTransportInternal* ice_transport() override;

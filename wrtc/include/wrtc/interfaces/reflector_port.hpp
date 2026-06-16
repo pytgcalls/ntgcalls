@@ -30,6 +30,7 @@ namespace wrtc {
 
         static std::unique_ptr<ReflectorPort> Create(
             const webrtc::CreateRelayPortArgs& args,
+            webrtc::SocketFactory *underlyingSocketFactory,
             webrtc::AsyncPacketSocket* s,
             uint8_t serverId,
             int serverPriority,
@@ -39,6 +40,7 @@ namespace wrtc {
 
         static std::unique_ptr<ReflectorPort> Create(
             const webrtc::CreateRelayPortArgs& args,
+            webrtc::SocketFactory *underlyingSocketFactory,
             uint16_t minPort,
             uint16_t maxPort,
             uint8_t serverId,
@@ -53,7 +55,7 @@ namespace wrtc {
 
         void PrepareAddress() override;
 
-        webrtc::Connection* CreateConnection(const webrtc::Candidate& remote_candidate, CandidateOrigin origin) override;
+        webrtc::Connection* CreateConnection(const webrtc::Candidate& remoteCandidate, CandidateOrigin origin) override;
 
         bool HandleIncomingPacket(webrtc::AsyncPacketSocket* s, const webrtc::ReceivedIpPacket& packet) override;
 
@@ -65,7 +67,7 @@ namespace wrtc {
 
         webrtc::ProtocolType GetProtocol() const override;
 
-        int SendTo(const void* data, size_t size, const webrtc::SocketAddress& addr, const webrtc::AsyncSocketPacketOptions& options, bool payload) override;
+        int SendTo(std::span<const uint8_t> data, const webrtc::SocketAddress& addr, const webrtc::AsyncSocketPacketOptions& options, bool payload) override;
 
         void OnSentPacket(webrtc::AsyncPacketSocket* s, const webrtc::SentPacketInfo& sent_packet) override;
 
@@ -80,6 +82,7 @@ namespace wrtc {
     protected:
         ReflectorPort(
             const webrtc::CreateRelayPortArgs& args,
+            webrtc::SocketFactory* underlyingSocketFactory,
             webrtc::AsyncPacketSocket* socket,
             uint8_t serverId,
             int serverPriority,
@@ -89,6 +92,7 @@ namespace wrtc {
 
         ReflectorPort(
             const webrtc::CreateRelayPortArgs& args,
+            webrtc::SocketFactory* underlyingSocketFactory,
             uint16_t min_port,
             uint16_t max_port,
             uint8_t serverId,
@@ -109,6 +113,7 @@ namespace wrtc {
         uint8_t serverId = 0;
         webrtc::ScopedTaskSafety taskSafety;
         std::unique_ptr<webrtc::AsyncPacketSocket> socket;
+        webrtc::SocketFactory* underlyingSocketFactory;
         SocketOptionsMap socketOptions;
         std::unique_ptr<webrtc::AsyncDnsResolverInterface> resolver;
         int error;
@@ -139,7 +144,7 @@ namespace wrtc {
 
         void OnSocketConnect(webrtc::AsyncPacketSocket* s);
 
-        void OnSocketClose(webrtc::AsyncPacketSocket* s, int e);
+        void OnSocketClose(webrtc::AsyncPacketSocket* s, int e) const;
 
         void Release();
 
@@ -148,6 +153,19 @@ namespace wrtc {
         void DispatchPacket(const webrtc::ReceivedIpPacket& packet);
 
         static webrtc::CopyOnWriteBuffer parseHex(std::string const &string);
+
+        static int BindSocket(
+            webrtc::Socket* socket,
+            const webrtc::SocketAddress& localAddress,
+            uint16_t minPort,
+            uint16_t maxPort
+        );
+
+        static std::unique_ptr<webrtc::AsyncPacketSocket> CreateClientRawTcpSocket(
+            webrtc::SocketFactory*socketFactory,
+            const webrtc::SocketAddress& localAddress,
+            const webrtc::SocketAddress& remoteAddress
+        );
 
         bool FailAndPruneConnection(const webrtc::SocketAddress& address);
     };

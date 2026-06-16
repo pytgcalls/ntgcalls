@@ -14,18 +14,19 @@ namespace signaling {
         const Version version,
         wrtc::SafeThread& networkThread,
         wrtc::SafeThread& signalingThread,
-        const webrtc::Environment&,
+        const webrtc::Environment& env,
         const EncryptionKey &key,
         const DataEmitter& onEmitData,
         const DataReceiver& onSignalData
     ) {
         std::shared_ptr<SignalingInterface> signaling;
-        if (version & Version::V2) {
-            RTC_LOG(LS_VERBOSE) << "Using signaling V2 Legacy";
-            signaling = std::make_shared<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
+        if (version & Version::V3) {
+            RTC_LOG(LS_VERBOSE) << "Using signaling V3";
+            signaling = std::make_shared<SignalingSctpConnection>(networkThread, signalingThread, env, key, onEmitData, onSignalData, true);
         }
         if (!signaling) {
-            throw ntgcalls::SignalingUnsupported("Unsupported protocol version");
+            RTC_LOG(LS_VERBOSE) << "Using signaling V2 Legacy";
+            signaling = std::make_shared<ExternalSignalingConnection>(networkThread, signalingThread, key, onEmitData, onSignalData);
         }
         signaling->init();
         return signaling;
@@ -35,6 +36,8 @@ namespace signaling {
         return {
             "8.0.0",
             "9.0.0",
+            "12.0.0",
+            "13.0.0",
         };
     }
 
@@ -43,6 +46,9 @@ namespace signaling {
         RTC_LOG(LS_INFO) << "Selected version: " << version;
         if (version == "8.0.0" || version == "9.0.0") {
             return Version::V2;
+        }
+        if (version == "12.0.0" || version == "13.0.0") {
+            return Version::V3;
         }
         throw ntgcalls::SignalingUnsupported("Unsupported " + version + " protocol version");
     }
@@ -57,9 +63,6 @@ namespace signaling {
         });
         auto supported = SupportedVersions();
         for (const auto& version : versions) {
-            if (std::ranges::find(supported, defaultVersion) != supported.end()) {
-                return defaultVersion;
-            }
             if (std::ranges::find(supported, version) != supported.end()) {
                 return version;
             }

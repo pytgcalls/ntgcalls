@@ -29,6 +29,10 @@ namespace wrtc {
         return thread->IsCurrent();
     }
 
+    webrtc::SocketServer* SafeThread::socketServer() const {
+        return thread->socketserver();
+    }
+
     void SafeThread::AllowInvokesToThread(const SafeThread& other) const {
         thread->AllowInvokesToThread(other);
     }

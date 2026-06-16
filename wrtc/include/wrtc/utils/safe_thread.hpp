@@ -29,6 +29,8 @@ namespace wrtc {
 
         [[nodiscard]] bool IsCurrent() const;
 
+        [[nodiscard]] webrtc::SocketServer *socketServer() const;
+
         void AllowInvokesToThread(const SafeThread& other) const;
 
         template <
