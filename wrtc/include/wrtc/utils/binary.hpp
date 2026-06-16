@@ -32,6 +32,11 @@ namespace bytes {
         return std::as_bytes(make_span(container));
     }
 
+    template <typename Container>
+    const_span view(const Container &container) {
+        return std::as_bytes(std::span(container.data(), container.size()));
+    }
+
     inline unique_binary make_unique_binary(const size_t size) {
         return std::make_unique<uint8_t[]>(size);
     }
