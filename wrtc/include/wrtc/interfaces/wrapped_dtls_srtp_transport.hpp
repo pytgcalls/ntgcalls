@@ -9,7 +9,7 @@
 namespace wrtc {
 
     class WrappedDtlsSrtpTransport final : public webrtc::DtlsSrtpTransport {
-        synchronized_callback<webrtc::RtpPacketReceived> rtpPacketCallback;
+        synchronized_callback<void(webrtc::RtpPacketReceived)> rtpPacketCallback;
         int decryptionFailureCount = 0;
 
     public:

@@ -12,7 +12,7 @@ namespace ntgcalls {
 
     class BaseReader: public virtual BaseIO {
     protected:
-        wrtc::synchronized_callback<bytes::unique_binary, wrtc::FrameData> dataCallback;
+        wrtc::synchronized_callback<void(bytes::unique_binary, wrtc::FrameData)> dataCallback;
         bool status = true;
 
     public:

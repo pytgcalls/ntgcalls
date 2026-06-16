@@ -24,7 +24,7 @@ namespace ntgcalls {
         pa_stream* stream{};
         std::string deviceID;
         std::map<std::string, std::string> playDevices, recordDevices;
-        wrtc::synchronized_callback<bytes::unique_binary> dataCallback;
+        wrtc::synchronized_callback<void(bytes::unique_binary)> dataCallback;
         bool isCapture = false;
 
         void paLock() const;

@@ -8,7 +8,7 @@
 
 namespace wrtc {
     class MediaTrackInterface {
-        synchronized_callback<bool> enableCallback;
+        synchronized_callback<void(bool)> enableCallback;
         bool status = true;
 
     public:

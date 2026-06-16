@@ -12,8 +12,8 @@ namespace ntgcalls {
 
     class GroupCall final : public CallInterface {
         std::shared_ptr<wrtc::GroupConnection> presentationConnection;
-        wrtc::synchronized_callback<void> broadcastTimestampCallback;
-        wrtc::synchronized_callback<wrtc::SegmentPartRequest> segmentPartRequestCallback;
+        wrtc::synchronized_callback<void()> broadcastTimestampCallback;
+        wrtc::synchronized_callback<void(wrtc::SegmentPartRequest)> segmentPartRequestCallback;
 
         static void updateRemoteVideoConstraints(const wrtc::GroupConnection* conn) ;
 

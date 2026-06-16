@@ -13,7 +13,7 @@ namespace ntgcalls {
     protected:
         BaseSink *sink = nullptr;
         std::atomic_bool running;
-        wrtc::synchronized_callback<void> eofCallback;
+        wrtc::synchronized_callback<void()> eofCallback;
 
     public:
         explicit BaseIO(BaseSink *sink);

@@ -23,8 +23,8 @@ namespace wrtc {
         bool isOpen = false;
         bool isSctpTransportStarted = false;
 
-        synchronized_callback<bool> onStateChangedCallback;
-        synchronized_callback<bytes::binary> onMessageReceivedCallback;
+        synchronized_callback<void(bool)> onStateChangedCallback;
+        synchronized_callback<void(bytes::binary)> onMessageReceivedCallback;
 
     public:
         SctpDataChannelProviderInterfaceImpl(

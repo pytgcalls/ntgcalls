@@ -19,7 +19,7 @@ namespace ntgcalls {
         std::optional<bytes::vector> _g_a_hash, _g_a_or_b;
         std::atomic_bool isMakingOffer = false, makingNegotation = false, handshakeCompleted = false;
         std::shared_ptr<signaling::SignalingInterface> signaling;
-        wrtc::synchronized_callback<bytes::binary> onEmitData;
+        wrtc::synchronized_callback<void(bytes::binary)> onEmitData;
         std::vector<wrtc::IceCandidate> pendingIceCandidates;
         signaling::Signaling::Version protocolVersion = signaling::Signaling::Version::Unknown;
 

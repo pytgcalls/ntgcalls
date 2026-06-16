@@ -2,7 +2,6 @@
 // Created by Laky64 on 09/03/2024.
 //
 #pragma once
-#include <cstdint>
 #include <optional>
 #include <rtc_base/byte_buffer.h>
 #include <rtc_base/copy_on_write_buffer.h>
@@ -48,7 +47,7 @@ namespace signaling {
         static constexpr auto kServiceCauseAcks = 1;
         static constexpr auto kServiceCauseResend = 2;
 
-        wrtc::synchronized_callback<int, int> requestSendServiceCallback;
+        wrtc::synchronized_callback<void(int, int)> requestSendServiceCallback;
 
         [[nodiscard]] bytes::binary encryptPrepared(const webrtc::CopyOnWriteBuffer &buffer);
 

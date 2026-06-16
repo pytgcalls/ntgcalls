@@ -5,68 +5,43 @@
 #pragma once
 
 #include <functional>
-#include <memory>
 #include <mutex>
 
 namespace wrtc {
+    template <typename Signature>
+    class synchronized_callback;
 
-    template <typename... Args> class
-    synchronized_callback final {
-        std::shared_ptr<std::function<void(Args...)>> callback;
+    template <typename R, typename... Args>
+    class synchronized_callback<R(Args...)> final {
+        std::function<R(Args...)> callback;
         mutable std::mutex mutex;
 
     public:
         synchronized_callback() = default;
-
         ~synchronized_callback() { *this = nullptr; }
 
-        synchronized_callback &operator=(std::function<void(Args...)> func) {
-            auto next = func ? std::make_shared<std::function<void(Args...)>>(std::move(func)) : nullptr;
+        synchronized_callback &operator=(std::function<R(Args...)> func) {
             std::lock_guard lock(mutex);
-            callback = std::move(next);
+            callback = std::move(func);
             return *this;
         }
 
-        bool operator()(Args... args) const {
-            std::shared_ptr<std::function<void(Args...)>> snapshot;
-            {
-                std::lock_guard lock(mutex);
-                snapshot = callback;
-            }
-            if (!snapshot || !*snapshot)
-                return false;
-            (*snapshot)(std::move(args)...);
-            return true;
-        }
-    };
-
-    template <> class
-    synchronized_callback<void> final {
-        std::shared_ptr<std::function<void()>> callback;
-        mutable std::mutex mutex;
-
-    public:
-        synchronized_callback() = default;
-
-        ~synchronized_callback() { *this = nullptr; }
-
-        synchronized_callback &operator=(std::function<void()> func) {
-            auto next = func ? std::make_shared<std::function<void()>>(std::move(func)) : nullptr;
+        // ReSharper disable once CppNonExplicitConversionOperator
+        operator bool() const {
             std::lock_guard lock(mutex);
-            callback = std::move(next);
-            return *this;
+            return static_cast<bool>(callback);
         }
 
-        bool operator()() const {
-            std::shared_ptr<std::function<void()>> snapshot;
-            {
-                std::lock_guard lock(mutex);
-                snapshot = callback;
+        auto operator()(Args... args) const {
+            std::lock_guard lock(mutex);
+            if constexpr (std::is_void_v<R>) {
+                if (!callback) return false;
+                callback(std::move(args)...);
+                return true;
+            } else {
+                if (!callback) return std::optional<R>{std::nullopt};
+                return std::optional<R>{callback(std::move(args)...)};
             }
-            if (!snapshot || !*snapshot)
-                return false;
-            (*snapshot)();
-            return true;
         }
     };
 

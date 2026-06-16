@@ -98,9 +98,9 @@ namespace ntgcalls {
         std::condition_variable syncCV;
         std::set<Device> syncReaders, cancelSyncReaders;
         std::mutex mutex;
-        wrtc::synchronized_callback<Type, Device> onEOF;
-        wrtc::synchronized_callback<MediaState> onChangeStatus;
-        wrtc::synchronized_callback<Mode, Device, std::vector<wrtc::Frame>> framesCallback;
+        wrtc::synchronized_callback<void(Type, Device)> onEOF;
+        wrtc::synchronized_callback<void(MediaState)> onChangeStatus;
+        wrtc::synchronized_callback<void(Mode, Device, std::vector<wrtc::Frame>)> framesCallback;
 
         enum class ReconfigureReason {
             None,

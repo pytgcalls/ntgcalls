@@ -18,10 +18,10 @@ namespace wrtc {
     protected:
         PeerConnectionFactory* factory;
         webrtc::Environment env;
-        synchronized_callback<void> dataChannelOpenedCallback;
-        synchronized_callback<IceCandidate> iceCandidateCallback;
-        synchronized_callback<ConnectionState, bool> connectionChangeCallback;
-        synchronized_callback<bytes::binary> dataChannelMessageCallback;
+        synchronized_callback<void()> dataChannelOpenedCallback;
+        synchronized_callback<void(IceCandidate)> iceCandidateCallback;
+        synchronized_callback<void(ConnectionState, bool)> connectionChangeCallback;
+        synchronized_callback<void(bytes::binary)> dataChannelMessageCallback;
         ConnectionState currentState = ConnectionState::Connecting;
         bool dataChannelOpen = false;
         bool alreadyConnected = false;

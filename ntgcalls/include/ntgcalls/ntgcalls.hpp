@@ -3,12 +3,7 @@
 //
 #pragma once
 
-
-#include <cstdint>
-
 #include <ntgcalls/instances/call_interface.hpp>
-// ReSharper disable once CppUnusedIncludeDirective
-#include <ntgcalls/models/auth_params.hpp>
 #include <ntgcalls/models/dh_config.hpp>
 #include <ntgcalls/models/protocol.hpp>
 #include <ntgcalls/models/rtc_server.hpp>
@@ -32,14 +27,14 @@ namespace ntgcalls {
 
     class NTgCalls {
         std::unordered_map<int64_t, std::shared_ptr<CallInterface>> connections;
-        wrtc::synchronized_callback<int64_t, StreamManager::Type, StreamManager::Device> onEof;
-        wrtc::synchronized_callback<int64_t, MediaState> mediaStateCallback;
-        wrtc::synchronized_callback<int64_t, NetworkInfo> connectionChangeCallback;
-        wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
-        wrtc::synchronized_callback<int64_t, RemoteSource> remoteSourceCallback;
-        wrtc::synchronized_callback<int64_t> broadcastTimestampCallback;
-        wrtc::synchronized_callback<int64_t, wrtc::SegmentPartRequest> segmentPartRequestCallback;
-        wrtc::synchronized_callback<int64_t, StreamManager::Mode, StreamManager::Device, std::vector<wrtc::Frame>> framesCallback;
+        wrtc::synchronized_callback<void(int64_t, StreamManager::Type, StreamManager::Device)> onEof;
+        wrtc::synchronized_callback<void(int64_t, MediaState)> mediaStateCallback;
+        wrtc::synchronized_callback<void(int64_t, NetworkInfo)> connectionChangeCallback;
+        wrtc::synchronized_callback<void(int64_t, BYTES(bytes::binary))> emitCallback;
+        wrtc::synchronized_callback<void(int64_t, RemoteSource)> remoteSourceCallback;
+        wrtc::synchronized_callback<void(int64_t)> broadcastTimestampCallback;
+        wrtc::synchronized_callback<void(int64_t, wrtc::SegmentPartRequest)> segmentPartRequestCallback;
+        wrtc::synchronized_callback<void(int64_t, StreamManager::Mode, StreamManager::Device, std::vector<wrtc::Frame>)> framesCallback;
         std::unique_ptr<wrtc::SafeThread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
