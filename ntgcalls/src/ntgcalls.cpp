@@ -128,8 +128,8 @@ namespace ntgcalls {
 
     ASYNC_RETURN(void) NTgCalls::createP2PCall(const int64_t userId) {
         SMART_ASYNC(this, userId)
-        CHECK_AND_THROW_IF_EXISTS(userId)
         std::lock_guard lock(mutex);
+        CHECK_AND_THROW_IF_EXISTS(userId)
         connections[userId] = std::make_shared<P2PCall>(*updateThread);
         setupListeners(userId);
         SafeCall<P2PCall>(connections[userId].get())->init();
@@ -165,8 +165,8 @@ namespace ntgcalls {
 
     ASYNC_RETURN(std::string) NTgCalls::createCall(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        CHECK_AND_THROW_IF_EXISTS(chatId)
         std::lock_guard lock(mutex);
+        CHECK_AND_THROW_IF_EXISTS(chatId)
         connections[chatId] = std::make_shared<GroupCall>(*updateThread);
         setupListeners(chatId);
         return SafeCall<GroupCall>(connections[chatId].get())->init();
