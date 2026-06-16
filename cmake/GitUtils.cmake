@@ -71,6 +71,9 @@ function(GitFile)
     if ("${ARG_URL}" MATCHES "googlesource.com")
         set(BASE64 TRUE)
         set(ARG_URL ${ARG_URL}?format=text)
+    elseif ("${ARG_URL}" MATCHES "github.com/.+/blob/")
+        string(REPLACE "github.com" "raw.githubusercontent.com" ARG_URL "${ARG_URL}")
+        string(REPLACE "/blob/" "/" ARG_URL "${ARG_URL}")
     endif ()
     execute_process(
         COMMAND curl -s ${ARG_URL}
