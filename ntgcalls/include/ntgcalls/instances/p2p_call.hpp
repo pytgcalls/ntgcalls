@@ -17,7 +17,7 @@ namespace ntgcalls {
         bytes::vector skipExchangeKey;
         bool skipIsOutgoing = false;
         std::optional<bytes::vector> _g_a_hash, _g_a_or_b;
-        std::atomic_bool isMakingOffer = false, makingNegotation = false, handshakeCompleted = false;
+        std::atomic_bool handshakeCompleted = false;
         std::shared_ptr<signaling::SignalingInterface> signaling;
         wrtc::synchronized_callback<void(bytes::binary)> onEmitData;
         std::vector<wrtc::IceCandidate> pendingIceCandidates;
