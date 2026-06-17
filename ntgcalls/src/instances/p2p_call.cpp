@@ -161,9 +161,15 @@ namespace ntgcalls {
                 if (!strong) {
                     return;
                 }
-                for (const auto &packet : data) {
-                    strong->processSignalingData(packet);
-                }
+                strong->connection->signalingThread().PostTask([weak, data] {
+                    const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+                    if (!strong) {
+                        return;
+                    }
+                    for (const auto &packet : data) {
+                        strong->processSignalingData(packet);
+                    }
+                });
             }
         );
         connection->onIceCandidate([weak](const wrtc::IceCandidate& candidate) {
@@ -193,7 +199,13 @@ namespace ntgcalls {
             if (!strong) {
                 return;
             }
-            strong->processSignalingData(data);
+            strong->connection->signalingThread().PostTask([weak, data] {
+                const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                strong->processSignalingData(data);
+            });
         });
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
         streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
