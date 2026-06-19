@@ -9,6 +9,9 @@
 #include <wrtc/utils/binary.hpp>
 
 namespace telegram {
+    using PublicKeyBytes = std::array<uint8_t, 32>;
+    using Hash256 = std::array<uint8_t, 32>;
+
     class TlWriter {
         bytes::binary buffer;
 
