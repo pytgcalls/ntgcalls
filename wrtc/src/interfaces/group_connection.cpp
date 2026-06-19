@@ -375,7 +375,10 @@ namespace wrtc {
                 audioContent,
                 workerThread(),
                 networkThread(),
-                &audioSink
+                &audioSink,
+                payloadTypeMapping,
+                encryptor,
+                nullptr
             );
         }
 
@@ -397,7 +400,9 @@ namespace wrtc {
                 videoContent,
                 workerThread(),
                 networkThread(),
-                &videoSink
+                &videoSink,
+                payloadTypeMapping,
+                encryptor
             );
         }
     }
@@ -431,6 +436,10 @@ namespace wrtc {
         if (incomingVideoChannels.contains(endpoint)) incomingVideoChannels.erase(endpoint);
         pendingContent.erase(endpoint);
         return true;
+    }
+
+    void GroupConnection::setE2EEncryptor(E2EEncryptor *encryptor) {
+        this->encryptor = encryptor;
     }
 
     void GroupConnection::addIncomingAudio(const uint32_t ssrc, const std::string& endpoint) {

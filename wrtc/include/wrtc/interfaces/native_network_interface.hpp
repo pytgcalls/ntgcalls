@@ -67,6 +67,7 @@ namespace wrtc {
         std::unique_ptr<webrtc::DtlsSrtpTransport> dtlsSrtpTransport;
         std::unique_ptr<webrtc::P2PTransportChannel> transportChannel;
         std::vector<webrtc::SdpVideoFormat> availableVideoFormats;
+        E2EEncryptor* encryptor = nullptr;
         std::unique_ptr<SctpDataChannelProviderInterfaceImpl> dataChannelInterface;
         std::map<std::string, std::unique_ptr<IncomingAudioChannel>> incomingAudioChannels;
         std::map<std::string, std::unique_ptr<IncomingVideoChannel>> incomingVideoChannels;

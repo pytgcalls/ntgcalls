@@ -14,7 +14,10 @@ namespace wrtc {
         const MediaContent& mediaContent,
         SafeThread& workerThread,
         SafeThread& networkThread,
-        webrtc::LocalAudioSinkAdapter* sink
+        webrtc::LocalAudioSinkAdapter* sink,
+        const std::map<int32_t, FrameTransformer::PayloadType>& payloadTypeMapping,
+        E2EEncryptor* encryptor,
+        const std::function<std::pair<uint8_t, bool>()>& getAudioLevelAndSpeech
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
         webrtc::AudioOptions audioOptions;
         audioOptions.echo_cancellation = false;
@@ -79,6 +82,20 @@ namespace wrtc {
             }
             if (initialParameters != updatedParameters) {
                 channel->voice_media_send_channel()->SetRtpSendParameters(_ssrc, updatedParameters);
+            }
+
+            if (encryptor) {
+                channel->voice_media_send_channel()->SetEncoderToPacketizerFrameTransformer(
+                    mediaContent.ssrc,
+                    webrtc::make_ref_counted<FrameTransformer>(
+                        true,
+                        encryptor,
+                        mediaContent.userID,
+                        payloadTypeMapping,
+                        getAudioLevelAndSpeech,
+                        nullptr
+                    )
+                );
             }
         });
     }

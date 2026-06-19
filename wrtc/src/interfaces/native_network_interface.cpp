@@ -109,6 +109,15 @@ namespace wrtc {
             );
         });
         availableVideoFormats = filterSupportedVideoFormats(factory->getSupportedVideoFormats());
+
+        payloadTypeMapping.insert(std::make_pair(111, FrameTransformer::PayloadType::Opus));
+        for (const auto tempVideoPayloadTypes = OutgoingVideoFormat::assignPayloadTypes(availableVideoFormats); const auto &it : tempVideoPayloadTypes) {
+            if (it.videoCodec.name == webrtc::kVp8CodecName) {
+                payloadTypeMapping.insert(std::make_pair(it.videoCodec.id.value(), FrameTransformer::PayloadType::VP8));
+            } else if (it.videoCodec.name == webrtc::kH264CodecName) {
+                payloadTypeMapping.insert(std::make_pair(it.videoCodec.id.value(), FrameTransformer::PayloadType::H264));
+            }
+        }
     }
 
     void NativeNetworkInterface::addIncomingSmartSource(const std::string& endpoint, const MediaContent& mediaContent, const bool force) {
@@ -157,7 +166,10 @@ namespace wrtc {
                 mediaContent,
                 workerThread(),
                 networkThread(),
-                remoteAudioSink
+                remoteAudioSink,
+                payloadTypeMapping,
+                encryptor,
+                nullptr
             );
         } else if (isAddable && mediaContent.type == MediaContent::Type::Video) {
             auto videoCodecs = OutgoingVideoFormat::getVideoCodecs(
@@ -174,7 +186,9 @@ namespace wrtc {
                 videoCodecs,
                 workerThread(),
                 networkThread(),
-                mediaContent.isScreenCast() ? remoteScreenCastSink : remoteVideoSink
+                mediaContent.isScreenCast() ? remoteScreenCastSink : remoteVideoSink,
+                payloadTypeMapping,
+                encryptor
             );
         }
         if (pendingContent.contains(endpoint)) {
@@ -442,6 +456,7 @@ namespace wrtc {
             signalingThread().BlockingCall([] {});
         }
         NetworkInterface::close();
+        encryptor = nullptr;
     }
 
     void NativeNetworkInterface::addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) {

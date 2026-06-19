@@ -15,7 +15,10 @@ namespace wrtc {
         const MediaContent& mediaContent,
         SafeThread& workerThread,
         SafeThread& networkThread,
-        std::weak_ptr<RemoteAudioSink> remoteAudioSink
+        std::weak_ptr<RemoteAudioSink> remoteAudioSink,
+        const std::map<int32_t, FrameTransformer::PayloadType>& payloadTypeMapping,
+        E2EEncryptor* encryptor,
+        const std::function<void(uint32_t, uint8_t, bool)>& setAudioLevelAndSpeech
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread) {
         updateActivity();
 
@@ -85,6 +88,23 @@ namespace wrtc {
                     remoteAudio->sendData(std::move(frame));
                 }
             });
+
+            if (encryptor) {
+                channel->voice_media_receive_channel()->SetDepacketizerToDecoderFrameTransformer(
+                    mediaContent.ssrc,
+                    webrtc::make_ref_counted<FrameTransformer>(
+                        false,
+                        encryptor,
+                        mediaContent.userID,
+                        payloadTypeMapping,
+                        nullptr,
+                        [mediaContent, setAudioLevelAndSpeech](const uint8_t audioLevel, const bool hasSpeech) {
+                            setAudioLevelAndSpeech(mediaContent.ssrc, audioLevel, hasSpeech);
+                        }
+                    )
+                );
+            }
+
             channel->voice_media_receive_channel()->SetRawAudioSink(_ssrc, std::move(rawSink));
         });
     }

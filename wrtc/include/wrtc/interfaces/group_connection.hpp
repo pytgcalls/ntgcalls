@@ -39,6 +39,8 @@ namespace wrtc {
 
         bool removeIncomingVideo(const std::string& endpoint);
 
+        void setE2EEncryptor(E2EEncryptor* encryptor);
+
         void open() override;
 
         void close() override;

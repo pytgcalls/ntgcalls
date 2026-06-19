@@ -15,7 +15,9 @@ namespace wrtc {
         const MediaContent &mediaContent,
         SafeThread& workerThread,
         SafeThread& networkThread,
-        LocalVideoAdapter* sink
+        LocalVideoAdapter* sink,
+        const std::map<int32_t, FrameTransformer::PayloadType>& payloadTypeMapping,
+        E2EEncryptor* encryptor
     ): _ssrc(mediaContent.ssrc), workerThread(workerThread), networkThread(networkThread), sink(sink) {
         webrtc::VideoOptions videoOptions;
         videoOptions.is_screencast = mediaContent.isScreenCast();
@@ -102,6 +104,26 @@ namespace wrtc {
             webrtc::RtpParameters rtpParameters = channel->video_media_send_channel()->GetRtpSendParameters(_ssrc);
             rtpParameters.degradation_preference = webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
             channel->video_media_send_channel()->SetRtpSendParameters(_ssrc, rtpParameters);
+
+            if (encryptor) {
+                for (const auto&[semantics, ssrcs] : mediaContent.ssrcGroups) {
+                    if (semantics == "SIM") {
+                        for (const auto& ssrc : ssrcs) {
+                            channel->video_media_send_channel()->SetEncoderToPacketizerFrameTransformer(
+                                ssrc,
+                                webrtc::make_ref_counted<FrameTransformer>(
+                                    true,
+                                    encryptor,
+                                    int64_t(),
+                                    payloadTypeMapping,
+                                    nullptr,
+                                    nullptr
+                                )
+                            );
+                        }
+                    }
+                }
+            }
         });
     }
 

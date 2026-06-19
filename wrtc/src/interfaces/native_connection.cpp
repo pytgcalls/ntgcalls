@@ -222,7 +222,10 @@ namespace wrtc {
                             *audioContent,
                             workerThread(),
                             networkThread(),
-                            &audioSink
+                            &audioSink,
+                            payloadTypeMapping,
+                            encryptor,
+                            nullptr
                         );
                     }
                 }
@@ -249,7 +252,9 @@ namespace wrtc {
                             *videoContent,
                             workerThread(),
                             networkThread(),
-                            &videoSink
+                            &videoSink,
+                            payloadTypeMapping,
+                            encryptor
                         );
                     }
                 }
