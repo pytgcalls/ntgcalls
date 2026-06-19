@@ -65,11 +65,7 @@ namespace telegram {
         storeUInt32(size);
     }
 
-    const bytes::binary& TlWriter::result() const {
-        return buffer;
-    }
-
-    bytes::binary TlWriter::take() {
+    bytes::binary TlWriter::result() {
         return std::move(buffer);
     }
 
@@ -179,10 +175,6 @@ namespace telegram {
 
     uint32_t TlReader::fetchVectorSize() {
         return fetchUInt32();
-    }
-
-    size_t TlReader::remaining() const {
-        return static_cast<size_t>(end - ptr);
     }
 
     bool TlReader::ok() const {

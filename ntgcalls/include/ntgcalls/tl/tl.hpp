@@ -31,9 +31,7 @@ namespace telegram {
 
         void storeVectorSize(uint32_t size);
 
-        [[nodiscard]] const bytes::binary& result() const;
-
-        [[nodiscard]] bytes::binary take();
+        [[nodiscard]] bytes::binary result();
     };
 
     class TlReader {
@@ -61,8 +59,6 @@ namespace telegram {
         bytes::binary fetchRaw(size_t size);
 
         uint32_t fetchVectorSize();
-
-        [[nodiscard]] size_t remaining() const;
 
         [[nodiscard]] bool ok() const;
 
