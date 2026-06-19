@@ -24,4 +24,11 @@ namespace wrtc {
         RTC_DCHECK(!sink || !_sink.has_value());
         _sink = SinkPair(sink, wants);
     }
+
+    void LocalVideoAdapter::RemoveSink(VideoSinkInterface* sink) {
+        webrtc::MutexLock lock(&lock_);
+        if (_sink.has_value() && _sink.value().sink == sink) {
+            _sink = std::nullopt;
+        }
+    }
 } // wrtc
