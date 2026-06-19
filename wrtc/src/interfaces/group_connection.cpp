@@ -561,7 +561,7 @@ namespace wrtc {
     }
 
     webrtc::IceMode GroupConnection::iceMode() const {
-        return webrtc::ICEMODE_LITE;
+        return webrtc::ICEMODE_FULL;
     }
 
     std::optional<webrtc::SSLRole> GroupConnection::dtlsRole() const {
