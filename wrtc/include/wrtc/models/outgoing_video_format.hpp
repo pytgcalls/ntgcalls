@@ -12,8 +12,6 @@ namespace wrtc {
     struct PayloadType;
 
     class OutgoingVideoFormat {
-        static std::vector<OutgoingVideoFormat> assignPayloadTypes(std::vector<webrtc::SdpVideoFormat> const &formats);
-
         static void addDefaultFeedbackParams(webrtc::Codec* codec);
 
     public:
@@ -27,6 +25,8 @@ namespace wrtc {
             const std::vector<PayloadType>& payloadTypes,
             bool isGroupConnection
         );
+
+        static std::vector<OutgoingVideoFormat> assignPayloadTypes(std::vector<webrtc::SdpVideoFormat> const &formats);
     };
 
 } // wrtc

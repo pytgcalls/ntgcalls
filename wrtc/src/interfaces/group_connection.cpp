@@ -12,7 +12,9 @@
 #include <rtc_base/time_utils.h>
 
 namespace wrtc {
-    GroupConnection::GroupConnection(const bool isPresentation): isPresentation(isPresentation) {}
+    GroupConnection::GroupConnection(const bool isPresentation, const bool isConference):
+    isPresentation(isPresentation),
+    isConference(isConference) {}
 
     void GroupConnection::open() {
         initConnection(true);
@@ -27,7 +29,12 @@ namespace wrtc {
             outgoingAudioSsrc = distribution(generator) & 0x7fffffffU;
         } while (!outgoingAudioSsrc);
         outgoingVideoSsrc = outgoingAudioSsrc + 1;
-        const int numVideoSimulcastLayers = isPresentation ? 2:3;
+        int numVideoSimulcastLayers = 3;
+        if (isConference) {
+            numVideoSimulcastLayers = 1;
+        } else if (isPresentation) {
+            numVideoSimulcastLayers = 2;
+        }
         std::vector<SimulcastLayer> outgoingVideoSsrcs;
         outgoingVideoSsrcs.reserve(numVideoSimulcastLayers);
         for (int layerIndex = 0; layerIndex < numVideoSimulcastLayers; layerIndex++) {
@@ -303,10 +310,6 @@ namespace wrtc {
     }
 
     void GroupConnection::updateIsConnected() {
-        const auto* currentFactory = factory;
-        if (!currentFactory) {
-            return;
-        }
         bool isEffectivelyConnected = false;
         switch (connectionMode) {
             case ConnectionMode::Rtc:
@@ -322,7 +325,7 @@ namespace wrtc {
         if (isEffectivelyConnected != lastEffectivelyConnected) {
             lastEffectivelyConnected = isEffectivelyConnected;
             std::weak_ptr weak(shared_from_this());
-            currentFactory->signalingThread().PostTask([weak, newValue = isEffectivelyConnected ? ConnectionState::Connected : ConnectionState::Connecting] {
+            signalingThread().PostTask([weak, newValue = isEffectivelyConnected ? ConnectionState::Connected : ConnectionState::Connecting] {
                 const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
                 if (!strong) {
                     return;
@@ -348,12 +351,28 @@ namespace wrtc {
                 if (incomingAudioChannels.contains(endpoint)) incomingAudioChannels[endpoint]->updateActivity();
             }
         }
-        if (packet.PayloadType() == 111) {
-            if (!incomingAudioChannels.contains(endpoint)) {
-                addIncomingAudio(packet.Ssrc(), endpoint);
-            } else {
-                incomingAudioChannels[endpoint]->updateActivity();
-            }
+
+        if (packet.PayloadType() != 111) {
+            return;
+        }
+
+        if (const auto it = incomingAudioChannels.find(endpoint); it != incomingAudioChannels.end()) {
+            it->second->updateActivity();
+            return;
+        }
+
+        if (!isConference) {
+            addIncomingAudio(0, packet.Ssrc(), endpoint);
+            return;
+        }
+
+        if (const auto it = audioSsrcToUserId.find(packet.Ssrc());it != audioSsrcToUserId.end()) {
+            addIncomingAudio(it->second, packet.Ssrc(), endpoint);
+            return;
+        }
+
+        if (pendingAudioSsrcs.insert(packet.Ssrc()).second) {
+            (void) requestParticipantsCallback();
         }
     }
 
@@ -407,12 +426,23 @@ namespace wrtc {
         }
     }
 
-    uint32_t GroupConnection::addIncomingVideo(const std::string& endpoint, const std::vector<SsrcGroup>& ssrcGroups) {
+    void GroupConnection::updateAudioSsrcMappings(const std::vector<SsrcMapping> &audioSsrcs) {
+        audioSsrcToUserId.clear();
+        for (const auto&[userID, ssrc] : audioSsrcs) {
+            audioSsrcToUserId[ssrc] = userID;
+            if (auto endpoint = std::to_string(ssrc); pendingAudioSsrcs.erase(ssrc) && !incomingAudioChannels.contains(endpoint)) {
+                addIncomingAudio(userID, ssrc, endpoint);
+            }
+        }
+    }
+
+    uint32_t GroupConnection::addIncomingVideo(const int64_t userID, const std::string& endpoint, const std::vector<SsrcGroup>& ssrcGroups) {
         if (pendingContent.contains(endpoint)) {
             return 0;
         }
         MediaContent mediaContent;
         mediaContent.type = MediaContent::Type::Video;
+        mediaContent.userID = userID;
         mediaContent.ssrcGroups = ssrcGroups;
         if (mtprotoStream) {
             mtprotoStream->addIncomingVideo(
@@ -438,14 +468,19 @@ namespace wrtc {
         return true;
     }
 
+    void GroupConnection::onRequestParticipants(const std::function<void()> &callback) {
+        requestParticipantsCallback = callback;
+    }
+
     void GroupConnection::setE2EEncryptor(E2EEncryptor *encryptor) {
         this->encryptor = encryptor;
     }
 
-    void GroupConnection::addIncomingAudio(const uint32_t ssrc, const std::string& endpoint) {
+    void GroupConnection::addIncomingAudio(const int64_t userID, const uint32_t ssrc, const std::string& endpoint) {
         MediaContent audioContent;
         audioContent.type = MediaContent::Type::Audio;
         audioContent.ssrc = ssrc;
+        audioContent.userID = userID;
         audioContent.rtpExtensions = mediaConfig.audioRtpExtensions;
         audioContent.payloadTypes = mediaConfig.audioPayloadTypes;
         addIncomingSmartSource(endpoint, audioContent);

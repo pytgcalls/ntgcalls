@@ -79,6 +79,7 @@ namespace wrtc {
 
         Type type = Type::Audio;
         uint32_t ssrc = 0;
+        int64_t userID = 0;
         std::vector<SsrcGroup> ssrcGroups;
         std::vector<PayloadType> payloadTypes;
         std::vector<webrtc::RtpExtension> rtpExtensions;
