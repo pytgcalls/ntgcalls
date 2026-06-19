@@ -55,6 +55,8 @@ namespace ntgcalls {
 
         MediaState getState();
 
+        void detach();
+
         bool pause();
 
         bool resume();
@@ -87,7 +89,7 @@ namespace ntgcalls {
         using StreamId = std::pair<Mode, Device>;
 
         wrtc::SafeThread& workerThread;
-        bool initialized = false, videoSimulcast = true;
+        bool initialized = false, videoSimulcast = true, resumeOnReconnect = false, detached = false;
         std::map<StreamId, std::unique_ptr<BaseSink>> streams;
         std::map<StreamId, std::unique_ptr<wrtc::MediaTrackInterface>> tracks;
         std::map<Device, std::unique_ptr<BaseReader>> readers;
