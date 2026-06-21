@@ -5,10 +5,10 @@
 #pragma once
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
-
-#include <wrtc/models/media_content.hpp>
 #include <wrtc/interfaces/media/channel_manager.hpp>
+#include <wrtc/interfaces/media/frame_transformer.hpp>
 #include <wrtc/interfaces/media/local_video_adapter.hpp>
+#include <wrtc/models/media_content.hpp>
 
 namespace wrtc {
     class OutgoingVideoChannel {
@@ -27,7 +27,9 @@ namespace wrtc {
             const MediaContent& mediaContent,
             SafeThread& workerThread,
             SafeThread& networkThread,
-            LocalVideoAdapter* sink
+            LocalVideoAdapter* sink,
+            const std::map<int32_t, FrameTransformer::PayloadType>& payloadTypeMapping,
+            E2EEncryptor* encryptor
         );
 
         ~OutgoingVideoChannel();

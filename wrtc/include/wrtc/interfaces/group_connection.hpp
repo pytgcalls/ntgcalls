@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <wrtc/models/ssrc_mapping.hpp>
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/models/response_payload.hpp>
@@ -13,7 +14,7 @@ namespace wrtc {
 
     class GroupConnection final: public NativeNetworkInterface {
     public:
-        explicit GroupConnection(bool isPresentation);
+        explicit GroupConnection(bool isPresentation, bool isConference);
 
         std::string getJoinPayload();
 
@@ -35,9 +36,15 @@ namespace wrtc {
 
         void createChannels(const ResponsePayload::Media& media);
 
-        uint32_t addIncomingVideo(const std::string& endpoint, const std::vector<SsrcGroup>& ssrcGroups);
+        void updateAudioSsrcMappings(const std::vector<SsrcMapping>& audioSsrcs);
+
+        uint32_t addIncomingVideo(int64_t userID, const std::string& endpoint, const std::vector<SsrcGroup>& ssrcGroups);
 
         bool removeIncomingVideo(const std::string& endpoint);
+
+        void onRequestParticipants(const std::function<void()>& callback);
+
+        void setE2EEncryptor(E2EEncryptor* encryptor);
 
         void open() override;
 
@@ -51,12 +58,15 @@ namespace wrtc {
         int64_t lastNetworkActivityMs = 0;
         uint32_t outgoingAudioSsrc = 0, outgoingVideoSsrc = 0;
         std::vector<SsrcGroup> outgoingVideoSsrcGroups;
-        bool isPresentation = false;
+        bool isPresentation = false, isConference = false;
         bool isRtcConnected = false, isStreamConnected = false;
         bool lastEffectivelyConnected = false;
         ConnectionMode connectionMode = ConnectionMode::None;
         ResponsePayload::Media mediaConfig;
         std::shared_ptr<MTProtoStream> mtprotoStream;
+        std::map<uint32_t, int64_t> audioSsrcToUserId;
+        std::unordered_set<uint32_t> pendingAudioSsrcs;
+        synchronized_callback<void()> requestParticipantsCallback;
 
         bool supportsRenomination() const override;
 
@@ -92,7 +102,7 @@ namespace wrtc {
 
         void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) override;
 
-        void addIncomingAudio(uint32_t ssrc, const std::string& endpoint);
+        void addIncomingAudio(int64_t userID, uint32_t ssrc, const std::string& endpoint);
 
         void enableAudioIncoming(bool enable) override;
 

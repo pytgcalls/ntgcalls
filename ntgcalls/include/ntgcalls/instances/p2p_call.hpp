@@ -8,18 +8,21 @@
 #include <ntgcalls/signaling/signaling.hpp>
 #include <ntgcalls/models/rtc_server.hpp>
 #include <ntgcalls/models/dh_config.hpp>
+#include <ntgcalls/instances/e2e_interface.hpp>
 
 namespace ntgcalls {
 
-    class P2PCall final: public CallInterface {
+    class P2PCall final: public CallInterface, public E2EInterface {
         bytes::vector randomPower, prime;
         std::optional<signaling::RawKey> key;
         bytes::vector skipExchangeKey;
         bool skipIsOutgoing = false;
+        std::string fingerprintEmojis;
         std::optional<bytes::vector> _g_a_hash, _g_a_or_b;
-        std::atomic_bool isMakingOffer = false, makingNegotation = false, handshakeCompleted = false;
+        std::atomic_bool handshakeCompleted = false;
         std::shared_ptr<signaling::SignalingInterface> signaling;
-        wrtc::synchronized_callback<bytes::binary> onEmitData;
+        wrtc::synchronized_callback<void(bytes::binary)> onEmitData;
+        wrtc::synchronized_callback<void(std::string)> updateEmojisCallback;
         std::vector<wrtc::IceCandidate> pendingIceCandidates;
         signaling::Signaling::Version protocolVersion = signaling::Signaling::Version::Unknown;
 
@@ -46,11 +49,15 @@ namespace ntgcalls {
 
         void skipExchange(bytes::vector encryptionKey, bool isOutgoing);
 
-        void connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed, std::optional<std::string> customParameters);
+        void connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed, const std::optional<std::string> &customParameters);
 
         Type type() const override;
 
+        std::string getFingerprintEmojis() override;
+
         void onSignalingData(const std::function<void(const bytes::binary&)>& callback);
+
+        void onUpdateEmojis(const std::function<void(std::string)>& callback) override;
 
         void sendSignalingData(const bytes::binary& buffer) const;
     };

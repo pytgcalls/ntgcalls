@@ -6,9 +6,9 @@
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
 #include <pc/rtp_sender.h>
-
-#include <wrtc/models/media_content.hpp>
 #include <wrtc/interfaces/media/channel_manager.hpp>
+#include <wrtc/interfaces/media/frame_transformer.hpp>
+#include <wrtc/models/media_content.hpp>
 
 namespace wrtc {
 
@@ -27,7 +27,10 @@ namespace wrtc {
             const MediaContent& mediaContent,
             SafeThread& workerThread,
             SafeThread& networkThread,
-            webrtc::LocalAudioSinkAdapter* sink
+            webrtc::LocalAudioSinkAdapter* sink,
+            const std::map<int32_t, FrameTransformer::PayloadType>& payloadTypeMapping,
+            E2EEncryptor* encryptor,
+            const std::function<std::pair<uint8_t, bool>()>& getAudioLevelAndSpeech
         );
 
         void set_enabled(bool enable) const;

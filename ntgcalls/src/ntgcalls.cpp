@@ -7,6 +7,7 @@
 #include <ntgcalls/devices/media_device.hpp>
 #include <ntgcalls/instances/group_call.hpp>
 #include <ntgcalls/instances/p2p_call.hpp>
+#include <ntgcalls/instances/conference_call.hpp>
 #include <ntgcalls/models/dh_config.hpp>
 #include <ntgcalls/utils/g_lib_loop_manager.hpp>
 #include <wrtc/video_factory/video_factory_config.hpp>
@@ -58,7 +59,7 @@ namespace ntgcalls {
             END_THREAD_SAFE
             END_WORKER
         });
-        if (connections[chatId]->type() & CallInterface::Type::Group) {
+        if (connections[chatId]->type() & (CallInterface::Type::Group | CallInterface::Type::Conference)) {
             SafeCall<GroupCall>(connections[chatId].get())->onUpgrade([this, chatId](const MediaState &state) {
                 WORKER("onUpgrade", updateThread, this, chatId, state)
                 THREAD_SAFE
@@ -81,6 +82,39 @@ namespace ntgcalls {
                 (void) broadcastTimestampCallback(chatId);
                 END_THREAD_SAFE
                 END_WORKER_NO_LOG
+            });
+            if (connections[chatId]->type() & CallInterface::Type::Conference) {
+                SafeCall<ConferenceCall>(connections[chatId].get())->onRequestParticipants([this, chatId] {
+                    WORKER("onRequestParticipants", updateThread, this, chatId)
+                    THREAD_SAFE
+                    (void) requestParticipantsCallback(chatId);
+                    END_THREAD_SAFE
+                    END_WORKER
+                });
+                SafeCall<ConferenceCall>(connections[chatId].get())->onOutboundBlock([this, chatId](const bytes::binary& block) {
+                    WORKER("onOutboundBlock", updateThread, this, chatId, block)
+                    THREAD_SAFE
+                    (void) outboundBlockCallback(chatId, CAST_BYTES(block));
+                    END_THREAD_SAFE
+                    END_WORKER
+                });
+                SafeCall<ConferenceCall>(connections[chatId].get())->onSubchainRequest([this, chatId](e2e::SubchainRequest subchainRequest) {
+                    WORKER("onSubchainRequest", updateThread, this, chatId, subchainRequest)
+                    THREAD_SAFE
+                    (void) subchainRequestCallback(chatId, subchainRequest);
+                    END_THREAD_SAFE
+                    END_WORKER
+                });
+            }
+        }
+        if (connections[chatId]->type() & (CallInterface::Type::P2P | CallInterface::Type::Conference)) {
+            SafeCall<E2EInterface>(connections[chatId].get())->onUpdateEmojis([this, chatId](const std::string &emojis) {
+                WORKER("onUpdateEmojis", updateThread, this, chatId, emojis)
+                THREAD_SAFE
+                RTC_LOG(LS_INFO) << "EMOJIS: " << emojis;
+                (void) updateEmojisCallback(chatId, emojis);
+                END_THREAD_SAFE
+                END_WORKER
             });
         }
         connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
@@ -128,8 +162,8 @@ namespace ntgcalls {
 
     ASYNC_RETURN(void) NTgCalls::createP2PCall(const int64_t userId) {
         SMART_ASYNC(this, userId)
-        CHECK_AND_THROW_IF_EXISTS(userId)
         std::lock_guard lock(mutex);
+        CHECK_AND_THROW_IF_EXISTS(userId)
         connections[userId] = std::make_shared<P2PCall>(*updateThread);
         setupListeners(userId);
         SafeCall<P2PCall>(connections[userId].get())->init();
@@ -157,7 +191,7 @@ namespace ntgcalls {
         END_ASYNC
     }
 
-    ASYNC_RETURN(void) NTgCalls::connectP2P(const int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed, std::optional<std::string> customParameters) {
+    ASYNC_RETURN(void) NTgCalls::connectP2P(const int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed, const std::optional<std::string>& customParameters) {
         SMART_ASYNC(this, userId, servers, versions, p2pAllowed, customParameters)
         SafeCall<P2PCall>(safeConnection(userId))->connect(servers, versions, p2pAllowed, customParameters);
         END_ASYNC
@@ -165,8 +199,8 @@ namespace ntgcalls {
 
     ASYNC_RETURN(std::string) NTgCalls::createCall(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        CHECK_AND_THROW_IF_EXISTS(chatId)
         std::lock_guard lock(mutex);
+        CHECK_AND_THROW_IF_EXISTS(chatId)
         connections[chatId] = std::make_shared<GroupCall>(*updateThread);
         setupListeners(chatId);
         return SafeCall<GroupCall>(connections[chatId].get())->init();
@@ -179,21 +213,58 @@ namespace ntgcalls {
         END_ASYNC
     }
 
+    ASYNC_RETURN(ConferenceJoinParams) NTgCalls::initConference(const int64_t chatId, const int64_t userId, const std::optional<BYTES(bytes::binary)>& lastBlock) {
+        SMART_ASYNC(this, chatId, userId, lastBlock = CPP_BYTES(lastBlock, bytes::binary))
+        std::lock_guard lock(mutex);
+        if (!exists(chatId)) {
+            THROW_CONNECTION_NOT_FOUND(chatId)
+        }
+        auto conferenceCall = std::make_shared<ConferenceCall>(*updateThread);
+        if (auto* p2pCall = SafeCall<P2PCall>(connections[chatId].get())) {
+            RTC_LOG(LS_INFO) << "Migrating P2P call to conference call for " << chatId;
+            conferenceCall->migrate(p2pCall);
+            p2pCall->stop();
+        }
+        connections[chatId] = std::move(conferenceCall);
+        auto result = SafeCall<ConferenceCall>(connections[chatId].get())->initConference(userId, lastBlock);
+        setupListeners(chatId);
+        return result;
+        END_ASYNC
+    }
+
     ASYNC_RETURN(void) NTgCalls::connect(const int64_t chatId, const std::string& params, const bool isPresentation) {
         SMART_ASYNC(this, chatId, params, isPresentation)
         SafeCall<GroupCall>(safeConnection(chatId))->connect(params, isPresentation);
         END_ASYNC
     }
 
-    ASYNC_RETURN(uint32_t) NTgCalls::addIncomingVideo(const int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroups) {
-        SMART_ASYNC(this, chatId, endpoint, ssrcGroups)
-        return SafeCall<GroupCall>(safeConnection(chatId))->addIncomingVideo(endpoint, ssrcGroups);
+    ASYNC_RETURN(uint32_t) NTgCalls::addIncomingVideo(const int64_t chatId, const int64_t userID, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroups) {
+        SMART_ASYNC(this, chatId, userID, endpoint, ssrcGroups)
+        return SafeCall<GroupCall>(safeConnection(chatId))->addIncomingVideo(userID, endpoint, ssrcGroups);
         END_ASYNC
     }
 
     ASYNC_RETURN(bool) NTgCalls::removeIncomingVideo(const int64_t chatId, const std::string& endpoint) {
         SMART_ASYNC(this, chatId, endpoint)
         return SafeCall<GroupCall>(safeConnection(chatId))->removeIncomingVideo(endpoint);
+        END_ASYNC
+    }
+
+    ASYNC_RETURN(void) NTgCalls::updateAudioSsrcMappings(const int64_t chatId, const std::vector<wrtc::SsrcMapping> &ssrcGroups) {
+        SMART_ASYNC(this, chatId, ssrcGroups)
+        return SafeCall<ConferenceCall>(safeConnection(chatId))->updateAudioSsrcMappings(ssrcGroups);
+        END_ASYNC
+    }
+
+    ASYNC_RETURN(void) NTgCalls::applyBlocks(const int64_t chatId, const int subchain, const int nextOffset, const std::vector<BYTES(bytes::binary)> &blocks, const bool fromShortPoll) {
+        SMART_ASYNC(this, chatId, subchain, nextOffset, blocks = CPP_BYTES(blocks, bytes::binary), fromShortPoll)
+        return SafeCall<ConferenceCall>(safeConnection(chatId))->applyBlocks(subchain, nextOffset, blocks, fromShortPoll);
+        END_ASYNC
+    }
+
+    ASYNC_RETURN(void) NTgCalls::finishSubchainRequest(const int64_t chatId, const int subchain) {
+        SMART_ASYNC(this, chatId, subchain)
+        return SafeCall<ConferenceCall>(safeConnection(chatId))->finishSubchainRequest(subchain);
         END_ASYNC
     }
 
@@ -239,6 +310,12 @@ namespace ntgcalls {
         END_ASYNC
     }
 
+    ASYNC_RETURN(std::string) NTgCalls::getEmojisFingerprint(int64_t chatId) {
+        SMART_ASYNC(this, chatId)
+        return SafeCall<E2EInterface>(safeConnection(chatId))->getFingerprintEmojis();
+        END_ASYNC
+    }
+
     void NTgCalls::onStreamEnd(const std::function<void(int64_t, StreamManager::Type, StreamManager::Device)>& callback) {
         std::lock_guard lock(mutex);
         onEof = callback;
@@ -277,6 +354,26 @@ namespace ntgcalls {
     void NTgCalls::onRequestBroadcastTimestamp(const std::function<void(int64_t)>& callback) {
         std::lock_guard lock(mutex);
         broadcastTimestampCallback = callback;
+    }
+
+    void NTgCalls::onRequestParticipants(const std::function<void(int64_t)> &callback) {
+        std::lock_guard lock(mutex);
+        requestParticipantsCallback = callback;
+    }
+
+    void NTgCalls::onOutboundBlock(const std::function<void(int64_t, const BYTES(bytes::binary)&)> &callback) {
+        std::lock_guard lock(mutex);
+        outboundBlockCallback = callback;
+    }
+
+    void NTgCalls::onSubchainRequest(const std::function<void(int64_t, e2e::SubchainRequest)> &callback) {
+        std::lock_guard lock(mutex);
+        subchainRequestCallback = callback;
+    }
+
+    void NTgCalls::onUpdateEmojis(const std::function<void(int64_t, std::string)> &callback) {
+        std::lock_guard lock(mutex);
+        updateEmojisCallback = callback;
     }
 
     ASYNC_RETURN(void) NTgCalls::sendBroadcastTimestamp(int64_t chatId, int64_t timestamp) {

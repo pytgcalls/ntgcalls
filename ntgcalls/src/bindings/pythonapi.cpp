@@ -7,8 +7,11 @@
 
 #include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/models/auth_params.hpp>
+#include <ntgcalls/models/conference_join_params.hpp>
 
 namespace py = pybind11;
+using namespace telegram;
 
 PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     py::class_<ntgcalls::NTgCalls> wrapper(m, "NTgCalls");
@@ -23,8 +26,12 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     wrapper.def("init_presentation", &ntgcalls::NTgCalls::initPresentation, py::arg("chat_id"));
     wrapper.def("connect", &ntgcalls::NTgCalls::connect, py::arg("chat_id"), py::arg("params"), py::arg("is_presentation"));
     wrapper.def("set_stream_sources", &ntgcalls::NTgCalls::setStreamSources, py::arg("chat_id"), py::arg("direction"), py::arg("media"));
-    wrapper.def("add_incoming_video", &ntgcalls::NTgCalls::addIncomingVideo, py::arg("chat_id"), py::arg("endpoint"), py::arg("ssrc_group"));
+    wrapper.def("init_conference", &ntgcalls::NTgCalls::initConference, py::arg("chat_id"), py::arg("user_id"), py::arg("last_block") = py::none());
+    wrapper.def("add_incoming_video", &ntgcalls::NTgCalls::addIncomingVideo, py::arg("chat_id"), py::arg("user_id"), py::arg("endpoint"), py::arg("ssrc_group"));
     wrapper.def("remove_incoming_video", &ntgcalls::NTgCalls::removeIncomingVideo, py::arg("chat_id"), py::arg("endpoint"));
+    wrapper.def("update_audio_ssrc_mappings", &ntgcalls::NTgCalls::updateAudioSsrcMappings, py::arg("chat_id"), py::arg("ssrc_mappings"));
+    wrapper.def("apply_blocks", &ntgcalls::NTgCalls::applyBlocks, py::arg("chat_id"), py::arg("subchain"), py::arg("nextOffset"), py::arg("blocks"), py::arg("from_short_poll"));
+    wrapper.def("finish_subchain_request", &ntgcalls::NTgCalls::finishSubchainRequest, py::arg("chat_id"), py::arg("subchain"));
     wrapper.def("pause", &ntgcalls::NTgCalls::pause, py::arg("chat_id"));
     wrapper.def("resume", &ntgcalls::NTgCalls::resume, py::arg("chat_id"));
     wrapper.def("mute", &ntgcalls::NTgCalls::mute, py::arg("chat_id"));
@@ -32,6 +39,7 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     wrapper.def("stop", &ntgcalls::NTgCalls::stop, py::arg("chat_id"));
     wrapper.def("stop_presentation", &ntgcalls::NTgCalls::stopPresentation, py::arg("chat_id"));
     wrapper.def("time", &ntgcalls::NTgCalls::time, py::arg("chat_id"), py::arg("direction"));
+    wrapper.def("get_emojis_fingerprint", &ntgcalls::NTgCalls::getEmojisFingerprint, py::arg("chat_id"));
     wrapper.def("get_state", &ntgcalls::NTgCalls::getState, py::arg("chat_id"));
     wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade, py::arg("callback"));
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd, py::arg("callback"));
@@ -41,6 +49,10 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     wrapper.def("on_remote_source_change", &ntgcalls::NTgCalls::onRemoteSourceChange, py::arg("callback"));
     wrapper.def("on_request_broadcast_part", &ntgcalls::NTgCalls::onRequestBroadcastPart, py::arg("callback"));
     wrapper.def("on_request_broadcast_timestamp", &ntgcalls::NTgCalls::onRequestBroadcastTimestamp, py::arg("callback"));
+    wrapper.def("on_request_participants", &ntgcalls::NTgCalls::onRequestParticipants, py::arg("callback"));
+    wrapper.def("on_outbound_block", &ntgcalls::NTgCalls::onOutboundBlock, py::arg("callback"));
+    wrapper.def("on_subchain_request", &ntgcalls::NTgCalls::onSubchainRequest, py::arg("callback"));
+    wrapper.def("on_update_emojis", &ntgcalls::NTgCalls::onUpdateEmojis, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def("send_external_frame", &ntgcalls::NTgCalls::sendExternalFrame, py::arg("chat_id"), py::arg("device"), py::arg("frame"), py::arg("frame_data"));
@@ -251,6 +263,31 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     segmentPartRequestWrapper.def_readonly("timestamp", &wrtc::SegmentPartRequest::timestamp);
     segmentPartRequestWrapper.def_readonly("channel_id", &wrtc::SegmentPartRequest::channelId);
     segmentPartRequestWrapper.def_readonly("quality", &wrtc::SegmentPartRequest::quality);
+
+    py::class_<wrtc::SsrcMapping> segmentPartWrapper(m, "SsrcMapping");
+    segmentPartWrapper.def(
+        py::init<int64_t, uint32_t>(),
+        py::arg("user_id"),
+        py::arg("ssrc")
+    );
+    segmentPartWrapper.def_readonly("user_id", &wrtc::SsrcMapping::userID);
+    segmentPartWrapper.def_readonly("ssrc", &wrtc::SsrcMapping::ssrc);
+
+    py::class_<ntgcalls::ConferenceJoinParams> conferenceJoinParamsWrapper(m, "ConferenceJoinParams");
+    conferenceJoinParamsWrapper.def(py::init<>());
+    conferenceJoinParamsWrapper.def_readonly("payload", &ntgcalls::ConferenceJoinParams::payload);
+    conferenceJoinParamsWrapper.def_property_readonly("public_key", [](const ntgcalls::ConferenceJoinParams& self) {
+        return toBytes(self.publicKey);
+    });
+    conferenceJoinParamsWrapper.def_property_readonly("block", [](const ntgcalls::ConferenceJoinParams& self) {
+        return toBytes(self.block);
+    });
+
+    py::class_<e2e::SubchainRequest> subchainRequestWrapper(m, "SubchainRequest");
+    subchainRequestWrapper.def(py::init<>());
+    subchainRequestWrapper.def_readonly("subchain", &e2e::SubchainRequest::subchain);
+    subchainRequestWrapper.def_readonly("height", &e2e::SubchainRequest::height);
+    subchainRequestWrapper.def_readonly("limit", &e2e::SubchainRequest::limit);
 
     py::enum_<wrtc::MediaSegment::Quality>(m, "MediaSegmentQuality")
         .value("NONE", wrtc::MediaSegment::Quality::None)

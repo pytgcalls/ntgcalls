@@ -3,14 +3,11 @@
 //
 #pragma once
 
-
-#include <cstdint>
-
+#include <wrtc/models/ssrc_mapping.hpp>
 #include <ntgcalls/instances/call_interface.hpp>
-// ReSharper disable once CppUnusedIncludeDirective
-#include <ntgcalls/models/auth_params.hpp>
 #include <ntgcalls/models/dh_config.hpp>
 #include <ntgcalls/models/protocol.hpp>
+#include <ntgcalls/models/subchain_request.hpp>
 #include <ntgcalls/models/rtc_server.hpp>
 #include <ntgcalls/utils/binding_utils.hpp>
 #include <ntgcalls/utils/hardware_info.hpp>
@@ -29,17 +26,22 @@ throw ConnectionError("Connection cannot be initialized more than once."); \
 throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chatId) + "\" not found");
 
 namespace ntgcalls {
+    using namespace telegram;
 
     class NTgCalls {
         std::unordered_map<int64_t, std::shared_ptr<CallInterface>> connections;
-        wrtc::synchronized_callback<int64_t, StreamManager::Type, StreamManager::Device> onEof;
-        wrtc::synchronized_callback<int64_t, MediaState> mediaStateCallback;
-        wrtc::synchronized_callback<int64_t, NetworkInfo> connectionChangeCallback;
-        wrtc::synchronized_callback<int64_t, BYTES(bytes::binary)> emitCallback;
-        wrtc::synchronized_callback<int64_t, RemoteSource> remoteSourceCallback;
-        wrtc::synchronized_callback<int64_t> broadcastTimestampCallback;
-        wrtc::synchronized_callback<int64_t, wrtc::SegmentPartRequest> segmentPartRequestCallback;
-        wrtc::synchronized_callback<int64_t, StreamManager::Mode, StreamManager::Device, std::vector<wrtc::Frame>> framesCallback;
+        wrtc::synchronized_callback<void(int64_t)> requestParticipantsCallback;
+        wrtc::synchronized_callback<void(int64_t, BYTES(bytes::binary))> outboundBlockCallback;
+        wrtc::synchronized_callback<void(int64_t, e2e::SubchainRequest)> subchainRequestCallback;
+        wrtc::synchronized_callback<void(int64_t, StreamManager::Type, StreamManager::Device)> onEof;
+        wrtc::synchronized_callback<void(int64_t, MediaState)> mediaStateCallback;
+        wrtc::synchronized_callback<void(int64_t, std::string)> updateEmojisCallback;
+        wrtc::synchronized_callback<void(int64_t, NetworkInfo)> connectionChangeCallback;
+        wrtc::synchronized_callback<void(int64_t, BYTES(bytes::binary))> emitCallback;
+        wrtc::synchronized_callback<void(int64_t, RemoteSource)> remoteSourceCallback;
+        wrtc::synchronized_callback<void(int64_t)> broadcastTimestampCallback;
+        wrtc::synchronized_callback<void(int64_t, wrtc::SegmentPartRequest)> segmentPartRequestCallback;
+        wrtc::synchronized_callback<void(int64_t, StreamManager::Mode, StreamManager::Device, std::vector<wrtc::Frame>)> framesCallback;
         std::unique_ptr<wrtc::SafeThread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
@@ -69,15 +71,17 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) skipExchange(int64_t userId, const BYTES(bytes::vector) &encryptionKey, bool isOutgoing);
 
-        ASYNC_RETURN(void) connectP2P(int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed, std::optional<std::string> customParameters);
+        ASYNC_RETURN(void) connectP2P(int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, bool p2pAllowed, const std::optional<std::string>& customParameters);
 
         ASYNC_RETURN(std::string) createCall(int64_t chatId);
 
         ASYNC_RETURN(std::string) initPresentation(int64_t chatId);
 
+        ASYNC_RETURN(ConferenceJoinParams) initConference(int64_t chatId, int64_t userId, const std::optional<BYTES(bytes::binary)>& lastBlock);
+
         ASYNC_RETURN(void) connect(int64_t chatId, const std::string& params, bool isPresentation);
 
-        ASYNC_RETURN(uint32_t) addIncomingVideo(int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroups);
+        ASYNC_RETURN(uint32_t) addIncomingVideo(int64_t chatId, int64_t userID, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroups);
 
         ASYNC_RETURN(bool) removeIncomingVideo(int64_t chatId, const std::string& endpoint);
 
@@ -94,6 +98,8 @@ namespace ntgcalls {
         ASYNC_RETURN(void) stop(int64_t chatId);
 
         ASYNC_RETURN(void) stopPresentation(int64_t chatId);
+
+        ASYNC_RETURN(std::string) getEmojisFingerprint(int64_t chatId);
 
         ASYNC_RETURN(uint64_t) time(int64_t chatId, StreamManager::Mode mode);
 
@@ -129,6 +135,14 @@ namespace ntgcalls {
 
         void onRequestBroadcastTimestamp(const std::function<void(int64_t)>& callback);
 
+        void onRequestParticipants(const std::function<void(int64_t)>& callback);
+
+        void onOutboundBlock(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
+
+        void onSubchainRequest(const std::function<void(int64_t, e2e::SubchainRequest)>& callback);
+
+        void onUpdateEmojis(const std::function<void(int64_t, std::string)>& callback);
+
         ASYNC_RETURN(void) sendBroadcastTimestamp(int64_t chatId, int64_t timestamp);
 
         ASYNC_RETURN(void) sendBroadcastPart(int64_t chatId, int64_t segmentId, int32_t partId, wrtc::MediaSegment::Part::Status status, bool qualityUpdate, const std::optional<BYTES(bytes::binary)> &data);
@@ -136,6 +150,12 @@ namespace ntgcalls {
         ASYNC_RETURN(void) sendSignalingData(int64_t chatId, const BYTES(bytes::binary) &msgKey);
 
         ASYNC_RETURN(void) sendExternalFrame(int64_t chatId, StreamManager::Device device, const BYTES(bytes::binary) &data, wrtc::FrameData frameData);
+
+        ASYNC_RETURN(void) updateAudioSsrcMappings(int64_t chatId, const std::vector<wrtc::SsrcMapping>& ssrcGroups);
+
+        ASYNC_RETURN(void) applyBlocks(int64_t chatId, int subchain, int nextOffset, const std::vector<BYTES(bytes::binary)> &blocks, bool fromShortPoll);
+
+        ASYNC_RETURN(void) finishSubchainRequest(int64_t chatId, int subchain);
 
         ASYNC_RETURN(std::map<int64_t, StreamManager::CallInfo>) calls();
     };

@@ -47,6 +47,16 @@ T toCBytes(const py::bytes& p) {
 }
 
 template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
+std::vector<T> toCBytes(const std::vector<py::bytes>& p) {
+    std::vector<T> result;
+    result.reserve(p.size());
+    for (const auto& item : p) {
+        result.push_back(toCBytes<T>(item));
+    }
+    return result;
+}
+
+template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::vector> || std::is_same_v<T, bytes::binary>>>
 py::bytes toBytes(const T& p) {
     return {reinterpret_cast<const char*>(p.data()), p.size()};
 }

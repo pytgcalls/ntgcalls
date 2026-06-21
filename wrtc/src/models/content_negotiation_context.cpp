@@ -620,10 +620,11 @@ namespace wrtc {
             auto mappedContent = convertContentInfoToSignalingContent(content);
 
             if (content.media_description()->direction() == webrtc::RtpTransceiverDirection::kRecvOnly) {
-                for (const auto &[type, ssrc, ssrcGroups, payloadTypes, rtpExtensions] : offer->contents) {
+                for (const auto &[type, ssrc, userID, ssrcGroups, payloadTypes, rtpExtensions] : offer->contents) {
                     if (std::to_string(ssrc) == content.mid()) {
                         mappedContent.ssrc = ssrc;
                         mappedContent.ssrcGroups = ssrcGroups;
+                        mappedContent.userID = userID;
                         break;
                     }
                 }

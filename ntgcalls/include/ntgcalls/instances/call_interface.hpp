@@ -17,8 +17,8 @@ namespace ntgcalls {
     protected:
         std::shared_ptr<wrtc::NetworkInterface> connection;
         std::shared_ptr<StreamManager> streamManager;
-        wrtc::synchronized_callback<NetworkInfo> connectionChangeCallback;
-        wrtc::synchronized_callback<RemoteSource> remoteSourceCallback;
+        wrtc::synchronized_callback<void(NetworkInfo)> connectionChangeCallback;
+        wrtc::synchronized_callback<void(RemoteSource)> remoteSourceCallback;
         wrtc::SafeThread& updateThread;
         StreamManager::Status lastCameraState = StreamManager::Status::Idling;
         StreamManager::Status lastScreenState = StreamManager::Status::Idling;
@@ -40,7 +40,8 @@ namespace ntgcalls {
             Group = 1 << 0,
             Outgoing = 1 << 1,
             Incoming = 1 << 2,
-            P2P = Outgoing | Incoming
+            P2P = Outgoing | Incoming,
+            Conference = 1 << 3
         };
 
         virtual void stop();
@@ -85,9 +86,15 @@ namespace ntgcalls {
             }
             throw std::runtime_error("Invalid NetworkInterface type");
         }
+
+        std::shared_ptr<StreamManager> getStreamManager() const;
     };
 
     inline int operator&(const CallInterface::Type& lhs, const CallInterface::Type rhs){
         return static_cast<int>(lhs) & static_cast<int>(rhs);
+    }
+
+    inline CallInterface::Type operator|(const CallInterface::Type lhs, const CallInterface::Type rhs){
+        return static_cast<CallInterface::Type>(static_cast<int>(lhs) | static_cast<int>(rhs));
     }
 } // ntgcalls

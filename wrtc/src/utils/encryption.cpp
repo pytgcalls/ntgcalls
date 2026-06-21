@@ -5,6 +5,8 @@
 #include <wrtc/utils/encryption.hpp>
 
 #include <openssl/aes.h>
+#include <openssl/hmac.h>
+#include <openssl/evp.h>
 #include <climits>
 
 namespace openssl {
@@ -12,6 +14,78 @@ namespace openssl {
         auto bytes = bytes::vector(SHA256_DIGEST_LENGTH);
         SHA256(reinterpret_cast<const unsigned char*>(data.data()), data.size(), reinterpret_cast<unsigned char*>(bytes.data()));
         return bytes;
+    }
+
+    std::array<uint8_t, kSha512Size> Sha512::Digest(const bytes::const_span data) {
+        auto result = std::array<uint8_t, kSha512Size>();
+        SHA512(reinterpret_cast<const unsigned char*>(data.data()), data.size(), result.data());
+        return result;
+    }
+
+    std::array<uint8_t, kSha256Size> Hmac::Sha256(const bytes::const_span key, const bytes::const_span data) {
+        auto result = std::array<uint8_t, kSha256Size>();
+        unsigned int length = 0;
+        HMAC(
+            EVP_sha256(),
+            key.data(), static_cast<int>(key.size()),
+            reinterpret_cast<const unsigned char*>(data.data()), data.size(),
+            result.data(), &length
+        );
+        return result;
+    }
+
+    std::array<uint8_t, kSha512Size> Hmac::Sha512(const bytes::const_span key, const bytes::const_span data) {
+        auto result = std::array<uint8_t, kSha512Size>();
+        unsigned int length = 0;
+        HMAC(
+            EVP_sha512(),
+            key.data(), static_cast<int>(key.size()),
+            reinterpret_cast<const unsigned char*>(data.data()), data.size(),
+            result.data(), &length
+        );
+        return result;
+    }
+
+    std::array<uint8_t, kSha512Size> Pbkdf2::Sha512(const bytes::const_span password, const bytes::const_span salt, const int iterations) {
+        auto result = std::array<uint8_t, kSha512Size>();
+        PKCS5_PBKDF2_HMAC(
+            reinterpret_cast<const char*>(password.data()), static_cast<int>(password.size()),
+            reinterpret_cast<const unsigned char*>(salt.data()), static_cast<int>(salt.size()),
+            iterations,
+            EVP_sha512(),
+            result.size(), result.data()
+        );
+        return result;
+    }
+
+    bytes::binary AesCbc::Encrypt(const bytes::const_span data, const std::array<uint8_t, 32>& key, std::array<uint8_t, 16> iv) {
+        bytes::binary result(data.size());
+        auto aes = AES_KEY();
+        AES_set_encrypt_key(key.data(), static_cast<int>(key.size()) * CHAR_BIT, &aes);
+        AES_cbc_encrypt(
+            reinterpret_cast<const unsigned char*>(data.data()),
+            result.data(),
+            data.size(),
+            &aes,
+            iv.data(),
+            AES_ENCRYPT
+        );
+        return result;
+    }
+
+    bytes::binary AesCbc::Decrypt(const bytes::const_span data, const std::array<uint8_t, 32>& key, std::array<uint8_t, 16> iv) {
+        bytes::binary result(data.size());
+        auto aes = AES_KEY();
+        AES_set_decrypt_key(key.data(), static_cast<int>(key.size()) * CHAR_BIT, &aes);
+        AES_cbc_encrypt(
+            reinterpret_cast<const unsigned char*>(data.data()),
+            result.data(),
+            data.size(),
+            &aes,
+            iv.data(),
+            AES_DECRYPT
+        );
+        return result;
     }
 
     std::array<uint8_t, kSha256Size> Sha256::Concat(const bytes::memory_span& first, const bytes::memory_span& second) {

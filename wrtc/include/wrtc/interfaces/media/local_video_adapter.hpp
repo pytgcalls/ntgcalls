@@ -18,5 +18,7 @@ namespace wrtc {
         void OnFrame(const webrtc::VideoFrame& frame) override;
 
         void AddOrUpdateSink(VideoSinkInterface* sink, const webrtc::VideoSinkWants& wants) override;
+
+        void RemoveSink(VideoSinkInterface* sink) override;
     };
 } // wrtc

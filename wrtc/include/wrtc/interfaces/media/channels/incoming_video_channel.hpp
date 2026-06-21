@@ -30,7 +30,9 @@ namespace wrtc {
             const std::vector<webrtc::Codec>& codecs,
             SafeThread& workerThread,
             SafeThread& networkThread,
-            std::weak_ptr<RemoteVideoSink> remoteVideoSink
+            std::weak_ptr<RemoteVideoSink> remoteVideoSink,
+            const std::map<int32_t, FrameTransformer::PayloadType>& payloadTypeMapping,
+            E2EEncryptor* encryptor
         );
 
         ~IncomingVideoChannel();

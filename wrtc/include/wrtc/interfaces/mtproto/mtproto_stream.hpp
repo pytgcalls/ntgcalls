@@ -50,11 +50,11 @@ namespace wrtc {
         std::map<std::string, int32_t> currentEndpointMapping;
         std::map<std::string, std::unique_ptr<VideoStreamingSharedState>> sharedVideoState;
 
-        synchronized_callback<void> requestCurrentTimeCallback;
-        synchronized_callback<int> updateAudioSourceCountCallback;
-        synchronized_callback<std::unique_ptr<AudioFrame>> audioFrameCallback;
-        synchronized_callback<uint32_t, bool, std::unique_ptr<webrtc::VideoFrame>> videoFrameCallback;
-        synchronized_callback<SegmentPartRequest> requestBroadcastPartCallback;
+        synchronized_callback<void()> requestCurrentTimeCallback;
+        synchronized_callback<void(int)> updateAudioSourceCountCallback;
+        synchronized_callback<void(std::unique_ptr<AudioFrame>)> audioFrameCallback;
+        synchronized_callback<void(uint32_t, bool, std::unique_ptr<webrtc::VideoFrame>)> videoFrameCallback;
+        synchronized_callback<void(SegmentPartRequest)> requestBroadcastPartCallback;
 
         std::shared_mutex segmentMutex;
         std::unique_ptr<ThreadBuffer> threadBuffer;

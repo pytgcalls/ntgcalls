@@ -13,8 +13,8 @@
 
 
 namespace wrtc {
-    NativeConnection::NativeConnection(std::vector<RTCServer> rtcServers, const bool enableP2P, const bool isOutgoing, json customParameters):
-    customParameters(std::move(customParameters)),
+    NativeConnection::NativeConnection(std::vector<RTCServer> rtcServers, const bool enableP2P, const bool isOutgoing,  const json& customParameters):
+    customParameters(customParameters),
     isOutgoing(isOutgoing),
     enableP2P(enableP2P),
     rtcServers(std::move(rtcServers)),
@@ -222,7 +222,10 @@ namespace wrtc {
                             *audioContent,
                             workerThread(),
                             networkThread(),
-                            &audioSink
+                            &audioSink,
+                            payloadTypeMapping,
+                            encryptor,
+                            nullptr
                         );
                     }
                 }
@@ -249,7 +252,9 @@ namespace wrtc {
                             *videoContent,
                             workerThread(),
                             networkThread(),
-                            &videoSink
+                            &videoSink,
+                            payloadTypeMapping,
+                            encryptor
                         );
                     }
                 }

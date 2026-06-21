@@ -32,6 +32,16 @@ namespace bytes {
         return std::as_bytes(make_span(container));
     }
 
+    inline const_span view(const void* data, const size_t size) {
+        // ReSharper disable once CppDFALocalValueEscapesFunction
+        return { static_cast<const byte*>(data), size };
+    }
+
+    template <typename Container>
+    const_span view(const Container &container) {
+        return std::as_bytes(std::span(container.data(), container.size()));
+    }
+
     inline unique_binary make_unique_binary(const size_t size) {
         return std::make_unique<uint8_t[]>(size);
     }

@@ -21,6 +21,7 @@ namespace ntgcalls {
 
     void StreamManager::close() {
         std::lock_guard lock(mutex);
+        if (detached) return;
         {
             std::lock_guard syncLock(syncMutex);
             syncReaders.clear();
@@ -79,7 +80,7 @@ namespace ntgcalls {
         pc->enableAudioIncoming(writers.contains(Microphone) || externalWriters.contains(Microphone));
         pc->enableVideoIncoming(writers.contains(Camera) || externalWriters.contains(Camera), false);
         pc->enableVideoIncoming(writers.contains(Screen) || externalWriters.contains(Screen), true);
-        initialized = pc->getConnectionMode() != wrtc::ConnectionMode::None;
+        initialized = detached = pc->getConnectionMode() != wrtc::ConnectionMode::None;
     }
 
     MediaState StreamManager::getState() {
@@ -101,6 +102,17 @@ namespace ntgcalls {
             !hasDeviceInternal(Capture, Camera),
             (paused || muted),
         };
+    }
+
+    void StreamManager::detach() {
+        std::lock_guard lock(mutex);
+        tracks.clear();
+        detached = initialized;
+        initialized = false;
+        resumeOnReconnect = !isPaused();
+        for (const auto& reader : readers | std::views::values) {
+            reader->set_enabled(false);
+        }
     }
 
     bool StreamManager::pause() {
@@ -173,6 +185,17 @@ namespace ntgcalls {
         for (const auto& writer : writers | std::views::values) {
             writer->open();
         }
+        if (resumeOnReconnect) {
+            resumeOnReconnect = false;
+            const auto now = std::chrono::steady_clock::now();
+            for (const auto& reader : readers | std::views::values) {
+                if (reader->set_enabled(true)) {
+                    if (const auto sync = dynamic_cast<wrtc::SyncHelper*>(reader.get())) {
+                        sync->synchronizeTime(now);
+                    }
+                }
+            }
+        }
     }
 
     bool StreamManager::hasDevice(const Mode mode, const Device device) {
@@ -237,6 +260,9 @@ namespace ntgcalls {
     }
 
     bool StreamManager::isPaused() {
+        if (!initialized) {
+            return false;
+        }
         auto res = false;
         for (const auto& reader : readers | std::views::values) {
             if (!reader->is_enabled()) {
@@ -331,6 +357,9 @@ namespace ntgcalls {
         }
 
         if (!desc) {
+            if (detached) {
+                return;
+            }
             handleNoDescription(mode, device);
             return;
         }

@@ -17,7 +17,9 @@ namespace wrtc {
         const std::vector<webrtc::Codec>& codecs,
         SafeThread& workerThread,
         SafeThread& networkThread,
-        std::weak_ptr<RemoteVideoSink> remoteVideoSink
+        std::weak_ptr<RemoteVideoSink> remoteVideoSink,
+        const std::map<int32_t, FrameTransformer::PayloadType>& payloadTypeMapping,
+        E2EEncryptor* encryptor
     ) : workerThread(workerThread), networkThread(networkThread) {
         sink = std::make_unique<RawVideoSink>();
         uint32_t mid = randomIdGenerator->GenerateId();
@@ -101,6 +103,20 @@ namespace wrtc {
                     sink->sendFrame(ssrc, std::move(frame));
                 }
             });
+
+            if (encryptor) {
+                channel->video_media_receive_channel()->SetDepacketizerToDecoderFrameTransformer(
+                    _ssrc,
+                    webrtc::make_ref_counted<FrameTransformer>(
+                        false,
+                        encryptor,
+                        _ssrc,
+                        payloadTypeMapping,
+                        nullptr,
+                        nullptr
+                    )
+                );
+            }
         });
         channel->Enable(true);
     }
