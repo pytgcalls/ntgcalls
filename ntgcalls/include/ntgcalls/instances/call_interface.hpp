@@ -90,4 +90,8 @@ namespace ntgcalls {
     inline int operator&(const CallInterface::Type& lhs, const CallInterface::Type rhs){
         return static_cast<int>(lhs) & static_cast<int>(rhs);
     }
+
+    inline CallInterface::Type operator|(const CallInterface::Type lhs, const CallInterface::Type rhs){
+        return static_cast<CallInterface::Type>(static_cast<int>(lhs) | static_cast<int>(rhs));
+    }
 } // ntgcalls
