@@ -12,11 +12,12 @@ namespace ntgcalls {
     using wrtc::json;
 
     class GroupCall: public CallInterface {
-        std::shared_ptr<wrtc::GroupConnection> presentationConnection;
         wrtc::synchronized_callback<void()> broadcastTimestampCallback;
         wrtc::synchronized_callback<void(wrtc::SegmentPartRequest)> segmentPartRequestCallback;
 
         static void updateRemoteVideoConstraints(const wrtc::GroupConnection* conn);
+    protected:
+        std::shared_ptr<wrtc::GroupConnection> presentationConnection;
 
     public:
         explicit GroupCall(wrtc::SafeThread& updateThread): CallInterface(updateThread) {}
@@ -25,7 +26,7 @@ namespace ntgcalls {
 
         std::string init();
 
-        std::string initPresentation();
+        virtual std::string initPresentation();
 
         virtual void connect(const std::string& jsonData, bool isPresentation);
 

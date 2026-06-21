@@ -28,6 +28,12 @@ namespace ntgcalls {
         };
     }
 
+    std::string ConferenceCall::initPresentation() {
+        auto res = GroupCall::initPresentation();
+        presentationConnection->setE2EEncryptor(session.get());
+        return res;
+    }
+
     void ConferenceCall::connect(const std::string &jsonData, const bool isPresentation) {
         GroupCall::connect(jsonData, isPresentation);
         session->shortPoll(0);

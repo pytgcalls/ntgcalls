@@ -108,6 +108,7 @@ namespace ntgcalls {
             (paused || muted),
             !hasDeviceInternal(Capture, Camera),
             (paused || muted),
+            !hasDeviceInternal(Capture, Screen),
         };
     }
 

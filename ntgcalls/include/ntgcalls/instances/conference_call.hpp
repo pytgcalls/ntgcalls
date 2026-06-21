@@ -20,6 +20,8 @@ namespace ntgcalls {
 
         ConferenceJoinParams initConference(int64_t userID, const std::optional<bytes::binary>& lastBlock);
 
+        std::string initPresentation() override;
+
         void connect(const std::string& jsonData, bool isPresentation) override;
 
         void migrate(const P2PCall *p2pCall);
