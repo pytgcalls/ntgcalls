@@ -79,6 +79,10 @@ namespace ntgcalls {
         streamManager->sendExternalFrame(device, data, frameData);
     }
 
+    std::shared_ptr<StreamManager> CallInterface::getStreamManager() const {
+        return streamManager;
+    }
+
     void CallInterface::setConnectionObserver(const std::shared_ptr<wrtc::NetworkInterface>& conn, NetworkInfo::Kind kind) {
         RTC_LOG(LS_VERBOSE) << "Connecting...";
         (void) connectionChangeCallback({NetworkInfo::ConnectionState::Connecting, kind});

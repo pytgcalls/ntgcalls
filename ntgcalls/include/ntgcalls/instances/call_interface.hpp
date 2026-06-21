@@ -85,6 +85,8 @@ namespace ntgcalls {
             }
             throw std::runtime_error("Invalid NetworkInterface type");
         }
+
+        std::shared_ptr<StreamManager> getStreamManager() const;
     };
 
     inline int operator&(const CallInterface::Type& lhs, const CallInterface::Type rhs){
