@@ -41,6 +41,7 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     wrapper.def("time", &ntgcalls::NTgCalls::time, py::arg("chat_id"), py::arg("direction"));
     wrapper.def("get_emojis_fingerprint", &ntgcalls::NTgCalls::getEmojisFingerprint, py::arg("chat_id"));
     wrapper.def("get_state", &ntgcalls::NTgCalls::getState, py::arg("chat_id"));
+    wrapper.def("get_call_type", &ntgcalls::NTgCalls::getCallType, py::arg("chat_id"));
     wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade, py::arg("callback"));
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd, py::arg("callback"));
     wrapper.def("on_connection_change", &ntgcalls::NTgCalls::onConnectionChange, py::arg("callback"));
@@ -67,6 +68,12 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     py::enum_<ntgcalls::StreamManager::Type>(m, "StreamType")
         .value("AUDIO", ntgcalls::StreamManager::Type::Audio)
         .value("VIDEO", ntgcalls::StreamManager::Type::Video)
+        .export_values();
+
+    py::enum_<ntgcalls::CallInterface::Type>(m, "CallType")
+        .value("GROUP", ntgcalls::CallInterface::Type::Group)
+        .value("P2P", ntgcalls::CallInterface::Type::P2P)
+        .value("CONFERENCE", ntgcalls::CallInterface::Type::Conference)
         .export_values();
 
     py::enum_<ntgcalls::StreamManager::Mode>(m, "StreamMode")

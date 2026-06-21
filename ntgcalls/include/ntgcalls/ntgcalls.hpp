@@ -105,6 +105,8 @@ namespace ntgcalls {
 
         ASYNC_RETURN(MediaState) getState(int64_t chatId);
 
+        ASYNC_RETURN(CallInterface::Type) getCallType(int64_t chatId);
+
         ASYNC_RETURN(wrtc::ConnectionMode) getConnectionMode(int64_t chatId);
 
         ASYNC_RETURN(double) cpuUsage() const;

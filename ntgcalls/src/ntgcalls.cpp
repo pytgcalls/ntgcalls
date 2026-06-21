@@ -411,6 +411,12 @@ namespace ntgcalls {
         END_ASYNC
     }
 
+    ASYNC_RETURN(CallInterface::Type) NTgCalls::getCallType(const int64_t chatId) {
+        SMART_ASYNC(this, chatId)
+        return safeConnection(chatId)->type();
+        END_ASYNC
+    }
+
     ASYNC_RETURN(wrtc::ConnectionMode) NTgCalls::getConnectionMode(int64_t chatId) {
         SMART_ASYNC(this, chatId)
         return safeConnection(chatId)->getConnectionMode();
