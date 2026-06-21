@@ -20,31 +20,38 @@ namespace ntgcalls {
     StreamManager::StreamManager(wrtc::SafeThread& workerThread): workerThread(workerThread) {}
 
     void StreamManager::close() {
-        std::lock_guard lock(mutex);
-        if (detached) return;
+        std::vector<std::unique_ptr<BaseReader>> readersToClose;
         {
-            std::lock_guard syncLock(syncMutex);
-            syncReaders.clear();
+            std::lock_guard lock(mutex);
+            if (detached) return;
+            {
+                std::lock_guard syncLock(syncMutex);
+                syncReaders.clear();
+            }
+            syncCV.notify_all();
+            onEOF = nullptr;
+            framesCallback = nullptr;
+            onChangeStatus = nullptr;
+            for (auto& reader : readers | std::views::values) {
+                readersToClose.push_back(std::move(reader));
+            }
+            readers.clear();
+            writers.clear();
+            for (const auto& stream : streams | std::views::values) {
+                if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
+                    audioReceiver->onFrames(nullptr);
+                } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
+                    videoReceiver->onFrame(nullptr);
+                }
+            }
+            streams.clear();
+            tracks.clear();
         }
-        syncCV.notify_all();
-        onEOF = nullptr;
-        framesCallback = nullptr;
-        onChangeStatus = nullptr;
-        for (const auto& reader : readers | std::views::values) {
+        for (auto& reader : readersToClose) {
             reader->onData(nullptr);
             reader->onEof(nullptr);
+            reader.reset();
         }
-        readers.clear();
-        writers.clear();
-        for (const auto& stream : streams | std::views::values) {
-            if (const auto audioReceiver = dynamic_cast<AudioReceiver*>(stream.get())) {
-                audioReceiver->onFrames(nullptr);
-            } else if (const auto videoReceiver = dynamic_cast<VideoReceiver*>(stream.get())) {
-                videoReceiver->onFrame(nullptr);
-            }
-        }
-        streams.clear();
-        tracks.clear();
     }
 
     void StreamManager::enableVideoSimulcast(const bool enable) {
@@ -108,8 +115,8 @@ namespace ntgcalls {
         std::lock_guard lock(mutex);
         tracks.clear();
         detached = initialized;
-        initialized = false;
         resumeOnReconnect = !isPaused();
+        initialized = false;
         for (const auto& reader : readers | std::views::values) {
             reader->set_enabled(false);
         }
@@ -306,11 +313,18 @@ namespace ntgcalls {
         if (wasSyncing) {
             syncCV.notify_all();
         }
+        std::unique_ptr<BaseReader> readerToDestroy;
         if (readers.contains(device)) {
-            readers[device]->onData(nullptr);
-            readers[device]->onEof(nullptr);
+            readerToDestroy = std::move(readers[device]);
+            readers.erase(device);
         }
-        readers.erase(device);
+        if (readerToDestroy) {
+            mutex.unlock();
+            readerToDestroy->onData(nullptr);
+            readerToDestroy->onEof(nullptr);
+            readerToDestroy.reset();
+            mutex.lock();
+        }
         externalReaders.erase(device);
         {
             std::lock_guard syncLock(syncMutex);
@@ -475,6 +489,7 @@ namespace ntgcalls {
                     }
                 }
             }
+            std::vector<wrtc::Frame> framesToEmit;
             {
                 std::lock_guard lock(strong->mutex);
                 if (strong->streams.contains(id)) {
@@ -482,21 +497,14 @@ namespace ntgcalls {
                     if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams[id].get())) {
                         frameData.absoluteCaptureTimestampMs = webrtc::TimeMillis();
                         if (streamType == Video && isShared) {
-                            (void) strong->framesCallback(
-                                id.first,
-                                id.second,
-                                {
-                                    {
-                                        0,
-                                        {data.get(), data.get() + frameSize},
-                                        frameData
-                                    }
-                                }
-                            );
+                            framesToEmit.push_back({0, {data.get(), data.get() + frameSize}, frameData});
                         }
                         stream->sendData(data.get(), frameSize, frameData);
                     }
                 }
+            }
+            if (!framesToEmit.empty()) {
+                (void) strong->framesCallback(id.first, id.second, std::move(framesToEmit));
             }
         });
 
