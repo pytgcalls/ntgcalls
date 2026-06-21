@@ -391,7 +391,6 @@ namespace telegram::e2e {
 
         chain::GroupParticipant self;
         self.user_id = sessionEncryption->userId();
-        self.flags = Permissions::AddUsers | Permissions::RemoveUsers;
         self.add_users = true;
         self.remove_users = true;
         self.public_key = privateKey.publicKeyBytes();

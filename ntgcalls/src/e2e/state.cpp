@@ -50,7 +50,7 @@ namespace telegram::e2e {
     ) {
         limitPermissions &= Permissions::AllPermissions;
         if (const auto participant = findParticipant(state, publicKey)) {
-            return Permissions{participant->flags & limitPermissions | Permissions::IsParticipant};
+            return Permissions{participant->flags() & limitPermissions | Permissions::IsParticipant};
         }
         return Permissions{state.external_permissions & limitPermissions};
     }
@@ -98,10 +98,10 @@ namespace telegram::e2e {
         std::map<std::pair<int64_t, PublicKeyBytes>, int32_t> oldParticipants;
         std::map<std::pair<int64_t, PublicKeyBytes>, int32_t> newParticipants;
         for (const auto& p : groupState.participants) {
-            oldParticipants[{p.user_id, p.public_key}] = p.flags;
+            oldParticipants[{p.user_id, p.public_key}] = p.flags();
         }
         for (const auto& p : newState.participants) {
-            newParticipants[{p.user_id, p.public_key}] = p.flags;
+            newParticipants[{p.user_id, p.public_key}] = p.flags();
         }
         if ((~groupState.external_permissions & newState.external_permissions) != 0) {
             return false;
@@ -136,7 +136,7 @@ namespace telegram::e2e {
         std::set<int64_t> userIds;
         std::set<PublicKeyBytes> keys;
         for (const auto& participant : state.participants) {
-            if ((participant.flags & ~Permissions::AllPermissions) != 0) {
+            if ((participant.flags() & ~Permissions::AllPermissions) != 0) {
                 return false;
             }
             userIds.insert(participant.user_id);
