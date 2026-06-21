@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <mutex>
+#include <rtc_base/logging.h>
 
 namespace wrtc {
     template <typename Signature>
@@ -36,11 +37,24 @@ namespace wrtc {
             std::lock_guard lock(mutex);
             if constexpr (std::is_void_v<R>) {
                 if (!callback) return false;
-                callback(std::move(args)...);
+                try {
+                    callback(std::move(args)...);
+                } catch (const std::exception& e) {
+                    RTC_LOG(LS_ERROR) << "synchronized_callback threw an exception: " << e.what();
+                } catch (...) {
+                    RTC_LOG(LS_ERROR) << "synchronized_callback threw an unknown exception";
+                }
                 return true;
             } else {
                 if (!callback) return std::optional<R>{std::nullopt};
-                return std::optional<R>{callback(std::move(args)...)};
+                try {
+                    return std::optional<R>{callback(std::move(args)...)};
+                } catch (const std::exception& e) {
+                    RTC_LOG(LS_ERROR) << "synchronized_callback threw an exception: " << e.what();
+                } catch (...) {
+                    RTC_LOG(LS_ERROR) << "synchronized_callback threw an unknown exception";
+                }
+                return std::optional<R>{std::nullopt};
             }
         }
     };
