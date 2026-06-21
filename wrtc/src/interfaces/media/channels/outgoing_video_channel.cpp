@@ -2,10 +2,10 @@
 // Created by Laky64 on 02/04/2024.
 //
 
-#include <wrtc/interfaces/media/channels/outgoing_video_channel.hpp>
-
-#include <wrtc/interfaces/native_connection.hpp>
+#include <set>
 #include <api/video/builtin_video_bitrate_allocator_factory.h>
+#include <wrtc/interfaces/native_connection.hpp>
+#include <wrtc/interfaces/media/channels/outgoing_video_channel.hpp>
 
 namespace wrtc {
     OutgoingVideoChannel::OutgoingVideoChannel(
@@ -106,22 +106,27 @@ namespace wrtc {
             channel->video_media_send_channel()->SetRtpSendParameters(_ssrc, rtpParameters);
 
             if (encryptor) {
+                std::set<uint32_t> transformerSsrcs;
+                transformerSsrcs.insert(_ssrc);
                 for (const auto&[semantics, ssrcs] : mediaContent.ssrcGroups) {
                     if (semantics == "SIM") {
                         for (const auto& ssrc : ssrcs) {
-                            channel->video_media_send_channel()->SetEncoderToPacketizerFrameTransformer(
-                                ssrc,
-                                webrtc::make_ref_counted<FrameTransformer>(
-                                    true,
-                                    encryptor,
-                                    int64_t(),
-                                    payloadTypeMapping,
-                                    nullptr,
-                                    nullptr
-                                )
-                            );
+                            transformerSsrcs.insert(ssrc);
                         }
                     }
+                }
+                for (const auto& ssrc : transformerSsrcs) {
+                    channel->video_media_send_channel()->SetEncoderToPacketizerFrameTransformer(
+                        ssrc,
+                        webrtc::make_ref_counted<FrameTransformer>(
+                            true,
+                            encryptor,
+                            int64_t(),
+                            payloadTypeMapping,
+                            nullptr,
+                            nullptr
+                        )
+                    );
                 }
             }
         });
