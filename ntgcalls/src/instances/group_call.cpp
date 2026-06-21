@@ -27,7 +27,7 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        connection = std::make_shared<wrtc::GroupConnection>(false);
+        connection = std::make_shared<wrtc::GroupConnection>(false, type() == Type::Conference);
         connection->open();
         RTC_LOG(LS_INFO) << "Group call initialized";
         streamManager->setStreamSources(StreamManager::Mode::Capture);
@@ -62,7 +62,7 @@ namespace ntgcalls {
             RTC_LOG(LS_ERROR) << "Screen sharing already initialized";
             throw ConnectionError("Screen sharing already initialized");
         }
-        presentationConnection = std::make_shared<wrtc::GroupConnection>(true);
+        presentationConnection = std::make_shared<wrtc::GroupConnection>(true, type() == Type::Conference);
         presentationConnection->open();
         streamManager->optimizeSources(presentationConnection.get());
         std::weak_ptr weak(shared_from_this());
@@ -170,12 +170,12 @@ namespace ntgcalls {
         conn->sendDataChannelMessage(bytes::make_binary(jsonRes.dump()));
     }
 
-    uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const {
+    uint32_t GroupCall::addIncomingVideo(const int64_t userID, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const {
         const auto& conn = Safe<wrtc::GroupConnection>(connection);
         if (!conn) {
             throw ConnectionError("Connection not initialized");
         }
-        const auto ssrc = conn->addIncomingVideo(endpoint, ssrcGroup);
+        const auto ssrc = conn->addIncomingVideo(userID, endpoint, ssrcGroup);
         if (getConnectionMode() == wrtc::ConnectionMode::Rtc) updateRemoteVideoConstraints(conn);
         return ssrc;
     }

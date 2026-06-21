@@ -40,7 +40,8 @@ namespace ntgcalls {
             Group = 1 << 0,
             Outgoing = 1 << 1,
             Incoming = 1 << 2,
-            P2P = Outgoing | Incoming
+            P2P = Outgoing | Incoming,
+            Conference = 1 << 3
         };
 
         virtual void stop();

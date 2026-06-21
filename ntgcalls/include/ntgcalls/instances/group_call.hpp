@@ -2,6 +2,7 @@
 // Created by Laky64 on 15/03/2024.
 //
 #pragma once
+#include <ntgcalls/instances/p2p_call.hpp>
 #include <ntgcalls/instances/call_interface.hpp>
 #include <wrtc/models/media_content.hpp>
 #include <wrtc/utils/json.hpp>
@@ -10,12 +11,12 @@
 namespace ntgcalls {
     using wrtc::json;
 
-    class GroupCall final : public CallInterface {
+    class GroupCall: public CallInterface {
         std::shared_ptr<wrtc::GroupConnection> presentationConnection;
         wrtc::synchronized_callback<void()> broadcastTimestampCallback;
         wrtc::synchronized_callback<void(wrtc::SegmentPartRequest)> segmentPartRequestCallback;
 
-        static void updateRemoteVideoConstraints(const wrtc::GroupConnection* conn) ;
+        static void updateRemoteVideoConstraints(const wrtc::GroupConnection* conn);
 
     public:
         explicit GroupCall(wrtc::SafeThread& updateThread): CallInterface(updateThread) {}
@@ -26,9 +27,9 @@ namespace ntgcalls {
 
         std::string initPresentation();
 
-        void connect(const std::string& jsonData, bool isPresentation);
+        virtual void connect(const std::string& jsonData, bool isPresentation);
 
-        uint32_t addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const;
+        uint32_t addIncomingVideo(int64_t userID, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const;
 
         bool removeIncomingVideo(const std::string& endpoint) const;
 
