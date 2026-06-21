@@ -65,12 +65,16 @@ namespace ntgcalls {
         session->onOutboundBlock(callback);
     }
 
-    void ConferenceCall::onSubchainRequest(const std::function<void(e2e::SubchainRequest)> &callback) const {
+    void ConferenceCall::onSubchainRequest(const std::function<void(e2e::SubchainRequest)>& callback) const {
         session->onSubchainRequest(callback);
     }
 
-    void ConferenceCall::onRequestParticipants(const std::function<void()> &callback) {
+    void ConferenceCall::onRequestParticipants(const std::function<void()>& callback) {
         requestParticipantsCallback = callback;
+    }
+
+    void ConferenceCall::onUpdateEmojis(const std::function<void(std::string)>& callback) {
+        session->onUpdateEmojiHash(callback);
     }
 
     CallInterface::Type ConferenceCall::type() const {
@@ -80,5 +84,9 @@ namespace ntgcalls {
     void ConferenceCall::stop() {
         GroupCall::stop();
         session = nullptr;
+    }
+
+    std::string ConferenceCall::getFingerprintEmojis() {
+        return session->getFingerprintEmojis();
     }
 } // ntgcalls

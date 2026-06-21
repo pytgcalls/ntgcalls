@@ -4,13 +4,14 @@
 
 #pragma once
 #include <ntgcalls/e2e/session.hpp>
+#include <ntgcalls/instances/e2e_interface.hpp>
 #include <ntgcalls/instances/group_call.hpp>
 #include <ntgcalls/models/conference_join_params.hpp>
 
 namespace ntgcalls {
     using namespace telegram;
 
-    class ConferenceCall final : public GroupCall {
+    class ConferenceCall final: public GroupCall, public E2EInterface {
         std::shared_ptr<e2e::Session> session;
         wrtc::synchronized_callback<void()> requestParticipantsCallback;
 
@@ -36,12 +37,16 @@ namespace ntgcalls {
 
         void onOutboundBlock(const std::function<void(bytes::binary)>& callback) const;
 
-        void onSubchainRequest(const std::function<void(e2e::SubchainRequest)> &callback) const;
+        void onSubchainRequest(const std::function<void(e2e::SubchainRequest)>& callback) const;
 
-        void onRequestParticipants(const std::function<void()> &callback);
+        void onRequestParticipants(const std::function<void()>& callback);
+
+        void onUpdateEmojis(const std::function<void(std::string)>& callback) override;
 
         Type type() const override;
 
         void stop() override;
+
+        std::string getFingerprintEmojis() override;
     };
 } // ntgcalls

@@ -11,11 +11,11 @@
 #include <ntgcalls/signaling/messages/media_state_message.hpp>
 #include <ntgcalls/signaling/messages/message.hpp>
 #include <ntgcalls/signaling/messages/negotiate_channels_message.hpp>
+#include <ntgcalls/utils/emoji_fingerprint.hpp>
 #include <wrtc/interfaces/native_connection.hpp>
 #include <wrtc/utils/encryption.hpp>
 
 namespace ntgcalls {
-
     void P2PCall::stop() {
         onEmitData = nullptr;
         CallInterface::stop();
@@ -94,6 +94,13 @@ namespace ntgcalls {
         }
         key = authKey;
         RTC_LOG(LS_INFO) << "Key exchanged, fingerprint: " << computedFingerprint;
+
+        const auto& g_a = _g_a_hash ? g_a_or_b : _g_a_or_b.value();
+        bytes::vector fingerprintData = computedAuthKey;
+        fingerprintData.insert(fingerprintData.end(), g_a.begin(), g_a.end());
+        const auto digest = openssl::Sha256::Digest(bytes::view(fingerprintData));
+        fingerprintEmojis = EmojiFingerprint::fromHash(digest);
+        (void) updateEmojisCallback(fingerprintEmojis);
         return AuthParams{
             static_cast<int64_t>(computedFingerprint),
             _g_a_or_b.value(),
@@ -408,6 +415,10 @@ namespace ntgcalls {
         onEmitData = callback;
     }
 
+    void P2PCall::onUpdateEmojis(const std::function<void(std::string)> &callback) {
+        updateEmojisCallback = callback;
+    }
+
     void P2PCall::sendSignalingData(const bytes::binary& buffer) const {
         if (!signaling) {
             throw ConnectionError("Connection not initialized");
@@ -427,5 +438,9 @@ namespace ntgcalls {
             return skipIsOutgoing ? Type::Outgoing : Type::Incoming;
         }
         return Type::P2P;
+    }
+
+    std::string P2PCall::getFingerprintEmojis() {
+        return fingerprintEmojis;
     }
 } // ntgcalls

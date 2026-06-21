@@ -35,6 +35,7 @@ namespace ntgcalls {
         wrtc::synchronized_callback<void(int64_t, e2e::SubchainRequest)> subchainRequestCallback;
         wrtc::synchronized_callback<void(int64_t, StreamManager::Type, StreamManager::Device)> onEof;
         wrtc::synchronized_callback<void(int64_t, MediaState)> mediaStateCallback;
+        wrtc::synchronized_callback<void(int64_t, std::string)> updateEmojisCallback;
         wrtc::synchronized_callback<void(int64_t, NetworkInfo)> connectionChangeCallback;
         wrtc::synchronized_callback<void(int64_t, BYTES(bytes::binary))> emitCallback;
         wrtc::synchronized_callback<void(int64_t, RemoteSource)> remoteSourceCallback;
@@ -98,6 +99,8 @@ namespace ntgcalls {
 
         ASYNC_RETURN(void) stopPresentation(int64_t chatId);
 
+        ASYNC_RETURN(std::string) getEmojisFingerprint(int64_t chatId);
+
         ASYNC_RETURN(uint64_t) time(int64_t chatId, StreamManager::Mode mode);
 
         ASYNC_RETURN(MediaState) getState(int64_t chatId);
@@ -137,6 +140,8 @@ namespace ntgcalls {
         void onOutboundBlock(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback);
 
         void onSubchainRequest(const std::function<void(int64_t, e2e::SubchainRequest)>& callback);
+
+        void onUpdateEmojis(const std::function<void(int64_t, std::string)>& callback);
 
         ASYNC_RETURN(void) sendBroadcastTimestamp(int64_t chatId, int64_t timestamp);
 

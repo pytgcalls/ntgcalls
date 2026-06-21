@@ -39,6 +39,7 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     wrapper.def("stop", &ntgcalls::NTgCalls::stop, py::arg("chat_id"));
     wrapper.def("stop_presentation", &ntgcalls::NTgCalls::stopPresentation, py::arg("chat_id"));
     wrapper.def("time", &ntgcalls::NTgCalls::time, py::arg("chat_id"), py::arg("direction"));
+    wrapper.def("get_emojis_fingerprint", &ntgcalls::NTgCalls::getEmojisFingerprint, py::arg("chat_id"));
     wrapper.def("get_state", &ntgcalls::NTgCalls::getState, py::arg("chat_id"));
     wrapper.def("on_upgrade", &ntgcalls::NTgCalls::onUpgrade, py::arg("callback"));
     wrapper.def("on_stream_end", &ntgcalls::NTgCalls::onStreamEnd, py::arg("callback"));
@@ -51,6 +52,7 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     wrapper.def("on_request_participants", &ntgcalls::NTgCalls::onRequestParticipants, py::arg("callback"));
     wrapper.def("on_outbound_block", &ntgcalls::NTgCalls::onOutboundBlock, py::arg("callback"));
     wrapper.def("on_subchain_request", &ntgcalls::NTgCalls::onSubchainRequest, py::arg("callback"));
+    wrapper.def("on_update_emojis", &ntgcalls::NTgCalls::onUpdateEmojis, py::arg("callback"));
     wrapper.def("calls", &ntgcalls::NTgCalls::calls);
     wrapper.def("cpu_usage", &ntgcalls::NTgCalls::cpuUsage);
     wrapper.def("send_external_frame", &ntgcalls::NTgCalls::sendExternalFrame, py::arg("chat_id"), py::arg("device"), py::arg("frame"), py::arg("frame_data"));

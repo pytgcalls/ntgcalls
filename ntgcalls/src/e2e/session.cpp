@@ -6,6 +6,7 @@
 #include <ntgcalls/e2e/session.hpp>
 #include <ntgcalls/e2e/chain/client_blockchain.hpp>
 #include <ntgcalls/e2e/chain/message_encryption.hpp>
+#include <ntgcalls/utils/emoji_fingerprint.hpp>
 #include <wrtc/utils/random.hpp>
 
 namespace telegram::e2e {
@@ -151,8 +152,7 @@ namespace telegram::e2e {
                 failed = true;
                 return;
             }
-            const auto emoji = receiveInboundMessage(bytes::view(last));
-            updateEmojiHashCallback(emoji ? *emoji : bytes::binary());
+            updateEmojis(receiveInboundMessage(bytes::view(last)));
             checkForOutboundMessages();
         } else if (blockchain) {
             if (!applyBlock(bytes::view(last))) {
@@ -378,8 +378,19 @@ namespace telegram::e2e {
         for (const auto& participant : currentGroupState().participants) {
             userIds.insert(participant.user_id);
         }
-        const auto emoji = emojiHash();
-        updateEmojiHashCallback(emoji ? *emoji : bytes::binary());
+        updateEmojis(emojiHash());
+    }
+
+    void Session::updateEmojis(const std::optional<bytes::binary>& hash) {
+        if (hash) {
+            fingerprintEmojis = ntgcalls::EmojiFingerprint::fromHash(bytes::view(*hash));
+            (void) updateEmojisCallback(fingerprintEmojis);
+        }
+    }
+
+    std::string Session::getFingerprintEmojis() {
+        std::lock_guard lock(mutex);
+        return fingerprintEmojis;
     }
 
     void Session::setLastBlock(const bytes::binary& block) {
@@ -505,8 +516,8 @@ namespace telegram::e2e {
         subchainRequestCallback = callback;
     }
 
-    void Session::onUpdateEmojiHash(const std::function<void(bytes::binary)> &callback) {
-        updateEmojiHashCallback = callback;
+    void Session::onUpdateEmojiHash(const std::function<void(std::string)> &callback) {
+        updateEmojisCallback = callback;
     }
 
     bytes::binary Session::encrypt(const bytes::binary& data, const size_t unencryptedPrefix) {

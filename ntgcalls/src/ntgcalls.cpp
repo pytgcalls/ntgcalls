@@ -107,6 +107,16 @@ namespace ntgcalls {
                 });
             }
         }
+        if (connections[chatId]->type() & (CallInterface::Type::P2P | CallInterface::Type::Conference)) {
+            SafeCall<E2EInterface>(connections[chatId].get())->onUpdateEmojis([this, chatId](const std::string &emojis) {
+                WORKER("onUpdateEmojis", updateThread, this, chatId, emojis)
+                THREAD_SAFE
+                RTC_LOG(LS_INFO) << "EMOJIS: " << emojis;
+                (void) updateEmojisCallback(chatId, emojis);
+                END_THREAD_SAFE
+                END_WORKER
+            });
+        }
         connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
             THREAD_SAFE
@@ -300,6 +310,12 @@ namespace ntgcalls {
         END_ASYNC
     }
 
+    ASYNC_RETURN(std::string) NTgCalls::getEmojisFingerprint(int64_t chatId) {
+        SMART_ASYNC(this, chatId)
+        return SafeCall<E2EInterface>(safeConnection(chatId))->getFingerprintEmojis();
+        END_ASYNC
+    }
+
     void NTgCalls::onStreamEnd(const std::function<void(int64_t, StreamManager::Type, StreamManager::Device)>& callback) {
         std::lock_guard lock(mutex);
         onEof = callback;
@@ -353,6 +369,11 @@ namespace ntgcalls {
     void NTgCalls::onSubchainRequest(const std::function<void(int64_t, e2e::SubchainRequest)> &callback) {
         std::lock_guard lock(mutex);
         subchainRequestCallback = callback;
+    }
+
+    void NTgCalls::onUpdateEmojis(const std::function<void(int64_t, std::string)> &callback) {
+        std::lock_guard lock(mutex);
+        updateEmojisCallback = callback;
     }
 
     ASYNC_RETURN(void) NTgCalls::sendBroadcastTimestamp(int64_t chatId, int64_t timestamp) {

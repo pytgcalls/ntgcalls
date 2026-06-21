@@ -29,6 +29,7 @@ namespace telegram::e2e {
         openssl::Key25519 privateKey;
         wrtc::SafeThread& updateThread;
         std::optional<bytes::binary> lastBlock;
+        std::string fingerprintEmojis;
         int lastBlockHeight = 0;
         SubChainState subchains[kSubChainsCount];
         std::optional<chain::ClientBlockchain> blockchain;
@@ -36,7 +37,7 @@ namespace telegram::e2e {
         std::unique_ptr<SessionEncryption> sessionEncryption;
         std::unique_ptr<SessionVerification> sessionVerification;
         wrtc::synchronized_callback<void(bytes::binary)> outboundBlockCallback;
-        wrtc::synchronized_callback<void(bytes::binary)> updateEmojiHashCallback;
+        wrtc::synchronized_callback<void(std::string)> updateEmojisCallback;
         wrtc::synchronized_callback<void(SubchainRequest)> subchainRequestCallback;
 
         static std::array<uint8_t, 32> randomSecret();
@@ -92,6 +93,8 @@ namespace telegram::e2e {
 
         std::optional<bytes::binary> emojiHash();
 
+        void updateEmojis(const std::optional<bytes::binary>& hash);
+
         void refreshFromCall();
 
     public:
@@ -120,7 +123,9 @@ namespace telegram::e2e {
 
         void onSubchainRequest(const std::function<void(SubchainRequest)>& callback);
 
-        void onUpdateEmojiHash(const std::function<void(bytes::binary)>& callback);
+        void onUpdateEmojiHash(const std::function<void(std::string)>& callback);
+
+        std::string getFingerprintEmojis();
 
         bytes::binary encrypt(const bytes::binary& data, size_t unencryptedPrefix) override;
 
