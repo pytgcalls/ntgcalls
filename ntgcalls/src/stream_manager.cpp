@@ -347,8 +347,7 @@ namespace ntgcalls {
     void StreamManager::maybeReconfigureDevice(Mode mode, Device device, const std::optional<DescriptionType> &desc) {
         const StreamId id(
             mode,
-            !videoSimulcast && (device == Camera || device == Screen) ?
-            Camera : device
+            device
         );
 
         const auto streamType = getStreamType(device);

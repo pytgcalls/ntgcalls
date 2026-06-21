@@ -413,7 +413,9 @@ namespace wrtc {
             audioChannelId = contentNegotiationContext->addOutgoingChannel(audioTrack);
         }
         if (const auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
-            videoChannelId = contentNegotiationContext->addOutgoingChannel(videoTrack);
+            if (!videoChannelId) {
+                videoChannelId = contentNegotiationContext->addOutgoingChannel(videoTrack);
+            }
         }
         return NativeNetworkInterface::addOutgoingTrack(track);
     }
