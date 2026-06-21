@@ -111,7 +111,6 @@ namespace ntgcalls {
             SafeCall<E2EInterface>(connections[chatId].get())->onUpdateEmojis([this, chatId](const std::string &emojis) {
                 WORKER("onUpdateEmojis", updateThread, this, chatId, emojis)
                 THREAD_SAFE
-                RTC_LOG(LS_INFO) << "EMOJIS: " << emojis;
                 (void) updateEmojisCallback(chatId, emojis);
                 END_THREAD_SAFE
                 END_WORKER
