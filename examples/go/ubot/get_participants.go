@@ -36,7 +36,7 @@ func (ctx *Context) GetParticipants(chatId int64) ([]*tg.GroupCallParticipant, e
 				return nil, err
 			}
 			for _, participant := range res.Participants {
-				ctx.callParticipants[chatId].CallParticipants[getParticipantId(participant.Peer)] = participant
+				ctx.callParticipants[chatId].CallParticipants[parsePeer(participant.Peer)] = participant
 			}
 			if res.NextOffset == "" {
 				break

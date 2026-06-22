@@ -2,7 +2,7 @@ package ubot
 
 import tg "github.com/amarnathcjd/gogram/telegram"
 
-func getParticipantId(peer tg.Peer) int64 {
+func parsePeer(peer tg.Peer) int64 {
 	var participantId int64
 	switch chatObj := peer.(type) {
 	case *tg.PeerUser:

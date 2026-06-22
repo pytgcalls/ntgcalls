@@ -17,17 +17,17 @@ func (ctx *Context) updateSources(chatId int64) error {
 		}
 	}
 	for _, participant := range participants {
-		participantId := getParticipantId(participant.Peer)
+		participantId := parsePeer(participant.Peer)
 		if participant.Video != nil && ctx.callSources[chatId].CameraSources[participantId] == "" {
 			ctx.callSources[chatId].CameraSources[participantId] = participant.Video.Endpoint
-			_, err = ctx.binding.AddIncomingVideo(chatId, participant.Video.Endpoint, parseVideoSources(participant.Video.SourceGroups))
+			_, err = ctx.binding.AddIncomingVideo(chatId, participantId, participant.Video.Endpoint, parseVideoSources(participant.Video.SourceGroups))
 			if err != nil {
 				return err
 			}
 		}
 		if participant.Presentation != nil && ctx.callSources[chatId].ScreenSources[participantId] == "" {
 			ctx.callSources[chatId].ScreenSources[participantId] = participant.Presentation.Endpoint
-			_, err = ctx.binding.AddIncomingVideo(chatId, participant.Presentation.Endpoint, parseVideoSources(participant.Presentation.SourceGroups))
+			_, err = ctx.binding.AddIncomingVideo(chatId, participantId, participant.Presentation.Endpoint, parseVideoSources(participant.Presentation.SourceGroups))
 			if err != nil {
 				return err
 			}

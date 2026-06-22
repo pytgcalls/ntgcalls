@@ -27,6 +27,7 @@ type Context struct {
 	incomingCallCallbacks []func(client *Context, chatId int64)
 	streamEndCallbacks    []ntgcalls.StreamEndCallback
 	frameCallbacks        []ntgcalls.FrameCallback
+	emojisCallbacks       []ntgcalls.EmojisCallback
 }
 
 func NewInstance(app *tg.Client) *Context {
@@ -59,6 +60,10 @@ func (ctx *Context) OnIncomingCall(callback func(client *Context, chatId int64))
 
 func (ctx *Context) OnStreamEnd(callback ntgcalls.StreamEndCallback) {
 	ctx.streamEndCallbacks = append(ctx.streamEndCallbacks, callback)
+}
+
+func (ctx *Context) OnUpdateEmojis(callback ntgcalls.EmojisCallback) {
+	ctx.emojisCallbacks = append(ctx.emojisCallbacks, callback)
 }
 
 func (ctx *Context) OnFrame(callback ntgcalls.FrameCallback) {

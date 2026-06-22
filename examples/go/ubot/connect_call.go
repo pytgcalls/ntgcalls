@@ -9,14 +9,112 @@ import (
 	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
-func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDescription, jsonParams string) error {
+func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDescription, jsonParams string, conference bool, lastBlock []byte) error {
 	defer func() {
 		if ctx.waitConnect[chatId] != nil {
 			delete(ctx.waitConnect, chatId)
 		}
+		delete(ctx.pendingConnections, chatId)
 	}()
 	ctx.waitConnect[chatId] = make(chan error)
-	if chatId >= 0 {
+	if conference {
+		if lastBlock == nil {
+			if err := ctx.binding.CreateP2PCall(chatId); err != nil {
+				return err
+			}
+		}
+		conferenceParams, err := ctx.binding.InitConference(chatId, ctx.self.ID, lastBlock)
+		if err != nil {
+			return err
+		}
+		if lastBlock == nil {
+			if err = ctx.binding.SetStreamSources(chatId, ntgcalls.CaptureStream, mediaDescription); err != nil {
+				return err
+			}
+		}
+		state, err := ctx.binding.GetState(chatId)
+		if err != nil {
+			return err
+		}
+
+		var rawUpdates []tg.Update
+		if lastBlock == nil {
+			createParams := &tg.PhoneCreateConferenceCallParams{
+				Muted:        false,
+				VideoStopped: state.VideoStopped,
+				Join:         true,
+				RandomID:     int32(tg.GenRandInt()),
+				Block:        conferenceParams.Block,
+				Params: &tg.DataJson{
+					Data: conferenceParams.Payload,
+				},
+				PublicKey: tg.NewInt256(conferenceParams.PublicKey),
+			}
+			callResRaw, err := ctx.app.PhoneCreateConferenceCall(createParams)
+			if err != nil {
+				return err
+			}
+			rawUpdates = callResRaw.(*tg.UpdatesObj).Updates
+		} else {
+			inputCall, err := ctx.getInputGroupCall(chatId)
+			if err != nil {
+				return err
+			}
+			joinParams := &tg.PhoneJoinGroupCallParams{
+				Muted:        false,
+				VideoStopped: state.VideoStopped,
+				Call:         inputCall,
+				JoinAs: &tg.InputPeerUser{
+					UserID:     ctx.self.ID,
+					AccessHash: ctx.self.AccessHash,
+				},
+				Block: conferenceParams.Block,
+				Params: &tg.DataJson{
+					Data: conferenceParams.Payload,
+				},
+				PublicKey: tg.NewInt256(conferenceParams.PublicKey),
+			}
+			callResRaw, err := ctx.app.PhoneJoinGroupCall(joinParams)
+			if err != nil {
+				return err
+			}
+			rawUpdates = callResRaw.(*tg.UpdatesObj).Updates
+		}
+
+		resultParams := "{\"transport\": null}"
+		for _, update := range rawUpdates {
+			switch u := update.(type) {
+			case *tg.UpdateGroupCall:
+				if groupCall, ok := u.Call.(*tg.GroupCallObj); ok {
+					ctx.inputGroupCalls[chatId] = &tg.InputGroupCallObj{
+						ID:         groupCall.ID,
+						AccessHash: groupCall.AccessHash,
+					}
+				}
+			case *tg.UpdateGroupCallConnection:
+				resultParams = u.Params.Data
+			}
+		}
+
+		if lastBlock == nil {
+			inputCall, err := ctx.getInputGroupCall(chatId)
+			if err != nil {
+				return err
+			}
+			inputUser, err := ctx.app.GetSendableUser(chatId)
+			if err != nil {
+				return err
+			}
+			_, err = ctx.app.PhoneInviteConferenceCallParticipant(!state.VideoStopped, inputCall, inputUser)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err = ctx.binding.Connect(chatId, resultParams, false); err != nil {
+			return err
+		}
+	} else if chatId >= 0 {
 		defer func() {
 			if ctx.p2pConfigs[chatId] != nil {
 				delete(ctx.p2pConfigs, chatId)
@@ -120,6 +218,7 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 			parseRTCServers(ctx.p2pConfigs[chatId].PhoneCall.Connections),
 			ctx.p2pConfigs[chatId].PhoneCall.Protocol.LibraryVersions,
 			ctx.p2pConfigs[chatId].PhoneCall.P2PAllowed,
+			"",
 		)
 		if err != nil {
 			return err
@@ -191,5 +290,26 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 			}
 		}
 	}
-	return <-ctx.waitConnect[chatId]
+
+	if err := <-ctx.waitConnect[chatId]; err != nil {
+		return err
+	}
+
+	if conference || chatId < 0 {
+		state, err := ctx.binding.GetState(chatId)
+		if err != nil {
+			return err
+		}
+		if err = ctx.joinPresentation(chatId, !state.PresentationStopped); err != nil {
+			return err
+		}
+		if ctx.callSources[chatId] == nil {
+			ctx.callSources[chatId] = &types.CallSources{
+				CameraSources: make(map[int64]string),
+				ScreenSources: make(map[int64]string),
+			}
+		}
+		return ctx.updateSources(chatId)
+	}
+	return nil
 }

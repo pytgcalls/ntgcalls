@@ -115,6 +115,20 @@ func main() {
 		}
 		return nil
 	})
+	mtProto.On("message:[!/.]conference", func(message *tg.NewMessage) error {
+		err := uBotInstance.JoinConference(message.ChannelID(), getMediaDescription(urlVideoTest))
+		if err != nil {
+			return err
+		}
+		_, err = message.Reply("Conference started!")
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	uBotInstance.OnUpdateEmojis(func(chatId int64, emojis string) {
+		fmt.Println("Emojis updated for chatId:", chatId, "emojis:", emojis)
+	})
 	mtProto.Idle()
 }
 

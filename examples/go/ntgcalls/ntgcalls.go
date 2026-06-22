@@ -10,6 +10,10 @@ package ntgcalls
 //extern void handleRemoteSourceChange(uintptr_t ptr, int64_t chatID, ntg_remote_source_struct remoteSource, void*);
 //extern void handleRequestBroadcastTimestamp(uintptr_t ptr, int64_t chatID, void*);
 //extern void handleRequestBroadcastPart(uintptr_t ptr, int64_t chatID, ntg_segment_part_request_struct segmentPartRequest, void*);
+//extern void handleUpdateEmojis(uintptr_t ptr, int64_t chatID, char* emojis, void*);
+//extern void handleRequestParticipants(uintptr_t ptr, int64_t chatID, void*);
+//extern void handleOutboundBlock(uintptr_t ptr, int64_t chatID, uint8_t* block, int size, void*);
+//extern void handleSubchainRequest(uintptr_t ptr, int64_t chatID, ntg_subchain_request_struct subchainRequest, void*);
 //extern void handleLogs(ntg_log_message_struct logMessage);
 import "C"
 import (
@@ -36,6 +40,10 @@ func NTgCalls() *Client {
 	C.ntg_on_remote_source_change(C.uintptr_t(instance.ptr), (C.ntg_remote_source_callback)(unsafe.Pointer(C.handleRemoteSourceChange)), selfPointer)
 	C.ntg_on_request_broadcast_timestamp(C.uintptr_t(instance.ptr), (C.ntg_broadcast_timestamp_callback)(unsafe.Pointer(C.handleRequestBroadcastTimestamp)), selfPointer)
 	C.ntg_on_request_broadcast_part(C.uintptr_t(instance.ptr), (C.ntg_broadcast_part_callback)(unsafe.Pointer(C.handleRequestBroadcastPart)), selfPointer)
+	C.ntg_on_update_emojis(C.uintptr_t(instance.ptr), (C.ntg_emojis_callback)(unsafe.Pointer(C.handleUpdateEmojis)), selfPointer)
+	C.ntg_on_request_participants(C.uintptr_t(instance.ptr), (C.ntg_participants_callback)(unsafe.Pointer(C.handleRequestParticipants)), selfPointer)
+	C.ntg_on_outbound_block(C.uintptr_t(instance.ptr), (C.ntg_outbound_block_callback)(unsafe.Pointer(C.handleOutboundBlock)), selfPointer)
+	C.ntg_on_subchain_request(C.uintptr_t(instance.ptr), (C.ntg_subchain_request_callback)(unsafe.Pointer(C.handleSubchainRequest)), selfPointer)
 	return instance
 }
 
@@ -86,10 +94,11 @@ func handleUpgrade(_ C.uintptr_t, chatID C.int64_t, state C.ntg_media_state_stru
 	self := (*Client)(ptr)
 	goChatID := int64(chatID)
 	goState := MediaState{
-		Muted:              bool(state.muted),
-		VideoPaused:        bool(state.videoPaused),
-		VideoStopped:       bool(state.videoStopped),
-		PresentationPaused: bool(state.presentationPaused),
+		Muted:               bool(state.muted),
+		VideoPaused:         bool(state.videoPaused),
+		VideoStopped:        bool(state.videoStopped),
+		PresentationPaused:  bool(state.presentationPaused),
+		PresentationStopped: bool(state.presentationStopped),
 	}
 	for _, x0 := range self.upgradeCallbacks {
 		go x0(goChatID, goState)
@@ -204,6 +213,49 @@ func handleRequestBroadcastPart(_ C.uintptr_t, chatID C.int64_t, segmentPartRequ
 	}
 }
 
+//export handleUpdateEmojis
+func handleUpdateEmojis(_ C.uintptr_t, chatID C.int64_t, emojis *C.char, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
+	goChatID := int64(chatID)
+	goEmojis := C.GoString(emojis)
+	for _, x0 := range self.emojisCallbacks {
+		go x0(goChatID, goEmojis)
+	}
+}
+
+//export handleRequestParticipants
+func handleRequestParticipants(_ C.uintptr_t, chatID C.int64_t, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
+	goChatID := int64(chatID)
+	for _, x0 := range self.requestParticipantsCallbacks {
+		go x0(goChatID)
+	}
+}
+
+//export handleOutboundBlock
+func handleOutboundBlock(_ C.uintptr_t, chatID C.int64_t, block *C.uint8_t, size C.int, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
+	goChatID := int64(chatID)
+	goBlock := C.GoBytes(unsafe.Pointer(block), size)
+	for _, x0 := range self.outboundBlockCallbacks {
+		go x0(goChatID, goBlock)
+	}
+}
+
+//export handleSubchainRequest
+func handleSubchainRequest(_ C.uintptr_t, chatID C.int64_t, subchainRequest C.ntg_subchain_request_struct, ptr unsafe.Pointer) {
+	self := (*Client)(ptr)
+	goChatID := int64(chatID)
+	goSubchainRequest := SubchainRequest{
+		Subchain: int32(subchainRequest.subchain),
+		Height:   int32(subchainRequest.height),
+		Limit:    int32(subchainRequest.limit),
+	}
+	for _, x0 := range self.subchainRequestCallbacks {
+		go x0(goChatID, goSubchainRequest)
+	}
+}
+
 func (ctx *Client) OnStreamEnd(callback StreamEndCallback) {
 	ctx.streamEndCallbacks = append(ctx.streamEndCallbacks, callback)
 }
@@ -236,6 +288,22 @@ func (ctx *Client) OnRequestBroadcastPart(callback BroadcastPartCallback) {
 	ctx.broadcastPartCallbacks = append(ctx.broadcastPartCallbacks, callback)
 }
 
+func (ctx *Client) OnUpdateEmojis(callback EmojisCallback) {
+	ctx.emojisCallbacks = append(ctx.emojisCallbacks, callback)
+}
+
+func (ctx *Client) OnRequestParticipants(callback RequestParticipantsCallback) {
+	ctx.requestParticipantsCallbacks = append(ctx.requestParticipantsCallbacks, callback)
+}
+
+func (ctx *Client) OnOutboundBlock(callback OutboundBlockCallback) {
+	ctx.outboundBlockCallbacks = append(ctx.outboundBlockCallbacks, callback)
+}
+
+func (ctx *Client) OnSubchainRequest(callback SubchainRequestCallback) {
+	ctx.subchainRequestCallbacks = append(ctx.subchainRequestCallbacks, callback)
+}
+
 func (ctx *Client) GetState(chatId int64) (MediaState, error) {
 	f := CreateFuture()
 	var buffer C.ntg_media_state_struct
@@ -246,10 +314,11 @@ func (ctx *Client) GetState(chatId int64) (MediaState, error) {
 		return MediaState{}, err
 	}
 	return MediaState{
-		Muted:              bool(buffer.muted),
-		VideoPaused:        bool(buffer.videoPaused),
-		VideoStopped:       bool(buffer.videoStopped),
-		PresentationPaused: bool(buffer.presentationPaused),
+		Muted:               bool(buffer.muted),
+		VideoPaused:         bool(buffer.videoPaused),
+		VideoStopped:        bool(buffer.videoStopped),
+		PresentationPaused:  bool(buffer.presentationPaused),
+		PresentationStopped: bool(buffer.presentationStopped),
 	}, nil
 }
 
@@ -274,6 +343,36 @@ func (ctx *Client) GetConnectionMode(chatId int64) (ConnectionMode, error) {
 	}
 }
 
+func (ctx *Client) GetEmojisFingerprint(chatId int64) (string, error) {
+	var buffer *C.char
+	f := CreateFuture()
+	C.ntg_get_emojis_fingerprint(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer, f.ParseToC())
+	f.wait()
+	defer C.free(unsafe.Pointer(buffer))
+	return C.GoString(buffer), parseErrorCode(f)
+}
+
+func (ctx *Client) GetCallType(chatId int64) (CallType, error) {
+	f := CreateFuture()
+	var buffer C.ntg_call_type_enum
+	C.ntg_get_call_type(C.uintptr_t(ctx.ptr), C.int64_t(chatId), &buffer, f.ParseToC())
+	f.wait()
+	err := parseErrorCode(f)
+	if err != nil {
+		return CallType(0), err
+	}
+	switch buffer {
+	case C.NTG_CALL_TYPE_GROUP:
+		return GroupCallType, nil
+	case C.NTG_CALL_TYPE_P2P:
+		return P2PCallType, nil
+	case C.NTG_CALL_TYPE_CONFERENCE:
+		return ConferenceCallType, nil
+	default:
+		return CallType(0), fmt.Errorf("unknown call type")
+	}
+}
+
 func (ctx *Client) CreateCall(chatId int64) (string, error) {
 	var buffer *C.char
 	f := CreateFuture()
@@ -292,6 +391,26 @@ func (ctx *Client) InitPresentation(chatId int64) (string, error) {
 	return C.GoString(buffer), parseErrorCode(f)
 }
 
+func (ctx *Client) InitConference(chatId int64, userId int64, lastBlock []byte) (ConferenceJoinParams, error) {
+	f := CreateFuture()
+	var buffer C.ntg_conference_join_params_struct
+	lastBlockC, lastBlockSize := parseBytes(lastBlock)
+	C.ntg_init_conference(C.uintptr_t(ctx.ptr), C.int64_t(chatId), C.int64_t(userId), lastBlockC, lastBlockSize, &buffer, f.ParseToC())
+	f.wait()
+	err := parseErrorCode(f)
+	if err != nil {
+		return ConferenceJoinParams{}, err
+	}
+	defer C.free(unsafe.Pointer(buffer.payload))
+	defer C.free(unsafe.Pointer(buffer.publicKey))
+	defer C.free(unsafe.Pointer(buffer.block))
+	return ConferenceJoinParams{
+		Payload:   C.GoString(buffer.payload),
+		PublicKey: C.GoBytes(unsafe.Pointer(buffer.publicKey), buffer.sizePublicKey),
+		Block:     C.GoBytes(unsafe.Pointer(buffer.block), buffer.sizeBlock),
+	}, nil
+}
+
 func (ctx *Client) StopPresentation(chatId int64) error {
 	f := CreateFuture()
 	C.ntg_stop_presentation(C.uintptr_t(ctx.ptr), C.int64_t(chatId), f.ParseToC())
@@ -299,10 +418,10 @@ func (ctx *Client) StopPresentation(chatId int64) error {
 	return parseErrorCode(f)
 }
 
-func (ctx *Client) AddIncomingVideo(chatId int64, endpoint string, ssrcGroups []SsrcGroup) (uint32, error) {
+func (ctx *Client) AddIncomingVideo(chatId, userId int64, endpoint string, ssrcGroups []SsrcGroup) (uint32, error) {
 	buffer := new(C.uint32_t)
 	f := CreateFuture()
-	C.ntg_add_incoming_video(C.uintptr_t(ctx.ptr), C.int64_t(chatId), C.CString(endpoint), parseSsrcGroups(ssrcGroups), C.int(len(ssrcGroups)), buffer, f.ParseToC())
+	C.ntg_add_incoming_video(C.uintptr_t(ctx.ptr), C.int64_t(chatId), C.int64_t(userId), C.CString(endpoint), parseSsrcGroups(ssrcGroups), C.int(len(ssrcGroups)), buffer, f.ParseToC())
 	f.wait()
 	return uint32(*buffer), parseErrorCode(f)
 }
@@ -353,10 +472,14 @@ func (ctx *Client) SkipExchange(chatId int64, encryptionKey []byte, isOutgoing b
 	return parseErrorCode(f)
 }
 
-func (ctx *Client) ConnectP2P(chatId int64, rtcServers []RTCServer, versions []string, P2PAllowed bool) error {
+func (ctx *Client) ConnectP2P(chatId int64, rtcServers []RTCServer, versions []string, P2PAllowed bool, customParameters string) error {
 	f := CreateFuture()
 	versionsC, sizeVersions := parseStringVectorC(versions)
-	C.ntg_connect_p2p(C.uintptr_t(ctx.ptr), C.int64_t(chatId), parseRtcServers(rtcServers), C.int(len(rtcServers)), versionsC, C.int(sizeVersions), C.bool(P2PAllowed), f.ParseToC())
+	var customParametersC *C.char
+	if len(customParameters) > 0 {
+		customParametersC = C.CString(customParameters)
+	}
+	C.ntg_connect_p2p(C.uintptr_t(ctx.ptr), C.int64_t(chatId), parseRtcServers(rtcServers), C.int(len(rtcServers)), versionsC, C.int(sizeVersions), C.bool(P2PAllowed), customParametersC, f.ParseToC())
 	f.wait()
 	return parseErrorCode(f)
 }
@@ -415,6 +538,28 @@ func (ctx *Client) SendBroadcastPart(chatId int64, segmentID int64, partID int32
 	f := CreateFuture()
 	dataC, dataSize := parseBytes(data)
 	C.ntg_send_broadcast_part(C.uintptr_t(ctx.ptr), C.int64_t(chatId), C.int64_t(segmentID), C.int32_t(partID), status.ParseToC(), C.bool(qualityUpdate), dataC, dataSize, f.ParseToC())
+	f.wait()
+	return parseErrorCode(f)
+}
+
+func (ctx *Client) UpdateAudioSsrcMappings(chatId int64, mappings []SsrcMapping) error {
+	f := CreateFuture()
+	C.ntg_update_audio_ssrc_mappings(C.uintptr_t(ctx.ptr), C.int64_t(chatId), parseSsrcMappings(mappings), C.int(len(mappings)), f.ParseToC())
+	f.wait()
+	return parseErrorCode(f)
+}
+
+func (ctx *Client) ApplyBlocks(chatId int64, subchain int32, nextOffset int32, blocks [][]byte, fromShortPoll bool) error {
+	f := CreateFuture()
+	blocksC, blockSizesC := parseBlocks(blocks)
+	C.ntg_apply_blocks(C.uintptr_t(ctx.ptr), C.int64_t(chatId), C.int(subchain), C.int(nextOffset), blocksC, blockSizesC, C.int(len(blocks)), C.bool(fromShortPoll), f.ParseToC())
+	f.wait()
+	return parseErrorCode(f)
+}
+
+func (ctx *Client) FinishSubchainRequest(chatId int64, subchain int32) error {
+	f := CreateFuture()
+	C.ntg_finish_subchain_request(C.uintptr_t(ctx.ptr), C.int64_t(chatId), C.int(subchain), f.ParseToC())
 	f.wait()
 	return parseErrorCode(f)
 }

@@ -7,6 +7,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/Laky-64/gologging"
 	tg "github.com/amarnathcjd/gogram/telegram"
 )
 
@@ -68,6 +69,21 @@ func (ctx *Context) handleUpdates() {
 				ctx.p2pConfigs[userId].WaitData <- nil
 			}
 		case *tg.PhoneCallDiscarded:
+			if migrate, ok := call.Reason.(*tg.PhoneCallDiscardReasonMigrateConferenceCall); ok {
+				ctx.inputGroupCalls[userId] = &tg.InputGroupCallSlug{Slug: migrate.Slug}
+				delete(ctx.inputCalls, userId)
+				go func() {
+					lastBlock, err := ctx.getConferenceLastBlock(userId)
+					if err != nil {
+						gologging.ErrorF("migrate getConferenceLastBlock: %v", err)
+						return
+					}
+					if err = ctx.connectCall(userId, ntgcalls.MediaDescription{}, "", true, lastBlock); err != nil {
+						gologging.ErrorF("migrate connectCall: %v", err)
+					}
+				}()
+				return nil
+			}
 			var reasonMessage string
 			switch call.Reason.(type) {
 			case *tg.PhoneCallDiscardReasonBusy:
@@ -106,7 +122,7 @@ func (ctx *Context) handleUpdates() {
 				}
 			}
 			for _, participant := range participantsUpdate.Participants {
-				participantId := getParticipantId(participant.Peer)
+				participantId := parsePeer(participant.Peer)
 				if participant.Left {
 					delete(ctx.callParticipants[chatId].CallParticipants, participantId)
 					if ctx.callSources != nil && ctx.callSources[chatId] != nil {
@@ -126,6 +142,7 @@ func (ctx *Context) handleUpdates() {
 							ctx.callSources[chatId].CameraSources[participantId] = participant.Video.Endpoint
 							_, _ = ctx.binding.AddIncomingVideo(
 								chatId,
+								participantId,
 								participant.Video.Endpoint,
 								parseVideoSources(participant.Video.SourceGroups),
 							)
@@ -143,6 +160,7 @@ func (ctx *Context) handleUpdates() {
 							ctx.callSources[chatId].ScreenSources[participantId] = participant.Presentation.Endpoint
 							_, _ = ctx.binding.AddIncomingVideo(
 								chatId,
+								participantId,
 								participant.Presentation.Endpoint,
 								parseVideoSources(participant.Presentation.SourceGroups),
 							)
@@ -169,6 +187,8 @@ func (ctx *Context) handleUpdates() {
 								chatId,
 								ctx.pendingConnections[chatId].MediaDescription,
 								ctx.pendingConnections[chatId].Payload,
+								false,
+								nil,
 							)
 						}
 					} else if !participant.CanSelfUnmute {
@@ -195,10 +215,7 @@ func (ctx *Context) handleUpdates() {
 	ctx.app.AddRawHandler(&tg.UpdateGroupCall{}, func(m tg.Update, c *tg.Client) error {
 		updateGroupCall := m.(*tg.UpdateGroupCall)
 		if groupCallRaw := updateGroupCall.Call; groupCallRaw != nil {
-			chatID, err := ctx.parseChatId(updateGroupCall.ChatID)
-			if err != nil {
-				return err
-			}
+			chatID := parsePeer(updateGroupCall.Peer)
 			switch groupCallRaw.(type) {
 			case *tg.GroupCallObj:
 				groupCall := groupCallRaw.(*tg.GroupCallObj)
@@ -214,6 +231,39 @@ func (ctx *Context) handleUpdates() {
 			}
 		}
 		return nil
+	})
+
+	ctx.app.AddRawHandler(&tg.UpdateGroupCallChainBlocks{}, func(m tg.Update, c *tg.Client) error {
+		chainBlocks := m.(*tg.UpdateGroupCallChainBlocks)
+		if inputCall, ok := chainBlocks.Call.(*tg.InputGroupCallObj); ok {
+			chatId, err := ctx.convertGroupCallId(inputCall.ID)
+			if err == nil {
+				_ = ctx.binding.ApplyBlocks(chatId, chainBlocks.SubChainID, chainBlocks.NextOffset, chainBlocks.Blocks, false)
+			}
+		}
+		return nil
+	})
+
+	ctx.binding.OnOutboundBlock(func(chatId int64, block []byte) {
+		ctx.sendConferenceCallBroadcast(chatId, block)
+	})
+
+	ctx.binding.OnSubchainRequest(func(chatId int64, request ntgcalls.SubchainRequest) {
+		blocks, nextOffset, err := ctx.getSubchainBlocks(chatId, request)
+		if err == nil && len(blocks) > 0 {
+			_ = ctx.binding.ApplyBlocks(chatId, request.Subchain, nextOffset, blocks, true)
+		}
+		_ = ctx.binding.FinishSubchainRequest(chatId, request.Subchain)
+	})
+
+	ctx.binding.OnRequestParticipants(func(chatId int64) {
+		_, _ = ctx.GetParticipants(chatId)
+	})
+
+	ctx.binding.OnUpdateEmojis(func(chatId int64, emojis string) {
+		for _, callback := range ctx.emojisCallbacks {
+			go callback(chatId, emojis)
+		}
 	})
 
 	ctx.binding.OnRequestBroadcastTimestamp(func(chatId int64) {
@@ -287,7 +337,7 @@ func (ctx *Context) handleUpdates() {
 	ctx.binding.OnUpgrade(func(chatId int64, state ntgcalls.MediaState) {
 		err := ctx.setCallStatus(ctx.inputGroupCalls[chatId], state)
 		if err != nil {
-			fmt.Println(err)
+			gologging.ErrorF("%v", err)
 		}
 	})
 
