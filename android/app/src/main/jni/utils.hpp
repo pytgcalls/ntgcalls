@@ -24,6 +24,10 @@ struct InstanceCallbacks {
     std::optional<JavaCallback> onRemoteSourceChangeCallback;
     std::optional<JavaCallback> onRequestBroadcastPartCallback;
     std::optional<JavaCallback> onRequestBroadcastTimestampCallback;
+    std::optional<JavaCallback> onUpdateEmojisCallback;
+    std::optional<JavaCallback> onRequestParticipantsCallback;
+    std::optional<JavaCallback> onOutboundBlockCallback;
+    std::optional<JavaCallback> onSubchainRequestCallback;
 };
 
 ntgcalls::NTgCalls* getInstance(JNIEnv *env, jobject obj);
@@ -119,6 +123,16 @@ webrtc::ScopedJavaLocalRef<jobject> parseJMediaSegmentQuality(JNIEnv *env, const
 wrtc::MediaSegment::Part::Status parseSegmentPartStatus(JNIEnv *env, jobject status);
 
 webrtc::ScopedJavaLocalRef<jobject> parseJConnectionMode(JNIEnv *env, wrtc::ConnectionMode mode);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJConferenceJoinParams(JNIEnv *env, const ntgcalls::ConferenceJoinParams& params);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJSubchainRequest(JNIEnv *env, const telegram::e2e::SubchainRequest& request);
+
+webrtc::ScopedJavaLocalRef<jobject> parseJCallType(JNIEnv *env, ntgcalls::CallInterface::Type type);
+
+std::vector<wrtc::SsrcMapping> parseSsrcMappingList(JNIEnv *env, jobject list);
+
+std::vector<bytes::binary> parseBinaryList(JNIEnv *env, jobject list);
 
 void throwJavaException(JNIEnv *env, std::string name, const std::string& message);
 

@@ -11,9 +11,11 @@ import io.github.pytgcalls.media.MediaSegmentStatus;
 import io.github.pytgcalls.media.MediaState;
 import io.github.pytgcalls.media.CallInfo;
 import io.github.pytgcalls.media.SsrcGroup;
+import io.github.pytgcalls.media.SsrcMapping;
 import io.github.pytgcalls.media.StreamDevice;
 import io.github.pytgcalls.media.StreamMode;
 import io.github.pytgcalls.p2p.AuthParams;
+import io.github.pytgcalls.p2p.ConferenceJoinParams;
 import io.github.pytgcalls.p2p.DhConfig;
 import io.github.pytgcalls.p2p.Protocol;
 import io.github.pytgcalls.p2p.RTCServer;
@@ -57,7 +59,7 @@ public class NTgCalls {
 
     public native void skipExchange(long chatId, byte[] encryptionKey, boolean isOutgoing) throws ConnectionException;
 
-    public native void connectP2P(long chatId, List<RTCServer> rtcServers, List<String> versions, boolean p2pAllowed) throws ConnectionException;
+    public native void connectP2P(long chatId, List<RTCServer> rtcServers, List<String> versions, boolean p2pAllowed, String customParameters) throws ConnectionException;
 
     public native String createCall(long chatId) throws FileNotFoundException, ConnectionException;
 
@@ -79,6 +81,18 @@ public class NTgCalls {
     public native long time(long chatId, StreamMode mode) throws ConnectionNotFoundException;
 
     public native MediaState getState(long chatId) throws ConnectionNotFoundException;
+
+    public native String getEmojisFingerprint(long chatId) throws ConnectionNotFoundException;
+
+    public native CallType getCallType(long chatId) throws ConnectionNotFoundException;
+
+    public native ConferenceJoinParams initConference(long chatId, long userId, byte[] lastBlock) throws ConnectionException;
+
+    public native void updateAudioSsrcMappings(long chatId, List<SsrcMapping> ssrcMappings) throws ConnectionNotFoundException;
+
+    public native void applyBlocks(long chatId, int subchain, int nextOffset, List<byte[]> blocks, boolean fromShortPoll) throws ConnectionNotFoundException;
+
+    public native void finishSubchainRequest(long chatId, int subchain) throws ConnectionNotFoundException;
 
     public static native Protocol getProtocol();
 
@@ -106,11 +120,19 @@ public class NTgCalls {
 
     public native void setRequestBroadcastPartCallback(RequestBroadcastPartCallback callback);
 
+    public native void setUpdateEmojisCallback(UpdateEmojisCallback callback);
+
+    public native void setRequestParticipantsCallback(RequestParticipantsCallback callback);
+
+    public native void setOutboundBlockCallback(OutboundBlockCallback callback);
+
+    public native void setSubchainRequestCallback(SubchainRequestCallback callback);
+
     public native void sendSignalingData(long chatId, byte[] data) throws ConnectionNotFoundException;
 
     public native void sendExternalFrame(long chatId, StreamDevice device, byte[] data, FrameData frameData);
 
-    public native void addIncomingVideo(long chatId, String endpoint, List<SsrcGroup> ssrcGroups);
+    public native void addIncomingVideo(long chatId, long userId, String endpoint, List<SsrcGroup> ssrcGroups);
 
     public native void removeIncomingVideo(long chatId, String endpoint);
 

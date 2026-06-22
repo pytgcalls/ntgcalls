@@ -113,6 +113,53 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_init(JNIEnv *env, jobje
         env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId));
         CAPTURE_JAVA_EXCEPTION
     });
+
+    instance->onUpdateEmojis([instancePtr](int64_t chatId, std::string emojis) {
+        std::lock_guard lock(callbacksMutex);
+        auto callback = callbacksInstances[instancePtr].onUpdateEmojisCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        auto jEmojis = parseJString(env, emojis);
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jEmojis.obj());
+        CAPTURE_JAVA_EXCEPTION
+    });
+
+    instance->onRequestParticipants([instancePtr](int64_t chatId) {
+        std::lock_guard lock(callbacksMutex);
+        auto callback = callbacksInstances[instancePtr].onRequestParticipantsCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId));
+        CAPTURE_JAVA_EXCEPTION
+    });
+
+    instance->onOutboundBlock([instancePtr](int64_t chatId, const bytes::binary& block) {
+        std::lock_guard lock(callbacksMutex);
+        auto callback = callbacksInstances[instancePtr].onOutboundBlockCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        auto jBlock = parseJBinary(env, block);
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jBlock.obj());
+        CAPTURE_JAVA_EXCEPTION
+    });
+
+    instance->onSubchainRequest([instancePtr](int64_t chatId, telegram::e2e::SubchainRequest request) {
+        std::lock_guard lock(callbacksMutex);
+        auto callback = callbacksInstances[instancePtr].onSubchainRequestCallback;
+        if (!callback) {
+            return;
+        }
+        auto env = (JNIEnv*) wrtc::GetJNIEnv();
+        auto jRequest = parseJSubchainRequest(env, request);
+        env->CallVoidMethod(callback->callback, callback->methodId, static_cast<jlong>(chatId), jRequest.obj());
+        CAPTURE_JAVA_EXCEPTION
+    });
 }
 
 extern "C"
@@ -143,6 +190,24 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_destroy(JNIEnv *env, jo
         env->DeleteGlobalRef(callback->callback);
     }
     if (auto callback = callbackInfo.onRemoteSourceChangeCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onRequestBroadcastPartCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onRequestBroadcastTimestampCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onUpdateEmojisCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onRequestParticipantsCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onOutboundBlockCallback) {
+        env->DeleteGlobalRef(callback->callback);
+    }
+    if (auto callback = callbackInfo.onSubchainRequestCallback) {
         env->DeleteGlobalRef(callback->callback);
     }
     callbacksInstances.erase(ptr);
@@ -183,10 +248,10 @@ JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_exchangeKeys(JNIEnv 
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_connectP2P(JNIEnv *env, jobject thiz, jlong chat_id, jobject rtc_servers, jobject versions, jboolean p2p_allowed) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_connectP2P(JNIEnv *env, jobject thiz, jlong chat_id, jobject rtc_servers, jobject versions, jboolean p2p_allowed, jstring custom_parameters) {
     try {
         auto instance = getInstance(env, thiz);
-        instance->connectP2P(static_cast<long>(chat_id), parseRTCServerList(env, rtc_servers), parseStringList(env, versions), static_cast<bool>(p2p_allowed));
+        instance->connectP2P(static_cast<long>(chat_id), parseRTCServerList(env, rtc_servers), parseStringList(env, versions), static_cast<bool>(p2p_allowed), custom_parameters ? std::optional(parseString(env, custom_parameters)) : std::nullopt);
     } HANDLE_EXCEPTIONS
 }
 
@@ -278,6 +343,57 @@ JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_getState(JNIEnv *env
 }
 
 extern "C"
+JNIEXPORT jstring JNICALL Java_io_github_pytgcalls_NTgCalls_getEmojisFingerprint(JNIEnv *env, jobject thiz, jlong chat_id) {
+    try {
+        auto instance = getInstance(env, thiz);
+        return parseJString(env, instance->getEmojisFingerprint(static_cast<long>(chat_id))).Release();
+    } HANDLE_EXCEPTIONS
+    return nullptr;
+}
+
+extern "C"
+JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_getCallType(JNIEnv *env, jobject thiz, jlong chat_id) {
+    try {
+        auto instance = getInstance(env, thiz);
+        return parseJCallType(env, instance->getCallType(static_cast<long>(chat_id))).Release();
+    } HANDLE_EXCEPTIONS
+    return nullptr;
+}
+
+extern "C"
+JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_initConference(JNIEnv *env, jobject thiz, jlong chat_id, jlong user_id, jbyteArray last_block) {
+    try {
+        auto instance = getInstance(env, thiz);
+        return parseJConferenceJoinParams(env, instance->initConference(static_cast<long>(chat_id), static_cast<long>(user_id), last_block ? std::optional(parseBinary(env, last_block)) : std::nullopt)).Release();
+    } HANDLE_EXCEPTIONS
+    return nullptr;
+}
+
+extern "C"
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_updateAudioSsrcMappings(JNIEnv *env, jobject thiz, jlong chat_id, jobject ssrc_mappings) {
+    try {
+        auto instance = getInstance(env, thiz);
+        instance->updateAudioSsrcMappings(static_cast<long>(chat_id), parseSsrcMappingList(env, ssrc_mappings));
+    } HANDLE_EXCEPTIONS
+}
+
+extern "C"
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_applyBlocks(JNIEnv *env, jobject thiz, jlong chat_id, jint subchain, jint next_offset, jobject blocks, jboolean from_short_poll) {
+    try {
+        auto instance = getInstance(env, thiz);
+        instance->applyBlocks(static_cast<long>(chat_id), static_cast<int>(subchain), static_cast<int>(next_offset), parseBinaryList(env, blocks), static_cast<bool>(from_short_poll));
+    } HANDLE_EXCEPTIONS
+}
+
+extern "C"
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_finishSubchainRequest(JNIEnv *env, jobject thiz, jlong chat_id, jint subchain) {
+    try {
+        auto instance = getInstance(env, thiz);
+        instance->finishSubchainRequest(static_cast<long>(chat_id), static_cast<int>(subchain));
+    } HANDLE_EXCEPTIONS
+}
+
+extern "C"
 JNIEXPORT jstring JNICALL Java_io_github_pytgcalls_NTgCalls_pingNative(JNIEnv* env, jclass) {
     return env->NewStringUTF(ntgcalls::NTgCalls::ping().c_str());
 }
@@ -303,6 +419,14 @@ REGISTER_CALLBACK(setRequestBroadcastPartCallback, onRequestBroadcastPart, "(JLi
 
 REGISTER_CALLBACK(setRequestBroadcastTimestampCallback, onRequestBroadcastTimestamp, "(J)V")
 
+REGISTER_CALLBACK(setUpdateEmojisCallback, onUpdateEmojis, "(JLjava/lang/String;)V")
+
+REGISTER_CALLBACK(setRequestParticipantsCallback, onRequestParticipants, "(J)V")
+
+REGISTER_CALLBACK(setOutboundBlockCallback, onOutboundBlock, "(J[B)V")
+
+REGISTER_CALLBACK(setSubchainRequestCallback, onSubchainRequest, "(JLio/github/pytgcalls/p2p/SubchainRequest;)V")
+
 extern "C"
 JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_sendSignalingData(JNIEnv *env, jobject thiz, jlong chat_id, jbyteArray data) {
     try {
@@ -320,10 +444,10 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_sendExternalFrame(JNIEn
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_addIncomingVideo(JNIEnv *env, jobject thiz, jlong chat_id, jstring endpoint, jobject ssrc_group) {
+JNIEXPORT void JNICALL Java_io_github_pytgcalls_NTgCalls_addIncomingVideo(JNIEnv *env, jobject thiz, jlong chat_id, jlong user_id, jstring endpoint, jobject ssrc_group) {
     try {
         auto instance = getInstance(env, thiz);
-        instance->addIncomingVideo(static_cast<long>(chat_id), parseString(env, endpoint), parseSsrcGroupList(env, ssrc_group));
+        instance->addIncomingVideo(static_cast<long>(chat_id), static_cast<long>(user_id), parseString(env, endpoint), parseSsrcGroupList(env, ssrc_group));
     } HANDLE_EXCEPTIONS
 }
 

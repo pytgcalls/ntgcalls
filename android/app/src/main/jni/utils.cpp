@@ -297,8 +297,8 @@ std::vector<ntgcalls::RTCServer> parseRTCServerList(JNIEnv *env, jobject list) {
 
 webrtc::ScopedJavaLocalRef<jobject> parseJMediaState(JNIEnv *env, ntgcalls::MediaState mediaState) {
     const auto mediaStateClass = webrtc::GetClass(env, "io/github/pytgcalls/media/MediaState");
-    jmethodID constructor = env->GetMethodID(mediaStateClass.obj(), "<init>", "(ZZZ)V");
-    return webrtc::ScopedJavaLocalRef<>::Adopt(env, env->NewObject(mediaStateClass.obj(), constructor, mediaState.muted, mediaState.videoPaused, mediaState.videoStopped));
+    jmethodID constructor = env->GetMethodID(mediaStateClass.obj(), "<init>", "(ZZZZZ)V");
+    return webrtc::ScopedJavaLocalRef<>::Adopt(env, env->NewObject(mediaStateClass.obj(), constructor, mediaState.muted, mediaState.videoPaused, mediaState.videoStopped, mediaState.presentationPaused, mediaState.presentationStopped));
 }
 
 webrtc::ScopedJavaLocalRef<jobject> parseJProtocol(JNIEnv *env, const ntgcalls::Protocol &protocol) {
@@ -675,4 +675,69 @@ void throwJavaException(JNIEnv *env, std::string name, const std::string& messag
     if (!exceptionClass.is_null()) {
         env->ThrowNew(exceptionClass.obj(), message.c_str());
     }
+}
+
+webrtc::ScopedJavaLocalRef<jobject> parseJConferenceJoinParams(JNIEnv *env, const ntgcalls::ConferenceJoinParams& params) {
+    const auto conferenceJoinParamsClass = webrtc::GetClass(env, "io/github/pytgcalls/p2p/ConferenceJoinParams");
+    jmethodID constructor = env->GetMethodID(conferenceJoinParamsClass.obj(), "<init>", "(Ljava/lang/String;[B[B)V");
+    const auto payload = parseJString(env, params.payload);
+    const auto publicKey = parseJBinary(env, params.publicKey);
+    const auto block = parseJBinary(env, params.block);
+    return webrtc::ScopedJavaLocalRef<>::Adopt(env, env->NewObject(conferenceJoinParamsClass.obj(), constructor, payload.obj(), publicKey.obj(), block.obj()));
+}
+
+webrtc::ScopedJavaLocalRef<jobject> parseJSubchainRequest(JNIEnv *env, const telegram::e2e::SubchainRequest& request) {
+    const auto subchainRequestClass = webrtc::GetClass(env, "io/github/pytgcalls/p2p/SubchainRequest");
+    jmethodID constructor = env->GetMethodID(subchainRequestClass.obj(), "<init>", "(III)V");
+    return webrtc::ScopedJavaLocalRef<>::Adopt(env, env->NewObject(subchainRequestClass.obj(), constructor, request.subchain, request.height, request.limit));
+}
+
+webrtc::ScopedJavaLocalRef<jobject> parseJCallType(JNIEnv *env, ntgcalls::CallInterface::Type type) {
+    const auto callTypeClass = webrtc::GetClass(env, "io/github/pytgcalls/CallType");
+    jfieldID groupField = env->GetStaticFieldID(callTypeClass.obj(), "GROUP", "Lio/github/pytgcalls/CallType;");
+    jfieldID p2pField = env->GetStaticFieldID(callTypeClass.obj(), "P2P", "Lio/github/pytgcalls/CallType;");
+    jfieldID conferenceField = env->GetStaticFieldID(callTypeClass.obj(), "CONFERENCE", "Lio/github/pytgcalls/CallType;");
+    if (type & ntgcalls::CallInterface::Type::Conference) {
+        return webrtc::ScopedJavaLocalRef<>::Adopt(env, env->GetStaticObjectField(callTypeClass.obj(), conferenceField));
+    }
+    if (type & ntgcalls::CallInterface::Type::Group) {
+        return webrtc::ScopedJavaLocalRef<>::Adopt(env, env->GetStaticObjectField(callTypeClass.obj(), groupField));
+    }
+    return webrtc::ScopedJavaLocalRef<>::Adopt(env, env->GetStaticObjectField(callTypeClass.obj(), p2pField));
+}
+
+std::vector<wrtc::SsrcMapping> parseSsrcMappingList(JNIEnv *env, jobject list) {
+    if (list == nullptr) {
+        return {};
+    }
+    const auto ssrcMappingClass = webrtc::GetClass(env, "io/github/pytgcalls/media/SsrcMapping");
+    jfieldID userIdField = env->GetFieldID(ssrcMappingClass.obj(), "userId", "J");
+    jfieldID ssrcField = env->GetFieldID(ssrcMappingClass.obj(), "ssrc", "I");
+    const auto listClass = webrtc::GetClass(env, "java/util/List");
+    jmethodID sizeMethod = env->GetMethodID(listClass.obj(), "size", "()I");
+    jmethodID getMethod = env->GetMethodID(listClass.obj(), "get", "(I)Ljava/lang/Object;");
+    std::vector<wrtc::SsrcMapping> result;
+    for (int i = 0; i < env->CallIntMethod(list, sizeMethod); i++) {
+        const auto element = webrtc::ScopedJavaLocalRef<>::Adopt(env, env->CallObjectMethod(list, getMethod, i));
+        result.emplace_back(
+            static_cast<int64_t>(env->GetLongField(element.obj(), userIdField)),
+            static_cast<int32_t>(env->GetIntField(element.obj(), ssrcField))
+        );
+    }
+    return result;
+}
+
+std::vector<bytes::binary> parseBinaryList(JNIEnv *env, jobject list) {
+    if (list == nullptr) {
+        return {};
+    }
+    const auto listClass = webrtc::GetClass(env, "java/util/List");
+    jmethodID sizeMethod = env->GetMethodID(listClass.obj(), "size", "()I");
+    jmethodID getMethod = env->GetMethodID(listClass.obj(), "get", "(I)Ljava/lang/Object;");
+    std::vector<bytes::binary> result;
+    for (int i = 0; i < env->CallIntMethod(list, sizeMethod); i++) {
+        const auto element = webrtc::ScopedJavaLocalRef<>::Adopt(env, env->CallObjectMethod(list, getMethod, i));
+        result.push_back(parseBinary(env, reinterpret_cast<jbyteArray>(element.obj())));
+    }
+    return result;
 }
