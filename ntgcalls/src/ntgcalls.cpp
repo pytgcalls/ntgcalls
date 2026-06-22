@@ -413,7 +413,14 @@ namespace ntgcalls {
 
     ASYNC_RETURN(CallInterface::Type) NTgCalls::getCallType(const int64_t chatId) {
         SMART_ASYNC(this, chatId)
-        return safeConnection(chatId)->type();
+        const auto type = safeConnection(chatId)->type();
+        if (type & CallInterface::Type::Conference) {
+            return CallInterface::Type::Conference;
+        }
+        if (type & CallInterface::Type::Group) {
+            return CallInterface::Type::Group;
+        }
+        return CallInterface::Type::P2P;
         END_ASYNC
     }
 
