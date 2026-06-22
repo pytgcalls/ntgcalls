@@ -70,7 +70,7 @@ namespace ntgcalls {
         py::object rtcLogs;
         py::object ntgLogs;
 #else
-        static wrtc::synchronized_callback<LogMessage> onLogMessage;
+        static wrtc::synchronized_callback<void(LogMessage)> onLogMessage;
 #endif
         std::unique_ptr<wrtc::SafeThread> thread;
     };

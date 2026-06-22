@@ -4,6 +4,8 @@
 #pragma once
 
 #include <wrtc/models/ssrc_mapping.hpp>
+#include <ntgcalls/models/auth_params.hpp>
+#include <ntgcalls/models/conference_join_params.hpp>
 #include <ntgcalls/instances/call_interface.hpp>
 #include <ntgcalls/models/dh_config.hpp>
 #include <ntgcalls/models/protocol.hpp>

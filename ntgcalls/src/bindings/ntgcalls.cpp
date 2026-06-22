@@ -5,6 +5,7 @@
 #include <ntgcalls/ntgcalls.hpp>
 #include "ntgcalls.h"
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/models/auth_params.hpp>
 
 constexpr uint16_t SUPPORTED_INPUTS = NTG_FILE | NTG_SHELL | NTG_DEVICE | NTG_DESKTOP | NTG_EXTERNAL;
 
@@ -132,7 +133,8 @@ ntg_media_state_struct parseCMediaState(const ntgcalls::MediaState state) {
         state.muted,
         state.videoPaused,
         state.videoStopped,
-        state.presentationPaused
+        state.presentationPaused,
+        state.presentationStopped
     };
 }
 
@@ -402,6 +404,16 @@ ntg_connection_mode_enum parseCConnectionMode(const wrtc::ConnectionMode mode) {
     return {};
 }
 
+ntg_call_type_enum parseCCallType(const ntgcalls::CallInterface::Type type) {
+    if (type & ntgcalls::CallInterface::Type::Conference) {
+        return NTG_CALL_TYPE_CONFERENCE;
+    }
+    if (type & ntgcalls::CallInterface::Type::Group) {
+        return NTG_CALL_TYPE_GROUP;
+    }
+    return NTG_CALL_TYPE_P2P;
+}
+
 ntg_frame_data_struct parseCFrameData(const wrtc::FrameData data) {
     return {
         data.absoluteCaptureTimestampMs,
@@ -432,6 +444,24 @@ std::vector<wrtc::SsrcGroup> parseSsrcGroups(ntg_ssrc_group_struct* ssrcGroups, 
     return groups;
 }
 
+std::vector<wrtc::SsrcMapping> parseSsrcMappings(ntg_ssrc_mapping_struct* mappings, const int size) {
+    std::vector<wrtc::SsrcMapping> result;
+    result.reserve(size);
+    for (int i = 0; i < size; i++) {
+        result.emplace_back(mappings[i].userId, mappings[i].ssrc);
+    }
+    return result;
+}
+
+std::vector<bytes::binary> parseBlocks(uint8_t** blocks, const int* blockSizes, const int size) {
+    std::vector<bytes::binary> result;
+    result.reserve(size);
+    for (int i = 0; i < size; i++) {
+        result.emplace_back(blocks[i], blocks[i] + blockSizes[i]);
+    }
+    return result;
+}
+
 uintptr_t ntg_init() {
     return reinterpret_cast<uintptr_t>(new ntgcalls::NTgCalls());
 }
@@ -454,6 +484,17 @@ int ntg_init_presentation(const uintptr_t ptr, const int64_t chatId, char** buff
     PREPARE_ASYNC_END
 }
 
+int ntg_init_conference(const uintptr_t ptr, const int64_t chatId, const int64_t userId, const uint8_t* lastBlock, const int sizeLastBlock, ntg_conference_join_params_struct* buffer, ntg_async_struct future) {
+    PREPARE_ASYNC(initConference, chatId, userId, sizeLastBlock ? std::optional(bytes::binary(lastBlock, lastBlock + sizeLastBlock)) : std::nullopt)
+    [future, buffer](const ntgcalls::ConferenceJoinParams& params) {
+        *future.errorCode = copyAndReturn(params.payload, &buffer->payload);
+        copyAndReturn(params.publicKey, &buffer->publicKey, &buffer->sizePublicKey);
+        copyAndReturn(params.block, &buffer->block, &buffer->sizeBlock);
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
 int ntg_stop_presentation(const uintptr_t ptr, const int64_t chatId, ntg_async_struct future) {
     PREPARE_ASYNC(stopPresentation, chatId)
     [future] {
@@ -463,8 +504,8 @@ int ntg_stop_presentation(const uintptr_t ptr, const int64_t chatId, ntg_async_s
     PREPARE_ASYNC_END
 }
 
-int ntg_add_incoming_video(const uintptr_t ptr, const int64_t chatId, char* endpoint, ntg_ssrc_group_struct* ssrcGroups, const int size, uint32_t* buffer, ntg_async_struct future) {
-    PREPARE_ASYNC(addIncomingVideo, chatId, std::string(endpoint), parseSsrcGroups(ssrcGroups, size))
+int ntg_add_incoming_video(const uintptr_t ptr, const int64_t chatId, const int64_t userId, char* endpoint, ntg_ssrc_group_struct* ssrcGroups, const int size, uint32_t* buffer, ntg_async_struct future) {
+    PREPARE_ASYNC(addIncomingVideo, chatId, userId, std::string(endpoint), parseSsrcGroups(ssrcGroups, size))
     [future, buffer](const uint32_t ssrc) {
         *future.errorCode = ssrc ? 0 : 1;
         *buffer = ssrc;
@@ -522,8 +563,8 @@ int ntg_skip_exchange(const uintptr_t ptr, const int64_t userId, const uint8_t* 
     PREPARE_ASYNC_END
 }
 
-int ntg_connect_p2p(const uintptr_t ptr, const int64_t userId, ntg_rtc_server_struct* servers, const int serversSize, char** versions, const int versionsSize, const bool p2pAllowed, ntg_async_struct future) {
-    PREPARE_ASYNC(connectP2P, userId, parseRTCServers(servers, serversSize), copyAndReturn(versions, versionsSize), p2pAllowed)
+int ntg_connect_p2p(const uintptr_t ptr, const int64_t userId, ntg_rtc_server_struct* servers, const int serversSize, char** versions, const int versionsSize, const bool p2pAllowed, char* customParameters, ntg_async_struct future) {
+    PREPARE_ASYNC(connectP2P, userId, parseRTCServers(servers, serversSize), copyAndReturn(versions, versionsSize), p2pAllowed, customParameters ? std::optional(std::string(customParameters)) : std::nullopt)
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
@@ -655,6 +696,25 @@ int ntg_get_connection_mode(const uintptr_t ptr, const int64_t chatID, ntg_conne
     PREPARE_ASYNC_END
 }
 
+int ntg_get_emojis_fingerprint(const uintptr_t ptr, const int64_t chatID, char** buffer, ntg_async_struct future) {
+    PREPARE_ASYNC(getEmojisFingerprint, chatID)
+    [future, buffer](const std::string& s) {
+        *future.errorCode = copyAndReturn(s, buffer);
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_get_call_type(const uintptr_t ptr, const int64_t chatID, ntg_call_type_enum* callType, ntg_async_struct future) {
+    PREPARE_ASYNC(getCallType, chatID)
+    [future, callType](const ntgcalls::CallInterface::Type type) {
+        *callType = parseCCallType(type);
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
 int ntg_send_external_frame(const uintptr_t ptr, const int64_t chatID, const ntg_stream_device_enum device, uint8_t* frame, const int frameSize, const ntg_frame_data_struct frameData, ntg_async_struct future) {
     PREPARE_ASYNC(sendExternalFrame, chatID, parseStreamDevice(device), bytes::binary(frame, frame + frameSize), parseFrameData(frameData))
     [future] {
@@ -675,6 +735,33 @@ int ntg_send_broadcast_timestamp(const uintptr_t ptr, const int64_t chatId, cons
 
 int ntg_send_broadcast_part(const uintptr_t ptr, const int64_t chatId, const int64_t segmentId, const int32_t partId, const ntg_media_segment_status_enum status, const bool qualityUpdate, const uint8_t* frame, const int frameSize, ntg_async_struct future) {
     PREPARE_ASYNC(sendBroadcastPart, chatId, segmentId, partId, parseSegmentStatus(status), qualityUpdate, bytes::make_binary_optional(frame, frameSize))
+    [future] {
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_update_audio_ssrc_mappings(const uintptr_t ptr, const int64_t chatId, ntg_ssrc_mapping_struct* mappings, const int size, ntg_async_struct future) {
+    PREPARE_ASYNC(updateAudioSsrcMappings, chatId, parseSsrcMappings(mappings, size))
+    [future] {
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_apply_blocks(const uintptr_t ptr, const int64_t chatId, const int subchain, const int nextOffset, uint8_t** blocks, const int* blockSizes, const int blocksSize, const bool fromShortPoll, ntg_async_struct future) {
+    PREPARE_ASYNC(applyBlocks, chatId, subchain, nextOffset, parseBlocks(blocks, blockSizes, blocksSize), fromShortPoll)
+    [future] {
+        *future.errorCode = 0;
+        future.promise(future.userData);
+    }
+    PREPARE_ASYNC_END
+}
+
+int ntg_finish_subchain_request(const uintptr_t ptr, const int64_t chatId, const int subchain, ntg_async_struct future) {
+    PREPARE_ASYNC(finishSubchainRequest, chatId, subchain)
     [future] {
         *future.errorCode = 0;
         future.promise(future.userData);
@@ -712,16 +799,6 @@ int ntg_calls(const uintptr_t ptr, ntg_call_info_struct** buffer, int* size, ntg
             });
         }
         copyAndReturn(groupCalls, buffer, size);
-        future.promise(future.userData);
-    }
-    PREPARE_ASYNC_END
-}
-
-int ntg_calls_count(const uintptr_t ptr, uint64_t* size, ntg_async_struct future) {
-    PREPARE_ASYNC(calls)
-    [future, size](const auto& callsCpp) {
-        *size = callsCpp.size();
-        *future.errorCode = 0;
         future.promise(future.userData);
     }
     PREPARE_ASYNC_END
@@ -778,6 +855,20 @@ int ntg_on_connection_change(const uintptr_t ptr, ntg_connection_callback callba
     try {
         getInstance(ptr)->onConnectionChange([ptr, callback, userData](const int64_t chatId, const ntgcalls::NetworkInfo state) {
             callback(ptr, chatId, parseCNetworkInfo(state), userData);
+        });
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+    return 0;
+}
+
+int ntg_on_update_emojis(const uintptr_t ptr, ntg_emojis_callback callback, void* userData) {
+    try {
+        getInstance(ptr)->onUpdateEmojis([ptr, callback, userData](const int64_t chatId, std::string emojis) {
+            char* buffer;
+            copyAndReturn(std::move(emojis), &buffer);
+            callback(ptr, chatId, buffer, userData);
+            delete[] buffer;
         });
     } catch (ntgcalls::NullPointer&) {
         return NTG_ERROR_NULL_POINTER;
@@ -860,6 +951,47 @@ int ntg_on_request_broadcast_part(uintptr_t ptr, ntg_broadcast_part_callback cal
                 partRequest.qualityUpdate,
                 partRequest.channelId,
                 parseCSegmentQuality(partRequest.quality)
+            }, userData);
+        });
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+    return 0;
+}
+
+int ntg_on_request_participants(const uintptr_t ptr, ntg_participants_callback callback, void* userData) {
+    try {
+        getInstance(ptr)->onRequestParticipants([ptr, callback, userData](const int64_t chatId) {
+            callback(ptr, chatId, userData);
+        });
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+    return 0;
+}
+
+int ntg_on_outbound_block(const uintptr_t ptr, ntg_outbound_block_callback callback, void* userData) {
+    try {
+        getInstance(ptr)->onOutboundBlock([ptr, callback, userData](const int64_t chatId, const bytes::binary& block) {
+            uint8_t* buffer;
+            int bufferSize;
+            copyAndReturn(block, &buffer, &bufferSize);
+            callback(ptr, chatId, buffer, bufferSize, userData);
+            delete[] buffer;
+        });
+    } catch (ntgcalls::NullPointer&) {
+        return NTG_ERROR_NULL_POINTER;
+    }
+    return 0;
+}
+
+int ntg_on_subchain_request(const uintptr_t ptr, ntg_subchain_request_callback callback, void* userData) {
+    try {
+        getInstance(ptr)->onSubchainRequest([ptr, callback, userData](const int64_t chatId, const telegram::e2e::SubchainRequest& request) {
+            callback(ptr, chatId, {
+                request.subchain,
+                request.height,
+                request.limit
             }, userData);
         });
     } catch (ntgcalls::NullPointer&) {

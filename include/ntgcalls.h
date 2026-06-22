@@ -117,6 +117,12 @@ typedef enum {
     NTG_CONNECTION_MODE_RTMP,
 } ntg_connection_mode_enum;
 
+typedef enum {
+    NTG_CALL_TYPE_GROUP,
+    NTG_CALL_TYPE_P2P,
+    NTG_CALL_TYPE_CONFERENCE,
+} ntg_call_type_enum;
+
 typedef struct {
     ntg_connection_kind_enum kind;
     ntg_connection_state_enum state;
@@ -162,6 +168,7 @@ typedef struct {
     bool videoPaused;
     bool videoStopped;
     bool presentationPaused;
+    bool presentationStopped;
 } ntg_media_state_struct;
 
 typedef struct {
@@ -212,6 +219,25 @@ typedef struct {
     uint32_t* ssrcs;
     int sizeSsrcs;
 } ntg_ssrc_group_struct;
+
+typedef struct {
+    int64_t userId;
+    int32_t ssrc;
+} ntg_ssrc_mapping_struct;
+
+typedef struct {
+    char* payload;
+    uint8_t* publicKey;
+    int sizePublicKey;
+    uint8_t* block;
+    int sizeBlock;
+} ntg_conference_join_params_struct;
+
+typedef struct {
+    int32_t subchain;
+    int32_t height;
+    int32_t limit;
+} ntg_subchain_request_struct;
 
 typedef void (*ntg_async_callback)(void*);
 
@@ -271,6 +297,14 @@ typedef void (*ntg_broadcast_timestamp_callback)(uintptr_t, int64_t, void*);
 
 typedef void (*ntg_broadcast_part_callback)(uintptr_t, int64_t, ntg_segment_part_request_struct, void*);
 
+typedef void (*ntg_emojis_callback)(uintptr_t, int64_t, char*, void*);
+
+typedef void (*ntg_participants_callback)(uintptr_t, int64_t, void*);
+
+typedef void (*ntg_outbound_block_callback)(uintptr_t, int64_t, uint8_t*, int, void*);
+
+typedef void (*ntg_subchain_request_callback)(uintptr_t, int64_t, ntg_subchain_request_struct, void*);
+
 typedef enum {
     NTG_LOG_DEBUG = 1 << 0,
     NTG_LOG_INFO = 1 << 1,
@@ -294,21 +328,21 @@ typedef struct {
 
 typedef void (*ntg_log_message_callback)(ntg_log_message_struct);
 
-NTG_C_EXPORT void ntg_register_logger(ntg_log_message_callback callback);
-
 NTG_C_EXPORT uintptr_t ntg_init();
 
 NTG_C_EXPORT int ntg_destroy(uintptr_t ptr);
 
-NTG_C_EXPORT int ntg_create_p2p(uintptr_t ptr, int64_t userId, ntg_async_struct future);
-
 NTG_C_EXPORT int ntg_init_presentation(uintptr_t ptr, int64_t chatId, char** buffer, ntg_async_struct future);
+
+NTG_C_EXPORT int ntg_init_conference(uintptr_t ptr, int64_t chatId, int64_t userId, uint8_t* lastBlock, int sizeLastBlock, ntg_conference_join_params_struct* buffer, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_stop_presentation(uintptr_t ptr, int64_t chatId, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_add_incoming_video(uintptr_t ptr, int64_t chatId, char* endpoint, ntg_ssrc_group_struct* ssrcGroups, int size, uint32_t* buffer, ntg_async_struct future);
+NTG_C_EXPORT int ntg_add_incoming_video(uintptr_t ptr, int64_t chatId, int64_t userId, char* endpoint, ntg_ssrc_group_struct* ssrcGroups, int size, uint32_t* buffer, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_remove_incoming_video(uintptr_t ptr, int64_t chatId, char* endpoint, ntg_async_struct future);
+
+NTG_C_EXPORT int ntg_create_p2p(uintptr_t ptr, int64_t userId, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_init_exchange(uintptr_t ptr, int64_t userId, ntg_dh_config_struct* dhConfig, const uint8_t* g_a_hash, int sizeGAHash, uint8_t** buffer, int* size, ntg_async_struct future);
 
@@ -316,7 +350,7 @@ NTG_C_EXPORT int ntg_exchange_keys(uintptr_t ptr, int64_t userId, const uint8_t*
 
 NTG_C_EXPORT int ntg_skip_exchange(uintptr_t ptr, int64_t userId, const uint8_t* encryptionKey, int size, bool isOutgoing, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_connect_p2p(uintptr_t ptr, int64_t userId, ntg_rtc_server_struct* servers, int serversSize, char** versions, int versionsSize, bool p2pAllowed, ntg_async_struct future);
+NTG_C_EXPORT int ntg_connect_p2p(uintptr_t ptr, int64_t userId, ntg_rtc_server_struct* servers, int serversSize, char** versions, int versionsSize, bool p2pAllowed, char* customParameters, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_send_signaling_data(uintptr_t ptr, int64_t userId, uint8_t* buffer, int size, ntg_async_struct future);
 
@@ -344,21 +378,37 @@ NTG_C_EXPORT int ntg_get_state(uintptr_t ptr, int64_t chatID, ntg_media_state_st
 
 NTG_C_EXPORT int ntg_get_connection_mode(uintptr_t ptr, int64_t chatID, ntg_connection_mode_enum* mode, ntg_async_struct future);
 
+NTG_C_EXPORT int ntg_get_emojis_fingerprint(uintptr_t ptr, int64_t chatID, char** buffer, ntg_async_struct future);
+
+NTG_C_EXPORT int ntg_get_call_type(uintptr_t ptr, int64_t chatID, ntg_call_type_enum* callType, ntg_async_struct future);
+
 NTG_C_EXPORT int ntg_send_external_frame(uintptr_t ptr, int64_t chatID, ntg_stream_device_enum device, uint8_t* frame, int frameSize, ntg_frame_data_struct frameData, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_send_broadcast_timestamp(uintptr_t ptr, int64_t chatId, int64_t timestamp, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_send_broadcast_part(uintptr_t ptr, int64_t chatId, int64_t segmentId, int32_t partId, ntg_media_segment_status_enum status, bool qualityUpdate, const uint8_t* frame, int frameSize, ntg_async_struct future);
 
+NTG_C_EXPORT int ntg_update_audio_ssrc_mappings(uintptr_t ptr, int64_t chatId, ntg_ssrc_mapping_struct* mappings, int size, ntg_async_struct future);
+
+NTG_C_EXPORT int ntg_apply_blocks(uintptr_t ptr, int64_t chatId, int subchain, int nextOffset, uint8_t** blocks, const int* blockSizes, int blocksSize, bool fromShortPoll, ntg_async_struct future);
+
+NTG_C_EXPORT int ntg_finish_subchain_request(uintptr_t ptr, int64_t chatId, int subchain, ntg_async_struct future);
+
 NTG_C_EXPORT int ntg_get_media_devices(ntg_media_devices_struct* buffer);
 
 NTG_C_EXPORT int ntg_calls(uintptr_t ptr, ntg_call_info_struct** buffer, int* size, ntg_async_struct future);
+
+NTG_C_EXPORT int ntg_cpu_usage(uintptr_t ptr, double* buffer, ntg_async_struct future);
+
+NTG_C_EXPORT int ntg_enable_g_lib_loop(bool enable);
 
 NTG_C_EXPORT int ntg_on_stream_end(uintptr_t ptr, ntg_stream_callback callback, void* userData);
 
 NTG_C_EXPORT int ntg_on_upgrade(uintptr_t ptr, ntg_upgrade_callback callback, void* userData);
 
 NTG_C_EXPORT int ntg_on_connection_change(uintptr_t ptr, ntg_connection_callback callback, void* userData);
+
+NTG_C_EXPORT int ntg_on_update_emojis(uintptr_t ptr, ntg_emojis_callback callback, void* userData);
 
 NTG_C_EXPORT int ntg_on_signaling_data(uintptr_t ptr, ntg_signaling_callback callback, void* userData);
 
@@ -370,11 +420,15 @@ NTG_C_EXPORT int ntg_on_request_broadcast_timestamp(uintptr_t ptr, ntg_broadcast
 
 NTG_C_EXPORT int ntg_on_request_broadcast_part(uintptr_t ptr, ntg_broadcast_part_callback callback, void* userData);
 
+NTG_C_EXPORT int ntg_on_request_participants(uintptr_t ptr, ntg_participants_callback callback, void* userData);
+
+NTG_C_EXPORT int ntg_on_outbound_block(uintptr_t ptr, ntg_outbound_block_callback callback, void* userData);
+
+NTG_C_EXPORT int ntg_on_subchain_request(uintptr_t ptr, ntg_subchain_request_callback callback, void* userData);
+
 NTG_C_EXPORT int ntg_get_version(char** buffer);
 
-NTG_C_EXPORT int ntg_cpu_usage(uintptr_t ptr, double* buffer, ntg_async_struct future);
-
-NTG_C_EXPORT int ntg_enable_g_lib_loop(bool enable);
+NTG_C_EXPORT void ntg_register_logger(ntg_log_message_callback callback);
 
 #ifdef __cplusplus
 }

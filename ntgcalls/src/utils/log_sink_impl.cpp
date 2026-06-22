@@ -12,7 +12,7 @@ namespace ntgcalls {
     std::mutex LogSink::mutex{};
     uint32_t LogSink::references = 0;
 #ifndef PYTHON_ENABLED
-    wrtc::synchronized_callback<LogSink::LogMessage> LogSink::onLogMessage{};
+    wrtc::synchronized_callback<void(LogSink::LogMessage)> LogSink::onLogMessage{};
 #endif
 
     LogSink::LogSink() {
