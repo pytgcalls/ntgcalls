@@ -338,7 +338,7 @@ NTG_C_EXPORT int ntg_destroy(uintptr_t ptr);
 
 NTG_C_EXPORT int ntg_init_presentation(uintptr_t ptr, int64_t chatId, char** buffer, ntg_async_struct future);
 
-NTG_C_EXPORT int ntg_init_conference(uintptr_t ptr, int64_t chatId, int64_t userId, uint8_t* lastBlock, int sizeLastBlock, ntg_conference_join_params_struct* buffer, ntg_async_struct future);
+NTG_C_EXPORT int ntg_init_conference(uintptr_t ptr, int64_t chatId, int64_t userId, const uint8_t* lastBlock, int sizeLastBlock, ntg_conference_join_params_struct* buffer, ntg_async_struct future);
 
 NTG_C_EXPORT int ntg_stop_presentation(uintptr_t ptr, int64_t chatId, ntg_async_struct future);
 
