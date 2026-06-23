@@ -54,7 +54,7 @@ namespace ntgcalls {
     void NTgCalls::setupListeners(const int64_t chatId) {
         connections[chatId]->onStreamEnd([this, chatId](const StreamManager::Type &type, const StreamManager::Device &device) {
             WORKER("onStreamEnd", updateThread, this, chatId, type, device)
-            THREAD_SAFE
+            THREAD_SAFE_EMIT
             (void) onEof(chatId, type, device);
             END_THREAD_SAFE
             END_WORKER
@@ -62,7 +62,7 @@ namespace ntgcalls {
         if (connections[chatId]->type() & (CallInterface::Type::Group | CallInterface::Type::Conference)) {
             SafeCall<GroupCall>(connections[chatId].get())->onUpgrade([this, chatId](const MediaState &state) {
                 WORKER("onUpgrade", updateThread, this, chatId, state)
-                THREAD_SAFE
+                THREAD_SAFE_EMIT
                 (void) mediaStateCallback(chatId, state);
                 END_THREAD_SAFE
                 END_WORKER
@@ -70,7 +70,7 @@ namespace ntgcalls {
 
             SafeCall<GroupCall>(connections[chatId].get())->onRequestedBroadcastPart([this, chatId](const wrtc::SegmentPartRequest &request) {
                 WORKER_NO_LOG(updateThread, this, chatId, request)
-                THREAD_SAFE
+                THREAD_SAFE_EMIT
                 (void) segmentPartRequestCallback(chatId, request);
                 END_THREAD_SAFE
                 END_WORKER_NO_LOG
@@ -78,7 +78,7 @@ namespace ntgcalls {
 
             SafeCall<GroupCall>(connections[chatId].get())->onRequestedBroadcastTimestamp([this, chatId] {
                 WORKER_NO_LOG(updateThread, this, chatId)
-                THREAD_SAFE
+                THREAD_SAFE_EMIT
                 (void) broadcastTimestampCallback(chatId);
                 END_THREAD_SAFE
                 END_WORKER_NO_LOG
@@ -86,21 +86,21 @@ namespace ntgcalls {
             if (connections[chatId]->type() & CallInterface::Type::Conference) {
                 SafeCall<ConferenceCall>(connections[chatId].get())->onRequestParticipants([this, chatId] {
                     WORKER("onRequestParticipants", updateThread, this, chatId)
-                    THREAD_SAFE
+                    THREAD_SAFE_EMIT
                     (void) requestParticipantsCallback(chatId);
                     END_THREAD_SAFE
                     END_WORKER
                 });
                 SafeCall<ConferenceCall>(connections[chatId].get())->onOutboundBlock([this, chatId](const bytes::binary& block) {
                     WORKER("onOutboundBlock", updateThread, this, chatId, block)
-                    THREAD_SAFE
+                    THREAD_SAFE_EMIT
                     (void) outboundBlockCallback(chatId, CAST_BYTES(block));
                     END_THREAD_SAFE
                     END_WORKER
                 });
                 SafeCall<ConferenceCall>(connections[chatId].get())->onSubchainRequest([this, chatId](e2e::SubchainRequest subchainRequest) {
                     WORKER("onSubchainRequest", updateThread, this, chatId, subchainRequest)
-                    THREAD_SAFE
+                    THREAD_SAFE_EMIT
                     (void) subchainRequestCallback(chatId, subchainRequest);
                     END_THREAD_SAFE
                     END_WORKER
@@ -110,7 +110,7 @@ namespace ntgcalls {
         if (connections[chatId]->type() & (CallInterface::Type::P2P | CallInterface::Type::Conference)) {
             SafeCall<E2EInterface>(connections[chatId].get())->onUpdateEmojis([this, chatId](const std::string &emojis) {
                 WORKER("onUpdateEmojis", updateThread, this, chatId, emojis)
-                THREAD_SAFE
+                THREAD_SAFE_EMIT
                 (void) updateEmojisCallback(chatId, emojis);
                 END_THREAD_SAFE
                 END_WORKER
@@ -118,7 +118,7 @@ namespace ntgcalls {
         }
         connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
             WORKER("onConnectionChange", updateThread, this, chatId, state)
-            THREAD_SAFE
+            THREAD_SAFE_EMIT
             (void) connectionChangeCallback(chatId, state);
             END_THREAD_SAFE
             if (state.kind == NetworkInfo::Kind::Normal) {
@@ -137,13 +137,13 @@ namespace ntgcalls {
             END_WORKER
         });
         connections[chatId]->onFrames([this, chatId] (const StreamManager::Mode mode, const StreamManager::Device device, const std::vector<wrtc::Frame>& frames) {
-            THREAD_SAFE
+            THREAD_SAFE_EMIT
             (void) framesCallback(chatId, mode, device, frames);
             END_THREAD_SAFE
         });
         connections[chatId]->onRemoteSourceChange([this, chatId](const RemoteSource &state) {
             WORKER("onRemoteSourceChange", updateThread, this, chatId, state)
-            THREAD_SAFE
+            THREAD_SAFE_EMIT
             (void) remoteSourceCallback(chatId, state);
             END_THREAD_SAFE
             END_WORKER
@@ -151,7 +151,7 @@ namespace ntgcalls {
         if (connections[chatId]->type() & CallInterface::Type::P2P) {
             SafeCall<P2PCall>(connections[chatId].get())->onSignalingData([this, chatId](const bytes::binary& data) {
                 WORKER("onSignalingData", updateThread, this, chatId, data)
-                THREAD_SAFE
+                THREAD_SAFE_EMIT
                 (void) emitCallback(chatId, CAST_BYTES(data));
                 END_THREAD_SAFE
                 END_WORKER

@@ -66,6 +66,10 @@ py::object translate_current_exception();
 #define THREAD_SAFE { \
 py::gil_scoped_acquire acquire;
 
+#define THREAD_SAFE_EMIT { \
+if (Py_IsFinalizing()) return; \
+py::gil_scoped_acquire acquire;
+
 #define BYTES(x) py::bytes
 
 #define CPP_BYTES(x, type) toCBytes<type>(x)
@@ -98,6 +102,7 @@ py::gil_scoped_release release;
 #define DESTROY_ASYNC
 #define ASYNC_ARGS
 #define THREAD_SAFE {
+#define THREAD_SAFE_EMIT {
 #define BYTES(x) x
 #define CPP_BYTES(x, type) x
 #define CAST_BYTES(...) __VA_ARGS__
@@ -158,6 +163,8 @@ public:
 #define ASYNC_ARGS std::unique_ptr<wrtc::SafeThread> asyncWorker;
 
 #define THREAD_SAFE {
+
+#define THREAD_SAFE_EMIT {
 
 #define BYTES(x) x
 
