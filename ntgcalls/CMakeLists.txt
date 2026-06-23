@@ -28,6 +28,11 @@ else ()
     target_sources(${NTG_LIB_NAME} PRIVATE ${MODULE_SRC})
 endif ()
 
+if (MACOS)
+    file(GLOB_RECURSE MODULE_MM_SRC *.mm)
+    target_sources(${NTG_LIB_NAME} PRIVATE ${MODULE_MM_SRC})
+endif ()
+
 setup_platform_flags(${NTG_LIB_NAME} OFF)
 
 target_include_directories(${NTG_LIB_NAME} PRIVATE include)

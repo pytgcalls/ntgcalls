@@ -2,7 +2,7 @@
 // Created by Laky64 on 15/10/24.
 //
 
-#if !defined(IS_ANDROID) && !defined(IS_MACOS)
+#ifndef IS_ANDROID
 #include <ntgcalls/exceptions.hpp>
 #include <third_party/libyuv/include/libyuv.h>
 #include <ntgcalls/utils/g_lib_loop_manager.hpp>
