@@ -4,7 +4,7 @@
 
 #pragma once
 
-#if !defined(IS_ANDROID) && !defined(IS_MACOS)
+#ifndef IS_ANDROID
 #include <wrtc/utils/json.hpp>
 #include <rtc_base/platform_thread.h>
 #include <ntgcalls/io/base_reader.hpp>
@@ -12,11 +12,12 @@
 #include <ntgcalls/devices/device_info.hpp>
 #include <ntgcalls/models/media_description.hpp>
 #include <modules/desktop_capture/desktop_and_cursor_composer.h>
+#include <modules/desktop_capture/delegated_source_list_controller.h>
 
 namespace ntgcalls {
     using wrtc::json;
 
-    class DesktopCapturerModule final: public BaseReader, public wrtc::SyncHelper, public webrtc::DesktopCapturer::Callback {
+    class DesktopCapturerModule final: public BaseReader, public wrtc::SyncHelper, public webrtc::DesktopCapturer::Callback, public webrtc::DelegatedSourceListController::Observer {
         std::unique_ptr<webrtc::DesktopCapturer> capturer;
         VideoDescription desc;
         webrtc::PlatformThread thread;
@@ -29,6 +30,12 @@ namespace ntgcalls {
         ~DesktopCapturerModule() override;
 
         void OnCaptureResult(webrtc::DesktopCapturer::Result result, std::unique_ptr<webrtc::DesktopFrame> frame) override;
+
+        void OnSelection() override;
+
+        void OnCancelled() override;
+
+        void OnError() override;
 
         void open() override;
 

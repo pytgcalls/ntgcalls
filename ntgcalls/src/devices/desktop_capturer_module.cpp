@@ -2,7 +2,7 @@
 // Created by Laky64 on 15/10/24.
 //
 
-#if !defined(IS_ANDROID) && !defined(IS_MACOS)
+#ifndef IS_ANDROID
 #include <ntgcalls/exceptions.hpp>
 #include <third_party/libyuv/include/libyuv.h>
 #include <ntgcalls/utils/g_lib_loop_manager.hpp>
@@ -34,6 +34,8 @@ namespace ntgcalls {
         options.set_allow_directx_capturer(true);
 #elif IS_MACOS
         options.set_allow_iosurface(true);
+        options.set_allow_sck_capturer(true);
+        options.set_allow_sck_system_picker(true);
 #elif IS_LINUX
         options.set_allow_pipewire(true);
 #endif
@@ -100,8 +102,25 @@ namespace ntgcalls {
         }
     }
 
+    void DesktopCapturerModule::OnSelection() {}
+
+    void DesktopCapturerModule::OnCancelled() {
+        (void) eofCallback();
+    }
+
+    void DesktopCapturerModule::OnError() {
+        (void) eofCallback();
+    }
+
 
     std::vector<DeviceInfo> DesktopCapturerModule::GetSources() {
+#ifdef IS_MACOS
+        const json metadata{
+            {"id", 0},
+            {"display_id", 0}
+        };
+        return {DeviceInfo("Screen / Window", metadata.dump())};
+#else
         const auto capturer = CreateCapturer();
         if (!capturer) {
             throw MediaDeviceError("Failed to create desktop capturer");
@@ -117,6 +136,7 @@ namespace ntgcalls {
             devices.emplace_back(title.empty() ? "Screen" : title, metadata.dump());
         }
         return devices;
+#endif
     }
 
     void DesktopCapturerModule::open() {
@@ -124,6 +144,12 @@ namespace ntgcalls {
         running = true;
         GLibLoopManager::AddInstance();
         capturer->Start(this);
+#ifdef IS_MACOS
+        if (const auto controller = capturer->GetDelegatedSourceListController()) {
+            controller->Observe(this);
+            controller->EnsureVisible();
+        }
+#endif
         capturer->CaptureFrame();
         thread = webrtc::PlatformThread::SpawnJoinable(
             [this] {

@@ -15,6 +15,9 @@
 #elif IS_ANDROID
 #include <ntgcalls/devices/oboe_device_module.hpp>
 #include <ntgcalls/devices/java_video_capturer_module.hpp>
+#elif IS_MACOS
+#include <ntgcalls/devices/mac_audio_device_module.hpp>
+#include <ntgcalls/devices/mac_camera_capturer_module.hpp>
 #endif
 
 namespace ntgcalls {
@@ -41,12 +44,16 @@ namespace ntgcalls {
         appendDevices(devices, "default", true);
         appendDevices(devices, "default", false);
         return devices;
+#elif IS_MACOS
+        if (MacAudioDeviceModule::isSupported()) {
+            return MacAudioDeviceModule::getDevices();
+        }
 #endif
         return {};
     }
 
     std::vector<DeviceInfo> MediaDevice::GetScreenDevices() {
-#if !defined(IS_ANDROID) && !defined(IS_MACOS)
+#ifndef IS_ANDROID
         if (DesktopCapturerModule::IsSupported()) {
             return DesktopCapturerModule::GetSources();
         }
@@ -69,13 +76,15 @@ namespace ntgcalls {
             return JavaVideoCapturerModule::getDevices();
         }
         return {};
+#elif IS_MACOS
+        return MacCameraCapturerModule::GetSources();
 #else
         return {};
 #endif
     }
 
     std::unique_ptr<BaseReader> MediaDevice::CreateDesktopCapture(const VideoDescription& desc, BaseSink* sink) {
-#if !defined(IS_ANDROID) && !defined(IS_MACOS)
+#ifndef IS_ANDROID
         if (DesktopCapturerModule::IsSupported()) {
             RTC_LOG(LS_INFO) << "Using DesktopCapturer module for input";
             return std::make_unique<DesktopCapturerModule>(desc, sink);
@@ -99,6 +108,9 @@ namespace ntgcalls {
             return std::make_unique<JavaVideoCapturerModule>(false, desc, sink);
         }
         throw MediaDeviceError("Unsupported platform for camera capture");
+#elif IS_MACOS
+        RTC_LOG(LS_INFO) << "Using macOS AVFoundation camera module for input";
+        return std::make_unique<MacCameraCapturerModule>(desc, sink);
 #else
         throw MediaDeviceError("Unsupported platform for camera capture");
 #endif
@@ -122,6 +134,11 @@ namespace ntgcalls {
 #elif IS_ANDROID
         RTC_LOG(LS_INFO) << "Using Oboe module for input";
         return std::make_unique<OboeDeviceModule>(desc, isCapture, sink);
+#elif IS_MACOS
+        if (MacAudioDeviceModule::isSupported()) {
+            RTC_LOG(LS_INFO) << "Using macOS AudioQueue module for input";
+            return std::make_unique<MacAudioDeviceModule>(desc, isCapture, sink);
+        }
 #endif
         throw MediaDeviceError("Unsupported platform for audio device");
     }
