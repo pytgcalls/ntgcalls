@@ -10,10 +10,6 @@
 #include <vector>
 #include <ntgcalls/exceptions.hpp>
 
-#ifndef kAudioObjectPropertyElementMain
-#define kAudioObjectPropertyElementMain kAudioObjectPropertyElementMaster
-#endif
-
 namespace ntgcalls {
     MacAudioDeviceModule::MacAudioDeviceModule(const AudioDescription* desc, const bool isCapture, BaseSink *sink):
         BaseIO(sink), BaseDeviceModule(desc, isCapture), BaseReader(sink), AudioMixer(sink) {
