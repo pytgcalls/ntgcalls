@@ -106,6 +106,7 @@ namespace wrtc {
                 std::is_same_v<D, bool> ||
                 std::is_same_v<D, std::string> ||
                 std::is_same_v<D, const char*> ||
+                std::is_same_v<D, char*> ||
                 std::is_enum_v<D> ||
                 is_vector_v<D>,
                 int
@@ -121,7 +122,7 @@ namespace wrtc {
             } else if constexpr (std::is_enum_v<D>) {
                 using U = std::underlying_type_t<D>;
                 storage_ = static_cast<U>(v);
-            } else if constexpr (std::is_same_v<D, const char*>) {
+            } else if constexpr (std::is_same_v<D, const char*> || std::is_same_v<D, char*>) {
                 storage_ = std::string(v);
             } else {
                 storage_ = static_cast<D>(v);
