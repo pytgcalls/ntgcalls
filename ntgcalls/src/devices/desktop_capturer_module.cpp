@@ -5,6 +5,7 @@
 #ifndef IS_ANDROID
 #include <ntgcalls/exceptions.hpp>
 #include <third_party/libyuv/include/libyuv.h>
+#include <ntgcalls/media/video_sink.hpp>
 #include <ntgcalls/utils/g_lib_loop_manager.hpp>
 #include <ntgcalls/devices/desktop_capturer_module.hpp>
 #include <modules/desktop_capture/desktop_capturer_differ_wrapper.h>
@@ -48,54 +49,71 @@ namespace ntgcalls {
             const int width = frame->size().width();
             const int height = frame->size().height();
 
+            const int chromaWidth = (width + 1) / 2;
+            const int chromaHeight = (height + 1) / 2;
             const auto ySize = width * height;
-            const auto uvSize = ySize / 4;
+            const auto uvSize = chromaWidth * chromaHeight;
             const auto yPlane = std::make_unique<uint8_t[]>(ySize);
             const auto uPlane = std::make_unique<uint8_t[]>(uvSize);
             const auto vPlane = std::make_unique<uint8_t[]>(uvSize);
             libyuv::ARGBToI420(
                 frame->data(), frame->stride(),
                 yPlane.get(), width,
-                uPlane.get(), width / 2,
-                vPlane.get(), width / 2,
+                uPlane.get(), chromaWidth,
+                vPlane.get(), chromaWidth,
                 width, height
             );
 
-            const auto yScaledSize = desc.width * desc.height;
-            const auto uvScaledSize = yScaledSize / 4;
-            auto yuv = bytes::make_unique_binary(yScaledSize + uvScaledSize * 2);
-
-            if (desc.width == width && desc.height == height) {
-                memcpy(yuv.get(), yPlane.get(), ySize);
-                memcpy(yuv.get() + ySize, uPlane.get(), uvSize);
-                memcpy(yuv.get() + ySize + uvSize, vPlane.get(), uvSize);
+            int outW = desc.width;
+            int outH = desc.height;
+            if (width * desc.height > desc.width * height) {
+                outH = desc.width * height / width;
             } else {
-                const auto yScaledPlane = std::make_unique<uint8_t[]>(yScaledSize);
-                const auto uScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
-                const auto vScaledPlane = std::make_unique<uint8_t[]>(uvScaledSize);
+                outW = desc.height * width / height;
+            }
+            outW &= ~1;
+            outH &= ~1;
+            if (outW < 2) outW = 2;
+            if (outH < 2) outH = 2;
 
+            const auto videoSink = dynamic_cast<VideoSink*>(sink);
+            if (auto config = videoSink->getConfig(); config->width != outW || config->height != outH) {
+                config->width = static_cast<int16_t>(outW);
+                config->height = static_cast<int16_t>(outH);
+                videoSink->setConfig(config);
+            }
+
+            const int outChromaW = outW / 2;
+            const int outChromaH = outH / 2;
+            const auto outYSize = outW * outH;
+            const auto outUvSize = outChromaW * outChromaH;
+            auto yuv = bytes::make_unique_binary(outYSize + outUvSize * 2);
+            const auto uDst = yuv.get() + outYSize;
+            const auto vDst = uDst + outUvSize;
+
+            if (outW == width && outH == height) {
+                memcpy(yuv.get(), yPlane.get(), outYSize);
+                memcpy(uDst, uPlane.get(), outUvSize);
+                memcpy(vDst, vPlane.get(), outUvSize);
+            } else {
                 I420Scale(
                     yPlane.get(), width,
-                    uPlane.get(), width / 2,
-                    vPlane.get(), width / 2,
+                    uPlane.get(), chromaWidth,
+                    vPlane.get(), chromaWidth,
                     width, height,
-                    yScaledPlane.get(), desc.width,
-                    uScaledPlane.get(), desc.width / 2,
-                    vScaledPlane.get(), desc.width / 2,
-                    desc.width, desc.height,
+                    yuv.get(), outW,
+                    uDst, outChromaW,
+                    vDst, outChromaW,
+                    outW, outH,
                     libyuv::kFilterBox
                 );
-
-                memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
-                memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
-                memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
             }
 
             (void) dataCallback(std::move(yuv), {
                 0,
                 webrtc::kVideoRotation_0,
-                static_cast<uint16_t>(desc.width),
-                static_cast<uint16_t>(desc.height),
+                static_cast<uint16_t>(outW),
+                static_cast<uint16_t>(outH),
             });
         } else if (result == webrtc::DesktopCapturer::Result::ERROR_PERMANENT) {
             (void) eofCallback();
