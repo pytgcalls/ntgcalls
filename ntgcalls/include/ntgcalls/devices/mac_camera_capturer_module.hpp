@@ -22,6 +22,8 @@ namespace ntgcalls {
 
         void destroy();
 
+        static void* captureDevices();
+
     public:
         MacCameraCapturerModule(const VideoDescription& desc, BaseSink* sink);
 

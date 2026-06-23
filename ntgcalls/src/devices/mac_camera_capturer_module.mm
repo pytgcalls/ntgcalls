@@ -50,7 +50,7 @@ namespace ntgcalls {
         }
 
         AVCaptureDevice* selectedDevice = nil;
-        for (AVCaptureDevice* dev in [RTCCameraVideoCapturer captureDevices]) {
+        for (AVCaptureDevice* dev in static_cast<NSArray<AVCaptureDevice*>*>(captureDevices())) {
             if ([dev.uniqueID isEqualToString:[NSString stringWithUTF8String:deviceId.c_str()]]) {
                 selectedDevice = dev;
                 break;
@@ -126,9 +126,21 @@ namespace ntgcalls {
         }
     }
 
+    void* MacCameraCapturerModule::captureDevices() {
+        NSArray<AVCaptureDeviceType>* types = @[
+            AVCaptureDeviceTypeBuiltInWideAngleCamera,
+            AVCaptureDeviceTypeExternal,
+        ];
+        AVCaptureDeviceDiscoverySession* session = [AVCaptureDeviceDiscoverySession
+            discoverySessionWithDeviceTypes:types
+                                  mediaType:AVMediaTypeVideo
+                                   position:AVCaptureDevicePositionUnspecified];
+        return static_cast<void*>(session.devices);
+    }
+
     std::vector<DeviceInfo> MacCameraCapturerModule::GetSources() {
         std::vector<DeviceInfo> result;
-        for (AVCaptureDevice* dev in [RTCCameraVideoCapturer captureDevices]) {
+        for (AVCaptureDevice* dev in static_cast<NSArray<AVCaptureDevice*>*>(captureDevices())) {
             const json metadata{
                 {"id", std::string(dev.uniqueID.UTF8String)},
             };
