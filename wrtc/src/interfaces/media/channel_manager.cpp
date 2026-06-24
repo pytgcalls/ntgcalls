@@ -104,7 +104,9 @@ namespace wrtc {
             mediaConfig,
             options,
             cryptoOptions,
-            bitrateAllocatorFactory
+            bitrateAllocatorFactory,
+            nullptr,
+            nullptr
         );
         if (!sendMediaChannel) {
             return nullptr;

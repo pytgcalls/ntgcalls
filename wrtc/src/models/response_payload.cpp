@@ -87,7 +87,7 @@ namespace wrtc {
         std::vector<webrtc::RtpExtension> result;
         for (const auto& extension : data["rtp-hdrexts"]) {
             webrtc::RtpExtension rtpExtension;
-            rtpExtension.id =extension["id"];
+            rtpExtension.id = webrtc::RtpHeaderExtensionId(extension["id"].get<int>());
             rtpExtension.uri = extension["uri"];
             result.push_back(rtpExtension);
         }

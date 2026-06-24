@@ -66,7 +66,7 @@ namespace signaling {
         for (const auto& rtpExtension : content.rtpExtensions) {
             rtpExtensionsJson.push_back(json{
                 {"uri", rtpExtension.uri},
-                {"id", rtpExtension.id},
+                {"id", rtpExtension.id.value()},
             });
         }
         contentJson["rtpExtensions"] = rtpExtensionsJson;
@@ -156,7 +156,7 @@ namespace signaling {
         if (!rtpExtension.contains("id") || !rtpExtension.contains("uri")) {
             throw ntgcalls::InvalidParams("Signaling: rtpExtension must contain id and uri");
         }
-        result.id = rtpExtension["id"];
+        result.id = webrtc::RtpHeaderExtensionId(rtpExtension["id"].get<int>());
         result.uri = rtpExtension["uri"];
         return result;
     }

@@ -105,7 +105,8 @@ namespace wrtc {
             callConfig.audio_state = strong->factory->mediaEngine()->voice().GetAudioState();
             strong->call = strong->factory->mediaFactory()->CreateCall(std::move(callConfig));
             strong->payloadTypeSuggester = std::make_unique<webrtc::SdpPayloadTypeSuggester>(
-                webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle
+                webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle,
+                strong->environment()
             );
         });
         availableVideoFormats = filterSupportedVideoFormats(factory->getSupportedVideoFormats());

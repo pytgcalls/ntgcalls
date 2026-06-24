@@ -6,6 +6,8 @@
 
 #include <p2p/base/dtls_transport.h>
 #include <memory>
+#include <optional>
+#include <api/task_queue/pending_task_safety_flag.h>
 
 namespace wrtc {
     SctpDataChannelProviderInterfaceImpl::SctpDataChannelProviderInterfaceImpl(
@@ -27,6 +29,8 @@ namespace wrtc {
             "data",
             true,
             dataChannelInit,
+            std::nullopt,
+            webrtc::PendingTaskSafetyFlag::CreateDetached(),
             networkThread,
             networkThread
         );
