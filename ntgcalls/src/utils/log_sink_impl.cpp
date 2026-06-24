@@ -5,6 +5,7 @@
 #include <ntgcalls/utils/log_sink_impl.hpp>
 
 #include <regex>
+#include <sstream>
 #include <rtc_base/ref_counted_object.h>
 
 namespace ntgcalls {
