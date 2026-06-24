@@ -14,6 +14,7 @@
 #include <ntgcalls/utils/binding_utils.hpp>
 #include <ntgcalls/utils/hardware_info.hpp>
 #include <ntgcalls/utils/log_sink_impl.hpp>
+#include <ntgcalls/utils/shutdown_hook.hpp>
 #include <ntgcalls/devices/media_devices.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
 #include <wrtc/models/media_content.hpp>
@@ -47,6 +48,7 @@ namespace ntgcalls {
         std::unique_ptr<wrtc::SafeThread> updateThread;
         std::unique_ptr<HardwareInfo> hardwareInfo;
         std::mutex mutex;
+        uint64_t shutdownToken = 0;
         ASYNC_ARGS
 
         bool exists(int64_t chatId) const;
@@ -59,6 +61,8 @@ namespace ntgcalls {
         static DestCallType* SafeCall(BaseCallType* call);
 
         void remove(int64_t chatId);
+
+        void stopConnections();
 
     public:
         explicit NTgCalls();

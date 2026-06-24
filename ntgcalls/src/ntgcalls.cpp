@@ -19,6 +19,9 @@ namespace ntgcalls {
         hardwareInfo = std::make_unique<HardwareInfo>();
         INIT_ASYNC
         LogSink::GetOrCreate();
+        shutdownToken = ShutdownHook::add([this] {
+            stopConnections();
+        });
     }
 
     NTgCalls::~NTgCalls() {
@@ -26,11 +29,10 @@ namespace ntgcalls {
 #ifdef PYTHON_ENABLED
         py::gil_scoped_release release;
 #endif
-        decltype(connections) localConnections;
+        ShutdownHook::remove(shutdownToken);
         {
             std::lock_guard lock(mutex);
             RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
-            localConnections = std::move(connections);
             onEof = nullptr;
             mediaStateCallback = nullptr;
             connectionChangeCallback = nullptr;
@@ -41,14 +43,22 @@ namespace ntgcalls {
             framesCallback = nullptr;
             hardwareInfo = nullptr;
         }
-        for (const auto& connection : localConnections | std::views::values) {
-            connection->stop();
-        }
-        localConnections.clear();
+        stopConnections();
         updateThread->Stop();
         updateThread = nullptr;
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
         LogSink::UnRef();
+    }
+
+    void NTgCalls::stopConnections() {
+        decltype(connections) localConnections;
+        {
+            std::lock_guard lock(mutex);
+            localConnections = std::move(connections);
+        }
+        for (const auto& connection : localConnections | std::views::values) {
+            connection->stop();
+        }
     }
 
     void NTgCalls::setupListeners(const int64_t chatId) {
