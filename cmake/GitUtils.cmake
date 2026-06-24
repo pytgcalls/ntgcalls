@@ -75,13 +75,25 @@ function(GitFile)
         string(REPLACE "github.com" "raw.githubusercontent.com" ARG_URL "${ARG_URL}")
         string(REPLACE "/blob/" "/" ARG_URL "${ARG_URL}")
     endif ()
-    execute_process(
-        COMMAND curl -s ${ARG_URL}
-        RESULT_VARIABLE GIT_RESULT_CODE
-        OUTPUT_VARIABLE FILE_CONTENT
-    )
+    set(GIT_RESULT_CODE 1)
+    set(GIT_ATTEMPT 0)
+    while(NOT GIT_RESULT_CODE EQUAL 0 AND GIT_ATTEMPT LESS 10)
+        if(GIT_ATTEMPT GREATER 0)
+            execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 5)
+        endif ()
+        execute_process(
+            COMMAND curl -sSL --fail ${ARG_URL}
+            RESULT_VARIABLE GIT_RESULT_CODE
+            OUTPUT_VARIABLE FILE_CONTENT
+            ERROR_VARIABLE GIT_ERROR
+        )
+        if(GIT_RESULT_CODE EQUAL 0 AND "${FILE_CONTENT}" STREQUAL "")
+            set(GIT_RESULT_CODE 1)
+        endif ()
+        math(EXPR GIT_ATTEMPT "${GIT_ATTEMPT} + 1")
+    endwhile ()
     if(NOT GIT_RESULT_CODE EQUAL 0)
-        message(FATAL_ERROR "Failed to fetch from remote origin.")
+        message(FATAL_ERROR "Failed to fetch ${ARG_URL} after ${GIT_ATTEMPT} attempts: ${GIT_ERROR}")
     endif ()
     if (BASE64)
         base64_decode("${FILE_CONTENT}" FILE_CONTENT)
