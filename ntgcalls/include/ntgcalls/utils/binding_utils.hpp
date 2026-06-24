@@ -63,6 +63,10 @@ py::bytes toBytes(const T& p) {
 
 py::object translate_current_exception();
 
+#if PY_VERSION_HEX < 0x030D0000
+#define Py_IsFinalizing _Py_IsFinalizing
+#endif
+
 #define THREAD_SAFE { \
 py::gil_scoped_acquire acquire;
 
