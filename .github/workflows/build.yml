@@ -182,6 +182,7 @@ jobs:
           CIBW_TEST_COMMAND: python -m unittest discover -s {package}/tests
           CIBW_CONTAINER_ENGINE: none
           CIBW_ENVIRONMENT: "PYPI_TAGS=1"
+          CIBW_SKIP: "cp314t-win*"
           CIBW_ARCHS_WINDOWS: "AMD64"
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
