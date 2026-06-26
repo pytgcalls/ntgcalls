@@ -2,6 +2,7 @@
 // Created by Laky64 on 20/09/2024.
 //
 
+#include <cstring>
 #include <ntgcalls/devices/win_core_device_module.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
 
@@ -356,7 +357,7 @@ namespace ntgcalls {
                 RTC_DLOG(LS_WARNING) << "Captured audio is replaced by silence";
             } else {
                 auto buffer = bytes::make_unique_binary(format.Format.nBlockAlign * numFramesToRead);
-                memcpy(buffer.get(), audioData, format.Format.nBlockAlign * numFramesToRead);
+                std::memcpy(buffer.get(), audioData, format.Format.nBlockAlign * numFramesToRead);
                 dataCallback(std::move(buffer), {});
             }
             error = audioCaptureClient->ReleaseBuffer(numFramesToRead);
@@ -399,7 +400,7 @@ namespace ntgcalls {
         }
         std::lock_guard queueLock(queueMutex);
         if (!queue.empty()) {
-            memcpy(audioData, queue.front().get(), numRequestedFrames * format.Format.nBlockAlign);
+            std::memcpy(audioData, queue.front().get(), numRequestedFrames * format.Format.nBlockAlign);
             queue.pop();
         }
         error = audioRenderClient->ReleaseBuffer(numRequestedFrames, 0);

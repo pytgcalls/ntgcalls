@@ -3,6 +3,7 @@
 //
 
 #ifdef IS_LINUX
+#include <cstring>
 #include <ntgcalls/devices/alsa_device_module.hpp>
 #include <ntgcalls/exceptions.hpp>
 #include <modules/audio_device/linux/audio_device_alsa_linux.h>
@@ -15,14 +16,14 @@ LATESYM_GET(webrtc::adm_linux_alsa::AlsaSymbolTable, GetAlsaSymbolTable(), sym)
 do { \
 *ptr = (snd_ctl_card_info_t*)__builtin_alloca( \
 LATE(snd_ctl_card_info_sizeof)()); \
-memset(*ptr, 0, LATE(snd_ctl_card_info_sizeof)()); \
+std::memset(*ptr, 0, LATE(snd_ctl_card_info_sizeof)()); \
 } while (0)
 
 #undef snd_pcm_info_alloca
 #define snd_pcm_info_alloca(pInfo) \
 do { \
 *pInfo = (snd_pcm_info_t*)__builtin_alloca(LATE(snd_pcm_info_sizeof)()); \
-memset(*pInfo, 0, LATE(snd_pcm_info_sizeof)()); \
+std::memset(*pInfo, 0, LATE(snd_pcm_info_sizeof)()); \
 } while (0)
 
 namespace ntgcalls {

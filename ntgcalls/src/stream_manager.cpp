@@ -2,6 +2,7 @@
 // Created by Laky64 on 28/09/24.
 //
 
+#include <cstring>
 #include <ranges>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/stream_manager.hpp>
@@ -227,7 +228,7 @@ namespace ntgcalls {
         }
         if (const auto stream = dynamic_cast<BaseStreamer*>(streams[id].get())) {
             const auto uniqueData = bytes::make_unique_binary(data.size());
-            memcpy(uniqueData.get(), data.data(), data.size());
+            std::memcpy(uniqueData.get(), data.data(), data.size());
             stream->sendData(uniqueData.get(), data.size(), frameData);
         }
     }

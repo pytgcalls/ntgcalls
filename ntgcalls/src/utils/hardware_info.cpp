@@ -2,6 +2,7 @@
 // Created by Laky64 on 02/03/2024.
 //
 
+#include <cstring>
 #include <ntgcalls/utils/hardware_info.hpp>
 
 #if defined(IS_LINUX) || defined(IS_ANDROID)
@@ -18,12 +19,12 @@ namespace ntgcalls {
         GetSystemInfo(&sysInfo);
         numProcessors = static_cast<int>(sysInfo.dwNumberOfProcessors);
         GetSystemTimeAsFileTime(&ftime);
-        memcpy(&lastCPU, &ftime, sizeof(FILETIME));
+        std::memcpy(&lastCPU, &ftime, sizeof(FILETIME));
 
         self = GetCurrentProcess();
         GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
-        memcpy(&lastSysCPU, &fsys, sizeof(FILETIME));
-        memcpy(&lastUserCPU, &fuser, sizeof(FILETIME));
+        std::memcpy(&lastSysCPU, &fsys, sizeof(FILETIME));
+        std::memcpy(&lastUserCPU, &fuser, sizeof(FILETIME));
 #elif IS_MACOS
         size_t len = sizeof(numProcessors);
         sysctlbyname("hw.ncpu", &numProcessors, &len, NULL, 0);
@@ -48,11 +49,11 @@ namespace ntgcalls {
         ULARGE_INTEGER now, sys, user;
 
         GetSystemTimeAsFileTime(&ftime);
-        memcpy(&now, &ftime, sizeof(FILETIME));
+        std::memcpy(&now, &ftime, sizeof(FILETIME));
 
         GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
-        memcpy(&sys, &fsys, sizeof(FILETIME));
-        memcpy(&user, &fuser, sizeof(FILETIME));
+        std::memcpy(&sys, &fsys, sizeof(FILETIME));
+        std::memcpy(&user, &fuser, sizeof(FILETIME));
         percent = static_cast<double>(sys.QuadPart - lastSysCPU.QuadPart + user.QuadPart - lastUserCPU.QuadPart);
         percent /= static_cast<double>(now.QuadPart - lastCPU.QuadPart);
         percent /= numProcessors;

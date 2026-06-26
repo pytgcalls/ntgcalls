@@ -2,6 +2,7 @@
 // Created by Laky64 on 09/03/2024.
 //
 
+#include <cstring>
 #include <ntgcalls/signaling/crypto/signaling_encryption.hpp>
 
 #include <rtc_base/copy_on_write_buffer.h>
@@ -35,7 +36,7 @@ namespace signaling {
             bytes::memory_span(buffer.data(), buffer.size())
         );
         const auto msgKey = encrypted.data();
-        memcpy(msgKey, msgKeyLarge.data() + 8, 16);
+        std::memcpy(msgKey, msgKeyLarge.data() + 8, 16);
         auto aesKeyIv = openssl::Aes::PrepareKeyIv(key, msgKey, x);
         openssl::Aes::ProcessCtr(
             bytes::memory_span(buffer.data(), buffer.size()),

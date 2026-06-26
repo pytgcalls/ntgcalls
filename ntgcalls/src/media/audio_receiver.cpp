@@ -2,6 +2,7 @@
 // Created by Laky64 on 07/10/24.
 //
 
+#include <cstring>
 #include <ntgcalls/media/audio_receiver.hpp>
 #include <ntgcalls/exceptions.hpp>
 #include <rtc_base/logging.h>
@@ -40,7 +41,7 @@ namespace ntgcalls {
         const size_t newSize = frameSize();
         auto newFrame = bytes::make_unique_binary(newSize);
         if (description->sampleRate == sampleRate) {
-            memcpy(newFrame.get(), convertedData.get(), preSampleSize);
+            std::memcpy(newFrame.get(), convertedData.get(), preSampleSize);
         } else {
             resampler->ResetIfNeeded(sampleRate, static_cast<int>(description->sampleRate), description->channelCount);
             size_t newFrameSize = 0;
@@ -99,7 +100,7 @@ namespace ntgcalls {
             for (const auto& frame: samples) {
                 try {
                     bytes::unique_binary data = bytes::make_unique_binary(frame->size);
-                    memcpy(data.get(), frame->data, frame->size);
+                    std::memcpy(data.get(), frame->data, frame->size);
                     processedFrames.emplace(
                         frame->ssrc,
                         std::pair{

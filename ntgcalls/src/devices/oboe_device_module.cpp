@@ -3,6 +3,7 @@
 //
 
 #ifdef IS_ANDROID
+#include <cstring>
 #include <thread>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/devices/oboe_device_module.hpp>
@@ -41,7 +42,7 @@ namespace ntgcalls {
             buffer.insert(buffer.end(), src, src + requiredBytes);
             while (buffer.size() >= frameSize_) {
                 auto result = bytes::make_unique_binary(frameSize_);
-                memcpy(result.get(), buffer.data(), frameSize_);
+                std::memcpy(result.get(), buffer.data(), frameSize_);
                 buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(frameSize_));
                 dataCallback(std::move(result), {});
             }
@@ -51,11 +52,11 @@ namespace ntgcalls {
             const size_t available = buffer.size();
             const size_t bytesToCopy = std::min(available, requiredBytes);
             if (bytesToCopy > 0) {
-                memcpy(dest, buffer.data(), bytesToCopy);
+                std::memcpy(dest, buffer.data(), bytesToCopy);
                 buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(bytesToCopy));
             }
             if (bytesToCopy < requiredBytes) {
-                memset(dest + bytesToCopy, 0, requiredBytes - bytesToCopy);
+                std::memset(dest + bytesToCopy, 0, requiredBytes - bytesToCopy);
             }
         }
         return oboe::DataCallbackResult::Continue;

@@ -2,6 +2,7 @@
 // Created by Laky64 on 26/10/24.
 //
 
+#include <cstring>
 #include <libyuv.h>
 #include <ntgcalls/media/video_receiver.hpp>
 
@@ -63,9 +64,9 @@ namespace ntgcalls {
                 libyuv::kFilterBox
             );
 
-            memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
-            memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
-            memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
+            std::memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
+            std::memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
+            std::memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
 
             (void) frameCallback(ssrc, std::move(yuv), totalSize, {
                 frame->timestamp_us(),

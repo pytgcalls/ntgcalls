@@ -3,6 +3,7 @@
 //
 
 #ifndef IS_ANDROID
+#include <cstring>
 #include <ntgcalls/exceptions.hpp>
 #include <third_party/libyuv/include/libyuv.h>
 #include <ntgcalls/media/video_sink.hpp>
@@ -92,9 +93,9 @@ namespace ntgcalls {
             const auto vDst = uDst + outUvSize;
 
             if (outW == width && outH == height) {
-                memcpy(yuv.get(), yPlane.get(), outYSize);
-                memcpy(uDst, uPlane.get(), outUvSize);
-                memcpy(vDst, vPlane.get(), outUvSize);
+                std::memcpy(yuv.get(), yPlane.get(), outYSize);
+                std::memcpy(uDst, uPlane.get(), outUvSize);
+                std::memcpy(vDst, vPlane.get(), outUvSize);
             } else {
                 I420Scale(
                     yPlane.get(), width,

@@ -4,6 +4,7 @@
 
 #ifdef IS_ANDROID
 
+#include <cstring>
 #include <libyuv.h>
 #include <ntgcalls/exceptions.hpp>
 #include <wrtc/utils/java_context.hpp>
@@ -134,9 +135,9 @@ namespace ntgcalls {
             desc.width, desc.height,
             libyuv::kFilterBox
         );
-        memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
-        memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
-        memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
+        std::memcpy(yuv.get(), yScaledPlane.get(), yScaledSize);
+        std::memcpy(yuv.get() + yScaledSize, uScaledPlane.get(), uvScaledSize);
+        std::memcpy(yuv.get() + yScaledSize + uvScaledSize, vScaledPlane.get(), uvScaledSize);
 
         (void) dataCallback(std::move(yuv), {
             0,

@@ -2,6 +2,7 @@
 // Created by Laky64 on 22/09/24.
 //
 
+#include <cstring>
 #include <ntgcalls/utils/pulse_connection.hpp>
 
 #ifdef IS_LINUX
@@ -197,7 +198,7 @@ namespace ntgcalls {
                 return;
             }
             auto buffer = bytes::make_unique_binary(nBytes);
-            memcpy(buffer.get(), audio_data, count);
+            std::memcpy(buffer.get(), audio_data, count);
             thiz->dataCallback(std::move(buffer));
             if(result != 0) {
                 return;
