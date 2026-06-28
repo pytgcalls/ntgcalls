@@ -4,7 +4,6 @@
 
 #ifdef IS_ANDROID
 
-#include <cstring>
 #include <libyuv.h>
 #include <ntgcalls/exceptions.hpp>
 #include <wrtc/utils/java_context.hpp>

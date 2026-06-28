@@ -2,7 +2,6 @@
 // Created by Laky64 on 09/03/2024.
 //
 
-#include <cstring>
 #include <ntgcalls/signaling/crypto/signaling_encryption.hpp>
 
 #include <rtc_base/copy_on_write_buffer.h>

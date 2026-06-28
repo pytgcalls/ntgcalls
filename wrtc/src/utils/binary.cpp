@@ -13,13 +13,13 @@ namespace bytes {
     }
 
     void set_with_const(span destination, const byte value) {
-        memset(destination.data(), std::to_integer<unsigned char>(value), destination.size());
+        std::memset(destination.data(), std::to_integer<unsigned char>(value), destination.size());
     }
 
     void copy(span destination, const const_span source) {
         if (destination.size() < source.size()) {
             throw std::out_of_range("Destination size is less than source size");
         }
-        memcpy(destination.data(), source.data(), source.size());
+        std::memcpy(destination.data(), source.data(), source.size());
     }
 } // wrtc

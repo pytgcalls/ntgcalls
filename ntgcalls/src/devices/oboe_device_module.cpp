@@ -3,7 +3,6 @@
 //
 
 #ifdef IS_ANDROID
-#include <cstring>
 #include <thread>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/devices/oboe_device_module.hpp>

@@ -2,7 +2,6 @@
 // Created by Laky64 on 22/09/24.
 //
 
-#include <cstring>
 #include <ntgcalls/utils/pulse_connection.hpp>
 
 #ifdef IS_LINUX

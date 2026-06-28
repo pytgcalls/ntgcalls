@@ -116,12 +116,12 @@ namespace openssl {
         );
         const auto aesKey = result.key.data();
         const auto aesIv = result.iv.data();
-        memcpy(aesKey, sha256a.data(), 8);
-        memcpy(aesKey + 8, sha256b.data() + 8, 16);
-        memcpy(aesKey + 8 + 16, sha256a.data() + 24, 8);
-        memcpy(aesIv, sha256b.data(), 4);
-        memcpy(aesIv + 4, sha256a.data() + 8, 8);
-        memcpy(aesIv + 4 + 8, sha256b.data() + 24, 4);
+        std::memcpy(aesKey, sha256a.data(), 8);
+        std::memcpy(aesKey + 8, sha256b.data() + 8, 16);
+        std::memcpy(aesKey + 8 + 16, sha256a.data() + 24, 8);
+        std::memcpy(aesIv, sha256b.data(), 4);
+        std::memcpy(aesIv + 4, sha256a.data() + 8, 8);
+        std::memcpy(aesIv + 4 + 8, sha256b.data() + 24, 4);
         return result;
     }
 

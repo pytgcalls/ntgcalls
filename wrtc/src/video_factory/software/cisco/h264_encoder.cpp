@@ -439,7 +439,7 @@ namespace openh264 {
                 RTC_DCHECK_EQ(pBsBuf[layer_len + 3], startCode[3]);
                 layer_len += pNalLengthInByte[nal];
             }
-            memcpy(buffer->data() + encodedImage->size(), pBsBuf, layer_len);
+            std::memcpy(buffer->data() + encodedImage->size(), pBsBuf, layer_len);
             encodedImage->set_size(encodedImage->size() + layer_len);
         }
     }

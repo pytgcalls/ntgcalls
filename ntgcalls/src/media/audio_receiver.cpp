@@ -2,7 +2,6 @@
 // Created by Laky64 on 07/10/24.
 //
 
-#include <cstring>
 #include <ntgcalls/media/audio_receiver.hpp>
 #include <ntgcalls/exceptions.hpp>
 #include <rtc_base/logging.h>

@@ -2,7 +2,6 @@
 // Created by Laky64 on 20/09/2024.
 //
 
-#include <cstring>
 #include <ntgcalls/devices/win_core_device_module.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
 

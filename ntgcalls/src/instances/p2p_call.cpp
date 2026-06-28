@@ -2,7 +2,6 @@
 // Created by Laky64 on 15/03/2024.
 //
 
-#include <cstring>
 #include <ntgcalls/instances/p2p_call.hpp>
 
 #include <ntgcalls/exceptions.hpp>

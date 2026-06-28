@@ -2,7 +2,6 @@
 // Created by Laky64 on 26/10/24.
 //
 
-#include <cstring>
 #include <libyuv.h>
 #include <ntgcalls/media/video_receiver.hpp>
 

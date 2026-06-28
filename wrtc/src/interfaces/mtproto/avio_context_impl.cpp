@@ -35,7 +35,7 @@ namespace wrtc {
         }
 
         if (bytesToRead > 0) {
-            memcpy(buffer, instance->fileData.data() + instance->fileReadPosition, bytesToRead);
+            std::memcpy(buffer, instance->fileData.data() + instance->fileReadPosition, bytesToRead);
             instance->fileReadPosition += bytesToRead;
             return bytesToRead;
         }

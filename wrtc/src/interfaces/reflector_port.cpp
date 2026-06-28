@@ -531,9 +531,9 @@ namespace wrtc {
         }
 
         uint8_t receivedPeerTag[16];
-        memcpy(receivedPeerTag, data, 16);
+        std::memcpy(receivedPeerTag, data, 16);
 
-        if (memcmp(receivedPeerTag, peerTag.data(), 16 - 4) != 0) {
+        if (std::memcmp(receivedPeerTag, peerTag.data(), 16 - 4) != 0) {
             RTC_LOG(LS_WARNING)
             << ToString()
             << ": Received REFLECTOR message with incorrect peer_tag";
@@ -568,22 +568,22 @@ namespace wrtc {
             bool isSpecialPacket = false;
             if (size >= 16 + 12) {
                 uint8_t specialTag[12];
-                memcpy(specialTag, data + 16, 12);
+                std::memcpy(specialTag, data + 16, 12);
 
                 uint8_t expectedSpecialTag[12];
-                memset(expectedSpecialTag, 0xff, 12);
+                std::memset(expectedSpecialTag, 0xff, 12);
 
-                if (memcmp(specialTag, expectedSpecialTag, 12) == 0) {
+                if (std::memcmp(specialTag, expectedSpecialTag, 12) == 0) {
                     isSpecialPacket = true;
                 }
             }
 
             if (!isSpecialPacket) {
                 uint32_t senderTag = 0;
-                memcpy(&senderTag, data + 16, 4);
+                std::memcpy(&senderTag, data + 16, 4);
 
                 uint32_t dataSize = 0;
-                memcpy(&dataSize, data + 16 + 4, 4);
+                std::memcpy(&dataSize, data + 16 + 4, 4);
                 dataSize = be32toh(dataSize);
                 if (dataSize > size - 16 - 4 - 4) {
                     RTC_LOG(LS_WARNING)

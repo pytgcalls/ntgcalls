@@ -2,7 +2,6 @@
 // Created by Laky64 on 28/09/24.
 //
 
-#include <cstring>
 #include <ranges>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/stream_manager.hpp>

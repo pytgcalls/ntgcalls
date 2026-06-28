@@ -2,13 +2,14 @@
 // Created by Laky64 on 02/03/2024.
 //
 
-#include <cstring>
 #include <ntgcalls/utils/hardware_info.hpp>
 
 #if defined(IS_LINUX) || defined(IS_ANDROID)
 #include <unistd.h>
 #elif IS_MACOS
 #include <sys/resource.h>
+#elif IS_WINDOWS
+#include <cstring>
 #endif
 
 namespace ntgcalls {

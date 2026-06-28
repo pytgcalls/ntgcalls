@@ -31,9 +31,9 @@ namespace wrtc {
         const size_t dataSize = sizeOfLuminancePlane() + 2 * sizeOfChromaPlane();
         this->contents = std::make_unique<uint8_t[]>(dataSize);
         if (contents && size == dataSize) {
-            memcpy(this->contents.get(), contents, dataSize);
+            std::memcpy(this->contents.get(), contents, dataSize);
         } else {
-            memset(this->contents.get(), 0, dataSize);
+            std::memset(this->contents.get(), 0, dataSize);
         }
     }
 
@@ -41,9 +41,9 @@ namespace wrtc {
 
     webrtc::scoped_refptr<webrtc::I420Buffer> i420ImageData::buffer() const {
         auto buffer = webrtc::I420Buffer::Create(width, height);
-        memcpy(buffer->MutableDataY(), dataY(), sizeOfLuminancePlane());
-        memcpy(buffer->MutableDataU(), dataU(), sizeOfChromaPlane());
-        memcpy(buffer->MutableDataV(), dataV(), sizeOfChromaPlane());
+        std::memcpy(buffer->MutableDataY(), dataY(), sizeOfLuminancePlane());
+        std::memcpy(buffer->MutableDataU(), dataU(), sizeOfChromaPlane());
+        std::memcpy(buffer->MutableDataV(), dataV(), sizeOfChromaPlane());
         return buffer;
     }
 }

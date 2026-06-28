@@ -137,7 +137,7 @@ namespace wrtc {
         }
 
         int32_t value = 0;
-        memcpy(&value, data.data() + offset, 4);
+        std::memcpy(&value, data.data() + offset, 4);
         offset += 4;
 
         return value;
@@ -288,7 +288,7 @@ namespace wrtc {
 
         switch (frame->format) {
             case AV_SAMPLE_FMT_S16: {
-                memcpy(pcmBuffer.data(), frame->data[0], frame->nb_samples * 2 * frame->ch_layout.nb_channels);
+                std::memcpy(pcmBuffer.data(), frame->data[0], frame->nb_samples * 2 * frame->ch_layout.nb_channels);
             } break;
             case AV_SAMPLE_FMT_S16P: {
                 int16_t* toPcm = pcmBuffer.data();

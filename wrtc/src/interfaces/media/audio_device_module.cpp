@@ -312,7 +312,7 @@ namespace wrtc {
         if (!audioCallback) {
             return;
         }
-        memset(buffer, 0, sizeof(buffer));
+        std::memset(buffer, 0, sizeof(buffer));
         size_t nSamplesOut = 0;
         int64_t elapsedTimeMs = 0;
         int64_t ntpTimeMs = 0;

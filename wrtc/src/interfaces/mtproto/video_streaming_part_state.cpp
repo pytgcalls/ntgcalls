@@ -133,7 +133,7 @@ namespace wrtc {
             return std::nullopt;
         }
         int32_t value = 0;
-        memcpy(&value, data.data() + offset, 4);
+        std::memcpy(&value, data.data() + offset, 4);
         offset += 4;
         return value;
     }
@@ -144,7 +144,7 @@ namespace wrtc {
         }
 
         int32_t value = 0;
-        memcpy(&value, data.data() + offset, count);
+        std::memcpy(&value, data.data() + offset, count);
         offset += count;
         return value;
     }

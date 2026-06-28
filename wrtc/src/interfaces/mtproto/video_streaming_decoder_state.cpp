@@ -28,7 +28,7 @@ namespace wrtc {
             return false;
         }
         if (lhs.extradata_size != 0) {
-            if (memcmp(lhs.extradata, rhs.extradata, lhs.extradata_size) != 0) {
+            if (std::memcmp(lhs.extradata, rhs.extradata, lhs.extradata_size) != 0) {
                 return false;
             }
         }

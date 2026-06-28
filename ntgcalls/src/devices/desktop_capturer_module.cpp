@@ -3,7 +3,6 @@
 //
 
 #ifndef IS_ANDROID
-#include <cstring>
 #include <ntgcalls/exceptions.hpp>
 #include <third_party/libyuv/include/libyuv.h>
 #include <ntgcalls/media/video_sink.hpp>
