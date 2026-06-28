@@ -88,7 +88,7 @@ namespace ntgcalls {
         pc->enableAudioIncoming(writers.contains(Microphone) || externalWriters.contains(Microphone));
         pc->enableVideoIncoming(writers.contains(Camera) || externalWriters.contains(Camera), false);
         pc->enableVideoIncoming(writers.contains(Screen) || externalWriters.contains(Screen), true);
-        initialized = detached = pc->getConnectionMode() != wrtc::ConnectionMode::None;
+        initialized = pc->getConnectionMode() != wrtc::ConnectionMode::None;
     }
 
     MediaState StreamManager::getState() {
@@ -194,6 +194,7 @@ namespace ntgcalls {
         for (const auto& writer : writers | std::views::values) {
             writer->open();
         }
+        detached = false;
         if (resumeOnReconnect) {
             resumeOnReconnect = false;
             const auto now = std::chrono::steady_clock::now();
