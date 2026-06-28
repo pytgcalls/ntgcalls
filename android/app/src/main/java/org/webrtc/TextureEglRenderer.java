@@ -134,6 +134,12 @@ public class TextureEglRenderer extends EglRenderer implements TextureView.Surfa
         return isFirstFrameRendered;
     }
 
+    public void clearFirstFrame() {
+        synchronized (layoutLock) {
+            isFirstFrameRendered = false;
+        }
+    }
+
     public void setRotation(int rotation) {
         synchronized (layoutLock) {
             this.rotation = rotation;

@@ -2,6 +2,7 @@ package org.webrtc;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.os.Looper;
@@ -22,8 +23,20 @@ public class TextureViewRenderer extends TextureView implements TextureView.Surf
     private boolean enableFixedSize;
     private final TextureEglRenderer eglRenderer;
     private OrientationHelper orientationHelper;
-    private int rotatedFrameWidth;
-    private int rotatedFrameHeight;
+    public int rotatedFrameWidth;
+    public int rotatedFrameHeight;
+    private VideoSink parentSink;
+    private TextureView backgroundRenderer;
+
+    public interface SinkParent {
+        void removeTarget(VideoSink sink);
+        void removeBackground(VideoSink sink);
+    }
+
+    public interface TextureCallback {
+        void run(Bitmap bitmap, int rotation);
+    }
+
     private int textureRotation;
     private int screenRotation;
     private int surfaceWidth;
@@ -59,8 +72,40 @@ public class TextureViewRenderer extends TextureView implements TextureView.Surf
 
     @Override
     public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
+        if (parentSink instanceof SinkParent) {
+            SinkParent p = (SinkParent) parentSink;
+            p.removeTarget(this);
+            p.removeBackground(this);
+        }
         eglRenderer.onSurfaceTextureDestroyed(surface);
         return true;
+    }
+
+    public void setParentSink(VideoSink parent) {
+        parentSink = parent;
+    }
+
+    public boolean isFirstFrameRendered() {
+        return eglRenderer.isFirstFrameRendered();
+    }
+
+    public void clearFirstFrame() {
+        eglRenderer.clearFirstFrame();
+    }
+
+    public void clearImage() {
+        eglRenderer.clearImage();
+        eglRenderer.clearFirstFrame();
+    }
+
+    public void setBackgroundRenderer(TextureView backgroundRenderer) {
+        this.backgroundRenderer = backgroundRenderer;
+    }
+
+    public void getRenderBufferBitmap(TextureCallback callback) {
+        if (callback != null) {
+            callback.run(null, 0);
+        }
     }
 
     @Override

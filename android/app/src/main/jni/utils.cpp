@@ -549,11 +549,14 @@ wrtc::SsrcGroup parseSsrcGroup(JNIEnv *env, jobject ssrcGroup) {
 
     jmethodID sizeMethod = env->GetMethodID(listClass.obj(), "size", "()I");
     jmethodID getMethod = env->GetMethodID(listClass.obj(), "get", "(I)Ljava/lang/Object;");
+    const auto integerClass = webrtc::GetClass(env, "java/lang/Integer");
+    jmethodID intValueMethod = env->GetMethodID(integerClass.obj(), "intValue", "()I");
     std::vector<uint32_t> result;
     int size = env->CallIntMethod(ssrcGroups.obj(), sizeMethod);
     result.reserve(size);
     for (int i = 0; i < size; i++) {
-        result.push_back(static_cast<uint32_t>(env->CallIntMethod(ssrcGroups.obj(), getMethod, i)));
+        const auto element = webrtc::ScopedJavaLocalRef<>::Adopt(env, env->CallObjectMethod(ssrcGroups.obj(), getMethod, i));
+        result.push_back(static_cast<uint32_t>(env->CallIntMethod(element.obj(), intValueMethod)));
     }
     return {parseString(env, semantics.obj()), result};
 }

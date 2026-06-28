@@ -405,7 +405,7 @@ JNIEXPORT jobject JNICALL Java_io_github_pytgcalls_NTgCalls_getProtocol(JNIEnv* 
 
 REGISTER_CALLBACK(setUpgradeCallback, onUpgrade, "(JLio/github/pytgcalls/media/MediaState;)V")
 
-REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLio/github/pytgcalls/media/StreamType;)V")
+REGISTER_CALLBACK(setStreamEndCallback, onStreamEnd, "(JLio/github/pytgcalls/media/StreamType;Lio/github/pytgcalls/media/StreamDevice;)V")
 
 REGISTER_CALLBACK(setConnectionChangeCallback, onConnectionChange, "(JLio/github/pytgcalls/NetworkInfo;)V")
 
