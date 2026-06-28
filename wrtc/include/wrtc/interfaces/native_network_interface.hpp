@@ -105,6 +105,13 @@ namespace wrtc {
 
         virtual void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) = 0;
 
+        void initConnection(bool supportsPacketSending = false);
+
+        void addIncomingSmartSource(const std::string& endpoint, const MediaContent& mediaContent, bool force = false);
+
+        void removeIncomingAudio(const std::string& endpoint);
+
+    public:
         void close() override;
 
         std::unique_ptr<MediaTrackInterface> addOutgoingTrack(const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) override;
@@ -113,13 +120,6 @@ namespace wrtc {
 
         void addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink, bool isScreenCast) override;
 
-        void initConnection(bool supportsPacketSending = false);
-
-        void addIncomingSmartSource(const std::string& endpoint, const MediaContent& mediaContent, bool force = false);
-
-        void removeIncomingAudio(const std::string& endpoint);
-
-    public:
         PeerIceParameters localIceParameters();
 
         std::unique_ptr<webrtc::SSLFingerprint> localFingerprint() const;

@@ -35,6 +35,7 @@ namespace wrtc {
 
         void checkConnectionTimeout();
 
+    protected:
         void start() override;
 
         bool getCustomParameterBool(const std::string& name) const override;

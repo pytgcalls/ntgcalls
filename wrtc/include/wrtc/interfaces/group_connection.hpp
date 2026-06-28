@@ -13,6 +13,60 @@
 namespace wrtc {
 
     class GroupConnection final: public NativeNetworkInterface {
+        int64_t lastNetworkActivityMs = 0;
+        uint32_t outgoingAudioSsrc = 0, outgoingVideoSsrc = 0;
+        std::vector<SsrcGroup> outgoingVideoSsrcGroups;
+        bool isPresentation = false, isConference = false;
+        bool isRtcConnected = false, isStreamConnected = false;
+        bool lastEffectivelyConnected = false;
+        ConnectionMode connectionMode = ConnectionMode::None;
+        ResponsePayload::Media mediaConfig;
+        std::shared_ptr<MTProtoStream> mtprotoStream;
+        std::map<uint32_t, int64_t> audioSsrcToUserId;
+        std::unordered_set<uint32_t> pendingAudioSsrcs;
+        synchronized_callback<void()> requestParticipantsCallback;
+
+    protected:
+        bool supportsRenomination() const override;
+
+        webrtc::IceRole iceRole() const override;
+
+        webrtc::IceMode iceMode() const override;
+
+        std::optional<webrtc::SSLRole> dtlsRole() const override;
+
+        std::pair<webrtc::ServerAddresses, std::vector<webrtc::RelayServerConfig>> getStunAndTurnServers() override;
+
+        webrtc::RelayPortFactoryInterface* getRelayPortFactory() override;
+
+        void registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) override;
+
+        webrtc::TimeDelta getRegatherOnFailedNetworksInterval() override;
+
+        bool getCustomParameterBool(const std::string& name) const override;
+
+        void setPortAllocatorFlags(webrtc::BasicPortAllocator* portAllocator) override;
+
+        void start() override;
+
+        void restartDataChannel();
+
+        void generateSsrcs();
+
+        void stateUpdated(bool isConnected) override;
+
+        int candidatePoolSize() const override;
+
+        void updateIsConnected();
+
+        void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) override;
+
+        void addIncomingAudio(int64_t userID, uint32_t ssrc, const std::string& endpoint);
+
+        void beginAudioChannelCleanupTimer();
+
+        bool isGroupConnection() const override;
+
     public:
         explicit GroupConnection(bool isPresentation, bool isConference);
 
@@ -54,63 +108,9 @@ namespace wrtc {
 
         ConnectionMode getConnectionMode() const override;
 
-    private:
-        int64_t lastNetworkActivityMs = 0;
-        uint32_t outgoingAudioSsrc = 0, outgoingVideoSsrc = 0;
-        std::vector<SsrcGroup> outgoingVideoSsrcGroups;
-        bool isPresentation = false, isConference = false;
-        bool isRtcConnected = false, isStreamConnected = false;
-        bool lastEffectivelyConnected = false;
-        ConnectionMode connectionMode = ConnectionMode::None;
-        ResponsePayload::Media mediaConfig;
-        std::shared_ptr<MTProtoStream> mtprotoStream;
-        std::map<uint32_t, int64_t> audioSsrcToUserId;
-        std::unordered_set<uint32_t> pendingAudioSsrcs;
-        synchronized_callback<void()> requestParticipantsCallback;
-
-        bool supportsRenomination() const override;
-
-        webrtc::IceRole iceRole() const override;
-
-        webrtc::IceMode iceMode() const override;
-
-        std::optional<webrtc::SSLRole> dtlsRole() const override;
-
-        std::pair<webrtc::ServerAddresses, std::vector<webrtc::RelayServerConfig>> getStunAndTurnServers() override;
-
-        webrtc::RelayPortFactoryInterface* getRelayPortFactory() override;
-
-        void registerTransportCallbacks(webrtc::P2PTransportChannel* transportChannel) override;
-
-        webrtc::TimeDelta getRegatherOnFailedNetworksInterval() override;
-
-        bool getCustomParameterBool(const std::string& name) const override;
-
-        void setPortAllocatorFlags(webrtc::BasicPortAllocator* portAllocator) override;
-
-        void start() override;
-
-        void restartDataChannel();
-
-        void generateSsrcs();
-
-        void stateUpdated(bool isConnected) override;
-
-        int candidatePoolSize() const override;
-
-        void updateIsConnected();
-
-        void RtpPacketReceived(const webrtc::RtpPacketReceived& packet) override;
-
-        void addIncomingAudio(int64_t userID, uint32_t ssrc, const std::string& endpoint);
-
         void enableAudioIncoming(bool enable) override;
 
         void enableVideoIncoming(bool enable, bool isScreenCast) override;
-
-        void beginAudioChannelCleanupTimer();
-
-        bool isGroupConnection() const override;
     };
 
 } // wrtc
