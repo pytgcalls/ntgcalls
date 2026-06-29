@@ -18,9 +18,12 @@ import (
 	"fmt"
 	"gotgcalls/ntgcalls"
 	"gotgcalls/ubot"
+	"log"
 
 	"github.com/Laky-64/gologging"
-	tg "github.com/amarnathcjd/gogram/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram/types"
+	"github.com/mtgo-labs/storage/sqlite"
 )
 
 var urlVideoTest = "https://docs.evostream.com/sample_content/assets/sintel1m720p.mp4"
@@ -28,12 +31,23 @@ var urlVideoTest = "https://docs.evostream.com/sample_content/assets/sintel1m720
 func main() {
 	gologging.SetLevel(gologging.FatalLevel)
 	gologging.GetLogger("ntgcalls").SetLevel(gologging.DebugLevel)
-	mtProto, _ := tg.NewClient(tg.ClientConfig{
-		AppID:   10029733,
-		AppHash: "d0d81009d46e774f78c0e0e622f5fa21",
-		Session: "session",
-	})
-	_ = mtProto.Start()
+	mtProto, _ := telegram.NewClient(
+		123,
+		"a1b2c3d4e5f6",
+		&telegram.Config{
+			PhoneNumber: "YOUR_PHONE_NUMBER",
+			SessionName: "ntgcalls.session",
+			SavePeers:   true,
+			Log: telegram.LogConfig{
+				Level: telegram.DebugLevel,
+			},
+			Storage: sqlite.New(),
+		},
+	)
+	if err := mtProto.Connect(0); err != nil {
+		log.Fatalf("connect: %v", err)
+	}
+	defer mtProto.Stop()
 
 	uBotInstance := ubot.NewInstance(mtProto)
 	defer uBotInstance.Close()
@@ -50,19 +64,20 @@ func main() {
 	uBotInstance.OnFrame(func(chatId int64, mode ntgcalls.StreamMode, device ntgcalls.StreamDevice, frames []ntgcalls.Frame) {
 		fmt.Println("Received frames for chatId:", chatId, "mode:", mode, "device:", device)
 	})
-	mtProto.On("message:[!/.]play", func(message *tg.NewMessage) error {
-		err := uBotInstance.Play(message.ChannelID(), getMediaDescription(urlVideoTest))
+	mtProto.OnMessage(func(client *telegram.Client, message *types.Message) {
+		err := uBotInstance.Play(message.ChatID, getMediaDescription(urlVideoTest))
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
 		_, err = message.Reply("Playing!")
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
-		return nil
-	})
-	mtProto.On("message:[!/.]record", func(message *tg.NewMessage) error {
-		err := uBotInstance.Record(message.ChannelID(), ntgcalls.MediaDescription{
+	}, telegram.Regex("^[!/.]play"))
+	mtProto.OnMessage(func(client *telegram.Client, message *types.Message) {
+		err := uBotInstance.Record(message.ChatID, ntgcalls.MediaDescription{
 			Microphone: &ntgcalls.AudioDescription{
 				MediaSource:  ntgcalls.MediaSourceExternal,
 				SampleRate:   96000,
@@ -70,62 +85,67 @@ func main() {
 			},
 		})
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
 		_, err = message.Reply("Recording!")
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
-		return nil
-	})
-	mtProto.On("message:[!/.]stop", func(message *tg.NewMessage) error {
-		err := uBotInstance.Stop(message.ChannelID())
+	}, telegram.Regex("^[!/.]record"))
+	mtProto.OnMessage(func(client *telegram.Client, message *types.Message) {
+		err := uBotInstance.Stop(message.ChatID)
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
 		_, err = message.Reply("Stopped!")
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
-		return nil
-	})
-	mtProto.On("message:[!/.]pause", func(message *tg.NewMessage) error {
-		paused, err := uBotInstance.Pause(message.ChannelID())
+	}, telegram.Regex("^[!/.]stop"))
+	mtProto.OnMessage(func(client *telegram.Client, message *types.Message) {
+		paused, err := uBotInstance.Pause(message.ChatID)
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
 		if paused {
 			_, err = message.Reply("Paused!")
 			if err != nil {
-				return err
+				gologging.Error(err)
+				return
 			}
 		}
-		return nil
-	})
-	mtProto.On("message:[!/.]resume", func(message *tg.NewMessage) error {
-		resumed, err := uBotInstance.Resume(message.ChannelID())
+	}, telegram.Regex("^[!/.]pause"))
+	mtProto.OnMessage(func(client *telegram.Client, message *types.Message) {
+		resumed, err := uBotInstance.Resume(message.ChatID)
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
 		if resumed {
 			_, err = message.Reply("Resumed!")
 			if err != nil {
-				return err
+				gologging.Error(err)
+				return
 			}
 		}
-		return nil
-	})
-	mtProto.On("message:[!/.]conference", func(message *tg.NewMessage) error {
-		err := uBotInstance.JoinConference(message.ChannelID(), getMediaDescription(urlVideoTest))
+	}, telegram.Regex("^[!/.]resume"))
+	mtProto.OnMessage(func(client *telegram.Client, message *types.Message) {
+		err := uBotInstance.JoinConference(message.ChatID, getMediaDescription(urlVideoTest))
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
 		_, err = message.Reply("Conference started!")
 		if err != nil {
-			return err
+			gologging.Error(err)
+			return
 		}
-		return nil
-	})
+	}, telegram.Regex("^[!/.]conference"))
 	uBotInstance.OnUpdateEmojis(func(chatId int64, emojis string) {
 		fmt.Println("Emojis updated for chatId:", chatId, "emojis:", emojis)
 	})

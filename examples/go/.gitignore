@@ -8,3 +8,6 @@ ntgcalls/*.h
 *.sum
 session
 session-test
+*.session
+*.session-wal
+*.session-shm

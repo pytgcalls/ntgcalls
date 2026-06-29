@@ -3,7 +3,7 @@ package ubot
 import (
 	"gotgcalls/ntgcalls"
 
-	tg "github.com/amarnathcjd/gogram/telegram"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func (ctx *Context) getConferenceLastBlock(chatId int64) ([]byte, error) {
@@ -11,11 +11,18 @@ func (ctx *Context) getConferenceLastBlock(chatId int64) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	res, err := ctx.app.PhoneGetGroupCallChainBlocks(inputCall, 0, -1, 1)
+	res, err := ctx.invoke(
+		&tg.PhoneGetGroupCallChainBlocksRequest{
+			Call:       inputCall,
+			SubChainID: 0,
+			Offset:     -1,
+			Limit:      1,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	if updatesObj, ok := res.(*tg.UpdatesObj); ok {
+	if updatesObj, ok := res.(*tg.Updates); ok {
 		for _, update := range updatesObj.Updates {
 			if chainBlocks, ok := update.(*tg.UpdateGroupCallChainBlocks); ok {
 				if len(chainBlocks.Blocks) > 0 {
@@ -32,7 +39,12 @@ func (ctx *Context) sendConferenceCallBroadcast(chatId int64, block []byte) {
 	if err != nil {
 		return
 	}
-	_, _ = ctx.app.PhoneSendConferenceCallBroadcast(inputCall, block)
+	_, _ = ctx.invoke(
+		&tg.PhoneSendConferenceCallBroadcastRequest{
+			Call:  inputCall,
+			Block: block,
+		},
+	)
 }
 
 func (ctx *Context) getSubchainBlocks(chatId int64, request ntgcalls.SubchainRequest) ([][]byte, int32, error) {
@@ -40,11 +52,19 @@ func (ctx *Context) getSubchainBlocks(chatId int64, request ntgcalls.SubchainReq
 	if err != nil {
 		return nil, 0, err
 	}
-	res, err := ctx.app.PhoneGetGroupCallChainBlocks(inputCall, request.Subchain, request.Height, request.Limit)
+
+	res, err := ctx.invoke(
+		&tg.PhoneGetGroupCallChainBlocksRequest{
+			Call:       inputCall,
+			SubChainID: request.Subchain,
+			Offset:     request.Height,
+			Limit:      request.Limit,
+		},
+	)
 	if err != nil {
 		return nil, 0, err
 	}
-	if updatesObj, ok := res.(*tg.UpdatesObj); ok {
+	if updatesObj, ok := res.(*tg.Updates); ok {
 		for _, update := range updatesObj.Updates {
 			if chainBlocks, ok := update.(*tg.UpdateGroupCallChainBlocks); ok {
 				return chainBlocks.Blocks, chainBlocks.NextOffset, nil

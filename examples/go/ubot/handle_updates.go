@@ -8,22 +8,22 @@ import (
 	"time"
 
 	"github.com/Laky-64/gologging"
-	tg "github.com/amarnathcjd/gogram/telegram"
+	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 func (ctx *Context) handleUpdates() {
-	ctx.app.AddRawHandler(&tg.UpdatePhoneCallSignalingData{}, func(m tg.Update, c *tg.Client) error {
-		signalingData := m.(*tg.UpdatePhoneCallSignalingData)
-		userId, err := ctx.convertCallId(signalingData.PhoneCallID)
-		if err == nil {
-			_ = ctx.binding.SendSignalingData(userId, signalingData.Data)
+	ctx.app.OnRawUpdate(func(update *tg.UpdatePhoneCallSignalingData) {
+		userId, err := ctx.convertCallId(update.PhoneCallID)
+		if err != nil {
+			gologging.Error(err)
+			return
 		}
-		return nil
+		_ = ctx.binding.SendSignalingData(userId, update.Data)
 	})
 
-	ctx.app.AddRawHandler(&tg.UpdatePhoneCall{}, func(m tg.Update, _ *tg.Client) error {
-		phoneCall := m.(*tg.UpdatePhoneCall).PhoneCall
-
+	ctx.app.OnRawUpdate(func(update *tg.UpdatePhoneCall) {
+		phoneCall := update.PhoneCall
 		var ID int64
 		var AccessHash int64
 		var userId int64
@@ -41,7 +41,7 @@ func (ctx *Context) handleUpdates() {
 			userId = call.AdminID
 			ID = call.ID
 			AccessHash = call.AccessHash
-		case *tg.PhoneCallObj:
+		case *tg.PhoneCall:
 			userId = call.AdminID
 		case *tg.PhoneCallDiscarded:
 			userId, _ = ctx.convertCallId(call.ID)
@@ -61,7 +61,7 @@ func (ctx *Context) handleUpdates() {
 				ctx.p2pConfigs[userId].GAorB = call.GB
 				ctx.p2pConfigs[userId].WaitData <- nil
 			}
-		case *tg.PhoneCallObj:
+		case *tg.PhoneCall:
 			if ctx.p2pConfigs[userId] != nil {
 				ctx.p2pConfigs[userId].GAorB = call.GAOrB
 				ctx.p2pConfigs[userId].KeyFingerprint = call.KeyFingerprint
@@ -82,7 +82,7 @@ func (ctx *Context) handleUpdates() {
 						gologging.ErrorF("migrate connectCall: %v", err)
 					}
 				}()
-				return nil
+				return
 			}
 			var reasonMessage string
 			switch call.Reason.(type) {
@@ -100,7 +100,8 @@ func (ctx *Context) handleUpdates() {
 			if ctx.p2pConfigs[userId] == nil {
 				p2pConfigs, err := ctx.getP2PConfigs(call.GAHash)
 				if err != nil {
-					return err
+					gologging.Error(err)
+					return
 				}
 				ctx.p2pConfigs[userId] = p2pConfigs
 				for _, callback := range ctx.incomingCallCallbacks {
@@ -108,12 +109,10 @@ func (ctx *Context) handleUpdates() {
 				}
 			}
 		}
-		return nil
 	})
 
-	ctx.app.AddRawHandler(&tg.UpdateGroupCallParticipants{}, func(m tg.Update, c *tg.Client) error {
-		participantsUpdate := m.(*tg.UpdateGroupCallParticipants)
-		chatId, err := ctx.convertGroupCallId(participantsUpdate.Call.(*tg.InputGroupCallObj).ID)
+	ctx.app.OnRawUpdate(func(update *tg.UpdateGroupCallParticipants) {
+		chatId, err := ctx.convertGroupCallId(update.Call.(*tg.InputGroupCall).ID)
 		if err == nil {
 			ctx.participantsMutex.Lock()
 			if ctx.callParticipants[chatId] == nil {
@@ -121,7 +120,7 @@ func (ctx *Context) handleUpdates() {
 					CallParticipants: make(map[int64]*tg.GroupCallParticipant),
 				}
 			}
-			for _, participant := range participantsUpdate.Participants {
+			for _, participant := range update.Participants {
 				participantId := parsePeer(participant.Peer)
 				if participant.Left {
 					delete(ctx.callParticipants[chatId].CallParticipants, participantId)
@@ -174,12 +173,12 @@ func (ctx *Context) handleUpdates() {
 					}
 				}
 			}
-			ctx.callParticipants[chatId].LastMtprotoUpdate = time.Now()
+			ctx.callParticipants[chatId].LastMTProtoUpdate = time.Now()
 			ctx.participantsMutex.Unlock()
 
-			for _, participant := range participantsUpdate.Participants {
+			for _, participant := range update.Participants {
 				userPeer := participant.Peer.(*tg.PeerUser)
-				if userPeer.UserID == ctx.self.ID {
+				if userPeer.UserID == ctx.self.UserID {
 					connectionMode, err := ctx.binding.GetConnectionMode(chatId)
 					if err == nil && connectionMode == ntgcalls.StreamConnection && participant.CanSelfUnmute {
 						if ctx.pendingConnections[chatId] != nil {
@@ -200,7 +199,7 @@ func (ctx *Context) handleUpdates() {
 						if err != nil {
 							panic(err)
 						}
-						err = ctx.setCallStatus(participantsUpdate.Call, state)
+						err = ctx.setCallStatus(update.Call, state)
 						if err != nil {
 							panic(err)
 						}
@@ -209,39 +208,40 @@ func (ctx *Context) handleUpdates() {
 				}
 			}
 		}
-		return nil
 	})
 
-	ctx.app.AddRawHandler(&tg.UpdateGroupCall{}, func(m tg.Update, c *tg.Client) error {
-		updateGroupCall := m.(*tg.UpdateGroupCall)
-		if groupCallRaw := updateGroupCall.Call; groupCallRaw != nil {
-			chatID := parsePeer(updateGroupCall.Peer)
+	ctx.app.OnRawUpdate(func(update *tg.UpdateGroupCall) {
+		if groupCallRaw := update.Call; groupCallRaw != nil {
+			chatID := parsePeer(update.Peer)
 			switch groupCallRaw.(type) {
-			case *tg.GroupCallObj:
-				groupCall := groupCallRaw.(*tg.GroupCallObj)
-				ctx.inputGroupCalls[chatID] = &tg.InputGroupCallObj{
+			case *tg.GroupCall:
+				groupCall := groupCallRaw.(*tg.GroupCall)
+				ctx.inputGroupCalls[chatID] = &tg.InputGroupCall{
 					ID:         groupCall.ID,
 					AccessHash: groupCall.AccessHash,
 				}
-				return nil
+				return
 			case *tg.GroupCallDiscarded:
 				delete(ctx.inputGroupCalls, chatID)
 				_ = ctx.binding.Stop(chatID)
-				return nil
+				return
 			}
 		}
-		return nil
 	})
 
-	ctx.app.AddRawHandler(&tg.UpdateGroupCallChainBlocks{}, func(m tg.Update, c *tg.Client) error {
-		chainBlocks := m.(*tg.UpdateGroupCallChainBlocks)
-		if inputCall, ok := chainBlocks.Call.(*tg.InputGroupCallObj); ok {
+	ctx.app.OnRawUpdate(func(update *tg.UpdateGroupCallChainBlocks) {
+		if inputCall, ok := update.Call.(*tg.InputGroupCall); ok {
 			chatId, err := ctx.convertGroupCallId(inputCall.ID)
 			if err == nil {
-				_ = ctx.binding.ApplyBlocks(chatId, chainBlocks.SubChainID, chainBlocks.NextOffset, chainBlocks.Blocks, false)
+				_ = ctx.binding.ApplyBlocks(
+					chatId,
+					update.SubChainID,
+					update.NextOffset,
+					update.Blocks,
+					false,
+				)
 			}
 		}
-		return nil
 	})
 
 	ctx.binding.OnOutboundBlock(func(chatId int64, block []byte) {
@@ -268,17 +268,24 @@ func (ctx *Context) handleUpdates() {
 
 	ctx.binding.OnRequestBroadcastTimestamp(func(chatId int64) {
 		if ctx.inputGroupCalls[chatId] != nil {
-			channels, err := ctx.app.PhoneGetGroupCallStreamChannels(ctx.inputGroupCalls[chatId])
+			channels, err := ctx.invoke(
+				&tg.PhoneGetGroupCallStreamChannelsRequest{
+					Call: ctx.inputGroupCalls[chatId],
+				},
+			)
 			if err == nil {
-				_ = ctx.binding.SendBroadcastTimestamp(chatId, channels.Channels[0].LastTimestampMs)
+				_ = ctx.binding.SendBroadcastTimestamp(
+					chatId,
+					channels.(*tg.PhoneGroupCallStreamChannels).Channels[0].LastTimestampMs,
+				)
 			}
 		}
 	})
 
 	ctx.binding.OnRequestBroadcastPart(func(chatId int64, segmentPartRequest ntgcalls.SegmentPartRequest) {
 		if ctx.inputGroupCalls[chatId] != nil {
-			file, err := ctx.app.UploadGetFile(
-				&tg.UploadGetFileParams{
+			file, err := ctx.invoke(
+				&tg.UploadGetFileRequest{
 					Location: &tg.InputGroupCallStream{
 						Call:         ctx.inputGroupCalls[chatId],
 						TimeMs:       segmentPartRequest.Timestamp,
@@ -296,12 +303,11 @@ func (ctx *Context) handleUpdates() {
 			data = nil
 
 			if err != nil {
-				secondsWait := tg.GetFloodWait(err)
-				if secondsWait == 0 {
+				if tgerr.IsFloodWait(err) {
 					status = ntgcalls.SegmentStatusResyncNeeded
 				}
 			} else {
-				data = file.(*tg.UploadFileObj).Bytes
+				data = file.(*tg.UploadFile).Bytes
 				status = ntgcalls.SegmentStatusSuccess
 			}
 
@@ -317,7 +323,12 @@ func (ctx *Context) handleUpdates() {
 	})
 
 	ctx.binding.OnSignal(func(chatId int64, signal []byte) {
-		_, _ = ctx.app.PhoneSendSignalingData(ctx.inputCalls[chatId], signal)
+		_, _ = ctx.invoke(
+			&tg.PhoneSendSignalingDataRequest{
+				Peer: ctx.inputCalls[chatId],
+				Data: signal,
+			},
+		)
 	})
 
 	ctx.binding.OnConnectionChange(func(chatId int64, state ntgcalls.NetworkInfo) {

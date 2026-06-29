@@ -32,7 +32,7 @@ func (ctx *Context) updateSources(chatId int64) error {
 				return err
 			}
 		}
-		if participantId == ctx.self.ID && !participant.CanSelfUnmute && !slices.Contains(ctx.mutedByAdmin, chatId) {
+		if participantId == ctx.self.UserID && !participant.CanSelfUnmute && !slices.Contains(ctx.mutedByAdmin, chatId) {
 			ctx.mutedByAdmin = append(ctx.mutedByAdmin, chatId)
 		}
 	}

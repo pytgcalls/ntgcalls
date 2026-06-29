@@ -3,10 +3,10 @@ package types
 import (
 	"time"
 
-	tg "github.com/amarnathcjd/gogram/telegram"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 type CallParticipantsCache struct {
 	CallParticipants  map[int64]*tg.GroupCallParticipant
-	LastMtprotoUpdate time.Time
+	LastMTProtoUpdate time.Time
 }

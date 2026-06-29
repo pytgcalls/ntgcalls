@@ -1,9 +1,10 @@
 package ubot
 
 import (
+	"context"
 	"fmt"
 
-	tg "github.com/amarnathcjd/gogram/telegram"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func (ctx *Context) parseChatId(chatId any) (int64, error) {
@@ -20,17 +21,17 @@ func (ctx *Context) parseChatId(chatId any) (int64, error) {
 	case int8:
 		parsedChatId = int64(v)
 	case string:
-		rawChat, err := ctx.app.ResolveUsername(chatId.(string))
+		rawChat, err := ctx.app.ResolveUsername(context.Background(), chatId.(string))
 		if err != nil {
 			return 0, fmt.Errorf("failed to resolve username: %w", err)
 		}
-		switch rawChat.(type) {
-		case *tg.UserObj:
-			parsedChatId = rawChat.(*tg.UserObj).ID
-		case *tg.ChatObj:
-			parsedChatId = -rawChat.(*tg.ChatObj).ID
-		case *tg.Channel:
-			parsedChatId = -1000000000000 - rawChat.(*tg.Channel).ID
+		switch c := rawChat.(type) {
+		case *tg.InputPeerUser:
+			parsedChatId = c.UserID
+		case *tg.InputPeerChat:
+			parsedChatId = -c.ChatID
+		case *tg.InputPeerChannel:
+			parsedChatId = -1000000000000 - c.ChannelID
 		}
 	default:
 		return 0, fmt.Errorf("unsupported chatId type: %T", chatId)
@@ -38,7 +39,7 @@ func (ctx *Context) parseChatId(chatId any) (int64, error) {
 
 	switch chatId.(type) {
 	case int64, int, int32, int16, int8:
-		rawChat, err := ctx.app.GetInputPeer(parsedChatId)
+		rawChat, err := ctx.app.ResolvePeer(context.Background(), parsedChatId)
 		if err != nil {
 			return 0, fmt.Errorf("failed to resolve peer: %w", err)
 		}

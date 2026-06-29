@@ -4,7 +4,7 @@ import (
 	"gotgcalls/ntgcalls"
 	"slices"
 
-	tg "github.com/amarnathcjd/gogram/telegram"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func (ctx *Context) joinPresentation(chatId int64, join bool) error {
@@ -30,17 +30,18 @@ func (ctx *Context) joinPresentation(chatId int64, join bool) error {
 					return err
 				}
 				resultParams := "{\"transport\": null}"
-				callResRaw, err := ctx.app.PhoneJoinGroupCallPresentation(
-					ctx.inputGroupCalls[chatId],
-					&tg.DataJson{
-						Data: jsonParams,
+				callRes, err := ctx.invoke(
+					&tg.PhoneJoinGroupCallPresentationRequest{
+						Call: ctx.inputGroupCalls[chatId],
+						Params: &tg.DataJSON{
+							Data: jsonParams,
+						},
 					},
 				)
 				if err != nil {
 					return err
 				}
-				callRes := callResRaw.(*tg.UpdatesObj)
-				for _, update := range callRes.Updates {
+				for _, update := range callRes.(*tg.Updates).Updates {
 					switch update.(type) {
 					case *tg.UpdateGroupCallConnection:
 						resultParams = update.(*tg.UpdateGroupCallConnection).Params.Data
@@ -63,8 +64,10 @@ func (ctx *Context) joinPresentation(chatId int64, join bool) error {
 			if err != nil {
 				return err
 			}
-			_, err = ctx.app.PhoneLeaveGroupCallPresentation(
-				ctx.inputGroupCalls[chatId],
+			_, err = ctx.invoke(
+				&tg.PhoneLeaveGroupCallPresentationRequest{
+					Call: ctx.inputGroupCalls[chatId],
+				},
 			)
 			if err != nil {
 				return err
