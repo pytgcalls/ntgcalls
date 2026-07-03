@@ -1,20 +1,20 @@
 //
-// Created by Laky64 on 10/09/2024.
+// Created by Lauren on 10/09/24.
 //
 
 #pragma once
 
 #include <string>
 
-namespace wrtc {
+namespace wrtc::models {
     struct RouteDescription {
-        explicit RouteDescription(std::string localDescription, std::string remoteDescription);
+        explicit RouteDescription(std::string local_description, std::string remote_description);
 
-        std::string localDescription;
-        std::string remoteDescription;
+        std::string local_description;
+        std::string remote_description;
 
         bool operator==(RouteDescription const &rhs) const;
 
         bool operator!=(const RouteDescription& rhs) const;
     };
-} // wrtc
+} // wrtc::models

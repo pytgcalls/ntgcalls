@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 04/10/24.
+// Created by Lauren on 04/10/24.
 //
 
 #pragma once
@@ -8,7 +8,7 @@
 #include <modules/audio_device/audio_device_impl.h>
 #include <wrtc/utils/safe_thread.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
     typedef uint16_t Sample;
     static constexpr uint8_t kNumberOfChannels = 2;
     static constexpr int kSamplesPerSecond = 96000;
@@ -16,26 +16,26 @@ namespace wrtc {
     static constexpr size_t kNumberBytesPerSample = sizeof(Sample);
 
     class AudioDeviceModule: public webrtc::AudioDeviceModule {
-        bool playIsInitialized = false;
-        bool playing = false;
-        mutable webrtc::Mutex mutex;
-        webrtc::AudioTransport* audioCallback RTC_GUARDED_BY(mutex) = nullptr;
-        bool started RTC_GUARDED_BY(mutex) = false;
-        std::unique_ptr<SafeThread> processThread;
-        webrtc::SequenceChecker processThreadChecker{webrtc::SequenceChecker::kDetached};
-        int64_t nextFrameTime RTC_GUARDED_BY(processThreadChecker) = 0;
-        char buffer[kNumberSamples * kNumberBytesPerSample * kNumberOfChannels]{};
+        bool play_is_initialized_ = false;
+        bool playing_ = false;
+        mutable webrtc::Mutex mutex_;
+        webrtc::AudioTransport* audio_callback_ RTC_GUARDED_BY(mutex_) = nullptr;
+        bool started_ RTC_GUARDED_BY(mutex_) = false;
+        std::unique_ptr<utils::SafeThread> process_thread_;
+        webrtc::SequenceChecker process_thread_checker_{webrtc::SequenceChecker::kDetached};
+        int64_t next_frame_time_ RTC_GUARDED_BY(process_thread_checker_) = 0;
+        char buffer_[kNumberSamples * kNumberBytesPerSample * kNumberOfChannels]{};
 
-        void UpdateProcessing(bool start) RTC_LOCKS_EXCLUDED(mutex);
+        void update_processing(bool start) RTC_LOCKS_EXCLUDED(mutex_);
 
-        void StartProcessP();
+        void start_process_p();
 
-        void ProcessFrameP();
+        void process_frame_p();
 
-        void ReceiveFrameP();
+        void receive_frame_p();
 
     public:
-        int32_t ActiveAudioLayer(AudioLayer* audioLayer) const override;
+        int32_t ActiveAudioLayer(AudioLayer* audio_layer) const override;
 
         int32_t RegisterAudioCallback(webrtc::AudioTransport* callback) override;
 
@@ -99,9 +99,9 @@ namespace wrtc {
 
         int32_t SpeakerVolume(uint32_t* volume) const override;
 
-        int32_t MaxSpeakerVolume(uint32_t* maxVolume) const override;
+        int32_t MaxSpeakerVolume(uint32_t* max_volume) const override;
 
-        int32_t MinSpeakerVolume(uint32_t* minVolume) const override;
+        int32_t MinSpeakerVolume(uint32_t* min_volume) const override;
 
         int32_t MicrophoneVolumeIsAvailable(bool* available) override;
 
@@ -109,9 +109,9 @@ namespace wrtc {
 
         int32_t MicrophoneVolume(uint32_t* volume) const override;
 
-        int32_t MaxMicrophoneVolume(uint32_t* maxVolume) const override;
+        int32_t MaxMicrophoneVolume(uint32_t* max_volume) const override;
 
-        int32_t MinMicrophoneVolume(uint32_t* minVolume) const override;
+        int32_t MinMicrophoneVolume(uint32_t* min_volume) const override;
 
         int32_t SpeakerMuteIsAvailable(bool* available) override;
 
@@ -137,7 +137,7 @@ namespace wrtc {
 
         int32_t StereoRecording(bool* enabled) const override;
 
-        int32_t PlayoutDelay(uint16_t* delayMS) const override;
+        int32_t PlayoutDelay(uint16_t* delay_ms) const override;
 
         bool BuiltInAECIsAvailable() const override;
 
@@ -152,4 +152,4 @@ namespace wrtc {
         int32_t EnableBuiltInNS(bool enable) override;
     };
 
-} // wrtc
+} // wrtc::interfaces::media

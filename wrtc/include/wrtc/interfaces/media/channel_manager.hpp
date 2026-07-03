@@ -1,47 +1,47 @@
 //
-// Created by Laky64 on 01/04/2024.
+// Created by Lauren on 01/04/24.
 //
 
 #pragma once
-#include <pc/channel.h>
 #include <media/base/media_engine.h>
+#include <pc/channel.h>
 #include <wrtc/utils/safe_thread.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
     class ChannelManager {
-        const webrtc::Environment& environment;
-        webrtc::MediaEngineInterface* mediaEngine;
-        SafeThread& workerThread;
-        webrtc::Thread* signalingThread;
-        webrtc::Thread* networkThread;
-        webrtc::UniqueRandomIdGenerator ssrcGenerator;
+        const webrtc::Environment& environment_;
+        webrtc::MediaEngineInterface* media_engine_;
+        utils::SafeThread& worker_thread_;
+        webrtc::Thread* signaling_thread_;
+        webrtc::Thread* network_thread_;
+        webrtc::UniqueRandomIdGenerator ssrc_generator_;
 
     public:
         ChannelManager(
             const webrtc::Environment& environment,
-            webrtc::MediaEngineInterface* mediaEngine,
-            SafeThread& workerThread,
-            webrtc::Thread* networkThread,
-            webrtc::Thread* signalingThread
+            webrtc::MediaEngineInterface* media_engine,
+            utils::SafeThread& worker_thread,
+            webrtc::Thread* network_thread,
+            webrtc::Thread* signaling_thread
         );
 
-        std::unique_ptr<webrtc::BaseChannel> CreateVoiceChannel(
+        std::unique_ptr<webrtc::BaseChannel> create_voice_channel(
             webrtc::Call* call,
-            const webrtc::MediaConfig& mediaConfig,
+            const webrtc::MediaConfig& media_config,
             const std::string& mid,
-            bool srtpRequired,
-            const webrtc::CryptoOptions& cryptoOptions,
+            bool srtp_required,
+            const webrtc::CryptoOptions& crypto_options,
             const webrtc::AudioOptions& options
         );
 
-        std::unique_ptr<webrtc::BaseChannel>  CreateVideoChannel(
+        std::unique_ptr<webrtc::BaseChannel> create_video_channel(
             webrtc::Call* call,
-            const webrtc::MediaConfig& mediaConfig,
+            const webrtc::MediaConfig& media_config,
             const std::string& mid,
-            bool srtpRequired,
-            const webrtc::CryptoOptions& cryptoOptions,
+            bool srtp_required,
+            const webrtc::CryptoOptions& crypto_options,
             const webrtc::VideoOptions& options,
-            webrtc::VideoBitrateAllocatorFactory* bitrateAllocatorFactory
+            webrtc::VideoBitrateAllocatorFactory* bitrate_allocator_factory
         );
     };
-} // wrtc
+} // wrtc::interfaces::media

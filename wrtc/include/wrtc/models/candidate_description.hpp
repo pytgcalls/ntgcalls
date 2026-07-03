@@ -1,12 +1,12 @@
 //
-// Created by Laky64 on 10/09/2024.
+// Created by Lauren on 10/09/24.
 //
 
 #pragma once
 
 #include <string>
 
-namespace wrtc {
+namespace wrtc::models {
     struct CandidateDescription {
         std::string protocol;
         std::string type;
@@ -18,4 +18,4 @@ namespace wrtc {
             return !(*this == rhs);
         }
     };
-} // wrtc
+} // wrtc::models

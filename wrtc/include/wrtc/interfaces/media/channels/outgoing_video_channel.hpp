@@ -1,34 +1,33 @@
 //
-// Created by Laky64 on 02/04/2024.
+// Created by Lauren on 02/04/24.
 //
 
 #pragma once
 #include <call/call.h>
-#include <pc/dtls_srtp_transport.h>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 #include <wrtc/interfaces/media/frame_transformer.hpp>
 #include <wrtc/interfaces/media/local_video_adapter.hpp>
 #include <wrtc/models/media_content.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media::channels {
     class OutgoingVideoChannel {
-        uint32_t _ssrc = 0;
-        std::unique_ptr<webrtc::BaseChannel> channel;
-        SafeThread& workerThread;
-        SafeThread& networkThread;
-        std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> bitrateAllocatorFactory;
-        LocalVideoAdapter* sink;
+        uint32_t ssrc_ = 0;
+        std::unique_ptr<webrtc::BaseChannel> channel_;
+        utils::SafeThread& worker_thread_;
+        utils::SafeThread& network_thread_;
+        std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> bitrate_allocator_factory_;
+        LocalVideoAdapter* sink_;
 
     public:
         OutgoingVideoChannel(
             webrtc::Call* call,
-            ChannelManager* channelManager,
-            webrtc::RtpTransport* rtpTransport,
-            const MediaContent& mediaContent,
-            SafeThread& workerThread,
-            SafeThread& networkThread,
+            ChannelManager* channel_manager,
+            webrtc::RtpTransport* rtp_transport,
+            const models::MediaContent& media_content,
+            utils::SafeThread& worker_thread,
+            utils::SafeThread& network_thread,
             LocalVideoAdapter* sink,
-            const std::map<int32_t, FrameTransformer::PayloadType>& payloadTypeMapping,
+            const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
             E2EEncryptor* encryptor
         );
 
@@ -38,4 +37,4 @@ namespace wrtc {
 
         [[nodiscard]] uint32_t ssrc() const;
     };
-} // wrtc
+} // wrtc::interfaces::media::channels

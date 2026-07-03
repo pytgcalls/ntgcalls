@@ -1,10 +1,10 @@
 //
-// Created by laky64 on 24/01/26.
+// Created by Lauren on 24/01/26.
 //
 
 #include <wrtc/utils/json.hpp>
 
-namespace wrtc {
+namespace wrtc::utils {
     iterable_items json::items() const {
         auto &self = const_cast<json&>(*this);
         return self.items();
@@ -48,4 +48,4 @@ namespace wrtc {
 
         throw exception("Not iterable");
     }
-} // wrtc
+} // wrtc::utils

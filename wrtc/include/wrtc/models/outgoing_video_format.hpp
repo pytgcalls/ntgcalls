@@ -1,32 +1,32 @@
 //
-// Created by Laky64 on 04/11/24.
+// Created by Lauren on 04/11/24.
 //
 
 #pragma once
 #include <vector>
+#include <api/video_codecs/sdp_video_format.h>
 #include <media/base/codec.h>
 #include <wrtc/models/media_content.hpp>
-#include <api/video_codecs/sdp_video_format.h>
 
-namespace wrtc {
-    struct PayloadType;
-
+namespace wrtc::models {
     class OutgoingVideoFormat {
-        static void addDefaultFeedbackParams(webrtc::Codec* codec);
+        webrtc::Codec video_codec_;
+        std::optional<webrtc::Codec> rtx_codec_;
+
+        static void add_default_feedback_params(webrtc::Codec* codec);
 
     public:
-        webrtc::Codec videoCodec;
-        std::optional<webrtc::Codec> rtxCodec;
+        OutgoingVideoFormat(webrtc::Codec video_codec, std::optional<webrtc::Codec> rtx_codec);
 
-        OutgoingVideoFormat(webrtc::Codec videoCodec_, std::optional<webrtc::Codec> rtxCodec_);
-
-        static std::vector<webrtc::Codec> getVideoCodecs(
+        static std::vector<webrtc::Codec> get_video_codecs(
             const std::vector<webrtc::SdpVideoFormat>& formats,
-            const std::vector<PayloadType>& payloadTypes,
-            bool isGroupConnection
+            const std::vector<PayloadType>& payload_types,
+            bool is_group_connection
         );
 
-        static std::vector<OutgoingVideoFormat> assignPayloadTypes(std::vector<webrtc::SdpVideoFormat> const &formats);
+        [[nodiscard]] webrtc::Codec video_codec() const;
+
+        static std::vector<OutgoingVideoFormat> assign_payload_types(std::vector<webrtc::SdpVideoFormat> const &formats);
     };
 
-} // wrtc
+} // wrtc::models

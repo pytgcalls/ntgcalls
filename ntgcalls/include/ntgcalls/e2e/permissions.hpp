@@ -1,11 +1,11 @@
 //
-// Created by Laky-64 on 17/06/26.
+// Created by Lauren on 17/06/26.
 //
 
 #pragma once
 #include <cstdint>
 
-namespace telegram::e2e {
+namespace ntgcalls::e2e {
     struct Permissions {
         enum GroupParticipantFlags : int32_t {
             AddUsers = 1 << 0,
@@ -17,14 +17,14 @@ namespace telegram::e2e {
 
         int32_t flags = 0;
 
-        [[nodiscard]] bool mayAddUsers() const;
+        [[nodiscard]] bool may_add_users() const;
 
-        [[nodiscard]] bool mayRemoveUsers() const;
+        [[nodiscard]] bool may_remove_users() const;
 
-        [[nodiscard]] bool maySetValue() const;
+        [[nodiscard]] bool may_set_value() const;
 
-        [[nodiscard]] bool isParticipant() const;
+        [[nodiscard]] bool is_participant() const;
 
-        [[nodiscard]] bool mayChangeSharedKey() const;
+        [[nodiscard]] bool may_change_shared_key() const;
     };
-} // telegram::e2e
+} // ntgcalls::e2e

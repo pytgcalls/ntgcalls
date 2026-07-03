@@ -1,20 +1,20 @@
 //
-// Created by Laky64 on 08/10/24.
+// Created by Lauren on 08/10/24.
 //
 
 #include <ntgcalls/io/base_io.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::io {
 
-    BaseIO::BaseIO(BaseSink* sink): sink(sink) {}
+    BaseIO::BaseIO(media::BaseSink* sink): sink_(sink) {}
 
-    void BaseIO::onEof(const std::function<void()>& callback) {
-        eofCallback = callback;
+    void BaseIO::on_eof(const std::function<void()>& callback) {
+        eof_callback_ = callback;
     }
 
     BaseIO::~BaseIO() {
-        eofCallback = nullptr;
-        sink = nullptr;
+        eof_callback_ = nullptr;
+        sink_ = nullptr;
     }
 
-} // ntgcalls
+} // ntgcalls::io

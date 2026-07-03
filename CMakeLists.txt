@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.27)
 
-if (WIN32)
-    add_compile_options(/wd4068)
+if (MSVC)
+    add_compile_options(/wd4068 /wd5030)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wno-unknown-attributes)
+else ()
+    add_compile_options(-Wno-attributes)
 endif ()
 
 include(ExternalProject)

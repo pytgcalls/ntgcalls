@@ -1,15 +1,18 @@
 //
-// Created by Laky64 on 16/03/2024.
+// Created by Lauren on 16/03/24.
 //
 
 #pragma once
 
+#include <api/environment/environment.h>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/signaling/signaling_interface.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling {
 
     class Signaling {
+        static std::string best_match(std::vector<std::string> versions);
+
     public:
         enum class Version{
             Unknown = 0,
@@ -19,25 +22,22 @@ namespace signaling {
             V3 = 1 << 3,
         };
 
-        static std::shared_ptr<SignalingInterface> Create(
+        static std::shared_ptr<SignalingInterface> create(
             Version version,
-            wrtc::SafeThread& networkThread,
-            wrtc::SafeThread& signalingThread,
+            wrtc::utils::SafeThread& network_thread,
+            wrtc::utils::SafeThread& signaling_thread,
             const webrtc::Environment&,
-            const EncryptionKey &key,
-            const DataEmitter& onEmitData,
-            const DataReceiver& onSignalData
+            const crypto::EncryptionKey &key,
+            const DataEmitter& on_emit_data,
+            const DataReceiver& on_signal_data
         );
 
-        static std::vector<std::string> SupportedVersions();
+        static std::vector<std::string> supported_versions();
 
-        static Version matchVersion(const std::vector<std::string> &versions);
-
-    private:
-        static std::string bestMatch(std::vector<std::string> versions);
+        static Version match_version(const std::vector<std::string> &versions);
     };
 
     inline bool operator&(const Signaling::Version lhs, Signaling::Version rhs) {
         return static_cast<int>(lhs) & static_cast<int>(rhs);
     }
-} // signaling
+} // ntgcalls::signaling

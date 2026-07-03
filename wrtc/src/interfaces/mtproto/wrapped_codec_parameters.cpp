@@ -1,23 +1,22 @@
 //
-// Created by Laky64 on 14/04/25.
+// Created by Lauren on 14/04/25.
 //
 
-#include <rtc_base/logging.h>
 #include <wrtc/interfaces/mtproto/wrapped_codec_parameters.hpp>
 
-namespace wrtc {
-    WrappedCodecParameters::WrappedCodecParameters(const AVCodecParameters* codecParameters) {
-        value = avcodec_parameters_alloc();
-        avcodec_parameters_copy(value, codecParameters);
+namespace wrtc::interfaces::mtproto {
+    WrappedCodecParameters::WrappedCodecParameters(const AVCodecParameters* codec_parameters) {
+        value_ = avcodec_parameters_alloc();
+        avcodec_parameters_copy(value_, codec_parameters);
     }
 
     WrappedCodecParameters::~WrappedCodecParameters() {
-        avcodec_parameters_free(&value);
+        avcodec_parameters_free(&value_);
     }
 
-    bool WrappedCodecParameters::isEqual(const AVCodecParameters* other) const {
-        return value->codec_id == other->codec_id &&
-               value->format == other->format &&
-                   value->ch_layout.nb_channels == other->ch_layout.nb_channels;
+    bool WrappedCodecParameters::is_equal(const AVCodecParameters* other) const {
+        return value_->codec_id == other->codec_id &&
+               value_->format == other->format &&
+                   value_->ch_layout.nb_channels == other->ch_layout.nb_channels;
     }
-} // wrtc
+} // wrtc::interfaces::mtproto

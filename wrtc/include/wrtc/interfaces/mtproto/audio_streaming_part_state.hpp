@@ -1,49 +1,49 @@
 //
-// Created by Laky64 on 14/04/25.
+// Created by Lauren on 14/04/25.
 //
 
 #pragma once
 #include <set>
 #include <wrtc/interfaces/mtproto/audio_streaming_part_internal.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::mtproto {
 
     class AudioStreamingPartState {
         struct ChannelMapping {
             uint32_t ssrc = 0;
-            int channelIndex = 0;
+            int channel_index = 0;
 
-            ChannelMapping(const uint32_t ssrc, const int channelIndex) : ssrc(ssrc), channelIndex(channelIndex) {}
+            ChannelMapping(const uint32_t ssrc, const int channel_index) : ssrc(ssrc), channel_index(channel_index) {}
         };
 
-        std::set<uint32_t> allSsrcs;
-        bool didReadToEnd = false;
-        bool isSingleChannel = false;
-        int remainingMilliseconds = 0;
-        std::vector<int16_t> pcm10ms;
-        std::vector<ChannelMapping> currentChannelMapping;
-        int frameIndex = 0;
-        std::unique_ptr<AudioStreamingPartInternal> parsedPart;
+        std::set<uint32_t> all_ssrcs_;
+        bool did_read_to_end_ = false;
+        bool is_single_channel_ = false;
+        int remaining_milliseconds_ = 0;
+        std::vector<int16_t> pcm10ms_;
+        std::vector<ChannelMapping> current_channel_mapping_;
+        int frame_index_ = 0;
+        std::unique_ptr<AudioStreamingPartInternal> parsed_part_;
 
-        void updateCurrentMapping(uint32_t ssrc, int channelIndex);
+        void update_current_mapping(uint32_t ssrc, int channel_index);
 
-        std::optional<int> getCurrentMappedChannelIndex(uint32_t ssrc) const;
+        [[nodiscard]] std::optional<int> get_current_mapped_channel_index(uint32_t ssrc) const;
 
     public:
         struct Channel {
             uint32_t ssrc = 0;
-            std::vector<int16_t> pcmData;
+            std::vector<int16_t> pcm_data;
         };
 
-        AudioStreamingPartState(bytes::binary&& data, const std::string &container, bool isSingleChannel);
+        AudioStreamingPartState(bytes::binary&& data, const std::string &container, bool is_single_channel);
 
         ~AudioStreamingPartState();
 
-        std::vector<Channel> get10msPerChannel(AudioStreamingPartPersistentDecoder &persistentDecoder);
+        std::vector<Channel> get_10ms_per_channel(AudioStreamingPartPersistentDecoder &persistent_decoder);
 
-        int getRemainingMilliseconds() const;
+        [[nodiscard]] int get_remaining_milliseconds() const;
 
-        std::map<std::string, int32_t> getEndpointMapping() const;
+        [[nodiscard]] std::map<std::string, int32_t> get_endpoint_mapping() const;
     };
 
-} // wrtc
+} // wrtc::interfaces::mtproto

@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 08/10/24.
+// Created by Lauren on 08/10/24.
 //
 
 #pragma once
@@ -12,21 +12,22 @@
 namespace bp = boost::process;
 namespace asio = boost::asio;
 
-namespace ntgcalls {
+namespace ntgcalls::io {
 
     class AudioShellWriter final: public ThreadedAudioMixer {
-        asio::io_context ctx;
-        asio::writable_pipe stdIn{ctx};
-        bp::process shellProcess{ctx};
+        asio::io_context ctx_;
+        asio::writable_pipe std_in_{ctx_};
+        bp::process shell_process_{ctx_};
 
+    protected:
         void write(const bytes::unique_binary& data) override;
 
     public:
-        explicit AudioShellWriter(const std::string &command, BaseSink* sink);
+        explicit AudioShellWriter(const std::string &command, media::BaseSink* sink);
 
         ~AudioShellWriter() override;
     };
 
-} // ntgcalls
+} // ntgcalls::io
 
 #endif

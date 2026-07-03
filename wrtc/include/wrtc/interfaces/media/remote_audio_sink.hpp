@@ -1,35 +1,35 @@
 //
-// Created by Laky64 on 07/10/24.
+// Created by Lauren on 07/10/24.
 //
 
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <vector>
-#include <functional>
-#include <wrtc/models/audio_frame.hpp>
 #include <wrtc/interfaces/media/remote_media_interface.hpp>
+#include <wrtc/models/audio_frame.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
 
     class RemoteAudioSink final: public RemoteMediaInterface, public std::enable_shared_from_this<RemoteAudioSink> {
-        std::atomic<uint32_t> numSources;
-        std::vector<std::unique_ptr<AudioFrame>> audioFrames;
-        std::function<void(const std::vector<std::unique_ptr<AudioFrame>>&)> framesCallback;
+        std::atomic<uint32_t> num_sources_;
+        std::vector<std::unique_ptr<models::AudioFrame>> audio_frames_;
+        std::function<void(const std::vector<std::unique_ptr<models::AudioFrame>>&)> frames_callback_;
 
     public:
-        explicit RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<AudioFrame>>&)>& callback);
+        explicit RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<models::AudioFrame>>&)>& callback);
 
         ~RemoteAudioSink() override;
 
-        void sendData(std::unique_ptr<AudioFrame> frame);
+        void send_data(std::unique_ptr<models::AudioFrame> frame);
 
-        void addSource();
+        void add_source();
 
-        void removeSource();
+        void remove_source();
 
-        void updateAudioSourceCount(int count);
+        void update_audio_source_count(int count);
     };
 
-} // wrtc
+} // wrtc::interfaces::media

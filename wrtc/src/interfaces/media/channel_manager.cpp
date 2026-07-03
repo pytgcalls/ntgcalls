@@ -1,135 +1,135 @@
 //
-// Created by Laky64 on 01/04/2024.
+// Created by Lauren on 01/04/24.
 //
 
 #include <wrtc/interfaces/media/channel_manager.hpp>
 
 #include <rtc_base/trace_event.h>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
     ChannelManager::ChannelManager(
         const webrtc::Environment& environment,
-        webrtc::MediaEngineInterface* mediaEngine,
-        SafeThread& workerThread,
-        webrtc::Thread* networkThread,
-        webrtc::Thread* signalingThread
-    ): environment(environment), mediaEngine(mediaEngine), workerThread(workerThread), signalingThread(signalingThread), networkThread(networkThread) {
-        RTC_DCHECK_RUN_ON(signalingThread);
-        RTC_DCHECK(&workerThread);
-        RTC_DCHECK(networkThread);
+        webrtc::MediaEngineInterface* media_engine,
+        utils::SafeThread& worker_thread,
+        webrtc::Thread* network_thread,
+        webrtc::Thread* signaling_thread
+    ): environment_(environment), media_engine_(media_engine), worker_thread_(worker_thread), signaling_thread_(signaling_thread), network_thread_(network_thread) {
+        RTC_DCHECK_RUN_ON(signaling_thread);
+        RTC_DCHECK(&worker_thread);
+        RTC_DCHECK(network_thread);
     }
 
-    std::unique_ptr<webrtc::BaseChannel> ChannelManager::CreateVoiceChannel(
+    std::unique_ptr<webrtc::BaseChannel> ChannelManager::create_voice_channel(
         webrtc::Call* call,
-        const webrtc::MediaConfig &mediaConfig,
+        const webrtc::MediaConfig &media_config,
         const std::string &mid,
-        const bool srtpRequired,
-        const webrtc::CryptoOptions &cryptoOptions,
+        const bool srtp_required,
+        const webrtc::CryptoOptions &crypto_options,
         const webrtc::AudioOptions &options
     ) {
         RTC_DCHECK(call);
-        RTC_DCHECK(mediaEngine);
-        if (!workerThread.IsCurrent()) {
+        RTC_DCHECK(media_engine_);
+        if (!worker_thread_.IsCurrent()) {
             std::unique_ptr<webrtc::BaseChannel> temp;
-            workerThread.BlockingCall([&] {
-                temp = CreateVoiceChannel(call, mediaConfig, mid, srtpRequired, cryptoOptions, options);
+            worker_thread_.BlockingCall([&] {
+                temp = create_voice_channel(call, media_config, mid, srtp_required, crypto_options, options);
             });
             return std::move(temp);
         }
-        RTC_DCHECK_RUN_ON(&workerThread);
-        auto sendMediaChannel = mediaEngine->voice().CreateSendChannel(
-            environment,
+        RTC_DCHECK_RUN_ON(&worker_thread_);
+        auto send_media_channel = media_engine_->voice().CreateSendChannel(
+            environment_,
             call,
-            mediaConfig,
+            media_config,
             options,
-            cryptoOptions
+            crypto_options
         );
-        if (!sendMediaChannel) {
+        if (!send_media_channel) {
             return nullptr;
         }
-        auto receiveMediaChannel = mediaEngine->voice().CreateReceiveChannel(
-            environment,
+        auto receive_media_channel = media_engine_->voice().CreateReceiveChannel(
+            environment_,
             call,
-            mediaConfig,
+            media_config,
             options,
-            cryptoOptions
+            crypto_options
         );
-        if (!receiveMediaChannel) {
+        if (!receive_media_channel) {
             return nullptr;
         }
         return std::make_unique<webrtc::BaseChannel>(
-            workerThread,
-            networkThread,
-            signalingThread,
-            std::move(sendMediaChannel),
-            std::move(receiveMediaChannel),
+            worker_thread_,
+            network_thread_,
+            signaling_thread_,
+            std::move(send_media_channel),
+            std::move(receive_media_channel),
             mid,
             webrtc::MediaType::AUDIO,
-            srtpRequired,
-            cryptoOptions,
-            &ssrcGenerator
+            srtp_required,
+            crypto_options,
+            &ssrc_generator_
         );
     }
 
-    std::unique_ptr<webrtc::BaseChannel> ChannelManager::CreateVideoChannel(
+    std::unique_ptr<webrtc::BaseChannel> ChannelManager::create_video_channel(
         webrtc::Call* call,
-        const webrtc::MediaConfig &mediaConfig,
+        const webrtc::MediaConfig &media_config,
         const std::string &mid,
-        const bool srtpRequired,
-        const webrtc::CryptoOptions &cryptoOptions,
+        const bool srtp_required,
+        const webrtc::CryptoOptions &crypto_options,
         const webrtc::VideoOptions &options,
-        webrtc::VideoBitrateAllocatorFactory* bitrateAllocatorFactory
+        webrtc::VideoBitrateAllocatorFactory* bitrate_allocator_factory
     ) {
         RTC_DCHECK(call);
-        RTC_DCHECK(mediaEngine);
-        if (!workerThread.IsCurrent()) {
+        RTC_DCHECK(media_engine_);
+        if (!worker_thread_.IsCurrent()) {
             std::unique_ptr<webrtc::BaseChannel> temp = nullptr;
-            workerThread.BlockingCall([&] {
-              temp = CreateVideoChannel(
+            worker_thread_.BlockingCall([&] {
+              temp = create_video_channel(
                   call,
-                  mediaConfig,
+                  media_config,
                   mid,
-                  srtpRequired,
-                  cryptoOptions,
+                  srtp_required,
+                  crypto_options,
                   options,
-                  bitrateAllocatorFactory
+                  bitrate_allocator_factory
               );
             });
             return temp;
         }
-        RTC_DCHECK_RUN_ON(&workerThread);
-        std::unique_ptr<webrtc::VideoMediaSendChannelInterface> sendMediaChannel = mediaEngine->video().CreateSendChannel(
-            environment,
+        RTC_DCHECK_RUN_ON(&worker_thread_);
+        std::unique_ptr<webrtc::VideoMediaSendChannelInterface> send_media_channel = media_engine_->video().CreateSendChannel(
+            environment_,
             call,
-            mediaConfig,
+            media_config,
             options,
-            cryptoOptions,
-            bitrateAllocatorFactory,
+            crypto_options,
+            bitrate_allocator_factory,
             nullptr,
             nullptr
         );
-        if (!sendMediaChannel) {
+        if (!send_media_channel) {
             return nullptr;
         }
-        std::unique_ptr<webrtc::VideoMediaReceiveChannelInterface> receiveMediaChannel = mediaEngine->video().CreateReceiveChannel(
-            environment,
+        std::unique_ptr<webrtc::VideoMediaReceiveChannelInterface> receive_media_channel = media_engine_->video().CreateReceiveChannel(
+            environment_,
             call,
-            mediaConfig,
+            media_config,
             options,
-            cryptoOptions
+            crypto_options
         );
         return std::make_unique<webrtc::BaseChannel>(
-            workerThread,
-            networkThread,
-            signalingThread,
-            std::move(sendMediaChannel),
-            std::move(receiveMediaChannel),
+            worker_thread_,
+            network_thread_,
+            signaling_thread_,
+            std::move(send_media_channel),
+            std::move(receive_media_channel),
             mid,
             webrtc::MediaType::VIDEO,
-            srtpRequired,
-            cryptoOptions,
-            &ssrcGenerator
+            srtp_required,
+            crypto_options,
+            &ssrc_generator_
         );
     }
 
-} // wrtc
+} // wrtc::interfaces::media

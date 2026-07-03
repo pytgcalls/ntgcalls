@@ -1,12 +1,12 @@
 //
-// Created by Laky64 on 06/11/24.
+// Created by Lauren on 06/11/24.
 //
 
 #ifndef IS_ANDROID
 #include <wrtc/video_factory/software/openh264/h264_color_space.hpp>
 
 namespace openh264 {
-  webrtc::ColorSpace ExtractH264ColorSpace(const AVCodecContext* codec) {
+  webrtc::ColorSpace extract_h264_color_space(const AVCodecContext* codec) {
     auto primaries = webrtc::ColorSpace::PrimaryID::kUnspecified;
     switch (codec->color_primaries) {
     case AVCOL_PRI_BT709:

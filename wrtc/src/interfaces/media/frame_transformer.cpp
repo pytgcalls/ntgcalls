@@ -1,41 +1,41 @@
 //
-// Created by Laky64 on 06/06/26.
+// Created by Lauren on 06/06/26.
 //
 
 #include <common_video/h264/h264_bitstream_parser.h>
 #include <common_video/h264/h264_common.h>
 #include <wrtc/interfaces/media/frame_transformer.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
     FrameTransformer::FrameTransformer(
-        const bool isEncryptor,
+        const bool is_encryptor,
         E2EEncryptor* encryptor,
-        const int64_t userId,
-        const std::map<int32_t, PayloadType>& payloadTypeMapping,
-        const std::function<std::pair<uint8_t, bool>()> &getAudioLevelAndSpeech,
-        const std::function<void(uint8_t, bool)> &setAudioLevelAndSpeech
-    ): isEncryptor(isEncryptor), userId(userId), encryptor(encryptor), payloadTypeMapping(payloadTypeMapping) {
-        this->getAudioLevelAndSpeech = getAudioLevelAndSpeech;
-        this->setAudioLevelAndSpeech = setAudioLevelAndSpeech;
+        const int64_t user_id,
+        const std::map<int32_t, PayloadType>& payload_type_mapping,
+        const std::function<std::pair<uint8_t, bool>()> &get_audio_level_and_speech,
+        const std::function<void(uint8_t, bool)> &set_audio_level_and_speech
+    ): is_encryptor_(is_encryptor), user_id_(user_id), encryptor_(encryptor), payload_type_mapping_(payload_type_mapping) {
+        this->get_audio_level_and_speech_ = get_audio_level_and_speech;
+        this->set_audio_level_and_speech_ = set_audio_level_and_speech;
     }
 
     void FrameTransformer::RegisterTransformedFrameSinkCallback(const webrtc::scoped_refptr<webrtc::TransformedFrameCallback> callback, const uint32_t ssrc) {
-        webrtc::MutexLock lock(&mutex);
-        sinkCallbackBySsrc[ssrc] = callback;
+        const webrtc::MutexLock lock(&mutex_);
+        sink_callback_by_ssrc_[ssrc] = callback;
     }
 
     void FrameTransformer::UnregisterTransformedFrameSinkCallback(const uint32_t ssrc) {
-        webrtc::MutexLock lock(&mutex);
-        sinkCallbackBySsrc.erase(ssrc);
+        const webrtc::MutexLock lock(&mutex_);
+        sink_callback_by_ssrc_.erase(ssrc);
     }
 
     void FrameTransformer::RegisterTransformedFrameCallback(const webrtc::scoped_refptr<webrtc::TransformedFrameCallback> callback) {
-        webrtc::MutexLock lock(&mutex);
+        const webrtc::MutexLock lock(&mutex_);
         assert(sinkCallback == nullptr);
-        sinkCallback = callback;
+        sink_callback_ = callback;
     }
 
-    size_t FrameTransformer::calculateSliceHeaderBytesForPpsId(const uint8_t *data, const size_t size) {
+    size_t FrameTransformer::calculate_slice_header_bytes_for_pps_id(const bytes::byte* data, const size_t size) {
         if (size < 2) {
             return 0;
         }
@@ -44,8 +44,8 @@ namespace wrtc {
             return 0;
         }
 
-        const std::span<const uint8_t> rbspView(rbsp.data() + 1, rbsp.size() - 1);
-        webrtc::BitstreamReader reader(rbspView);
+        const bytes::const_span rbsp_view(rbsp.data() + 1, rbsp.size() - 1);
+        webrtc::BitstreamReader reader(rbsp_view);
         reader.ReadExponentialGolomb();
 
         if (!reader.Ok()) {
@@ -62,129 +62,128 @@ namespace wrtc {
             return 4;
         }
 
-        const size_t bitsConsumed = rbspView.size() * 8 - reader.RemainingBitCount();
-        const size_t bytesRead = 1 + (bitsConsumed + 7) / 8;
-        return bytesRead + 1;
+        const size_t bits_consumed = rbsp_view.size() * 8 - reader.RemainingBitCount();
+        const size_t bytes_read = 1 + (bits_consumed + 7) / 8;
+        return bytes_read + 1;
     }
 
-    bytes::binary FrameTransformer::calculateH264FramePlaintextHeaderSize(std::span<const uint8_t> frame, uint32_t &headerSize) {
+    bytes::binary FrameTransformer::calculate_h264_frame_plaintext_header_size(bytes::const_span frame, uint32_t &header_size) {
         if (frame.empty()) {
-            headerSize = 0;
+            header_size = 0;
             return {};
         }
 
-        std::vector<webrtc::H264::NaluIndex> naluIndices = webrtc::H264::FindNaluIndices(frame);
+        const std::vector<webrtc::H264::NaluIndex> nalu_indices = webrtc::H264::FindNaluIndices(frame);
 
-        if (naluIndices.empty()) {
-            headerSize = 0;
+        if (nalu_indices.empty()) {
+            header_size = 0;
 
-            bytes::binary frameData;
-            frameData.resize(frame.size());
-            std::ranges::copy(frame, frameData.begin());
-            return frameData;
+            bytes::binary frame_data;
+            frame_data.resize(frame.size());
+            std::ranges::copy(frame, frame_data.begin());
+            return frame_data;
         }
 
-        size_t maxOffset = 0;
-        std::vector<uint8_t> naluToUpdate;
+        size_t max_offset = 0;
+        std::vector<uint8_t> nalu_to_update;
 
-        for (const auto&[start_offset, payload_start_offset, payload_size] : naluIndices) {
-            if (const auto startCodeLength = payload_start_offset - start_offset; startCodeLength == webrtc::H264::kNaluShortStartSequenceSize) {
-                naluToUpdate.push_back(start_offset);
+        for (const auto&[start_offset, payload_start_offset, payload_size] : nalu_indices) {
+            if (const auto start_code_length = payload_start_offset - start_offset; start_code_length == webrtc::H264::kNaluShortStartSequenceSize) {
+                nalu_to_update.push_back(start_offset);
             }
 
-            auto headerEndOffset = payload_start_offset + webrtc::H264::kNaluTypeSize;
+            auto header_end_offset = payload_start_offset + webrtc::H264::kNaluTypeSize;
             if (payload_size >= webrtc::H264::kNaluTypeSize) {
-                if (const auto nalType = frame[payload_start_offset] & kTypeMask; nalType == webrtc::H264::kFuA) {
+                if (const auto nal_type = frame[payload_start_offset] & kTypeMask; nal_type == webrtc::H264::kFuA) {
                     if (payload_size >= kFuAHeaderSize) {
-                        headerEndOffset = payload_start_offset + kFuAHeaderSize;
+                        header_end_offset = payload_start_offset + kFuAHeaderSize;
 
                         if ((frame[payload_start_offset + 1] & 0x80) != 0) {
-                            if (const uint8_t originalNalType = frame[payload_start_offset + 1] & kTypeMask; originalNalType == webrtc::H264::kIdr || originalNalType == 1) {
-                                 headerEndOffset += 4;
+                            if (const uint8_t original_nal_type = frame[payload_start_offset + 1] & kTypeMask; original_nal_type == webrtc::H264::kIdr || original_nal_type == 1) {
+                                 header_end_offset += 4;
                             }
                         }
                     }
-                } else if (nalType == webrtc::H264::kStapA) {
+                } else if (nal_type == webrtc::H264::kStapA) {
                     if (payload_size >= kStapAHeaderSize) {
-                        headerEndOffset = payload_start_offset + kStapAHeaderSize;
+                        header_end_offset = payload_start_offset + kStapAHeaderSize;
 
                         if (payload_size > kStapAHeaderSize) {
-                            uint8_t firstNalType = frame[payload_start_offset + kStapAHeaderSize] & kTypeMask;
-                            if (firstNalType == webrtc::H264::kIdr || firstNalType == 1) {
-                                headerEndOffset += 4;
+                            if (const uint8_t first_nal_type = frame[payload_start_offset + kStapAHeaderSize] & kTypeMask; first_nal_type == webrtc::H264::kIdr || first_nal_type == 1) {
+                                header_end_offset += 4;
                             }
                         }
                     }
-                } else if (nalType == webrtc::H264::kIdr || nalType == 1) {
-                    const size_t ppsIdBytes = calculateSliceHeaderBytesForPpsId(
+                } else if (nal_type == webrtc::H264::kIdr || nal_type == 1) {
+                    const size_t pps_id_bytes = calculate_slice_header_bytes_for_pps_id(
                         frame.data() + payload_start_offset,
                         payload_size
                     );
 
-                    headerEndOffset = payload_start_offset + ppsIdBytes;
-                    maxOffset = std::max(maxOffset, headerEndOffset);
+                    header_end_offset = payload_start_offset + pps_id_bytes;
+                    max_offset = std::max(max_offset, header_end_offset);
                     break;
-                } else if (nalType == webrtc::H264::kSps || nalType == webrtc::H264::kPps || nalType == webrtc::H264::kSei) {
-                    headerEndOffset = payload_start_offset + payload_size;
+                } else if (nal_type == webrtc::H264::kSps || nal_type == webrtc::H264::kPps || nal_type == webrtc::H264::kSei) {
+                    header_end_offset = payload_start_offset + payload_size;
                 }
             }
-            maxOffset = std::max(maxOffset, headerEndOffset);
+            max_offset = std::max(max_offset, header_end_offset);
         }
 
-        bytes::binary frameData;
-        frameData.resize(frame.size() + naluToUpdate.size());
+        bytes::binary frame_data;
+        frame_data.resize(frame.size() + nalu_to_update.size());
 
         uint8_t offset = 0;
-        for (uint8_t i = 0; i < static_cast<uint8_t>(naluToUpdate.size()); ++i) {
-            const auto& naluIndex = naluToUpdate[i];
-            if (naluIndex - offset > 0) {
-                std::copy(frame.begin() + offset, frame.begin() + naluIndex, frameData.begin() + offset + i);
+        for (uint8_t i = 0; i < static_cast<uint8_t>(nalu_to_update.size()); ++i) {
+            const auto& nalu_index = nalu_to_update[i];
+            if (nalu_index - offset > 0) {
+                std::copy(frame.begin() + offset, frame.begin() + nalu_index, frame_data.begin() + offset + i);
             }
 
-            frameData[naluIndex + i] = 0;
-            offset = naluIndex;
+            frame_data[nalu_index + i] = 0;
+            offset = nalu_index;
         }
         if (offset < frame.size()) {
-            std::copy(frame.begin() + offset, frame.end(), frameData.begin() + offset + static_cast<uint8_t>(naluToUpdate.size()));
+            std::copy(frame.begin() + offset, frame.end(), frame_data.begin() + offset + static_cast<uint8_t>(nalu_to_update.size()));
         }
-        headerSize = static_cast<uint32_t>(maxOffset + naluToUpdate.size());
-        return frameData;
+        header_size = static_cast<uint32_t>(max_offset + nalu_to_update.size());
+        return frame_data;
     }
 
-    bytes::binary FrameTransformer::calculateVp8FramePlaintextHeaderSize(std::span<const uint8_t> frame, uint32_t& headerSize) {
+    bytes::binary FrameTransformer::calculate_vp8_frame_plaintext_header_size(bytes::const_span frame, uint32_t& header_size) {
         if (frame.empty()) {
-            headerSize = 0;
+            header_size = 0;
             return {};
         }
 
-        if (const uint8_t firstByte = frame[0]; (firstByte & P_BIT) == 0) {
-            headerSize = frame.size() >= 10 ? 10 : static_cast<uint32_t>(frame.size());
+        if (const uint8_t first_byte = frame[0]; (first_byte & kPBit) == 0) {
+            header_size = frame.size() >= 10 ? 10 : static_cast<uint32_t>(frame.size());
         } else {
-            headerSize = 1;
+            header_size = 1;
         }
 
-        bytes::binary frameData;
-        frameData.resize(frame.size());
-        std::ranges::copy(frame, frameData.begin());
-        return frameData;
+        bytes::binary frame_data;
+        frame_data.resize(frame.size());
+        std::ranges::copy(frame, frame_data.begin());
+        return frame_data;
     }
 
     // ReSharper disable once CppDFAConstantParameter
-    std::optional<FrameTransformer::IndexStartCodeSizePair> FrameTransformer::FindNextH26XNaluIndex(const uint8_t* buffer, const size_t bufferSize, const size_t searchStartIndex = 0) {
-        if (bufferSize < kH26XNaluShortStartSequenceSize) {
+    std::optional<FrameTransformer::IndexStartCodeSizePair> FrameTransformer::find_next_h26x_nalu_index(const bytes::byte* buffer, const size_t buffer_size, const size_t search_start_index = 0) {
+        if (buffer_size < kH26XNaluShortStartSequenceSize) {
             return std::nullopt;
         }
 
-        for (size_t i = searchStartIndex; i < bufferSize - kH26XNaluShortStartSequenceSize;) {
+        for (size_t i = search_start_index; i < buffer_size - kH26XNaluShortStartSequenceSize;) {
             if (buffer[i + 2] > kH26XStartCodeHighestPossibleValue) {
                 i += kH26XNaluShortStartSequenceSize;
             } else if (buffer[i + 2] == kH26XStartCodeEndByteValue) {
                 if (buffer[i + 1] == kH26XStartCodeLeadingBytesValue && buffer[i] == kH26XStartCodeLeadingBytesValue) {
-                    auto nalUnitStartIndex = i + kH26XNaluShortStartSequenceSize;
+                    auto nal_unit_start_index = i + kH26XNaluShortStartSequenceSize;
                     if (i >= 1 && buffer[i - 1] == kH26XStartCodeLeadingBytesValue) {
-                        return IndexStartCodeSizePair({nalUnitStartIndex, 4});
+                        return IndexStartCodeSizePair({nal_unit_start_index, 4});
                     }
-                    return IndexStartCodeSizePair({nalUnitStartIndex, 3});
+                    return IndexStartCodeSizePair({nal_unit_start_index, 3});
                 }
                 i += kH26XNaluShortStartSequenceSize;
             } else {
@@ -194,77 +193,77 @@ namespace wrtc {
         return std::nullopt;
     }
 
-    bool FrameTransformer::ValidateEncryptedFrame(const PayloadType payloadType, const std::span<const uint8_t> frame, uint32_t plaintextPrefix) {
-        if (payloadType != PayloadType::H264) {
+    bool FrameTransformer::validate_encrypted_frame(const PayloadType payload_type, const bytes::const_span frame, uint32_t plaintext_prefix) {
+        if (payload_type != PayloadType::H264) {
             return true;
         }
 
         static_assert(kH26XNaluShortStartSequenceSize - 1 >= 0, "Padding will overflow!");
-        constexpr size_t Padding = kH26XNaluShortStartSequenceSize - 1;
+        constexpr size_t kPadding = kH26XNaluShortStartSequenceSize - 1;
 
-        std::vector<UnencryptedRange> unencryptedRanges;
-        if (plaintextPrefix != 0) {
-            unencryptedRanges.emplace_back(0, plaintextPrefix);
+        std::vector<UnencryptedRange> unencrypted_ranges;
+        if (plaintext_prefix != 0) {
+            unencrypted_ranges.emplace_back(0, plaintext_prefix);
         }
 
-        size_t encryptedSectionStart = 0;
-        for (const auto& range : unencryptedRanges) {
-            if (encryptedSectionStart == range.offset) {
-                encryptedSectionStart += range.size;
+        size_t encrypted_section_start = 0;
+        for (const auto& range : unencrypted_ranges) {
+            if (encrypted_section_start == range.offset) {
+                encrypted_section_start += range.size;
                 continue;
             }
 
-            const auto start = encryptedSectionStart - std::min(encryptedSectionStart, size_t{Padding});
-            if (const auto end = std::min(range.offset + Padding, frame.size()); FindNextH26XNaluIndex(frame.data() + start, end - start)) {
+            const auto start = encrypted_section_start - std::min(encrypted_section_start, size_t{kPadding});
+            if (const auto end = std::min(range.offset + kPadding, frame.size()); find_next_h26x_nalu_index(frame.data() + start, end - start)) {
                 return false;
             }
 
-            encryptedSectionStart = range.offset + range.size;
+            encrypted_section_start = range.offset + range.size;
         }
 
-        if (encryptedSectionStart == frame.size()) {
+        if (encrypted_section_start == frame.size()) {
             return true;
         }
 
-        const auto start = encryptedSectionStart - std::min(encryptedSectionStart, size_t{Padding});
+        const auto start = encrypted_section_start - std::min(encrypted_section_start, size_t{kPadding});
 
-        if (const auto end = frame.size(); FindNextH26XNaluIndex(frame.data() + start, end - start)) {
+        if (const auto end = frame.size(); find_next_h26x_nalu_index(frame.data() + start, end - start)) {
             return false;
         }
         return true;
     }
 
     void FrameTransformer::Transform(std::unique_ptr<webrtc::TransformableFrameInterface> frame) {
-        webrtc::MutexLock lock(&mutex);
+        const webrtc::MutexLock lock(&mutex_);
         const auto ssrc = frame->GetSsrc();
-        const auto i = sinkCallbackBySsrc.find(ssrc);
-        const auto sink = i != sinkCallbackBySsrc.end() && i->second ? i->second.get() : sinkCallback.get();
+        const auto i = sink_callback_by_ssrc_.find(ssrc);
+        const auto sink = i != sink_callback_by_ssrc_.end() && i->second ? i->second.get() : sink_callback_.get();
         if (!sink) {
             return;
         }
 
-        auto payloadType = PayloadType::Unknown;
-        if (const auto foundPayloadType = payloadTypeMapping.find(frame->GetPayloadType()); foundPayloadType != payloadTypeMapping.end()) {
-            payloadType = foundPayloadType->second;
+        auto payload_type = PayloadType::Unknown;
+        if (const auto found_payload_type = payload_type_mapping_.find(frame->GetPayloadType()); found_payload_type != payload_type_mapping_.end()) {
+            payload_type = found_payload_type->second;
         }
 
-        if (isEncryptor) {
-            if (payloadType == PayloadType::H264 || payloadType == PayloadType::VP8) {
-                uint32_t plaintextHeaderSize = 0;
-                bytes::binary frameData;
-                if (payloadType == PayloadType::H264) {
-                    frameData = calculateH264FramePlaintextHeaderSize(frame->GetData(), plaintextHeaderSize);
+        if (is_encryptor_) {
+            if (payload_type == PayloadType::H264 || payload_type == PayloadType::VP8) {
+                uint32_t plaintext_header_size = 0;
+                bytes::binary frame_data;
+                if (payload_type == PayloadType::H264) {
+                    frame_data = calculate_h264_frame_plaintext_header_size(frame->GetData(), plaintext_header_size);
                 } else {
-                    frameData = calculateVp8FramePlaintextHeaderSize(frame->GetData(), plaintextHeaderSize);
+                    frame_data = calculate_vp8_frame_plaintext_header_size(frame->GetData(), plaintext_header_size);
                 }
 
-                if (plaintextHeaderSize > static_cast<uint32_t>(frameData.size())) {
-                    plaintextHeaderSize = static_cast<uint32_t>(frameData.size());
+                if (plaintext_header_size > static_cast<uint32_t>(frame_data.size())) {
+                    plaintext_header_size = static_cast<uint32_t>(frame_data.size());
                 }
 
                 for (int attempt = 0; attempt < 4; attempt++) {
-                    if (auto result = encryptor->encrypt(frameData, plaintextHeaderSize); !result.empty()) {
-                        if (ValidateEncryptedFrame(payloadType, result, plaintextHeaderSize)) {
+                    if (auto result = encryptor_->encrypt(frame_data, plaintext_header_size); !result.empty()) {
+                        if (validate_encrypted_frame(payload_type, result, plaintext_header_size)) {
                             frame->SetData(result);
                             sink->OnTransformedFrame(std::move(frame));
                             break;
@@ -279,46 +278,46 @@ namespace wrtc {
                 std::copy(frame->GetData().begin(), frame->GetData().end(), buffer.begin());
 
                 buffer[buffer.size() - 1 - 1] = 0x01;
-                std::pair<uint8_t, bool> audioLevelAndSpeech = std::make_pair(0, false);
-                if (const auto audioLevelAndSpeechOpt = getAudioLevelAndSpeech(); audioLevelAndSpeechOpt) {
-                    audioLevelAndSpeech = *audioLevelAndSpeechOpt;
+                std::pair<uint8_t, bool> audio_level_and_speech = std::make_pair(0, false);
+                if (const auto audio_level_and_speech_opt = get_audio_level_and_speech_(); audio_level_and_speech_opt) {
+                    audio_level_and_speech = *audio_level_and_speech_opt;
                 }
-                uint8_t encodedAudioLevelAndSpeech = 0;
-                if (audioLevelAndSpeech.second) {
-                    encodedAudioLevelAndSpeech = encodedAudioLevelAndSpeech | 0x80;
+                uint8_t encoded_audio_level_and_speech = 0;
+                if (audio_level_and_speech.second) {
+                    encoded_audio_level_and_speech = encoded_audio_level_and_speech | 0x80;
                 }
-                encodedAudioLevelAndSpeech |= audioLevelAndSpeech.first & 0x7f;
-                buffer[buffer.size() - 1] = encodedAudioLevelAndSpeech;
+                encoded_audio_level_and_speech |= audio_level_and_speech.first & 0x7f;
+                buffer[buffer.size() - 1] = encoded_audio_level_and_speech;
 
-                auto result = encryptor->encrypt(buffer, 0);
+                auto result = encryptor_->encrypt(buffer, 0);
                 if (!result.empty()) {
                     frame->SetData(result);
                     sink->OnTransformedFrame(std::move(frame));
                 }
             }
         } else {
-            if (payloadType != PayloadType::Opus) {
-                std::vector<uint8_t> encryptedFrame;
-                encryptedFrame.resize(frame->GetData().size());
-                std::copy(frame->GetData().begin(), frame->GetData().end(), encryptedFrame.begin());
+            if (payload_type != PayloadType::Opus) {
+                bytes::binary encrypted_frame;
+                encrypted_frame.resize(frame->GetData().size());
+                std::copy(frame->GetData().begin(), frame->GetData().end(), encrypted_frame.begin());
 
-                auto decryptedFrame = encryptor->decrypt(userId, encryptedFrame);
-                if (!decryptedFrame.empty()) {
-                    frame->SetData(decryptedFrame);
+                auto decrypted_frame = encryptor_->decrypt(user_id_, encrypted_frame);
+                if (!decrypted_frame.empty()) {
+                    frame->SetData(decrypted_frame);
                     sink->OnTransformedFrame(std::move(frame));
                 }
             } else {
-                std::vector<uint8_t> buffer;
+                bytes::binary buffer;
                 buffer.resize(frame->GetData().size());
                 std::copy(frame->GetData().begin(), frame->GetData().end(), buffer.begin());
 
-                if (auto result = encryptor->decrypt(userId, buffer); !result.empty()) {
+                if (auto result = encryptor_->decrypt(user_id_, buffer); !result.empty()) {
                     if (result.size() >= 2) {
-                        if (const uint8_t extensionFlags = result[result.size() - 2]; extensionFlags & 0x01) {
-                            const uint8_t audioLevelAndSpeech = result[result.size() - 1];
-                            const bool hasSpeech = (audioLevelAndSpeech & 0x80) != 0;
-                            const uint8_t audioLevel = audioLevelAndSpeech & 0x7f;
-                            (void) setAudioLevelAndSpeech(audioLevel, hasSpeech);
+                        if (const uint8_t extension_flags = result[result.size() - 2]; extension_flags & 0x01) {
+                            const uint8_t audio_level_and_speech = result[result.size() - 1];
+                            const bool has_speech = (audio_level_and_speech & 0x80) != 0;
+                            const uint8_t audio_level = audio_level_and_speech & 0x7f;
+                            (void) set_audio_level_and_speech_(audio_level, has_speech);
 
                             result.resize(result.size() - 2);
                         } else {
@@ -332,4 +331,4 @@ namespace wrtc {
             }
         }
     }
-} // wrtc
+} // wrtc::interfaces::media

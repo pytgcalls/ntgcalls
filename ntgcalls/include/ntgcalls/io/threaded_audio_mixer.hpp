@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 07/10/24.
+// Created by Lauren on 07/10/24.
 //
 
 #pragma once
@@ -9,26 +9,26 @@
 #include <ntgcalls/io/audio_mixer.hpp>
 #include <rtc_base/platform_thread.h>
 
-namespace ntgcalls {
+namespace ntgcalls::io {
 
     class ThreadedAudioMixer: public AudioMixer {
-        std::mutex queueMutex;
-        std::queue<bytes::unique_binary> queue;
-        std::mutex mtx;
-        std::condition_variable cv;
-        webrtc::PlatformThread thread;
-
-        void onData(bytes::unique_binary data) override;
+        std::mutex queue_mutex_;
+        std::queue<bytes::unique_binary> queue_;
+        std::mutex mtx_;
+        std::condition_variable cv_;
+        webrtc::PlatformThread thread_;
 
     protected:
+        void on_data(bytes::unique_binary data) override;
+
         virtual void write(const bytes::unique_binary& data) = 0;
 
     public:
-        explicit ThreadedAudioMixer(BaseSink* sink);
+        explicit ThreadedAudioMixer(media::BaseSink* sink);
 
         ~ThreadedAudioMixer() override;
 
         void open() override;
     };
 
-} // ntgcalls
+} // ntgcalls::io

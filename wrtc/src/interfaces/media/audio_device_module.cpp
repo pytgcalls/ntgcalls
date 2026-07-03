@@ -1,18 +1,18 @@
 //
-// Created by Laky64 on 04/10/24.
+// Created by Lauren on 04/10/24.
 //
 
 #include <wrtc/interfaces/media/audio_device_module.hpp>
 
-namespace wrtc {
-    int32_t AudioDeviceModule::ActiveAudioLayer(AudioLayer* audioLayer) const {
-        *audioLayer = kDummyAudio;
+namespace wrtc::interfaces::media {
+    int32_t AudioDeviceModule::ActiveAudioLayer(AudioLayer* audio_layer) const {
+        *audio_layer = kDummyAudio;
         return 0;
     }
 
     int32_t AudioDeviceModule::RegisterAudioCallback(webrtc::AudioTransport* callback) {
-        webrtc::MutexLock lock(&mutex);
-        audioCallback = callback;
+        const webrtc::MutexLock lock(&mutex_);
+        audio_callback_ = callback;
         return 0;
     }
 
@@ -66,12 +66,12 @@ namespace wrtc {
     }
 
     int32_t AudioDeviceModule::InitPlayout() {
-        playIsInitialized = true;
+        play_is_initialized_ = true;
         return 0;
     }
 
     bool AudioDeviceModule::PlayoutIsInitialized() const {
-        return playIsInitialized;
+        return play_is_initialized_;
     }
 
     int32_t AudioDeviceModule::RecordingIsAvailable(bool* available) {
@@ -87,28 +87,28 @@ namespace wrtc {
     }
 
     int32_t AudioDeviceModule::StartPlayout() {
-        if (!playIsInitialized) {
+        if (!play_is_initialized_) {
             return -1;
         }
         {
-            webrtc::MutexLock lock(&mutex);
-            playing = true;
+            const webrtc::MutexLock lock(&mutex_);
+            playing_ = true;
         }
-        UpdateProcessing(true);
+        update_processing(true);
         return 0;
     }
 
     int32_t AudioDeviceModule::StopPlayout() {
         {
-            webrtc::MutexLock lock(&mutex);
-            playing = false;
+            const webrtc::MutexLock lock(&mutex_);
+            playing_ = false;
         }
-        UpdateProcessing(false);
+        update_processing(false);
         return 0;
     }
 
     bool AudioDeviceModule::Playing() const {
-        return playing;
+        return playing_;
     }
 
     int32_t AudioDeviceModule::StartRecording() {
@@ -151,11 +151,11 @@ namespace wrtc {
         return -1;
     }
 
-    int32_t AudioDeviceModule::MaxSpeakerVolume(uint32_t* maxVolume) const {
+    int32_t AudioDeviceModule::MaxSpeakerVolume(uint32_t* max_volume) const {
         return -1;
     }
 
-    int32_t AudioDeviceModule::MinSpeakerVolume(uint32_t* minVolume) const {
+    int32_t AudioDeviceModule::MinSpeakerVolume(uint32_t* min_volume) const {
         return -1;
     }
 
@@ -171,11 +171,11 @@ namespace wrtc {
         return -1;
     }
 
-    int32_t AudioDeviceModule::MaxMicrophoneVolume(uint32_t* maxVolume) const {
+    int32_t AudioDeviceModule::MaxMicrophoneVolume(uint32_t* max_volume) const {
         return -1;
     }
 
-    int32_t AudioDeviceModule::MinMicrophoneVolume(uint32_t* minVolume) const {
+    int32_t AudioDeviceModule::MinMicrophoneVolume(uint32_t* min_volume) const {
         return -1;
     }
 
@@ -229,8 +229,8 @@ namespace wrtc {
         return -1;
     }
 
-    int32_t AudioDeviceModule::PlayoutDelay(uint16_t* delayMS) const {
-        *delayMS = 0;
+    int32_t AudioDeviceModule::PlayoutDelay(uint16_t* delay_ms) const {
+        *delay_ms = 0;
         return 0;
     }
 
@@ -258,73 +258,73 @@ namespace wrtc {
         return -1;
     }
 
-    void AudioDeviceModule::UpdateProcessing(const bool start) {
+    void AudioDeviceModule::update_processing(const bool start) {
         if (start) {
-            if (!processThread) {
-                processThread = SafeThread::Create();
-                processThread->Start();
+            if (!process_thread_) {
+                process_thread_ = utils::SafeThread::Create();
+                process_thread_->Start();
             }
-            processThread->PostTask([this] { StartProcessP(); });
+            process_thread_->PostTask([this] { start_process_p(); });
         } else {
-            if (processThread) {
-                processThread->Stop();
-                processThread.reset(nullptr);
-                processThreadChecker.Detach();
+            if (process_thread_) {
+                process_thread_->Stop();
+                process_thread_.reset(nullptr);
+                process_thread_checker_.Detach();
             }
-            webrtc::MutexLock lock(&mutex);
-            started = false;
+            const webrtc::MutexLock lock(&mutex_);
+            started_ = false;
         }
     }
 
-    void AudioDeviceModule::StartProcessP() {
-        RTC_DCHECK_RUN_ON(&processThreadChecker);
+    void AudioDeviceModule::start_process_p() {
+        RTC_DCHECK_RUN_ON(&process_thread_checker_);
         {
-            webrtc::MutexLock lock(&mutex);
-            if (started) {
+            const webrtc::MutexLock lock(&mutex_);
+            if (started_) {
                 return;
             }
         }
-        ProcessFrameP();
+        process_frame_p();
     }
 
-    void AudioDeviceModule::ProcessFrameP() {
-        RTC_DCHECK_RUN_ON(&processThreadChecker);
+    void AudioDeviceModule::process_frame_p() {
+        RTC_DCHECK_RUN_ON(&process_thread_checker_);
         {
-            webrtc::MutexLock lock(&mutex);
-            if (!started) {
-                nextFrameTime = webrtc::TimeMillis();
-                started = true;
+            const webrtc::MutexLock lock(&mutex_);
+            if (!started_) {
+                next_frame_time_ = webrtc::TimeMillis();
+                started_ = true;
             }
 
-            if (playing) {
-                ReceiveFrameP();
+            if (playing_) {
+                receive_frame_p();
             }
         }
 
-        nextFrameTime += 10;
+        next_frame_time_ += 10;
         const int64_t current_time = webrtc::TimeMillis();
-        const int64_t wait_time = nextFrameTime > current_time ? nextFrameTime - current_time : 0;
-        processThread->PostDelayedTask([this] { ProcessFrameP(); },webrtc::TimeDelta::Millis(wait_time));
+        const int64_t wait_time = next_frame_time_ > current_time ? next_frame_time_ - current_time : 0;
+        process_thread_->PostDelayedTask([this] { process_frame_p(); },webrtc::TimeDelta::Millis(wait_time));
     }
 
-    void AudioDeviceModule::ReceiveFrameP() {
-        RTC_DCHECK_RUN_ON(&processThreadChecker);
-        if (!audioCallback) {
+    void AudioDeviceModule::receive_frame_p() {
+        RTC_DCHECK_RUN_ON(&process_thread_checker_);
+        if (!audio_callback_) {
             return;
         }
-        std::memset(buffer, 0, sizeof(buffer));
-        size_t nSamplesOut = 0;
-        int64_t elapsedTimeMs = 0;
-        int64_t ntpTimeMs = 0;
-        audioCallback->NeedMorePlayData(
+        std::memset(buffer_, 0, sizeof(buffer_));
+        size_t n_samples_out = 0;
+        int64_t elapsed_time_ms = 0;
+        int64_t ntp_time_ms = 0;
+        audio_callback_->NeedMorePlayData(
             kNumberSamples,
             kNumberBytesPerSample,
             kNumberOfChannels,
             kSamplesPerSecond,
-            buffer,
-            nSamplesOut,
-            &elapsedTimeMs,
-            &ntpTimeMs
+            buffer_,
+            n_samples_out,
+            &elapsed_time_ms,
+            &ntp_time_ms
         );
     }
-} // wrtc
+} // wrtc::interfaces::media

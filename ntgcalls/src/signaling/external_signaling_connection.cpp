@@ -1,33 +1,33 @@
 //
-// Created by Laky64 on 18/08/2024.
+// Created by Lauren on 18/08/24.
 //
 
 #include <ntgcalls/signaling/external_signaling_connection.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling {
     ExternalSignalingConnection::ExternalSignalingConnection(
-        wrtc::SafeThread& networkThread,
-        wrtc::SafeThread& signalingThread,
-        const EncryptionKey &key,
-        const DataEmitter& onEmitData,
-        const DataReceiver& onSignalData
-    ): SignalingInterface(networkThread, signalingThread, key, onEmitData, onSignalData) {}
+        wrtc::utils::SafeThread& network_thread,
+        wrtc::utils::SafeThread& signaling_thread,
+        const crypto::EncryptionKey &key,
+        const DataEmitter& on_emit_data,
+        const DataReceiver& on_signal_data
+    ): SignalingInterface(network_thread, signaling_thread, key, on_emit_data, on_signal_data) {}
 
     void ExternalSignalingConnection::send(const bytes::binary& data) {
-        onEmitData(preSendData(data, true));
+        on_emit_data_(pre_send_data(data, true));
     }
 
     void ExternalSignalingConnection::receive(const bytes::binary& data) {
-        const auto signalDataCallback = onSignalData;
-        const auto decryptedData = preReadData(data, true);
-        signalingThread.PostTask([signalDataCallback, decryptedData] {
-            if (signalDataCallback) {
-                signalDataCallback(decryptedData);
+        const auto signal_data_callback = on_signal_data_;
+        const auto decrypted_data = pre_read_data(data, true);
+        signaling_thread_.PostTask([signal_data_callback, decrypted_data] {
+            if (signal_data_callback) {
+                signal_data_callback(decrypted_data);
             }
         });
     }
 
-    bool ExternalSignalingConnection::supportsCompression() const {
+    bool ExternalSignalingConnection::supports_compression() const {
         return false;
     }
-} // signaling
+} // ntgcalls::signaling

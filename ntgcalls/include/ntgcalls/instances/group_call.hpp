@@ -1,54 +1,55 @@
 //
-// Created by Laky64 on 15/03/2024.
+// Created by Lauren on 15/03/24.
 //
 #pragma once
-#include <ntgcalls/instances/p2p_call.hpp>
 #include <ntgcalls/instances/call_interface.hpp>
+#include <ntgcalls/instances/p2p_call.hpp>
+#include <wrtc/interfaces/group_connection.hpp>
 #include <wrtc/models/media_content.hpp>
 #include <wrtc/utils/json.hpp>
-#include <wrtc/interfaces/group_connection.hpp>
 
-namespace ntgcalls {
-    using wrtc::json;
+namespace ntgcalls::instances {
+    using wrtc::utils::json;
 
     class GroupCall: public CallInterface {
-        wrtc::synchronized_callback<void()> broadcastTimestampCallback;
-        wrtc::synchronized_callback<void(wrtc::SegmentPartRequest)> segmentPartRequestCallback;
+        wrtc::utils::synchronized_callback<void()> broadcast_timestamp_callback_;
+        wrtc::utils::synchronized_callback<void(wrtc::models::SegmentPartRequest)> segment_part_request_callback_;
 
-        static void updateRemoteVideoConstraints(const wrtc::GroupConnection* conn);
+        static void update_remote_video_constraints(const wrtc::interfaces::GroupConnection* conn);
+
     protected:
-        std::shared_ptr<wrtc::GroupConnection> presentationConnection;
+        std::shared_ptr<wrtc::interfaces::GroupConnection> presentation_connection_;
 
     public:
-        explicit GroupCall(wrtc::SafeThread& updateThread): CallInterface(updateThread) {}
+        explicit GroupCall(wrtc::utils::SafeThread& update_thread): CallInterface(update_thread) {}
 
         void stop() override;
 
         std::string init();
 
-        virtual std::string initPresentation();
+        virtual std::string init_presentation();
 
-        virtual void connect(const std::string& jsonData, bool isPresentation);
+        virtual void connect(const std::string& json_data, bool is_presentation);
 
-        uint32_t addIncomingVideo(int64_t userID, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const;
+        uint32_t add_incoming_video(int64_t user_id, const std::string& endpoint, const std::vector<wrtc::models::SsrcGroup>& ssrc_group) const;
 
-        bool removeIncomingVideo(const std::string& endpoint) const;
+        bool remove_incoming_video(const std::string& endpoint) const;
 
-        void stopPresentation(bool force = false);
+        void stop_presentation(bool force = false);
 
-        void setStreamSources(StreamManager::Mode mode, const MediaDescription& config) const override;
+        void set_stream_sources(media::StreamManager::Mode mode, const media::MediaDescription& config) const override;
 
         Type type() const override;
 
-        void onUpgrade(const std::function<void(MediaState)> &callback) const;
+        void on_upgrade(const std::function<void(media::MediaState)> &callback) const;
 
-        void sendBroadcastPart(int64_t segmentID, int32_t partID, wrtc::MediaSegment::Part::Status status, bool qualityUpdate, const std::optional<bytes::binary>& data) const;
+        void send_broadcast_part(int64_t segment_id, int32_t part_id, wrtc::models::MediaSegment::Part::Status status, bool quality_update, const std::optional<bytes::binary>& data) const;
 
-        void onRequestedBroadcastPart(const std::function<void(wrtc::SegmentPartRequest)>& callback);
+        void on_request_broadcast_part(const std::function<void(wrtc::models::SegmentPartRequest)>& callback);
 
-        void sendBroadcastTimestamp(int64_t timestamp) const;
+        void send_broadcast_timestamp(int64_t timestamp) const;
 
-        void onRequestedBroadcastTimestamp(const std::function<void()>& callback);
+        void on_request_broadcast_timestamp(const std::function<void()>& callback);
     };
 
-} // ntgcalls
+} // ntgcalls::instances

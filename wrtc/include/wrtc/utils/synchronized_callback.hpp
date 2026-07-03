@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 12/08/2023.
+// Created by Lauren on 12/08/23.
 //
 
 #pragma once
@@ -8,37 +8,37 @@
 #include <mutex>
 #include <rtc_base/logging.h>
 
-namespace wrtc {
+namespace wrtc::utils {
     template <typename Signature>
     class synchronized_callback;
 
     template <typename R, typename... Args>
     class synchronized_callback<R(Args...)> final {
-        std::function<R(Args...)> callback;
-        mutable std::mutex mutex;
+        std::function<R(Args...)> callback_;
+        mutable std::mutex mutex_;
 
     public:
         synchronized_callback() = default;
         ~synchronized_callback() { *this = nullptr; }
 
         synchronized_callback &operator=(std::function<R(Args...)> func) {
-            std::lock_guard lock(mutex);
-            callback = std::move(func);
+            std::lock_guard lock(mutex_);
+            callback_ = std::move(func);
             return *this;
         }
 
         // ReSharper disable once CppNonExplicitConversionOperator
         operator bool() const {
-            std::lock_guard lock(mutex);
-            return static_cast<bool>(callback);
+            std::lock_guard lock(mutex_);
+            return static_cast<bool>(callback_);
         }
 
         auto operator()(Args... args) const {
-            std::lock_guard lock(mutex);
+            std::lock_guard lock(mutex_);
             if constexpr (std::is_void_v<R>) {
-                if (!callback) return false;
+                if (!callback_) return false;
                 try {
-                    callback(std::move(args)...);
+                    callback_(std::move(args)...);
                 } catch (const std::exception& e) {
                     RTC_LOG(LS_ERROR) << "synchronized_callback threw an exception: " << e.what();
                 } catch (...) {
@@ -46,9 +46,9 @@ namespace wrtc {
                 }
                 return true;
             } else {
-                if (!callback) return std::optional<R>{std::nullopt};
+                if (!callback_) return std::optional<R>{std::nullopt};
                 try {
-                    return std::optional<R>{callback(std::move(args)...)};
+                    return std::optional<R>{callback_(std::move(args)...)};
                 } catch (const std::exception& e) {
                     RTC_LOG(LS_ERROR) << "synchronized_callback threw an exception: " << e.what();
                 } catch (...) {
@@ -59,4 +59,4 @@ namespace wrtc {
         }
     };
 
-} // wrtc
+} // wrtc::utils

@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 19/08/2023.
+// Created by Lauren on 19/08/23.
 //
 
 #pragma once
@@ -8,7 +8,7 @@
 
 #include <wrtc/models/rtc_on_data_event.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media::tracks {
 
     class AudioTrackSource: public webrtc::LocalAudioSource {
     public:
@@ -22,10 +22,10 @@ namespace wrtc {
 
         void RemoveSink(webrtc::AudioTrackSinkInterface* sink) override;
 
-        void PushData(const RTCOnDataEvent &, int64_t absoluteCaptureTimestampMs) const;
+        void push_data(const models::RTCOnDataEvent &, int64_t absolute_capture_timestamp_ms) const;
 
     private:
-        std::atomic<webrtc::AudioTrackSinkInterface *> _sink = {nullptr};
+        std::atomic<webrtc::AudioTrackSinkInterface *> sink_ = {nullptr};
     };
 
-} // wrtc
+} // wrtc::interfaces::media::tracks

@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 30/08/2023.
+// Created by Lauren on 30/08/23.
 //
 
 #pragma once
@@ -12,20 +12,20 @@
 namespace bp = boost::process;
 namespace asio = boost::asio;
 
-namespace ntgcalls {
+namespace ntgcalls::io {
 
     class ShellReader final: public ThreadedReader {
-        asio::io_context ctx;
-        asio::readable_pipe stdOut{ctx};
-        bp::process shellProcess{ctx};
+        asio::io_context ctx_;
+        asio::readable_pipe std_out_{ctx_};
+        bp::process shell_process_{ctx_};
 
     public:
-        explicit ShellReader(const std::string& command, BaseSink *sink);
+        explicit ShellReader(const std::string& command, media::BaseSink *sink);
 
         ~ShellReader() override;
 
         void open() override;
     };
 
-} // ntgcalls
+} // ntgcalls::io
 #endif

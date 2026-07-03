@@ -62,11 +62,11 @@ if (NOT IS_PYTHON AND NOT ANDROID)
 
     if (NOT STATIC_BUILD)
         set_target_properties(${NTG_LIB_NAME} PROPERTIES
-            ${ARCHIVE_TYPE}_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
+                ${ARCHIVE_TYPE}_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
         )
         if (WINDOWS)
             set_target_properties(${NTG_LIB_NAME} PROPERTIES
-                ARCHIVE_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
+                    ARCHIVE_OUTPUT_DIRECTORY ${ARCHIVE_DIR}/lib
             )
         endif ()
     endif ()

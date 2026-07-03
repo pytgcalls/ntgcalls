@@ -1,75 +1,75 @@
 //
-// Created by Laky-64 on 17/06/26.
+// Created by Lauren on 17/06/26.
 //
 
 #include <ntgcalls/e2e/chain/blockchain.hpp>
 #include <ntgcalls/e2e/chain/client_blockchain.hpp>
 
-namespace telegram::e2e::chain {
-    ClientBlockchain ClientBlockchain::createEmpty() {
+namespace ntgcalls::e2e::chain {
+    ClientBlockchain ClientBlockchain::create_empty() {
         ClientBlockchain res;
-        res.blockchain = Blockchain::createEmpty();
+        res.blockchain_ = Blockchain::create_empty();
         return std::move(res);
     }
 
-    std::optional<ClientBlockchain> ClientBlockchain::createFromBlock(const bytes::const_span serializedBlock) {
-        TlReader reader(serializedBlock);
-        const auto block = Block::fetchBoxed(reader);
+    std::optional<ClientBlockchain> ClientBlockchain::create_from_block(const bytes::const_span serialized_block) {
+        tl::TlReader reader(serialized_block);
+        const auto block = Block::fetch_boxed(reader);
         if (!reader.finish()) {
             return std::nullopt;
         }
-        auto chain = Blockchain::createFromBlock(block);
+        auto chain = Blockchain::create_from_block(block);
         if (!chain) {
             return std::nullopt;
         }
         ClientBlockchain result;
-        result.blockchain = std::move(*chain);
+        result.blockchain_ = std::move(*chain);
         return result;
     }
 
-    const GroupState & ClientBlockchain::groupState() const {
-        return blockchain.currentGroupState();
+    const GroupState & ClientBlockchain::group_state() const {
+        return blockchain_.current_group_state();
     }
 
     const Blockchain & ClientBlockchain::inner() const {
-        return blockchain;
+        return blockchain_;
     }
 
     int32_t ClientBlockchain::height() const {
-        return blockchain.height();
+        return blockchain_.height();
     }
 
-    Hash256 ClientBlockchain::previousBlockHash() const {
-        return blockchain.previousHash();
+    tl::Hash256 ClientBlockchain::previous_block_hash() const {
+        return blockchain_.previous_hash();
     }
 
-    Hash256 ClientBlockchain::lastBlockHash() const {
-        return blockchain.hash();
+    tl::Hash256 ClientBlockchain::last_block_hash() const {
+        return blockchain_.hash();
     }
 
-    std::optional<std::vector<Change>> ClientBlockchain::tryApplyBlock(const bytes::const_span serializedBlock) {
-        TlReader reader(serializedBlock);
-        auto block = Block::fetchBoxed(reader);
+    std::optional<std::vector<Change>> ClientBlockchain::try_apply_block(const bytes::const_span serialized_block) {
+        tl::TlReader reader(serialized_block);
+        auto block = Block::fetch_boxed(reader);
         if (!reader.finish()) {
             return std::nullopt;
         }
-        if (!blockchain.tryApplyBlock(block, true, false)) {
+        if (!blockchain_.try_apply_block(block, true, false)) {
             return std::nullopt;
         }
         return std::move(block.changes);
     }
 
-    const SharedKey & ClientBlockchain::groupSharedKey() const {
-        return blockchain.currentSharedKey();
+    const SharedKey & ClientBlockchain::group_shared_key() const {
+        return blockchain_.current_shared_key();
     }
 
-    std::optional<bytes::binary> ClientBlockchain::buildBlock(const std::vector<Change> &changes, const openssl::Key25519 &key) const {
-        const auto block = blockchain.buildBlock(changes, key);
+    std::optional<bytes::binary> ClientBlockchain::build_block(const std::vector<Change> &changes, const openssl::Key25519 &key) const {
+        const auto block = blockchain_.build_block(changes, key);
         if (!block) {
             return std::nullopt;
         }
-        TlWriter writer;
-        block->storeBoxed(writer);
+        tl::TlWriter writer;
+        block->store_boxed(writer);
         return writer.result();
     }
-} // telegram::e2e::chain
+} // ntgcalls::e2e::chain

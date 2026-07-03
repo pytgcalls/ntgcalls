@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 30/03/2024.
+// Created by Lauren on 30/03/24.
 //
 
 #pragma once
@@ -7,7 +7,7 @@
 #include <vector>
 #include <api/rtp_parameters.h>
 
-namespace wrtc {
+namespace wrtc::models {
     struct SsrcGroup {
         std::string semantics;
         std::vector<uint32_t> ssrcs;
@@ -40,11 +40,11 @@ namespace wrtc {
     };
 
     struct PayloadType {
-        uint32_t id = 0;
+        int32_t id = 0;
         std::string name;
-        uint32_t clockrate = 0;
-        uint32_t channels = 0;
-        std::vector<FeedbackType> feedbackTypes;
+        int32_t clockrate = 0;
+        size_t channels = 0;
+        std::vector<FeedbackType> feedback_types;
         std::vector<std::pair<std::string, std::string>> parameters;
 
         bool operator==(PayloadType const &rhs) const {
@@ -60,7 +60,7 @@ namespace wrtc {
             if (channels != rhs.channels) {
                 return false;
             }
-            if (feedbackTypes != rhs.feedbackTypes) {
+            if (feedback_types != rhs.feedback_types) {
                 return false;
             }
             if (parameters != rhs.parameters) {
@@ -79,10 +79,10 @@ namespace wrtc {
 
         Type type = Type::Audio;
         uint32_t ssrc = 0;
-        int64_t userID = 0;
-        std::vector<SsrcGroup> ssrcGroups;
-        std::vector<PayloadType> payloadTypes;
-        std::vector<webrtc::RtpExtension> rtpExtensions;
+        int64_t user_id = 0;
+        std::vector<SsrcGroup> ssrc_groups;
+        std::vector<PayloadType> payload_types;
+        std::vector<webrtc::RtpExtension> rtp_extensions;
 
         bool operator==(const MediaContent& rhs) const {
             if (type != rhs.type) {
@@ -91,40 +91,40 @@ namespace wrtc {
             if (ssrc != rhs.ssrc) {
                 return false;
             }
-            if (ssrcGroups != rhs.ssrcGroups) {
+            if (ssrc_groups != rhs.ssrc_groups) {
                 return false;
             }
 
-            std::vector<PayloadType> sortedPayloadTypes = payloadTypes;
-            std::ranges::sort(sortedPayloadTypes, [](PayloadType const &lhs, PayloadType const &rhs2) {
+            std::vector<PayloadType> sorted_payload_types = payload_types;
+            std::ranges::sort(sorted_payload_types, [](PayloadType const &lhs, PayloadType const &rhs2) {
                 return lhs.id < rhs2.id;
             });
-            std::vector<PayloadType> sortedRhsPayloadTypes = rhs.payloadTypes;
-            std::ranges::sort(sortedRhsPayloadTypes, [](PayloadType const &lhs, PayloadType const &rhs2) {
+            std::vector<PayloadType> sorted_rhs_payload_types = rhs.payload_types;
+            std::ranges::sort(sorted_rhs_payload_types, [](PayloadType const &lhs, PayloadType const &rhs2) {
                 return lhs.id < rhs2.id;
             });
-            if (sortedPayloadTypes != sortedRhsPayloadTypes) {
+            if (sorted_payload_types != sorted_rhs_payload_types) {
                 return false;
             }
 
-            if (rtpExtensions != rhs.rtpExtensions) {
+            if (rtp_extensions != rhs.rtp_extensions) {
                 return false;
             }
 
             return true;
         }
 
-        [[nodiscard]] bool isScreenCast() const {
-            return std::ranges::any_of(ssrcGroups, [](const auto& group) {
+        [[nodiscard]] bool is_screen_cast() const {
+            return std::ranges::any_of(ssrc_groups, [](const auto& group) {
                 return group.semantics == "SIM" && group.ssrcs.size() == 2;
             });
         }
 
-        [[nodiscard]] uint32_t mainSsrc() const {
-            if (ssrcGroups.size() <= 1) {
+        [[nodiscard]] uint32_t main_ssrc() const {
+            if (ssrc_groups.size() <= 1) {
                 return ssrc;
             }
-            for (const auto& [semantics, ssrcs] : ssrcGroups) {
+            for (const auto& [semantics, ssrcs] : ssrc_groups) {
                 if (semantics == "SIM") {
                     return ssrcs[0];
                 }
@@ -132,4 +132,4 @@ namespace wrtc {
             return 0;
         }
     };
-} // wrtc
+} // wrtc::models

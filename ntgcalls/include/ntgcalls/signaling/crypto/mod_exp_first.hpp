@@ -1,20 +1,19 @@
 //
-// Created by Laky64 on 08/03/2024.
+// Created by Lauren on 08/03/24.
 //
 #pragma once
 #include <wrtc/utils/bignum.hpp>
 
-
-namespace signaling {
+namespace ntgcalls::signaling::crypto {
     class ModExpFirst {
         static constexpr size_t kRandomPowerSize = 256;
     public:
-        bytes::vector randomPower, modexp;
+        bytes::binary random_power, modexp;
 
-        static bool IsGoodModExpFirst(const openssl::BigNum &modexp, const openssl::BigNum &prime);
+        static bool is_good_mod_exp_first(const openssl::BigNum &modexp, const openssl::BigNum &prime);
 
         ModExpFirst(int32_t g, bytes::const_span p, bytes::const_span r);
 
         ~ModExpFirst();
     };
-} // signaling
+} // ntgcalls::signaling::crypto

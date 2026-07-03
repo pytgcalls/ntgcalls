@@ -1,18 +1,18 @@
 //
-// Created by Laky-64 on 21/06/26.
+// Created by Lauren on 21/06/26.
 //
 
 #pragma once
 #include <string>
 #include <wrtc/utils/binary.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::utils {
 
     class EmojiFingerprint {
         static constexpr int kPartSize = 8;
         static constexpr int kEmojiInFingerprint = 4;
 
-        static constexpr uint16_t Data[] = {
+        static constexpr uint16_t kData[] = {
             0xd83d, 0xde09, 0xd83d, 0xde0d, 0xd83d, 0xde1b, 0xd83d, 0xde2d, 0xd83d, 0xde31, 0xd83d, 0xde21,
             0xd83d, 0xde0e, 0xd83d, 0xde34, 0xd83d, 0xde35, 0xd83d, 0xde08, 0xd83d, 0xde2c, 0xd83d, 0xde07,
             0xd83d, 0xde0f, 0xd83d, 0xdc6e, 0xd83d, 0xdc77, 0xd83d, 0xdc82, 0xd83d, 0xdc76, 0xd83d, 0xdc68,
@@ -70,7 +70,7 @@ namespace ntgcalls {
             0xd83d, 0xdd31, 0xd83d, 0xdd34, 0xd83d, 0xdd35, 0xd83d, 0xdd36, 0xd83d, 0xdd37
         };
 
-        static constexpr uint16_t Offsets[] = {
+        static constexpr uint16_t kOffsets[] = {
             0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22,
             24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46,
             48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70,
@@ -101,16 +101,16 @@ namespace ntgcalls {
             642, 643, 644, 646, 648, 650, 652, 654, 656, 658
         };
 
-        static constexpr auto kEmojiCount = static_cast<int>(std::size(Offsets) - 1);
+        static constexpr auto kEmojiCount = static_cast<int>(std::size(kOffsets) - 1);
 
-        static uint64_t computeIndex(bytes::const_span part);
+        static uint64_t compute_index(bytes::const_span part);
 
-        static void appendCodepoint(std::string& out, uint32_t codepoint);
+        static void append_codepoint(std::string& out, uint32_t codepoint);
 
-        static void appendEmoji(std::string& out, int index);
+        static void append_emoji(std::string& out, int index);
 
     public:
-        static std::string fromHash(bytes::const_span hash);
+        static std::string from_hash(bytes::const_span hash);
     };
 
-} // ntgcalls
+} // ntgcalls::utils

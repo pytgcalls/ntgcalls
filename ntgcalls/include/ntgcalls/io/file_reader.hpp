@@ -1,24 +1,22 @@
 //
-// Created by Laky64 on 04/08/2023.
+// Created by Lauren on 04/08/23.
 //
 
 #pragma once
 
 #include <fstream>
 #include <string>
-
-#include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/threaded_reader.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::io {
     class FileReader final: public ThreadedReader {
-        std::ifstream source;
+        std::ifstream source_;
 
     public:
-        explicit FileReader(const std::string& path, BaseSink *sink);
+        explicit FileReader(const std::string& path, media::BaseSink *sink);
 
         ~FileReader() override;
 
         void open() override;
     };
-}
+} // ntgcalls::io

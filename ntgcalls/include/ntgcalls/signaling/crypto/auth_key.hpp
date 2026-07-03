@@ -1,30 +1,30 @@
 //
-// Created by Laky64 on 08/03/2024.
+// Created by Lauren on 08/03/24.
 //
 
 #pragma once
 #include <wrtc/utils/binary.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling::crypto {
     struct EncryptionKey {
         static constexpr int kSize = 256;
 
-        std::shared_ptr<const std::array<uint8_t, kSize>> value;
-        bool isOutgoing = false;
+        std::shared_ptr<const bytes::array<kSize>> value;
+        bool is_outgoing = false;
 
         EncryptionKey(
-            std::shared_ptr<const std::array<uint8_t, kSize>> const& value,
-            const bool isOutgoing
-        ): value(value), isOutgoing(isOutgoing) {}
+            std::shared_ptr<const bytes::array<kSize>> const& value,
+            const bool is_outgoing
+        ): value(value), is_outgoing(is_outgoing) {}
     };
-    using RawKey = std::array<bytes::byte, EncryptionKey::kSize>;
+    using RawKey = bytes::array<EncryptionKey::kSize>;
 
     class AuthKey {
     public:
-        static bytes::vector CreateAuthKey(bytes::const_span firstBytes, bytes::const_span random, bytes::const_span primeBytes);
+        static bytes::binary create_auth_key(bytes::const_span first_bytes, bytes::const_span random, bytes::const_span prime_bytes);
 
-        static void FillData(RawKey &authKey, bytes::const_span computedAuthKey);
+        static void fill_data(RawKey &auth_key, bytes::const_span computed_auth_key);
 
-        static uint64_t Fingerprint(bytes::const_span authKey);
+        static uint64_t fingerprint(bytes::const_span auth_key);
     };
-} // signaling
+} // ntgcalls::signaling::crypto

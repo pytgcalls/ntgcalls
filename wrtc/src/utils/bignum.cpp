@@ -1,73 +1,73 @@
 //
-// Created by Laky64 on 07/03/2024.
+// Created by Lauren on 07/03/24.
 //
 
 #include <wrtc/utils/bignum.hpp>
 
 namespace openssl {
     void BigNum::clear() const {
-        BN_clear_free(std::exchange(_data, nullptr));
+        BN_clear_free(std::exchange(data_, nullptr));
     }
 
     BIGNUM* BigNum::raw() const {
-        if (!_data) _data = BN_new();
-        return _data;
+        if (!data_) data_ = BN_new();
+        return data_;
     }
 
-    bool BigNum::isZero() const {
-        return !failed() && (!_data || BN_is_zero(raw()));
+    bool BigNum::is_zero() const {
+        return !failed() && (!data_ || BN_is_zero(raw()));
     }
 
     bool BigNum::failed() const {
-        return _failed;
+        return failed_;
     }
 
-    void BigNum::setBytes(const bytes::const_span bytes) const {
+    void BigNum::set_bytes(const bytes::const_span bytes) const {
         if (bytes.empty()) {
             clear();
-            _failed = false;
+            failed_ = false;
         } else {
-            _failed = !BN_bin2bn(reinterpret_cast<const unsigned char*>(bytes.data()), bytes.size(), raw());
+            failed_ = !BN_bin2bn(bytes.data(), bytes.size(), raw());
         }
     }
 
-    void BigNum::setWord(const uint32_t word) const {
+    void BigNum::set_word(const uint32_t word) const {
         if (!word) {
             clear();
-            _failed = false;
+            failed_ = false;
         } else {
-            _failed = !BN_set_word(raw(), word);
+            failed_ = !BN_set_word(raw(), word);
         }
     }
 
-    void BigNum::setModExp(const BigNum& base, const BigNum& power, const BigNum& m, const Context &context) const {
+    void BigNum::set_mod_exp(const BigNum& base, const BigNum& power, const BigNum& m, const Context &context) const {
         if (base.failed() || power.failed() || m.failed()) {
-            _failed = true;
-        } else if (base.isNegative() || power.isNegative() || m.isNegative()) {
-            _failed = true;
+            failed_ = true;
+        } else if (base.is_negative() || power.is_negative() || m.is_negative()) {
+            failed_ = true;
         } else if (!BN_mod_exp(raw(), base.raw(), power.raw(), m.raw(), context.raw())) {
-            _failed = true;
-        } else if (isNegative()) {
-            _failed = true;
+            failed_ = true;
+        } else if (is_negative()) {
+            failed_ = true;
         } else {
-            _failed = false;
+            failed_ = false;
         }
     }
 
-    void BigNum::setSub(const BigNum& a, const BigNum& b) const {
+    void BigNum::set_sub(const BigNum& a, const BigNum& b) const {
         if (a.failed() || b.failed()) {
-            _failed = true;
+            failed_ = true;
         } else {
-            _failed = !BN_sub(raw(), a.raw(), b.raw());
+            failed_ = !BN_sub(raw(), a.raw(), b.raw());
         }
     }
 
     BigNum::BigNum(const bytes::const_span bytes): BigNum() {
-        setBytes(bytes);
+        set_bytes(bytes);
     }
 
     BigNum::BigNum(const uint32_t word): BigNum() {
-        setWord(word);
+        set_word(word);
     }
 
     BigNum::~BigNum() {
@@ -76,38 +76,38 @@ namespace openssl {
 
     BigNum& BigNum::operator=(const BigNum& other) { // NOLINT(*-unhandled-self-assignment)
         if (other.failed()) {
-            _failed = true;
-        } else if (other.isZero()) {
+            failed_ = true;
+        } else if (other.is_zero()) {
             clear();
-            _failed = false;
-        } else if (!_data) {
-            _data = BN_dup(other.raw());
-            _failed = false;
+            failed_ = false;
+        } else if (!data_) {
+            data_ = BN_dup(other.raw());
+            failed_ = false;
         } else {
-            _failed = !BN_copy(raw(), other.raw());
+            failed_ = !BN_copy(raw(), other.raw());
         }
         return *this;
     }
 
-    bool BigNum::isNegative() const {
-        return !failed() && _data && BN_is_negative(raw());
+    bool BigNum::is_negative() const {
+        return !failed() && data_ && BN_is_negative(raw());
     }
 
-    uint32_t BigNum::bitsSize() const {
+    uint32_t BigNum::bits_size() const {
         return failed() ? 0 : BN_num_bits(raw());
     }
 
-    uint32_t BigNum::bytesSize() const {
+    uint32_t BigNum::bytes_size() const {
         return failed() ? 0 : BN_num_bytes(raw());
     }
 
-    bytes::vector BigNum::getBytes() const {
+    bytes::binary BigNum::get_bytes() const {
         if (failed()) {
             return {};
         }
         const auto length = BN_num_bytes(raw());
-        bytes::vector result(length);
-        BN_bn2bin(raw(), reinterpret_cast<unsigned char*>(result.data()));
+        bytes::binary result(length);
+        BN_bn2bin(raw(), result.data());
         return result;
     }
 } // openssl

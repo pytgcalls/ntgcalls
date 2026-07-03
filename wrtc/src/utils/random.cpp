@@ -1,18 +1,18 @@
 //
-// Created by Laky64 on 08/03/2024.
+// Created by Lauren on 08/03/24.
 //
 
 #include <wrtc/utils/random.hpp>
 #include <openssl/rand.h>
 
 namespace bytes {
-    void RandomFill(span data) {
-        RAND_bytes(reinterpret_cast<unsigned char*>(data.data()), data.size());
+    void random_fill(span data) {
+        RAND_bytes(data.data(), data.size());
     }
 
     void set_random(const span destination) {
         if (!destination.empty()) {
-            RandomFill(destination);
+            random_fill(destination);
         }
     }
 } // bytes

@@ -1,10 +1,11 @@
 //
-// Created by Laky64 on 30/09/2023.
+// Created by Lauren on 30/09/23.
 //
 
+#include <pc/peer_connection_factory_proxy.h>
 #include <wrtc/interfaces/peer_connection/peer_connection_factory_with_context.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::peer_connection {
     webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
     PeerConnectionFactoryWithContext::Create(
             const webrtc::Environment &env,
@@ -19,7 +20,7 @@ namespace wrtc {
             if (factory == nullptr) {
                 return result_type(nullptr, nullptr);
             }
-            auto connection_context = factory->GetContext();
+            auto connection_context = factory->get_context();
             auto proxy = webrtc::PeerConnectionFactoryProxy::Create(
                     factory->signaling_thread(), factory->worker_thread(), factory);
             return result_type(proxy, connection_context);
@@ -35,7 +36,7 @@ namespace wrtc {
                 std::move(dependencies));
     }
 
-    webrtc::scoped_refptr<webrtc::ConnectionContext> PeerConnectionFactoryWithContext::GetContext() const {
+    webrtc::scoped_refptr<webrtc::ConnectionContext> PeerConnectionFactoryWithContext::get_context() const {
         return conn_context_;
     }
 
@@ -54,7 +55,7 @@ namespace wrtc {
                 webrtc::ConnectionContext::Create(env, &dependencies),
             &dependencies) {}
 
-    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> CreateModularPeerConnectionFactoryWithContext(
+    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> create_modular_peer_connection_factory_with_context(
         const webrtc::Environment &env,
         webrtc::PeerConnectionFactoryDependencies dependencies,
         webrtc::scoped_refptr<webrtc::ConnectionContext>& context
@@ -65,11 +66,11 @@ namespace wrtc {
             if (factory == nullptr) {
               return result_type(nullptr, nullptr);
             }
-            auto ctx = factory->GetContext();
+            auto ctx = factory->get_context();
             auto proxy = webrtc::PeerConnectionFactoryProxy::Create(factory->signaling_thread(), factory->worker_thread(), factory);
             return result_type(proxy, ctx);
         });
         context = snd;
         return fst;
     }
-} // wrtc
+} // wrtc::interfaces::peer_connection

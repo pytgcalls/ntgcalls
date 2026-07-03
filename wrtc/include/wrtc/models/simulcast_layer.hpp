@@ -1,19 +1,19 @@
 //
-// Created by Laky64 on 02/10/24.
+// Created by Lauren on 02/10/24.
 //
 
 #pragma once
 
 #include <cstdint>
 
-namespace wrtc {
+namespace wrtc::models {
 
     class SimulcastLayer {
     public:
         uint32_t ssrc = 0;
-        uint32_t fidSsrc = 0;
+        uint32_t fid_ssrc = 0;
 
-        SimulcastLayer(uint32_t ssrc, uint32_t fidSsrc);
+        SimulcastLayer(uint32_t ssrc, uint32_t fid_ssrc);
     };
 
-} // wrtc
+} // wrtc::models

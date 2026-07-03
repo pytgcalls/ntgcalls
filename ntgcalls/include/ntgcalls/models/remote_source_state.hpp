@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 26/10/24.
+// Created by Lauren on 26/10/24.
 //
 
 #pragma once
@@ -9,8 +9,8 @@ namespace ntgcalls {
 
     struct RemoteSource {
         uint32_t ssrc = 0;
-        StreamManager::Status state = StreamManager::Status::Idling;
-        StreamManager::Device device{};
+        media::StreamManager::Status state = media::StreamManager::Status::Idling;
+        media::StreamManager::Device device{};
     };
 
 } // ntgcalls

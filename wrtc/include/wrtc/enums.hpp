@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 15/08/2023.
+// Created by Lauren on 15/08/23.
 //
 
 #pragma once
@@ -28,8 +28,8 @@ namespace wrtc {
         Stable,
         HaveLocalOffer,
         HaveRemoteOffer,
-        HaveLocalPranswer,
-        HaveRemotePranswer,
+        HaveLocalPrAnswer,
+        HaveRemotePrAnswer,
         Closed,
     };
 

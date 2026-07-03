@@ -1,17 +1,17 @@
 //
-// Created by Laky-64 on 19/06/26.
+// Created by Lauren on 19/06/26.
 //
 
 #pragma once
 #include <wrtc/utils/binary.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
     class E2EEncryptor {
     public:
         virtual ~E2EEncryptor() = default;
 
-        virtual bytes::binary encrypt(const bytes::binary& data, size_t unencryptedPrefix) = 0;
+        virtual bytes::binary encrypt(const bytes::binary& data, size_t unencrypted_prefix) = 0;
 
-        virtual bytes::binary decrypt(int64_t userId, const bytes::binary& data) = 0;
+        virtual bytes::binary decrypt(int64_t user_id, const bytes::binary& data) = 0;
     };
-} // wrtc
+} // wrtc::interfaces::media

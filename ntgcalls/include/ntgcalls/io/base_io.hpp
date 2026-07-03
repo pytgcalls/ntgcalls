@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 08/10/24.
+// Created by Lauren on 08/10/24.
 //
 
 #pragma once
@@ -7,20 +7,20 @@
 #include <ntgcalls/media/base_sink.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::io {
 
     class BaseIO {
     protected:
-        BaseSink *sink = nullptr;
-        std::atomic_bool running;
-        wrtc::synchronized_callback<void()> eofCallback;
+        media::BaseSink *sink_ = nullptr;
+        std::atomic_bool running_;
+        wrtc::utils::synchronized_callback<void()> eof_callback_;
 
     public:
-        explicit BaseIO(BaseSink *sink);
+        explicit BaseIO(media::BaseSink *sink);
 
         virtual ~BaseIO();
 
-        void onEof(const std::function<void()>& callback);
+        void on_eof(const std::function<void()>& callback);
     };
 
-} // ntgcalls
+} // ntgcalls::io

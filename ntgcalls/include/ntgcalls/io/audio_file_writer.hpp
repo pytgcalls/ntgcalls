@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 07/10/24.
+// Created by Lauren on 07/10/24.
 //
 
 #pragma once
@@ -7,16 +7,16 @@
 #include <fstream>
 #include <string>
 #include <ntgcalls/io/audio_mixer.hpp>
-#include <ntgcalls/media/base_sink.hpp>
 #include <ntgcalls/io/threaded_audio_mixer.hpp>
+#include <ntgcalls/media/base_sink.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::io {
 
     class AudioFileWriter final: public ThreadedAudioMixer {
-        std::ofstream source;
+        std::ofstream source_;
 
     public:
-        AudioFileWriter(const std::string& path, BaseSink* sink);
+        AudioFileWriter(const std::string& path, media::BaseSink* sink);
 
         ~AudioFileWriter() override;
 
@@ -24,4 +24,4 @@ namespace ntgcalls {
         void write(const bytes::unique_binary& data) override;
     };
 
-} // ntgcalls
+} // ntgcalls::io

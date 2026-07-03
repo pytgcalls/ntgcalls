@@ -1,15 +1,13 @@
 //
-// Created by Laky64 on 19/08/2023.
+// Created by Lauren on 19/08/23.
 //
 
 #include <wrtc/interfaces/media/tracks/video_track_source.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media::tracks {
 
-    VideoTrackSource::VideoTrackSource(const bool is_screencast, const std::optional<bool> needs_denoising) {
-        _is_screencast = is_screencast;
-        _needs_denoising = needs_denoising;
-    }
+    VideoTrackSource::VideoTrackSource(const bool is_screencast, const std::optional<bool> needs_denoising):
+    is_screencast_(is_screencast), needs_denoising_(needs_denoising) {}
 
     webrtc::MediaSourceInterface::SourceState VideoTrackSource::state() const {
         return kLive;
@@ -20,15 +18,15 @@ namespace wrtc {
     }
 
     bool VideoTrackSource::is_screencast() const {
-        return _is_screencast;
+        return is_screencast_;
     }
 
     std::optional<bool> VideoTrackSource::needs_denoising() const {
-        return _needs_denoising;
+        return needs_denoising_;
     }
 
-    void VideoTrackSource::PushFrame(const webrtc::VideoFrame &frame) {
+    void VideoTrackSource::push_frame(const webrtc::VideoFrame &frame) {
         OnFrame(frame);
     }
 
-} // wrtc
+} // wrtc::interfaces::media::tracks

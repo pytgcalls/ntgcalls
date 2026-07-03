@@ -1,13 +1,13 @@
 //
-// Created by Laky64 on 19/08/2023.
+// Created by Lauren on 19/08/23.
 //
 
 #include <wrtc/interfaces/media/tracks/audio_track_source.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media::tracks {
 
     AudioTrackSource::~AudioTrackSource() {
-        _sink = nullptr;
+        sink_ = nullptr;
     }
 
     webrtc::MediaSourceInterface::SourceState AudioTrackSource::state() const {
@@ -19,23 +19,23 @@ namespace wrtc {
     }
 
     void AudioTrackSource::AddSink(webrtc::AudioTrackSinkInterface* sink) {
-        _sink = sink;
+        sink_ = sink;
     }
 
     void AudioTrackSource::RemoveSink(webrtc::AudioTrackSinkInterface *) {
-        _sink = nullptr;
+        sink_ = nullptr;
     }
 
-    void AudioTrackSource::PushData(const RTCOnDataEvent &data, const int64_t absoluteCaptureTimestampMs) const {
-        if (webrtc::AudioTrackSinkInterface* sink = _sink) {
+    void AudioTrackSource::push_data(const models::RTCOnDataEvent &data, const int64_t absolute_capture_timestamp_ms) const {
+        if (webrtc::AudioTrackSinkInterface* sink = sink_) {
             sink->OnData(
-                data.audioData,
-                data.bitsPerSample,
-                static_cast<int>(data.sampleRate),
-                data.channelCount,
-                data.numberOfFrames,
-                absoluteCaptureTimestampMs
+                data.audio_data,
+                data.bits_per_sample,
+                static_cast<int>(data.sample_rate),
+                data.channel_count,
+                data.number_of_frames,
+                absolute_capture_timestamp_ms
             );
         }
     }
-} // wrtc
+} // wrtc::interfaces::media::tracks

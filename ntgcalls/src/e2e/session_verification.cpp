@@ -1,5 +1,5 @@
 //
-// Created by Laky-64 on 19/06/26.
+// Created by Lauren on 19/06/26.
 //
 
 #include <algorithm>
@@ -8,216 +8,216 @@
 #include <wrtc/utils/encryption.hpp>
 #include <wrtc/utils/random.hpp>
 
-namespace telegram::e2e {
-    SessionVerification::SessionVerification(const int64_t selfUserId, const openssl::Key25519 &privateKey):
-        selfUserId(selfUserId), privateKey(privateKey) {}
+namespace ntgcalls::e2e {
+    SessionVerification::SessionVerification(const int64_t self_user_id, const openssl::Key25519 &private_key):
+        self_user_id_(self_user_id), private_key_(private_key) {}
 
-    Hash256 SessionVerification::sha256(const bytes::const_span data) {
-        Hash256 result{};
-        const auto digest = openssl::Sha256::Digest(data);
-        std::copy_n(reinterpret_cast<const uint8_t*>(digest.data()), result.size(), result.begin());
+    tl::Hash256 SessionVerification::sha256(const bytes::const_span data) {
+        tl::Hash256 result{};
+        const auto digest = openssl::Sha256::digest(data);
+        std::copy_n(digest.data(), result.size(), result.begin());
         return result;
     }
 
-    Hash256 SessionVerification::randomNonce() {
-        Hash256 nonce{};
-        bytes::RandomFill(bytes::span(reinterpret_cast<std::byte*>(nonce.data()), nonce.size()));
+    tl::Hash256 SessionVerification::random_nonce() {
+        tl::Hash256 nonce{};
+        bytes::random_fill(bytes::span(nonce.data(), nonce.size()));
         return nonce;
     }
 
-    bytes::binary SessionVerification::dataToSign(const chain::GroupBroadcastNonceCommit &commit) {
+    bytes::binary SessionVerification::data_to_sign(const chain::GroupBroadcastNonceCommit &commit) {
         chain::GroupBroadcastNonceCommit copy = commit;
         copy.signature = {};
-        TlWriter w;
-        copy.storeBoxed(w);
+        tl::TlWriter w;
+        copy.store_boxed(w);
         return w.result();
     }
 
-    bytes::binary SessionVerification::dataToSign(const chain::GroupBroadcastNonceReveal &reveal) {
+    bytes::binary SessionVerification::data_to_sign(const chain::GroupBroadcastNonceReveal &reveal) {
         chain::GroupBroadcastNonceReveal copy = reveal;
         copy.signature = {};
-        TlWriter w;
-        copy.storeBoxed(w);
+        tl::TlWriter w;
+        copy.store_boxed(w);
         return w.result();
     }
 
-    bool SessionVerification::processCommit(const chain::GroupBroadcastNonceCommit &commit) {
-        if (phase != Phase::Commit) {
+    bool SessionVerification::process_commit(const chain::GroupBroadcastNonceCommit &commit) {
+        if (phase_ != Phase::Commit) {
             return false;
         }
-        const auto it = participantKeys.find(commit.user_id);
-        if (it == participantKeys.end()) {
+        const auto it = participant_keys_.find(commit.user_id);
+        if (it == participant_keys_.end()) {
             return false;
         }
-        if (!openssl::Key25519::Verify(
+        if (!openssl::Key25519::verify(
             bytes::view(it->second),
-            bytes::view(dataToSign(commit)),
+            bytes::view(data_to_sign(commit)),
             bytes::view(commit.signature))
         ) {
             return false;
         }
-        if (committed.contains(commit.user_id)) {
+        if (committed_.contains(commit.user_id)) {
             return false;
         }
-        committed[commit.user_id] = commit.nonce_hash;
-        if (committed.size() == participantKeys.size()) {
-            phase = Phase::Reveal;
+        committed_[commit.user_id] = commit.nonce_hash;
+        if (committed_.size() == participant_keys_.size()) {
+            phase_ = Phase::Reveal;
         }
         return true;
     }
 
-    bool SessionVerification::processReveal(const chain::GroupBroadcastNonceReveal& reveal) {
-        if (phase != Phase::Reveal) {
+    bool SessionVerification::process_reveal(const chain::GroupBroadcastNonceReveal& reveal) {
+        if (phase_ != Phase::Reveal) {
             return false;
         }
-        const auto it = participantKeys.find(reveal.user_id);
-        if (it == participantKeys.end()) {
+        const auto it = participant_keys_.find(reveal.user_id);
+        if (it == participant_keys_.end()) {
             return false;
         }
-        if (!openssl::Key25519::Verify(
+        if (!openssl::Key25519::verify(
             bytes::view(it->second),
-            bytes::view(dataToSign(reveal)),
+            bytes::view(data_to_sign(reveal)),
             bytes::view(reveal.signature))
         ) {
             return false;
         }
-        if (revealed.contains(reveal.user_id)) {
+        if (revealed_.contains(reveal.user_id)) {
             return false;
         }
         if (
-            const auto committedIt = committed.find(reveal.user_id);
-            committedIt == committed.end() || sha256(bytes::view(reveal.nonce)) != committedIt->second
+            const auto committed_it = committed_.find(reveal.user_id);
+            committed_it == committed_.end() || sha256(bytes::view(reveal.nonce)) != committed_it->second
          ) {
             return false;
         }
-        revealed[reveal.user_id] = reveal.nonce;
-        if (revealed.size() == participantKeys.size()) {
-            std::vector<Hash256> nonces;
-            nonces.reserve(revealed.size());
-            for (const auto &nonce: revealed | std::views::values) {
+        revealed_[reveal.user_id] = reveal.nonce;
+        if (revealed_.size() == participant_keys_.size()) {
+            std::vector<tl::Hash256> nonces;
+            nonces.reserve(revealed_.size());
+            for (const auto &nonce: revealed_ | std::views::values) {
                 nonces.push_back(nonce);
             }
             std::ranges::sort(nonces);
-            bytes::binary fullNonce;
-            fullNonce.reserve(nonces.size() * 32);
+            bytes::binary full_nonce;
+            full_nonce.reserve(nonces.size() * 32);
             for (const auto& nonce : nonces) {
-                fullNonce.insert(fullNonce.end(), nonce.begin(), nonce.end());
+                full_nonce.insert(full_nonce.end(), nonce.begin(), nonce.end());
             }
-            const auto digest = openssl::Hmac::Sha512(bytes::view(fullNonce), bytes::view(lastBlockHash));
-            emojiHashValue = bytes::binary(digest.begin(), digest.end());
-            phase = Phase::End;
+            const auto digest = openssl::Hmac::sha512(bytes::view(full_nonce), bytes::view(last_block_hash_));
+            emoji_hash_value_ = bytes::binary(digest.begin(), digest.end());
+            phase_ = Phase::End;
         }
         return true;
     }
 
-    bool SessionVerification::processBroadcast(const chain::GroupBroadcast &broadcast) {
-        Hash256 broadcastHash{};
+    bool SessionVerification::process_broadcast(const chain::GroupBroadcast &broadcast) {
+        tl::Hash256 broadcast_hash{};
         std::visit(
-            [&broadcastHash](const auto& value) {
-                broadcastHash = value.chain_hash;
+            [&broadcast_hash](const auto& value) {
+                broadcast_hash = value.chain_hash;
             },
             broadcast.value
         );
-        if (broadcastHash != lastBlockHash) {
+        if (broadcast_hash != last_block_hash_) {
             return false;
         }
         return std::visit([this]<typename T>(const T& value) {
             if constexpr (std::is_same_v<T, chain::GroupBroadcastNonceCommit>) {
-                return processCommit(value);
+                return process_commit(value);
             } else {
-                return processReveal(value);
+                return process_reveal(value);
             }
         }, broadcast.value);
     }
 
-    void SessionVerification::emitRevealIfNeeded() {
-        if (phase == Phase::Reveal && !sentReveal) {
-            sentReveal = true;
+    void SessionVerification::emit_reveal_if_needed() {
+        if (phase_ == Phase::Reveal && !sent_reveal_) {
+            sent_reveal_ = true;
             chain::GroupBroadcastNonceReveal reveal;
-            reveal.user_id = selfUserId;
-            reveal.chain_height = height;
-            reveal.chain_hash = lastBlockHash;
-            reveal.nonce = selfNonce;
-            reveal.signature = privateKey.sign(bytes::view(dataToSign(reveal)));
+            reveal.user_id = self_user_id_;
+            reveal.chain_height = height_;
+            reveal.chain_hash = last_block_hash_;
+            reveal.nonce = self_nonce_;
+            reveal.signature = private_key_.sign(bytes::view(data_to_sign(reveal)));
 
-            TlWriter writer;
-            reveal.storeBoxed(writer);
-            pendingOutbound.push_back(writer.result());
+            tl::TlWriter writer;
+            reveal.store_boxed(writer);
+            pending_outbound_.push_back(writer.result());
         }
     }
 
-    bool SessionVerification::receiveInboundMessage(const bytes::const_span message) {
-        TlReader reader(message);
-        auto broadcast = chain::GroupBroadcast::fetchBoxed(reader);
+    bool SessionVerification::receive_inbound_message(const bytes::const_span message) {
+        tl::TlReader reader(message);
+        auto broadcast = chain::GroupBroadcast::fetch_boxed(reader);
         if (!reader.finish()) {
             return false;
         }
-        int32_t chainHeight = -1;
-        std::visit([&chainHeight](const auto& value) {
-            chainHeight = value.chain_height;
+        int32_t chain_height = -1;
+        std::visit([&chain_height](const auto& value) {
+            chain_height = value.chain_height;
         }, broadcast.value);
 
-        if (chainHeight < height) {
+        if (chain_height < height_) {
             return true;
         }
-        if (chainHeight > height) {
-            const auto data = reinterpret_cast<const uint8_t*>(message.data());
-            delayed[chainHeight].emplace_back(data, data + message.size());
+        if (chain_height > height_) {
+            const auto data = message.data();
+            delayed_[chain_height].emplace_back(data, data + message.size());
             return true;
         }
-        const auto applied = processBroadcast(broadcast);
-        emitRevealIfNeeded();
+        const auto applied = process_broadcast(broadcast);
+        emit_reveal_if_needed();
         return applied;
     }
 
-    std::optional<bytes::binary> SessionVerification::emojiHash() const {
-        return emojiHashValue;
+    std::optional<bytes::binary> SessionVerification::emoji_hash() const {
+        return emoji_hash_value_;
     }
 
-    std::vector<bytes::binary> SessionVerification::pullOutboundMessages() {
+    std::vector<bytes::binary> SessionVerification::pull_outbound_messages() {
         std::vector<bytes::binary> result;
-        std::swap(result, pendingOutbound);
+        std::swap(result, pending_outbound_);
         return result;
     }
 
-    void SessionVerification::onNewMainBlock(const chain::Blockchain &blockchain) {
-        selfNonce = randomNonce();
-        height = blockchain.height();
-        lastBlockHash = blockchain.hash();
-        phase = Phase::Commit;
-        committed.clear();
-        revealed.clear();
-        emojiHashValue.reset();
-        sentReveal = false;
+    void SessionVerification::on_new_main_block(const chain::Blockchain &blockchain) {
+        self_nonce_ = random_nonce();
+        height_ = blockchain.height();
+        last_block_hash_ = blockchain.hash();
+        phase_ = Phase::Commit;
+        committed_.clear();
+        revealed_.clear();
+        emoji_hash_value_.reset();
+        sent_reveal_ = false;
 
-        participantKeys.clear();
-        for (const auto& participant : blockchain.currentGroupState().participants) {
-            participantKeys.emplace(participant.user_id, participant.public_key);
+        participant_keys_.clear();
+        for (const auto& participant : blockchain.current_group_state().participants) {
+            participant_keys_.emplace(participant.user_id, participant.public_key);
         }
 
         chain::GroupBroadcastNonceCommit commit;
-        commit.user_id = selfUserId;
-        commit.chain_height = height;
-        commit.chain_hash = lastBlockHash;
-        commit.nonce_hash = sha256(bytes::view(selfNonce));
-        commit.signature = privateKey.sign(bytes::view(dataToSign(commit)));
+        commit.user_id = self_user_id_;
+        commit.chain_height = height_;
+        commit.chain_hash = last_block_hash_;
+        commit.nonce_hash = sha256(bytes::view(self_nonce_));
+        commit.signature = private_key_.sign(bytes::view(data_to_sign(commit)));
 
-        TlWriter writer;
-        commit.storeBoxed(writer);
-        pendingOutbound.clear();
-        pendingOutbound.push_back(writer.result());
+        tl::TlWriter writer;
+        commit.store_boxed(writer);
+        pending_outbound_.clear();
+        pending_outbound_.push_back(writer.result());
 
-        if (const auto it = delayed.find(height); it != delayed.end()) {
+        if (const auto it = delayed_.find(height_); it != delayed_.end()) {
             const auto pending = std::move(it->second);
-            delayed.erase(it);
+            delayed_.erase(it);
             for (const auto& message : pending) {
-                TlReader reader(bytes::view(message));
-                const auto broadcast = chain::GroupBroadcast::fetchBoxed(reader);
+                tl::TlReader reader(bytes::view(message));
+                const auto broadcast = chain::GroupBroadcast::fetch_boxed(reader);
                 if (!reader.finish()) {
-                    processBroadcast(broadcast);
+                    process_broadcast(broadcast);
                 }
             }
-            emitRevealIfNeeded();
+            emit_reveal_if_needed();
         }
     }
-} // telegram::e2e
+} // ntgcalls::e2e

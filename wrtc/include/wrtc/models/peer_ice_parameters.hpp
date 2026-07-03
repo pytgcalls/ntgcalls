@@ -1,25 +1,25 @@
 //
-// Created by Laky64 on 29/03/2024.
+// Created by Lauren on 29/03/24.
 //
 
 #pragma once
 #include <string>
 #include <utility>
 
-namespace wrtc {
+namespace wrtc::models {
 
     struct PeerIceParameters {
         std::string ufrag;
         std::string pwd;
-        bool supportsRenomination = false;
+        bool supports_renomination = false;
 
         PeerIceParameters() = default;
 
         PeerIceParameters(
             std::string ufrag,
             std::string pwd,
-            const bool supportsRenomination
-        ): ufrag(std::move(ufrag)), pwd(std::move(pwd)), supportsRenomination(supportsRenomination) {}
+            const bool supports_renomination
+        ): ufrag(std::move(ufrag)), pwd(std::move(pwd)), supports_renomination(supports_renomination) {}
     };
 
-} // wrtc
+} // wrtc::models

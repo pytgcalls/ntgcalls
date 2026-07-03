@@ -1,18 +1,18 @@
 //
-// Created by Laky64 on 05/09/2024.
+// Created by Lauren on 05/09/24.
 //
 
 #pragma once
 
 #include <wrtc/utils/synchronized_callback.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media::tracks {
     class MediaTrackInterface {
-        synchronized_callback<void(bool)> enableCallback;
-        bool status = true;
+        utils::synchronized_callback<void(bool)> enable_callback_;
+        bool status_ = true;
 
     public:
-        explicit MediaTrackInterface(const std::function<void(bool)>& enableCallback);
+        explicit MediaTrackInterface(const std::function<void(bool)>& enable_callback);
 
         ~MediaTrackInterface();
 
@@ -20,4 +20,4 @@ namespace wrtc {
 
         bool enabled() const;
     };
-} // wrtc
+} // wrtc::interfaces::media::tracks

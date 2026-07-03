@@ -1,14 +1,13 @@
 //
-// Created by Laky64 on 22/03/2024.
+// Created by Lauren on 22/03/24.
 //
+#include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/signaling/messages/message.hpp>
 
-#include <ntgcalls/exceptions.hpp>
-
-namespace signaling {
+namespace ntgcalls::signaling::messages {
     Message::Type Message::type(const bytes::binary& data) {
         if (data.empty()) {
-            throw ntgcalls::InvalidParams("Empty data");
+            throw InvalidParams("Empty data");
         }
         auto j = json::parse(data.begin(), data.end());
         if (const auto type = j["@type"];!type.is_null()) {
@@ -28,7 +27,7 @@ namespace signaling {
         return Type::Unknown;
     }
 
-    std::optional<webrtc::CopyOnWriteBuffer> Message::deserializeRaw(webrtc::ByteBufferReader &reader) {
+    std::optional<webrtc::CopyOnWriteBuffer> Message::deserialize_raw(webrtc::ByteBufferReader &reader) {
         if (!reader.Length()) {
             return std::nullopt;
         }
@@ -47,10 +46,10 @@ namespace signaling {
         return result;
     }
 
-    uint32_t Message::stringToUInt32(std::string const &string) {
-        std::stringstream stringStream(string);
+    uint32_t Message::string_to_uint32(std::string const &string) {
+        std::stringstream string_stream(string);
         uint32_t value = 0;
-        stringStream >> value;
+        string_stream >> value;
         return value;
     }
-} // signaling
+} // ntgcalls::signaling::messages
