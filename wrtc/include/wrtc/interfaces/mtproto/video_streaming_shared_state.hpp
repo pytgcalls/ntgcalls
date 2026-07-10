@@ -1,26 +1,26 @@
 //
-// Created by Laky64 on 15/04/25.
+// Created by Lauren on 15/04/25.
 //
 
 #pragma once
 #include <memory>
 #include <wrtc/interfaces/mtproto/video_streaming_decoder_state.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::mtproto {
 
     class VideoStreamingSharedState {
-        std::unique_ptr<VideoStreamingDecoderState> decoderState;
+        std::unique_ptr<VideoStreamingDecoderState> decoder_state_;
 
     public:
         ~VideoStreamingSharedState();
 
-        void updateDecoderState(const AVCodecParameters* codecParameters, AVRational pktTimebase);
+        void update_decoder_state(const AVCodecParameters* codec_parameters, AVRational pkt_timebase);
 
-        int sendFrame(const DecodableFrame* frame) const;
+        int send_frame(const media::DecodableFrame* frame) const;
 
-        int receiveFrame(const VideoStreamingAVFrame* frame) const;
+        int receive_frame(const media::VideoStreamingAVFrame* frame) const;
 
         void reset() const;
     };
 
-} // wrtc
+} // wrtc::interfaces::mtproto

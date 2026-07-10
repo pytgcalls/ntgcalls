@@ -1,49 +1,49 @@
 //
-// Created by Laky64 on 13/08/2023.
+// Created by Lauren on 13/08/23.
 //
 
 #include <wrtc/models/i420_image_data.hpp>
 
-namespace wrtc {
-    size_t i420ImageData::sizeOfLuminancePlane() const {
-        return static_cast<size_t>(width * height);
+namespace wrtc::models {
+    size_t I420ImageData::size_of_luminance_plane() const {
+        return static_cast<size_t>(width_ * height_);
     }
 
-    size_t i420ImageData::sizeOfChromaPlane() const {
-        return sizeOfLuminancePlane() / 4;
+    size_t I420ImageData::size_of_chroma_plane() const {
+        return size_of_luminance_plane() / 4;
     }
 
-    uint8_t* i420ImageData::dataY() const {
-        return contents.get();
+    bytes::byte* I420ImageData::data_y() const {
+        return contents_.get();
     }
 
-    uint8_t* i420ImageData::dataU() const {
-        return dataY() + sizeOfLuminancePlane();
+    bytes::byte* I420ImageData::data_u() const {
+        return data_y() + size_of_luminance_plane();
     }
 
-    uint8_t* i420ImageData::dataV() const {
-        return dataU() + sizeOfChromaPlane();
+    bytes::byte* I420ImageData::data_v() const {
+        return data_u() + size_of_chroma_plane();
     }
 
-    i420ImageData::i420ImageData(const uint16_t width, const uint16_t height, const uint8_t* contents, const size_t size) {
-        this->width = width;
-        this->height = height;
-        const size_t dataSize = sizeOfLuminancePlane() + 2 * sizeOfChromaPlane();
-        this->contents = std::make_unique<uint8_t[]>(dataSize);
-        if (contents && size == dataSize) {
-            std::memcpy(this->contents.get(), contents, dataSize);
+    I420ImageData::I420ImageData(const uint16_t width, const uint16_t height, const bytes::byte* contents, const size_t size) {
+        this->width_ = width;
+        this->height_ = height;
+        const size_t data_size = size_of_luminance_plane() + 2 * size_of_chroma_plane();
+        this->contents_ = bytes::make_unique_binary(data_size);
+        if (contents && size == data_size) {
+            std::memcpy(this->contents_.get(), contents, data_size);
         } else {
-            std::memset(this->contents.get(), 0, dataSize);
+            std::memset(this->contents_.get(), 0, data_size);
         }
     }
 
-    i420ImageData::~i420ImageData() = default;
+    I420ImageData::~I420ImageData() = default;
 
-    webrtc::scoped_refptr<webrtc::I420Buffer> i420ImageData::buffer() const {
-        auto buffer = webrtc::I420Buffer::Create(width, height);
-        std::memcpy(buffer->MutableDataY(), dataY(), sizeOfLuminancePlane());
-        std::memcpy(buffer->MutableDataU(), dataU(), sizeOfChromaPlane());
-        std::memcpy(buffer->MutableDataV(), dataV(), sizeOfChromaPlane());
+    webrtc::scoped_refptr<webrtc::I420Buffer> I420ImageData::buffer() const {
+        auto buffer = webrtc::I420Buffer::Create(width_, height_);
+        std::memcpy(buffer->MutableDataY(), data_y(), size_of_luminance_plane());
+        std::memcpy(buffer->MutableDataU(), data_u(), size_of_chroma_plane());
+        std::memcpy(buffer->MutableDataV(), data_v(), size_of_chroma_plane());
         return buffer;
     }
 }

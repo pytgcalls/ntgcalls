@@ -1,149 +1,148 @@
 //
-// Created by Laky64 on 30/03/2024.
+// Created by Lauren on 30/03/24.
 //
 
+#include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/signaling/messages/negotiate_channels_message.hpp>
 
-#include <ntgcalls/exceptions.hpp>
-
-namespace signaling {
-    json NegotiateChannelsMessage::serializeSourceGroup(const wrtc::SsrcGroup &ssrcGroup) {
-        auto ssrcsJson = json::array();
-        for (const auto ssrc : ssrcGroup.ssrcs) {
-            ssrcsJson.push_back(std::to_string(ssrc));
+namespace ntgcalls::signaling::messages {
+    json NegotiateChannelsMessage::serialize_source_group(const wrtc::models::SsrcGroup &ssrc_group) {
+        auto ssrcs_json = json::array();
+        for (const auto ssrc : ssrc_group.ssrcs) {
+            ssrcs_json.push_back(std::to_string(ssrc));
         }
         return {
-            {"semantics", ssrcGroup.semantics},
-            {"ssrcs", ssrcsJson},
+            {"semantics", ssrc_group.semantics},
+            {"ssrcs", ssrcs_json},
         };
     }
 
-    json NegotiateChannelsMessage::serializePayloadType(const wrtc::PayloadType &payloadType) {
+    json NegotiateChannelsMessage::serialize_payload_type(const wrtc::models::PayloadType &payload_type) {
         json res{
-            {"id", payloadType.id},
-            {"name", payloadType.name},
-            {"clockrate", payloadType.clockrate},
-            {"channels", payloadType.channels},
+            {"id", payload_type.id},
+            {"name", payload_type.name},
+            {"clockrate", payload_type.clockrate},
+            {"channels", payload_type.channels},
         };
-        auto feedbackTypesJson = json::array();
-        if (!payloadType.feedbackTypes.empty()) {
-            for (const auto&[type, subtype] : payloadType.feedbackTypes) {
-                feedbackTypesJson.push_back({
+        auto feedback_types_json = json::array();
+        if (!payload_type.feedback_types.empty()) {
+            for (const auto&[type, subtype] : payload_type.feedback_types) {
+                feedback_types_json.push_back({
                     {"type", type},
                     {"subtype", subtype},
                 });
             }
         }
-        res["feedbackTypes"] = feedbackTypesJson;
-        auto parametersJson = json::object();
-        for (const auto& [key, value] : payloadType.parameters) {
-            parametersJson[key] = value;
+        res["feedbackTypes"] = feedback_types_json;
+        auto parameters_json = json::object();
+        for (const auto& [key, value] : payload_type.parameters) {
+            parameters_json[key] = value;
         }
-        res["parameters"] = parametersJson;
+        res["parameters"] = parameters_json;
         return res;
     }
 
-    json NegotiateChannelsMessage::serializeContent(const wrtc::MediaContent &content) {
-        json contentJson{
-            {"type", content.type == wrtc::MediaContent::Type::Audio ? "audio" : "video"},
+    json NegotiateChannelsMessage::serialize_content(const wrtc::models::MediaContent &content) {
+        json content_json{
+            {"type", content.type == wrtc::models::MediaContent::Type::Audio ? "audio" : "video"},
             {"ssrc", std::to_string(content.ssrc)},
         };
-        if (!content.ssrcGroups.empty()) {
-            auto ssrcGroupsJson = json::array();
-            for (const auto& ssrcGroup : content.ssrcGroups) {
-                ssrcGroupsJson.push_back(serializeSourceGroup(ssrcGroup));
+        if (!content.ssrc_groups.empty()) {
+            auto ssrc_groups_json = json::array();
+            for (const auto& ssrc_group : content.ssrc_groups) {
+                ssrc_groups_json.push_back(serialize_source_group(ssrc_group));
             }
-            contentJson["ssrcGroups"] = ssrcGroupsJson;
+            content_json["ssrcGroups"] = ssrc_groups_json;
         }
-        if (!content.payloadTypes.empty()) {
-            auto payloadTypesJson = json::array();
-            for (const auto& payloadType : content.payloadTypes) {
-                payloadTypesJson.push_back(serializePayloadType(payloadType));
+        if (!content.payload_types.empty()) {
+            auto payload_types_json = json::array();
+            for (const auto& payload_type : content.payload_types) {
+                payload_types_json.push_back(serialize_payload_type(payload_type));
             }
-            contentJson["payloadTypes"] = payloadTypesJson;
+            content_json["payloadTypes"] = payload_types_json;
         }
-        auto rtpExtensionsJson = json::array();
-        for (const auto& rtpExtension : content.rtpExtensions) {
-            rtpExtensionsJson.push_back(json{
-                {"uri", rtpExtension.uri},
-                {"id", rtpExtension.id.value()},
+        auto rtp_extensions_json = json::array();
+        for (const auto& rtp_extension : content.rtp_extensions) {
+            rtp_extensions_json.push_back(json{
+                {"uri", rtp_extension.uri},
+                {"id", rtp_extension.id.value()},
             });
         }
-        contentJson["rtpExtensions"] = rtpExtensionsJson;
-        return contentJson;
+        content_json["rtpExtensions"] = rtp_extensions_json;
+        return content_json;
     }
 
     bytes::binary NegotiateChannelsMessage::serialize() const {
         json res{
             {"@type", "NegotiateChannels"},
-            {"exchangeId", std::to_string(exchangeId)},
+            {"exchangeId", std::to_string(exchange_id)},
         };
-        auto contentsJson = json::array();
+        auto contents_json = json::array();
         for (const auto& content : contents) {
-            contentsJson.push_back(serializeContent(content));
+            contents_json.push_back(serialize_content(content));
         }
-        res["contents"] = contentsJson;
+        res["contents"] = contents_json;
         return bytes::make_binary(res.dump());
     }
 
-    wrtc::SsrcGroup NegotiateChannelsMessage::deserializeSourceGroup(const json &ssrcGroup) {
-        wrtc::SsrcGroup result;
-        if (!ssrcGroup.contains("semantics") || !ssrcGroup.contains("ssrcs")) {
-            throw ntgcalls::InvalidParams("Signaling: ssrcGroup must contain semantics and ssrcs");
+    wrtc::models::SsrcGroup NegotiateChannelsMessage::deserialize_source_group(const json &ssrc_group) {
+        wrtc::models::SsrcGroup result;
+        if (!ssrc_group.contains("semantics") || !ssrc_group.contains("ssrcs")) {
+            throw InvalidParams("Signaling: ssrcGroup must contain semantics and ssrcs");
         }
-        result.semantics = ssrcGroup["semantics"];
-        for (const auto &ssrc : ssrcGroup["ssrcs"]) {
+        result.semantics = ssrc_group["semantics"];
+        for (const auto &ssrc : ssrc_group["ssrcs"]) {
             if (ssrc.is_string()) {
-                uint32_t parsedSsrc = stringToUInt32(ssrc);
-                if (parsedSsrc == 0) {
-                    throw ntgcalls::InvalidParams("Signaling: parsedSsrc must not be 0");
+                const uint32_t parsed_ssrc = string_to_uint32(ssrc);
+                if (parsed_ssrc == 0) {
+                    throw InvalidParams("Signaling: parsedSsrc must not be 0");
                 }
-                result.ssrcs.push_back(parsedSsrc);
+                result.ssrcs.push_back(parsed_ssrc);
             } else if (ssrc.is_number()) {
                 result.ssrcs.push_back(ssrc);
             } else {
-                throw ntgcalls::InvalidParams("Signaling: ssrcs item must be a string or a number");
+                throw InvalidParams("Signaling: ssrcs item must be a string or a number");
             }
         }
         return result;
     }
 
-    wrtc::FeedbackType NegotiateChannelsMessage::deserializeFeedbackType(const json &feedbackType) {
-        wrtc::FeedbackType result;
-        if (!feedbackType.contains("type") || !feedbackType.contains("subtype")) {
-            throw ntgcalls::InvalidParams("Signaling: feedbackType must contain type and subtype");
+    wrtc::models::FeedbackType NegotiateChannelsMessage::deserialize_feedback_type(const json &feedback_type) {
+        wrtc::models::FeedbackType result;
+        if (!feedback_type.contains("type") || !feedback_type.contains("subtype")) {
+            throw InvalidParams("Signaling: feedbackType must contain type and subtype");
         }
-        result.type = feedbackType["type"];
-        result.subtype = feedbackType["subtype"];
+        result.type = feedback_type["type"];
+        result.subtype = feedback_type["subtype"];
         return result;
     }
 
-    wrtc::PayloadType NegotiateChannelsMessage::deserializePayloadType(const json &payloadType) {
-        wrtc::PayloadType result;
-        if (!payloadType.contains("id") || !payloadType.contains("name") || !payloadType.contains("clockrate")) {
-            throw ntgcalls::InvalidParams("Signaling: payloadType must contain id, name and clockrate");
+    wrtc::models::PayloadType NegotiateChannelsMessage::deserialize_payload_type(const json &payload_type) {
+        wrtc::models::PayloadType result;
+        if (!payload_type.contains("id") || !payload_type.contains("name") || !payload_type.contains("clockrate")) {
+            throw InvalidParams("Signaling: payloadType must contain id, name and clockrate");
         }
-        result.id = payloadType["id"];
-        result.name = payloadType["name"];
-        result.clockrate = payloadType["clockrate"];
-        if (payloadType.contains("channels")) {
-            if (!payloadType["channels"].is_number()) {
-                throw ntgcalls::InvalidParams("Signaling: channels must be a number");
+        result.id = payload_type["id"];
+        result.name = payload_type["name"];
+        result.clockrate = payload_type["clockrate"];
+        if (payload_type.contains("channels")) {
+            if (!payload_type["channels"].is_number()) {
+                throw InvalidParams("Signaling: channels must be a number");
             }
-            result.channels = payloadType["channels"];
+            result.channels = payload_type["channels"];
         }
-        if (payloadType.contains("feedbackTypes")) {
-            for (const auto &feedbackType : payloadType["feedbackTypes"]) {
-                if (!feedbackType.is_object()) {
-                    throw ntgcalls::InvalidParams("Signaling: feedbackTypes items must be objects");
+        if (payload_type.contains("feedbackTypes")) {
+            for (const auto &feedback_type : payload_type["feedbackTypes"]) {
+                if (!feedback_type.is_object()) {
+                    throw InvalidParams("Signaling: feedbackTypes items must be objects");
                 }
-                result.feedbackTypes.push_back(deserializeFeedbackType(feedbackType));
+                result.feedback_types.push_back(deserialize_feedback_type(feedback_type));
             }
         }
-        if (payloadType.contains("parameters")) {
-            for (const auto &parameter : payloadType["parameters"].items()) {
+        if (payload_type.contains("parameters")) {
+            for (const auto &parameter : payload_type["parameters"].items()) {
                 if (!parameter.value().is_string()) {
-                    throw ntgcalls::InvalidParams("Signaling: parameters items must be strings");
+                    throw InvalidParams("Signaling: parameters items must be strings");
                 }
                 result.parameters.emplace_back(parameter.key(), parameter.value());
             }
@@ -151,58 +150,58 @@ namespace signaling {
         return result;
     }
 
-    webrtc::RtpExtension NegotiateChannelsMessage::deserializeRtpExtension(const json &rtpExtension) {
+    webrtc::RtpExtension NegotiateChannelsMessage::deserialize_rtp_extension(const json &rtp_extension) {
         webrtc::RtpExtension result;
-        if (!rtpExtension.contains("id") || !rtpExtension.contains("uri")) {
-            throw ntgcalls::InvalidParams("Signaling: rtpExtension must contain id and uri");
+        if (!rtp_extension.contains("id") || !rtp_extension.contains("uri")) {
+            throw InvalidParams("Signaling: rtpExtension must contain id and uri");
         }
-        result.id = webrtc::RtpHeaderExtensionId(rtpExtension["id"].get<int>());
-        result.uri = rtpExtension["uri"];
+        result.id = webrtc::RtpHeaderExtensionId(rtp_extension["id"].get<int>());
+        result.uri = rtp_extension["uri"];
         return result;
     }
 
-    wrtc::MediaContent NegotiateChannelsMessage::deserializeContent(const json &content) {
-        wrtc::MediaContent result;
+    wrtc::models::MediaContent NegotiateChannelsMessage::deserialize_content(const json &content) {
+        wrtc::models::MediaContent result;
         if (!content.contains("type") || !content.contains("ssrc")) {
-            throw ntgcalls::InvalidParams("Signaling: content must contain type and ssrc");
+            throw InvalidParams("Signaling: content must contain type and ssrc");
         }
         if (const auto& type = content["type"]; type == "audio") {
-            result.type = wrtc::MediaContent::Type::Audio;
+            result.type = wrtc::models::MediaContent::Type::Audio;
         } else if (type == "video") {
-            result.type = wrtc::MediaContent::Type::Video;
+            result.type = wrtc::models::MediaContent::Type::Video;
         } else {
-            throw ntgcalls::InvalidParams("Signaling: type must be 'audio' or 'video'");
+            throw InvalidParams("Signaling: type must be 'audio' or 'video'");
         }
 
         if (const auto& ssrc = content["ssrc"]; ssrc.is_string()) {
-            result.ssrc = stringToUInt32(ssrc);
+            result.ssrc = string_to_uint32(ssrc);
         } else if (ssrc.is_number()) {
             result.ssrc = static_cast<uint32_t>(ssrc);
         } else {
-            throw ntgcalls::InvalidParams("Signaling: ssrc must be a string or a number");
+            throw InvalidParams("Signaling: ssrc must be a string or a number");
         }
         if (content.contains("ssrcGroups")) {
-            for (const auto &ssrcGroup : content["ssrcGroups"]) {
-                if (!ssrcGroup.is_object()) {
-                    throw ntgcalls::InvalidParams("Signaling: ssrcsGroups items must be objects");
+            for (const auto &ssrc_group : content["ssrcGroups"]) {
+                if (!ssrc_group.is_object()) {
+                    throw InvalidParams("Signaling: ssrcsGroups items must be objects");
                 }
-                result.ssrcGroups.push_back(deserializeSourceGroup(ssrcGroup));
+                result.ssrc_groups.push_back(deserialize_source_group(ssrc_group));
             }
         }
         if (content.contains("payloadTypes")) {
-            for (const auto &payloadType : content["payloadTypes"]) {
-                if (!payloadType.is_object()) {
-                    throw ntgcalls::InvalidParams("Signaling: payloadTypes items must be objects");
+            for (const auto &payload_type : content["payloadTypes"]) {
+                if (!payload_type.is_object()) {
+                    throw InvalidParams("Signaling: payloadTypes items must be objects");
                 }
-                result.payloadTypes.push_back(deserializePayloadType(payloadType));
+                result.payload_types.push_back(deserialize_payload_type(payload_type));
             }
         }
         if (content.contains("rtpExtensions")) {
-            for (const auto &rtpExtension : content["rtpExtensions"]) {
-                if (!rtpExtension.is_object()) {
-                    throw ntgcalls::InvalidParams("Signaling: rtpExtensions items must be objects");
+            for (const auto &rtp_extension : content["rtpExtensions"]) {
+                if (!rtp_extension.is_object()) {
+                    throw InvalidParams("Signaling: rtpExtensions items must be objects");
                 }
-                result.rtpExtensions.push_back(deserializeRtpExtension(rtpExtension));
+                result.rtp_extensions.push_back(deserialize_rtp_extension(rtp_extension));
             }
         }
         return result;
@@ -212,24 +211,24 @@ namespace signaling {
         json j = json::parse(data.begin(), data.end());
         auto message = std::make_unique<NegotiateChannelsMessage>();
         if (!j.contains("exchangeId")) {
-            throw ntgcalls::InvalidParams("Signaling: exchangeId must be present");
+            throw InvalidParams("Signaling: exchangeId must be present");
         }
-        if (const auto exchangeId = j["exchangeId"]; exchangeId.is_string()) {
-            message->exchangeId = stringToUInt32(exchangeId);
-        } else if (exchangeId.is_number()) {
-            message->exchangeId = static_cast<uint32_t>(exchangeId);
+        if (const auto exchange_id = j["exchangeId"]; exchange_id.is_string()) {
+            message->exchange_id = string_to_uint32(exchange_id);
+        } else if (exchange_id.is_number()) {
+            message->exchange_id = static_cast<uint32_t>(exchange_id);
         } else {
-            throw ntgcalls::InvalidParams("Signaling: exchangeId must be a string or a number");
+            throw InvalidParams("Signaling: exchangeId must be a string or a number");
         }
         if (!j.contains("contents")) {
-            throw ntgcalls::InvalidParams("Signaling: contents must be present");
+            throw InvalidParams("Signaling: contents must be present");
         }
         for (const auto &content : j["contents"]) {
             if (!content.is_object()) {
-                throw ntgcalls::InvalidParams("Signaling: contents items must be objects");
+                throw InvalidParams("Signaling: contents items must be objects");
             }
-            message->contents.push_back(deserializeContent(content));
+            message->contents.push_back(deserialize_content(content));
         }
         return std::move(message);
     }
-} // signaling
+} // ntgcalls::signaling::messages

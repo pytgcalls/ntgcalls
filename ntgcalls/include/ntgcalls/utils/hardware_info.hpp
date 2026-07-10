@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 02/03/2024.
+// Created by Lauren on 02/03/24.
 //
 # pragma once
 #include <cstdint>
@@ -12,22 +12,22 @@
 #include <sys/times.h>
 #endif
 
-namespace ntgcalls {
+namespace ntgcalls::utils {
 
     class HardwareInfo {
-        int numProcessors;
+        int num_processors_;
 #ifdef IS_WINDOWS
-        ULARGE_INTEGER lastCPU{}, lastSysCPU{}, lastUserCPU{};
+        ULARGE_INTEGER last_cpu_{}, last_sys_cpu_{}, last_user_cpu_{};
         HANDLE self;
 #else
-        clock_t lastCPU, lastSysCPU, lastUserCPU;
+        clock_t last_cpu_, last_sys_cpu_, last_user_cpu_;
 #endif
     public:
         HardwareInfo();
 
-        double getCpuUsage();
+        double get_cpu_usage();
 
-        [[nodiscard]] uint16_t getCoreCount() const;
+        [[nodiscard]] uint16_t get_core_count() const;
     };
 
-} // ntgcalls
+} // ntgcalls::utils

@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
 
-if (WIN32)
-    add_compile_options(/wd4068)
-endif ()
-
 include(ExternalProject)
 
 option(STATIC_BUILD "Build static libraries" ON)
@@ -17,6 +13,14 @@ add_custom_target(clean_objects
 project(ntgcalls VERSION 3.0.0.4 LANGUAGES C CXX)
 include(cmake/VersionUtil.cmake)
 
+if (MSVC)
+    add_compile_options(/wd4068 /wd5030)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wno-unknown-attributes)
+else ()
+    add_compile_options(-Wno-attributes)
+endif ()
+
 if (MACOS)
     enable_language(OBJCXX)
 endif ()
@@ -24,8 +28,7 @@ endif ()
 find_package(Threads REQUIRED)
 
 get_filename_component(DEPS_DIR     "deps" REALPATH)
-get_filename_component(android_loc  "android" REALPATH)
-get_filename_component(jni_loc      "${android_loc}/app/src/main/jni" REALPATH)
+get_filename_component(ROOT_DIR     "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
 get_filename_component(props_loc    "version.properties" REALPATH)
 
 include(cmake/FindGLib.cmake)
@@ -37,18 +40,8 @@ include(cmake/FindBoost.cmake)
 include(cmake/FindOpenH264.cmake)
 include(cmake/FindFFmpeg.cmake)
 include(cmake/GenerateE2ETL.cmake)
-
-# pybind11
-if (IS_PYTHON)
-    set(PYBIND11_FINDPYTHON "NEW")
-    add_subdirectory(deps/pybind11)
-endif ()
-
-# Oboe
-if (ANDROID)
-    add_subdirectory(deps/oboe)
-    setup_platform_flags(oboe OFF)
-endif ()
+include(cmake/codegen/GenerateSchema.cmake)
+include(cmake/codegen/GenerateBinding.cmake)
 
 add_subdirectory(wrtc)
 add_subdirectory(ntgcalls)

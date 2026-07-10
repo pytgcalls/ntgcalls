@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 16/08/2023.
+// Created by Lauren on 16/08/23.
 //
 
 #include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
@@ -22,20 +22,20 @@ extern "C" {
 #include <wrtc/video_factory/video_factory_config.hpp>
 #include <wrtc/video_factory/hardware/android/video_factory.hpp>
 
-namespace wrtc {
-    std::mutex PeerConnectionFactory::_mutex{};
-    bool PeerConnectionFactory::initialized = false;
-    std::unique_ptr<PeerConnectionFactory> PeerConnectionFactory::_default = nullptr;
+namespace wrtc::interfaces::peer_connection {
+    std::mutex PeerConnectionFactory::mutex_{};
+    bool PeerConnectionFactory::initialized_ = false;
+    std::unique_ptr<PeerConnectionFactory> PeerConnectionFactory::default_ = nullptr;
 
     PeerConnectionFactory::PeerConnectionFactory() {
         av_log_set_level(AV_LOG_QUIET);
-        network_thread_ = SafeThread::CreateWithSocketServer();
+        network_thread_ = utils::SafeThread::CreateWithSocketServer();
         network_thread_->SetName("ntg-net", nullptr);
         network_thread_->Start();
-        worker_thread_ = SafeThread::Create();
+        worker_thread_ = utils::SafeThread::Create();
         worker_thread_->SetName("ntg-work", nullptr);
         worker_thread_->Start();
-        signaling_thread_ = SafeThread::Create();
+        signaling_thread_ = utils::SafeThread::Create();
         signaling_thread_->SetName("ntg-media", nullptr);
         signaling_thread_->Start();
 
@@ -50,35 +50,35 @@ namespace wrtc {
         dependencies.signaling_thread = *signaling_thread_;
         dependencies.env = env;
         dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>();
-        jniEnv = GetJNIEnv();
+        jni_env_ = utils::GetJNIEnv();
         dependencies.adm = worker_thread_->BlockingCall([&] {
-            if (!_audioDeviceModule)
-                _audioDeviceModule = webrtc::make_ref_counted<AudioDeviceModule>();
-            return _audioDeviceModule;
+            if (!audio_device_module_)
+                audio_device_module_ = webrtc::make_ref_counted<media::AudioDeviceModule>();
+            return audio_device_module_;
         });
         dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
         dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
 #ifdef IS_ANDROID
-        dependencies.video_encoder_factory = android::CreateVideoEncoderFactory(static_cast<JNIEnv*>(jniEnv));
-        dependencies.video_decoder_factory = android::CreateVideoDecoderFactory(static_cast<JNIEnv*>(jniEnv));
+        dependencies.video_encoder_factory = android::create_video_encoder_factory(static_cast<JNIEnv*>(jni_env_));
+        dependencies.video_decoder_factory = android::create_video_decoder_factory(static_cast<JNIEnv*>(jni_env_));
 #else
-        auto config = VideoFactoryConfig();
+        auto config = video_factory::VideoFactoryConfig();
         dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
         dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
 #endif
         dependencies.audio_mixer = nullptr;
-        supportedVideoFormats = dependencies.video_encoder_factory->GetSupportedFormats();
+        supported_video_formats_ = dependencies.video_encoder_factory->GetSupportedFormats();
         EnableMedia(dependencies);
         if (!factory_) {
-            factory_ = CreateModularPeerConnectionFactoryWithContext(env, std::move(dependencies), connection_context_);
+            factory_ = create_modular_peer_connection_factory_with_context(env, std::move(dependencies), connection_context_);
         }
     }
 
     PeerConnectionFactory::~PeerConnectionFactory() {
-        if (_audioDeviceModule) {
+        if (audio_device_module_) {
             worker_thread_->BlockingCall([this] {
-                if (_audioDeviceModule)
-                    _audioDeviceModule = nullptr;
+                if (audio_device_module_)
+                    audio_device_module_ = nullptr;
             });
         }
         factory_ = nullptr;
@@ -91,37 +91,37 @@ namespace wrtc {
         return factory_;
     }
 
-    SafeThread& PeerConnectionFactory::networkThread() const {
+    utils::SafeThread& PeerConnectionFactory::network_thread() const {
         return *network_thread_;
     }
 
-    SafeThread& PeerConnectionFactory::signalingThread() const {
+    utils::SafeThread& PeerConnectionFactory::signaling_thread() const {
         return *signaling_thread_;
     }
 
-    SafeThread& PeerConnectionFactory::workerThread() const {
+    utils::SafeThread& PeerConnectionFactory::worker_thread() const {
         return *worker_thread_;
     }
 
-    webrtc::NetworkManager* PeerConnectionFactory::networkManager() const {
+    webrtc::NetworkManager* PeerConnectionFactory::network_manager() const {
         return connection_context_->default_network_manager();
     }
 
-    webrtc::PacketSocketFactory* PeerConnectionFactory::socketFactory() const {
+    webrtc::PacketSocketFactory* PeerConnectionFactory::socket_factory() const {
         return connection_context_->default_socket_factory();
     }
 
-    webrtc::UniqueRandomIdGenerator* PeerConnectionFactory::ssrcGenerator() const {
+    webrtc::UniqueRandomIdGenerator* PeerConnectionFactory::ssrc_generator() const {
         return connection_context_->ssrc_generator();
     }
 
-    webrtc::MediaEngineInterface* PeerConnectionFactory::mediaEngine() {
-        if (!media_engine_ref) {
-            media_engine_ref = std::make_unique<webrtc::ConnectionContext::MediaEngineReference>(
+    webrtc::MediaEngineInterface* PeerConnectionFactory::media_engine() {
+        if (!media_engine_ref_) {
+            media_engine_ref_ = std::make_unique<webrtc::ConnectionContext::MediaEngineReference>(
                 webrtc::scoped_refptr(connection_context_)
             );
         }
-        return media_engine_ref->media_engine();
+        return media_engine_ref_->media_engine();
     }
 
     webrtc::Environment PeerConnectionFactory::environment() {
@@ -135,23 +135,23 @@ namespace wrtc {
         );
     }
 
-    webrtc::MediaFactory* PeerConnectionFactory::mediaFactory() const {
+    webrtc::MediaFactory* PeerConnectionFactory::media_factory() const {
         return connection_context_->call_factory();
     }
 
-    std::vector<webrtc::SdpVideoFormat> PeerConnectionFactory::getSupportedVideoFormats() const {
-        return supportedVideoFormats;
+    std::vector<webrtc::SdpVideoFormat> PeerConnectionFactory::get_supported_video_formats() const {
+        return supported_video_formats_;
     }
 
-    PeerConnectionFactory* PeerConnectionFactory::GetOrCreateDefault() {
-        std::lock_guard lock(_mutex);
-        if (initialized == false) {
+    PeerConnectionFactory* PeerConnectionFactory::get_or_create_default() {
+        const std::lock_guard lock(mutex_);
+        if (initialized_ == false) {
 #ifndef IS_ANDROID
             webrtc::InitializeSSL();
 #endif
-            initialized = true;
-            _default = std::make_unique<PeerConnectionFactory>();
+            initialized_ = true;
+            default_ = std::make_unique<PeerConnectionFactory>();
         }
-        return _default.get();
+        return default_.get();
     }
-} // wrtc
+} // wrtc::interfaces::peer_connection

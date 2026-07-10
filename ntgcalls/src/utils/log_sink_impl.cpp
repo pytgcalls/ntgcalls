@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 26/03/2024.
+// Created by Lauren on 26/03/24.
 //
 
 #include <ntgcalls/utils/log_sink_impl.hpp>
@@ -8,18 +8,16 @@
 #include <sstream>
 #include <rtc_base/ref_counted_object.h>
 
-namespace ntgcalls {
-    webrtc::scoped_refptr<LogSink> LogSink::instance = nullptr;
-    std::mutex LogSink::mutex{};
-    uint32_t LogSink::references = 0;
-#ifndef PYTHON_ENABLED
-    wrtc::synchronized_callback<void(LogSink::LogMessage)> LogSink::onLogMessage{};
-#endif
+namespace ntgcalls::utils {
+    webrtc::scoped_refptr<LogSink> LogSink::instance_ = nullptr;
+    std::mutex LogSink::mutex_{};
+    uint32_t LogSink::references_ = 0;
+    wrtc::utils::synchronized_callback<void(LogSink::LogMessage)> LogSink::on_log_message_{};
 
     LogSink::LogSink() {
-        thread = wrtc::SafeThread::Create();
-        thread->SetName("LogSink", nullptr);
-        thread->Start();
+        thread_ = wrtc::utils::SafeThread::Create();
+        thread_->SetName("LogSink", nullptr);
+        thread_->Start();
 #ifdef DEBUG
         webrtc::LogMessage::LogToDebug(webrtc::LS_VERBOSE);
 #else
@@ -27,50 +25,16 @@ namespace ntgcalls {
 #endif
         webrtc::LogMessage::SetLogToStderr(false);
         webrtc::LogMessage::AddLogToStream(this, webrtc::LS_VERBOSE);
-#ifdef PYTHON_ENABLED
-        THREAD_SAFE
-        const auto loggingLib = py::module::import("logging");
-        rtcLogs = loggingLib.attr("getLogger")("webrtc");
-        if (rtcLogs.attr("level").equal(loggingLib.attr("NOTSET"))) {
-            rtcLogs.attr("setLevel")(loggingLib.attr("CRITICAL"));
-        }
-        ntgLogs = loggingLib.attr("getLogger")("ntgcalls");
-        if (ntgLogs.attr("level").equal(loggingLib.attr("NOTSET"))) {
-            ntgLogs.attr("setLevel")(loggingLib.attr("CRITICAL"));
-        }
-        END_THREAD_SAFE
-#endif
     }
 
     LogSink::~LogSink() {
         webrtc::LogMessage::RemoveLogToStream(this);
-        thread->Stop();
-        thread = nullptr;
-#ifndef PYTHON_ENABLED
-        onLogMessage = nullptr;
-#endif
+        thread_->Stop();
+        thread_ = nullptr;
+        on_log_message_ = nullptr;
     }
 
-#ifdef PYTHON_ENABLED
-    py::object LogSink::parseSeverity(const webrtc::LoggingSeverity severity) {
-        THREAD_SAFE
-        const auto loggingLib = py::module::import("logging");
-        switch (severity) {
-            case webrtc::LS_VERBOSE:
-                return loggingLib.attr("DEBUG");
-            case webrtc::LS_INFO:
-                return loggingLib.attr("INFO");
-            case webrtc::LS_WARNING:
-                return loggingLib.attr("WARNING");
-            case webrtc::LS_ERROR:
-                return loggingLib.attr("ERROR");
-            default:
-                return loggingLib.attr("NOTSET");
-        }
-        END_THREAD_SAFE
-    }
-#else
-    LogSink::Level LogSink::parseSeverity(const webrtc::LoggingSeverity severity) {
+    LogSink::Level LogSink::parse_severity(const webrtc::LoggingSeverity severity) {
         switch (severity) {
             case webrtc::LS_VERBOSE:
                 return Level::Debug;
@@ -84,46 +48,29 @@ namespace ntgcalls {
                 return Level::Unknown;
         }
     }
-#endif
 
-    uint32_t LogSink::parseLineNumber(const std::string &message) {
+    uint32_t LogSink::parse_line_number(const std::string &message) {
         uint32_t port = -1;
         std::stringstream ss(message);
         ss >> port;
         return port;
     }
 
-    void LogSink::registerLogMessage(const std::string &message, const webrtc::LoggingSeverity severity) const {
-        thread->PostTask([this, message, severity] {
-#ifdef PYTHON_ENABLED
-            if (!Py_IsInitialized()) {
-                return;
-            }
-#endif
+    void LogSink::register_log_message(const std::string &message, const webrtc::LoggingSeverity severity) const {
+        thread_->PostTask([message, severity] {
             const std::regex regex(R"(\((.*)\.(.*):([0-9]+)\):\s?(.*))");
             if (std::smatch match; std::regex_search(message, match, regex)) {
-                const auto fileName = std::string(match[1]) + "." + std::string(match[2]);
-                const auto lineNum = parseLineNumber(match[3]);
-                const auto level = parseSeverity(severity);
-                const auto parsedMessage = std::string(match[4]);
-#ifdef PYTHON_ENABLED
-                const auto logMess = fileName + ":" + std::to_string(lineNum) + " " + parsedMessage;
-                THREAD_SAFE
-                if (match[2] == "cpp") {
-                    (void) ntgLogs.attr("log")(level, logMess);
-                } else {
-                    (void) rtcLogs.attr("log")(level, logMess);
-                }
-                END_THREAD_SAFE
-#else
-                (void) onLogMessage({
+                const auto file_name = std::string(match[1]) + "." + std::string(match[2]);
+                const auto line_num = parse_line_number(match[3]);
+                const auto level = parse_severity(severity);
+                const auto parsed_message = std::string(match[4]);
+                (void) on_log_message_({
                     level,
                     std::string(match[2]) == "cpp" ? Source::Self : Source::WebRTC,
-                    fileName,
-                    lineNum,
-                    parsedMessage
+                    file_name,
+                    line_num,
+                    parsed_message
                 });
-#endif
             }
         });
     }
@@ -133,32 +80,30 @@ namespace ntgcalls {
     }
 
     void LogSink::OnLogMessage(const std::string& message, const webrtc::LoggingSeverity severity) {
-        registerLogMessage(message, severity);
+        register_log_message(message, severity);
     }
 
     void LogSink::OnLogMessage(const std::string& message) {
-        registerLogMessage(message, webrtc::LS_NONE);
+        register_log_message(message, webrtc::LS_NONE);
     }
 
-#ifndef PYTHON_ENABLED
-    void LogSink::registerLogger(std::function<void(LogMessage)> callback) {
-        onLogMessage = std::move(callback);
+    void LogSink::register_logger(std::function<void(LogMessage)> callback) {
+        on_log_message_ = std::move(callback);
     }
-#endif
 
-    void LogSink::GetOrCreate() {
-        std::lock_guard lock(mutex);
-        references++;
-        if (references == 1) {
-            instance = webrtc::scoped_refptr<LogSink>(new webrtc::RefCountedObject<LogSink>());
+    void LogSink::get_or_create() {
+        const std::lock_guard lock(mutex_);
+        references_++;
+        if (references_ == 1) {
+            instance_ = webrtc::scoped_refptr<LogSink>(new webrtc::RefCountedObject<LogSink>());
         }
     }
 
-    void LogSink::UnRef() {
-        std::lock_guard lock(mutex);
-        references--;
-        if (!references) {
-            instance = nullptr;
+    void LogSink::un_ref() {
+        const std::lock_guard lock(mutex_);
+        references_--;
+        if (!references_) {
+            instance_ = nullptr;
         }
     }
-} // ntgcalls
+} // ntgcalls::utils

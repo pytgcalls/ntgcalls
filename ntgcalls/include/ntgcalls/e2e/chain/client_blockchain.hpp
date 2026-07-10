@@ -1,5 +1,5 @@
 //
-// Created by Laky-64 on 17/06/26.
+// Created by Lauren on 17/06/26.
 //
 
 #pragma once
@@ -9,29 +9,29 @@
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/key25519.hpp>
 
-namespace telegram::e2e::chain {
+namespace ntgcalls::e2e::chain {
     class ClientBlockchain {
-        Blockchain blockchain;
+        Blockchain blockchain_;
 
     public:
-        static ClientBlockchain createEmpty();
+        static ClientBlockchain create_empty();
 
-        static std::optional<ClientBlockchain> createFromBlock(bytes::const_span serializedBlock);
+        static std::optional<ClientBlockchain> create_from_block(bytes::const_span serialized_block);
 
-        [[nodiscard]] const GroupState& groupState() const;
+        [[nodiscard]] const GroupState& group_state() const;
 
         [[nodiscard]] const Blockchain& inner() const;
 
         [[nodiscard]] int32_t height() const;
 
-        [[nodiscard]] Hash256 previousBlockHash() const;
+        [[nodiscard]] tl::Hash256 previous_block_hash() const;
 
-        [[nodiscard]] Hash256 lastBlockHash() const;
+        [[nodiscard]] tl::Hash256 last_block_hash() const;
 
-        std::optional<std::vector<Change>> tryApplyBlock(bytes::const_span serializedBlock);
+        std::optional<std::vector<Change>> try_apply_block(bytes::const_span serialized_block);
 
-        [[nodiscard]] const SharedKey& groupSharedKey() const;
+        [[nodiscard]] const SharedKey& group_shared_key() const;
 
-        [[nodiscard]] std::optional<bytes::binary> buildBlock(const std::vector<Change>& changes, const openssl::Key25519& key) const;
+        [[nodiscard]] std::optional<bytes::binary> build_block(const std::vector<Change>& changes, const openssl::Key25519& key) const;
     };
-} // telegram::e2e::chain
+} // ntgcalls::e2e::chain

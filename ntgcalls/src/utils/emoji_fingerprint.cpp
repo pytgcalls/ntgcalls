@@ -1,17 +1,15 @@
 //
-// Created by Laky-64 on 21/06/26.
+// Created by Lauren on 21/06/26.
 //
 
+#include <cstdint>
 #include <ntgcalls/utils/emoji_fingerprint.hpp>
 
-#include <array>
-#include <cstdint>
-
-namespace ntgcalls {
-    uint64_t EmojiFingerprint::computeIndex(const bytes::const_span part) {
+namespace ntgcalls::utils {
+    uint64_t EmojiFingerprint::compute_index(const bytes::const_span part) {
         uint64_t value = 0;
         for (int i = 0; i < kPartSize; ++i) {
-            auto byte = static_cast<uint64_t>(std::to_integer<uint8_t>(part[i]));
+            auto byte = static_cast<uint64_t>(part[i]);
             if (i == 0) {
                 byte &= 0x7F;
             }
@@ -20,7 +18,7 @@ namespace ntgcalls {
         return value;
     }
 
-    void EmojiFingerprint::appendCodepoint(std::string &out, const uint32_t codepoint) {
+    void EmojiFingerprint::append_codepoint(std::string &out, const uint32_t codepoint) {
         if (codepoint < 0x80) {
             out.push_back(static_cast<char>(codepoint));
         } else if (codepoint < 0x800) {
@@ -38,32 +36,32 @@ namespace ntgcalls {
         }
     }
 
-    void EmojiFingerprint::appendEmoji(std::string &out, const int index) {
+    void EmojiFingerprint::append_emoji(std::string &out, const int index) {
         uint16_t high = 0;
-        for (int i = Offsets[index]; i < Offsets[index + 1]; ++i) {
-            const uint16_t unit = Data[i];
+        for (int i = kOffsets[index]; i < kOffsets[index + 1]; ++i) {
+            const uint16_t unit = kData[i];
             if (unit >= 0xD800 && unit <= 0xDBFF) {
                 high = unit;
                 continue;
             }
             if (high && unit >= 0xDC00 && unit <= 0xDFFF) {
-                appendCodepoint(out, 0x10000 + ((static_cast<uint32_t>(high) - 0xD800) << 10) + (unit - 0xDC00));
+                append_codepoint(out, 0x10000 + ((static_cast<uint32_t>(high) - 0xD800) << 10) + (unit - 0xDC00));
                 high = 0;
             } else {
-                appendCodepoint(out, unit);
+                append_codepoint(out, unit);
             }
         }
     }
 
-    std::string EmojiFingerprint::fromHash(const bytes::const_span hash) {
+    std::string EmojiFingerprint::from_hash(const bytes::const_span hash) {
         if (hash.size() < static_cast<size_t>(kPartSize) * kEmojiInFingerprint) {
             return {};
         }
         std::string result;
         for (int part = 0; part < kEmojiInFingerprint; ++part) {
-            const auto index = static_cast<int>(computeIndex(hash.subspan(part * kPartSize, kPartSize)) % kEmojiCount);
-            appendEmoji(result, index);
+            const auto index = static_cast<int>(compute_index(hash.subspan(part * kPartSize, kPartSize)) % kEmojiCount);
+            append_emoji(result, index);
         }
         return result;
     }
-} // ntgcalls
+} // ntgcalls::utils

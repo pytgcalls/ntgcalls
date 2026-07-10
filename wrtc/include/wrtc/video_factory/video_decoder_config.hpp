@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 18/08/2023.
+// Created by Lauren on 18/08/23.
 //
 
 #pragma once
@@ -7,7 +7,7 @@
 #include <api/video_codecs/video_decoder_factory.h>
 #include <wrtc/video_factory/video_base_config.hpp>
 
-namespace wrtc {
+namespace wrtc::video_factory {
 
     class VideoDecoderConfig final : public VideoBaseConfig {
     public:
@@ -15,21 +15,22 @@ namespace wrtc {
 
         ~VideoDecoderConfig() override;
 
-        VideoDecoderConfig(webrtc::VideoCodecType codec, DecoderCallback createVideoDecoder);
+        VideoDecoderConfig(webrtc::VideoCodecType codec, DecoderCallback create_video_decoder);
 
-        VideoDecoderConfig(FormatsRetriever getSupportedFormats, DecoderCallback createVideoDecoder);
+        VideoDecoderConfig(FormatsRetriever get_supported_formats, DecoderCallback create_video_decoder);
 
-        explicit VideoDecoderConfig(std::unique_ptr<webrtc::VideoDecoderFactory> factory): factory(std::move(factory)) {}
+        explicit VideoDecoderConfig(std::unique_ptr<webrtc::VideoDecoderFactory> factory): factory_(std::move(factory)) {}
 
-        [[nodiscard]] std::unique_ptr<webrtc::VideoDecoder> CreateVideoCodec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const;
+        [[nodiscard]] std::unique_ptr<webrtc::VideoDecoder> create_video_codec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const;
 
     private:
-        DecoderCallback decoder;
-        std::shared_ptr<webrtc::VideoDecoderFactory> factory;
+        DecoderCallback decoder_;
+        std::shared_ptr<webrtc::VideoDecoderFactory> factory_;
 
-        bool isInternal() const override;
+    protected:
+        bool is_internal() const override;
 
-        std::vector<webrtc::SdpVideoFormat> getInternalFormats() const override;
+        std::vector<webrtc::SdpVideoFormat> get_internal_formats() const override;
     };
 
-} // wrtc
+} // wrtc::video_factory

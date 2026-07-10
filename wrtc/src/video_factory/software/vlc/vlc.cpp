@@ -1,10 +1,10 @@
 //
-// Created by Laky64 on 18/08/2023.
+// Created by Lauren on 18/08/23.
 //
 
 #ifndef IS_ANDROID
-#include <wrtc/video_factory/software/vlc/vlc.hpp>
 #include <api/environment/environment_factory.h>
+#include <wrtc/video_factory/software/vlc/vlc.hpp>
 
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
 #include <modules/video_coding/codecs/av1/dav1d_decoder.h>
@@ -13,7 +13,7 @@
 
 namespace vlc {
 
-    void addEncoders(std::vector<wrtc::VideoEncoderConfig> &encoders) {
+    void add_encoders(std::vector<wrtc::video_factory::VideoEncoderConfig> &encoders) {
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
         encoders.emplace_back(
             webrtc::kVideoCodecAV1,
@@ -24,7 +24,7 @@ namespace vlc {
 #endif
     }
 
-    void addDecoders(std::vector<wrtc::VideoDecoderConfig> &decoders) {
+    void add_decoders(std::vector<wrtc::video_factory::VideoDecoderConfig> &decoders) {
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
         decoders.emplace_back(
             webrtc::kVideoCodecAV1,

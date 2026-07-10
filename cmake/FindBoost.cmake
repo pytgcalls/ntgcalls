@@ -111,6 +111,6 @@ if (NOT ANDROID)
         target_link_libraries(Boost::process INTERFACE Boost::atomic Boost::context Boost::date_time Boost::filesystem)
     endif ()
 
-    add_compile_definitions(BOOST_ENABLED)
+    add_compile_definitions(BOOST_ENABLED BOOST_ASIO_NO_DEPRECATED)
     set(BOOST_ENABLED TRUE)
 endif ()

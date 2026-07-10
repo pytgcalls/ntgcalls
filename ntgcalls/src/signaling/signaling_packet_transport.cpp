@@ -1,15 +1,15 @@
 //
-// Created by Laky64 on 14/03/2024.
+// Created by Lauren on 14/03/24.
 //
 
 #include <ntgcalls/signaling/signaling_packet_transport.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling {
     SignalingPacketTransport::~SignalingPacketTransport() {
-        emitData = nullptr;
+        emit_data_ = nullptr;
     }
 
-    void SignalingPacketTransport::receiveData(const bytes::binary& data) {
+    void SignalingPacketTransport::receive_data(const bytes::binary& data) {
         NotifyPacketReceived(
             webrtc::ReceivedIpPacket(
                 std::span(data.data(), data.size()),
@@ -22,7 +22,7 @@ namespace signaling {
     }
 
     const std::string& SignalingPacketTransport::transport_name() const {
-        return transportName;
+        return transport_name_;
     }
 
     bool SignalingPacketTransport::writable() const {
@@ -34,10 +34,10 @@ namespace signaling {
     }
 
     int SignalingPacketTransport::SendPacket(const char* data, const size_t len, const webrtc::AsyncSocketPacketOptions& options, int flags) {
-        emitData(bytes::binary(data, data + len));
-        webrtc::SentPacketInfo sentPacket;
-        sentPacket.packet_id = options.packet_id;
-        NotifySentPacket(this, sentPacket);
+        emit_data_(bytes::binary(data, data + len));
+        webrtc::SentPacketInfo sent_packet;
+        sent_packet.packet_id = options.packet_id;
+        NotifySentPacket(this, sent_packet);
         return static_cast<int>(len);
     }
 
@@ -120,4 +120,4 @@ namespace signaling {
     bool SignalingPacketTransport::AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char> &keying_material) {
         return false;
     }
-} // signaling
+} // ntgcalls::signaling

@@ -1,5 +1,5 @@
 //
-// Created by Laky-64 on 19/06/26.
+// Created by Lauren on 19/06/26.
 //
 
 #pragma once
@@ -10,7 +10,7 @@
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/key25519.hpp>
 
-namespace telegram::e2e {
+namespace ntgcalls::e2e {
     class SessionVerification {
         enum class Phase {
             Commit,
@@ -18,45 +18,45 @@ namespace telegram::e2e {
             End
         };
 
-        int64_t selfUserId;
-        int32_t height = -1;
-        Hash256 selfNonce{};
-        bool sentReveal = false;
-        Hash256 lastBlockHash{};
-        Phase phase = Phase::Commit;
-        openssl::Key25519 privateKey;
-        std::map<int64_t, Hash256> revealed;
-        std::map<int64_t, Hash256> committed;
-        std::vector<bytes::binary> pendingOutbound;
-        std::optional<bytes::binary> emojiHashValue;
-        std::map<int64_t, PublicKeyBytes> participantKeys;
-        std::map<int32_t, std::vector<bytes::binary>> delayed;
+        int64_t self_user_id_;
+        int32_t height_ = -1;
+        tl::Hash256 self_nonce_{};
+        bool sent_reveal_ = false;
+        tl::Hash256 last_block_hash_{};
+        Phase phase_ = Phase::Commit;
+        openssl::Key25519 private_key_;
+        std::map<int64_t, tl::Hash256> revealed_;
+        std::map<int64_t, tl::Hash256> committed_;
+        std::vector<bytes::binary> pending_outbound_;
+        std::optional<bytes::binary> emoji_hash_value_;
+        std::map<int64_t, tl::PublicKeyBytes> participant_keys_;
+        std::map<int32_t, std::vector<bytes::binary>> delayed_;
 
-        static Hash256 sha256(bytes::const_span data);
+        static tl::Hash256 sha256(bytes::const_span data);
 
-        static Hash256 randomNonce();
+        static tl::Hash256 random_nonce();
 
-        static bytes::binary dataToSign(const chain::GroupBroadcastNonceCommit& commit);
+        static bytes::binary data_to_sign(const chain::GroupBroadcastNonceCommit& commit);
 
-        static bytes::binary dataToSign(const chain::GroupBroadcastNonceReveal& reveal);
+        static bytes::binary data_to_sign(const chain::GroupBroadcastNonceReveal& reveal);
 
-        bool processCommit(const chain::GroupBroadcastNonceCommit& commit);
+        bool process_commit(const chain::GroupBroadcastNonceCommit& commit);
 
-        bool processReveal(const chain::GroupBroadcastNonceReveal& reveal);
+        bool process_reveal(const chain::GroupBroadcastNonceReveal& reveal);
 
-        bool processBroadcast(const chain::GroupBroadcast& broadcast);
+        bool process_broadcast(const chain::GroupBroadcast& broadcast);
 
-        void emitRevealIfNeeded();
+        void emit_reveal_if_needed();
 
     public:
-        SessionVerification(int64_t selfUserId, const openssl::Key25519 &privateKey);
+        SessionVerification(int64_t self_user_id, const openssl::Key25519 &private_key);
 
-        bool receiveInboundMessage(bytes::const_span message);
+        bool receive_inbound_message(bytes::const_span message);
 
-        [[nodiscard]] std::optional<bytes::binary> emojiHash() const;
+        [[nodiscard]] std::optional<bytes::binary> emoji_hash() const;
 
-        std::vector<bytes::binary> pullOutboundMessages();
+        std::vector<bytes::binary> pull_outbound_messages();
 
-        void onNewMainBlock(const chain::Blockchain& blockchain);
+        void on_new_main_block(const chain::Blockchain& blockchain);
     };
-} // telegram::e2e
+} // ntgcalls::e2e

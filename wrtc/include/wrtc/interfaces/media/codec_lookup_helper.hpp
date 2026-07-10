@@ -1,21 +1,21 @@
 //
-// Created by Laky64 on 25/04/25.
+// Created by Lauren on 25/04/25.
 //
 
 #pragma once
 #include <pc/codec_vendor.h>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
 
     class CodecLookupHelper final: public webrtc::CodecLookupHelper {
-        std::unique_ptr<webrtc::CodecVendor> codecVendor;
-        webrtc::PayloadTypeSuggester* payloadTypeSuggester;
+        std::unique_ptr<webrtc::CodecVendor> codec_vendor_;
+        webrtc::PayloadTypeSuggester* payload_type_suggester_;
 
     public:
         CodecLookupHelper(
-            webrtc::MediaEngineInterface* mediaEngine,
-            const webrtc::TransportDescriptionFactory* transportDescriptionFactory,
-            webrtc::PayloadTypeSuggester* payloadTypeSuggester
+            webrtc::MediaEngineInterface* media_engine,
+            const webrtc::TransportDescriptionFactory* transport_description_factory,
+            webrtc::PayloadTypeSuggester* payload_type_suggester
         );
 
         ~CodecLookupHelper() override;
@@ -25,4 +25,4 @@ namespace wrtc {
         webrtc::CodecVendor* GetCodecVendor() override;
     };
 
-} // wrtc
+} // wrtc::interfaces::media

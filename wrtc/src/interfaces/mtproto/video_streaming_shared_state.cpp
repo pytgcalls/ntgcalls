@@ -1,39 +1,39 @@
 //
-// Created by Laky64 on 15/04/25.
+// Created by Lauren on 15/04/25.
 //
 
 #include <wrtc/interfaces/mtproto/video_streaming_shared_state.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::mtproto {
     VideoStreamingSharedState::~VideoStreamingSharedState() {
-        decoderState = nullptr;
+        decoder_state_ = nullptr;
     }
 
-    void VideoStreamingSharedState::updateDecoderState(const AVCodecParameters* codecParameters, const AVRational pktTimebase) {
-        if (decoderState && decoderState->supportsDecoding(codecParameters, pktTimebase)) {
+    void VideoStreamingSharedState::update_decoder_state(const AVCodecParameters* codec_parameters, const AVRational pkt_timebase) {
+        if (decoder_state_ && decoder_state_->supports_decoding(codec_parameters, pkt_timebase)) {
             return;
         }
-        decoderState = VideoStreamingDecoderState::create(codecParameters, pktTimebase);
+        decoder_state_ = VideoStreamingDecoderState::create(codec_parameters, pkt_timebase);
     }
 
-    int VideoStreamingSharedState::sendFrame(const DecodableFrame* frame) const {
-        if (!decoderState) {
+    int VideoStreamingSharedState::send_frame(const media::DecodableFrame* frame) const {
+        if (!decoder_state_) {
             return AVERROR(EIO);
         }
-        return decoderState->sendFrame(frame);
+        return decoder_state_->send_frame(frame);
     }
 
-    int VideoStreamingSharedState::receiveFrame(const VideoStreamingAVFrame* frame) const {
-        if (!decoderState) {
+    int VideoStreamingSharedState::receive_frame(const media::VideoStreamingAVFrame* frame) const {
+        if (!decoder_state_) {
             return AVERROR(EIO);
         }
-        return decoderState->receiveFrame(frame);
+        return decoder_state_->receive_frame(frame);
     }
 
     void VideoStreamingSharedState::reset() const {
-        if (!decoderState) {
+        if (!decoder_state_) {
             return;
         }
-        decoderState->reset();
+        decoder_state_->reset();
     }
-} // wrtc
+} // wrtc::interfaces::mtproto

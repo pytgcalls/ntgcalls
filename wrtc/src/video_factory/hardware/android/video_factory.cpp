@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 15/09/24.
+// Created by Lauren on 15/09/24.
 //
 
 #ifdef IS_ANDROID
@@ -9,7 +9,7 @@
 #include <sdk/android/native_api/jni/scoped_java_ref.h>
 
 namespace android {
-    std::unique_ptr<webrtc::VideoEncoderFactory> CreateVideoEncoderFactory(JNIEnv* env) {
+    std::unique_ptr<webrtc::VideoEncoderFactory> create_video_encoder_factory(JNIEnv* env) {
         const webrtc::ScopedJavaLocalRef<jclass> javaVideoCapturerModule = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
         // ReSharper disable once CppLocalVariableMayBeConst
         jmethodID getEglContext = env->GetStaticMethodID(javaVideoCapturerModule.obj(), "getSharedEGLContext", "()Lorg/webrtc/EglBase$Context;");
@@ -25,7 +25,7 @@ namespace android {
         return webrtc::JavaToNativeVideoEncoderFactory(env, factoryObject.obj());
     }
 
-    std::unique_ptr<webrtc::VideoDecoderFactory> CreateVideoDecoderFactory(JNIEnv* env) {
+    std::unique_ptr<webrtc::VideoDecoderFactory> create_video_decoder_factory(JNIEnv* env) {
         const webrtc::ScopedJavaLocalRef<jclass> javaVideoCapturerModule = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
         // ReSharper disable once CppLocalVariableMayBeConst
         jmethodID getEglContext = env->GetStaticMethodID(javaVideoCapturerModule.obj(), "getSharedEGLContext", "()Lorg/webrtc/EglBase$Context;");

@@ -1,0 +1,10 @@
+# ntgcalls codegen — enclosing-class alias rules
+# Exact "Class::Enum = TLName" wins over pattern "Class::* = repl".
+# In a pattern repl, '*' = the enum name (so 'Class::* = *' drops the class).
+
+alias StreamManager::CallInfo = CallInfo
+alias StreamManager::*        = Stream*
+alias CallInterface::*        = Call*
+alias MediaSegment::Part::*   = MediaSegmentPart*
+alias MediaSegment::*         = MediaSegment*
+alias ConnectionInfo::*       = Connection*

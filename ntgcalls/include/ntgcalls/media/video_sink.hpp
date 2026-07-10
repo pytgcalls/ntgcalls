@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 27/09/24.
+// Created by Lauren on 27/09/24.
 //
 
 #pragma once
@@ -13,24 +13,24 @@
 // where Y (luminance) and UV (chrominance) components are combined with a 3:2 pixel ratio.
 
 #include <ntgcalls/media/base_sink.hpp>
-#include <ntgcalls/models/media_description.hpp>
+#include <ntgcalls/media/media_description.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::media {
 
     class VideoSink: public BaseSink {
     protected:
-        std::optional<VideoDescription> description;
+        std::optional<VideoDescription> description_;
 
     public:
-        bool setConfig(const std::optional<VideoDescription>& desc);
+        bool set_config(const std::optional<VideoDescription>& desc);
 
-        std::optional<VideoDescription> getConfig();
+        std::optional<VideoDescription> get_config();
 
-        std::chrono::nanoseconds frameTime() override;
+        std::chrono::nanoseconds frame_time() override;
 
-        int64_t frameSize() override;
+        int64_t frame_size() override;
 
-        uint8_t frameRate() override;
+        uint8_t frame_rate() override;
     };
 
-} // ntgcalls
+} // ntgcalls::media

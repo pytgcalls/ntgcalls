@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 04/11/24.
+// Created by Lauren on 04/11/24.
 //
 
 #pragma once
@@ -10,19 +10,19 @@
 namespace openh264 {
 
     struct LayerConfig {
-        int simulcastIdx = 0;
+        int simulcast_idx = 0;
         int width = -1;
         int height = -1;
         bool sending = true;
-        bool keyFrameRequest = false;
-        float maxFrameRate = 0;
-        uint32_t targetBps = 0;
-        uint32_t maxBps = 0;
-        bool frameDroppingOn = false;
-        int keyFrameInterval = 0;
-        int numTemporalLayers = 1;
+        bool key_frame_request = false;
+        float max_frame_rate = 0;
+        uint32_t target_bps = 0;
+        uint32_t max_bps = 0;
+        bool frame_dropping_on = false;
+        int key_frame_interval = 0;
+        int num_temporal_layers = 1;
 
-        void SetStreamState(bool sendStream);
+        void set_stream_state(bool send_stream);
     };
 
 } // openh264

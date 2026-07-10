@@ -1,39 +1,39 @@
 //
-// Created by Laky64 on 15/04/25.
+// Created by Lauren on 15/04/25.
 //
 
 #pragma once
 #include <memory>
-#include <wrtc/models/decodable_frame.hpp>
-#include <wrtc/models/video_streaming_av_frame.hpp>
+#include <wrtc/interfaces/media/decodable_frame.hpp>
+#include <wrtc/interfaces/media/video_streaming_av_frame.hpp>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-namespace wrtc {
+namespace wrtc::interfaces::mtproto {
 
     class VideoStreamingDecoderState {
-        AVCodecContext* codecContext = nullptr;
-        AVCodecParameters* parameters = nullptr;
-        AVRational timebase;
+        AVCodecContext* codec_context_ = nullptr;
+        AVCodecParameters* parameters_ = nullptr;
+        AVRational timebase_;
 
-        static bool areCodecParametersEqual(const AVCodecParameters& lhs, AVCodecParameters const &rhs);
+        static bool are_codec_parameters_equal(const AVCodecParameters& lhs, AVCodecParameters const &rhs);
 
     public:
-        VideoStreamingDecoderState(AVCodecContext* codecContext, const AVCodecParameters* codecParameters, AVRational pktTimebase);
+        VideoStreamingDecoderState(AVCodecContext* codec_context, const AVCodecParameters* codec_parameters, AVRational pkt_timebase);
 
         ~VideoStreamingDecoderState();
 
-        static std::unique_ptr<VideoStreamingDecoderState> create(const AVCodecParameters* codecParameters, AVRational pktTimebase);
+        static std::unique_ptr<VideoStreamingDecoderState> create(const AVCodecParameters* codec_parameters, AVRational pkt_timebase);
 
-        bool supportsDecoding(const AVCodecParameters* codecParameters, AVRational pktTimebase) const;
+        bool supports_decoding(const AVCodecParameters* codec_parameters, AVRational pkt_timebase) const;
 
-        int sendFrame(const DecodableFrame* frame) const;
+        int send_frame(const media::DecodableFrame* frame) const;
 
-        int receiveFrame(const VideoStreamingAVFrame* frame) const;
+        int receive_frame(const media::VideoStreamingAVFrame* frame) const;
 
         void reset() const;
     };
 
-} // wrtc
+} // wrtc::interfaces::mtproto

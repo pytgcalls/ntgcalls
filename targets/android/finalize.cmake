@@ -1,0 +1,1 @@
+bundle_static_library(ntgcalls-native ntgcalls "${TARGET_CODE_DIR}/app/src/main/jni/ntgcalls/${ANDROID_ABI}")

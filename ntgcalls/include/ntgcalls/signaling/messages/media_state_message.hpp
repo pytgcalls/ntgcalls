@@ -1,13 +1,13 @@
 //
-// Created by Laky64 on 22/03/2024.
+// Created by Lauren on 22/03/24.
 //
 
 #pragma once
 
-#include <wrtc/utils/binary.hpp>
 #include <ntgcalls/signaling/messages/message.hpp>
+#include <wrtc/utils/binary.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling::messages {
     class MediaStateMessage final : public Message {
     public:
         enum class VideoState {
@@ -22,20 +22,21 @@ namespace signaling {
             Rotation180 = 180,
             Rotation270 = 270
         };
-        bool isMuted = false;
-        VideoState videoState = VideoState::Inactive;
-        VideoRotation videoRotation = VideoRotation::Rotation0;
-        VideoState screencastState = VideoState::Inactive;
-        bool isBatteryLow = false;
+
+        bool is_muted = false;
+        VideoState video_state = VideoState::Inactive;
+        VideoRotation video_rotation = VideoRotation::Rotation0;
+        VideoState screencast_state = VideoState::Inactive;
+        bool is_battery_low = false;
 
         [[nodiscard]] bytes::binary serialize() const override;
 
         static std::unique_ptr<MediaStateMessage> deserialize(const bytes::binary& data);
 
     private:
-        static std::string parseVideoState(VideoState state);
+        static std::string parse_video_state(VideoState state);
 
-        static VideoState parseVideoState(const std::string& state);
+        static VideoState parse_video_state(const std::string& state);
     };
 
-} // signaling
+} // ntgcalls::signaling::messages

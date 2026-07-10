@@ -1,15 +1,15 @@
 //
-// Created by Laky64 on 18/08/2023.
+// Created by Lauren on 18/08/23.
 //
 
 #pragma once
 
 #ifndef IS_ANDROID
 #include <vector>
-#include <wrtc/video_factory/video_encoder_factory.hpp>
 #include <wrtc/video_factory/video_decoder_factory.hpp>
+#include <wrtc/video_factory/video_encoder_factory.hpp>
 
-namespace wrtc {
+namespace wrtc::video_factory {
 
     class VideoFactoryConfig {
     public:
@@ -23,6 +23,6 @@ namespace wrtc {
         std::unique_ptr<VideoDecoderFactory> CreateVideoDecoderFactory();
     };
 
-} // wrtc
+} // wrtc::video_factory
 
 #endif

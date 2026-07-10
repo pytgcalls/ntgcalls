@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 07/03/2024.
+// Created by Lauren on 07/03/24.
 //
 
 #pragma once
@@ -10,11 +10,10 @@
 #include <vector>
 
 namespace bytes {
-    using unique_binary = std::unique_ptr<uint8_t[]>;
-    using binary = std::vector<uint8_t>;
+    using byte = uint8_t;
+    using unique_binary = std::unique_ptr<byte[]>;
+    using binary = std::vector<byte>;
 
-    using byte = std::byte;
-    using vector = std::vector<byte>;
     using span = std::span<byte>;
     using const_span = std::span<const byte>;
 
@@ -24,12 +23,14 @@ namespace bytes {
     template <typename Container,
     typename = std::enable_if_t<!std::is_const_v<Container> && !std::is_same_v<Container, binary>>>
     span make_span(Container &container) {
-        return std::as_writable_bytes(span(container.data(), container.size()));
+        const auto raw = std::as_writable_bytes(std::span(container.data(), container.size()));
+        return { reinterpret_cast<byte*>(raw.data()), raw.size() };
     }
 
     template <typename Container>
     const_span make_span(const Container &container) {
-        return std::as_bytes(make_span(container));
+        const auto raw = std::as_bytes(std::span(container.data(), container.size()));
+        return { reinterpret_cast<const byte*>(raw.data()), raw.size() };
     }
 
     inline const_span view(const void* data, const size_t size) {
@@ -39,17 +40,12 @@ namespace bytes {
 
     template <typename Container>
     const_span view(const Container &container) {
-        return std::as_bytes(std::span(container.data(), container.size()));
+        const auto raw = std::as_bytes(std::span(container.data(), container.size()));
+        return { reinterpret_cast<const byte*>(raw.data()), raw.size() };
     }
 
     inline unique_binary make_unique_binary(const size_t size) {
         return std::make_unique<uint8_t[]>(size);
-    }
-
-    template <typename Container>
-    vector make_vector(const Container &container) {
-        const auto buffer = make_span(container);
-        return { buffer.begin(), buffer.end() };
     }
 
     template <typename Container>
@@ -66,7 +62,7 @@ namespace bytes {
 
     std::string to_string(const binary &buffer);
 
-    struct memory_span {
+    struct memory_span { // NOLINT(*-identifier-naming)
         const void* data = nullptr;
         size_t size = 0;
 

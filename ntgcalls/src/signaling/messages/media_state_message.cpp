@@ -1,34 +1,34 @@
 //
-// Created by Laky64 on 22/03/2024.
+// Created by Lauren on 22/03/24.
 //
 
-#include <ntgcalls/signaling/messages/media_state_message.hpp>
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/signaling/messages/media_state_message.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling::messages {
     bytes::binary MediaStateMessage::serialize() const {
         return bytes::make_binary(json{
             {"@type", "MediaState"},
-            {"muted", isMuted},
-            {"lowBattery", isBatteryLow},
-            {"videoState", parseVideoState(videoState)},
-            {"videoRotation", videoRotation},
-            {"screencastState", parseVideoState(screencastState)}
+            {"muted", is_muted},
+            {"lowBattery", is_battery_low},
+            {"videoState", parse_video_state(video_state)},
+            {"videoRotation", video_rotation},
+            {"screencastState", parse_video_state(screencast_state)}
         }.dump());
     }
 
     std::unique_ptr<MediaStateMessage> MediaStateMessage::deserialize(const bytes::binary& data) {
         json j = json::parse(data.begin(), data.end());
         auto message = std::make_unique<MediaStateMessage>();
-        message->isMuted = j["muted"];
-        message->isBatteryLow = j["lowBattery"];
-        message->videoState = parseVideoState(j["videoState"].get<std::string>());
-        message->screencastState = parseVideoState(j["screencastState"].get<std::string>());
-        message->videoRotation = j["videoRotation"];
+        message->is_muted = j["muted"];
+        message->is_battery_low = j["lowBattery"];
+        message->video_state = parse_video_state(j["videoState"].get<std::string>());
+        message->screencast_state = parse_video_state(j["screencastState"].get<std::string>());
+        message->video_rotation = j["videoRotation"];
         return std::move(message);
     }
 
-    std::string MediaStateMessage::parseVideoState(const VideoState state) {
+    std::string MediaStateMessage::parse_video_state(const VideoState state) {
         switch (state) {
         case VideoState::Inactive:
             return "inactive";
@@ -37,10 +37,10 @@ namespace signaling {
         case VideoState::Active:
             return "active";
         }
-        throw ntgcalls::InvalidParams("Invalid video state");
+        throw InvalidParams("Invalid video state");
     }
 
-    MediaStateMessage::VideoState MediaStateMessage::parseVideoState(const std::string& state) {
+    MediaStateMessage::VideoState MediaStateMessage::parse_video_state(const std::string& state) {
         if (state == "inactive") {
             return VideoState::Inactive;
         }
@@ -50,6 +50,6 @@ namespace signaling {
         if (state == "active") {
             return VideoState::Active;
         }
-        throw ntgcalls::InvalidParams("Invalid video state");
+        throw InvalidParams("Invalid video state");
     }
-} // signaling
+} // ntgcalls::signaling::messages

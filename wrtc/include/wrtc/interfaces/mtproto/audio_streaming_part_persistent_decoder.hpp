@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 14/04/25.
+// Created by Lauren on 14/04/25.
 //
 
 #pragma once
@@ -9,19 +9,20 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
-namespace wrtc {
+namespace wrtc::interfaces::mtproto {
 
     class AudioStreamingPartPersistentDecoder {
-        std::unique_ptr<AudioStreamingPartPersistentDecoderState> state;
+        std::unique_ptr<AudioStreamingPartPersistentDecoderState> state_;
 
-        void maybeReset(const AVCodecParameters* codecParameters, AVRational timeBase);
+        void maybe_reset(const AVCodecParameters* codec_parameters, AVRational time_base);
+
     public:
         AudioStreamingPartPersistentDecoder() = default;
 
         ~AudioStreamingPartPersistentDecoder();
 
-        int decode(AVCodecParameters const* codecParameters, AVRational timeBase, const AVPacket &packet, AVFrame* frame);
+        int decode(AVCodecParameters const* codec_parameters, AVRational time_base, const AVPacket &packet, AVFrame* frame);
     };
 
 
-} // wrtc
+} // wrtc::interfaces::mtproto

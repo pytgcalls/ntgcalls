@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 07/06/26.
+// Created by Lauren on 07/06/26.
 //
 
 #pragma once
@@ -8,31 +8,31 @@
 
 namespace openssl {
     class Key25519 {
-        std::array<uint8_t, 32> privateKey{};
-        std::array<uint8_t, 32> publicKey{};
-        bool withPrivateKey = false;
+        bytes::array<32> private_key_{};
+        bytes::array<32> public_key_{};
+        bool with_private_key_ = false;
 
-        static std::array<uint8_t, 32> edwardsToMontgomery(const std::array<uint8_t, 32>& publicKey);
+        static bytes::array<32> edwards_to_montgomery(const bytes::array<32>& public_key);
 
     public:
         Key25519() = default;
 
-        static Key25519 Generate();
+        static Key25519 generate();
 
-        static Key25519 FromPrivateKey(bytes::const_span seed);
+        static Key25519 from_private_key(bytes::const_span seed);
 
-        static Key25519 FromPublicKey(bytes::const_span key);
+        static Key25519 from_public_key(bytes::const_span key);
 
-        [[nodiscard]] std::array<uint8_t, 32> publicKeyBytes() const;
+        [[nodiscard]] bytes::array<32> public_key_bytes() const;
 
-        [[nodiscard]] std::array<uint8_t, 32> privateKeyBytes() const;
+        [[nodiscard]] bytes::array<32> private_key_bytes() const;
 
-        [[nodiscard]] bool hasPrivateKey() const;
+        [[nodiscard]] bool has_private_key() const;
 
-        [[nodiscard]] std::array<uint8_t, 64> sign(bytes::const_span data) const;
+        [[nodiscard]] bytes::array<64> sign(bytes::const_span data) const;
 
-        [[nodiscard]] std::array<uint8_t, 32> computeSharedSecret(bytes::const_span otherPublicKey) const;
+        [[nodiscard]] bytes::array<32> compute_shared_secret(bytes::const_span other_public_key) const;
 
-        static bool Verify(bytes::const_span publicKey, bytes::const_span data, bytes::const_span signature);
+        static bool verify(bytes::const_span public_key, bytes::const_span data, bytes::const_span signature);
     };
 } // openssl

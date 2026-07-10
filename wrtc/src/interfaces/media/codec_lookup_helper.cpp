@@ -1,32 +1,32 @@
 //
-// Created by Laky64 on 25/04/25.
+// Created by Lauren on 25/04/25.
 //
 
 #include <wrtc/interfaces/media/codec_lookup_helper.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
     CodecLookupHelper::CodecLookupHelper(
-        webrtc::MediaEngineInterface* mediaEngine,
-        const webrtc::TransportDescriptionFactory* transportDescriptionFactory,
-        webrtc::PayloadTypeSuggester* payloadTypeSuggester
-    ) : payloadTypeSuggester(payloadTypeSuggester) {
-        codecVendor = std::make_unique<webrtc::CodecVendor>(
-            mediaEngine,
+        webrtc::MediaEngineInterface* media_engine,
+        const webrtc::TransportDescriptionFactory* transport_description_factory,
+        webrtc::PayloadTypeSuggester* payload_type_suggester
+    ) : payload_type_suggester_(payload_type_suggester) {
+        codec_vendor_ = std::make_unique<webrtc::CodecVendor>(
+            media_engine,
             true,
-            transportDescriptionFactory->trials()
+            transport_description_factory->trials()
         );
     }
 
     CodecLookupHelper::~CodecLookupHelper() {
-        codecVendor = nullptr;
-        payloadTypeSuggester = nullptr;
+        codec_vendor_ = nullptr;
+        payload_type_suggester_ = nullptr;
     }
 
     webrtc::PayloadTypeSuggester* CodecLookupHelper::PayloadTypeSuggester() {
-        return payloadTypeSuggester;
+        return payload_type_suggester_;
     }
 
     webrtc::CodecVendor* CodecLookupHelper::GetCodecVendor() {
-        return codecVendor.get();
+        return codec_vendor_.get();
     }
-} // wrtc
+} // wrtc::interfaces::media

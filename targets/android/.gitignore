@@ -1,0 +1,7 @@
+.idea
+.cxx
+.gradle
+build/
+app/src/main/jni/ntgcalls/
+app/src/main/jni/wrtc/
+local.properties

@@ -1,11 +1,11 @@
 //
-// Created by Laky64 on 10/09/2024.
+// Created by Lauren on 10/09/24.
 //
 
 #pragma once
 #include <wrtc/models/candidate_description.hpp>
 
-namespace wrtc {
+namespace wrtc::models {
     struct ConnectionDescription {
         CandidateDescription local;
         CandidateDescription remote;
@@ -14,4 +14,4 @@ namespace wrtc {
 
         bool operator!=(const ConnectionDescription& rhs) const;
     };
-} // wrtc
+} // wrtc::models

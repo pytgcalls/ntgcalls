@@ -1,5 +1,5 @@
 //
-// Created by Laky-64 on 17/06/26.
+// Created by Lauren on 17/06/26.
 //
 
 #include <api/units/time_delta.h>
@@ -9,68 +9,68 @@
 #include <ntgcalls/utils/emoji_fingerprint.hpp>
 #include <wrtc/utils/random.hpp>
 
-namespace telegram::e2e {
-    Session::Session(wrtc::SafeThread& updateThread, int64_t userID) : updateThread(updateThread) {
-        privateKey = openssl::Key25519::Generate();
-        sessionEncryption = std::make_unique<SessionEncryption>(userID, privateKey);
-        sessionVerification = std::make_unique<SessionVerification>(userID, privateKey);
+namespace ntgcalls::e2e {
+    Session::Session(wrtc::utils::SafeThread& update_thread, int64_t user_id) : update_thread_(update_thread) {
+        private_key_ = openssl::Key25519::generate();
+        session_encryption_ = std::make_unique<SessionEncryption>(user_id, private_key_);
+        session_verification_ = std::make_unique<SessionVerification>(user_id, private_key_);
     }
 
     Session::~Session() {
-        std::lock_guard lock(mutex);
-        sessionEncryption = nullptr;
-        sessionVerification = nullptr;
+        const std::lock_guard lock(mutex_);
+        session_encryption_ = nullptr;
+        session_verification_ = nullptr;
     }
 
-    std::array<uint8_t, 32> Session::randomSecret() {
-        std::array<uint8_t, 32> secret{};
-        bytes::RandomFill(bytes::span(reinterpret_cast<std::byte*>(secret.data()), secret.size()));
+    bytes::array<32> Session::random_secret() {
+        bytes::array<32> secret{};
+        bytes::random_fill(bytes::span(secret.data(), secret.size()));
         return secret;
     }
 
-    std::vector<chain::Change> Session::makeChangesForNewState(const chain::GroupState &groupState) {
-        const auto ephemeralKey = openssl::Key25519::Generate();
-        const auto groupSharedKey = randomSecret();
-        const auto oneTimeSecret = randomSecret();
-        const auto encryptedGroupSharedKey = chain::MessageEncryption::encryptData(
-            bytes::view(groupSharedKey),
-            bytes::view(oneTimeSecret)
+    std::vector<chain::Change> Session::make_changes_for_new_state(const chain::GroupState &group_state) {
+        const auto ephemeral_key = openssl::Key25519::generate();
+        const auto group_shared_key = random_secret();
+        const auto one_time_secret = random_secret();
+        const auto encrypted_group_shared_key = chain::MessageEncryption::encrypt_data(
+            bytes::view(group_shared_key),
+            bytes::view(one_time_secret)
         );
-        chain::SharedKey sharedKey;
-        sharedKey.ek = ephemeralKey.publicKeyBytes();
-        sharedKey.encrypted_shared_key.assign(
-            reinterpret_cast<const char*>(encryptedGroupSharedKey.data()),
-            encryptedGroupSharedKey.size()
+        chain::SharedKey shared_key;
+        shared_key.ek = ephemeral_key.public_key_bytes();
+        shared_key.encrypted_shared_key.assign(
+            reinterpret_cast<const char*>(encrypted_group_shared_key.data()),
+            encrypted_group_shared_key.size()
         );
-        for (const auto& participant : groupState.participants) {
-            const auto sharedSecret = ephemeralKey.computeSharedSecret(bytes::view(participant.public_key));
-            const auto header = chain::MessageEncryption::encryptHeader(
-                bytes::view(oneTimeSecret),
-                bytes::view(encryptedGroupSharedKey),
-                bytes::view(sharedSecret)
+        for (const auto& participant : group_state.participants) {
+            const auto shared_secret = ephemeral_key.compute_shared_secret(bytes::view(participant.public_key));
+            const auto header = chain::MessageEncryption::encrypt_header(
+                bytes::view(one_time_secret),
+                bytes::view(encrypted_group_shared_key),
+                bytes::view(shared_secret)
             );
             if (!header) {
                 return {};
             }
-            sharedKey.dest_user_id.push_back(participant.user_id);
-            sharedKey.dest_header.push_back(*header);
+            shared_key.dest_user_id.push_back(participant.user_id);
+            shared_key.dest_header.push_back(*header);
         }
         return {
             chain::Change{
-                chain::ChangeSetGroupState{groupState}
+                chain::ChangeSetGroupState{group_state}
             },
             chain::Change{
-                chain::ChangeSetSharedKey{std::move(sharedKey)}
+                chain::ChangeSetSharedKey{std::move(shared_key)}
             }
         };
     }
 
-    bool Session::isGoodMagic(const int32_t magic) {
-        return magic == chain::Block::ID || magic == chain::GroupBroadcastNonceCommit::ID || magic == chain::GroupBroadcastNonceReveal::ID;
+    bool Session::is_good_magic(const int32_t magic) {
+        return magic == chain::Block::kID || magic == chain::GroupBroadcastNonceCommit::kID || magic == chain::GroupBroadcastNonceReveal::kID;
     }
 
-    int32_t Session::readMagic(const bytes::const_span block) {
-        const auto data = reinterpret_cast<const uint8_t*>(block.data());
+    int32_t Session::read_magic(const bytes::const_span block) {
+        const auto data = block.data();
         return static_cast<int32_t>(
             static_cast<uint32_t>(data[0]) |
             static_cast<uint32_t>(data[1]) << 8 |
@@ -78,7 +78,7 @@ namespace telegram::e2e {
             static_cast<uint32_t>(data[3]) << 24);
     }
 
-    void Session::writeMagic(bytes::binary &block, const int32_t magic) {
+    void Session::write_magic(bytes::binary &block, const int32_t magic) {
         const auto raw = static_cast<uint32_t>(magic);
         block[0] = static_cast<uint8_t>(raw & 0xff);
         block[1] = static_cast<uint8_t>(raw >> 8 & 0xff);
@@ -86,258 +86,258 @@ namespace telegram::e2e {
         block[3] = static_cast<uint8_t>(raw >> 24 & 0xff);
     }
 
-    std::optional<bytes::binary> Session::fromServerToLocal(const bytes::const_span block) {
+    std::optional<bytes::binary> Session::from_server_to_local(const bytes::const_span block) {
         if (block.size() < 4) {
             return std::nullopt;
         }
-        const auto serverMagic = readMagic(block);
-        if (isGoodMagic(serverMagic)) {
+        const auto server_magic = read_magic(block);
+        if (is_good_magic(server_magic)) {
             return std::nullopt;
         }
-        bytes::binary result(reinterpret_cast<const uint8_t*>(block.data()), reinterpret_cast<const uint8_t*>(block.data()) + block.size());
-        writeMagic(result, serverMagic - 1);
+        bytes::binary result((block.data()), block.data() + block.size());
+        write_magic(result, server_magic - 1);
         return result;
     }
 
-    std::optional<bytes::binary> Session::createZeroBlock(
+    std::optional<bytes::binary> Session::create_zero_block(
         const openssl::Key25519 &key,
-        const chain::GroupState &groupState
+        const chain::GroupState &group_state
     ) {
-        const auto blockchain = chain::ClientBlockchain::createEmpty();
-        const auto changes = makeChangesForNewState(groupState);
+        const auto blockchain = chain::ClientBlockchain::create_empty();
+        const auto changes = make_changes_for_new_state(group_state);
         if (changes.empty()) {
             return std::nullopt;
         }
-        return blockchain.buildBlock(changes, key);
+        return blockchain.build_block(changes, key);
     }
 
-    std::optional<bytes::binary> Session::createSelfAddBlock(
+    std::optional<bytes::binary> Session::create_self_add_block(
         const openssl::Key25519& key,
-        const bytes::const_span previousServerBlock,
+        const bytes::const_span previous_server_block,
         const chain::GroupParticipant& self
     ) {
-        const auto previous = fromServerToLocal(previousServerBlock);
+        const auto previous = from_server_to_local(previous_server_block);
         if (!previous) {
             return std::nullopt;
         }
-        const auto blockchain = chain::ClientBlockchain::createFromBlock(bytes::view(*previous));
+        const auto blockchain = chain::ClientBlockchain::create_from_block(bytes::view(*previous));
         if (!blockchain) {
             return std::nullopt;
         }
-        auto state = blockchain->groupState();
+        auto state = blockchain->group_state();
         std::erase_if(state.participants, [&self](const chain::GroupParticipant& p) {
             return p.user_id == self.user_id;
         });
         state.participants.push_back(self);
-        const auto changes = makeChangesForNewState(state);
+        const auto changes = make_changes_for_new_state(state);
         if (changes.empty()) {
             return std::nullopt;
         }
-        return blockchain->buildBlock(changes, key);
+        return blockchain->build_block(changes, key);
     }
 
-    std::optional<bytes::binary> Session::receiveInboundMessage(const bytes::const_span serverMessage) {
-        std::lock_guard lock(mutex);
-        const auto local = fromServerToLocal(serverMessage);
+    std::optional<bytes::binary> Session::receive_inbound_message(const bytes::const_span server_message) {
+        const std::lock_guard lock(mutex_);
+        const auto local = from_server_to_local(server_message);
         if (!local) {
             return std::nullopt;
         }
-        sessionVerification->receiveInboundMessage(bytes::view(*local));
-        return sessionVerification->emojiHash();
+        session_verification_->receive_inbound_message(bytes::view(*local));
+        return session_verification_->emoji_hash();
     }
 
     void Session::apply(const int subchain, const bytes::binary& last) {
         if (subchain) {
-            if (!blockchain) {
-                failed = true;
+            if (!blockchain_) {
+                failed_ = true;
                 return;
             }
-            updateEmojis(receiveInboundMessage(bytes::view(last)));
-            checkForOutboundMessages();
-        } else if (blockchain) {
-            if (!applyBlock(bytes::view(last))) {
-                failed = true;
+            update_emojis(receive_inbound_message(bytes::view(last)));
+            check_for_outbound_messages();
+        } else if (blockchain_) {
+            if (!apply_block(bytes::view(last))) {
+                failed_ = true;
                 return;
             }
-            refreshFromCall();
-            checkForOutboundMessages();
+            refresh_from_call();
+            check_for_outbound_messages();
         } else {
-            if (!initBlockchain(bytes::view(last))) {
-                failed = true;
+            if (!init_blockchain(bytes::view(last))) {
+                failed_ = true;
                 return;
             }
             for (auto i = 0; i != kSubChainsCount; ++i) {
-                if (!subchains[i].waitingActive) {
-                    scheduleShortPoll(i);
+                if (!subchains_[i].waiting_active) {
+                    schedule_short_poll(i);
                 }
             }
-            refreshFromCall();
-            checkForOutboundMessages();
+            refresh_from_call();
+            check_for_outbound_messages();
         }
     }
 
-    void Session::scheduleWaiting(const int subchain) {
-        auto& entry = subchains[subchain];
-        const auto generation = ++entry.waitingGeneration;
-        entry.waitingActive = true;
-        std::weak_ptr weak(shared_from_this());
-        updateThread.PostDelayedTask([weak, subchain, generation] {
+    void Session::schedule_waiting(const int subchain) {
+        auto& entry = subchains_[subchain];
+        const auto generation = ++entry.waiting_generation;
+        entry.waiting_active = true;
+        const std::weak_ptr weak(shared_from_this());
+        update_thread_.PostDelayedTask([weak, subchain, generation] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            auto& state = strong->subchains[subchain];
-            if (state.waitingGeneration != generation) {
+            auto& state = strong->subchains_[subchain];
+            if (state.waiting_generation != generation) {
                 return;
             }
-            state.waitingActive = false;
-            strong->checkWaitingBlocks(subchain, true);
+            state.waiting_active = false;
+            strong->check_waiting_blocks(subchain, true);
         }, webrtc::TimeDelta::Millis(kShortPollWaitForMs));
     }
 
-    void Session::cancelWaiting(const int subchain) {
-        auto& entry = subchains[subchain];
-        ++entry.waitingGeneration;
-        entry.waitingActive = false;
+    void Session::cancel_waiting(const int subchain) {
+        auto& entry = subchains_[subchain];
+        ++entry.waiting_generation;
+        entry.waiting_active = false;
     }
 
-    void Session::cancelShortPoll(const int subchain) {
-        ++subchains[subchain].shortPollGeneration;
+    void Session::cancel_short_poll(const int subchain) {
+        ++subchains_[subchain].short_poll_generation;
     }
 
-    void Session::checkWaitingBlocks(const int subchain, const bool waited) {
-        if (failed) {
+    void Session::check_waiting_blocks(const int subchain, const bool waited) {
+        if (failed_) {
             return;
         }
 
-        auto& entry = subchains[subchain];
-        if (!blockchain) {
-            scheduleWaiting(subchain);
+        auto& entry = subchains_[subchain];
+        if (!blockchain_) {
+            schedule_waiting(subchain);
             return;
         }
-        if (entry.shortPolling) {
+        if (entry.short_polling) {
             return;
         }
         auto& waiting = entry.waiting;
-        cancelShortPoll(subchain);
+        cancel_short_poll(subchain);
         while (!waiting.empty()) {
             const auto index = waiting.begin()->first;
             if (index > entry.height) {
                 if (waited) {
-                    shortPoll(subchain);
+                    short_poll(subchain);
                 } else {
-                    scheduleWaiting(subchain);
+                    schedule_waiting(subchain);
                 }
                 return;
             }
             if (index == entry.height) {
                 apply(subchain, waiting.begin()->second);
-                if (failed) {
+                if (failed_) {
                     return;
                 }
                 entry.height = std::max(entry.height, index + 1);
             }
             waiting.erase(waiting.begin());
         }
-        cancelWaiting(subchain);
-        scheduleShortPoll(subchain);
+        cancel_waiting(subchain);
+        schedule_short_poll(subchain);
     }
 
-    void Session::checkForOutboundMessages() {
-        if (!blockchain) {
+    void Session::check_for_outbound_messages() {
+        if (!blockchain_) {
             return;
         }
-        if (const auto messages = pullOutboundMessages(); !messages.empty()) {
-            (void) outboundBlockCallback(messages.back());
+        if (const auto messages = pull_outbound_messages(); !messages.empty()) {
+            (void) outbound_block_callback_(messages.back());
         }
     }
 
-    std::vector<bytes::binary> Session::pullOutboundMessages() {
-        std::lock_guard lock(mutex);
-        return sessionVerification->pullOutboundMessages();
+    std::vector<bytes::binary> Session::pull_outbound_messages() {
+        const std::lock_guard lock(mutex_);
+        return session_verification_->pull_outbound_messages();
     }
 
-    bool Session::initBlockchain(const bytes::const_span serverBlock) {
-        std::lock_guard lock(mutex);
-        const auto local = fromServerToLocal(serverBlock);
+    bool Session::init_blockchain(const bytes::const_span server_block) {
+        const std::lock_guard lock(mutex_);
+        const auto local = from_server_to_local(server_block);
         if (!local) {
-            failed = true;
+            failed_ = true;
             return false;
         }
-        auto created = chain::ClientBlockchain::createFromBlock(bytes::view(*local));
+        auto created = chain::ClientBlockchain::create_from_block(bytes::view(*local));
         if (!created) {
-            failed = true;
+            failed_ = true;
             return false;
         }
-        blockchain = std::move(*created);
-        sessionVerification->onNewMainBlock(blockchain->inner());
-        return updateGroupSharedKey();
+        blockchain_ = std::move(*created);
+        session_verification_->on_new_main_block(blockchain_->inner());
+        return update_group_shared_key();
     }
 
-    bool Session::applyBlock(const bytes::const_span serverBlock) {
-        std::lock_guard lock(mutex);
-        const auto local = fromServerToLocal(serverBlock);
+    bool Session::apply_block(const bytes::const_span server_block) {
+        const std::lock_guard lock(mutex_);
+        const auto local = from_server_to_local(server_block);
         if (!local) {
-            failed = true;
+            failed_ = true;
             return false;
         }
-        if (!blockchain->tryApplyBlock(bytes::view(*local))) {
-            failed = true;
+        if (!blockchain_->try_apply_block(bytes::view(*local))) {
+            failed_ = true;
             return false;
         }
-        sessionVerification->onNewMainBlock(blockchain->inner());
-        return updateGroupSharedKey();
+        session_verification_->on_new_main_block(blockchain_->inner());
+        return update_group_shared_key();
     }
 
-    bool Session::updateGroupSharedKey() {
-        sessionEncryption->forgetSharedKey(blockchain->height() - 1, blockchain->previousBlockHash());
+    bool Session::update_group_shared_key() {
+        session_encryption_->forget_shared_key(blockchain_->height() - 1, blockchain_->previous_block_hash());
 
-        const auto groupState = blockchain->groupState();
+        const auto group_state = blockchain_->group_state();
         if (
-            const auto self = State::findParticipant(groupState, privateKey.publicKeyBytes());
-            !self || self->user_id != sessionEncryption->userId()
+            const auto self = State::find_participant(group_state, private_key_.public_key_bytes());
+            !self || self->user_id != session_encryption_->user_id()
         ) {
-            failed = true;
+            failed_ = true;
             return false;
         }
-        auto secret = decryptSharedKey();
+        auto secret = decrypt_shared_key();
         if (!secret) {
-            failed = true;
+            failed_ = true;
             return false;
         }
-        if (State::groupStateVersion(groupState) >= 1) {
-            const auto rehashed = openssl::Hmac::Sha512(
+        if (State::group_state_version(group_state) >= 1) {
+            const auto rehashed = openssl::Hmac::sha512(
                 bytes::view(*secret),
-                bytes::view(blockchain->lastBlockHash())
+                bytes::view(blockchain_->last_block_hash())
             );
             secret = bytes::binary(rehashed.begin(), rehashed.begin() + 32);
         }
-        return sessionEncryption->addSharedKey(blockchain->height(), blockchain->lastBlockHash(), *secret, groupState);
+        return session_encryption_->add_shared_key(blockchain_->height(), blockchain_->last_block_hash(), *secret, group_state);
     }
 
-    std::optional<bytes::binary> Session::decryptSharedKey() const {
+    std::optional<bytes::binary> Session::decrypt_shared_key() const {
         const auto&[
             ek,
             encryptedSharedKey,
             destUserId,
             destHeader
-        ] = blockchain->groupSharedKey();
+        ] = blockchain_->group_shared_key();
         for (size_t i = 0; i < destUserId.size(); ++i) {
-            if (destUserId[i] != sessionEncryption->userId()) {
+            if (destUserId[i] != session_encryption_->user_id()) {
                 continue;
             }
-            const auto sharedSecret = privateKey.computeSharedSecret(bytes::view(ek));
-            const auto oneTimeSecret = e2e::chain::MessageEncryption::decryptHeader(
+            const auto shared_secret = private_key_.compute_shared_secret(bytes::view(ek));
+            const auto one_time_secret = chain::MessageEncryption::decrypt_header(
                 bytes::view(destHeader[i]),
                 bytes::view(encryptedSharedKey),
-                bytes::view(sharedSecret)
+                bytes::view(shared_secret)
             );
-            if (!oneTimeSecret) {
+            if (!one_time_secret) {
                 return std::nullopt;
             }
-            auto decrypted = e2e::chain::MessageEncryption::decryptData(
+            auto decrypted = chain::MessageEncryption::decrypt_data(
                 bytes::view(encryptedSharedKey),
-                bytes::view(*oneTimeSecret)
+                bytes::view(*one_time_secret)
             );
             if (!decrypted || decrypted->size() != 32) {
                 return std::nullopt;
@@ -347,96 +347,96 @@ namespace telegram::e2e {
         return std::nullopt;
     }
 
-    void Session::scheduleShortPoll(const int subchain) {
-        auto& entry = subchains[subchain];
-        const auto generation = ++entry.shortPollGeneration;
-        std::weak_ptr weak = weak_from_this();
-        updateThread.PostDelayedTask([weak, subchain, generation] {
+    void Session::schedule_short_poll(const int subchain) {
+        auto& entry = subchains_[subchain];
+        const auto generation = ++entry.short_poll_generation;
+        const std::weak_ptr weak = weak_from_this();
+        update_thread_.PostDelayedTask([weak, subchain, generation] {
             const auto strong = weak.lock();
-            if (!strong || strong->subchains[subchain].shortPollGeneration != generation) {
+            if (!strong || strong->subchains_[subchain].short_poll_generation != generation) {
                 return;
             }
-            strong->shortPoll(subchain);
+            strong->short_poll(subchain);
         }, webrtc::TimeDelta::Millis(kShortPollTimeoutMs));
     }
 
-    chain::GroupState Session::currentGroupState() {
-        std::lock_guard lock(mutex);
-        return blockchain->groupState();
+    chain::GroupState Session::current_group_state() {
+        const std::lock_guard lock(mutex_);
+        return blockchain_->group_state();
     }
 
-    std::optional<bytes::binary> Session::emojiHash() {
-        std::lock_guard lock(mutex);
-        return sessionVerification->emojiHash();
+    std::optional<bytes::binary> Session::emoji_hash() {
+        const std::lock_guard lock(mutex_);
+        return session_verification_->emoji_hash();
     }
 
-    void Session::refreshFromCall() {
-        if (!blockchain) {
+    void Session::refresh_from_call() {
+        if (!blockchain_) {
             return;
         }
-        std::unordered_set<int64_t> userIds;
-        for (const auto& participant : currentGroupState().participants) {
-            userIds.insert(participant.user_id);
+        std::unordered_set<int64_t> user_ids;
+        for (const auto& participant : current_group_state().participants) {
+            user_ids.insert(participant.user_id);
         }
-        updateEmojis(emojiHash());
+        update_emojis(emoji_hash());
     }
 
-    void Session::updateEmojis(const std::optional<bytes::binary>& hash) {
+    void Session::update_emojis(const std::optional<bytes::binary>& hash) {
         if (hash) {
-            fingerprintEmojis = ntgcalls::EmojiFingerprint::fromHash(bytes::view(*hash));
-            (void) updateEmojisCallback(fingerprintEmojis);
+            fingerprint_emojis_ = utils::EmojiFingerprint::from_hash(bytes::view(*hash));
+            (void) update_emojis_callback_(fingerprint_emojis_);
         }
     }
 
-    std::string Session::getFingerprintEmojis() {
-        std::lock_guard lock(mutex);
-        return fingerprintEmojis;
+    std::string Session::get_fingerprint_emojis() {
+        const std::lock_guard lock(mutex_);
+        return fingerprint_emojis_;
     }
 
-    void Session::setLastBlock(const bytes::binary& block) {
-        lastBlock = block;
+    void Session::set_last_block(const bytes::binary& block) {
+        last_block_ = block;
     }
 
-    bytes::binary Session::makeJoinBlock() {
-        if (failed) return {};
+    bytes::binary Session::make_join_block() {
+        if (failed_) return {};
 
         chain::GroupParticipant self;
-        self.user_id = sessionEncryption->userId();
+        self.user_id = session_encryption_->user_id();
         self.add_users = true;
         self.remove_users = true;
-        self.public_key = privateKey.publicKeyBytes();
+        self.public_key = private_key_.public_key_bytes();
         self.version = 0;
 
         std::optional<bytes::binary> block;
-        if (lastBlock) {
-            block = createSelfAddBlock(
-                privateKey,
-                bytes::view(lastBlock.value()),
+        if (last_block_) {
+            block = create_self_add_block(
+                private_key_,
+                bytes::view(last_block_.value()),
                 self
             );
         } else {
-            chain::GroupState groupState;
-            groupState.participants = {self};
-            groupState.external_permissions = Permissions::AddUsers | Permissions::RemoveUsers;
-            block = createZeroBlock(privateKey, groupState);
+            chain::GroupState group_state;
+            group_state.participants = {self};
+            group_state.external_permissions = Permissions::AddUsers | Permissions::RemoveUsers;
+            block = create_zero_block(private_key_, group_state);
         }
         if (!block) {
-            failed = true;
+            failed_ = true;
             return {};
         }
         return block.value();
     }
 
-    void Session::shortPoll(const int subchain) {
-        auto& entry = subchains[subchain];
-        cancelWaiting(subchain);
-        cancelShortPoll(subchain);
-        if (subchain && !blockchain) {
-            scheduleWaiting(subchain);
+    void Session::short_poll(const int subchain) {
+        auto& entry = subchains_[subchain];
+        cancel_waiting(subchain);
+        cancel_short_poll(subchain);
+        if (subchain && !blockchain_) {
+            schedule_waiting(subchain);
             return;
         }
-        entry.shortPolling = true;
-        (void) subchainRequestCallback(
+        entry.short_polling = true;
+        (void) subchain_request_callback_(
             SubchainRequest{
                 subchain,
                 entry.height,
@@ -445,92 +445,92 @@ namespace telegram::e2e {
         );
     }
 
-    void Session::finishSubchainRequest(const int subchain) {
-        if (failed) {
+    void Session::finish_subchain_request(const int subchain) {
+        if (failed_) {
             return;
         }
-        subchains[subchain].shortPolling = false;
-        checkWaitingBlocks(subchain, false);
+        subchains_[subchain].short_polling = false;
+        check_waiting_blocks(subchain, false);
     }
 
-    bytes::binary Session::publicKey() const {
-        const auto publicKey = privateKey.publicKeyBytes();
-        return {publicKey.begin(), publicKey.end()};
+    bytes::binary Session::public_key() const {
+        const auto public_key = private_key_.public_key_bytes();
+        return {public_key.begin(), public_key.end()};
     }
 
-    void Session::applyBlocks(
+    void Session::apply_blocks(
         const int subchain,
-        const int nextOffset,
+        const int next_offset,
         const std::vector<bytes::binary> &blocks,
-        const bool fromShortPoll
+        const bool from_short_poll
     ) {
-        if (!subchain && !blocks.empty() && nextOffset > lastBlockHeight) {
-            lastBlock = blocks.back();
-            lastBlockHeight = nextOffset;
+        if (!subchain && !blocks.empty() && next_offset > last_block_height_) {
+            last_block_ = blocks.back();
+            last_block_height_ = next_offset;
         }
 
-        auto& entry = subchains[subchain];
-        if (fromShortPoll) {
+        auto& entry = subchains_[subchain];
+        if (from_short_poll) {
             auto i = entry.waiting.begin();
-            while (i != entry.waiting.end() && i->first < nextOffset) {
+            while (i != entry.waiting.end() && i->first < next_offset) {
                 ++i;
             }
             entry.waiting.erase(entry.waiting.begin(), i);
 
-            if (subchain && !blockchain && !blocks.empty()) {
+            if (subchain && !blockchain_ && !blocks.empty()) {
                 RTC_LOG(LS_ERROR) << "ConferenceCall: broadcast short-poll block before the call was created";
-                failed = true;
+                failed_ = true;
                 return;
             }
         } else {
-            entry.lastUpdate = webrtc::TimeMillis();
+            entry.last_update = webrtc::TimeMillis();
         }
-        if (failed) {
+        if (failed_) {
             return;
         }
 
-        if (auto index = nextOffset - static_cast<int>(blocks.size()); !fromShortPoll && (index > entry.height || (!blockchain && subchain))) {
+        if (auto index = next_offset - static_cast<int>(blocks.size()); !from_short_poll && (index > entry.height || (!blockchain_ && subchain))) {
             for (const auto& block : blocks) {
                 entry.waiting.emplace(index++, block);
             }
         } else {
-            if (fromShortPoll && subchain && index > entry.height) {
+            if (from_short_poll && subchain && index > entry.height) {
                 entry.height = index;
             }
             for (const auto& block : blocks) {
-                if (!blockchain || entry.height == index) {
+                if (!blockchain_ || entry.height == index) {
                     apply(subchain, block);
                 }
                 entry.height = std::max(entry.height, ++index);
             }
-            entry.height = std::max(entry.height, nextOffset);
+            entry.height = std::max(entry.height, next_offset);
         }
-        checkWaitingBlocks(subchain);
+        check_waiting_blocks(subchain);
     }
 
-    void Session::onOutboundBlock(const std::function<void(bytes::binary)>& callback) {
-        outboundBlockCallback = callback;
+    void Session::on_outbound_block(const std::function<void(bytes::binary)>& callback) {
+        outbound_block_callback_ = callback;
     }
 
-    void Session::onSubchainRequest(const std::function<void(SubchainRequest)> &callback) {
-        subchainRequestCallback = callback;
+    void Session::on_subchain_request(const std::function<void(SubchainRequest)> &callback) {
+        subchain_request_callback_ = callback;
     }
 
-    void Session::onUpdateEmojiHash(const std::function<void(std::string)> &callback) {
-        updateEmojisCallback = callback;
+    void Session::on_update_emoji_hash(const std::function<void(std::string)> &callback) {
+        update_emojis_callback_ = callback;
     }
 
-    bytes::binary Session::encrypt(const bytes::binary& data, const size_t unencryptedPrefix) {
-        std::lock_guard lock(mutex);
-        if (failed) return {};
-        const auto r = sessionEncryption->encrypt(0,  bytes::view(data), unencryptedPrefix);
+    bytes::binary Session::encrypt(const bytes::binary& data, const size_t unencrypted_prefix) {
+        const std::lock_guard lock(mutex_);
+        if (failed_) return {};
+        const auto r = session_encryption_->encrypt(0,  bytes::view(data), unencrypted_prefix);
         return r ? *r : bytes::binary();
     }
 
-    bytes::binary Session::decrypt(const int64_t userId, const bytes::binary& data) {
-        std::lock_guard lock(mutex);
-        if (failed) return {};
-        const auto r = sessionEncryption->decrypt(userId,  bytes::view(data));
+    bytes::binary Session::decrypt(const int64_t user_id, const bytes::binary& data) {
+        const std::lock_guard lock(mutex_);
+        if (failed_) return {};
+        const auto r = session_encryption_->decrypt(user_id,  bytes::view(data));
         return r ? *r : bytes::binary();
     }
-} // telegram::e2e
+} // ntgcalls::e2e

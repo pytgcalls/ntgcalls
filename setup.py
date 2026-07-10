@@ -104,32 +104,55 @@ class CMakeBuild(build_ext):
         )
 
 
+TARGETS_DIR = Path(base_path, 'targets')
+ARCH_OVERRIDES = {
+    'android': ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'],
+}
+DEFAULT_TARGET = 'c'
+
+
+def discover_targets():
+    result = {}
+    if TARGETS_DIR.is_dir():
+        for entry in sorted(TARGETS_DIR.iterdir()):
+            if entry.is_dir():
+                result[entry.name] = ARCH_OVERRIDES.get(entry.name, ['auto'])
+    return result
+
+
+BINDING_TARGETS = discover_targets()
+
+
 class SharedCommand(Command):
     description = 'Generate shared-libs files'
     user_options = [
         ('no-preserve-cache', None, 'Do not preserve cache'),
         ('static', None, 'Static build'),
-        ('android', None, 'Android build'),
+        ('target=', None, f'Binding target ({", ".join(BINDING_TARGETS)})'),
     ]
 
     # noinspection PyAttributeOutsideInit
     def initialize_options(self):
         self.no_preserve_cache = False
         self.static = False
-        self.android = False
+        self.target = None
 
+    # noinspection PyAttributeOutsideInit
     def finalize_options(self):
-        pass
+        if self.target is None:
+            self.target = DEFAULT_TARGET
+        if self.target not in BINDING_TARGETS:
+            raise ValueError(
+                f'Unknown target "{self.target}", available: {", ".join(BINDING_TARGETS)}'
+            )
 
-    # noinspection PyMethodMayBeStatic
     def run(self):
-        arch_outputs = [
-            'auto',
-        ]
+        target = self.target
+        arch_outputs = BINDING_TARGETS[target]
         cmake_args = [
             f'-DCMAKE_BUILD_TYPE={release_kind()}',
             f'-DSTATIC_BUILD={"ON" if self.static else "OFF"}',
-            f'-DIS_PYTHON=OFF',
+            f'-DBINDING={target}',
             f'-DPython_EXECUTABLE={sys.executable}',
             f'-DCMAKE_TOOLCHAIN_FILE={Path(Path.cwd(), "cmake", "Toolchain.cmake")}',
         ]
@@ -141,13 +164,6 @@ class SharedCommand(Command):
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
         source_dir = os.path.dirname(os.path.abspath(__file__))
-        if self.android:
-            arch_outputs = [
-                'arm64-v8a',
-                'armeabi-v7a',
-                'x86',
-                'x86_64',
-            ]
         for arch in arch_outputs:
             new_cmake_args = cmake_args.copy()
             if arch != 'auto':
@@ -173,12 +189,31 @@ class SharedCommand(Command):
             print('Cleanup successfully')
 
 
+class GenerateCommand(Command):
+    description = 'Run the code generator to produce the schema without building'
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        subprocess.run(
+            [cmake_bin(), f'-DROOT_DIR={base_path}', '-P',
+             str(Path(base_path, 'cmake', 'codegen', 'RunCodegen.cmake'))],
+            check=True,
+        )
+
+
 setup(
     version=version,
     ext_modules=[CMakeExtension('ntgcalls')],
     cmdclass={
         'build_ext': CMakeBuild,
-        'build_lib': SharedCommand
+        'build_lib': SharedCommand,
+        'generate': GenerateCommand
     },
     zip_safe=False,
 )

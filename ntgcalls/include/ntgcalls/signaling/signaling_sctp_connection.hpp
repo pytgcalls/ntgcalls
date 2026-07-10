@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 16/03/2024.
+// Created by Lauren on 16/03/24.
 //
 
 #pragma once
@@ -7,25 +7,28 @@
 #include <ntgcalls/signaling/signaling_interface.hpp>
 #include <ntgcalls/signaling/signaling_packet_transport.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling {
 
     class SignalingSctpConnection final : public SignalingInterface, public webrtc::DataChannelSink {
-        std::unique_ptr<webrtc::SctpTransportFactory> sctpTransportFactory;
-        std::unique_ptr<SignalingPacketTransport> packetTransport;
-        std::unique_ptr<webrtc::SctpTransportInternal> sctpTransport;
-        std::vector<bytes::binary> pendingData;
-        bool allowCompression = false;
-        bool isReadyToSend = false;
+        std::unique_ptr<webrtc::SctpTransportFactory> sctp_transport_factory_;
+        std::unique_ptr<SignalingPacketTransport> packet_transport_;
+        std::unique_ptr<webrtc::SctpTransportInternal> sctp_transport_;
+        std::vector<bytes::binary> pending_data_;
+        bool allow_compression_ = false;
+        bool is_ready_to_send_ = false;
+
+    protected:
+        [[nodiscard]] bool supports_compression() const override;
 
     public:
         SignalingSctpConnection(
-            wrtc::SafeThread& networkThread,
-            wrtc::SafeThread& signalingThread,
+            wrtc::utils::SafeThread& network_thread,
+            wrtc::utils::SafeThread& signaling_thread,
             const webrtc::Environment& env,
-            const EncryptionKey &key,
-            const DataEmitter& onEmitData,
-            const DataReceiver& onSignalData,
-            bool allowCompression
+            const crypto::EncryptionKey &key,
+            const DataEmitter& on_emit_data,
+            const DataReceiver& on_signal_data,
+            bool allow_compression
         );
 
         void close() override;
@@ -46,9 +49,6 @@ namespace signaling {
         void OnBufferedAmountLow(int channel_id) override{}
         void OnTransportConnected() override{}
         void OnMaxMessageSize(int max_message_size) override{}
-
-    protected:
-        [[nodiscard]] bool supportsCompression() const override;
     };
 
-} // signaling
+} // ntgcalls::signaling

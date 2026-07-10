@@ -1,71 +1,71 @@
 //
-// Created by Laky64 on 07/06/26.
+// Created by Lauren on 07/06/26.
 //
 
 #pragma once
 #include <array>
-#include <string>
 #include <cstdint>
+#include <string>
 #include <wrtc/utils/binary.hpp>
 
-namespace telegram {
-    using PublicKeyBytes = std::array<uint8_t, 32>;
-    using Hash256 = std::array<uint8_t, 32>;
+namespace ntgcalls::tl {
+    using PublicKeyBytes = bytes::array<32>;
+    using Hash256 = bytes::array<32>;
 
     class TlWriter {
-        bytes::binary buffer;
+        bytes::binary buffer_;
 
     public:
-        void storeInt32(int32_t value);
+        void store_int32(int32_t value);
 
-        void storeUInt32(uint32_t value);
+        void store_u_int32(uint32_t value);
 
-        void storeInt64(int64_t value);
+        void store_int64(int64_t value);
 
-        void storeInt256(const std::array<uint8_t, 32>& value);
+        void store_int256(const bytes::array<32>& value);
 
-        void storeInt512(const std::array<uint8_t, 64>& value);
+        void store_int512(const bytes::array<64>& value);
 
-        void storeBytes(bytes::const_span value);
+        void store_bytes(bytes::const_span value);
 
-        void storeString(const std::string& value);
+        void store_string(const std::string& value);
 
-        void storeRaw(bytes::const_span value);
+        void store_raw(bytes::const_span value);
 
-        void storeVectorSize(uint32_t size);
+        void store_vector_size(uint32_t size);
 
         [[nodiscard]] bytes::binary result();
     };
 
     class TlReader {
-        const uint8_t* ptr;
-        const uint8_t* end;
-        bool failed = false;
+        const uint8_t* ptr_;
+        const uint8_t* end_;
+        bool failed_ = false;
 
     public:
         explicit TlReader(bytes::const_span data);
 
-        int32_t fetchInt32();
+        int32_t fetch_int32();
 
-        uint32_t fetchUInt32();
+        uint32_t fetch_uint32();
 
-        int64_t fetchInt64();
+        int64_t fetch_int64();
 
-        std::array<uint8_t, 32> fetchInt256();
+        std::array<uint8_t, 32> fetch_int256();
 
-        std::array<uint8_t, 64> fetchInt512();
+        std::array<uint8_t, 64> fetch_int512();
 
-        bytes::binary fetchBytes();
+        bytes::binary fetch_bytes();
 
-        std::string fetchString();
+        std::string fetch_string();
 
-        bytes::binary fetchRaw(size_t size);
+        bytes::binary fetch_raw(size_t size);
 
-        uint32_t fetchVectorSize();
+        uint32_t fetch_vector_size();
 
         [[nodiscard]] bool ok() const;
 
-        void setError();
+        void set_error();
 
         [[nodiscard]] bool finish() const;
     };

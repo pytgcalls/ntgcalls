@@ -1,29 +1,29 @@
 //
-// Created by Laky64 on 26/10/24.
+// Created by Lauren on 26/10/24.
 //
 
 #pragma once
-#include <ntgcalls/media/video_sink.hpp>
 #include <ntgcalls/media/base_receiver.hpp>
+#include <ntgcalls/media/video_sink.hpp>
 #include <wrtc/interfaces/media/remote_video_sink.hpp>
 #include <wrtc/models/frame_data.hpp>
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::media {
 
     class VideoReceiver final: public VideoSink, public BaseReceiver {
-        std::shared_ptr<wrtc::RemoteVideoSink> sink;
-        wrtc::synchronized_callback<void(uint32_t, bytes::unique_binary, size_t, wrtc::FrameData)> frameCallback;
+        std::shared_ptr<wrtc::interfaces::media::RemoteVideoSink> sink_;
+        wrtc::utils::synchronized_callback<void(uint32_t, bytes::unique_binary, size_t, wrtc::models::FrameData)> frame_callback_;
 
     public:
         ~VideoReceiver() override;
 
-        void onFrame(const std::function<void(uint32_t, bytes::unique_binary, size_t, wrtc::FrameData)>& callback);
+        void on_frame(const std::function<void(uint32_t, bytes::unique_binary, size_t, wrtc::models::FrameData)>& callback);
 
-        std::weak_ptr<wrtc::RemoteVideoSink> remoteSink();
+        std::weak_ptr<wrtc::interfaces::media::RemoteVideoSink> remote_sink();
 
         void open() override;
     };
 
-} // ntgcalls
+} // ntgcalls::media

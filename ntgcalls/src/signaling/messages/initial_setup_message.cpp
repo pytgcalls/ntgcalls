@@ -1,26 +1,26 @@
 //
-// Created by Laky64 on 28/03/2024.
+// Created by Lauren on 28/03/24.
 //
 
 #include <ntgcalls/signaling/messages/initial_setup_message.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling::messages {
     bytes::binary InitialSetupMessage::serialize() const {
         json res = {
             {"@type", "InitialSetup"},
             {"ufrag", ufrag},
             {"pwd", pwd},
-            {"renomination", supportsRenomination},
+            {"renomination", supports_renomination},
         };
-        json fingerprintsJson = json::array();
+        json fingerprints_json = json::array();
         for (const auto& [hash, setup, fingerprint] : fingerprints) {
-            fingerprintsJson.push_back(json{
+            fingerprints_json.push_back(json{
                 {"hash", hash},
                 {"setup", setup},
                 {"fingerprint", fingerprint},
             });
         }
-        res["fingerprints"] = fingerprintsJson;
+        res["fingerprints"] = fingerprints_json;
         return bytes::make_binary(res.dump());
     }
 
@@ -29,7 +29,7 @@ namespace signaling {
         auto message = std::make_unique<InitialSetupMessage>();
         message->ufrag = j["ufrag"];
         message->pwd = j["pwd"];
-        message->supportsRenomination = j["renomination"];
+        message->supports_renomination = j["renomination"];
         for (const auto& fingerprint : j["fingerprints"]) {
             message->fingerprints.push_back({
                 fingerprint["hash"],
@@ -39,4 +39,4 @@ namespace signaling {
         }
         return std::move(message);
     }
-} // signaling
+} // ntgcalls::signaling::messages

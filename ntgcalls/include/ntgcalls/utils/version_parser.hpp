@@ -1,12 +1,12 @@
 //
-// Created by Laky64 on 13/10/24.
+// Created by Lauren on 13/10/24.
 //
 
 #pragma once
 
 #include <string>
 
-namespace ntgcalls {
+namespace ntgcalls::utils {
 
     struct VersionParser {
         int major = 0;
@@ -28,4 +28,4 @@ namespace ntgcalls {
         [[nodiscard]] std::string toString() const;
     };
 
-} // ntgcalls
+} // ntgcalls::utils

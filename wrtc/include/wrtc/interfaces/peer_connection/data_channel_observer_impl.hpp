@@ -1,17 +1,17 @@
 //
-// Created by Laky64 on 22/03/2024.
+// Created by Lauren on 22/03/24.
 //
 
 #pragma once
 #include <api/data_channel_interface.h>
 
-namespace wrtc {
+namespace wrtc::interfaces::peer_connection {
 
     class DataChannelObserverImpl final : public webrtc::DataChannelObserver {
     public:
         struct Parameters {
-            std::function<void()> onStateChange;
-            std::function<void(webrtc::DataBuffer const &)> onMessage;
+            std::function<void()> on_state_change;
+            std::function<void(webrtc::DataBuffer const &)> on_message;
         };
 
         explicit DataChannelObserverImpl(Parameters &&parameters);
@@ -23,7 +23,7 @@ namespace wrtc {
         ~DataChannelObserverImpl() override;
 
     private:
-        Parameters parameters;
+        Parameters parameters_;
     };
 
-} // wrtc
+} // wrtc::interfaces::peer_connection

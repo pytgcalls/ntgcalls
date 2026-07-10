@@ -1,42 +1,42 @@
 //
-// Created by Laky64 on 12/08/2023.
+// Created by Lauren on 12/08/23.
 //
 
 #include <ntgcalls/media/video_streamer.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::media {
     VideoStreamer::VideoStreamer() {
-        video = std::make_unique<wrtc::RTCVideoSource>();
+        video_ = std::make_unique<wrtc::interfaces::media::RTCVideoSource>();
     }
 
     VideoStreamer::~VideoStreamer() {
-        video = nullptr;
+        video_ = nullptr;
     }
 
     webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> VideoStreamer::createTrack() {
-        return video->createTrack();
+        return video_->create_track();
     }
 
-    void VideoStreamer::sendData(uint8_t* sample, const size_t size, wrtc::FrameData additionalData) {
-        frames++;
-        if (additionalData.width == 0) {
-            additionalData.width = description->width;
+    void VideoStreamer::sendData(uint8_t* sample, const size_t size, wrtc::models::FrameData additional_data) {
+        frames_++;
+        if (additional_data.width == 0) {
+            additional_data.width = description_->width;
         }
-        if (additionalData.height == 0) {
-            additionalData.height = description->height;
+        if (additional_data.height == 0) {
+            additional_data.height = description_->height;
         }
-        if (additionalData.width == 0 || additionalData.height == 0 || size == 0) {
+        if (additional_data.width == 0 || additional_data.height == 0 || size == 0) {
             return;
         }
-        video->OnFrame(
-            wrtc::i420ImageData(
-                additionalData.width,
-                additionalData.height,
+        video_->on_frame(
+            wrtc::models::I420ImageData(
+                additional_data.width,
+                additional_data.height,
                 sample,
                 size
             ),
-            additionalData
+            additional_data
         );
     }
-}
+} // ntgcalls::media
 
