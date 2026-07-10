@@ -28,8 +28,7 @@ endif ()
 find_package(Threads REQUIRED)
 
 get_filename_component(DEPS_DIR     "deps" REALPATH)
-get_filename_component(android_loc  "android" REALPATH)
-get_filename_component(jni_loc      "${android_loc}/app/src/main/jni" REALPATH)
+get_filename_component(ROOT_DIR     "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
 get_filename_component(props_loc    "version.properties" REALPATH)
 
 include(cmake/FindGLib.cmake)
@@ -41,18 +40,8 @@ include(cmake/FindBoost.cmake)
 include(cmake/FindOpenH264.cmake)
 include(cmake/FindFFmpeg.cmake)
 include(cmake/GenerateE2ETL.cmake)
-
-# pybind11
-if (IS_PYTHON)
-    set(PYBIND11_FINDPYTHON "NEW")
-    add_subdirectory(deps/pybind11)
-endif ()
-
-# Oboe
-if (ANDROID)
-    add_subdirectory(deps/oboe)
-    setup_platform_flags(oboe OFF)
-endif ()
+include(cmake/codegen/GenerateSchema.cmake)
+include(cmake/codegen/GenerateBinding.cmake)
 
 add_subdirectory(wrtc)
 add_subdirectory(ntgcalls)

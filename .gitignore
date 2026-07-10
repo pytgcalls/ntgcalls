@@ -1,7 +1,5 @@
 .idea
 .claude
-.cxx
-.gradle
 venv
 .env
 env
@@ -30,13 +28,12 @@ deps/mesa/
 deps/glib/
 ntgcalls/src/tl/e2e_api.cpp
 ntgcalls/include/ntgcalls/tl/e2e_api.hpp
-android/app/src/main/jni/ntgcalls/
-android/app/src/main/jni/wrtc/
-android/local.properties
 build/
 build_lib/
 shared-output/
 static-output/
+ntl-output/
+docs/
 dist/
 local_tests/
 __pycache__
