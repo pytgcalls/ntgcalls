@@ -137,6 +137,17 @@ jobs:
           "${{ steps.python.outputs.path }}" setup.py build_lib --target=${{ matrix.target }}
         shell: bash
 
+      - name: Upload node metadata
+        if: matrix.target == 'node' && matrix.node_platform == 'linux' && matrix.node_arch == 'x64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ntgcalls-node-meta
+          path: |
+            ntl-output/schema.ntl
+            targets/node/index.d.ts
+            targets/node/index.mjs
+          if-no-files-found: error
+
       - name: Upload artifact
         if: matrix.artifact != ''
         uses: actions/upload-artifact@v7
@@ -192,6 +203,13 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: recursive
+
+      - name: Download node metadata
+        if: contains(matrix.tools, 'node')
+        uses: actions/download-artifact@v8
+        with:
+          name: ntgcalls-node-meta
+          path: .
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -369,10 +387,11 @@ jobs:
             fi
           done
 
-      - name: Generate schema
+      - name: Prepare schema asset
+        if: hashFiles('tmp/ntgcalls-node-meta/ntl-output/schema.ntl') != ''
         run: |
-          cmake -DROOT_DIR="$PWD" -DVERSION_NAME="${{ steps.patch-version.outputs.version }}" -P cmake/codegen/RunCodegen.cmake
-          cp ntl-output/schema.ntl releases/ntgcalls.tl
+          grep -v '^// Version' tmp/ntgcalls-node-meta/ntl-output/schema.ntl > releases/ntgcalls.tl
+          printf '\n// Version %s\n' "${{ steps.patch-version.outputs.version }}" >> releases/ntgcalls.tl
 
       - name: Create Release
         id: create-new-release
