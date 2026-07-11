@@ -4,7 +4,6 @@ import multiprocessing
 import os
 import platform
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -298,6 +297,7 @@ class PublishCommand(Command):
             subst['platform'] = self.platform
         if self.set_version:
             subst['version'] = self.set_version
+        subst['dist_tag'] = 'beta' if '-' in subst['version'] else 'latest'
         subst.update(parse_defines(self.defines))
         archs = (self.arch,) if self.arch else ('auto',)
         execute_cfg(self.target, subst, archs, section='publish', keys=[self.phase])
