@@ -367,6 +367,11 @@ jobs:
             fi
           done
 
+      - name: Generate schema
+        run: |
+          cmake -DROOT_DIR="$PWD" -DVERSION_NAME="${{ steps.patch-version.outputs.version }}" -P cmake/codegen/RunCodegen.cmake
+          cp ntl-output/schema.ntl releases/ntgcalls.tl
+
       - name: Create Release
         id: create-new-release
         if: hashFiles('releases/*') != ''

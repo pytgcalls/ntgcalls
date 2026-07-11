@@ -249,7 +249,7 @@ class GenerateCommand(Command):
 
     def run(self):
         subprocess.run(
-            [cmake_bin(), f'-DROOT_DIR={base_path}', '-P',
+            [cmake_bin(), f'-DROOT_DIR={base_path}', f'-DVERSION_NAME={version}', '-P',
              str(Path(base_path, 'cmake', 'codegen', 'RunCodegen.cmake'))],
             check=True,
         )

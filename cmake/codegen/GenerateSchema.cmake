@@ -35,3 +35,5 @@ foreach(l ${_srclines})
 endforeach()
 
 gen_ntl("${API_HPP}" "${API_CPP}" "${ALIASES}" "${STRUCT_HEADERS}" "${EXC_HEADERS}" "${NTL_OUTPUT_FILE}")
+
+file(APPEND "${NTL_OUTPUT_FILE}" "\n// Version ${VERSION_NAME}\n")
