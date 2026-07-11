@@ -10,3 +10,5 @@ export const @{c.name} = binding.@{c.name};
 export const @{e.name} = binding.@{e.name};
 @end
 @end
+export const LogLevel = binding.LogLevel;
+export const setLogLevel = binding.setLogLevel;

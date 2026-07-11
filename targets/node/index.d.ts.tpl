@@ -31,6 +31,16 @@ export enum @{e.name} {
 
 @end
 @end
+export enum LogLevel {
+    DEBUG = 1,
+    INFO = 2,
+    WARNING = 4,
+    ERROR = 8,
+    SILENT = 16,
+}
+
+export function setLogLevel(level: LogLevel): void;
+
 @for s in structs
 export interface @{s.name} {
 @for f in s.fields

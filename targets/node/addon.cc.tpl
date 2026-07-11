@@ -10,9 +10,11 @@
 #include <napi_convert.hpp>
 #include <promise_worker.hpp>
 #include <callback_bridge.hpp>
+#include <napi_log.hpp>
 
 #include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/utils/shutdown_hook.hpp>
 
 @for e in enums
 @if e.emit
@@ -290,6 +292,10 @@ private:
 
 @end
 static Napi::Object InitModule(Napi::Env env, Napi::Object exports) {
+    ntgcalls::support::install_log_bridge(env);
+    env.AddCleanupHook([] {
+        ntgcalls::utils::ShutdownHook::runAll();
+    });
 @for c in classes
     @{c.name}::Init(env, exports);
 @end
@@ -304,6 +310,19 @@ static Napi::Object InitModule(Napi::Env env, Napi::Object exports) {
     }
 @end
 @end
+    exports.Set("setLogLevel", Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+        ntgcalls::support::set_log_level(info[0].As<Napi::Number>().Int32Value());
+        return info.Env().Undefined();
+    }));
+    {
+        auto values = Napi::Object::New(env);
+        values.Set("DEBUG", Napi::Number::New(env, static_cast<int32_t>(ntgcalls::utils::LogSink::Level::Debug)));
+        values.Set("INFO", Napi::Number::New(env, static_cast<int32_t>(ntgcalls::utils::LogSink::Level::Info)));
+        values.Set("WARNING", Napi::Number::New(env, static_cast<int32_t>(ntgcalls::utils::LogSink::Level::Warning)));
+        values.Set("ERROR", Napi::Number::New(env, static_cast<int32_t>(ntgcalls::utils::LogSink::Level::Error)));
+        values.Set("SILENT", Napi::Number::New(env, 16));
+        exports.Set("LogLevel", values);
+    }
     return exports;
 }
 
