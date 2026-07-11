@@ -6,6 +6,10 @@
 #include <ntgcalls/utils/log_sink_impl.hpp>
 #include <pybind11/pybind11.h>
 
+#if PY_VERSION_HEX < 0x030D0000
+#define Py_IsFinalizing _Py_IsFinalizing
+#endif
+
 namespace py = pybind11;
 
 namespace ntgcalls::support {
