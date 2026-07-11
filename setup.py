@@ -135,10 +135,11 @@ def execute_cfg(target, subst, archs=('auto',), section='build', keys=None):
                 line = line.strip()
                 if not line:
                     continue
-                subprocess.run(
-                    shlex.split(line.format(**ctx), posix=(os.name != 'nt')),
-                    cwd=workdir, check=True, env=env,
-                )
+                command = line.format(**ctx)
+                if os.name == 'nt':
+                    subprocess.run(command, cwd=workdir, check=True, env=env, shell=True)
+                else:
+                    subprocess.run(shlex.split(command), cwd=workdir, check=True, env=env)
 
 
 class CMakeBuild(build_ext):
