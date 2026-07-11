@@ -136,7 +136,8 @@ def execute_cfg(target, subst, archs=('auto',), section='build', keys=None):
                 if not line:
                     continue
                 subprocess.run(
-                    shlex.split(line.format(**ctx)), cwd=workdir, check=True, env=env
+                    shlex.split(line.format(**ctx), posix=(os.name != 'nt')),
+                    cwd=workdir, check=True, env=env,
                 )
 
 

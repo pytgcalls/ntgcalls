@@ -127,7 +127,8 @@ jobs:
         shell: powershell
 
       - name: Build
-        run: ${{ steps.python.outputs.path }} setup.py build_lib --target=${{ matrix.target }}
+        run: |
+          "${{ steps.python.outputs.path }}" setup.py build_lib --target=${{ matrix.target }}
         shell: bash
 
       - name: Upload artifact
@@ -158,7 +159,7 @@ jobs:
       - name: Publish artifact
         if: github.event.inputs.publish == 'true' && (matrix.publish == 'artifact' || matrix.publish == 'both')
         run: >
-          ${{ steps.python.outputs.path }} setup.py publish_lib --target=${{ matrix.target }} --phase=artifact
+          "${{ steps.python.outputs.path }}" setup.py publish_lib --target=${{ matrix.target }} --phase=artifact
           --platform=${{ matrix.node_platform }} --arch=${{ matrix.node_arch }}
           --set-version=${{ steps.version.outputs.version }}
         shell: bash
