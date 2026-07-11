@@ -4,53 +4,28 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
+      targets:
+        description: 'Targets to build ("all" or a comma list, e.g. c,node)'
+        required: false
+        default: all
+        type: string
+      platforms:
+        description: 'Platforms filter ("all" or a comma list, e.g. linux-x64)'
+        required: false
+        default: all
+        type: string
+      wheels:
+        description: 'Build Python wheels'
+        required: false
+        default: false
+        type: boolean
       use-blacksmith:
         description: 'Use Blacksmith runners (faster builds)'
         required: false
         default: false
         type: boolean
-      build-shared-libs:
-        description: 'Build shared libraries'
-        required: false
-        default: true
-        type: boolean
-      build-static-libs:
-        description: 'Build static libraries'
-        required: false
-        default: true
-        type: boolean
-      build-wheels:
-        description: 'Build wheels'
-        required: false
-        default: false
-        type: boolean
-      linux-build:
-        description: 'Build for Linux'
-        required: false
-        default: true
-        type: boolean
-      linux-arm64-build:
-        description: 'Build for Linux ARM64'
-        required: false
-        default: true
-        type: boolean
-      macos-build:
-        description: 'Build for macOS'
-        required: false
-        default: false
-        type: boolean
-      windows-build:
-        description: 'Build for Windows'
-        required: false
-        default: false
-        type: boolean
-      android-build:
-        description: 'Build for Android'
-        required: false
-        default: false
-        type: boolean
       publish:
-        description: 'Publish the library'
+        description: 'Publish the built targets'
         required: false
         default: true
         type: boolean
@@ -59,58 +34,44 @@ jobs:
     name: Generate Build Matrix
     runs-on: ubuntu-latest
     outputs:
-      desktop-matrix: ${{ steps.set-matrix.outputs.desktop-matrix }}
-      mobile-matrix: ${{ steps.set-matrix.outputs.mobile-matrix }}
-      has-desktop: ${{ steps.set-matrix.outputs.has-desktop }}
-      has-mobile: ${{ steps.set-matrix.outputs.has-mobile }}
+      build-matrix: ${{ steps.set.outputs.build-matrix }}
+      final-matrix: ${{ steps.set.outputs.final-matrix }}
+      has-build: ${{ steps.set.outputs.has-build }}
+      has-final: ${{ steps.set.outputs.has-final }}
     steps:
-      - name: Set matrix
-        id: set-matrix
-        run: |
-          desktop_list=""
-          if [[ "${{ github.event.inputs.linux-build }}" == "true" ]]; then
-            desktop_list+=",{\"os\":\"ubuntu-latest\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404\",\"shared_name\":\"linux-x86_64\",\"cibw_os_build\":\"manylinux_\",\"container_image\":\"ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest\"}"
-          fi
-          if [[ "${{ github.event.inputs.linux-arm64-build }}" == "true" ]]; then
-            desktop_list+=",{\"os\":\"arm64-server\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404-arm\",\"shared_name\":\"linux-arm64\",\"cibw_os_build\":\"manylinux_\",\"container_image\":\"ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest\"}"
-          fi
-          if [[ "${{ github.event.inputs.macos-build }}" == "true" ]]; then
-            desktop_list+=",{\"os\":\"macos-15\",\"blacksmith_os\":\"blacksmith-6vcpu-macos-15\",\"shared_name\":\"macos-arm64\",\"cibw_os_build\":\"macosx_\"}"
-          fi
-          if [[ "${{ github.event.inputs.windows-build }}" == "true" ]]; then
-            desktop_list+=",{\"os\":\"windows-2022\",\"blacksmith_os\":\"blacksmith-4vcpu-windows-2025\",\"shared_name\":\"windows-x86_64\"}"
-          fi
-          [[ -n "$desktop_list" ]] && desktop_list="${desktop_list:1}"
-          echo "desktop-matrix={\"include\":[$desktop_list]}" >> $GITHUB_OUTPUT
-          
-          mobile_list=""
-          if [[ "${{ github.event.inputs.android-build }}" == "true" ]]; then
-            mobile_list+=",{\"os\":\"ubuntu-latest\",\"blacksmith_os\":\"blacksmith-4vcpu-ubuntu-2404\",\"shared_name\":\"android\"}"
-          fi
-          [[ -n "$mobile_list" ]] && mobile_list="${mobile_list:1}"
-          echo "mobile-matrix={\"include\":[$mobile_list]}" >> $GITHUB_OUTPUT
-          
-          [[ -n "$desktop_list" ]] && echo "has-desktop=true" >> $GITHUB_OUTPUT || echo "has-desktop=false" >> $GITHUB_OUTPUT
-          [[ -n "$mobile_list"  ]] && echo "has-mobile=true"  >> $GITHUB_OUTPUT || echo "has-mobile=false"  >> $GITHUB_OUTPUT
+      - name: Check out the repo
+        uses: actions/checkout@v7
 
-  build-desktop:
-    name: Build (${{ matrix.shared_name }}) [${{ inputs.use-blacksmith == true && 'Blacksmith' || 'GitHub' }}]
-    if: |
-        needs.setup.outputs.has-desktop == 'true' &&
-        (
-            github.event.inputs.build-wheels == 'true' || 
-            github.event.inputs.build-shared-libs == 'true' || 
-            github.event.inputs.build-static-libs == 'true'
-        )
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set matrix
+        id: set
+        run: |
+          build="$(python setup.py -q matrix --targets='${{ inputs.targets }}' --platforms='${{ inputs.platforms }}')"
+          final="$(python setup.py -q matrix --targets='${{ inputs.targets }}' --final)"
+          {
+            echo "build-matrix=$build"
+            echo "final-matrix=$final"
+            echo "has-build=$([ "$(echo "$build" | jq '.include | length')" -gt 0 ] && echo true || echo false)"
+            echo "has-final=$([ "$(echo "$final" | jq '.include | length')" -gt 0 ] && echo true || echo false)"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.target }} / ${{ matrix.platform }}) [${{ inputs.use-blacksmith == true && 'Blacksmith' || 'GitHub' }}]
     needs: setup
-    runs-on: ${{ inputs.use-blacksmith == true && matrix.blacksmith_os || matrix.os }}
+    if: needs.setup.outputs.has-build == 'true'
+    runs-on: ${{ inputs.use-blacksmith == true && matrix.blacksmith || matrix.os }}
     container:
-      image: ${{ matrix.container_image }}
+      image: ${{ matrix.container }}
     permissions:
       contents: read
+      packages: write
     strategy:
-      matrix: ${{fromJson(needs.setup.outputs.desktop-matrix)}}
-
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup.outputs.build-matrix) }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v7
@@ -119,7 +80,177 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v6
-        if: ${{ !(startsWith(matrix.shared_name, 'linux')) }}
+        if: matrix.container == ''
+        id: python-setup
+        with:
+          python-version: "3.10 - 3.14"
+
+      - name: Resolve Python path
+        id: python
+        run: |
+          if [[ -n "${{ steps.python-setup.outputs.python-path }}" ]]; then
+            echo "path=${{ steps.python-setup.outputs.python-path }}" >> $GITHUB_OUTPUT
+          else
+            echo "path=python3" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Set up Node
+        if: contains(matrix.tools, 'node')
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: https://registry.npmjs.org
+
+      - name: Set up Java
+        if: contains(matrix.tools, 'java')
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          server-id: central
+
+      - name: Install Python Requirements
+        run: |
+          "${{ steps.python.outputs.path }}" -m pip install setuptools
+        shell: bash
+
+      - name: Install Media Foundation
+        if: startsWith(matrix.shared_name, 'windows')
+        run: |
+          if ((Get-WindowsFeature Server-Media-Foundation).InstallState -ne 'Installed') {
+            Install-WindowsFeature Server-Media-Foundation
+          }
+        shell: powershell
+
+      - name: Build
+        run: ${{ steps.python.outputs.path }} setup.py build_lib --target=${{ matrix.target }}
+        shell: bash
+
+      - name: Upload artifact
+        if: matrix.artifact != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: ./${{ matrix.output }}/*
+          if-no-files-found: error
+
+      - name: Upload secondary artifact
+        if: matrix.artifact2 != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact2 }}
+          path: ./${{ matrix.output2 }}/*
+          if-no-files-found: error
+
+      - name: Resolve version
+        id: version
+        if: github.event.inputs.publish == 'true' && (matrix.publish == 'artifact' || matrix.publish == 'both')
+        run: |
+          version="$(sed -n 's/.*ntgcalls VERSION \([A-Za-z0-9.]*\).*/\1/p' CMakeLists.txt | head -1)"
+          fancy_version="$(cmake -DPROJECT_VERSION="$version" -DGITHUB_TAGS=ON -P cmake/VersionUtil.cmake 2>&1)"
+          echo "version=$fancy_version" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Publish artifact
+        if: github.event.inputs.publish == 'true' && (matrix.publish == 'artifact' || matrix.publish == 'both')
+        run: >
+          ${{ steps.python.outputs.path }} setup.py publish_lib --target=${{ matrix.target }} --phase=artifact
+          --platform=${{ matrix.node_platform }} --arch=${{ matrix.node_arch }}
+          --set-version=${{ steps.version.outputs.version }}
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+
+  publish-final:
+    name: Publish Final (${{ matrix.target }})
+    needs: [ setup, build ]
+    if: github.event.inputs.publish == 'true' && needs.setup.outputs.has-final == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup.outputs.final-matrix) }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        id: python
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        if: contains(matrix.tools, 'node')
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: https://registry.npmjs.org
+
+      - name: Set up Java
+        if: contains(matrix.tools, 'java')
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          server-id: central
+
+      - name: Install Python Requirements
+        run: |
+          "${{ steps.python.outputs.python-path }}" -m pip install setuptools
+        shell: bash
+
+      - name: Resolve version
+        id: version
+        run: |
+          version="$(sed -n 's/.*ntgcalls VERSION \([A-Za-z0-9.]*\).*/\1/p' CMakeLists.txt | head -1)"
+          fancy_version="$(cmake -DPROJECT_VERSION="$version" -DGITHUB_TAGS=ON -P cmake/VersionUtil.cmake 2>&1)"
+          echo "version=$fancy_version" >> "$GITHUB_OUTPUT"
+
+      - name: Publish
+        run: >
+          ${{ steps.python.outputs.python-path }} setup.py publish_lib --target=${{ matrix.target }} --phase=final
+          --set-version=${{ steps.version.outputs.version }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+
+  build-wheels:
+    name: Build Wheels (${{ matrix.shared_name }}) [${{ inputs.use-blacksmith == true && 'Blacksmith' || 'GitHub' }}]
+    if: github.event.inputs.wheels == 'true'
+    runs-on: ${{ inputs.use-blacksmith == true && matrix.blacksmith || matrix.os }}
+    container:
+      image: ${{ matrix.container }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, blacksmith: blacksmith-4vcpu-ubuntu-2404, shared_name: linux-x86_64, cibw: manylinux_, container: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest }
+          - { os: arm64-server, blacksmith: blacksmith-4vcpu-ubuntu-2404-arm, shared_name: linux-arm64, cibw: manylinux_, container: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest }
+          - { os: macos-15, blacksmith: blacksmith-6vcpu-macos-15, shared_name: macos-arm64, cibw: macosx_, container: '' }
+          - { os: windows-2022, blacksmith: blacksmith-4vcpu-windows-2025, shared_name: windows-x86_64, cibw: '', container: '' }
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        if: matrix.container == ''
         id: python-setup
         with:
           python-version: "3.10 - 3.14"
@@ -147,38 +278,11 @@ jobs:
           }
         shell: powershell
 
-      - name: Build Shared Libs
-        if: github.event.inputs.build-shared-libs == 'true'
-        run: |
-          ${{ steps.python.outputs.path }} setup.py build_lib
-
-      - name: Build Static Libs
-        if: github.event.inputs.build-static-libs == 'true'
-        run: |
-          ${{ steps.python.outputs.path }} setup.py build_lib --static
-
-      - name: Upload Shared Libs for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v7
-        if: github.event.inputs.build-shared-libs == 'true'
-        with:
-          name: ntgcalls.${{ matrix.shared_name }}-shared_libs
-          path: ./shared-output/*
-          if-no-files-found: error
-
-      - name: Upload Static Libs for ${{ matrix.shared_name }}
-        uses: actions/upload-artifact@v7
-        if: github.event.inputs.build-static-libs == 'true'
-        with:
-          name: ntgcalls.${{ matrix.shared_name }}-static_libs
-          path: ./static-output/*
-          if-no-files-found: error
-
       - name: Build wheels
         run: ${{ steps.python.outputs.path }} -m cibuildwheel --output-dir wheelhouse
-        if: github.event.inputs.build-wheels == 'true'
         env:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
-          CIBW_BUILD: cp3*-${{ matrix.cibw_os_build }}*
+          CIBW_BUILD: cp3*-${{ matrix.cibw }}*
           CIBW_TEST_COMMAND: python -m unittest discover -s {package}/tests
           CIBW_CONTAINER_ENGINE: none
           CIBW_ENVIRONMENT: "PYPI_TAGS=1"
@@ -187,68 +291,16 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
       - uses: actions/upload-artifact@v7
-        if: github.event.inputs.build-wheels == 'true'
         with:
           name: ntgcalls-${{ matrix.shared_name }}-wheels
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
-  build-mobile:
-    name: Build (${{ matrix.shared_name }}) [${{ inputs.use-blacksmith == true && 'Blacksmith' || 'GitHub' }}]
-    if: needs.setup.outputs.has-mobile == 'true'
-    needs: setup
-    runs-on: ${{ inputs.use-blacksmith == true && matrix.blacksmith_os || matrix.os }}
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      matrix: ${{fromJson(needs.setup.outputs.mobile-matrix)}}
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v7
-        with:
-          submodules: recursive
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        id: python
-        with:
-          python-version: "3.14"
-
-      - name: Install Python Requirements
-        run: |
-          "${{ steps.python.outputs.python-path }}" -m pip install setuptools
-          "${{ steps.python.outputs.python-path }}" -m pip install pipx
-        shell: bash
-
-      - name: Build JNI Libraries
-        run: |
-          ${{ steps.python.outputs.python-path }} setup.py build_lib --android
-        shell: bash
-
-      - name: Set up Maven Central Repository
-        uses: actions/setup-java@v5
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          server-id: central
-
-      - name: Publish Library to Maven Central
-        run: bash ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
-        shell: bash
-        working-directory: android/
-
-
   publish:
-    name: Publish
+    name: Publish Release
     runs-on: ubuntu-latest
-    needs: [ build-desktop ]
-    if: github.event.inputs.publish == 'true'
+    needs: [ build, build-wheels ]
+    if: ${{ always() && github.event.inputs.publish == 'true' && (needs.build.result == 'success' || needs.build-wheels.result == 'success') }}
     permissions:
       id-token: write
       contents: write
@@ -283,7 +335,7 @@ jobs:
           path: tmp/
 
       - name: Prepare source distribution
-        if: github.event.inputs.build-wheels == 'true'
+        if: github.event.inputs.wheels == 'true'
         run: |
           python3 -m pip install --upgrade setuptools
           python3 setup.py sdist
@@ -303,6 +355,7 @@ jobs:
 
       - name: Create Release
         id: create-new-release
+        if: hashFiles('releases/*') != ''
         uses: softprops/action-gh-release@v3
         with:
           files: |
@@ -313,10 +366,13 @@ jobs:
           prerelease: ${{ steps.patch-version.outputs.is_dev }}
 
       - name: Extract artifacts
-        run: find tmp -type f -name "*.whl" | xargs -I {} mv {} dist
+        if: github.event.inputs.wheels == 'true'
+        run: |
+          mkdir -p dist
+          find tmp -type f -name "*.whl" | xargs -I {} mv {} dist
 
       - name: Publish a Python distribution to PyPI.
-        if: github.event.inputs.build-wheels == 'true'
+        if: github.event.inputs.wheels == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
