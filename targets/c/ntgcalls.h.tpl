@@ -59,6 +59,30 @@ typedef enum {
 @end
 } ntg_result;
 
+typedef enum {
+    NTG_LOG_DEBUG = 1,
+    NTG_LOG_INFO = 2,
+    NTG_LOG_WARNING = 4,
+    NTG_LOG_ERROR = 8
+} ntg_log_level;
+
+typedef enum {
+    NTG_LOG_SOURCE_WEBRTC = 1,
+    NTG_LOG_SOURCE_SELF = 2
+} ntg_log_source;
+
+typedef struct ntg_log_message {
+    ntg_log_level level;
+    ntg_log_source source;
+    const char* file;
+    uint32_t line;
+    const char* message;
+} ntg_log_message;
+
+typedef void (*ntg_log_cb)(ntg_log_message message, void* user_data);
+
+NTG_C_EXPORT void ntg_set_log_callback(ntg_log_cb callback, void* user_data);
+
 @for e in enums
 @if e.emit
 typedef enum {

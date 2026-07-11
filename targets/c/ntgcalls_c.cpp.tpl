@@ -519,3 +519,19 @@ extern "C" NTG_C_EXPORT ntg_result ntg_on_@{cb.name|snake}(ntg_instance* handle,
 
 @end
 @end
+
+extern "C" NTG_C_EXPORT void ntg_set_log_callback(ntg_log_cb callback, void* user_data) {
+    if (callback == nullptr) {
+        ntgcalls::utils::LogSink::register_logger([](const ntgcalls::utils::LogSink::LogMessage&) {});
+        return;
+    }
+    ntgcalls::utils::LogSink::register_logger([callback, user_data](const ntgcalls::utils::LogSink::LogMessage& message) {
+        ntg_log_message out;
+        out.level = static_cast<ntg_log_level>(message.level);
+        out.source = static_cast<ntg_log_source>(message.source);
+        out.file = message.file.c_str();
+        out.line = message.line;
+        out.message = message.message.c_str();
+        callback(out, user_data);
+    });
+}
