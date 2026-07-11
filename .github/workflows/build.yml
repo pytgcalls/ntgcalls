@@ -239,7 +239,7 @@ jobs:
     permissions:
       contents: read
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - { os: ubuntu-latest, blacksmith: blacksmith-4vcpu-ubuntu-2404, shared_name: linux-x86_64, cibw: manylinux_, container: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest }
