@@ -26,7 +26,7 @@ def cmake_path():
 def cmake_bin():
     if sys.platform.startswith('linux'):
         return Path(cmake_path(), 'bin', 'cmake')
-    return 'cmake'
+    return shutil.which('cmake') or 'cmake'
 
 
 def install_cmake(cmake_version: str):
