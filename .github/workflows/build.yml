@@ -170,6 +170,7 @@ jobs:
           --set-version=${{ steps.version.outputs.version }}
         shell: bash
         env:
+          NPM_CONFIG_PROVENANCE: ${{ runner.environment == 'github-hosted' }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
@@ -235,6 +236,7 @@ jobs:
           ${{ steps.python.outputs.python-path }} setup.py publish_lib --target=${{ matrix.target }} --phase=final
           --set-version=${{ steps.version.outputs.version }}
         env:
+          NPM_CONFIG_PROVENANCE: ${{ runner.environment == 'github-hosted' }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
