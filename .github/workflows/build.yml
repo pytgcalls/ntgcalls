@@ -47,6 +47,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install Python Requirements
+        run: python -m pip install setuptools
+
       - name: Set matrix
         id: set
         run: |
