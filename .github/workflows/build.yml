@@ -72,6 +72,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
     strategy:
       fail-fast: true
       matrix: ${{ fromJson(needs.setup.outputs.build-matrix) }}
@@ -104,6 +105,11 @@ jobs:
         with:
           node-version: '24'
           registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm for trusted publishing
+        if: contains(matrix.tools, 'node')
+        run: npm install -g npm@latest
+        shell: bash
 
       - name: Set up Java
         if: contains(matrix.tools, 'java')
@@ -164,7 +170,6 @@ jobs:
           --set-version=${{ steps.version.outputs.version }}
         shell: bash
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
@@ -177,6 +182,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.setup.outputs.final-matrix) }}
@@ -198,6 +204,11 @@ jobs:
         with:
           node-version: '24'
           registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm for trusted publishing
+        if: contains(matrix.tools, 'node')
+        run: npm install -g npm@latest
+        shell: bash
 
       - name: Set up Java
         if: contains(matrix.tools, 'java')
@@ -224,7 +235,6 @@ jobs:
           ${{ steps.python.outputs.python-path }} setup.py publish_lib --target=${{ matrix.target }} --phase=final
           --set-version=${{ steps.version.outputs.version }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
