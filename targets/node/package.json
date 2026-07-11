@@ -1,0 +1,35 @@
+{
+  "name": "ntgcalls",
+  "version": "0.0.0",
+  "description": "A Library for creating group calls and P2P calls with WebRTC and MTProto",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "author": "Lauren <business@laky64.me>",
+  "license": "LGPL-3.0-only",
+  "homepage": "https://pytgcalls.github.io/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pytgcalls/ntgcalls.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "build": "cmake-js compile"
+  },
+  "optionalDependencies": {
+    "@ntgcalls/linux-x64": "0.0.0",
+    "@ntgcalls/linux-arm64": "0.0.0",
+    "@ntgcalls/darwin-arm64": "0.0.0",
+    "@ntgcalls/win32-x64": "0.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "cmake-js": "^7",
+    "node-addon-api": "^8"
+  }
+}
