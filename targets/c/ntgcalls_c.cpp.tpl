@@ -535,3 +535,7 @@ extern "C" NTG_C_EXPORT void ntg_set_log_callback(ntg_log_cb callback, void* use
         callback(out, user_data);
     });
 }
+
+extern "C" NTG_C_EXPORT const char* ntg_get_version(void) {
+    return NTG_VERSION;
+}
