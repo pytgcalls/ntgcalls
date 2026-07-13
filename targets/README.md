@@ -41,16 +41,26 @@ generated files, they're auto-`.gitignore`d.
 ```
 targets/<lang>/
   something.tpl          # a template → renders to `something` (drop the .tpl)
-  build.cmake            # REQUIRED: how to compile/link the generated sources
+  build.cfg              # REQUIRED: how setup.py builds/publishes this target
+  build.cmake            # OPTIONAL: how to compile/link generated sources (C/C++ addons)
   finalize.cmake         # OPTIONAL: runs after the link graph is known
   support/               # OPTIONAL: hand-written helper headers (target-level)
 ```
 
 - **`.tpl` → generated file**: `ntgcalls.h.tpl` renders to `ntgcalls.h`.
   Multi-file templates (Java: one class per file) use `@file`/`@endfile` instead.
-- **`build.cmake`** gets `${MODULE_SRC}` (core sources), `${GEN_SOURCES}` (your
-  generated `.cpp`/`.cc`), `${GEN_INCLUDES}` (your `support/` dir),
-  `${TARGET_CODE_DIR}`, `${NTG_LIB_NAME}`. Create the lib target there.
+- **`build.cfg`** is the data-driven descriptor `setup.py` reads (INI-style).
+  `[options]` declares `workdir`, `platforms`, `tools`, `publish`, and artifact
+  names; `[build]` and `[publish]` hold command blocks (`generate`, `compile`,
+  `artifact`, `final`) whose lines are run in order with `{root}`, `{cmake}`,
+  `{target}`, `{version}`, `{toolchain}`, … substituted. This is what feeds the
+  CI matrix — adding a language never edits `build.yml`. See `targets/rust/build.cfg`
+  (pure-codegen crate) and `targets/node/build.cfg` (native addon).
+- **`build.cmake`** (native addons only) gets `${MODULE_SRC}` (core sources),
+  `${GEN_SOURCES}` (your generated `.cpp`/`.cc`), `${GEN_INCLUDES}` (your
+  `support/` dir), `${TARGET_CODE_DIR}`, `${NTG_LIB_NAME}`. Create the lib target
+  there. Non-C++ targets (Rust) skip it and compile via their own toolchain in
+  `build.cfg`.
 - **`support/`** is where genuinely hand-written, language-specific helpers go
   (e.g. C `ntg_dup_string`). Generated code may `#include` them.
 
@@ -80,7 +90,18 @@ name **is** the folder name, `setup.py` auto-discovers `targets/*/`.
 | `base` | strip namespace (`a.b.C` / `a::b::C` → `C`) | — |
 | `slash` | `a.b.C` → `a/b/C` | — |
 | `type` | apply the active `@typemap` | `ntg_CallInfo` |
+| `reserve` | escape language keywords (see below) | — |
 | `conv#MAP#typepath` | apply a `@wrapmap` named MAP | see below |
+
+**`reserve`** guards identifiers that collide with target keywords. Declare the
+word list and a prefix at the top of the template; a value in the list gets the
+prefix, everything else passes through:
+
+```
+@config reserve_prefix = r#
+@config reserved = as break const fn let match move mut type use ...   # Rust keywords
+```
+`@{p.name|snake|reserve}` → `type` becomes `r#type`, `chat_id` stays `chat_id`.
 
 ### Control flow
 
@@ -165,7 +186,7 @@ deduplicated import block. Language-agnostic, you **must** set all three configs
 ```
 @importroot io.github.pytgcalls        # roots to scan (repeatable)
 
-@config import_sep    = .               # namespace separator (. Java, :: Rust)
+@config import_sep    = .               # namespace separator (. Java, :: for Rust-style)
 @config import_line   = import $;       # statement, $ = the FQN
 @config import_anchor = package         # module keyword: imports go AFTER
                                         # 'package X;' and same-module FQNs are
@@ -173,10 +194,12 @@ deduplicated import block. Language-agnostic, you **must** set all three configs
                                         # go to the top of the file).
 ```
 
-- **Java**: `sep = .` · `line = import $;` · `anchor = package` →
+- **Java** (`targets/android/`, the only current user): `sep = .` ·
+  `line = import $;` · `anchor = package` →
   `import io.github.pytgcalls.media.CallInfo;` after `package …;`.
-- **Rust**: `sep = ::` · `line = use $;` · `anchor = -` →
-  `use crate::media::CallInfo;` at the **top** of the file.
+- **`::`-style** (e.g. a Rust target that wanted it): `sep = ::` · `line = use $;`
+  · `anchor = -` → `use crate::media::CallInfo;` at the **top** of the file. (The
+  current `rust/` target instead writes fully-qualified `crate::`/`sys::` paths.)
 
 Works for both `@out` (single-file) and `@file` (multi-file) outputs.
 
@@ -207,6 +230,7 @@ Top-level lists: `classes`, `structs`, `enums`, `excs`, `callbacks`,
 | `m.retelcpp` | C++ element type (vector return) |
 | `m.retmapkey` / `m.retmapval` | schema key/value types (map return) |
 | `m.params` | input params |
+| `m.hasconv` | a param is a struct or vector (needs a value-conversion pass) |
 | `m.args` | async-enriched args (pybind: `.byval`, `.bytes`, `.bytetype`, `.optional`) |
 
 > Platform-specific methods (e.g. desktop-only) aren't a fact, exclude them per
@@ -274,6 +298,13 @@ include(${ROOT_DIR}/cmake/codegen/GenerateBinding.cmake)
 cmake -P gen.cmake        # writes targets/c/*  (no compile)
 ```
 
+This standalone path is fast but skips libwebrtc, so webrtc-derived types (e.g.
+the `VideoRotation` enum) are absent. For the **complete** language-agnostic
+schema — the canonical `ntl-output/schema.ntl` that CI ships as `ntgcalls.tl` —
+run `python setup.py generate`. It does a `-DSCHEMA_ONLY=ON` configure (all
+`Find*` run so webrtc is downloaded) but skips `GenerateBinding` and the C++
+build.
+
 ---
 
 ## 7. Gotchas
@@ -293,5 +324,7 @@ cmake -P gen.cmake        # writes targets/c/*  (no compile)
 ---
 
 Reference targets: **`c/`** (idiomatic C: opaque handle, `ntg_result` codes,
-blocking, typed frees), **`python/`** (pybind11), **`android/`** (JNI + Java).
-Read one alongside this guide, the patterns repeat.
+blocking, typed frees), **`python/`** (pybind11), **`android/`** (JNI + Java),
+**`rust/`** (two crates from one template: `ntgcalls-sys` raw FFI + `ntgcalls`
+safe async wrapper — real enums, `tokio::spawn_blocking`, `|reserve` keyword
+escaping). Read one alongside this guide, the patterns repeat.
