@@ -202,3 +202,23 @@ extern "C" {
     pub fn ntg_on_@{cb.name|snake}(handle: *mut ntg_instance, callback: ntg_@{cb.name|snake}_cb, user_data: *mut c_void) -> ntg_result;
 @end
 }
+
+#[cfg(glibc_resolv_compat)]
+mod glibc_resolv_compat {
+    use std::os::raw::{c_char, c_int, c_uchar, c_void};
+
+    extern "C" {
+        fn dn_expand(msg: *const c_uchar, eom: *const c_uchar, src: *const c_uchar, dst: *mut c_char, dstsiz: c_int) -> c_int;
+        fn res_nquery(statp: *mut c_void, dname: *const c_char, class_: c_int, type_: c_int, answer: *mut c_uchar, anslen: c_int) -> c_int;
+    }
+
+    #[no_mangle]
+    pub unsafe extern "C" fn __dn_expand(msg: *const c_uchar, eom: *const c_uchar, src: *const c_uchar, dst: *mut c_char, dstsiz: c_int) -> c_int {
+        dn_expand(msg, eom, src, dst, dstsiz)
+    }
+
+    #[no_mangle]
+    pub unsafe extern "C" fn __res_nquery(statp: *mut c_void, dname: *const c_char, class_: c_int, type_: c_int, answer: *mut c_uchar, anslen: c_int) -> c_int {
+        res_nquery(statp, dname, class_, type_, answer, anslen)
+    }
+}

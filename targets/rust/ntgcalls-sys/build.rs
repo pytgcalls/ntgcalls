@@ -50,7 +50,35 @@ fn lib_dir() -> PathBuf {
     download_lib(&out)
 }
 
+#[cfg(target_env = "gnu")]
+fn host_glibc_ge_234() -> bool {
+    use std::ffi::CStr;
+    use std::os::raw::c_char;
+    extern "C" {
+        fn gnu_get_libc_version() -> *const c_char;
+    }
+    let raw = unsafe { CStr::from_ptr(gnu_get_libc_version()) };
+    let ver = raw.to_string_lossy();
+    let mut parts = ver.split('.');
+    let major: u32 = parts.next().and_then(|x| x.trim().parse().ok()).unwrap_or(0);
+    let minor: u32 = parts.next().and_then(|x| x.trim().parse().ok()).unwrap_or(0);
+    major > 2 || (major == 2 && minor >= 34)
+}
+
+#[cfg(not(target_env = "gnu"))]
+fn host_glibc_ge_234() -> bool {
+    false
+}
+
 fn main() {
+    println!("cargo:rustc-check-cfg=cfg(glibc_resolv_compat)");
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("linux")
+        && env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("gnu")
+        && host_glibc_ge_234()
+    {
+        println!("cargo:rustc-cfg=glibc_resolv_compat");
+    }
+
     let dir = lib_dir();
     println!("cargo:rerun-if-env-changed=NTGCALLS_LIB_DIR");
     println!("cargo:rerun-if-env-changed=NTGCALLS_DYLIB");
