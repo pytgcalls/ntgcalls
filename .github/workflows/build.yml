@@ -165,16 +165,6 @@ jobs:
           "${{ steps.python.outputs.path }}" setup.py build_lib --target=${{ matrix.target }}
         shell: bash
 
-      - name: Upload node metadata
-        if: matrix.target == 'node' && matrix.node_platform == 'linux' && matrix.node_arch == 'x64'
-        uses: actions/upload-artifact@v7
-        with:
-          name: ntgcalls-node-meta
-          path: |
-            targets/node/index.d.ts
-            targets/node/index.mjs
-          if-no-files-found: error
-
       - name: Upload artifact
         if: matrix.artifact != ''
         uses: actions/upload-artifact@v7
@@ -231,15 +221,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Download node metadata
-        if: contains(matrix.tools, 'node')
-        uses: actions/download-artifact@v8
-        with:
-          name: ntgcalls-node-meta
-          path: .
-
       - name: Download NTL schema
-        if: contains(matrix.tools, 'rust')
         uses: actions/download-artifact@v8
         with:
           name: ntgcalls-schema
