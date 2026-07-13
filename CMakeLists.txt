@@ -4,6 +4,7 @@ include(ExternalProject)
 
 option(STATIC_BUILD "Build static libraries" ON)
 option(USE_LIBCXX   "Use libc++" ON)
+option(SCHEMA_ONLY  "Only generate the language-agnostic NTL schema, skip bindings and build" OFF)
 
 add_custom_target(clean_objects
     COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/CleanObjects.cmake"
@@ -41,7 +42,9 @@ include(cmake/FindOpenH264.cmake)
 include(cmake/FindFFmpeg.cmake)
 include(cmake/GenerateE2ETL.cmake)
 include(cmake/codegen/GenerateSchema.cmake)
-include(cmake/codegen/GenerateBinding.cmake)
+if(NOT SCHEMA_ONLY)
+    include(cmake/codegen/GenerateBinding.cmake)
 
-add_subdirectory(wrtc)
-add_subdirectory(ntgcalls)
+    add_subdirectory(wrtc)
+    add_subdirectory(ntgcalls)
+endif()

@@ -238,7 +238,7 @@ class SharedCommand(Command):
 
 
 class GenerateCommand(Command):
-    description = 'Run the code generator to produce the schema without building'
+    description = 'Generate the language-agnostic NTL schema (SCHEMA_ONLY configure, no build)'
     user_options = []
 
     def initialize_options(self):
@@ -248,9 +248,12 @@ class GenerateCommand(Command):
         pass
 
     def run(self):
+        subst = base_subst()
+        builddir = Path(base_path, 'build_lib', 'schema')
+        builddir.mkdir(parents=True, exist_ok=True)
         subprocess.run(
-            [cmake_bin(), f'-DROOT_DIR={base_path}', f'-DVERSION_NAME={version}', '-P',
-             str(Path(base_path, 'cmake', 'codegen', 'RunCodegen.cmake'))],
+            [subst['cmake'], '-B', str(builddir), '-DSCHEMA_ONLY=ON',
+             f'-DCMAKE_TOOLCHAIN_FILE={subst["toolchain"]}', base_path],
             check=True,
         )
 
