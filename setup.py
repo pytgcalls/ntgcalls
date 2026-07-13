@@ -192,7 +192,7 @@ def select_targets(spec):
         chosen = list(BINDING_TARGETS)
     else:
         chosen = [t.strip() for t in spec.split(',') if t.strip()]
-    return [t for t in chosen if 'platforms' in target_options(t)]
+    return [t for t in chosen if {'platforms', 'publish'} & target_options(t).keys()]
 
 
 class SharedCommand(Command):
