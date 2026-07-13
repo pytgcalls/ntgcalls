@@ -26,6 +26,8 @@ fn download_lib(out: &PathBuf) -> PathBuf {
             .call()
             .unwrap_or_else(|e| panic!("failed to fetch {url}: {e}"))
             .into_body()
+            .into_with_config()
+            .limit(u64::MAX)
             .read_to_vec()
             .expect("read release body");
         let reader = std::io::Cursor::new(bytes);
