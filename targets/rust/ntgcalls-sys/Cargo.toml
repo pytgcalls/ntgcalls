@@ -11,6 +11,7 @@ keywords = ["telegram", "webrtc", "voip", "mtproto", "ffi"]
 categories = ["external-ffi-bindings", "multimedia"]
 links = "ntgcalls"
 build = "build.rs"
+include = ["src/**/*.rs", "build.rs", "Cargo.toml", "README.md"]
 
 [dependencies]
 

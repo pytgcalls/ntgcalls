@@ -9,6 +9,7 @@ homepage = "https://pytgcalls.github.io/"
 readme = "README.md"
 keywords = ["telegram", "webrtc", "voip", "mtproto", "calls"]
 categories = ["multimedia", "api-bindings"]
+include = ["src/**/*.rs", "build.rs", "Cargo.toml", "README.md"]
 
 [dependencies]
 ntgcalls-sys = { version = "0.0.0", path = "../ntgcalls-sys" }
