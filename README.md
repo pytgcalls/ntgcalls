@@ -109,6 +109,9 @@ For developers looking to use NTgCalls with C and C++, we provide C Bindings. Fo
 * <b><a href="https://github.com/vrumger">@vrumger</a> (Mid-level NodeJS Developer):</b>
     * Avrumy has made important fixes and enhancements to the WebRTC component of the library,
       improving its stability and performance.
+* <b><a href="https://github.com/ankit-chaubey">@ankit-chaubey</a> (Rust Developer):</b>
+    * Authored the first Rust bindings for NTgCalls and generously transferred the
+      <a href="https://crates.io/crates/ntgcalls">ntgcalls</a> crate to the official project.
 
 ## Junior Developers
 * <b><a href="https://github.com/TuriOG">@TuriOG</a> (Junior Python Developer):</b>
