@@ -50,12 +50,16 @@ targets/<lang>/
 - **`.tpl` → generated file**: `ntgcalls.h.tpl` renders to `ntgcalls.h`.
   Multi-file templates (Java: one class per file) use `@file`/`@endfile` instead.
 - **`build.cfg`** is the data-driven descriptor `setup.py` reads (INI-style).
-  `[options]` declares `workdir`, `platforms`, `tools`, `publish`, and artifact
-  names; `[build]` and `[publish]` hold command blocks (`generate`, `compile`,
-  `artifact`, `final`) whose lines are run in order with `{root}`, `{cmake}`,
-  `{target}`, `{version}`, `{toolchain}`, … substituted. This is what feeds the
-  CI matrix — adding a language never edits `build.yml`. See `targets/rust/build.cfg`
-  (pure-codegen crate) and `targets/node/build.cfg` (native addon).
+  `[options]` declares `workdir`, `tools`, `publish`, and — for targets that
+  build per platform — `platforms` plus artifact names. `[build]`/`[publish]`
+  hold command blocks whose keys are arbitrary (run in order) with `{root}`,
+  `{cmake}`, `{target}`, `{version}`, `{toolchain}`, … substituted. This feeds
+  the CI matrix — adding a language never edits `build.yml`. A target with
+  `platforms` gets per-platform **build** jobs; a target with only `publish`
+  (no `platforms`) is **final-only** — one publish job, no build, e.g.
+  `targets/rust/build.cfg` (a pure-codegen crate that pulls the prebuilt static
+  lib at consumer build time). See `targets/node/build.cfg` (native addon that
+  builds + publishes) for the full shape.
 - **`build.cmake`** (native addons only) gets `${MODULE_SRC}` (core sources),
   `${GEN_SOURCES}` (your generated `.cpp`/`.cc`), `${GEN_INCLUDES}` (your
   `support/` dir), `${TARGET_CODE_DIR}`, `${NTG_LIB_NAME}`. Create the lib target
@@ -287,23 +291,35 @@ One per distinct map value type: `me.keytl`, `me.valtl` (schema key/value types)
 
 ### Regenerate + eyeball without a full build
 
-```cmake
-# gen.cmake
-set(ROOT_DIR "/path/to/ntgcalls")
-set(BINDING "c")                      # your target folder
-include(${ROOT_DIR}/cmake/codegen/GenerateSchema.cmake)
-include(${ROOT_DIR}/cmake/codegen/GenerateBinding.cmake)
+Two steps: generate the schema once, then render your target off it.
+
 ```
-```
-cmake -P gen.cmake        # writes targets/c/*  (no compile)
+python setup.py generate                       # writes the complete ntl-output/schema.ntl
+
+cmake -DROOT_DIR=<repo> -DBINDING=<lang> \
+      -DNTL_OUTPUT_FILE=<repo>/ntl-output/schema.ntl \
+      -P <repo>/cmake/codegen/GenerateBinding.cmake      # writes targets/<lang>/* (no compile)
 ```
 
-This standalone path is fast but skips libwebrtc, so webrtc-derived types (e.g.
-the `VideoRotation` enum) are absent. For the **complete** language-agnostic
-schema — the canonical `ntl-output/schema.ntl` that CI ships as `ntgcalls.tl` —
-run `python setup.py generate`. It does a `-DSCHEMA_ONLY=ON` configure (all
-`Find*` run so webrtc is downloaded) but skips `GenerateBinding` and the C++
-build.
+`setup.py generate` does a `-DSCHEMA_ONLY=ON` configure (all `Find*` run, so
+libwebrtc is downloaded and webrtc-derived types like the `VideoRotation` enum
+are present) but skips `GenerateBinding` and the C++ build. This is the
+canonical schema CI ships as `ntgcalls.tl` and reuses across every binding, so
+the CMake step above is exactly what each target's `[publish] final` runs.
+
+Quicker throwaway that skips libwebrtc — fine when you don't touch
+webrtc-derived types — is a one-off script **you create** (there is no
+`gen.cmake` in the repo), then run with `cmake -P`:
+
+```cmake
+# gen.cmake  →  cmake -P gen.cmake
+set(ROOT_DIR "/path/to/ntgcalls")
+set(BINDING "c")                      # your target folder
+include(${ROOT_DIR}/cmake/codegen/GenerateSchema.cmake)   # standalone, no webrtc
+include(${ROOT_DIR}/cmake/codegen/GenerateBinding.cmake)
+```
+
+Its schema is **incomplete** (no `VideoRotation`), so prefer `setup.py generate`.
 
 ---
 
@@ -320,6 +336,12 @@ build.
   `ntgcalls/` or `cmake/codegen/`. If you need a new *neutral* fact (a type
   category, an ordering), add it to `NTLParser`, but keep the language part in the
   template.
+- **First publish of a brand-new crate/package can't use OIDC.** crates.io trusted
+  publishing only mints a token for a crate that already exists. Bootstrap a new
+  crate once by hand (`cargo login` + `cargo publish -p <crate>` to claim the name
+  and become owner), then add the GitHub trusted publisher in its crates.io
+  settings; CI OIDC handles every publish after. Publish dependency crates before
+  their dependents (`ntgcalls-sys` before `ntgcalls`).
 
 ---
 
