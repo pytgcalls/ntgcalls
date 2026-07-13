@@ -237,6 +237,15 @@ jobs:
           distribution: 'temurin'
           server-id: central
 
+      - name: Set up Rust
+        if: contains(matrix.tools, 'rust')
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Authenticate to crates.io
+        id: crates-auth
+        if: contains(matrix.tools, 'rust')
+        uses: rust-lang/crates-io-auth-action@v1
+
       - name: Install Python Requirements
         run: |
           "${{ steps.python.outputs.python-path }}" -m pip install setuptools
@@ -255,6 +264,7 @@ jobs:
           --set-version=${{ steps.version.outputs.version }}
         env:
           NPM_CONFIG_PROVENANCE: ${{ runner.environment == 'github-hosted' }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-auth.outputs.token }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}

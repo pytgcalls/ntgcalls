@@ -1,0 +1,6 @@
+/target
+**/target
+Cargo.lock
+ntgcalls/README.md
+ntgcalls-sys/README.md
+ntgcalls-sys/src/lib.rs
