@@ -253,6 +253,7 @@ class GenerateCommand(Command):
         builddir.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [subst['cmake'], '-B', str(builddir), '-DSCHEMA_ONLY=ON',
+             f'-DPython_EXECUTABLE={subst["python"]}',
              f'-DCMAKE_TOOLCHAIN_FILE={subst["toolchain"]}', base_path],
             check=True,
         )
