@@ -50,13 +50,13 @@ targets/<lang>/
 - **`.tpl` → generated file**: `ntgcalls.h.tpl` renders to `ntgcalls.h`.
   Multi-file templates (Java: one class per file) use `@file`/`@endfile` instead.
 - **`build.cfg`** is the data-driven descriptor `setup.py` reads (INI-style).
-  `[options]` declares `workdir`, `tools`, `publish`, and — for targets that
-  build per platform — `platforms` plus artifact names. `[build]`/`[publish]`
+  `[options]` declares `workdir`, `tools`, `publish`, and, for targets that
+  build per platform, `platforms` plus artifact names. `[build]`/`[publish]`
   hold command blocks whose keys are arbitrary (run in order) with `{root}`,
   `{cmake}`, `{target}`, `{version}`, `{toolchain}`, … substituted. This feeds
-  the CI matrix — adding a language never edits `build.yml`. A target with
+  the CI matrix, so adding a language never edits `build.yml`. A target with
   `platforms` gets per-platform **build** jobs; a target with only `publish`
-  (no `platforms`) is **final-only** — one publish job, no build, e.g.
+  (no `platforms`) is **final-only**: one publish job, no build, e.g.
   `targets/rust/build.cfg` (a pure-codegen crate that pulls the prebuilt static
   lib at consumer build time). See `targets/node/build.cfg` (native addon that
   builds + publishes) for the full shape.
@@ -307,8 +307,8 @@ are present) but skips `GenerateBinding` and the C++ build. This is the
 canonical schema CI ships as `ntgcalls.tl` and reuses across every binding, so
 the CMake step above is exactly what each target's `[publish] final` runs.
 
-Quicker throwaway that skips libwebrtc — fine when you don't touch
-webrtc-derived types — is a one-off script **you create** (there is no
+Quicker throwaway that skips libwebrtc (fine when you don't touch
+webrtc-derived types) is a one-off script **you create** (there is no
 `gen.cmake` in the repo), then run with `cmake -P`:
 
 ```cmake
@@ -342,11 +342,35 @@ Its schema is **incomplete** (no `VideoRotation`), so prefer `setup.py generate`
   and become owner), then add the GitHub trusted publisher in its crates.io
   settings; CI OIDC handles every publish after. Publish dependency crates before
   their dependents (`ntgcalls-sys` before `ntgcalls`).
+- **Static-linking the lib into an executable needs glibc resolver forwards.** The
+  prebuilt `libntgcalls.a` bundles GLib, whose resolver objects reference the
+  internal `__dn_expand`/`__res_nquery`. glibc ≥ 2.34 demoted those to compat-only
+  (non-default) versions: a **shared** consumer defers them to runtime and is fine,
+  but a target that links the archive **statically into an executable** must resolve
+  them at link time and ld won't bind them → `undefined reference`. Define the
+  internal names forwarding to the public, default-versioned `dn_expand`/`res_nquery`,
+  gated to glibc ≥ 2.34 (below that the public names don't exist yet and GLib links
+  directly, so the forwards must stay off):
+
+  ```c
+  /* resolv_compat.h: link into the final executable */
+  #if defined(__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 34))
+  #include <resolv.h>
+  int __dn_expand(const unsigned char *msg, const unsigned char *eom,
+                  const unsigned char *src, char *dst, int dstsiz) {
+      return dn_expand(msg, eom, src, dst, dstsiz);
+  }
+  int __res_nquery(res_state statp, const char *dname, int class, int type,
+                   unsigned char *answer, int anslen) {
+      return res_nquery(statp, dname, class, type, answer, anslen);
+  }
+  #endif
+  ```
 
 ---
 
 Reference targets: **`c/`** (idiomatic C: opaque handle, `ntg_result` codes,
 blocking, typed frees), **`python/`** (pybind11), **`android/`** (JNI + Java),
-**`rust/`** (two crates from one template: `ntgcalls-sys` raw FFI + `ntgcalls`
-safe async wrapper — real enums, `tokio::spawn_blocking`, `|reserve` keyword
+**`rust/`** (two crates from one template: `ntgcalls-sys` raw FFI plus `ntgcalls`
+safe async wrapper with real enums, `tokio::spawn_blocking`, `|reserve` keyword
 escaping). Read one alongside this guide, the patterns repeat.
