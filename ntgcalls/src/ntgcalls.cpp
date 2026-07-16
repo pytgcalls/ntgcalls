@@ -152,8 +152,8 @@ namespace ntgcalls {
         return safe_call<instances::P2PCall>(safe_connection(user_id))->init_exchange(dh_config, ga_hash);
     }
 
-    p2p::AuthParams NTgCalls::exchange_keys(const int64_t user_id, const bytes::binary &ga_or_gb, const int64_t fingerprint) {
-        return safe_call<instances::P2PCall>(safe_connection(user_id))->exchange_keys(ga_or_gb, fingerprint);
+    p2p::AuthParams NTgCalls::exchange_keys(const int64_t user_id, const bytes::binary &g_a_or_b, const int64_t fingerprint) {
+        return safe_call<instances::P2PCall>(safe_connection(user_id))->exchange_keys(g_a_or_b, fingerprint);
     }
 
     void NTgCalls::skip_exchange(const int64_t user_id, const bytes::binary &encryption_key, const bool is_outgoing) {

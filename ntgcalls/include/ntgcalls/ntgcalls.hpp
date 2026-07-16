@@ -84,7 +84,7 @@ namespace ntgcalls {
 
         [[ntg::async]] bytes::binary init_exchange(int64_t user_id, const p2p::DhConfig& dh_config, const std::optional<bytes::binary> &ga_hash);
 
-        [[ntg::async]] p2p::AuthParams exchange_keys(int64_t user_id, const bytes::binary &ga_or_gb, int64_t fingerprint);
+        [[ntg::async]] p2p::AuthParams exchange_keys(int64_t user_id, const bytes::binary &g_a_or_b, int64_t fingerprint);
 
         [[ntg::async]] void skip_exchange(int64_t user_id, const bytes::binary &encryption_key, bool is_outgoing);
 

@@ -18,7 +18,7 @@ namespace ntgcalls::instances {
         bytes::binary skip_exchange_key_;
         bool skip_is_outgoing_ = false;
         std::string fingerprint_emojis_;
-        std::optional<bytes::binary> ga_hash_, ga_or_gb_;
+        std::optional<bytes::binary> ga_hash_, g_a_or_b_;
         std::atomic_bool handshake_completed_ = false;
         std::shared_ptr<signaling::SignalingInterface> signaling_;
         wrtc::utils::synchronized_callback<void(bytes::binary)> on_emit_data_;
@@ -45,7 +45,7 @@ namespace ntgcalls::instances {
 
         bytes::binary init_exchange(const p2p::DhConfig &dh_config, const std::optional<bytes::binary> &ga_hash);
 
-        p2p::AuthParams exchange_keys(const bytes::binary &ga_or_gb, int64_t fingerprint);
+        p2p::AuthParams exchange_keys(const bytes::binary &g_a_or_b, int64_t fingerprint);
 
         void skip_exchange(bytes::binary encryption_key, bool is_outgoing);
 

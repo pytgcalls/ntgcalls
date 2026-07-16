@@ -34,7 +34,7 @@ namespace ntgcalls::instances {
     }
 
     bytes::binary P2PCall::init_exchange(const p2p::DhConfig& dh_config, const std::optional<bytes::binary>& ga_hash) {
-        if (ga_or_gb_) {
+        if (g_a_or_b_) {
             RTC_LOG(LS_ERROR) << "Exchange already initialized";
             throw ConnectionError("Exchange already initialized");
         }
@@ -48,17 +48,17 @@ namespace ntgcalls::instances {
         if (ga_hash) {
             ga_hash_ = ga_hash;
         }
-        ga_or_gb_ = std::move(first.modexp);
+        g_a_or_b_ = std::move(first.modexp);
         RTC_LOG(LS_INFO) << "P2P call initialized";
-        return ga_hash ? ga_or_gb_.value() : openssl::Sha256::digest(ga_or_gb_.value());
+        return ga_hash ? g_a_or_b_.value() : openssl::Sha256::digest(g_a_or_b_.value());
     }
 
-    p2p::AuthParams P2PCall::exchange_keys(const bytes::binary &ga_or_gb, const int64_t fingerprint) {
+    p2p::AuthParams P2PCall::exchange_keys(const bytes::binary &g_a_or_b, const int64_t fingerprint) {
         if (connection_) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        if (!ga_or_gb_) {
+        if (!g_a_or_b_) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionNotFound("Connection not initialized");
         }
@@ -71,13 +71,13 @@ namespace ntgcalls::instances {
                 RTC_LOG(LS_ERROR) << "Fingerprint not found";
                 throw InvalidParams("Fingerprint not found");
             }
-            if (ga_hash_ != openssl::Sha256::digest(ga_or_gb)) {
+            if (ga_hash_ != openssl::Sha256::digest(g_a_or_b)) {
                 RTC_LOG(LS_ERROR) << "Hash mismatch";
                 throw CryptoError("Hash mismatch");
             }
         }
         const auto computed_auth_key = signaling::crypto::AuthKey::create_auth_key(
-            ga_or_gb,
+            g_a_or_b,
             random_power_,
             prime_
         );
@@ -95,7 +95,7 @@ namespace ntgcalls::instances {
         key_ = auth_key;
         RTC_LOG(LS_INFO) << "Key exchanged, fingerprint: " << computed_fingerprint;
 
-        const auto& ga = ga_hash_ ? ga_or_gb : ga_or_gb_.value();
+        const auto& ga = ga_hash_ ? g_a_or_b : g_a_or_b_.value();
         bytes::binary fingerprint_data = computed_auth_key;
         fingerprint_data.insert(fingerprint_data.end(), ga.begin(), ga.end());
         const auto digest = openssl::Sha256::digest(bytes::view(fingerprint_data));
@@ -103,7 +103,7 @@ namespace ntgcalls::instances {
         (void) update_emojis_callback_(fingerprint_emojis_);
         return p2p::AuthParams{
             static_cast<int64_t>(computed_fingerprint),
-            ga_or_gb_.value(),
+            g_a_or_b_.value(),
         };
     }
 
@@ -129,7 +129,7 @@ namespace ntgcalls::instances {
         }
         auto encryption_key = std::make_shared<std::array<uint8_t, signaling::crypto::EncryptionKey::kSize>>();
         if (skip_exchange_key_.empty()) {
-            if (!ga_or_gb_ || !key_) {
+            if (!g_a_or_b_ || !key_) {
                 RTC_LOG(LS_ERROR) << "Connection not initialized";
                 throw ConnectionNotFound("Connection not initialized");
             }
@@ -443,7 +443,7 @@ namespace ntgcalls::instances {
 
     CallInterface::Type P2PCall::type() const {
         if (skip_exchange_key_.empty()) {
-            if (ga_or_gb_) {
+            if (g_a_or_b_) {
                 if (ga_hash_) {
                     return Type::Incoming;
                 }

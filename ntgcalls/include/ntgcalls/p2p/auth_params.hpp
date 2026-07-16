@@ -8,7 +8,7 @@
 namespace ntgcalls::p2p {
     struct AuthParams {
         int64_t key_fingerprint = 0;
-        bytes::binary ga_or_gb;
+        bytes::binary g_a_or_b;
     };
 } // ntgcalls
 
