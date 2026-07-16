@@ -168,7 +168,11 @@ extern "C" {
 @if p.vector
         @{p.name|snake|reserve}: *const @{p.type|type|snake}, @{p.name|snake|reserve}_len: usize,
 @else
+@if p.optional
+        @{p.name|snake|reserve}: *const @{p.type|type|snake},
+@else
         @{p.name|snake|reserve}: @{p.type|type|snake},
+@end
 @end
 @end
 @end

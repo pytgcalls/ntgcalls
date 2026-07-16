@@ -254,10 +254,18 @@ impl NTgCalls {
 @end
 @for p in m.params
 @if p.string
+@if p.optional
+        @{p.name|snake|reserve}: Option<&str>,
+@else
         @{p.name|snake|reserve}: &str,
+@end
 @else
 @if p.bytes
+@if p.optional
+        @{p.name|snake|reserve}: Option<&[u8]>,
+@else
         @{p.name|snake|reserve}: &[u8],
+@end
 @else
 @if p.vector
         @{p.name|snake|reserve}: &[@{p.type|type}],
@@ -291,10 +299,18 @@ impl NTgCalls {
 @if m.async
 @for p in m.params
 @if p.string
+@if p.optional
+        let @{p.name|snake|reserve} = @{p.name|snake|reserve}.map(|s| s.to_owned());
+@else
         let @{p.name|snake|reserve} = @{p.name|snake|reserve}.to_owned();
+@end
 @else
 @if p.bytes
+@if p.optional
+        let @{p.name|snake|reserve} = @{p.name|snake|reserve}.map(|b| b.to_vec());
+@else
         let @{p.name|snake|reserve} = @{p.name|snake|reserve}.to_vec();
+@end
 @else
 @if p.vector
         let @{p.name|snake|reserve} = @{p.name|snake|reserve}.to_vec();
@@ -321,7 +337,24 @@ impl NTgCalls {
 @end
 @for p in m.params
 @if p.string
+@if p.optional
+        let @{p.name|snake|reserve}_c = @{p.name|snake|reserve}.map(|s| CString::new(s).unwrap());
+        let @{p.name|snake|reserve}_ptr = @{p.name|snake|reserve}_c.as_ref().map_or(std::ptr::null(), |c| c.as_ptr());
+@else
         let @{p.name|snake|reserve}_c = CString::new(@{p.name|snake|reserve}).unwrap();
+        let @{p.name|snake|reserve}_ptr = @{p.name|snake|reserve}_c.as_ptr();
+@end
+@end
+@end
+@for p in m.params
+@if p.bytes
+@if p.optional
+        let @{p.name|snake|reserve}_ptr = @{p.name|snake|reserve}.as_ref().map_or(std::ptr::null(), |b| b.as_ptr());
+        let @{p.name|snake|reserve}_len = @{p.name|snake|reserve}.as_ref().map_or(0, |b| b.len());
+@else
+        let @{p.name|snake|reserve}_ptr = @{p.name|snake|reserve}.as_ptr();
+        let @{p.name|snake|reserve}_len = @{p.name|snake|reserve}.len();
+@end
 @end
 @end
 @for p in m.params
@@ -343,10 +376,10 @@ impl NTgCalls {
 @end
 @for p in m.params
 @if p.string
-                @{p.name|snake|reserve}_c.as_ptr(),
+                @{p.name|snake|reserve}_ptr,
 @else
 @if p.bytes
-                @{p.name|snake|reserve}.as_ptr(), @{p.name|snake|reserve}.len(),
+                @{p.name|snake|reserve}_ptr, @{p.name|snake|reserve}_len,
 @else
 @if p.vector
                 @{p.name|snake|reserve}_c.as_ptr(), @{p.name|snake|reserve}_c.len(),
@@ -378,10 +411,10 @@ impl NTgCalls {
 @end
 @for p in m.params
 @if p.string
-                @{p.name|snake|reserve}_c.as_ptr(),
+                @{p.name|snake|reserve}_ptr,
 @else
 @if p.bytes
-                @{p.name|snake|reserve}.as_ptr(), @{p.name|snake|reserve}.len(),
+                @{p.name|snake|reserve}_ptr, @{p.name|snake|reserve}_len,
 @else
 @if p.vector
                 @{p.name|snake|reserve}_c.as_ptr(), @{p.name|snake|reserve}_c.len(),
@@ -415,10 +448,10 @@ impl NTgCalls {
 @end
 @for p in m.params
 @if p.string
-                @{p.name|snake|reserve}_c.as_ptr(),
+                @{p.name|snake|reserve}_ptr,
 @else
 @if p.bytes
-                @{p.name|snake|reserve}.as_ptr(), @{p.name|snake|reserve}.len(),
+                @{p.name|snake|reserve}_ptr, @{p.name|snake|reserve}_len,
 @else
 @if p.vector
                 @{p.name|snake|reserve}_c.as_ptr(), @{p.name|snake|reserve}_c.len(),
@@ -454,10 +487,10 @@ impl NTgCalls {
 @end
 @for p in m.params
 @if p.string
-                @{p.name|snake|reserve}_c.as_ptr(),
+                @{p.name|snake|reserve}_ptr,
 @else
 @if p.bytes
-                @{p.name|snake|reserve}.as_ptr(), @{p.name|snake|reserve}.len(),
+                @{p.name|snake|reserve}_ptr, @{p.name|snake|reserve}_len,
 @else
 @if p.vector
                 @{p.name|snake|reserve}_c.as_ptr(), @{p.name|snake|reserve}_c.len(),
@@ -502,10 +535,10 @@ impl NTgCalls {
 @end
 @for p in m.params
 @if p.string
-                @{p.name|snake|reserve}_c.as_ptr(),
+                @{p.name|snake|reserve}_ptr,
 @else
 @if p.bytes
-                @{p.name|snake|reserve}.as_ptr(), @{p.name|snake|reserve}.len(),
+                @{p.name|snake|reserve}_ptr, @{p.name|snake|reserve}_len,
 @else
 @if p.vector
                 @{p.name|snake|reserve}_c.as_ptr(), @{p.name|snake|reserve}_c.len(),
@@ -537,10 +570,10 @@ impl NTgCalls {
 @end
 @for p in m.params
 @if p.string
-                @{p.name|snake|reserve}_c.as_ptr(),
+                @{p.name|snake|reserve}_ptr,
 @else
 @if p.bytes
-                @{p.name|snake|reserve}.as_ptr(), @{p.name|snake|reserve}.len(),
+                @{p.name|snake|reserve}_ptr, @{p.name|snake|reserve}_len,
 @else
 @if p.vector
                 @{p.name|snake|reserve}_c.as_ptr(), @{p.name|snake|reserve}_c.len(),

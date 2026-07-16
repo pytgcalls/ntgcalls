@@ -435,18 +435,38 @@ extern "C" NTG_C_EXPORT ntg_result ntg_@{m.name|snake}(
 @end
 @for p in m.params
 @if p.bytes
+@if p.optional
+            @{p.name|snake} ? std::optional<bytes::binary>(ntg_to_cpp_bytes(@{p.name|snake}, @{p.name|snake}_len)) : std::nullopt@{p.sep}
+@else
             ntg_to_cpp_bytes(@{p.name|snake}, @{p.name|snake}_len)@{p.sep}
+@end
 @else
 @if p.string
+@if p.optional
+            @{p.name|snake} ? std::optional<std::string>(@{p.name|snake}) : std::nullopt@{p.sep}
+@else
             @{p.name|snake}@{p.sep}
+@end
 @else
 @if p.vector
+@if p.optional
+            @{p.name|snake} ? std::optional<std::vector<@{p.elcpp}>>(ntg_from_c_vector<@{p.elcpp}>(@{p.name|snake}, @{p.name|snake}_len)) : std::nullopt@{p.sep}
+@else
             ntg_from_c_vector<@{p.elcpp}>(@{p.name|snake}, @{p.name|snake}_len)@{p.sep}
+@end
 @else
 @if p.scalar
+@if p.optional
+            @{p.name|snake} ? std::optional<@{p.cpptype}>(*@{p.name|snake}) : std::nullopt@{p.sep}
+@else
             @{p.name|snake}@{p.sep}
+@end
+@else
+@if p.optional
+            @{p.name|snake} ? std::optional<@{p.cpptype}>(from_c_@{p.type|base}(*@{p.name|snake})) : std::nullopt@{p.sep}
 @else
             from_c_@{p.type|base}(@{p.name|snake})@{p.sep}
+@end
 @end
 @end
 @end
@@ -461,18 +481,38 @@ extern "C" NTG_C_EXPORT ntg_result ntg_@{m.name|snake}(
 @end
 @for p in m.params
 @if p.bytes
+@if p.optional
+            @{p.name|snake} ? std::optional<bytes::binary>(ntg_to_cpp_bytes(@{p.name|snake}, @{p.name|snake}_len)) : std::nullopt@{p.sep}
+@else
             ntg_to_cpp_bytes(@{p.name|snake}, @{p.name|snake}_len)@{p.sep}
+@end
 @else
 @if p.string
+@if p.optional
+            @{p.name|snake} ? std::optional<std::string>(@{p.name|snake}) : std::nullopt@{p.sep}
+@else
             @{p.name|snake}@{p.sep}
+@end
 @else
 @if p.vector
+@if p.optional
+            @{p.name|snake} ? std::optional<std::vector<@{p.elcpp}>>(ntg_from_c_vector<@{p.elcpp}>(@{p.name|snake}, @{p.name|snake}_len)) : std::nullopt@{p.sep}
+@else
             ntg_from_c_vector<@{p.elcpp}>(@{p.name|snake}, @{p.name|snake}_len)@{p.sep}
+@end
 @else
 @if p.scalar
+@if p.optional
+            @{p.name|snake} ? std::optional<@{p.cpptype}>(*@{p.name|snake}) : std::nullopt@{p.sep}
+@else
             @{p.name|snake}@{p.sep}
+@end
+@else
+@if p.optional
+            @{p.name|snake} ? std::optional<@{p.cpptype}>(from_c_@{p.type|base}(*@{p.name|snake})) : std::nullopt@{p.sep}
 @else
             from_c_@{p.type|base}(@{p.name|snake})@{p.sep}
+@end
 @end
 @end
 @end

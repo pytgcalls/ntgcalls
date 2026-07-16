@@ -176,7 +176,11 @@ NTG_C_EXPORT ntg_result ntg_@{m.name|snake}(
 @if p.vector
     const @{p.type|type|snake}* @{p.name|snake}, size_t @{p.name|snake}_len@{p.sep}
 @else
+@if p.optional
+    const @{p.type|type|snake}* @{p.name|snake}@{p.sep}
+@else
     @{p.type|type|snake} @{p.name|snake}@{p.sep}
+@end
 @end
 @end
 @end
@@ -192,7 +196,11 @@ NTG_C_EXPORT ntg_result ntg_@{m.name|snake}(
 @if p.vector
     const @{p.type|type|snake}* @{p.name|snake}, size_t @{p.name|snake}_len,
 @else
+@if p.optional
+    const @{p.type|type|snake}* @{p.name|snake},
+@else
     @{p.type|type|snake} @{p.name|snake},
+@end
 @end
 @end
 @end

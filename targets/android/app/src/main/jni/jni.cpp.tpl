@@ -191,7 +191,11 @@ JNIEXPORT @{m.ret|type} JNICALL Java_io_github_pytgcalls_@{c.name}_@{m.name}(
 @if p.vector
                 parseList<@{p.elcpp}>(env, @{p.name|camel})@{p.sep}
 @else
+@if p.optional
+                @{p.name|camel} ? std::optional<@{p.cpptype}>(@{p.name|camel|conv#argconv#p.type}) : std::nullopt@{p.sep}
+@else
                 @{p.name|camel|conv#argconv#p.type}@{p.sep}
+@end
 @end
 @end
 @if m.isvoid
