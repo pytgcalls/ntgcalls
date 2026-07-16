@@ -19,9 +19,9 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
         w.def(py::init<>());
 @for m in c.methods
 @if m.static
-        w.def_static("@{m.name|snake}", &@{c.cpp}::@{m.name|snake}
+        w.def_static("@{m.name|snake}", &@{c.cpp}::@{m.name|snake}@{m.argsep}
 @for p in m.params
-            , py::arg("@{p.name|snake}")
+            py::arg("@{p.name|snake}")@{p.sep}
 @end
         );
 @else
@@ -50,15 +50,15 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
 @end
                 );
             });
-        }
+        }@{m.argsep}
 @for p in m.params
-            , py::arg("@{p.name|snake}")
+            py::arg("@{p.name|snake}")@{p.sep}
 @end
         );
 @else
-        w.def("@{m.name|snake}", &@{c.cpp}::@{m.name|snake}
+        w.def("@{m.name|snake}", &@{c.cpp}::@{m.name|snake}@{m.argsep}
 @for p in m.params
-            , py::arg("@{p.name|snake}")
+            py::arg("@{p.name|snake}")@{p.sep}
 @end
         );
 @end
