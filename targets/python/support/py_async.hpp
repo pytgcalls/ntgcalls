@@ -5,15 +5,18 @@
 #include <algorithm>
 #include <thread>
 #include <utility>
+#include <pybind11/gil_safe_call_once.h>
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 
 namespace ntgcalls::support {
     inline py::object async_executor() {
-        const static py::object kExecutor = py::module_::import("concurrent.futures")
-            .attr("ThreadPoolExecutor")(std::min(32u, std::thread::hardware_concurrency()));
-        return kExecutor;
+        PYBIND11_CONSTINIT static py::gil_safe_call_once_and_store<py::object> storage;
+        return storage.call_once_and_store_result([] {
+            return py::module_::import("concurrent.futures")
+                .attr("ThreadPoolExecutor")(std::min(32u, std::thread::hardware_concurrency()));
+        }).get_stored();
     }
 
     template <typename F>
