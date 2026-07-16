@@ -85,6 +85,8 @@ NTG_C_EXPORT void ntg_set_log_callback(ntg_log_cb callback, void* user_data);
 
 NTG_C_EXPORT const char* ntg_get_version(void);
 
+NTG_C_EXPORT const char* ntg_last_error(void);
+
 @for e in enums
 @if e.emit
 typedef enum {

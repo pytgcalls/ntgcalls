@@ -70,16 +70,26 @@ impl crate::util::ToC for @{e.name} {
 use ntgcalls_sys as sys;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Error {
+pub enum ErrorKind {
 @for e in excs
     @{e.name|pascal},
 @end
     Unknown(i32),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Error {
+    pub kind: ErrorKind,
+    pub message: String,
+}
+
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
+        if self.message.is_empty() {
+            write!(f, "{:?}", self.kind)
+        } else {
+            write!(f, "{:?}: {}", self.kind, self.message)
+        }
     }
 }
 
@@ -88,13 +98,17 @@ impl std::error::Error for Error {}
 pub type Result<T> = std::result::Result<T, Error>;
 
 pub(crate) fn check(code: sys::ntg_result) -> Result<()> {
-    match code {
-        sys::NTG_OK => Ok(()),
+    let kind = match code {
+        sys::NTG_OK => return Ok(()),
 @for e in excs
-        sys::NTG_ERR_@{e.name|snake|upper} => Err(Error::@{e.name|pascal}),
+        sys::NTG_ERR_@{e.name|snake|upper} => ErrorKind::@{e.name|pascal},
 @end
-        other => Err(Error::Unknown(other)),
-    }
+        other => ErrorKind::Unknown(other),
+    };
+    Err(Error {
+        kind,
+        message: crate::util::cstr(unsafe { sys::ntg_last_error() }),
+    })
 }
 @endfile
 @file @{config.self_dir}/structs.rs

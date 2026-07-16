@@ -23,7 +23,9 @@
 @out @{config.self_dir}/ntgcalls_c.cpp
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <map>
+#include <string>
 
 #include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
@@ -31,19 +33,22 @@
 #include "ntgcalls.h"
 #include "support/ntg_support.hpp"
 
+static thread_local std::string ntg_last_error_message;
+
 #define HANDLE_EXCEPTIONS \
 @for e in excs
 @if e.parent
-    catch (const @{e.cpp}&) { return NTG_ERR_@{e.name|snake|upper}; } \
+    catch (const @{e.cpp}& _exc) { ntg_last_error_message = _exc.what(); return NTG_ERR_@{e.name|snake|upper}; } \
 @end
 @end
 @for e in excs
 @if e.parent
 @else
-    catch (const @{e.cpp}&) { return NTG_ERR_@{e.name|snake|upper}; } \
+    catch (const @{e.cpp}& _exc) { ntg_last_error_message = _exc.what(); return NTG_ERR_@{e.name|snake|upper}; } \
 @end
 @end
-    catch (...) { return NTG_ERR_UNKNOWN; }
+    catch (const std::exception& _exc) { ntg_last_error_message = _exc.what(); return NTG_ERR_UNKNOWN; } \
+    catch (...) { ntg_last_error_message = "unknown error"; return NTG_ERR_UNKNOWN; }
 
 struct ntg_instance {
     ntgcalls::NTgCalls* impl;
@@ -578,4 +583,8 @@ extern "C" NTG_C_EXPORT void ntg_set_log_callback(ntg_log_cb callback, void* use
 
 extern "C" NTG_C_EXPORT const char* ntg_get_version(void) {
     return NTG_VERSION;
+}
+
+extern "C" NTG_C_EXPORT const char* ntg_last_error(void) {
+    return ntg_last_error_message.c_str();
 }

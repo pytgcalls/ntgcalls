@@ -137,6 +137,7 @@ pub type ntg_@{cb.name|snake}_cb = Option<unsafe extern "C" fn(
 @end
 extern "C" {
     pub fn ntg_get_version() -> *const c_char;
+    pub fn ntg_last_error() -> *const c_char;
     pub fn ntg_set_log_callback(callback: ntg_log_cb, user_data: *mut c_void);
     pub fn ntg_instance_create() -> *mut ntg_instance;
     pub fn ntg_instance_destroy(handle: *mut ntg_instance);

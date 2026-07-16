@@ -6,7 +6,7 @@ mod structs;
 mod util;
 
 pub use enums::*;
-pub use error::{Error, Result};
+pub use error::{Error, ErrorKind, Result};
 pub use instance::NTgCalls;
 pub use log::init_logging;
 pub use structs::*;
