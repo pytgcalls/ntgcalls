@@ -28,18 +28,10 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
 @if m.async
         w.def("@{m.name|snake}", [](@{c.cpp}& self@{m.argsep}
 @for a in m.args
-@if a.bytes
-@if a.optional
-            const std::optional<py::bytes>& @{a.name}@{a.sep}
-@else
-            const py::bytes& @{a.name}@{a.sep}
-@end
-@else
 @if a.byval
             @{a.cpptype} @{a.name}@{a.sep}
 @else
             const @{a.cpptype}& @{a.name}@{a.sep}
-@end
 @end
 @end
         ) {
@@ -48,27 +40,15 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
                 @{a.name}@{a.sep}
 @end
             ] {
-@if m.retbytes
-                return to_bytes(self.@{m.name|snake}(
-@else
 @if m.isvoid
                 self.@{m.name|snake}(
 @else
                 return self.@{m.name|snake}(
 @end
-@end
 @for a in m.args
-@if a.bytes
-                    to_c_bytes<@{a.bytetype}>(@{a.name})@{a.sep}
-@else
                     @{a.name}@{a.sep}
 @end
-@end
-@if m.retbytes
-                ));
-@else
                 );
-@end
             });
         }
 @for p in m.params
@@ -102,39 +82,6 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
         w.def(py::init<>());
 @end
 @if s.ctorargs
-@ifany a in s.ctorargs : wrap
-        w.def(py::init([](
-@for a in s.ctorargs
-@if a.bytes
-@if a.optional
-            const std::optional<py::bytes>& @{a.name}@{a.sep}
-@else
-            const py::bytes& @{a.name}@{a.sep}
-@end
-@else
-@if a.byval
-            const @{a.cpptype} @{a.name}@{a.sep}
-@else
-            const @{a.cpptype}& @{a.name}@{a.sep}
-@end
-@end
-@end
-        ) {
-            return @{s.cpp}(
-@for a in s.ctorargs
-@if a.bytes
-                to_c_bytes<@{a.bytetype}>(@{a.name})@{a.sep}
-@else
-                @{a.name}@{a.sep}
-@end
-@end
-            );
-        }),
-@for a in s.ctorargs
-            py::arg("@{a.name|snake}")@{a.sep}
-@end
-        );
-@else
         w.def(py::init<
 @for a in s.ctorargs
             @{a.cpptype}@{a.sep}
@@ -145,16 +92,11 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
 @end
         );
 @end
-@end
 @for f in s.fields
-@if f.bytes
-        w.def_property_readonly("@{f.name|snake}", [](const @{s.cpp}& self) { return to_bytes(self.@{f.cpp}); });
-@else
 @if f.intenum
         w.def_property("@{f.name|snake}", [](const @{s.cpp}& self) { return static_cast<int>(self.@{f.cpp}); }, [](@{s.cpp}& self, const int v) { self.@{f.cpp} = static_cast<@{f.intenum}>(v); });
 @else
         w.def_readwrite("@{f.name|snake}", &@{s.cpp}::@{f.cpp});
-@end
 @end
 @end
     }

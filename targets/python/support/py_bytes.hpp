@@ -2,49 +2,31 @@
 // Python binding support -- generated bindings only, not part of the core lib.
 //
 #pragma once
-#include <optional>
-#include <string>
-#include <vector>
 #include <pybind11/pybind11.h>
 #include <wrtc/utils/binary.hpp>
 
 namespace py = pybind11;
 
-namespace ntgcalls::support {
-    template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::binary>>>
-    T to_c_bytes(const py::bytes& p) {
-        const std::string s = p;
-        return T(s.begin(), s.end());
-    }
+template <>
+class pybind11::detail::type_caster<bytes::binary> {
+    PYBIND11_TYPE_CASTER(::bytes::binary, const_name("bytes"));
 
-    template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::binary>>>
-    std::optional<T> to_c_bytes(const std::optional<py::bytes>& p) {
-        if (!p.has_value()) {
-            return std::nullopt;
+    bool load(const handle src, bool) {
+        char* buffer = nullptr;
+        Py_ssize_t length = 0;
+        if (PyBytes_AsStringAndSize(src.ptr(), &buffer, &length) != 0) {
+            PyErr_Clear();
+            return false;
         }
-        return to_c_bytes<T>(*p);
+        const auto data = reinterpret_cast<const ::bytes::byte*>(buffer);
+        value.assign(data, data + length);
+        return true;
     }
 
-    template <typename T, typename = std::enable_if_t<std::is_same_v<T, bytes::binary>>>
-    std::vector<T> to_c_bytes(const std::vector<py::bytes>& p) {
-        std::vector<T> result;
-        result.reserve(p.size());
-        for (const auto& item : p) {
-            result.push_back(to_c_bytes<T>(item));
-        }
-        return result;
+    static handle cast(const ::bytes::binary& src, return_value_policy, handle) {
+        return PyBytes_FromStringAndSize(
+            reinterpret_cast<const char*>(src.data()),
+            static_cast<Py_ssize_t>(src.size())
+        );
     }
-
-    template <typename T>
-    py::bytes to_bytes(const T& p) {
-        return {reinterpret_cast<const char*>(p.data()), p.size()};
-    }
-
-    template <typename T>
-    py::object to_bytes(const std::optional<T>& p) {
-        if (!p.has_value()) {
-            return py::none();
-        }
-        return to_bytes(*p);
-    }
-} // ntgcalls::support
+};
