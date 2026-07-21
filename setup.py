@@ -63,8 +63,12 @@ if not any(cmd in sys.argv for cmd in LIGHT_COMMANDS):
         ]
         if os.environ.get('PYPI_TAGS'):
             cmake_command.insert(-2, '-DPYPI_TAGS=ON')
-        version = subprocess.run(cmake_command, capture_output=True, text=True).stderr.strip()
-        version = re.sub(r'\x1b\[[0-9;]*m', '', version)
+        output = subprocess.run(cmake_command, capture_output=True, text=True).stderr
+        output = re.sub(r'\x1b\[[0-9;]*m', '', output)
+        version = next(
+            (line.strip() for line in reversed(output.splitlines()) if line.strip()),
+            '0',
+        )
 
 class CMakeExtension(Extension):
     def __init__(self, name: str, sourcedir: str = '') -> None:
