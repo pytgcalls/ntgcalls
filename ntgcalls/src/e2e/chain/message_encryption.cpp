@@ -127,7 +127,7 @@ namespace ntgcalls::e2e::chain {
         if (encrypted_message.size() < 16 || decrypted_header.size() != 32) {
             return std::nullopt;
         }
-        const auto large_key = openssl::Hmac::sha512(secret, bytes::view(kEncryptData));
+        const auto large_key = openssl::Hmac::sha512(secret, bytes::view(kEncryptHeader));
         const auto encryption_key = bytes::view(large_key.data(), 32);
         const auto cbc = openssl::Hmac::sha512(encryption_key, encrypted_message.subspan(0, 16));
         return openssl::AesCbc::encrypt(decrypted_header, slice_key(cbc), slice_iv(cbc));
@@ -141,7 +141,7 @@ namespace ntgcalls::e2e::chain {
         if (encrypted_message.size() < 16 || encrypted_header.size() != 32) {
             return std::nullopt;
         }
-        const auto large_key = openssl::Hmac::sha512(secret, bytes::view(kEncryptData));
+        const auto large_key = openssl::Hmac::sha512(secret, bytes::view(kEncryptHeader));
         const auto encryption_key = bytes::view(large_key.data(), 32);
         const auto cbc = openssl::Hmac::sha512(encryption_key, encrypted_message.subspan(0, 16));
         return openssl::AesCbc::decrypt(encrypted_header, slice_key(cbc), slice_iv(cbc));
