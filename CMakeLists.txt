@@ -16,6 +16,9 @@ add_custom_target(clean_objects
 
 project(ntgcalls VERSION 2.2.5 LANGUAGES C CXX)
 include(cmake/VersionUtil.cmake)
+include(cmake/PlatformUtils.cmake)
+include(cmake/DownloadProject.cmake)
+include(cmake/GitUtils.cmake)
 
 if (MACOS)
     enable_language(OBJCXX)

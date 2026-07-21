@@ -1,4 +1,4 @@
-set(cmake_dir ${CMAKE_SOURCE_DIR}/cmake)
+set(cmake_dir ${CMAKE_CURRENT_LIST_DIR})
 if(WIN32)
     set(OS_NAME WINDOWS)
 elseif (UNIX AND NOT APPLE)
