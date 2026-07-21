@@ -83,7 +83,18 @@ namespace ntgcalls {
     }
 
     void StreamManager::optimizeSources(wrtc::NetworkInterface* pc) {
-        pc->enableAudioIncoming(writers.contains(Microphone) || externalWriters.contains(Microphone));
+        // Microphone is a Capture-mode device: its state lives in
+        // readers/externalReaders (see handleCaptureConfig()), never in
+        // writers/externalWriters, which handlePlaybackConfig() populates
+        // for Playback-mode devices only. writers.contains(Microphone) can
+        // therefore never be true, so enableAudioIncoming(true) was never
+        // actually reachable - incoming audio channels never got created
+        // for any call that only sets up a capture (microphone) + playback
+        // (also Microphone, per P2PCall::connect()'s addTrack calls) audio
+        // pair, which is the normal case for external-audio-source P2P
+        // calls. Use the existing hasDeviceInternal() helper, which already
+        // encodes the correct per-mode map lookup.
+        pc->enableAudioIncoming(hasDeviceInternal(Capture, Microphone));
         pc->enableVideoIncoming(writers.contains(Camera) || externalWriters.contains(Camera), false);
         pc->enableVideoIncoming(writers.contains(Screen) || externalWriters.contains(Screen), true);
         initialized = pc->getConnectionMode() != wrtc::ConnectionMode::None;
