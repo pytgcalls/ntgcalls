@@ -416,8 +416,8 @@ jobs:
       - name: Prepare schema asset
         if: hashFiles('tmp/ntgcalls-schema/schema.ntl') != ''
         run: |
-          grep -v '^// Version' tmp/ntgcalls-schema/schema.ntl > releases/ntgcalls.tl
-          printf '\n// Version %s\n' "${{ steps.patch-version.outputs.version }}" >> releases/ntgcalls.tl
+          grep -v '^// Version' tmp/ntgcalls-schema/schema.ntl > releases/ntgcalls.ntl
+          printf '\n// Version %s\n' "${{ steps.patch-version.outputs.version }}" >> releases/ntgcalls.ntl
 
       - name: Create Release
         id: create-new-release
