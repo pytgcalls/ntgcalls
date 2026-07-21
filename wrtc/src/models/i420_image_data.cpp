@@ -3,6 +3,7 @@
 //
 
 #include <wrtc/models/i420_image_data.hpp>
+#include <cstring>
 
 namespace wrtc {
     size_t i420ImageData::sizeOfLuminancePlane() const {

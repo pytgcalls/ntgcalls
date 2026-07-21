@@ -3,6 +3,7 @@
 //
 
 #include <wrtc/utils/bignum.hpp>
+#include <utility>
 
 namespace openssl {
     void BigNum::clear() const {

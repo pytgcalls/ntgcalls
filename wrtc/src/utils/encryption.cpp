@@ -6,6 +6,7 @@
 
 #include <openssl/aes.h>
 #include <climits>
+#include <cstring>
 
 namespace openssl {
     bytes::vector Sha256::Digest(const bytes::const_span data) {
