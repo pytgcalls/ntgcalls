@@ -118,7 +118,7 @@ jobs:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         if: ${{ !(startsWith(matrix.shared_name, 'linux')) }}
         id: python-setup
         with:
@@ -209,7 +209,7 @@ jobs:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         id: python
         with:
           python-version: "3.14"
