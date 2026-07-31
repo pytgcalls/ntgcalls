@@ -49,10 +49,12 @@ def install_cmake(cmake_version: str):
 with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
     if sys.platform.startswith('linux'):
         install_cmake(CMAKE_VERSION)
-    regex = re.compile(r'VERSION ([0-9.]+)', re.MULTILINE)
+    content = f.read()
+    project_version_match = re.search(r'project\s*\(\s*\w+\s+VERSION\s+([0-9.]+)', content)
+    project_ver = project_version_match.group(1) if project_version_match else '2.2.5'
     cmake_command = [
         str(cmake_bin()),
-        f'-DPROJECT_VERSION={re.findall(regex, f.read())[1]}',
+        f'-DPROJECT_VERSION={project_ver}',
         '-P',
         'cmake/VersionUtil.cmake',
     ]
