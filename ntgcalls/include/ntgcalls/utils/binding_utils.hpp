@@ -18,6 +18,9 @@ RTC_LOG(LS_VERBOSE) << funcName << ": " << "Worker started";
 RTC_LOG(LS_VERBOSE) << "Worker finished";\
 END_WORKER_NO_LOG
 
+#include <algorithm>
+#include <thread>
+
 #ifdef PYTHON_ENABLED
 #include <wrtc/utils/binary.hpp>
 #include <pybind11/pybind11.h>
@@ -69,8 +72,14 @@ py::object loop;\
 py::object executor;
 
 #define INIT_ASYNC \
-loop = py::module::import("asyncio").attr("get_event_loop")();\
-executor = py::module::import("concurrent.futures").attr("ThreadPoolExecutor")(std::min(static_cast<uint32_t>(32), std::thread::hardware_concurrency()));
+try {\
+    loop = py::module::import("asyncio").attr("get_running_loop")();\
+} catch (const py::error_already_set&) {\
+    loop = py::module::import("asyncio").attr("get_event_loop_policy")().attr("get_event_loop")();\
+}\
+const uint32_t concurrency = std::thread::hardware_concurrency();\
+const uint32_t workers = std::clamp(concurrency == 0 ? 4u : concurrency, 1u, 32u);\
+executor = py::module::import("concurrent.futures").attr("ThreadPoolExecutor")(workers);
 
 #define DESTROY_ASYNC \
 executor.attr("shutdown")(py::arg("wait") = true);\
