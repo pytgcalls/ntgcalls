@@ -387,7 +387,14 @@ namespace ntgcalls::media {
             return;
         }
 
-        handle_capture_config(id, d, reason, stream_type, is_external);
+        switch (mode) {
+        case Capture:
+            handle_capture_config(id, d, reason, stream_type, is_external);
+            break;
+        case Playback:
+            handle_playback_config(id, d, reason, stream_type, is_external);
+            break;
+        }
     }
 
     void StreamManager::handle_no_description(const Mode mode, const Device device) {
