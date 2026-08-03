@@ -18,7 +18,7 @@
 namespace wrtc::interfaces {
     void NativeNetworkInterface::init_connection(bool supports_packet_sending) {
         const std::weak_ptr weak(shared_from_this());
-        network_thread().PostTask([weak, supports_packet_sending] {
+        network_thread().BlockingCall([weak, supports_packet_sending] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
