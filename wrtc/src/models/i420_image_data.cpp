@@ -2,6 +2,7 @@
 // Created by Lauren on 13/08/23.
 //
 
+#include <cstring>
 #include <wrtc/models/i420_image_data.hpp>
 
 namespace wrtc::models {

@@ -5,6 +5,7 @@
 #include <wrtc/utils/encryption.hpp>
 
 #include <climits>
+#include <cstring>
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
