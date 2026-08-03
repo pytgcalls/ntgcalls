@@ -29,6 +29,8 @@ deps/glib/
 ntgcalls/src/tl/e2e_api.cpp
 ntgcalls/include/ntgcalls/tl/e2e_api.hpp
 build/
+build_c/
+build_shared/
 build_lib/
 shared-output/
 static-output/
@@ -41,3 +43,4 @@ __pycache__
 *.pcm
 *.mp4
 *.mp3
+*.so
