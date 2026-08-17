@@ -107,6 +107,8 @@ namespace wrtc::interfaces {
 
         void init_connection(bool supports_packet_sending = false);
 
+        void handle_role_conflict();
+
         void add_incoming_smart_source(const std::string& endpoint, const models::MediaContent& media_content, bool force = false);
 
         void remove_incoming_audio(const std::string& endpoint);

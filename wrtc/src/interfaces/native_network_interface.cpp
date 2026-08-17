@@ -290,6 +290,13 @@ namespace wrtc::interfaces {
         );
         transport_channel_->SetIceParameters(local_ice_parameters);
         transport_channel_->SetIceRole(ice_role());
+        transport_channel_->SubscribeRoleConflict(this, [weak](webrtc::IceTransportInternal*) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            strong->handle_role_conflict();
+        });
         transport_channel_->SubscribeIceTransportStateChanged(this, [weak](webrtc::IceTransportInternal*) {
             const auto strong = weak.lock();
             if (!strong) {
@@ -321,6 +328,19 @@ namespace wrtc::interfaces {
         }
         dtls_transport_->SetLocalCertificate(local_certificate_);
         dtls_srtp_transport_->SetDtlsTransports(dtls_transport_.get(), nullptr);
+    }
+
+    void NativeNetworkInterface::handle_role_conflict() {
+        assert(network_thread().IsCurrent());
+        if (!transport_channel_ || is_group_connection()) {
+            return;
+        }
+        const auto reversed_role = transport_channel_->GetIceRole() == webrtc::ICEROLE_CONTROLLING
+            ? webrtc::ICEROLE_CONTROLLED
+            : webrtc::ICEROLE_CONTROLLING;
+        RTC_LOG(LS_WARNING) << "Got ICE role conflict, switching to "
+            << (reversed_role == webrtc::ICEROLE_CONTROLLING ? "controlling" : "controlled") << " role";
+        transport_channel_->SetIceRole(reversed_role);
     }
 
     webrtc::CryptoOptions NativeNetworkInterface::get_default_crypto_options() {
