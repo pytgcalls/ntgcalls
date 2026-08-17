@@ -233,6 +233,9 @@ namespace wrtc::interfaces {
     }
 
     void NativeNetworkInterface::update_aggregate_states_n() {
+        if (closed_ || !transport_channel_ || !dtls_srtp_transport_) {
+            return;
+        }
         const auto state = transport_channel_->GetIceTransportState();
         bool is_connected = false;
         switch (state) {
@@ -448,7 +451,7 @@ namespace wrtc::interfaces {
             strong->call_ = nullptr;
         });
         channel_manager_ = nullptr;
-        if (factory_) {
+        if (!closed_) {
             RTC_LOG(LS_VERBOSE) << "Removed call";
             network_thread().BlockingCall([weak] {
                 const auto strong = weak.lock();

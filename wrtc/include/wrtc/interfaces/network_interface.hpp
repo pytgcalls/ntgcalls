@@ -25,6 +25,7 @@ namespace wrtc::interfaces {
         ConnectionState current_state_ = ConnectionState::Connecting;
         bool data_channel_open_ = false;
         bool already_connected_ = false;
+        bool closed_ = false;
         bool audio_incoming_ = false, camera_incoming_ = false, screen_incoming_ = false;
 
         static webrtc::IceCandidateInterface* parse_ice_candidate(const models::IceCandidate& raw_candidate);

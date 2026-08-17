@@ -58,9 +58,7 @@ namespace wrtc::interfaces {
         ice_candidate_callback_ = nullptr;
         connection_change_callback_ = nullptr;
         data_channel_message_callback_ = nullptr;
-        if (factory_) {
-            factory_ = nullptr;
-        }
+        closed_ = true;
     }
 
     bool NetworkInterface::is_data_channel_open() const {

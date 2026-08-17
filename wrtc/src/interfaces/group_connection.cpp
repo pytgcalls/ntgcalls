@@ -310,6 +310,9 @@ namespace wrtc::interfaces {
     }
 
     void GroupConnection::update_is_connected() {
+        if (closed_) {
+            return;
+        }
         bool is_effectively_connected = false;
         switch (connection_mode_) {
             case ConnectionMode::Rtc:
@@ -503,7 +506,7 @@ namespace wrtc::interfaces {
     }
 
     void GroupConnection::begin_audio_channel_cleanup_timer() {
-        if (!factory_) {
+        if (closed_) {
             return;
         }
         const std::weak_ptr weak(shared_from_this());

@@ -436,7 +436,7 @@ namespace wrtc::interfaces {
 
     void NativeConnection::check_connection_timeout() {
         const std::weak_ptr weak(shared_from_this());
-        if (factory_ != nullptr) {
+        if (!closed_) {
             network_thread().PostDelayedTask([weak] {
                 const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
                 if (!strong) {
