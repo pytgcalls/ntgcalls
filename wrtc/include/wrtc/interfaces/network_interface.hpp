@@ -70,6 +70,8 @@ namespace wrtc::interfaces {
 
         ConnectionState get_connection_state() const;
 
+        bool is_already_connected() const;
+
         virtual void enable_audio_incoming(bool enable);
 
         virtual void enable_video_incoming(bool enable, bool is_screen_cast);

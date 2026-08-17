@@ -135,7 +135,7 @@ namespace ntgcalls::instances {
             if (!strong) {
                 return;
             }
-            if (conn->get_connection_state() == wrtc::ConnectionState::Connecting) {
+            if (conn->get_connection_state() == wrtc::ConnectionState::Connecting && !conn->is_already_connected()) {
                 RTC_LOG(LS_ERROR) << "Connection timeout";
                 (void) strong->connection_change_callback_({ConnectionInfo::State::Timeout, kind});
             }

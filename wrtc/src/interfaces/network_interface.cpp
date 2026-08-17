@@ -71,6 +71,10 @@ namespace wrtc::interfaces {
         return current_state_;
     }
 
+    bool NetworkInterface::is_already_connected() const {
+        return already_connected_;
+    }
+
     void NetworkInterface::enable_audio_incoming(const bool enable) {
         audio_incoming_ = enable;
     }
