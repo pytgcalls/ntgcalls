@@ -26,6 +26,7 @@ namespace wrtc::interfaces {
         std::unique_ptr<webrtc::RtcEventLogNull> event_log_;
         std::unique_ptr<ContentNegotiationContext> content_negotiation_context_;
         std::optional<std::string> audio_channel_id_, video_channel_id_;
+        std::string applied_dtls_params_;
 
         void notify_state_updated();
 

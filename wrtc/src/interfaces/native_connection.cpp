@@ -378,13 +378,19 @@ namespace wrtc::interfaces {
             if (!strong) {
                 return;
             }
-            strong->remote_parameters_ = remote_ice_parameters;
-            const webrtc::IceParameters parameters(
-                remote_ice_parameters.ufrag,
-                remote_ice_parameters.pwd,
-                remote_ice_parameters.supports_renomination
-            );
-            strong->transport_channel_->SetRemoteIceParameters(parameters);
+            if (strong->remote_parameters_.ufrag != remote_ice_parameters.ufrag ||
+                strong->remote_parameters_.pwd != remote_ice_parameters.pwd ||
+                strong->remote_parameters_.supports_renomination != remote_ice_parameters.supports_renomination) {
+                strong->remote_parameters_ = remote_ice_parameters;
+                const webrtc::IceParameters parameters(
+                    remote_ice_parameters.ufrag,
+                    remote_ice_parameters.pwd,
+                    remote_ice_parameters.supports_renomination
+                );
+                strong->transport_channel_->SetRemoteIceParameters(parameters);
+            } else {
+                RTC_LOG(LS_VERBOSE) << "Remote ICE parameters unchanged, skipping";
+            }
             webrtc::SSLRole ssl_role;
             if (ssl_setup == "active") {
                 ssl_role = webrtc::SSLRole::SSL_SERVER;
@@ -394,7 +400,12 @@ namespace wrtc::interfaces {
                 ssl_role = strong->is_outgoing_ ? webrtc::SSLRole::SSL_CLIENT : webrtc::SSLRole::SSL_SERVER;
             }
             if (fingerprint) {
-                strong->dtls_transport_->SetRemoteParameters(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size(), ssl_role);
+                if (auto dtls_params = fingerprint->GetRfc4572Fingerprint() + ":" + std::to_string(static_cast<int>(ssl_role)); dtls_params != strong->applied_dtls_params_) {
+                    strong->applied_dtls_params_ = std::move(dtls_params);
+                    strong->dtls_transport_->SetRemoteParameters(fingerprint->algorithm, fingerprint->digest.data(), fingerprint->digest.size(), ssl_role);
+                } else {
+                    RTC_LOG(LS_VERBOSE) << "Remote DTLS parameters unchanged, skipping";
+                }
             }
         });
     }
