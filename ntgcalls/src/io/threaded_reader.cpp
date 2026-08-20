@@ -2,6 +2,7 @@
 // Created by Lauren on 28/09/24.
 //
 
+#include <algorithm>
 #include <thread>
 #include <ntgcalls/io/threaded_reader.hpp>
 
@@ -32,7 +33,7 @@ namespace ntgcalls::io {
         for (size_t i = 0; i < buffer_count; ++i) {
             buffer_threads_.push_back(
                 webrtc::PlatformThread::SpawnJoinable(
-                    [this, i, buffer_count, frame_size = sink_->frame_size(), max_buffer_size = std::chrono::seconds(1) / frame_time / 10, read_callback] {
+                    [this, i, buffer_count, frame_size = sink_->frame_size(), max_buffer_size = std::max<int64_t>(1, std::chrono::seconds(1) / frame_time / 10), read_callback] {
                         active_buffer_count_++;
                         std::vector<bytes::unique_binary> frames;
                         frames.reserve(max_buffer_size);
