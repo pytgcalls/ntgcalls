@@ -46,5 +46,7 @@ async def get_youtube_stream(link: str) -> Tuple[str, str]:
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await proc.communicate()
-    links = stdout.decode().split('\n')
+    links = [line.strip() for line in stdout.decode().splitlines() if line.strip()]
+    if len(links) < 2:
+        raise RuntimeError(f"yt-dlp failed to return audio and video streams: {stderr.decode()}")
     return links[1], links[0]
