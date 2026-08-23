@@ -522,6 +522,9 @@ namespace ntgcalls::media {
                 {
                     const std::lock_guard lock(strong_thread->mutex_);
                     strong_thread->remove_reader(device);
+                    if (strong_thread->initialized_) {
+                        strong_thread->check_upgrade();
+                    }
                 }
                 (void) strong_thread->on_eof_(get_stream_type(device), device);
             });
