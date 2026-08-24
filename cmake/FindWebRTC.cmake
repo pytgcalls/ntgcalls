@@ -60,7 +60,7 @@ if(NOT TARGET WebRTC::webrtc)
         SOURCE_DIR ${WEBRTC_SRC}
     )
 
-    add_library(WebRTC::webrtc STATIC IMPORTED)
+    add_library(WebRTC::webrtc STATIC IMPORTED GLOBAL)
 
     set(_DIRS
         ${WEBRTC_INCLUDE}
