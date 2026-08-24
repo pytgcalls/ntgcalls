@@ -35,7 +35,7 @@ build_lib/
 shared-output/
 static-output/
 ntl-output/
-docs/
+/docs/
 dist/
 local_tests/
 __pycache__
@@ -45,3 +45,5 @@ uv.lock
 *.mp4
 *.mp3
 *.so
+
+/docs-output

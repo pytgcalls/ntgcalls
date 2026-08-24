@@ -1,0 +1,90 @@
+name: Publish Documentation
+permissions:
+  contents: read
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'docsdata branch to publish to (defaults to the branch being pushed)'
+        required: false
+        default: dev
+        type: string
+  push:
+    branches: [ master, dev ]
+    paths:
+      - 'ntgcalls/include/**'
+      - 'wrtc/include/**'
+      - 'targets/docs/**'
+      - 'targets/sources.ntlgen'
+      - 'targets/aliases.tlgen'
+      - 'cmake/codegen/**'
+      - '.github/workflows/docs.yml'
+
+jobs:
+  publish:
+    name: Generate And Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Check out docsdata
+        uses: actions/checkout@v7
+        with:
+          repository: pytgcalls/docsdata
+          ref: ${{ inputs.branch || (github.ref_name == 'master' && 'master' || 'dev') }}
+          ssh-key: ${{ secrets.DOCS_DEPLOY_KEY }}
+          path: docsdata
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python Requirements
+        run: python -m pip install setuptools
+
+      - name: Generate schema
+        run: python setup.py generate
+
+      - name: Stamp the library version
+        run: |
+          cmake -DCONFIG_XML="$PWD/docsdata/config.xml" \
+                -DOPTION=NTGCALLS_VERSION \
+                -DVERSION="$(python setup.py --version)" \
+                -P cmake/codegen/StampDocsVersion.cmake
+
+      - name: Generate documentation
+        run: |
+          cmake -DROOT_DIR="$PWD" \
+                -DCONFIG_XML="$PWD/docsdata/config.xml" \
+                -P cmake/codegen/GenerateDocs.cmake
+
+      - name: Check prose coverage
+        run: |
+          cmake -DDOCS_OUT="$PWD/docs-output" \
+                -DCONFIG_XML="$PWD/docsdata/config.xml" \
+                -P cmake/codegen/CheckDocsCoverage.cmake
+
+      - name: Update the reference pages
+        run: |
+          rm -rf docsdata/NTgCalls/"Basic Methods" \
+                 docsdata/NTgCalls/"Stream Methods" \
+                 docsdata/NTgCalls/"Advanced Methods" \
+                 docsdata/NTgCalls/Callbacks \
+                 docsdata/NTgCalls/"Available Types"
+          find docsdata/NTgCalls/"Available Enums" -name '*.xml' ! -name 'ntg_log_*' -delete
+          cp -R docs-output/NTgCalls/. docsdata/NTgCalls/
+          cmake -DCONFIG_XML="$PWD/docsdata/config.xml" \
+                -DINDEX_FILE="$PWD/docs-output/files-list.xml" \
+                -P cmake/codegen/UpdateDocsIndex.cmake
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          repository: docsdata
+          commit_message: "Regenerated the NTgCalls reference"
+          commit_options: "--no-verify"
+          branch: ${{ inputs.branch || (github.ref_name == 'master' && 'master' || 'dev') }}
