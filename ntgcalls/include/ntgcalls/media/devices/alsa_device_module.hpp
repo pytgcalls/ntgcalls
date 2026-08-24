@@ -15,8 +15,8 @@ namespace ntgcalls::media::devices {
 
     class AlsaDeviceModule final: public BaseDeviceModule, public io::ThreadedReader, public io::AudioMixer {
         snd_pcm_format_t format_ = SND_PCM_FORMAT_S16_LE;
-        snd_pcm_t *alsa_handle_{};
-        snd_pcm_hw_params_t *hw_params_{};
+        snd_pcm_t* alsa_handle_{};
+        snd_pcm_hw_params_t* hw_params_{};
         std::string device_id_;
 
         static std::map<std::string, std::string> get_devices(_snd_pcm_stream stream);
@@ -25,7 +25,7 @@ namespace ntgcalls::media::devices {
         void on_data(bytes::unique_binary data) override;
 
     public:
-        AlsaDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink *sink);
+        AlsaDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink* sink);
 
         ~AlsaDeviceModule() override;
 

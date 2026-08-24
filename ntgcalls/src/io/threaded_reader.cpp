@@ -7,7 +7,7 @@
 #include <ntgcalls/io/threaded_reader.hpp>
 
 namespace ntgcalls::io {
-    ThreadedReader::ThreadedReader(media::BaseSink *sink, const size_t thread_count): BaseReader(sink), SyncHelper(sink->frame_time()) {
+    ThreadedReader::ThreadedReader(media::BaseSink* sink, const size_t thread_count): BaseReader(sink), SyncHelper(sink->frame_time()) {
         buffer_threads_.reserve(thread_count);
     }
 

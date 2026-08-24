@@ -8,12 +8,12 @@
 
 namespace ntgcalls::io {
 
-    ShellReader::ShellReader(const std::string &command, media::BaseSink *sink):
+    ShellReader::ShellReader(const std::string& command, media::BaseSink* sink):
     BaseIO(sink), ThreadedReader(sink) {
         try {
             const auto cmd = bp::shell(command);
             shell_process_ = bp::process(ctx_, cmd.exe(), cmd.args(), bp::process_stdio{nullptr, std_out_, {}});
-        } catch (std::runtime_error &e) {
+        } catch (std::runtime_error& e) {
             throw ShellError(e.what());
         }
     }

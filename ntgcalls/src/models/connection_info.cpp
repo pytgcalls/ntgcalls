@@ -5,5 +5,5 @@
 #include <ntgcalls/models/connection_info.hpp>
 
 namespace ntgcalls {
-    ConnectionInfo::ConnectionInfo(const State state, const Kind kind) : state(state), kind(kind) {}
+    ConnectionInfo::ConnectionInfo(const State state, const Kind kind): state(state), kind(kind) {}
 } // ntgcalls

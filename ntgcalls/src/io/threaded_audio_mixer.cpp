@@ -26,7 +26,7 @@ namespace ntgcalls::io {
         auto frame_size = sink_->frame_size();
         auto frame_time = sink_->frame_time();
         thread_ = webrtc::PlatformThread::SpawnJoinable(
-        [this, frame_size, frame_time] {
+            [this, frame_size, frame_time] {
                 while (running_) {
                     std::unique_lock lock(mtx_);
                     const auto ok = cv_.wait_for(lock, frame_time + std::chrono::milliseconds(20), [this] {

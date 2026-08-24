@@ -138,12 +138,15 @@ namespace ntgcalls::media::devices {
         std::memcpy(yuv.get() + y_scaled_size, u_scaled_plane.get(), uv_scaled_size);
         std::memcpy(yuv.get() + y_scaled_size + uv_scaled_size, v_scaled_plane.get(), uv_scaled_size);
 
-        (void) data_callback_(std::move(yuv), {
-            0,
-            frame.rotation(),
-            static_cast<uint16_t>(desc_.width),
-            static_cast<uint16_t>(desc_.height),
-        });
+        (void) data_callback_(
+            std::move(yuv),
+            {
+                0,
+                frame.rotation(),
+                static_cast<uint16_t>(desc_.width),
+                static_cast<uint16_t>(desc_.height),
+            }
+        );
     }
 
     void JavaVideoCapturerModule::open() {

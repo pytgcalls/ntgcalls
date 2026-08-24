@@ -44,12 +44,9 @@ namespace ntgcalls::signaling::crypto {
         if (modexp.failed() || prime.failed() || diff.failed()) {
             return false;
         }
-        if (constexpr auto kMinDiffBitsCount = 2048 - 64; diff.is_negative()
-            || diff.bits_size() < kMinDiffBitsCount
-            || modexp.bits_size() < kMinDiffBitsCount
-            || modexp.bytes_size() > kRandomPowerSize) {
+        if (constexpr auto kMinDiffBitsCount = 2048 - 64; diff.is_negative() || diff.bits_size() < kMinDiffBitsCount || modexp.bits_size() < kMinDiffBitsCount || modexp.bytes_size() > kRandomPowerSize) {
             return false;
-            }
+        }
         return true;
     }
 } // ntgcalls::signaling::crypto

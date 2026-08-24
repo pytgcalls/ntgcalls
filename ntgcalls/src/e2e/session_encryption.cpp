@@ -11,23 +11,23 @@
 namespace ntgcalls::e2e {
     SessionEncryption::SessionEncryption(
         const int64_t self_user_id,
-        const openssl::Key25519 &private_key
-    ) : self_user_id_(self_user_id), private_key_(private_key) {}
+        const openssl::Key25519& private_key
+    ): self_user_id_(self_user_id), private_key_(private_key) {}
 
-    void SessionEncryption::append_uint32(bytes::binary &buffer, const uint32_t value) {
+    void SessionEncryption::append_uint32(bytes::binary& buffer, const uint32_t value) {
         for (int i = 0; i < 4; ++i) {
             buffer.push_back(static_cast<uint8_t>(value >> i * 8 & 0xff));
         }
     }
 
-    uint32_t SessionEncryption::read_uint32(const uint8_t *data) {
+    uint32_t SessionEncryption::read_uint32(const uint8_t* data) {
         return static_cast<uint32_t>(data[0]) |
                static_cast<uint32_t>(data[1]) << 8 |
                static_cast<uint32_t>(data[2]) << 16 |
                static_cast<uint32_t>(data[3]) << 24;
     }
 
-    void SessionEncryption::append_raw(bytes::binary &buffer, const bytes::const_span value) {
+    void SessionEncryption::append_raw(bytes::binary& buffer, const bytes::const_span value) {
         const auto data = value.data();
         buffer.insert(buffer.end(), data, data + value.size());
     }
@@ -42,8 +42,7 @@ namespace ntgcalls::e2e {
         return result;
     }
 
-    bool SessionEncryption::check_not_seen(const tl::PublicKeyBytes& public_key, const int32_t channel_id,
-        const uint32_t seqno_value) {
+    bool SessionEncryption::check_not_seen(const tl::PublicKeyBytes& public_key, const int32_t channel_id, const uint32_t seqno_value) {
         const auto& s = seen_[{public_key, channel_id}];
         if (s.empty()) {
             return true;
@@ -54,8 +53,7 @@ namespace ntgcalls::e2e {
         return !s.contains(seqno_value);
     }
 
-    void SessionEncryption::mark_as_seen(const tl::PublicKeyBytes& public_key, const int32_t channel_id,
-        const uint32_t seqno_value) {
+    void SessionEncryption::mark_as_seen(const tl::PublicKeyBytes& public_key, const int32_t channel_id, const uint32_t seqno_value) {
         auto& s = seen_[{public_key, channel_id}];
         s.insert(seqno_value);
         while (s.size() > 1024 || (!s.empty() && *s.begin() + 1024 < seqno_value)) {
@@ -120,7 +118,7 @@ namespace ntgcalls::e2e {
         const bytes::const_span unencrypted_prefix,
         const bytes::const_span encrypted_packet,
         const bytes::const_span one_time_secret,
-        const chain::GroupState &group_state
+        const chain::GroupState& group_state
     ) {
         const auto participant = State::find_participant(group_state, expected_user_id);
         if (!participant) {
@@ -185,7 +183,7 @@ namespace ntgcalls::e2e {
 
         bytes::binary header_a;
         append_uint32(header_a, static_cast<uint32_t>(epochs_.size()));
-        for (const auto &info: epochs_ | std::views::values) {
+        for (const auto& info : epochs_ | std::views::values) {
             header_a.insert(header_a.end(), info.epoch_hash.begin(), info.epoch_hash.end());
         }
 
@@ -200,7 +198,7 @@ namespace ntgcalls::e2e {
         }
 
         bytes::binary header_b;
-        for (const auto &info: epochs_ | std::views::values) {
+        for (const auto& info : epochs_ | std::views::values) {
             const auto encrypted_header = chain::MessageEncryption::encrypt_header(
                 bytes::view(one_time_secret),
                 bytes::view(*encrypted_packet),
@@ -285,13 +283,12 @@ namespace ntgcalls::e2e {
         return std::nullopt;
     }
 
-    void SessionEncryption::forget_shared_key(const int32_t epoch, const tl::Hash256 &) {
+    void SessionEncryption::forget_shared_key(const int32_t epoch, const tl::Hash256&) {
         sync();
         epochs_to_forget_.emplace_back(webrtc::TimeMillis() + kForgetEpochDelayMs, epoch);
     }
 
-    bool SessionEncryption::add_shared_key(const int32_t epoch, const tl::Hash256 &epoch_hash, bytes::binary secret,
-        chain::GroupState group_state) {
+    bool SessionEncryption::add_shared_key(const int32_t epoch, const tl::Hash256& epoch_hash, bytes::binary secret, chain::GroupState group_state) {
         sync();
         const auto self = State::find_participant(group_state, private_key_.public_key_bytes());
         if (!self || self->user_id != self_user_id_) {

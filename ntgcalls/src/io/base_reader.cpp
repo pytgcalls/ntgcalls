@@ -6,7 +6,7 @@
 #include <ntgcalls/io/base_reader.hpp>
 
 namespace ntgcalls::io {
-    BaseReader::BaseReader(media::BaseSink *sink): BaseIO(sink) {}
+    BaseReader::BaseReader(media::BaseSink* sink): BaseIO(sink) {}
 
     BaseReader::~BaseReader() {
         data_callback_ = nullptr;

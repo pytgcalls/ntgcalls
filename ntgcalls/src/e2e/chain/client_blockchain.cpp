@@ -27,11 +27,11 @@ namespace ntgcalls::e2e::chain {
         return result;
     }
 
-    const GroupState & ClientBlockchain::group_state() const {
+    const GroupState& ClientBlockchain::group_state() const {
         return blockchain_.current_group_state();
     }
 
-    const Blockchain & ClientBlockchain::inner() const {
+    const Blockchain& ClientBlockchain::inner() const {
         return blockchain_;
     }
 
@@ -59,11 +59,11 @@ namespace ntgcalls::e2e::chain {
         return std::move(block.changes);
     }
 
-    const SharedKey & ClientBlockchain::group_shared_key() const {
+    const SharedKey& ClientBlockchain::group_shared_key() const {
         return blockchain_.current_shared_key();
     }
 
-    std::optional<bytes::binary> ClientBlockchain::build_block(const std::vector<Change> &changes, const openssl::Key25519 &key) const {
+    std::optional<bytes::binary> ClientBlockchain::build_block(const std::vector<Change>& changes, const openssl::Key25519& key) const {
         const auto block = blockchain_.build_block(changes, key);
         if (!block) {
             return std::nullopt;

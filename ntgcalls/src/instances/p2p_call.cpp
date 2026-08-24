@@ -53,7 +53,7 @@ namespace ntgcalls::instances {
         return ga_hash ? g_a_or_b_.value() : openssl::Sha256::digest(g_a_or_b_.value());
     }
 
-    p2p::AuthParams P2PCall::exchange_keys(const bytes::binary &g_a_or_b, const int64_t fingerprint) {
+    p2p::AuthParams P2PCall::exchange_keys(const bytes::binary& g_a_or_b, const int64_t fingerprint) {
         if (connection_) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
@@ -121,7 +121,7 @@ namespace ntgcalls::instances {
         RTC_LOG(LS_VERBOSE) << "Exchange skipped";
     }
 
-    void P2PCall::connect(const std::vector<p2p::RTCServer>& servers, const std::vector<std::string>& versions, const bool p2p_allowed, const std::optional<std::string> &custom_parameters) {
+    void P2PCall::connect(const std::vector<p2p::RTCServer>& servers, const std::vector<std::string>& versions, const bool p2p_allowed, const std::optional<std::string>& custom_parameters) {
         RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2p_allowed ? "true" : "false");
         if (connection_) {
             RTC_LOG(LS_ERROR) << "Connection already made";
@@ -157,14 +157,14 @@ namespace ntgcalls::instances {
             connection_->signaling_thread(),
             connection_->environment(),
             signaling::crypto::EncryptionKey(std::move(encryption_key), type() == Type::Outgoing),
-            [weak](const bytes::binary &data) {
+            [weak](const bytes::binary& data) {
                 const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
                 if (!strong) {
                     return;
                 }
                 (void) strong->on_emit_data_(data);
             },
-            [weak](const std::vector<bytes::binary> &data) {
+            [weak](const std::vector<bytes::binary>& data) {
                 const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
                 if (!strong) {
                     return;
@@ -174,7 +174,7 @@ namespace ntgcalls::instances {
                     if (!strong) {
                         return;
                     }
-                    for (const auto &packet : data) {
+                    for (const auto& packet : data) {
                         strong->process_signaling_data(packet);
                     }
                 });
@@ -189,7 +189,7 @@ namespace ntgcalls::instances {
             cand_mess.ice_candidates.push_back({
                 candidate.sdp,
                 candidate.mid,
-                candidate.m_line
+                candidate.m_line,
             });
             const auto message = cand_mess.serialize();
             RTC_LOG(LS_VERBOSE) << "Sending candidate: " << bytes::to_string(message);
@@ -222,7 +222,7 @@ namespace ntgcalls::instances {
         stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Microphone, connection_.get());
         stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Camera, connection_.get());
         stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Screen, connection_.get());
-        stream_manager_->on_upgrade([weak] (const media::MediaState media_state) {
+        stream_manager_->on_upgrade([weak](const media::MediaState media_state) {
             const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
             if (!strong) {
                 return;
@@ -265,7 +265,7 @@ namespace ntgcalls::instances {
                 break;
             }
             case signaling::messages::Message::Type::Candidates: {
-                for (const auto message = signaling::messages::CandidatesMessage::deserialize(buffer); const auto&[sdpString, sdpMid, sdpMLineIndex] : message->ice_candidates) {
+                for (const auto message = signaling::messages::CandidatesMessage::deserialize(buffer); const auto& [sdpString, sdpMid, sdpMLineIndex] : message->ice_candidates) {
                     webrtc::SdpParseError error;
                     std::unique_ptr<webrtc::IceCandidate> parse_candidate = webrtc::IceCandidate::Create(
                         sdpMid,
@@ -343,7 +343,7 @@ namespace ntgcalls::instances {
     }
 
     void P2PCall::send_media_state(const media::MediaState media_state) const {
-        if (!connection_ -> is_data_channel_open()) {
+        if (!connection_->is_data_channel_open()) {
             return;
         }
         signaling::messages::MediaStateMessage message;
@@ -418,7 +418,7 @@ namespace ntgcalls::instances {
                 dtls_fingerprint.fingerprint = fingerprint;
                 dtls_fingerprint.setup = setup;
                 message.fingerprints.push_back(std::move(dtls_fingerprint));
-                
+
                 const auto serialized_message = message.serialize();
                 RTC_LOG(LS_VERBOSE) << "Sending initial setup: " << bytes::to_string(serialized_message);
                 strong_message->signaling_->send(serialized_message);
@@ -430,7 +430,7 @@ namespace ntgcalls::instances {
         on_emit_data_ = callback;
     }
 
-    void P2PCall::on_update_emojis(const std::function<void(std::string)> &callback) {
+    void P2PCall::on_update_emojis(const std::function<void(std::string)>& callback) {
         update_emojis_callback_ = callback;
     }
 

@@ -55,7 +55,7 @@ namespace ntgcalls::media {
     }
 
     void StreamManager::enable_video_simulcast(const bool enable) {
-       video_simulcast_ = enable;
+        video_simulcast_ = enable;
     }
 
     void StreamManager::set_stream_sources(const Mode mode, const MediaDescription& desc) {
@@ -159,7 +159,8 @@ namespace ntgcalls::media {
     StreamManager::Status StreamManager::status(const Mode mode) {
         const std::lock_guard lock(mutex_);
         if (mode == Capture) {
-            return readers_.empty() ? Idling : is_paused() ? Paused : Active;
+            return readers_.empty() ? Idling : is_paused() ? Paused
+                                                           : Active;
         }
         return writers_.empty() ? Idling : Active;
     }
@@ -341,12 +342,12 @@ namespace ntgcalls::media {
             if (!strong) {
                 return;
             }
-           (void) strong->on_change_status_(strong->get_state());
+            (void) strong->on_change_status_(strong->get_state());
         });
     }
 
     template<typename SinkType, typename DescriptionType>
-    void StreamManager::maybe_reconfigure_device(Mode mode, Device device, const std::optional<DescriptionType> &desc) {
+    void StreamManager::maybe_reconfigure_device(Mode mode, Device device, const std::optional<DescriptionType>& desc) {
         const StreamId id(
             mode,
             device
@@ -433,8 +434,8 @@ namespace ntgcalls::media {
 
     template<typename DescriptionType>
     void StreamManager::handle_capture_config(
-        const StreamId &id,
-        const DescriptionType &desc,
+        const StreamId& id,
+        const DescriptionType& desc,
         ReconfigureReason reason,
         const Type stream_type,
         const bool is_external
@@ -464,7 +465,7 @@ namespace ntgcalls::media {
         }
     }
 
-    void StreamManager::setup_capture_callbacks(const StreamId &id, Type stream_type, bool is_shared) {
+    void StreamManager::setup_capture_callbacks(const StreamId& id, Type stream_type, bool is_shared) {
         const auto& device = id.second;
         const std::weak_ptr weak(shared_from_this());
 
@@ -533,8 +534,8 @@ namespace ntgcalls::media {
 
     template<typename DescriptionType>
     void StreamManager::handle_playback_config(
-        const StreamId &id,
-        const DescriptionType &desc,
+        const StreamId& id,
+        const DescriptionType& desc,
         ReconfigureReason reason,
         const Type stream_type,
         const bool is_external
@@ -565,8 +566,7 @@ namespace ntgcalls::media {
         }
     }
 
-
-    void StreamManager::setup_audio_playback_callbacks(const StreamId &id, bool is_external) {
+    void StreamManager::setup_audio_playback_callbacks(const StreamId& id, bool is_external) {
         const std::weak_ptr weak(shared_from_this());
         dynamic_cast<AudioReceiver*>(streams_[id].get())->on_frames([weak, id, is_external](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
             const auto strong = weak.lock();
@@ -580,7 +580,7 @@ namespace ntgcalls::media {
                         external_frames.push_back({
                             ssrc,
                             {data.first.get(), data.first.get() + data.second},
-                            {}
+                            {},
                         });
                     }
                 }
@@ -599,7 +599,7 @@ namespace ntgcalls::media {
         });
     }
 
-    void StreamManager::setup_video_playback_callbacks(const StreamId &id) {
+    void StreamManager::setup_video_playback_callbacks(const StreamId& id) {
         const std::weak_ptr weak(shared_from_this());
         dynamic_cast<VideoReceiver*>(streams_[id].get())->on_frame([weak, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::models::FrameData frame_data) {
             const auto strong = weak.lock();
@@ -610,13 +610,9 @@ namespace ntgcalls::media {
                 (void) strong->frames_callback_(
                     id.first,
                     id.second,
-                    {
-                        {
-                            ssrc,
-                            {frame.get(), frame.get() + size},
-                            frame_data
-                        }
-                    }
+                    {{ssrc,
+                      {frame.get(), frame.get() + size},
+                      frame_data}}
                 );
             }
         });

@@ -47,7 +47,7 @@ namespace ntgcalls::media::devices {
         void on_data(bytes::unique_binary data) override;
 
     public:
-        MacAudioDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink *sink);
+        MacAudioDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink* sink);
 
         ~MacAudioDeviceModule() override;
 

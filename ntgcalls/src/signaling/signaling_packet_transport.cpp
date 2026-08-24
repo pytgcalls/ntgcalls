@@ -117,7 +117,7 @@ namespace ntgcalls::signaling {
         return 0;
     }
 
-    bool SignalingPacketTransport::AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char> &keying_material) {
+    bool SignalingPacketTransport::AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char>& keying_material) {
         return false;
     }
 } // ntgcalls::signaling

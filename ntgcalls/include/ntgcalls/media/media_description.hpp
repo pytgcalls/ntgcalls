@@ -29,37 +29,37 @@ namespace ntgcalls::media {
         virtual ~BaseMediaDescription() = default;
     };
 
-    class AudioDescription final : public BaseMediaDescription {
+    class AudioDescription final: public BaseMediaDescription {
     public:
         uint32_t sample_rate;
         uint8_t channel_count;
 
         AudioDescription(const MediaSource media_source, const uint32_t sample_rate, const uint8_t channel_count, const std::string& input, const bool keep_open):
-                BaseMediaDescription(input, media_source, keep_open), sample_rate(sample_rate), channel_count(channel_count) {}
+        BaseMediaDescription(input, media_source, keep_open), sample_rate(sample_rate), channel_count(channel_count) {}
     };
 
     inline bool operator==(const AudioDescription& lhs, const AudioDescription& rhs) {
         return lhs.sample_rate == rhs.sample_rate &&
-            lhs.channel_count == rhs.channel_count &&
-                lhs.input == rhs.input &&
-                    lhs.media_source == rhs.media_source;
+               lhs.channel_count == rhs.channel_count &&
+               lhs.input == rhs.input &&
+               lhs.media_source == rhs.media_source;
     }
 
-    class VideoDescription final : public BaseMediaDescription {
+    class VideoDescription final: public BaseMediaDescription {
     public:
         int16_t width, height;
         uint8_t fps;
 
         VideoDescription(const MediaSource media_source, const int16_t width, const int16_t height, const uint8_t fps, const std::string& input, const bool keep_open):
-                BaseMediaDescription(input, media_source, keep_open), width(width), height(height), fps(fps) {}
+        BaseMediaDescription(input, media_source, keep_open), width(width), height(height), fps(fps) {}
     };
 
     inline bool operator==(const VideoDescription& lhs, const VideoDescription& rhs) {
         return lhs.width == rhs.width &&
-            lhs.height == rhs.height &&
-                lhs.fps == rhs.fps &&
-                    lhs.input == rhs.input &&
-                        lhs.media_source == rhs.media_source;
+               lhs.height == rhs.height &&
+               lhs.fps == rhs.fps &&
+               lhs.input == rhs.input &&
+               lhs.media_source == rhs.media_source;
     }
 
     class MediaDescription {

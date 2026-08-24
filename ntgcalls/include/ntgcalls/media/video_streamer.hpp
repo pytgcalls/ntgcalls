@@ -9,7 +9,7 @@
 #include <wrtc/interfaces/media/rtc_video_source.hpp>
 
 namespace ntgcalls::media {
-    class VideoStreamer final : public VideoSink, public BaseStreamer {
+    class VideoStreamer final: public VideoSink, public BaseStreamer {
         std::unique_ptr<wrtc::interfaces::media::RTCVideoSource> video_;
 
     public:

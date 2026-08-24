@@ -13,10 +13,10 @@ namespace ntgcalls::p2p {
         bytes::binary p;
         bytes::binary random;
 
-        DhConfig(int32_t g, const bytes::binary &p, const bytes::binary &random) {
-            this -> g = g;
-            this -> p = p;
-            this -> random = random;
+        DhConfig(int32_t g, const bytes::binary& p, const bytes::binary& random) {
+            this->g = g;
+            this->p = p;
+            this->random = random;
         }
     };
 } // ntgcalls

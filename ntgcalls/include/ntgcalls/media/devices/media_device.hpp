@@ -11,10 +11,10 @@
 namespace ntgcalls::media::devices {
 
     class MediaDevice {
-        static std::unique_ptr<io::BaseIO> create_audio_device(const AudioDescription* desc, BaseSink *sink, bool is_capture);
+        static std::unique_ptr<io::BaseIO> create_audio_device(const AudioDescription* desc, BaseSink* sink, bool is_capture);
 
     public:
-        template <typename T>
+        template<typename T>
         static std::unique_ptr<T> create_device(const BaseMediaDescription& desc, BaseSink* sink, const bool is_capture) {
             if (auto* audio = dynamic_cast<const AudioDescription*>(&desc)) {
                 auto io_device = create_audio_device(audio, sink, is_capture);

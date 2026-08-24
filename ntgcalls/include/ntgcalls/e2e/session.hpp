@@ -58,9 +58,9 @@ namespace ntgcalls::e2e {
         );
 
         static std::optional<bytes::binary> create_self_add_block(
-            const openssl::Key25519 &key,
+            const openssl::Key25519& key,
             bytes::const_span previous_server_block,
-            const chain::GroupParticipant &self
+            const chain::GroupParticipant& self
         );
 
         std::optional<bytes::binary> receive_inbound_message(bytes::const_span server_message);
@@ -73,7 +73,7 @@ namespace ntgcalls::e2e {
 
         void cancel_short_poll(int subchain);
 
-        void check_waiting_blocks(int subchain, bool waited  = false);
+        void check_waiting_blocks(int subchain, bool waited = false);
 
         void check_for_outbound_messages();
 

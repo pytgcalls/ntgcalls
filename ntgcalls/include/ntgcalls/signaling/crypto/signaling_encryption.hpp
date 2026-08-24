@@ -46,17 +46,17 @@ namespace ntgcalls::signaling::crypto {
 
         wrtc::utils::synchronized_callback<void(int, int)> request_send_service_callback_;
 
-        [[nodiscard]] bytes::binary encrypt_prepared(const webrtc::CopyOnWriteBuffer &buffer);
+        [[nodiscard]] bytes::binary encrypt_prepared(const webrtc::CopyOnWriteBuffer& buffer);
 
-        static void write_seq(void *bytes, uint32_t seq);
+        static void write_seq(void* bytes, uint32_t seq);
 
         static uint32_t read_seq(const void* bytes);
 
-        static void append_seq(webrtc::CopyOnWriteBuffer &buffer, uint32_t seq);
+        static void append_seq(webrtc::CopyOnWriteBuffer& buffer, uint32_t seq);
 
         static uint32_t counter_from_seq(uint32_t seq);
 
-        static bool const_time_is_different(const void *a, const void *b, size_t size);
+        static bool const_time_is_different(const void* a, const void* b, size_t size);
 
         bool register_incoming_counter(uint32_t incoming_counter);
 
@@ -66,37 +66,36 @@ namespace ntgcalls::signaling::crypto {
 
         bool register_sent_ack(uint32_t counter, bool first_in_packet);
 
-        std::vector<webrtc::CopyOnWriteBuffer> process_raw_packet(const webrtc::Buffer &full_buffer, uint32_t packet_seq);
+        std::vector<webrtc::CopyOnWriteBuffer> process_raw_packet(const webrtc::Buffer& full_buffer, uint32_t packet_seq);
 
         std::optional<uint32_t> compute_next_seq(bool message_requires_ack);
 
-        static bool enough_space_in_packet(const webrtc::CopyOnWriteBuffer &buffer, size_t amount);
+        static bool enough_space_in_packet(const webrtc::CopyOnWriteBuffer& buffer, size_t amount);
 
         static webrtc::CopyOnWriteBuffer serialize_empty_message_with_seq(uint32_t seq);
 
-        static webrtc::CopyOnWriteBuffer serialize_raw_message_with_seq(const webrtc::CopyOnWriteBuffer &message, uint32_t seq);
+        static webrtc::CopyOnWriteBuffer serialize_raw_message_with_seq(const webrtc::CopyOnWriteBuffer& message, uint32_t seq);
 
-        void append_messages(webrtc::CopyOnWriteBuffer &buffer);
+        void append_messages(webrtc::CopyOnWriteBuffer& buffer);
 
-        void append_acks_to_send(webrtc::CopyOnWriteBuffer &buffer);
+        void append_acks_to_send(webrtc::CopyOnWriteBuffer& buffer);
 
         bool have_messages() const;
 
-        std::optional<bytes::binary> prepare_for_sending_message_internal(webrtc::CopyOnWriteBuffer &serialized, uint32_t seq);
+        std::optional<bytes::binary> prepare_for_sending_message_internal(webrtc::CopyOnWriteBuffer& serialized, uint32_t seq);
 
     public:
         explicit SignalingEncryption(EncryptionKey key);
 
         ~SignalingEncryption();
 
-        std::optional<bytes::binary> encrypt(const webrtc::CopyOnWriteBuffer &buffer, bool is_raw);
+        std::optional<bytes::binary> encrypt(const webrtc::CopyOnWriteBuffer& buffer, bool is_raw);
 
-        std::vector<webrtc::CopyOnWriteBuffer> decrypt(const webrtc::CopyOnWriteBuffer &buffer, bool is_raw);
+        std::vector<webrtc::CopyOnWriteBuffer> decrypt(const webrtc::CopyOnWriteBuffer& buffer, bool is_raw);
 
-        void on_service_message(const std::function<void(int delay_ms, int cause)> &request_send_service);
+        void on_service_message(const std::function<void(int delay_ms, int cause)>& request_send_service);
 
         std::optional<bytes::binary> prepare_for_sending_service(int cause);
     };
 
 } // ntgcalls::signaling::crypto
-

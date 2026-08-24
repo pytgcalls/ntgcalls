@@ -8,7 +8,7 @@
 
 namespace ntgcalls::signaling::messages {
     class NegotiateChannelsMessage final: public Message {
-        [[nodiscard]] static json serialize_content(const wrtc::models::MediaContent &content);
+        [[nodiscard]] static json serialize_content(const wrtc::models::MediaContent& content);
 
         [[nodiscard]] static json serialize_source_group(const wrtc::models::SsrcGroup& ssrc_group);
 

@@ -9,7 +9,7 @@
 #include <wrtc/interfaces/media/rtc_audio_source.hpp>
 
 namespace ntgcalls::media {
-    class AudioStreamer final : public AudioSink, public BaseStreamer {
+    class AudioStreamer final: public AudioSink, public BaseStreamer {
         std::unique_ptr<wrtc::interfaces::media::RTCAudioSource> audio_;
 
     public:

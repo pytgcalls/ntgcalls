@@ -10,7 +10,7 @@ namespace ntgcalls::signaling {
         wrtc::utils::SafeThread& network_thread,
         wrtc::utils::SafeThread& signaling_thread,
         const webrtc::Environment& env,
-        const crypto::EncryptionKey &key,
+        const crypto::EncryptionKey& key,
         const DataEmitter& on_emit_data,
         const DataReceiver& on_signal_data,
         const bool allow_compression
@@ -24,7 +24,7 @@ namespace ntgcalls::signaling {
             sctp_transport_->Start({
                 5000,
                 5000,
-                262144
+                262144,
             });
         });
     }
@@ -68,7 +68,7 @@ namespace ntgcalls::signaling {
     void SignalingSctpConnection::OnReadyToSend() {
         assert(networkThread.IsCurrent());
         is_ready_to_send_ = true;
-        for (const auto &data : pending_data_) {
+        for (const auto& data : pending_data_) {
             webrtc::SendDataParams params;
             params.type = webrtc::DataMessageType::kBinary;
             params.ordered = true;

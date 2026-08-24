@@ -17,7 +17,7 @@
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/media/devices/mac_camera_capturer_module.hpp>
 
-@interface NTgCameraCapturerDelegate : NSObject <RTCVideoCapturerDelegate>
+@interface NTgCameraCapturerDelegate: NSObject <RTCVideoCapturerDelegate>
 @property(nonatomic, assign) ntgcalls::media::devices::MacCameraCapturerModule* owner_module;
 @end
 
@@ -26,7 +26,7 @@
 }
 @synthesize owner_module = owner_module;
 
-- (void)capturer:(RTCVideoCapturer *)capturer didCaptureVideoFrame:(RTCVideoFrame *)frame {
+- (void)capturer:(RTCVideoCapturer*)capturer didCaptureVideoFrame:(RTCVideoFrame*)frame {
     if (!self.owner_module) {
         return;
     }
@@ -181,11 +181,11 @@ namespace ntgcalls::media::devices {
         memcpy(yuv.get() + y_scaled_size + uv_scaled_size, v_scaled_plane.get(), uv_scaled_size);
 
         (void) data_callback_(std::move(yuv), {
-            0,
-            static_cast<webrtc::VideoRotation>(rotation),
-            static_cast<uint16_t>(desc_.width),
-            static_cast<uint16_t>(desc_.height),
-        });
+                                                  0,
+                                                  static_cast<webrtc::VideoRotation>(rotation),
+                                                  static_cast<uint16_t>(desc_.width),
+                                                  static_cast<uint16_t>(desc_.height),
+                                              });
     }
 
     void MacCameraCapturerModule::open() {

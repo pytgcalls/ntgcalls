@@ -8,8 +8,8 @@
 #include <ntgcalls/media/devices/mac_audio_device_module.hpp>
 
 namespace ntgcalls::media::devices {
-    MacAudioDeviceModule::MacAudioDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink *sink):
-        BaseIO(sink), BaseDeviceModule(desc, is_capture), BaseReader(sink), AudioMixer(sink) {
+    MacAudioDeviceModule::MacAudioDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink):
+    BaseIO(sink), BaseDeviceModule(desc, is_capture), BaseReader(sink), AudioMixer(sink) {
         try {
             device_uid_ = device_metadata_["uid"];
         } catch (...) {
@@ -93,7 +93,7 @@ namespace ntgcalls::media::devices {
     }
 
     std::string MacAudioDeviceModule::string_property(const AudioDeviceID id, const AudioObjectPropertySelector selector) {
-        const AudioObjectPropertyAddress addr = { selector, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain };
+        const AudioObjectPropertyAddress addr = {selector, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain};
         CFStringRef value = nullptr;
         UInt32 size = sizeof(CFStringRef);
         if (AudioObjectGetPropertyData(id, &addr, 0, nullptr, &size, &value) != noErr || !value) {
@@ -105,7 +105,7 @@ namespace ntgcalls::media::devices {
     }
 
     UInt32 MacAudioDeviceModule::channels_for_scope(const AudioDeviceID id, const AudioObjectPropertyScope scope) {
-        const AudioObjectPropertyAddress addr = { kAudioDevicePropertyStreamConfiguration, scope, kAudioObjectPropertyElementMain };
+        const AudioObjectPropertyAddress addr = {kAudioDevicePropertyStreamConfiguration, scope, kAudioObjectPropertyElementMain};
         UInt32 size = 0;
         if (AudioObjectGetPropertyDataSize(id, &addr, 0, nullptr, &size) != noErr || size == 0) {
             return 0;

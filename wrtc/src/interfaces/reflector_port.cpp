@@ -244,11 +244,13 @@ namespace wrtc::interfaces {
             if (state_ == State::Connected) {
                 timeout_ms = 500;
             }
-            thread()->PostDelayedTask(SafeTask(task_safety_.flag(), [this] {
-                                          is_running_ping_task_ = false;
-                                          send_reflector_hello();
-                                      }),
-                                      webrtc::TimeDelta::Millis(timeout_ms));
+            thread()->PostDelayedTask(
+                SafeTask(task_safety_.flag(), [this] {
+                    is_running_ping_task_ = false;
+                    send_reflector_hello();
+                }),
+                webrtc::TimeDelta::Millis(timeout_ms)
+            );
         }
     }
 

@@ -43,13 +43,13 @@ namespace ntgcalls::instances {
 
         void init() const;
 
-        bytes::binary init_exchange(const p2p::DhConfig &dh_config, const std::optional<bytes::binary> &ga_hash);
+        bytes::binary init_exchange(const p2p::DhConfig& dh_config, const std::optional<bytes::binary>& ga_hash);
 
-        p2p::AuthParams exchange_keys(const bytes::binary &g_a_or_b, int64_t fingerprint);
+        p2p::AuthParams exchange_keys(const bytes::binary& g_a_or_b, int64_t fingerprint);
 
         void skip_exchange(bytes::binary encryption_key, bool is_outgoing);
 
-        void connect(const std::vector<p2p::RTCServer>& servers, const std::vector<std::string>& versions, bool p2p_allowed, const std::optional<std::string> &custom_parameters);
+        void connect(const std::vector<p2p::RTCServer>& servers, const std::vector<std::string>& versions, bool p2p_allowed, const std::optional<std::string>& custom_parameters);
 
         Type type() const override;
 

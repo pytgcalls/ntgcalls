@@ -10,10 +10,10 @@
 #include <ntgcalls/exceptions.hpp>
 
 #define LATE(sym) \
-LATESYM_GET(webrtc::adm_linux_pulse::PulseAudioSymbolTable, GetPulseSymbolTable(), sym)
+    LATESYM_GET(webrtc::adm_linux_pulse::PulseAudioSymbolTable, GetPulseSymbolTable(), sym)
 
 namespace ntgcalls::media::devices {
-    PulseDeviceModule::PulseDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink *sink): BaseIO(sink), BaseDeviceModule(desc, is_capture), BaseReader(sink), AudioMixer(sink) {
+    PulseDeviceModule::PulseDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink): BaseIO(sink), BaseDeviceModule(desc, is_capture), BaseReader(sink), AudioMixer(sink) {
         pulse_connection_ = std::make_unique<utils::PulseConnection>();
         RTC_LOG(LS_VERBOSE) << "PulseAudio version: " << pulse_connection_->get_version();
 
@@ -52,10 +52,10 @@ namespace ntgcalls::media::devices {
         auto play_devices = pulse_connection->get_play_devices();
         pulse_connection->disconnect();
         std::vector<DeviceInfo> devices;
-        for (const auto& [fst, snd]: record_devices) {
+        for (const auto& [fst, snd] : record_devices) {
             append_device(devices, fst, snd, true);
         }
-        for (const auto& [fst, snd]: play_devices) {
+        for (const auto& [fst, snd] : play_devices) {
             append_device(devices, fst, snd, false);
         }
         return devices;

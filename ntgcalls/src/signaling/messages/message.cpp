@@ -10,7 +10,7 @@ namespace ntgcalls::signaling::messages {
             throw InvalidParams("Empty data");
         }
         auto j = json::parse(data.begin(), data.end());
-        if (const auto type = j["@type"];!type.is_null()) {
+        if (const auto type = j["@type"]; !type.is_null()) {
             if (type == "InitialSetup") {
                 return Type::InitialSetup;
             }
@@ -27,7 +27,7 @@ namespace ntgcalls::signaling::messages {
         return Type::Unknown;
     }
 
-    std::optional<webrtc::CopyOnWriteBuffer> Message::deserialize_raw(webrtc::ByteBufferReader &reader) {
+    std::optional<webrtc::CopyOnWriteBuffer> Message::deserialize_raw(webrtc::ByteBufferReader& reader) {
         if (!reader.Length()) {
             return std::nullopt;
         }
@@ -46,7 +46,7 @@ namespace ntgcalls::signaling::messages {
         return result;
     }
 
-    uint32_t Message::string_to_uint32(std::string const &string) {
+    uint32_t Message::string_to_uint32(std::string const& string) {
         std::stringstream string_stream(string);
         uint32_t value = 0;
         string_stream >> value;

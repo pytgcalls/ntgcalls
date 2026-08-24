@@ -6,7 +6,7 @@
 #include <ntgcalls/io/file_reader.hpp>
 
 namespace ntgcalls::io {
-    FileReader::FileReader(const std::string& path, media::BaseSink *sink): BaseIO(sink), ThreadedReader(sink) {
+    FileReader::FileReader(const std::string& path, media::BaseSink* sink): BaseIO(sink), ThreadedReader(sink) {
         source_ = std::ifstream(path, std::ios::binary);
         if (!source_) {
             RTC_LOG(LS_ERROR) << "Unable to open the file located at \"" << path << "\"";

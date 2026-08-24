@@ -7,12 +7,12 @@
 #include <ntgcalls/signaling/signaling_interface.hpp>
 
 namespace ntgcalls::signaling {
-    class ExternalSignalingConnection final : public SignalingInterface {
+    class ExternalSignalingConnection final: public SignalingInterface {
     public:
         ExternalSignalingConnection(
             wrtc::utils::SafeThread& network_thread,
             wrtc::utils::SafeThread& signaling_thread,
-            const crypto::EncryptionKey &key,
+            const crypto::EncryptionKey& key,
             const DataEmitter& on_emit_data,
             const DataReceiver& on_signal_data
         );

@@ -1,7 +1,7 @@
 //
 // Created by Lauren on 02/03/24.
 //
-# pragma once
+#pragma once
 #include <cstdint>
 
 #ifdef IS_WINDOWS

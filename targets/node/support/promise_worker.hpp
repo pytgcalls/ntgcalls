@@ -48,9 +48,10 @@ private:
 template<typename Compute>
 class AsyncRunnerVoid final: public Napi::AsyncWorker {
 public:
-    AsyncRunnerVoid(const Napi::Env env, Compute compute): AsyncWorker(env),
-                                                           deferred_(Napi::Promise::Deferred::New(env)),
-                                                           compute_(std::move(compute)) {}
+    AsyncRunnerVoid(const Napi::Env env, Compute compute):
+    AsyncWorker(env),
+    deferred_(Napi::Promise::Deferred::New(env)),
+    compute_(std::move(compute)) {}
 
     Napi::Promise Promise() {
         return deferred_.Promise();

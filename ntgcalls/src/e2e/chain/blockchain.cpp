@@ -13,11 +13,11 @@ namespace ntgcalls::e2e::chain {
         return result;
     }
 
-    const GroupState & Blockchain::current_group_state() const {
+    const GroupState& Blockchain::current_group_state() const {
         return state_.group_state;
     }
 
-    std::optional<Block> Blockchain::build_block(std::vector<Change> changes, const openssl::Key25519 &key) const {
+    std::optional<Block> Blockchain::build_block(std::vector<Change> changes, const openssl::Key25519& key) const {
         const auto public_key = key.public_key_bytes();
         auto working_state = state_;
         if (last_block_.height == std::numeric_limits<int32_t>::max()) {
@@ -43,7 +43,7 @@ namespace ntgcalls::e2e::chain {
         working_state.has_set_value = false;
         working_state.has_group_state_change = false;
         working_state.has_shared_key_change = false;
-        for (const auto&[value] : changes) {
+        for (const auto& [value] : changes) {
             std::visit([&]<typename T>(const T&) {
                 if constexpr (std::is_same_v<T, ChangeSetGroupState>) {
                     proof.group_state = std::nullopt;
@@ -55,7 +55,8 @@ namespace ntgcalls::e2e::chain {
                 } else if constexpr (std::is_same_v<T, ChangeSetValue>) {
                     working_state.has_set_value = true;
                 }
-            }, value);
+            },
+                       value);
         }
         if (!working_state.validate_state(proof)) {
             return std::nullopt;
@@ -82,7 +83,7 @@ namespace ntgcalls::e2e::chain {
         if (block.height == 0) {
             state_return.group_state = GroupState{{}, Permissions::AllPermissions};
         }
-        for (const auto&[valueChange] : block.changes) {
+        for (const auto& [valueChange] : block.changes) {
             std::visit([&]<typename T>(const T& value) {
                 if constexpr (std::is_same_v<T, ChangeSetGroupState>) {
                     state_return.group_state = value.group_state;
@@ -94,7 +95,8 @@ namespace ntgcalls::e2e::chain {
                 } else if constexpr (std::is_same_v<T, ChangeSetValue>) {
                     state_return.has_set_value = true;
                 }
-            }, valueChange);
+            },
+                       valueChange);
         }
         if (block.state_proof.group_state) {
             state_return.group_state = *block.state_proof.group_state;
@@ -115,7 +117,7 @@ namespace ntgcalls::e2e::chain {
         return last_block_.prev_block_hash;
     }
 
-    const SharedKey & Blockchain::current_shared_key() const {
+    const SharedKey& Blockchain::current_shared_key() const {
         return state_.shared_key;
     }
 
@@ -123,7 +125,7 @@ namespace ntgcalls::e2e::chain {
         block.signature = key.sign(bytes::view(data_to_sign(block)));
     }
 
-    bytes::binary Blockchain::data_to_sign(const Block &block) {
+    bytes::binary Blockchain::data_to_sign(const Block& block) {
         Block copy = block;
         copy.signature = {};
         tl::TlWriter w;
@@ -148,7 +150,7 @@ namespace ntgcalls::e2e::chain {
         return true;
     }
 
-    tl::Hash256 Blockchain::calc_hash(const Block &block) {
+    tl::Hash256 Blockchain::calc_hash(const Block& block) {
         tl::Hash256 result{};
         if (block.height == -1) {
             return result;

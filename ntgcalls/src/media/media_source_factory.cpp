@@ -10,12 +10,13 @@
 #include <ntgcalls/media/devices/media_device.hpp>
 #include <rtc_base/logging.h>
 
-#define BOOST_THROW RTC_LOG(LS_ERROR) << "Shell execution is not yet supported on your OS/Architecture"; \
+#define BOOST_THROW                                                                      \
+    RTC_LOG(LS_ERROR) << "Shell execution is not yet supported on your OS/Architecture"; \
     throw ShellError("Shell execution is not yet supported on your OS/Architecture");
 
 namespace ntgcalls::media {
 
-    std::unique_ptr<io::BaseReader> MediaSourceFactory::from_input(const BaseMediaDescription& desc, BaseSink *sink) {
+    std::unique_ptr<io::BaseReader> MediaSourceFactory::from_input(const BaseMediaDescription& desc, BaseSink* sink) {
         if (const auto* video = dynamic_cast<const VideoDescription*>(&desc)) {
             if (video->width <= 0 || video->height <= 0 || video->fps == 0) {
                 RTC_LOG(LS_ERROR) << "Invalid video resolution or fps";
@@ -53,7 +54,7 @@ namespace ntgcalls::media {
         }
     }
 
-    std::unique_ptr<io::AudioWriter> MediaSourceFactory::from_audio_output(const BaseMediaDescription& desc, BaseSink *sink) {
+    std::unique_ptr<io::AudioWriter> MediaSourceFactory::from_audio_output(const BaseMediaDescription& desc, BaseSink* sink) {
         // SUPPORTED OUTPUT AUDIO MODES
         switch (desc.media_source) {
         case BaseMediaDescription::MediaSource::File:

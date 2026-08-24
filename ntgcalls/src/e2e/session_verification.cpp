@@ -9,8 +9,8 @@
 #include <wrtc/utils/random.hpp>
 
 namespace ntgcalls::e2e {
-    SessionVerification::SessionVerification(const int64_t self_user_id, const openssl::Key25519 &private_key):
-        self_user_id_(self_user_id), private_key_(private_key) {}
+    SessionVerification::SessionVerification(const int64_t self_user_id, const openssl::Key25519& private_key):
+    self_user_id_(self_user_id), private_key_(private_key) {}
 
     tl::Hash256 SessionVerification::sha256(const bytes::const_span data) {
         tl::Hash256 result{};
@@ -25,7 +25,7 @@ namespace ntgcalls::e2e {
         return nonce;
     }
 
-    bytes::binary SessionVerification::data_to_sign(const chain::GroupBroadcastNonceCommit &commit) {
+    bytes::binary SessionVerification::data_to_sign(const chain::GroupBroadcastNonceCommit& commit) {
         chain::GroupBroadcastNonceCommit copy = commit;
         copy.signature = {};
         tl::TlWriter w;
@@ -33,7 +33,7 @@ namespace ntgcalls::e2e {
         return w.result();
     }
 
-    bytes::binary SessionVerification::data_to_sign(const chain::GroupBroadcastNonceReveal &reveal) {
+    bytes::binary SessionVerification::data_to_sign(const chain::GroupBroadcastNonceReveal& reveal) {
         chain::GroupBroadcastNonceReveal copy = reveal;
         copy.signature = {};
         tl::TlWriter w;
@@ -41,7 +41,7 @@ namespace ntgcalls::e2e {
         return w.result();
     }
 
-    bool SessionVerification::process_commit(const chain::GroupBroadcastNonceCommit &commit) {
+    bool SessionVerification::process_commit(const chain::GroupBroadcastNonceCommit& commit) {
         if (phase_ != Phase::Commit) {
             return false;
         }
@@ -50,10 +50,10 @@ namespace ntgcalls::e2e {
             return false;
         }
         if (!openssl::Key25519::verify(
-            bytes::view(it->second),
-            bytes::view(data_to_sign(commit)),
-            bytes::view(commit.signature))
-        ) {
+                bytes::view(it->second),
+                bytes::view(data_to_sign(commit)),
+                bytes::view(commit.signature)
+            )) {
             return false;
         }
         if (committed_.contains(commit.user_id)) {
@@ -75,10 +75,10 @@ namespace ntgcalls::e2e {
             return false;
         }
         if (!openssl::Key25519::verify(
-            bytes::view(it->second),
-            bytes::view(data_to_sign(reveal)),
-            bytes::view(reveal.signature))
-        ) {
+                bytes::view(it->second),
+                bytes::view(data_to_sign(reveal)),
+                bytes::view(reveal.signature)
+            )) {
             return false;
         }
         if (revealed_.contains(reveal.user_id)) {
@@ -87,14 +87,14 @@ namespace ntgcalls::e2e {
         if (
             const auto committed_it = committed_.find(reveal.user_id);
             committed_it == committed_.end() || sha256(bytes::view(reveal.nonce)) != committed_it->second
-         ) {
+        ) {
             return false;
         }
         revealed_[reveal.user_id] = reveal.nonce;
         if (revealed_.size() == participant_keys_.size()) {
             std::vector<tl::Hash256> nonces;
             nonces.reserve(revealed_.size());
-            for (const auto &nonce: revealed_ | std::views::values) {
+            for (const auto& nonce : revealed_ | std::views::values) {
                 nonces.push_back(nonce);
             }
             std::ranges::sort(nonces);
@@ -110,7 +110,7 @@ namespace ntgcalls::e2e {
         return true;
     }
 
-    bool SessionVerification::process_broadcast(const chain::GroupBroadcast &broadcast) {
+    bool SessionVerification::process_broadcast(const chain::GroupBroadcast& broadcast) {
         tl::Hash256 broadcast_hash{};
         std::visit(
             [&broadcast_hash](const auto& value) {
@@ -127,7 +127,8 @@ namespace ntgcalls::e2e {
             } else {
                 return process_reveal(value);
             }
-        }, broadcast.value);
+        },
+                          broadcast.value);
     }
 
     void SessionVerification::emit_reveal_if_needed() {
@@ -155,7 +156,8 @@ namespace ntgcalls::e2e {
         int32_t chain_height = -1;
         std::visit([&chain_height](const auto& value) {
             chain_height = value.chain_height;
-        }, broadcast.value);
+        },
+                   broadcast.value);
 
         if (chain_height < height_) {
             return true;
@@ -180,7 +182,7 @@ namespace ntgcalls::e2e {
         return result;
     }
 
-    void SessionVerification::on_new_main_block(const chain::Blockchain &blockchain) {
+    void SessionVerification::on_new_main_block(const chain::Blockchain& blockchain) {
         self_nonce_ = random_nonce();
         height_ = blockchain.height();
         last_block_hash_ = blockchain.hash();

@@ -10,11 +10,10 @@
 namespace ntgcalls::media::devices {
 
     OboeDeviceModule::OboeDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink):
-        BaseIO(sink),
-        BaseDeviceModule(desc, is_capture),
-        BaseReader(sink),
-        AudioMixer(sink)
-    {
+    BaseIO(sink),
+    BaseDeviceModule(desc, is_capture),
+    BaseReader(sink),
+    AudioMixer(sink) {
         frame_size_ = static_cast<size_t>(sink->frame_size());
         if (const auto r = create_stream(); r != oboe::Result::OK) {
             throw MediaDeviceError("Failed to open Oboe stream: " + std::string(oboe::convertToText(r)));

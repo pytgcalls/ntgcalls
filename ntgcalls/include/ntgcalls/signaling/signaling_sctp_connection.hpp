@@ -9,7 +9,7 @@
 
 namespace ntgcalls::signaling {
 
-    class SignalingSctpConnection final : public SignalingInterface, public webrtc::DataChannelSink {
+    class SignalingSctpConnection final: public SignalingInterface, public webrtc::DataChannelSink {
         std::unique_ptr<webrtc::SctpTransportFactory> sctp_transport_factory_;
         std::unique_ptr<SignalingPacketTransport> packet_transport_;
         std::unique_ptr<webrtc::SctpTransportInternal> sctp_transport_;
@@ -25,7 +25,7 @@ namespace ntgcalls::signaling {
             wrtc::utils::SafeThread& network_thread,
             wrtc::utils::SafeThread& signaling_thread,
             const webrtc::Environment& env,
-            const crypto::EncryptionKey &key,
+            const crypto::EncryptionKey& key,
             const DataEmitter& on_emit_data,
             const DataReceiver& on_signal_data,
             bool allow_compression
@@ -44,11 +44,11 @@ namespace ntgcalls::signaling {
         void OnTransportClosed(webrtc::RTCError error) override;
 
         // Unused
-        void OnChannelClosing(int channel_id) override{}
-        void OnChannelClosed(int channel_id) override{}
-        void OnBufferedAmountLow(int channel_id) override{}
-        void OnTransportConnected() override{}
-        void OnMaxMessageSize(int max_message_size) override{}
+        void OnChannelClosing(int channel_id) override {}
+        void OnChannelClosed(int channel_id) override {}
+        void OnBufferedAmountLow(int channel_id) override {}
+        void OnTransportConnected() override {}
+        void OnMaxMessageSize(int max_message_size) override {}
     };
 
 } // ntgcalls::signaling

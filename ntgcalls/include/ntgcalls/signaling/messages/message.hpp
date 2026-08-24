@@ -27,9 +27,9 @@ namespace ntgcalls::signaling::messages {
 
         static Type type(const bytes::binary& data);
 
-        static std::optional<webrtc::CopyOnWriteBuffer> deserialize_raw(webrtc::ByteBufferReader &reader);
+        static std::optional<webrtc::CopyOnWriteBuffer> deserialize_raw(webrtc::ByteBufferReader& reader);
 
-        static uint32_t string_to_uint32(std::string const &string);
+        static uint32_t string_to_uint32(std::string const& string);
     };
 
 } // ntgcalls::signaling::messages

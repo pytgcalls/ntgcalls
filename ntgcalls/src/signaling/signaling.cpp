@@ -13,7 +13,7 @@ namespace ntgcalls::signaling {
         wrtc::utils::SafeThread& network_thread,
         wrtc::utils::SafeThread& signaling_thread,
         const webrtc::Environment& env,
-        const crypto::EncryptionKey &key,
+        const crypto::EncryptionKey& key,
         const DataEmitter& on_emit_data,
         const DataReceiver& on_signal_data
     ) {
@@ -39,7 +39,7 @@ namespace ntgcalls::signaling {
         };
     }
 
-    Signaling::Version Signaling::match_version(const std::vector<std::string> &versions) {
+    Signaling::Version Signaling::match_version(const std::vector<std::string>& versions) {
         const auto version = best_match(versions);
         RTC_LOG(LS_INFO) << "Selected version: " << version;
         if (version == "8.0.0" || version == "9.0.0") {

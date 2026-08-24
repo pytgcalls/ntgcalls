@@ -16,13 +16,13 @@ namespace ntgcalls::io {
         bool status_ = true;
 
     public:
-        explicit BaseReader(media::BaseSink *sink);
+        explicit BaseReader(media::BaseSink* sink);
 
         ~BaseReader() override;
 
         virtual void open() = 0;
 
-        void on_data(const std::function<void(bytes::unique_binary, wrtc::models::FrameData)> &callback);
+        void on_data(const std::function<void(bytes::unique_binary, wrtc::models::FrameData)>& callback);
 
         virtual bool set_enabled(bool enable);
 

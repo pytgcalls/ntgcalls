@@ -12,7 +12,7 @@ namespace ntgcalls::media::devices {
         std::string name;
         std::string metadata;
 
-        DeviceInfo(std::string name, std::string metadata) : name(std::move(name)), metadata(std::move(metadata)) {}
+        DeviceInfo(std::string name, std::string metadata): name(std::move(name)), metadata(std::move(metadata)) {}
     };
 
 } // ntgcalls

@@ -11,7 +11,7 @@ namespace ntgcalls::media {
 
     class MediaSourceFactory {
     public:
-        static std::unique_ptr<io::BaseReader> from_input(const BaseMediaDescription& desc, BaseSink *sink);
+        static std::unique_ptr<io::BaseReader> from_input(const BaseMediaDescription& desc, BaseSink* sink);
 
         static std::unique_ptr<io::AudioWriter> from_audio_output(const BaseMediaDescription& desc, BaseSink* sink);
     };

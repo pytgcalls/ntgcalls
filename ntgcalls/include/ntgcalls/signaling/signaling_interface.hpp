@@ -18,11 +18,11 @@ namespace ntgcalls::signaling {
     protected:
         DataReceiver on_signal_data_;
         DataEmitter on_emit_data_;
-        wrtc::utils::SafeThread& network_thread_, &signaling_thread_;
+        wrtc::utils::SafeThread &network_thread_, &signaling_thread_;
 
-        std::vector<bytes::binary> pre_read_data(const bytes::binary &data, bool is_raw = false);
+        std::vector<bytes::binary> pre_read_data(const bytes::binary& data, bool is_raw = false);
 
-        bytes::binary pre_send_data(const bytes::binary &data, bool is_raw = false);
+        bytes::binary pre_send_data(const bytes::binary& data, bool is_raw = false);
 
         virtual bool supports_compression() const = 0;
 
@@ -32,7 +32,7 @@ namespace ntgcalls::signaling {
         SignalingInterface(
             wrtc::utils::SafeThread& network_thread,
             wrtc::utils::SafeThread& signaling_thread,
-            const crypto::EncryptionKey &key,
+            const crypto::EncryptionKey& key,
             DataEmitter on_emit_data,
             DataReceiver on_signal_data
         );

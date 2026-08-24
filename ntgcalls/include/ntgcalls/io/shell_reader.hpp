@@ -20,7 +20,7 @@ namespace ntgcalls::io {
         bp::process shell_process_{ctx_};
 
     public:
-        explicit ShellReader(const std::string& command, media::BaseSink *sink);
+        explicit ShellReader(const std::string& command, media::BaseSink* sink);
 
         ~ShellReader() override;
 

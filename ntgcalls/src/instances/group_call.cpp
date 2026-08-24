@@ -9,7 +9,8 @@
 #include <wrtc/interfaces/group_connection.hpp>
 #include <wrtc/interfaces/response_payload.hpp>
 
-#define RTMP_UNSUPPORTED_THROW RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP"; \
+#define RTMP_UNSUPPORTED_THROW                                         \
+    RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP"; \
     throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
 
 namespace ntgcalls::instances {
@@ -82,7 +83,7 @@ namespace ntgcalls::instances {
 
     void GroupCall::connect(const std::string& json_data, const bool is_presentation) {
         RTC_LOG(LS_VERBOSE) << "Connecting to group call";
-        const auto &conn = is_presentation ? presentation_connection_ : connection_;
+        const auto& conn = is_presentation ? presentation_connection_ : connection_;
         if (!conn) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionError("Connection not initialized");
@@ -130,14 +131,14 @@ namespace ntgcalls::instances {
             RTC_LOG(LS_VERBOSE) << "Remote parameters set";
         } else {
             const std::weak_ptr weak(shared_from_this());
-            safe<wrtc::interfaces::GroupConnection>(conn)->on_request_broadcast_part([weak](const wrtc::models::SegmentPartRequest& request){
+            safe<wrtc::interfaces::GroupConnection>(conn)->on_request_broadcast_part([weak](const wrtc::models::SegmentPartRequest& request) {
                 const auto strong = std::static_pointer_cast<GroupCall>(weak.lock());
                 if (!strong) {
                     return;
                 }
                 (void) strong->segment_part_request_callback_(request);
             });
-            safe<wrtc::interfaces::GroupConnection>(conn)->on_request_broadcast_timestamp([weak]{
+            safe<wrtc::interfaces::GroupConnection>(conn)->on_request_broadcast_timestamp([weak] {
                 const auto strong = std::static_pointer_cast<GroupCall>(weak.lock());
                 if (!strong) {
                     return;

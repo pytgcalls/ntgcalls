@@ -57,19 +57,19 @@ namespace ntgcalls {
     }
 
     void NTgCalls::setup_listeners(const int64_t chat_id) {
-        connections_[chat_id]->on_stream_end([this, chat_id](const media::StreamManager::Type &type, const media::StreamManager::Device &device) {
+        connections_[chat_id]->on_stream_end([this, chat_id](const media::StreamManager::Type& type, const media::StreamManager::Device& device) {
             WORKER("onStreamEnd", update_thread_, this, chat_id, type, device)
             (void) on_eof_callback_(chat_id, type, device);
             END_WORKER
         });
         if (connections_[chat_id]->type() & (instances::CallInterface::Type::Group | instances::CallInterface::Type::Conference)) {
-            safe_call<instances::GroupCall>(connections_[chat_id].get())->on_upgrade([this, chat_id](const media::MediaState &state) {
+            safe_call<instances::GroupCall>(connections_[chat_id].get())->on_upgrade([this, chat_id](const media::MediaState& state) {
                 WORKER("onUpgrade", update_thread_, this, chat_id, state)
                 (void) media_state_callback_(chat_id, state);
                 END_WORKER
             });
 
-            safe_call<instances::GroupCall>(connections_[chat_id].get())->on_request_broadcast_part([this, chat_id](const wrtc::models::SegmentPartRequest &request) {
+            safe_call<instances::GroupCall>(connections_[chat_id].get())->on_request_broadcast_part([this, chat_id](const wrtc::models::SegmentPartRequest& request) {
                 WORKER_NO_LOG(update_thread_, this, chat_id, request)
                 (void) request_broadcast_part_callback_(chat_id, request);
                 END_WORKER_NO_LOG
@@ -99,34 +99,34 @@ namespace ntgcalls {
             }
         }
         if (connections_[chat_id]->type() & (instances::CallInterface::Type::P2P | instances::CallInterface::Type::Conference)) {
-            safe_call<instances::E2EInterface>(connections_[chat_id].get())->on_update_emojis([this, chat_id](const std::string &emojis) {
+            safe_call<instances::E2EInterface>(connections_[chat_id].get())->on_update_emojis([this, chat_id](const std::string& emojis) {
                 WORKER("onUpdateEmojis", update_thread_, this, chat_id, emojis)
                 (void) update_emojis_callback_(chat_id, emojis);
                 END_WORKER
             });
         }
-        connections_[chat_id]->on_connection_change([this, chat_id](const ConnectionInfo &state) {
+        connections_[chat_id]->on_connection_change([this, chat_id](const ConnectionInfo& state) {
             WORKER("onConnectionChange", update_thread_, this, chat_id, state)
             (void) connection_change_callback_(chat_id, state);
             if (state.kind == ConnectionInfo::Kind::Normal) {
                 switch (state.state) {
-                    case ConnectionInfo::State::Closed:
-                    case ConnectionInfo::State::Failed:
-                    case ConnectionInfo::State::Timeout:
-                        update_thread_->PostTask([this, chat_id] {
-                            remove(chat_id);
-                        });
-                        break;
-                    default:
-                        break;
+                case ConnectionInfo::State::Closed:
+                case ConnectionInfo::State::Failed:
+                case ConnectionInfo::State::Timeout:
+                    update_thread_->PostTask([this, chat_id] {
+                        remove(chat_id);
+                    });
+                    break;
+                default:
+                    break;
                 }
             }
             END_WORKER
         });
-        connections_[chat_id]->on_frames([this, chat_id] (const media::StreamManager::Mode mode, const media::StreamManager::Device device, const std::vector<wrtc::models::Frame>& frames) {
+        connections_[chat_id]->on_frames([this, chat_id](const media::StreamManager::Mode mode, const media::StreamManager::Device device, const std::vector<wrtc::models::Frame>& frames) {
             (void) frames_callback_(chat_id, mode, device, frames);
         });
-        connections_[chat_id]->on_remote_source_change([this, chat_id](const RemoteSource &state) {
+        connections_[chat_id]->on_remote_source_change([this, chat_id](const RemoteSource& state) {
             WORKER("onRemoteSourceChange", update_thread_, this, chat_id, state)
             (void) remote_source_callback_(chat_id, state);
             END_WORKER
@@ -148,15 +148,15 @@ namespace ntgcalls {
         safe_call<instances::P2PCall>(connections_[user_id].get())->init();
     }
 
-    bytes::binary NTgCalls::init_exchange(const int64_t user_id, const p2p::DhConfig& dh_config, const std::optional<bytes::binary> &ga_hash) {
+    bytes::binary NTgCalls::init_exchange(const int64_t user_id, const p2p::DhConfig& dh_config, const std::optional<bytes::binary>& ga_hash) {
         return safe_call<instances::P2PCall>(safe_connection(user_id))->init_exchange(dh_config, ga_hash);
     }
 
-    p2p::AuthParams NTgCalls::exchange_keys(const int64_t user_id, const bytes::binary &g_a_or_b, const int64_t fingerprint) {
+    p2p::AuthParams NTgCalls::exchange_keys(const int64_t user_id, const bytes::binary& g_a_or_b, const int64_t fingerprint) {
         return safe_call<instances::P2PCall>(safe_connection(user_id))->exchange_keys(g_a_or_b, fingerprint);
     }
 
-    void NTgCalls::skip_exchange(const int64_t user_id, const bytes::binary &encryption_key, const bool is_outgoing) {
+    void NTgCalls::skip_exchange(const int64_t user_id, const bytes::binary& encryption_key, const bool is_outgoing) {
         safe_call<instances::P2PCall>(safe_connection(user_id))->skip_exchange(encryption_key, is_outgoing);
     }
 
@@ -205,11 +205,11 @@ namespace ntgcalls {
         return safe_call<instances::GroupCall>(safe_connection(chat_id))->remove_incoming_video(endpoint);
     }
 
-    void NTgCalls::update_audio_ssrc_mappings(const int64_t chat_id, const std::vector<wrtc::models::SsrcMapping> &ssrc_groups) {
+    void NTgCalls::update_audio_ssrc_mappings(const int64_t chat_id, const std::vector<wrtc::models::SsrcMapping>& ssrc_groups) {
         return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->update_audio_ssrc_mappings(ssrc_groups);
     }
 
-    void NTgCalls::apply_blocks(const int64_t chat_id, const int subchain, const int next_offset, const std::vector<bytes::binary> &blocks, const bool from_short_poll) {
+    void NTgCalls::apply_blocks(const int64_t chat_id, const int subchain, const int next_offset, const std::vector<bytes::binary>& blocks, const bool from_short_poll) {
         return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->apply_blocks(subchain, next_offset, blocks, from_short_poll);
     }
 
@@ -260,8 +260,8 @@ namespace ntgcalls {
     }
 
     void NTgCalls::on_connection_change(const std::function<void(int64_t, ConnectionInfo)>& callback) {
-       const std::lock_guard lock(mutex_);
-       connection_change_callback_ = callback;
+        const std::lock_guard lock(mutex_);
+        connection_change_callback_ = callback;
     }
 
     void NTgCalls::on_frames(const std::function<void(int64_t, media::StreamManager::Mode, media::StreamManager::Device, const std::vector<wrtc::models::Frame>&)>& callback) {
@@ -289,22 +289,22 @@ namespace ntgcalls {
         broadcast_timestamp_callback_ = callback;
     }
 
-    void NTgCalls::on_request_participants(const std::function<void(int64_t)> &callback) {
+    void NTgCalls::on_request_participants(const std::function<void(int64_t)>& callback) {
         const std::lock_guard lock(mutex_);
         request_participants_callback_ = callback;
     }
 
-    void NTgCalls::on_outbound_block(const std::function<void(int64_t, const bytes::binary&)> &callback) {
+    void NTgCalls::on_outbound_block(const std::function<void(int64_t, const bytes::binary&)>& callback) {
         const std::lock_guard lock(mutex_);
         outbound_block_callback_ = callback;
     }
 
-    void NTgCalls::on_subchain_request(const std::function<void(int64_t, e2e::SubchainRequest)> &callback) {
+    void NTgCalls::on_subchain_request(const std::function<void(int64_t, e2e::SubchainRequest)>& callback) {
         const std::lock_guard lock(mutex_);
         subchain_request_callback_ = callback;
     }
 
-    void NTgCalls::on_update_emojis(const std::function<void(int64_t, std::string)> &callback) {
+    void NTgCalls::on_update_emojis(const std::function<void(int64_t, std::string)>& callback) {
         const std::lock_guard lock(mutex_);
         update_emojis_callback_ = callback;
     }
@@ -317,11 +317,11 @@ namespace ntgcalls {
         safe_call<instances::GroupCall>(safe_connection(chat_id))->send_broadcast_part(segment_id, part_id, status, quality_update, data);
     }
 
-    void NTgCalls::send_signaling_data(const int64_t chat_id, const bytes::binary &msg_key) {
+    void NTgCalls::send_signaling_data(const int64_t chat_id, const bytes::binary& msg_key) {
         safe_call<instances::P2PCall>(safe_connection(chat_id))->send_signaling_data(msg_key);
     }
 
-    void NTgCalls::send_external_frame(const int64_t chat_id, const media::StreamManager::Device device, const bytes::binary &data, const wrtc::models::FrameData frame_data) {
+    void NTgCalls::send_external_frame(const int64_t chat_id, const media::StreamManager::Device device, const bytes::binary& data, const wrtc::models::FrameData frame_data) {
         safe_connection(chat_id)->send_external_frame(device, data, frame_data);
     }
 
@@ -356,10 +356,13 @@ namespace ntgcalls {
         const std::lock_guard lock(mutex_);
         std::map<int64_t, media::StreamManager::CallInfo> status_list;
         for (const auto& [fst, snd] : connections_) {
-            status_list.emplace(fst, media::StreamManager::CallInfo{
-                snd->status(media::StreamManager::Mode::Playback),
-                snd->status(media::StreamManager::Mode::Capture)
-            });
+            status_list.emplace(
+                fst,
+                media::StreamManager::CallInfo{
+                    .playback = snd->status(media::StreamManager::Mode::Playback),
+                    .capture = snd->status(media::StreamManager::Mode::Capture),
+                }
+            );
         }
         return status_list;
     }

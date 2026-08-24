@@ -4,7 +4,6 @@
 
 #include <ntgcalls/instances/conference_call.hpp>
 
-
 namespace ntgcalls::instances {
     p2p::ConferenceJoinParams ConferenceCall::init_conference(const int64_t user_id, const std::optional<bytes::binary>& last_block) {
         session_ = std::make_shared<e2e::Session>(update_thread_, user_id);
@@ -34,13 +33,13 @@ namespace ntgcalls::instances {
         return res;
     }
 
-    void ConferenceCall::connect(const std::string &json_data, const bool is_presentation) {
+    void ConferenceCall::connect(const std::string& json_data, const bool is_presentation) {
         GroupCall::connect(json_data, is_presentation);
         session_->short_poll(0);
         session_->short_poll(1);
     }
 
-    void ConferenceCall::migrate(const P2PCall *p2p_call) {
+    void ConferenceCall::migrate(const P2PCall* p2p_call) {
         stream_manager_ = std::move(p2p_call->stream_manager());
         stream_manager_->enable_video_simulcast(true);
         stream_manager_->detach();
@@ -49,7 +48,7 @@ namespace ntgcalls::instances {
     void ConferenceCall::apply_blocks(
         const int subchain,
         const int next_offset,
-        const std::vector<bytes::binary> &blocks,
+        const std::vector<bytes::binary>& blocks,
         const bool from_short_poll
     ) const {
         session_->apply_blocks(subchain, next_offset, blocks, from_short_poll);
@@ -59,7 +58,7 @@ namespace ntgcalls::instances {
         session_->finish_subchain_request(subchain);
     }
 
-    void ConferenceCall::update_audio_ssrc_mappings(const std::vector<wrtc::models::SsrcMapping> &audio_ssrcs) const {
+    void ConferenceCall::update_audio_ssrc_mappings(const std::vector<wrtc::models::SsrcMapping>& audio_ssrcs) const {
         const auto groupConnection = safe<wrtc::interfaces::GroupConnection>(connection_);
         if (!groupConnection) {
             throw ConnectionError("Conference connection not initialized");
@@ -67,7 +66,7 @@ namespace ntgcalls::instances {
         groupConnection->update_audio_ssrc_mappings(audio_ssrcs);
     }
 
-    void ConferenceCall::on_outbound_block(const std::function<void(bytes::binary)> &callback) const {
+    void ConferenceCall::on_outbound_block(const std::function<void(bytes::binary)>& callback) const {
         session_->on_outbound_block(callback);
     }
 

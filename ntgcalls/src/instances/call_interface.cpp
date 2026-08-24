@@ -130,20 +130,23 @@ namespace ntgcalls::instances {
                 }
             });
         });
-        update_thread_.PostDelayedTask([weak, kind, conn] {
-            const auto strong = weak.lock();
-            if (!strong) {
-                return;
-            }
-            if (conn->get_connection_state() == wrtc::ConnectionState::Connecting && !conn->is_already_connected()) {
-                RTC_LOG(LS_ERROR) << "Connection timeout";
-                (void) strong->connection_change_callback_({ConnectionInfo::State::Timeout, kind});
-            }
-        }, webrtc::TimeDelta::Seconds(10));
+        update_thread_.PostDelayedTask(
+            [weak, kind, conn] {
+                const auto strong = weak.lock();
+                if (!strong) {
+                    return;
+                }
+                if (conn->get_connection_state() == wrtc::ConnectionState::Connecting && !conn->is_already_connected()) {
+                    RTC_LOG(LS_ERROR) << "Connection timeout";
+                    (void) strong->connection_change_callback_({ConnectionInfo::State::Timeout, kind});
+                }
+            },
+            webrtc::TimeDelta::Seconds(10)
+        );
     }
 
     media::StreamManager::Status CallInterface::parse_video_state(const signaling::messages::MediaStateMessage::VideoState state) {
-        switch (state){
+        switch (state) {
         case signaling::messages::MediaStateMessage::VideoState::Active:
             return media::StreamManager::Status::Active;
         case signaling::messages::MediaStateMessage::VideoState::Inactive:

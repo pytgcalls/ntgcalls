@@ -23,7 +23,7 @@ namespace ntgcalls::instances {
 
         void connect(const std::string& json_data, bool is_presentation) override;
 
-        void migrate(const P2PCall *p2p_call);
+        void migrate(const P2PCall* p2p_call);
 
         void apply_blocks(
             int subchain,
@@ -32,7 +32,7 @@ namespace ntgcalls::instances {
             bool from_short_poll
         ) const;
 
-        void update_audio_ssrc_mappings(const std::vector<wrtc::models::SsrcMapping> &audio_ssrcs) const;
+        void update_audio_ssrc_mappings(const std::vector<wrtc::models::SsrcMapping>& audio_ssrcs) const;
 
         void finish_subchain_request(int subchain) const;
 

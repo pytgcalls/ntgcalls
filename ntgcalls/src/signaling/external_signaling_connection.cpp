@@ -8,7 +8,7 @@ namespace ntgcalls::signaling {
     ExternalSignalingConnection::ExternalSignalingConnection(
         wrtc::utils::SafeThread& network_thread,
         wrtc::utils::SafeThread& signaling_thread,
-        const crypto::EncryptionKey &key,
+        const crypto::EncryptionKey& key,
         const DataEmitter& on_emit_data,
         const DataReceiver& on_signal_data
     ): SignalingInterface(network_thread, signaling_thread, key, on_emit_data, on_signal_data) {}

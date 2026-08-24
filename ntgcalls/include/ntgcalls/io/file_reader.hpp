@@ -13,7 +13,7 @@ namespace ntgcalls::io {
         std::ifstream source_;
 
     public:
-        explicit FileReader(const std::string& path, media::BaseSink *sink);
+        explicit FileReader(const std::string& path, media::BaseSink* sink);
 
         ~FileReader() override;
 

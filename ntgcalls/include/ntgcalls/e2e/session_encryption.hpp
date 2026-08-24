@@ -62,7 +62,7 @@ namespace ntgcalls::e2e {
         );
 
     public:
-        SessionEncryption(int64_t self_user_id, const openssl::Key25519 &private_key);
+        SessionEncryption(int64_t self_user_id, const openssl::Key25519& private_key);
 
         std::optional<bytes::binary> encrypt(int32_t channel_id, bytes::const_span data, size_t unencrypted_prefix_length);
 

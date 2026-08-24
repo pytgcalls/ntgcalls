@@ -23,7 +23,7 @@ namespace ntgcalls::io {
         void write(const bytes::unique_binary& data) override;
 
     public:
-        explicit AudioShellWriter(const std::string &command, media::BaseSink* sink);
+        explicit AudioShellWriter(const std::string& command, media::BaseSink* sink);
 
         ~AudioShellWriter() override;
     };

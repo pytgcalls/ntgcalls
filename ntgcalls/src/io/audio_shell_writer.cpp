@@ -7,11 +7,11 @@
 #include <ntgcalls/io/audio_shell_writer.hpp>
 
 namespace ntgcalls::io {
-    AudioShellWriter::AudioShellWriter(const std::string &command, media::BaseSink* sink): BaseIO(sink), ThreadedAudioMixer(sink) {
+    AudioShellWriter::AudioShellWriter(const std::string& command, media::BaseSink* sink): BaseIO(sink), ThreadedAudioMixer(sink) {
         try {
             const auto cmd = bp::shell(command);
             shell_process_ = bp::process(ctx_, cmd.exe(), cmd.args(), bp::process_stdio{std_in_, nullptr, {}});
-        } catch (std::runtime_error &e) {
+        } catch (std::runtime_error& e) {
             throw ShellError(e.what());
         }
     }

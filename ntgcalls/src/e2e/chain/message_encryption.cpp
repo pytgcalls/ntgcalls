@@ -7,7 +7,7 @@
 #include <wrtc/utils/random.hpp>
 
 namespace ntgcalls::e2e::chain {
-    void MessageEncryption::append_int32(bytes::binary &buffer, const int32_t value) {
+    void MessageEncryption::append_int32(bytes::binary& buffer, const int32_t value) {
         const auto raw = static_cast<uint32_t>(value);
         for (int i = 0; i < 4; ++i) {
             buffer.push_back(static_cast<uint8_t>(raw >> i * 8 & 0xff));
@@ -15,7 +15,7 @@ namespace ntgcalls::e2e::chain {
     }
 
     // ReSharper disable once CppDFAConstantParameter
-    bool MessageEncryption::const_time_equal(const uint8_t *a, const uint8_t *b, const size_t size) {
+    bool MessageEncryption::const_time_equal(const uint8_t* a, const uint8_t* b, const size_t size) {
         uint8_t diff = 0;
         for (size_t i = 0; i < size; ++i) {
             diff |= a[i] ^ b[i];
@@ -23,13 +23,13 @@ namespace ntgcalls::e2e::chain {
         return diff == 0;
     }
 
-    std::array<uint8_t, 32> MessageEncryption::slice_key(const std::array<uint8_t, 64> &hash) {
+    std::array<uint8_t, 32> MessageEncryption::slice_key(const std::array<uint8_t, 64>& hash) {
         std::array<uint8_t, 32> key{};
         std::copy_n(hash.begin(), 32, key.begin());
         return key;
     }
 
-    std::array<uint8_t, 16> MessageEncryption::slice_iv(const std::array<uint8_t, 64> &hash) {
+    std::array<uint8_t, 16> MessageEncryption::slice_iv(const std::array<uint8_t, 64>& hash) {
         std::array<uint8_t, 16> iv{};
         std::copy_n(hash.begin() + 32, 16, iv.begin());
         return iv;

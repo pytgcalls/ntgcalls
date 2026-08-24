@@ -15,7 +15,7 @@ namespace ntgcalls::utils {
         static bool is_runnable_;
         static bool allow_eventloop_;
 #ifdef IS_LINUX
-        static GMainLoop *loop_;
+        static GMainLoop* loop_;
         static webrtc::PlatformThread thread_;
 #endif
         static bool is_event_loop_running();

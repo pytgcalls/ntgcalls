@@ -20,7 +20,7 @@ namespace ntgcalls::media::devices {
         void on_data(bytes::unique_binary data) override;
 
     public:
-        PulseDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink *sink);
+        PulseDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink* sink);
 
         ~PulseDeviceModule() override;
 

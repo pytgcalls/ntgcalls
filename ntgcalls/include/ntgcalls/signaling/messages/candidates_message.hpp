@@ -9,7 +9,7 @@
 #include <ntgcalls/signaling/messages/message.hpp>
 
 namespace ntgcalls::signaling::messages {
-    class CandidatesMessage final : public Message {
+    class CandidatesMessage final: public Message {
     public:
         struct IceCandidate {
             std::string sdp_string;

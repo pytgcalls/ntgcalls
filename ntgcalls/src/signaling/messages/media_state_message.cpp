@@ -7,14 +7,15 @@
 
 namespace ntgcalls::signaling::messages {
     bytes::binary MediaStateMessage::serialize() const {
-        return bytes::make_binary(json{
+        const json payload{
             {"@type", "MediaState"},
             {"muted", is_muted},
             {"lowBattery", is_battery_low},
             {"videoState", parse_video_state(video_state)},
             {"videoRotation", video_rotation},
-            {"screencastState", parse_video_state(screencast_state)}
-        }.dump());
+            {"screencastState", parse_video_state(screencast_state)},
+        };
+        return bytes::make_binary(payload.dump());
     }
 
     std::unique_ptr<MediaStateMessage> MediaStateMessage::deserialize(const bytes::binary& data) {

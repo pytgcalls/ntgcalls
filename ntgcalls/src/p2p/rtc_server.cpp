@@ -7,7 +7,7 @@
 namespace ntgcalls::p2p {
     std::set<uint64_t> RTCServer::collect_endpoint_ids(const std::vector<RTCServer>& servers) {
         std::set<uint64_t> result;
-        for (const auto &server: servers) {
+        for (const auto& server : servers) {
             if (server.peer_tag) {
                 result.emplace(server.id);
             }
@@ -42,7 +42,7 @@ namespace ntgcalls::p2p {
     std::vector<wrtc::models::RTCServer> RTCServer::to_rtc_servers(const std::vector<RTCServer>& servers) {
         const auto ids = collect_endpoint_ids(servers);
         std::vector<wrtc::models::RTCServer> wrtc_servers;
-        for (const auto& server: servers) {
+        for (const auto& server : servers) {
             if (server.peer_tag) {
                 const auto hex = [](const bytes::binary& value) {
                     const auto digit = [](const unsigned char c) {
@@ -57,8 +57,8 @@ namespace ntgcalls::p2p {
                     return result;
                 };
                 const auto i = ids.find(server.id);
-		        const auto id = static_cast<uint8_t>(std::distance(ids.begin(), i) + 1);
-                const auto push_phone = [&](const std::string &host) {
+                const auto id = static_cast<uint8_t>(std::distance(ids.begin(), i) + 1);
+                const auto push_phone = [&](const std::string& host) {
                     wrtc::models::RTCServer rtc_server;
                     rtc_server.id = id;
                     rtc_server.host = host;
@@ -74,7 +74,7 @@ namespace ntgcalls::p2p {
                 push_phone(server.ipv6);
             } else {
                 if (server.stun) {
-                    const auto push_stun = [&](const std::string &host) {
+                    const auto push_stun = [&](const std::string& host) {
                         wrtc::models::RTCServer rtc_server;
                         rtc_server.host = host;
                         rtc_server.port = server.port;
@@ -85,7 +85,7 @@ namespace ntgcalls::p2p {
                     push_stun(server.ipv6);
                 }
                 if (server.turn && server.username && server.password) {
-                    const auto push_turn = [&](const std::string &host) {
+                    const auto push_turn = [&](const std::string& host) {
                         wrtc::models::RTCServer rtc_server;
                         rtc_server.host = host;
                         rtc_server.port = server.port;
@@ -105,7 +105,7 @@ namespace ntgcalls::p2p {
 
     webrtc::PeerConnectionInterface::IceServers RTCServer::to_ice_servers(const std::vector<RTCServer>& servers) {
         webrtc::PeerConnectionInterface::IceServers ice_servers;
-        for (const std::vector<wrtc::models::RTCServer> wrtc_servers = to_rtc_servers(servers); const auto & [id, host, port, login, password, isTurn, isTcp] : wrtc_servers) {
+        for (const std::vector<wrtc::models::RTCServer> wrtc_servers = to_rtc_servers(servers); const auto& [id, host, port, login, password, isTurn, isTcp] : wrtc_servers) {
             if (isTcp) {
                 continue;
             }

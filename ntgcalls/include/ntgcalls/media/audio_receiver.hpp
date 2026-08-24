@@ -20,9 +20,9 @@ namespace ntgcalls::media {
 
         bytes::unique_binary resample_frame(bytes::unique_binary data, size_t size, uint8_t channels, uint16_t sample_rate);
 
-        static bytes::unique_binary stereo_to_mono(const bytes::unique_binary& data, size_t size, size_t *new_size);
+        static bytes::unique_binary stereo_to_mono(const bytes::unique_binary& data, size_t size, size_t* new_size);
 
-        static bytes::unique_binary mono_to_stereo(const bytes::unique_binary& data, size_t size, size_t *new_size);
+        static bytes::unique_binary mono_to_stereo(const bytes::unique_binary& data, size_t size, size_t* new_size);
 
     public:
         AudioReceiver();

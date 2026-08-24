@@ -70,7 +70,7 @@ namespace ntgcalls::tl {
     }
 
     TlReader::TlReader(const bytes::const_span data):
-        ptr_(data.data()), end_(ptr_ + data.size()) {}
+    ptr_(data.data()), end_(ptr_ + data.size()) {}
 
     uint32_t TlReader::fetch_uint32() {
         if (failed_ || end_ - ptr_ < 4) {
@@ -78,9 +78,9 @@ namespace ntgcalls::tl {
             return 0;
         }
         const auto value = static_cast<uint32_t>(ptr_[0]) |
-            static_cast<uint32_t>(ptr_[1]) << 8 |
-            static_cast<uint32_t>(ptr_[2]) << 16 |
-            static_cast<uint32_t>(ptr_[3]) << 24;
+                           static_cast<uint32_t>(ptr_[1]) << 8 |
+                           static_cast<uint32_t>(ptr_[2]) << 16 |
+                           static_cast<uint32_t>(ptr_[3]) << 24;
         ptr_ += 4;
         return value;
     }

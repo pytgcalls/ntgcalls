@@ -118,7 +118,7 @@ namespace ntgcalls::media::devices {
 #endif
     }
 
-    std::unique_ptr<io::BaseIO> MediaDevice::create_audio_device(const AudioDescription* desc, BaseSink *sink, const bool is_capture) {
+    std::unique_ptr<io::BaseIO> MediaDevice::create_audio_device(const AudioDescription* desc, BaseSink* sink, const bool is_capture) {
 #ifdef IS_LINUX
         if (PulseDeviceModule::is_supported()) {
             RTC_LOG(LS_INFO) << "Using PulseAudio module for input";

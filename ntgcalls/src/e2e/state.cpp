@@ -11,7 +11,7 @@
 #include <wrtc/utils/key25519.hpp>
 
 namespace ntgcalls::e2e {
-    std::optional<chain::GroupParticipant> State::find_participant(const chain::GroupState &state, const int64_t user_id) {
+    std::optional<chain::GroupParticipant> State::find_participant(const chain::GroupState& state, const int64_t user_id) {
         for (const auto& participant : state.participants) {
             if (participant.user_id == user_id) {
                 return participant;
@@ -21,7 +21,7 @@ namespace ntgcalls::e2e {
     }
 
     std::optional<chain::GroupParticipant> State::find_participant(
-        const chain::GroupState &state,
+        const chain::GroupState& state,
         const tl::PublicKeyBytes& public_key
     ) {
         for (const auto& participant : state.participants) {
@@ -32,7 +32,7 @@ namespace ntgcalls::e2e {
         return std::nullopt;
     }
 
-    int32_t State::group_state_version(const chain::GroupState &state) {
+    int32_t State::group_state_version(const chain::GroupState& state) {
         if (state.participants.empty()) {
             return 0;
         }
@@ -44,7 +44,7 @@ namespace ntgcalls::e2e {
     }
 
     Permissions State::get_permissions(
-        const chain::GroupState &state,
+        const chain::GroupState& state,
         const tl::PublicKeyBytes& public_key,
         int32_t limit_permissions
     ) {
@@ -55,7 +55,7 @@ namespace ntgcalls::e2e {
         return Permissions{state.external_permissions & limit_permissions};
     }
 
-    bool State::set_shared_key(const chain::SharedKey &new_key, const Permissions &permissions) {
+    bool State::set_shared_key(const chain::SharedKey& new_key, const Permissions& permissions) {
         if (shared_key != chain::SharedKey{}) {
             return false;
         }
@@ -69,7 +69,7 @@ namespace ntgcalls::e2e {
         return true;
     }
 
-    bool State::apply_change(const chain::Change &change, const tl::PublicKeyBytes& signer, const int32_t limit_permissions) {
+    bool State::apply_change(const chain::Change& change, const tl::PublicKeyBytes& signer, const int32_t limit_permissions) {
         return std::visit([&]<typename T>(const T& value) {
             if constexpr (std::is_same_v<T, chain::ChangeNoop>) {
                 return true;
@@ -88,10 +88,11 @@ namespace ntgcalls::e2e {
             } else {
                 return false;
             }
-        }, change.value);
+        },
+                          change.value);
     }
 
-    bool State::set_group_state(const chain::GroupState &new_state, const Permissions &permissions) {
+    bool State::set_group_state(const chain::GroupState& new_state, const Permissions& permissions) {
         if (!validate_group_state(new_state)) {
             return false;
         }
@@ -107,7 +108,7 @@ namespace ntgcalls::e2e {
             return false;
         }
         int32_t needed_flags = 0;
-        for (const auto &key: old_participants | std::views::keys) {
+        for (const auto& key : old_participants | std::views::keys) {
             if (!new_participants.contains(key) && !permissions.may_remove_users()) {
                 return false;
             }
@@ -132,7 +133,7 @@ namespace ntgcalls::e2e {
         return true;
     }
 
-    bool State::validate_group_state(const chain::GroupState &state) {
+    bool State::validate_group_state(const chain::GroupState& state) {
         std::set<int64_t> user_ids;
         std::set<tl::PublicKeyBytes> keys;
         for (const auto& participant : state.participants) {
@@ -148,7 +149,7 @@ namespace ntgcalls::e2e {
         return user_ids.size() == state.participants.size() && keys.size() == state.participants.size();
     }
 
-    bool State::clear_shared_key(const Permissions &permissions) {
+    bool State::clear_shared_key(const Permissions& permissions) {
         if (!permissions.may_change_shared_key()) {
             return false;
         }
@@ -156,7 +157,7 @@ namespace ntgcalls::e2e {
         return true;
     }
 
-    bool State::validate_state(const chain::StateProof &proof) const {
+    bool State::validate_state(const chain::StateProof& proof) const {
         if (proof.kv_hash != kv_hash) {
             return false;
         }
@@ -185,7 +186,7 @@ namespace ntgcalls::e2e {
         return validate_group_state(group_state) && validate_shared_key(shared_key, group_state);
     }
 
-    bool State::validate_shared_key(const chain::SharedKey &shared_key, const chain::GroupState &state) {
+    bool State::validate_shared_key(const chain::SharedKey& shared_key, const chain::GroupState& state) {
         if (shared_key == chain::SharedKey{}) {
             return true;
         }
@@ -204,7 +205,7 @@ namespace ntgcalls::e2e {
         });
     }
 
-    bool State::verify_block(const chain::Block &block, const tl::PublicKeyBytes &public_key) {
+    bool State::verify_block(const chain::Block& block, const tl::PublicKeyBytes& public_key) {
         return openssl::Key25519::verify(
             bytes::view(public_key),
             bytes::view(chain::Blockchain::data_to_sign(block)),
@@ -214,7 +215,7 @@ namespace ntgcalls::e2e {
 
     // ReSharper disable once CppDFAConstantFunctionResult
     bool State::apply(
-        const chain::Block &block,
+        const chain::Block& block,
         const bool validate_signature,
         const bool validate_state_hash,
         const int32_t limit_permissions

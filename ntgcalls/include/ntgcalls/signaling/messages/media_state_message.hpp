@@ -8,7 +8,7 @@
 #include <wrtc/utils/binary.hpp>
 
 namespace ntgcalls::signaling::messages {
-    class MediaStateMessage final : public Message {
+    class MediaStateMessage final: public Message {
     public:
         enum class VideoState {
             Inactive,

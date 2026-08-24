@@ -11,4 +11,3 @@ namespace ntgcalls::p2p {
         bytes::binary g_a_or_b;
     };
 } // ntgcalls
-

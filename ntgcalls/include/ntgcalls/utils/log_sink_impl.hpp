@@ -39,11 +39,11 @@ namespace ntgcalls::utils {
 
         ~LogSink() override;
 
-        void OnLogMessage(const std::string &msg, webrtc::LoggingSeverity severity, const char *tag) override;
+        void OnLogMessage(const std::string& msg, webrtc::LoggingSeverity severity, const char* tag) override;
 
-        void OnLogMessage(const std::string &message, webrtc::LoggingSeverity severity) override;
+        void OnLogMessage(const std::string& message, webrtc::LoggingSeverity severity) override;
 
-        void OnLogMessage(const std::string &message) override;
+        void OnLogMessage(const std::string& message) override;
 
         static void get_or_create();
 
@@ -52,9 +52,9 @@ namespace ntgcalls::utils {
     private:
         static Level parse_severity(webrtc::LoggingSeverity severity);
 
-        static uint32_t parse_line_number(const std::string &message);
+        static uint32_t parse_line_number(const std::string& message);
 
-        void register_log_message(const std::string &message, webrtc::LoggingSeverity severity) const;
+        void register_log_message(const std::string& message, webrtc::LoggingSeverity severity) const;
 
         static webrtc::scoped_refptr<LogSink> instance_;
         static std::mutex mutex_;

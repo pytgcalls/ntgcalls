@@ -19,27 +19,28 @@
 #include <wrtc/models/segment_part_request.hpp>
 #include <wrtc/models/ssrc_mapping.hpp>
 
-#define CHECK_AND_THROW_IF_EXISTS(chat_id) \
-if (exists(chat_id)) { \
-throw ConnectionError("Connection cannot be initialized more than once."); \
-}
+#define CHECK_AND_THROW_IF_EXISTS(chat_id)                                         \
+    if (exists(chat_id)) {                                                         \
+        throw ConnectionError("Connection cannot be initialized more than once."); \
+    }
 
 #define THROW_CONNECTION_NOT_FOUND(chat_id) \
-throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chat_id) + "\" not found");
+    throw ConnectionNotFound("Connection with chat id \"" + std::to_string(chat_id) + "\" not found");
 
 #define WORKER_NO_LOG(worker, ...) \
-worker->PostTask([__VA_ARGS__] {\
+worker->PostTask([__VA_ARGS__] {
 
-#define END_WORKER_NO_LOG });
+#define END_WORKER_NO_LOG \
+    });
 
-#define WORKER(funcName, worker, ...) \
-RTC_LOG(LS_VERBOSE) << funcName << ": " << "Starting worker"; \
-WORKER_NO_LOG(worker, __VA_ARGS__) \
-RTC_LOG(LS_VERBOSE) << funcName << ": " << "Worker started";
+#define WORKER(funcName, worker, ...)                             \
+    RTC_LOG(LS_VERBOSE) << funcName << ": " << "Starting worker"; \
+    WORKER_NO_LOG(worker, __VA_ARGS__)                            \
+    RTC_LOG(LS_VERBOSE) << funcName << ": " << "Worker started";
 
-#define END_WORKER \
-RTC_LOG(LS_VERBOSE) << "Worker finished";\
-END_WORKER_NO_LOG
+#define END_WORKER                            \
+    RTC_LOG(LS_VERBOSE) << "Worker finished"; \
+    END_WORKER_NO_LOG
 
 namespace ntgcalls {
 
@@ -82,11 +83,11 @@ namespace ntgcalls {
 
         [[ntg::async]] void create_p2p_call(int64_t user_id);
 
-        [[ntg::async]] bytes::binary init_exchange(int64_t user_id, const p2p::DhConfig& dh_config, const std::optional<bytes::binary> &ga_hash);
+        [[ntg::async]] bytes::binary init_exchange(int64_t user_id, const p2p::DhConfig& dh_config, const std::optional<bytes::binary>& ga_hash);
 
-        [[ntg::async]] p2p::AuthParams exchange_keys(int64_t user_id, const bytes::binary &g_a_or_b, int64_t fingerprint);
+        [[ntg::async]] p2p::AuthParams exchange_keys(int64_t user_id, const bytes::binary& g_a_or_b, int64_t fingerprint);
 
-        [[ntg::async]] void skip_exchange(int64_t user_id, const bytes::binary &encryption_key, bool is_outgoing);
+        [[ntg::async]] void skip_exchange(int64_t user_id, const bytes::binary& encryption_key, bool is_outgoing);
 
         [[ntg::async]] void connect_p2p(int64_t user_id, const std::vector<p2p::RTCServer>& servers, const std::vector<std::string>& versions, bool p2p_allowed, const std::optional<std::string>& custom_parameters);
 
@@ -164,15 +165,15 @@ namespace ntgcalls {
 
         [[ntg::async]] void send_broadcast_timestamp(int64_t chat_id, int64_t timestamp);
 
-        [[ntg::async]] void send_broadcast_part(int64_t chat_id, int64_t segment_id, int32_t part_id, wrtc::models::MediaSegment::Part::Status status, bool quality_update, const std::optional<bytes::binary> &data);
+        [[ntg::async]] void send_broadcast_part(int64_t chat_id, int64_t segment_id, int32_t part_id, wrtc::models::MediaSegment::Part::Status status, bool quality_update, const std::optional<bytes::binary>& data);
 
         [[ntg::async]] void send_signaling_data(int64_t chat_id, const bytes::binary& msg_key);
 
-        [[ntg::async]] void send_external_frame(int64_t chat_id, media::StreamManager::Device device, const bytes::binary &data, wrtc::models::FrameData frame_data);
+        [[ntg::async]] void send_external_frame(int64_t chat_id, media::StreamManager::Device device, const bytes::binary& data, wrtc::models::FrameData frame_data);
 
         [[ntg::async]] void update_audio_ssrc_mappings(int64_t chat_id, const std::vector<wrtc::models::SsrcMapping>& ssrc_groups);
 
-        [[ntg::async]] void apply_blocks(int64_t chat_id, int subchain, int next_offset, const std::vector<bytes::binary> &blocks, bool from_short_poll);
+        [[ntg::async]] void apply_blocks(int64_t chat_id, int subchain, int next_offset, const std::vector<bytes::binary>& blocks, bool from_short_poll);
 
         [[ntg::async]] void finish_subchain_request(int64_t chat_id, int subchain);
 

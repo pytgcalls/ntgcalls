@@ -22,7 +22,7 @@ namespace ntgcalls::media {
         bytes::unique_binary converted_data;
         size_t pre_sample_size;
         if (channels != description_->channel_count) {
-            switch (channels){
+            switch (channels) {
             case 1:
                 converted_data = mono_to_stereo(data, size, &pre_sample_size);
                 break;
@@ -59,7 +59,7 @@ namespace ntgcalls::media {
         return std::move(new_frame);
     }
 
-    bytes::unique_binary AudioReceiver::stereo_to_mono(const bytes::unique_binary& data, const size_t size, size_t *new_size) {
+    bytes::unique_binary AudioReceiver::stereo_to_mono(const bytes::unique_binary& data, const size_t size, size_t* new_size) {
         *new_size = size / 2;
         auto mono_data = bytes::make_unique_binary(*new_size);
         for (size_t i = 0; i < size / sizeof(int16_t); i += 2) {
@@ -71,7 +71,7 @@ namespace ntgcalls::media {
         return std::move(mono_data);
     }
 
-    bytes::unique_binary AudioReceiver::mono_to_stereo(const bytes::unique_binary& data, const size_t size, size_t *new_size) {
+    bytes::unique_binary AudioReceiver::mono_to_stereo(const bytes::unique_binary& data, const size_t size, size_t* new_size) {
         *new_size = size * 2;
         auto stereo_data = bytes::make_unique_binary(*new_size);
         for (size_t i = 0; i < size / sizeof(int16_t); i++) {
@@ -96,7 +96,7 @@ namespace ntgcalls::media {
             }
             const std::lock_guard lock(mutex_);
             std::map<uint32_t, std::pair<bytes::unique_binary, size_t>> processed_frames;
-            for (const auto& frame: samples) {
+            for (const auto& frame : samples) {
                 try {
                     bytes::unique_binary data = bytes::make_unique_binary(frame->size);
                     std::memcpy(data.get(), frame->data, frame->size);

@@ -14,7 +14,7 @@ namespace ntgcalls::e2e::chain {
         Block last_block_;
         tl::Hash256 last_block_hash_{};
 
-        static void sign_block(Block &block, const openssl::Key25519 &key);
+        static void sign_block(Block& block, const openssl::Key25519& key);
 
         static tl::Hash256 calc_hash(const Block& block);
 
@@ -29,7 +29,7 @@ namespace ntgcalls::e2e::chain {
 
         static std::optional<Blockchain> create_from_block(Block block);
 
-        bool try_apply_block(const Block &block, bool validate_signature, bool validate_state_hash);
+        bool try_apply_block(const Block& block, bool validate_signature, bool validate_state_hash);
 
         [[nodiscard]] int32_t height() const;
 

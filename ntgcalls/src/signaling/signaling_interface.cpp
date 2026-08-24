@@ -44,21 +44,24 @@ namespace ntgcalls::signaling {
                     }
                 });
             } else {
-                strong->signaling_thread_.PostDelayedTask([weak, cause] {
-                    const auto strong_thread = weak.lock();
-                    if (!strong_thread) {
-                        return;
-                    }
-                    const std::lock_guard lock(strong_thread->mutex_);
-                    if (const auto service = strong_thread->signaling_encryption_->prepare_for_sending_service(cause)) {
-                        strong_thread->on_emit_data_(*service);
-                    }
-                }, webrtc::TimeDelta::Millis(delay_ms));
+                strong->signaling_thread_.PostDelayedTask(
+                    [weak, cause] {
+                        const auto strong_thread = weak.lock();
+                        if (!strong_thread) {
+                            return;
+                        }
+                        const std::lock_guard lock(strong_thread->mutex_);
+                        if (const auto service = strong_thread->signaling_encryption_->prepare_for_sending_service(cause)) {
+                            strong_thread->on_emit_data_(*service);
+                        }
+                    },
+                    webrtc::TimeDelta::Millis(delay_ms)
+                );
             }
         });
     }
 
-    std::vector<bytes::binary> SignalingInterface::pre_read_data(const bytes::binary &data, const bool is_raw) {
+    std::vector<bytes::binary> SignalingInterface::pre_read_data(const bytes::binary& data, const bool is_raw) {
         const std::lock_guard lock(mutex_);
         RTC_LOG(LS_VERBOSE) << "Decrypting packets";
         const auto raw = signaling_encryption_->decrypt(webrtc::CopyOnWriteBuffer(data.data(), data.size()), is_raw);
@@ -83,7 +86,7 @@ namespace ntgcalls::signaling {
         return packets;
     }
 
-    bytes::binary SignalingInterface::pre_send_data(const bytes::binary &data, const bool is_raw) {
+    bytes::binary SignalingInterface::pre_send_data(const bytes::binary& data, const bool is_raw) {
         const std::lock_guard lock(mutex_);
         auto packet_data = data;
         if (supports_compression()) {

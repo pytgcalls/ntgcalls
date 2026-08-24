@@ -11,14 +11,13 @@
 
 namespace ntgcalls::media::devices {
 
-    WinCoreDeviceModule::WinCoreDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink *sink):
-        BaseIO(sink),
-        BaseDeviceModule(desc, is_capture),
-        BaseReader(sink),
-        AudioMixer(sink),
-        com_initializer_(webrtc::ScopedCOMInitializer::kMTA),
-        mmcss_registration_(L"Pro Audio")
-    {
+    WinCoreDeviceModule::WinCoreDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink):
+    BaseIO(sink),
+    BaseDeviceModule(desc, is_capture),
+    BaseReader(sink),
+    AudioMixer(sink),
+    com_initializer_(webrtc::ScopedCOMInitializer::kMTA),
+    mmcss_registration_(L"Pro Audio") {
         RTC_DCHECK(com_initializer_.Succeeded());
         RTC_DCHECK(mmcss_registration_.Succeeded());
 
@@ -86,7 +85,7 @@ namespace ntgcalls::media::devices {
     void WinCoreDeviceModule::init() {
         if (running_) return;
         running_ = true;
-        const auto data_flow = is_capture_ ? eCapture:eRender;
+        const auto data_flow = is_capture_ ? eCapture : eRender;
         std::string device_id = webrtc::AudioDeviceName::kDefaultDeviceId;
         auto role = ERole();
         switch (device_index_) {
@@ -150,7 +149,7 @@ namespace ntgcalls::media::devices {
             RTC_LOG(LS_INFO) << "Updating Audio Configuration...";
             config->channel_count = channels_;
             config->sample_rate = rate_;
-            dynamic_cast<AudioSink*>(sink_) -> set_config(config);
+            dynamic_cast<AudioSink*>(sink_)->set_config(config);
         }
 
         // TODO: Low latency mode is not supported yet
@@ -437,7 +436,7 @@ namespace ntgcalls::media::devices {
 
     // ReSharper disable once CppDFAUnreachableFunctionCall
     void WinCoreDeviceModule::switch_device() {
-        if (core_audio_utility::NumberOfActiveDevices(is_capture_ ? eCapture:eRender) < 1) {
+        if (core_audio_utility::NumberOfActiveDevices(is_capture_ ? eCapture : eRender) < 1) {
             throw MediaDeviceError("No active devices");
         }
         std::string new_device_uid;

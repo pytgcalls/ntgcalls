@@ -19,7 +19,7 @@ namespace ntgcalls::io {
         std::mutex mtx_;
 
     public:
-        explicit ThreadedReader(media::BaseSink *sink, size_t thread_count = 2);
+        explicit ThreadedReader(media::BaseSink* sink, size_t thread_count = 2);
 
         void close();
 

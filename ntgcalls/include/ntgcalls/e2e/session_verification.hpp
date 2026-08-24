@@ -49,7 +49,7 @@ namespace ntgcalls::e2e {
         void emit_reveal_if_needed();
 
     public:
-        SessionVerification(int64_t self_user_id, const openssl::Key25519 &private_key);
+        SessionVerification(int64_t self_user_id, const openssl::Key25519& private_key);
 
         bool receive_inbound_message(bytes::const_span message);
 

@@ -69,9 +69,9 @@ namespace ntgcalls::media {
 
         Status status(Mode mode);
 
-        void on_stream_end(const std::function<void(Type, Device)> &callback);
+        void on_stream_end(const std::function<void(Type, Device)>& callback);
 
-        void on_upgrade(const std::function<void(MediaState)> &callback);
+        void on_upgrade(const std::function<void(MediaState)>& callback);
 
         void add_track(Mode mode, Device device, wrtc::interfaces::NetworkInterface* pc);
 
@@ -116,7 +116,7 @@ namespace ntgcalls::media {
         void maybe_reconfigure_device(Mode mode, Device device, const std::optional<DescriptionType>& desc);
 
         template<class SinkType, class DescriptionType>
-        ReconfigureReason detect_reconfigure_reason(const StreamId &id, const DescriptionType &desc, bool is_external);
+        ReconfigureReason detect_reconfigure_reason(const StreamId& id, const DescriptionType& desc, bool is_external);
 
         template<typename DescriptionType>
         void handle_capture_config(
@@ -148,7 +148,7 @@ namespace ntgcalls::media {
         );
 
         void setup_video_playback_callbacks(
-            const StreamId &id
+            const StreamId& id
         );
 
         void handle_no_description(Mode mode, Device device);

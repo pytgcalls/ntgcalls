@@ -65,7 +65,7 @@ namespace ntgcalls::utils {
 
         std::map<std::string, std::string> get_record_devices();
 
-        void on_data(const std::function<void(bytes::unique_binary)> &callback);
+        void on_data(const std::function<void(bytes::unique_binary)>& callback);
 
         void write_data(const bytes::unique_binary& data, size_t size) const;
     };

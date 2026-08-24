@@ -10,7 +10,7 @@
 #include <wrtc/utils/random.hpp>
 
 namespace ntgcalls::e2e {
-    Session::Session(wrtc::utils::SafeThread& update_thread, int64_t user_id) : update_thread_(update_thread) {
+    Session::Session(wrtc::utils::SafeThread& update_thread, int64_t user_id): update_thread_(update_thread) {
         private_key_ = openssl::Key25519::generate();
         session_encryption_ = std::make_unique<SessionEncryption>(user_id, private_key_);
         session_verification_ = std::make_unique<SessionVerification>(user_id, private_key_);
@@ -28,7 +28,7 @@ namespace ntgcalls::e2e {
         return secret;
     }
 
-    std::vector<chain::Change> Session::make_changes_for_new_state(const chain::GroupState &group_state) {
+    std::vector<chain::Change> Session::make_changes_for_new_state(const chain::GroupState& group_state) {
         const auto ephemeral_key = openssl::Key25519::generate();
         const auto group_shared_key = random_secret();
         const auto one_time_secret = random_secret();
@@ -75,10 +75,11 @@ namespace ntgcalls::e2e {
             static_cast<uint32_t>(data[0]) |
             static_cast<uint32_t>(data[1]) << 8 |
             static_cast<uint32_t>(data[2]) << 16 |
-            static_cast<uint32_t>(data[3]) << 24);
+            static_cast<uint32_t>(data[3]) << 24
+        );
     }
 
-    void Session::write_magic(bytes::binary &block, const int32_t magic) {
+    void Session::write_magic(bytes::binary& block, const int32_t magic) {
         const auto raw = static_cast<uint32_t>(magic);
         block[0] = static_cast<uint8_t>(raw & 0xff);
         block[1] = static_cast<uint8_t>(raw >> 8 & 0xff);
@@ -100,8 +101,8 @@ namespace ntgcalls::e2e {
     }
 
     std::optional<bytes::binary> Session::create_zero_block(
-        const openssl::Key25519 &key,
-        const chain::GroupState &group_state
+        const openssl::Key25519& key,
+        const chain::GroupState& group_state
     ) {
         const auto blockchain = chain::ClientBlockchain::create_empty();
         const auto changes = make_changes_for_new_state(group_state);
@@ -181,18 +182,21 @@ namespace ntgcalls::e2e {
         const auto generation = ++entry.waiting_generation;
         entry.waiting_active = true;
         const std::weak_ptr weak(shared_from_this());
-        update_thread_.PostDelayedTask([weak, subchain, generation] {
-            const auto strong = weak.lock();
-            if (!strong) {
-                return;
-            }
-            auto& state = strong->subchains_[subchain];
-            if (state.waiting_generation != generation) {
-                return;
-            }
-            state.waiting_active = false;
-            strong->check_waiting_blocks(subchain, true);
-        }, webrtc::TimeDelta::Millis(kShortPollWaitForMs));
+        update_thread_.PostDelayedTask(
+            [weak, subchain, generation] {
+                const auto strong = weak.lock();
+                if (!strong) {
+                    return;
+                }
+                auto& state = strong->subchains_[subchain];
+                if (state.waiting_generation != generation) {
+                    return;
+                }
+                state.waiting_active = false;
+                strong->check_waiting_blocks(subchain, true);
+            },
+            webrtc::TimeDelta::Millis(kShortPollWaitForMs)
+        );
     }
 
     void Session::cancel_waiting(const int subchain) {
@@ -316,12 +320,7 @@ namespace ntgcalls::e2e {
     }
 
     std::optional<bytes::binary> Session::decrypt_shared_key() const {
-        const auto&[
-            ek,
-            encryptedSharedKey,
-            destUserId,
-            destHeader
-        ] = blockchain_->group_shared_key();
+        const auto& [ek, encryptedSharedKey, destUserId, destHeader] = blockchain_->group_shared_key();
         for (size_t i = 0; i < destUserId.size(); ++i) {
             if (destUserId[i] != session_encryption_->user_id()) {
                 continue;
@@ -351,13 +350,16 @@ namespace ntgcalls::e2e {
         auto& entry = subchains_[subchain];
         const auto generation = ++entry.short_poll_generation;
         const std::weak_ptr weak = weak_from_this();
-        update_thread_.PostDelayedTask([weak, subchain, generation] {
-            const auto strong = weak.lock();
-            if (!strong || strong->subchains_[subchain].short_poll_generation != generation) {
-                return;
-            }
-            strong->short_poll(subchain);
-        }, webrtc::TimeDelta::Millis(kShortPollTimeoutMs));
+        update_thread_.PostDelayedTask(
+            [weak, subchain, generation] {
+                const auto strong = weak.lock();
+                if (!strong || strong->subchains_[subchain].short_poll_generation != generation) {
+                    return;
+                }
+                strong->short_poll(subchain);
+            },
+            webrtc::TimeDelta::Millis(kShortPollTimeoutMs)
+        );
     }
 
     chain::GroupState Session::current_group_state() {
@@ -461,7 +463,7 @@ namespace ntgcalls::e2e {
     void Session::apply_blocks(
         const int subchain,
         const int next_offset,
-        const std::vector<bytes::binary> &blocks,
+        const std::vector<bytes::binary>& blocks,
         const bool from_short_poll
     ) {
         if (!subchain && !blocks.empty() && next_offset > last_block_height_) {
@@ -512,25 +514,25 @@ namespace ntgcalls::e2e {
         outbound_block_callback_ = callback;
     }
 
-    void Session::on_subchain_request(const std::function<void(SubchainRequest)> &callback) {
+    void Session::on_subchain_request(const std::function<void(SubchainRequest)>& callback) {
         subchain_request_callback_ = callback;
     }
 
-    void Session::on_update_emoji_hash(const std::function<void(std::string)> &callback) {
+    void Session::on_update_emoji_hash(const std::function<void(std::string)>& callback) {
         update_emojis_callback_ = callback;
     }
 
     bytes::binary Session::encrypt(const bytes::binary& data, const size_t unencrypted_prefix) {
         const std::lock_guard lock(mutex_);
         if (failed_) return {};
-        const auto r = session_encryption_->encrypt(0,  bytes::view(data), unencrypted_prefix);
+        const auto r = session_encryption_->encrypt(0, bytes::view(data), unencrypted_prefix);
         return r ? *r : bytes::binary();
     }
 
     bytes::binary Session::decrypt(const int64_t user_id, const bytes::binary& data) {
         const std::lock_guard lock(mutex_);
         if (failed_) return {};
-        const auto r = session_encryption_->decrypt(user_id,  bytes::view(data));
+        const auto r = session_encryption_->decrypt(user_id, bytes::view(data));
         return r ? *r : bytes::binary();
     }
 } // ntgcalls::e2e

@@ -57,9 +57,9 @@ namespace ntgcalls::instances {
 
         virtual void set_stream_sources(media::StreamManager::Mode mode, const media::MediaDescription& config) const;
 
-        void on_stream_end(const std::function<void(media::StreamManager::Type, media::StreamManager::Device)> &callback) const;
+        void on_stream_end(const std::function<void(media::StreamManager::Type, media::StreamManager::Device)>& callback) const;
 
-        void on_connection_change(const std::function<void(ConnectionInfo)> &callback);
+        void on_connection_change(const std::function<void(ConnectionInfo)>& callback);
 
         void on_frames(const std::function<void(media::StreamManager::Mode, media::StreamManager::Device, const std::vector<wrtc::models::Frame>&)>& callback) const;
 
@@ -89,11 +89,11 @@ namespace ntgcalls::instances {
         std::shared_ptr<media::StreamManager> stream_manager() const;
     };
 
-    inline int operator&(const CallInterface::Type& lhs, const CallInterface::Type rhs){
+    inline int operator&(const CallInterface::Type& lhs, const CallInterface::Type rhs) {
         return static_cast<int>(lhs) & static_cast<int>(rhs);
     }
 
-    inline CallInterface::Type operator|(const CallInterface::Type lhs, const CallInterface::Type rhs){
+    inline CallInterface::Type operator|(const CallInterface::Type lhs, const CallInterface::Type rhs) {
         return static_cast<CallInterface::Type>(static_cast<int>(lhs) | static_cast<int>(rhs));
     }
 } // ntgcalls::instances

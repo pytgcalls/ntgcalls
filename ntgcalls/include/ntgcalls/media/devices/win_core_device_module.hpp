@@ -77,7 +77,7 @@ namespace ntgcalls::media::devices {
         void on_data(bytes::unique_binary data) override;
 
     public:
-        explicit WinCoreDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink *sink);
+        explicit WinCoreDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink* sink);
 
         ~WinCoreDeviceModule() override;
 

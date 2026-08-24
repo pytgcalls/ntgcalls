@@ -39,6 +39,7 @@ docs/
 dist/
 local_tests/
 __pycache__
+uv.lock
 *.i420
 *.pcm
 *.mp4

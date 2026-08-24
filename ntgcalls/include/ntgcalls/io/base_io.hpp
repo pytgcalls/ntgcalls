@@ -11,12 +11,12 @@ namespace ntgcalls::io {
 
     class BaseIO {
     protected:
-        media::BaseSink *sink_ = nullptr;
+        media::BaseSink* sink_ = nullptr;
         std::atomic_bool running_;
         wrtc::utils::synchronized_callback<void()> eof_callback_;
 
     public:
-        explicit BaseIO(media::BaseSink *sink);
+        explicit BaseIO(media::BaseSink* sink);
 
         virtual ~BaseIO();
 

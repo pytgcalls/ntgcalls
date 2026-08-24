@@ -21,7 +21,7 @@ namespace ntgcalls::signaling::crypto {
         return auth_key.get_bytes();
     }
 
-    void AuthKey::fill_data(RawKey &auth_key, const bytes::const_span computed_auth_key) {
+    void AuthKey::fill_data(RawKey& auth_key, const bytes::const_span computed_auth_key) {
         const auto computed_auth_key_size = computed_auth_key.size();
         if (computed_auth_key_size > EncryptionKey::kSize) {
             throw InvalidParams("Invalid auth key size");
@@ -41,12 +41,12 @@ namespace ntgcalls::signaling::crypto {
         }
         const auto hash = openssl::Sha1::digest(auth_key);
         return static_cast<uint64_t>(hash[19]) << 56 |
-            static_cast<uint64_t>(hash[18]) << 48 |
-            static_cast<uint64_t>(hash[17]) << 40 |
-            static_cast<uint64_t>(hash[16]) << 32 |
-            static_cast<uint64_t>(hash[15]) << 24 |
-            static_cast<uint64_t>(hash[14]) << 16 |
-            static_cast<uint64_t>(hash[13]) << 8 |
-            static_cast<uint64_t>(hash[12]);
+               static_cast<uint64_t>(hash[18]) << 48 |
+               static_cast<uint64_t>(hash[17]) << 40 |
+               static_cast<uint64_t>(hash[16]) << 32 |
+               static_cast<uint64_t>(hash[15]) << 24 |
+               static_cast<uint64_t>(hash[14]) << 16 |
+               static_cast<uint64_t>(hash[13]) << 8 |
+               static_cast<uint64_t>(hash[12]);
     }
 } // ntgcalls::signaling::crypto

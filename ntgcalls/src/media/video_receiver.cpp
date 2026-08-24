@@ -67,12 +67,17 @@ namespace ntgcalls::media {
             std::memcpy(yuv.get() + y_scaled_size, u_scaled_plane.get(), uv_scaled_size);
             std::memcpy(yuv.get() + y_scaled_size + uv_scaled_size, v_scaled_plane.get(), uv_scaled_size);
 
-            (void) frame_callback_(ssrc, std::move(yuv), total_size, {
-                frame->timestamp_us(),
-                frame->rotation(),
-                new_width,
-                new_height
-            });
+            (void) frame_callback_(
+                ssrc,
+                std::move(yuv),
+                total_size,
+                {
+                    frame->timestamp_us(),
+                    frame->rotation(),
+                    new_width,
+                    new_height,
+                }
+            );
         });
         weakSink_ = sink_;
     }

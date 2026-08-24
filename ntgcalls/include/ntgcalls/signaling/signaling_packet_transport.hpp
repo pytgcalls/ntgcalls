@@ -10,9 +10,10 @@
 
 namespace ntgcalls::signaling {
 
-    class SignalingPacketTransport final : public webrtc::DtlsTransportInternal {
+    class SignalingPacketTransport final: public webrtc::DtlsTransportInternal {
         std::function<void(const bytes::binary&)> emit_data_;
         std::string transport_name_;
+
     public:
         explicit SignalingPacketTransport(const std::function<void(const bytes::binary&)>& emit_data): emit_data_(emit_data), transport_name_("signaling") {}
 
@@ -66,7 +67,7 @@ namespace ntgcalls::signaling {
 
         uint16_t GetSslGroupId() const override;
 
-        bool AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char> &keying_material) override;
+        bool AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char>& keying_material) override;
     };
 
 } // ntgcalls::signaling

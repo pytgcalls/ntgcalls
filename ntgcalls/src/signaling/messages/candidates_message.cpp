@@ -14,14 +14,14 @@ namespace ntgcalls::signaling::messages {
             ice_candidates_json.push_back(json{
                 {"sdpString", sdpString},
                 {"sdpMid", sdpMid},
-                {"sdpMLineIndex", sdpMLineIndex}
+                {"sdpMLineIndex", sdpMLineIndex},
             });
         }
         res["candidates"] = ice_candidates_json;
         return bytes::make_binary(res.dump());
     }
 
-    std::unique_ptr<CandidatesMessage> CandidatesMessage::deserialize(const bytes::binary &data) {
+    std::unique_ptr<CandidatesMessage> CandidatesMessage::deserialize(const bytes::binary& data) {
         json j = json::parse(data.begin(), data.end());
         auto message = std::make_unique<CandidatesMessage>();
         for (const auto& ice_candidate : j["candidates"]) {
@@ -38,7 +38,7 @@ namespace ntgcalls::signaling::messages {
             message->ice_candidates.push_back(IceCandidate{
                 ice_candidate["sdpString"],
                 std::move(sdp_mid),
-                sdp_m_line_index
+                sdp_m_line_index,
             });
         }
         return std::move(message);

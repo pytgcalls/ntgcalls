@@ -41,7 +41,7 @@ namespace ntgcalls::instances {
 
         Type type() const override;
 
-        void on_upgrade(const std::function<void(media::MediaState)> &callback) const;
+        void on_upgrade(const std::function<void(media::MediaState)>& callback) const;
 
         void send_broadcast_part(int64_t segment_id, int32_t part_id, wrtc::models::MediaSegment::Part::Status status, bool quality_update, const std::optional<bytes::binary>& data) const;
 

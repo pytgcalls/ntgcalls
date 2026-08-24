@@ -11,9 +11,9 @@
 
 namespace ntgcalls::signaling::crypto {
     SignalingEncryption::SignalingEncryption(EncryptionKey key):
-       key_(std::move(key)),
-        send_acks_timer_active_(false),
-        resend_timer_active_(false) {}
+    key_(std::move(key)),
+    send_acks_timer_active_(false),
+    resend_timer_active_(false) {}
 
     SignalingEncryption::~SignalingEncryption() {
         const std::lock_guard lock(mutex_);
@@ -22,7 +22,7 @@ namespace ntgcalls::signaling::crypto {
         largest_incoming_counters_.clear();
     }
 
-    bytes::binary SignalingEncryption::encrypt_prepared(const webrtc::CopyOnWriteBuffer &buffer) {
+    bytes::binary SignalingEncryption::encrypt_prepared(const webrtc::CopyOnWriteBuffer& buffer) {
         const std::lock_guard lock(mutex_);
         bytes::binary encrypted(16 + buffer.size());
         const auto x = (key_.is_outgoing ? 0 : 8) + 128;
@@ -42,7 +42,7 @@ namespace ntgcalls::signaling::crypto {
         return encrypted;
     }
 
-    void SignalingEncryption::write_seq(void *bytes, const uint32_t seq) {
+    void SignalingEncryption::write_seq(void* bytes, const uint32_t seq) {
         *static_cast<uint32_t*>(bytes) = webrtc::HostToNetwork32(seq);
     }
 
@@ -50,7 +50,7 @@ namespace ntgcalls::signaling::crypto {
         return webrtc::NetworkToHost32(*static_cast<const uint32_t*>(bytes));
     }
 
-    void SignalingEncryption::append_seq(webrtc::CopyOnWriteBuffer &buffer, const uint32_t seq) {
+    void SignalingEncryption::append_seq(webrtc::CopyOnWriteBuffer& buffer, const uint32_t seq) {
         const auto bytes = webrtc::HostToNetwork32(seq);
         buffer.AppendData(reinterpret_cast<const char*>(&bytes), sizeof(bytes));
     }
@@ -60,7 +60,7 @@ namespace ntgcalls::signaling::crypto {
     }
 
     // ReSharper disable once CppDFAConstantParameter
-    bool SignalingEncryption::const_time_is_different(const void *a, const void *b, const size_t size) {
+    bool SignalingEncryption::const_time_is_different(const void* a, const void* b, const size_t size) {
         auto ca = static_cast<const char*>(a);
         auto cb = static_cast<const char*>(b);
         volatile auto different = false;
@@ -71,7 +71,7 @@ namespace ntgcalls::signaling::crypto {
     }
 
     bool SignalingEncryption::register_incoming_counter(const uint32_t incoming_counter) {
-        auto &list = largest_incoming_counters_;
+        auto& list = largest_incoming_counters_;
         const auto position = std::ranges::lower_bound(list, incoming_counter);
         const auto largest = list.empty() ? 0 : list.back();
         if (position != list.end() && *position == incoming_counter) {
@@ -94,7 +94,7 @@ namespace ntgcalls::signaling::crypto {
 
     void SignalingEncryption::ack_my_message(const uint32_t seq) {
         auto type = static_cast<uint8_t>(0);
-        auto &list = my_not_yet_acked_messages_;
+        auto& list = my_not_yet_acked_messages_;
         for (auto i = list.begin(), e = list.end(); i != e; ++i) {
             assert(i->data.size() >= 5);
             if (read_seq(i->data.cdata()) == seq) {
@@ -107,14 +107,14 @@ namespace ntgcalls::signaling::crypto {
     }
 
     void SignalingEncryption::send_ack_postponed(const uint32_t incoming_seq) {
-        auto &list = acks_to_send_seqs_;
+        auto& list = acks_to_send_seqs_;
         if (const auto already = std::ranges::find(list, incoming_seq); already == list.end()) {
             list.push_back(incoming_seq);
         }
     }
 
     bool SignalingEncryption::register_sent_ack(const uint32_t c, const bool first_in_packet) {
-        auto &list = acks_sent_counters_;
+        auto& list = acks_sent_counters_;
         const auto position = std::ranges::lower_bound(list, c);
         const auto already = position != list.end() && *position == c;
         const auto was = list;
@@ -129,7 +129,7 @@ namespace ntgcalls::signaling::crypto {
         return !already;
     }
 
-    std::vector<webrtc::CopyOnWriteBuffer> SignalingEncryption::process_raw_packet(const webrtc::Buffer &full_buffer, const uint32_t packet_seq) {
+    std::vector<webrtc::CopyOnWriteBuffer> SignalingEncryption::process_raw_packet(const webrtc::Buffer& full_buffer, const uint32_t packet_seq) {
         if (full_buffer.size() < 4) {
             RTC_LOG(LS_ERROR) << "Bad incoming data size";
             return {};
@@ -169,8 +169,8 @@ namespace ntgcalls::signaling::crypto {
                 if (auto message = messages::Message::deserialize_raw(reader)) {
                     const auto message_requires_ack = (current_seq & kMessageRequiresAckSeqBit) != 0;
                     const auto skip_message = message_requires_ack
-                        ? !register_sent_ack(current_counter, first_message_requiring_ack)
-                        : additional_message && !register_incoming_counter(current_counter);
+                                                  ? !register_sent_ack(current_counter, first_message_requiring_ack)
+                                                  : additional_message && !register_incoming_counter(current_counter);
                     if (message_requires_ack) {
                         first_message_requiring_ack = false;
                         if (!skip_message) {
@@ -232,7 +232,7 @@ namespace ntgcalls::signaling::crypto {
         return static_cast<uint32_t>(++counter_ | (message_requires_ack ? kMessageRequiresAckSeqBit : 0));
     }
 
-    bool SignalingEncryption::enough_space_in_packet(const webrtc::CopyOnWriteBuffer &buffer, const size_t amount) {
+    bool SignalingEncryption::enough_space_in_packet(const webrtc::CopyOnWriteBuffer& buffer, const size_t amount) {
         return amount < kMaxSignalingPacketSize && 16 + buffer.size() + amount <= kMaxSignalingPacketSize;
     }
 
@@ -244,7 +244,7 @@ namespace ntgcalls::signaling::crypto {
         return result;
     }
 
-    webrtc::CopyOnWriteBuffer SignalingEncryption::serialize_raw_message_with_seq(const webrtc::CopyOnWriteBuffer &message, const uint32_t seq) {
+    webrtc::CopyOnWriteBuffer SignalingEncryption::serialize_raw_message_with_seq(const webrtc::CopyOnWriteBuffer& message, const uint32_t seq) {
         webrtc::ByteBufferWriter writer;
         writer.WriteUInt32(seq);
         writer.WriteUInt8(kCustomId);
@@ -255,21 +255,21 @@ namespace ntgcalls::signaling::crypto {
         return result;
     }
 
-    void SignalingEncryption::append_messages(webrtc::CopyOnWriteBuffer &buffer) {
+    void SignalingEncryption::append_messages(webrtc::CopyOnWriteBuffer& buffer) {
         append_acks_to_send(buffer);
 
         if (my_not_yet_acked_messages_.empty()) {
             return;
         }
         const auto now = webrtc::TimeMillis();
-        for (auto &[data, lastSent] : my_not_yet_acked_messages_) {
+        for (auto& [data, lastSent] : my_not_yet_acked_messages_) {
             const auto sent = lastSent;
             const auto when = sent ? sent + kMinDelayBeforeMessageResend : 0;
             assert(data.size() >= 5);
             const auto c = counter_from_seq(read_seq(data.data()));
             const auto type = static_cast<uint8_t>(data.data()[4]);
             if (when > now) {
-                RTC_LOG(LS_VERBOSE)<< "Skip RESEND:type" << type << "#" << c << " (wait " << when - now << "ms).";
+                RTC_LOG(LS_VERBOSE) << "Skip RESEND:type" << type << "#" << c << " (wait " << when - now << "ms).";
                 break;
             }
             if (enough_space_in_packet(buffer, data.size())) {
@@ -291,7 +291,7 @@ namespace ntgcalls::signaling::crypto {
         }
     }
 
-    void SignalingEncryption::append_acks_to_send(webrtc::CopyOnWriteBuffer &buffer) {
+    void SignalingEncryption::append_acks_to_send(webrtc::CopyOnWriteBuffer& buffer) {
         auto i = acks_to_send_seqs_.begin();
         while (i != acks_to_send_seqs_.end() && enough_space_in_packet(buffer, kAckSerializedSize)) {
             RTC_LOG(LS_VERBOSE) << "Add ACK#" << counter_from_seq(*i);
@@ -309,7 +309,7 @@ namespace ntgcalls::signaling::crypto {
         return !my_not_yet_acked_messages_.empty() || !acks_to_send_seqs_.empty();
     }
 
-    std::optional<bytes::binary> SignalingEncryption::prepare_for_sending_message_internal(webrtc::CopyOnWriteBuffer &serialized, uint32_t seq) {
+    std::optional<bytes::binary> SignalingEncryption::prepare_for_sending_message_internal(webrtc::CopyOnWriteBuffer& serialized, uint32_t seq) {
         if (!enough_space_in_packet(serialized, 0)) {
             RTC_LOG(LS_ERROR) << "Too large packet: " << std::to_string(serialized.size());
             return std::nullopt;
@@ -327,13 +327,13 @@ namespace ntgcalls::signaling::crypto {
         if (!send_enqueued) {
             return encrypt_prepared(serialized);
         }
-        for (auto &[data, lastSent] : my_not_yet_acked_messages_) {
+        for (auto& [data, lastSent] : my_not_yet_acked_messages_) {
             lastSent = 0;
         }
         return prepare_for_sending_service(0);
     }
 
-    std::optional<bytes::binary> SignalingEncryption::encrypt(const webrtc::CopyOnWriteBuffer &buffer, const bool is_raw) {
+    std::optional<bytes::binary> SignalingEncryption::encrypt(const webrtc::CopyOnWriteBuffer& buffer, const bool is_raw) {
         if (is_raw) {
             const auto maybe_seq = compute_next_seq(true);
             if (!maybe_seq) {
@@ -352,7 +352,7 @@ namespace ntgcalls::signaling::crypto {
         return encrypt_prepared(result);
     }
 
-    std::vector<webrtc::CopyOnWriteBuffer> SignalingEncryption::decrypt(const webrtc::CopyOnWriteBuffer &buffer, const bool is_raw) {
+    std::vector<webrtc::CopyOnWriteBuffer> SignalingEncryption::decrypt(const webrtc::CopyOnWriteBuffer& buffer, const bool is_raw) {
         if (buffer.size() < 21 || buffer.size() > kMaxIncomingPacketSize) {
             RTC_LOG(LS_ERROR) << "Bad incoming data size";
             return {};
@@ -372,9 +372,10 @@ namespace ntgcalls::signaling::crypto {
         );
 
         if (const auto msg_key_large = openssl::Sha256::concat(
-            bytes::memory_span(key + 88 + x, 32),
-            bytes::memory_span(decryption_buffer.data(), decryption_buffer.size())
-        ); const_time_is_different(msg_key_large.data() + 8, msg_key, 16)) {
+                bytes::memory_span(key + 88 + x, 32),
+                bytes::memory_span(decryption_buffer.data(), decryption_buffer.size())
+            );
+            const_time_is_different(msg_key_large.data() + 8, msg_key, 16)) {
             RTC_LOG(LS_ERROR) << "Bad incoming data hash";
             return {};
         }
@@ -393,7 +394,7 @@ namespace ntgcalls::signaling::crypto {
         return {result_buffer};
     }
 
-    void SignalingEncryption::on_service_message(const std::function<void(int delay_ms, int cause)> &request_send_service) {
+    void SignalingEncryption::on_service_message(const std::function<void(int delay_ms, int cause)>& request_send_service) {
         request_send_service_callback_ = request_send_service;
     }
 
