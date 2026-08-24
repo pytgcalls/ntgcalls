@@ -36,11 +36,15 @@ namespace wrtc::utils {
         }
 
         auto operator()(Args... args) const {
-            std::lock_guard lock(mutex_);
+            std::function<R(Args...)> callback;
+            {
+                const std::lock_guard lock(mutex_);
+                callback = callback_;
+            }
             if constexpr (std::is_void_v<R>) {
-                if (!callback_) return false;
+                if (!callback) return false;
                 try {
-                    callback_(std::move(args)...);
+                    callback(std::move(args)...);
                 } catch (const std::exception& e) {
                     RTC_LOG(LS_ERROR) << "synchronized_callback threw an exception: " << e.what();
                 } catch (...) {
@@ -48,9 +52,9 @@ namespace wrtc::utils {
                 }
                 return true;
             } else {
-                if (!callback_) return std::optional<R>{std::nullopt};
+                if (!callback) return std::optional<R>{std::nullopt};
                 try {
-                    return std::optional<R>{callback_(std::move(args)...)};
+                    return std::optional<R>{callback(std::move(args)...)};
                 } catch (const std::exception& e) {
                     RTC_LOG(LS_ERROR) << "synchronized_callback threw an exception: " << e.what();
                 } catch (...) {

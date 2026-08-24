@@ -20,10 +20,11 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
         w.def(py::init<>());
 @for m in c.methods
 @if m.static
-        w.def_static("@{m.name|snake}", &@{c.cpp}::@{m.name|snake}@{m.argsep}
+        w.def_static("@{m.name|snake}", &@{c.cpp}::@{m.name|snake},
 @for p in m.params
-            py::arg("@{p.name|snake}")@{p.sep}
+            py::arg("@{p.name|snake}"),
 @end
+            py::call_guard<py::gil_scoped_release>()
         );
 @else
 @if m.async
@@ -57,10 +58,11 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
 @end
         );
 @else
-        w.def("@{m.name|snake}", &@{c.cpp}::@{m.name|snake}@{m.argsep}
+        w.def("@{m.name|snake}", &@{c.cpp}::@{m.name|snake},
 @for p in m.params
-            py::arg("@{p.name|snake}")@{p.sep}
+            py::arg("@{p.name|snake}"),
 @end
+            py::call_guard<py::gil_scoped_release>()
         );
 @end
 @end

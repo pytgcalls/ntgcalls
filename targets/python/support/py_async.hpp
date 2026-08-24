@@ -23,6 +23,9 @@ namespace ntgcalls::support {
     template<typename F>
     py::object async_run(F fn) {
         const auto loop = py::module_::import("asyncio").attr("get_event_loop")();
-        return loop.attr("run_in_executor")(async_executor(), py::cpp_function(std::move(fn)));
+        return loop.attr("run_in_executor")(
+            async_executor(),
+            py::cpp_function(std::move(fn), py::call_guard<py::gil_scoped_release>())
+        );
     }
 } // ntgcalls::support
