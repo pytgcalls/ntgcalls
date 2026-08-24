@@ -6,6 +6,7 @@
 #include <py_bytes.hpp>
 #include <py_holder.hpp>
 #include <py_log.hpp>
+#include <py_str.hpp>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/ntgcalls.hpp>
 
