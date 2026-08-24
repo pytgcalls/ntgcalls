@@ -2,6 +2,7 @@
 // Created by Lauren on 03/10/24.
 //
 
+#include <functional>
 #include <rtc_base/time_utils.h>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/interfaces/media/raw_audio_sink.hpp>
@@ -81,6 +82,12 @@ namespace wrtc::interfaces::media::channels {
             channel_->SetRemoteContent(incoming_description.get(), webrtc::SdpType::kAnswer);
         });
         channel_->Enable(true);
+        std::function<void(uint8_t, bool)> audio_level_and_speech;
+        if (set_audio_level_and_speech) {
+            audio_level_and_speech = [media_content, set_audio_level_and_speech](const uint8_t audio_level, const bool has_speech) {
+                set_audio_level_and_speech(media_content.ssrc, audio_level, has_speech);
+            };
+        }
         worker_thread.BlockingCall([&] {
             auto raw_sink = std::make_unique<RawAudioSink>();
             raw_sink->set_remote_audio_sink(ssrc_, [remote_audio_sink](std::unique_ptr<models::AudioFrame> frame) {
@@ -98,9 +105,7 @@ namespace wrtc::interfaces::media::channels {
                         media_content.user_id,
                         payload_type_mapping,
                         nullptr,
-                        [media_content, set_audio_level_and_speech](const uint8_t audio_level, const bool has_speech) {
-                            set_audio_level_and_speech(media_content.ssrc, audio_level, has_speech);
-                        }
+                        audio_level_and_speech
                     )
                 );
             }
@@ -115,6 +120,8 @@ namespace wrtc::interfaces::media::channels {
             channel_->SetRtpTransport(nullptr);
         });
         worker_thread_.BlockingCall([&] {
+            channel_->voice_media_receive_channel()->SetDepacketizerToDecoderFrameTransformer(ssrc_, nullptr);
+            channel_->voice_media_receive_channel()->SetRawAudioSink(ssrc_, nullptr);
             channel_ = nullptr;
         });
     }
