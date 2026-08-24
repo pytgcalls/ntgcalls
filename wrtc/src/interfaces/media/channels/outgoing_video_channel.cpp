@@ -12,7 +12,7 @@ namespace wrtc::interfaces::media::channels {
         webrtc::Call* call,
         ChannelManager* channel_manager,
         webrtc::RtpTransport* rtp_transport,
-        const models::MediaContent &media_content,
+        const models::MediaContent& media_content,
         utils::SafeThread& worker_thread,
         utils::SafeThread& network_thread,
         LocalVideoAdapter* sink,
@@ -35,12 +35,12 @@ namespace wrtc::interfaces::media::channels {
             channel_->SetRtpTransport(rtp_transport);
         });
         std::vector<webrtc::Codec> unsorted_codecs;
-        for (const auto &[id, name, clockrate, channels, feedbackTypes, parameters] : media_content.payload_types) {
+        for (const auto& [id, name, clockrate, channels, feedbackTypes, parameters] : media_content.payload_types) {
             webrtc::Codec codec = webrtc::CreateVideoCodec(id, name);
-            for (const auto &[fst, snd] : parameters) {
+            for (const auto& [fst, snd] : parameters) {
                 codec.SetParam(fst, snd);
             }
-            for (const auto &[type, subtype] : feedbackTypes) {
+            for (const auto& [type, subtype] : feedbackTypes) {
                 codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
             }
             unsorted_codecs.push_back(std::move(codec));
@@ -49,21 +49,21 @@ namespace wrtc::interfaces::media::channels {
             webrtc::kH264CodecName
         };
         std::vector<webrtc::Codec> codecs;
-        for (const auto &name : codec_preferences) {
-            for (const auto &codec : unsorted_codecs) {
+        for (const auto& name : codec_preferences) {
+            for (const auto& codec : unsorted_codecs) {
                 if (codec.name == name) {
                     codecs.push_back(codec);
                 }
             }
         }
-        for (const auto &codec : unsorted_codecs) {
+        for (const auto& codec : unsorted_codecs) {
             if (std::ranges::find(codecs, codec) == codecs.end()) {
                 codecs.push_back(codec);
             }
         }
 
         auto outgoing_video_description = std::make_unique<webrtc::VideoContentDescription>();
-        for (const auto &rtp_extension : media_content.rtp_extensions) {
+        for (const auto& rtp_extension : media_content.rtp_extensions) {
             outgoing_video_description->AddRtpHeaderExtension(rtp_extension);
         }
         outgoing_video_description->set_rtcp_mux(true);
@@ -72,7 +72,7 @@ namespace wrtc::interfaces::media::channels {
         outgoing_video_description->set_codecs(codecs);
         outgoing_video_description->set_bandwidth(-1);
         webrtc::StreamParams video_send_stream_params;
-        for (const auto &[semantics, ssrcs] : media_content.ssrc_groups) {
+        for (const auto& [semantics, ssrcs] : media_content.ssrc_groups) {
             for (auto ssrc : ssrcs) {
                 if (!video_send_stream_params.has_ssrc(ssrc)) {
                     video_send_stream_params.ssrcs.push_back(ssrc);
@@ -85,7 +85,7 @@ namespace wrtc::interfaces::media::channels {
         outgoing_video_description->AddStream(video_send_stream_params);
 
         auto incoming_video_description = std::make_unique<webrtc::VideoContentDescription>();
-        for (const auto &rtp_extension : media_content.rtp_extensions) {
+        for (const auto& rtp_extension : media_content.rtp_extensions) {
             incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(rtp_extension.uri, rtp_extension.id));
         }
         incoming_video_description->set_rtcp_mux(true);
@@ -108,7 +108,7 @@ namespace wrtc::interfaces::media::channels {
             if (encryptor) {
                 std::set<uint32_t> transformer_ssrcs;
                 transformer_ssrcs.insert(ssrc_);
-                for (const auto&[semantics, ssrcs] : media_content.ssrc_groups) {
+                for (const auto& [semantics, ssrcs] : media_content.ssrc_groups) {
                     if (semantics == "SIM") {
                         for (const auto& ssrc : ssrcs) {
                             transformer_ssrcs.insert(ssrc);
@@ -147,7 +147,7 @@ namespace wrtc::interfaces::media::channels {
     void OutgoingVideoChannel::set_enabled(const bool enable) const {
         channel_->Enable(enable);
         worker_thread_.BlockingCall([&] {
-            channel_->video_media_send_channel()->SetVideoSend(ssrc_, nullptr, enable ? sink_:nullptr);
+            channel_->video_media_send_channel()->SetVideoSend(ssrc_, nullptr, enable ? sink_ : nullptr);
         });
     }
 

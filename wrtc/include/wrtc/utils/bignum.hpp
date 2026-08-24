@@ -10,9 +10,9 @@
 namespace openssl {
     class Context {
     public:
-        Context() : data_(BN_CTX_new()) {}
+        Context(): data_(BN_CTX_new()) {}
 
-        Context(const Context &other) = delete;
+        Context(const Context& other) = delete;
 
         ~Context() {
             if (data_) {
@@ -23,6 +23,7 @@ namespace openssl {
         [[nodiscard]] BN_CTX* raw() const {
             return data_;
         }
+
     private:
         BN_CTX* data_ = nullptr;
     };
@@ -42,7 +43,7 @@ namespace openssl {
 
         ~BigNum();
 
-        BigNum &operator=(const BigNum &other);
+        BigNum& operator=(const BigNum& other);
 
         bool is_negative() const;
 
@@ -50,7 +51,7 @@ namespace openssl {
 
         uint32_t bytes_size() const;
 
-        void set_mod_exp(const BigNum &base, const BigNum &power, const BigNum &m, const Context &context = Context()) const;
+        void set_mod_exp(const BigNum& base, const BigNum& power, const BigNum& m, const Context& context = Context()) const;
 
         bool failed() const;
 
@@ -64,6 +65,6 @@ namespace openssl {
 
         void set_word(uint32_t word) const;
 
-        void set_sub(const BigNum &a, const BigNum &b) const;
+        void set_sub(const BigNum& a, const BigNum& b) const;
     };
 } // openssl

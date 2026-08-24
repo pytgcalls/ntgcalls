@@ -5,7 +5,7 @@
 #include <wrtc/interfaces/mtproto/avio_context_impl.hpp>
 
 namespace wrtc::interfaces::mtproto {
-    AVIOContextImpl::AVIOContextImpl(bytes::binary&& file_data) : file_data_(std::move(file_data)) {
+    AVIOContextImpl::AVIOContextImpl(bytes::binary&& file_data): file_data_(std::move(file_data)) {
         buffer_.resize(4 * 1024);
         context_ = avio_alloc_context(
             buffer_.data(),
@@ -27,7 +27,7 @@ namespace wrtc::interfaces::mtproto {
     }
 
     int AVIOContextImpl::read(void* opaque, unsigned char* buffer, const int buffer_size) {
-        const auto instance = static_cast<AVIOContextImpl *>(opaque);
+        const auto instance = static_cast<AVIOContextImpl*>(opaque);
 
         int bytes_to_read = std::min(buffer_size, static_cast<int>(instance->file_data_.size()) - instance->file_read_position_);
         if (bytes_to_read < 0) {
@@ -43,7 +43,7 @@ namespace wrtc::interfaces::mtproto {
     }
 
     int64_t AVIOContextImpl::seek(void* opaque, const int64_t offset, const int whence) {
-        const auto instance = static_cast<AVIOContextImpl *>(opaque);
+        const auto instance = static_cast<AVIOContextImpl*>(opaque);
 
         if (whence == 0x10000) {
             return static_cast<int64_t>(instance->file_data_.size());

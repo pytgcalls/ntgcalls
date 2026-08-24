@@ -8,7 +8,7 @@
 
 namespace wrtc::interfaces::media {
 
-    class RawAudioSink final : public webrtc::AudioSinkInterface  {
+    class RawAudioSink final: public webrtc::AudioSinkInterface {
         std::function<void(std::unique_ptr<models::AudioFrame>)> callback_;
         uint32_t ssrc_ = 0;
 

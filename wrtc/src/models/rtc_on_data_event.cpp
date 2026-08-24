@@ -6,13 +6,13 @@
 
 namespace wrtc::models {
 
-  RTCOnDataEvent::RTCOnDataEvent(bytes::byte* data, const uint16_t length) {
-    audio_data = data;
-    number_of_frames = length;
-  }
+    RTCOnDataEvent::RTCOnDataEvent(bytes::byte* data, const uint16_t length) {
+        audio_data = data;
+        number_of_frames = length;
+    }
 
-  RTCOnDataEvent::~RTCOnDataEvent() {
-    audio_data = nullptr;
-  }
+    RTCOnDataEvent::~RTCOnDataEvent() {
+        audio_data = nullptr;
+    }
 
 } // namespace wrtc

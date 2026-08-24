@@ -30,10 +30,10 @@ namespace wrtc::video_factory {
     }
 
     std::unique_ptr<webrtc::VideoDecoder> VideoDecoderConfig::create_video_codec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const {
-       if (factory_) {
-           return factory_->Create(env, format);
-       }
-       return decoder_(format);
+        if (factory_) {
+            return factory_->Create(env, format);
+        }
+        return decoder_(format);
     }
 
 } // wrtc::video_factory

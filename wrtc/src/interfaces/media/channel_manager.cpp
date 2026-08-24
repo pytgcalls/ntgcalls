@@ -21,11 +21,11 @@ namespace wrtc::interfaces::media {
 
     std::unique_ptr<webrtc::BaseChannel> ChannelManager::create_voice_channel(
         webrtc::Call* call,
-        const webrtc::MediaConfig &media_config,
-        const std::string &mid,
+        const webrtc::MediaConfig& media_config,
+        const std::string& mid,
         const bool srtp_required,
-        const webrtc::CryptoOptions &crypto_options,
-        const webrtc::AudioOptions &options
+        const webrtc::CryptoOptions& crypto_options,
+        const webrtc::AudioOptions& options
     ) {
         RTC_DCHECK(call);
         RTC_DCHECK(media_engine_);
@@ -73,11 +73,11 @@ namespace wrtc::interfaces::media {
 
     std::unique_ptr<webrtc::BaseChannel> ChannelManager::create_video_channel(
         webrtc::Call* call,
-        const webrtc::MediaConfig &media_config,
-        const std::string &mid,
+        const webrtc::MediaConfig& media_config,
+        const std::string& mid,
         const bool srtp_required,
-        const webrtc::CryptoOptions &crypto_options,
-        const webrtc::VideoOptions &options,
+        const webrtc::CryptoOptions& crypto_options,
+        const webrtc::VideoOptions& options,
         webrtc::VideoBitrateAllocatorFactory* bitrate_allocator_factory
     ) {
         RTC_DCHECK(call);
@@ -85,15 +85,15 @@ namespace wrtc::interfaces::media {
         if (!worker_thread_.IsCurrent()) {
             std::unique_ptr<webrtc::BaseChannel> temp = nullptr;
             worker_thread_.BlockingCall([&] {
-              temp = create_video_channel(
-                  call,
-                  media_config,
-                  mid,
-                  srtp_required,
-                  crypto_options,
-                  options,
-                  bitrate_allocator_factory
-              );
+                temp = create_video_channel(
+                    call,
+                    media_config,
+                    mid,
+                    srtp_required,
+                    crypto_options,
+                    options,
+                    bitrate_allocator_factory
+                );
             });
             return temp;
         }

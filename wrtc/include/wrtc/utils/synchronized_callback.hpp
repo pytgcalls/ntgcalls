@@ -9,19 +9,21 @@
 #include <rtc_base/logging.h>
 
 namespace wrtc::utils {
-    template <typename Signature>
+    template<typename Signature>
     class synchronized_callback;
 
-    template <typename R, typename... Args>
+    template<typename R, typename... Args>
     class synchronized_callback<R(Args...)> final {
         std::function<R(Args...)> callback_;
         mutable std::mutex mutex_;
 
     public:
         synchronized_callback() = default;
-        ~synchronized_callback() { *this = nullptr; }
+        ~synchronized_callback() {
+            *this = nullptr;
+        }
 
-        synchronized_callback &operator=(std::function<R(Args...)> func) {
+        synchronized_callback& operator=(std::function<R(Args...)> func) {
             std::lock_guard lock(mutex_);
             callback_ = std::move(func);
             return *this;

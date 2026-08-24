@@ -21,8 +21,7 @@ namespace wrtc::video_factory {
         return get_default_formats();
     }
 
-    std::vector<webrtc::SdpVideoFormat> VideoBaseConfig::get_default_formats() const
-    {
+    std::vector<webrtc::SdpVideoFormat> VideoBaseConfig::get_default_formats() const {
         std::vector<webrtc::SdpVideoFormat> r;
         if (codec_ == webrtc::kVideoCodecVP8) {
             r.emplace_back(webrtc::kVp8CodecName);
@@ -38,36 +37,36 @@ namespace wrtc::video_factory {
             );
         } else if (codec_ == webrtc::kVideoCodecH264) {
             r.push_back(
-                    CreateH264Format(
-                            webrtc::H264Profile::kProfileBaseline,
-                            webrtc::H264Level::kLevel3_1,
-                            "1",
-                            true
-                    )
+                CreateH264Format(
+                    webrtc::H264Profile::kProfileBaseline,
+                    webrtc::H264Level::kLevel3_1,
+                    "1",
+                    true
+                )
             );
             r.push_back(
-                    CreateH264Format(
-                            webrtc::H264Profile::kProfileBaseline,
-                            webrtc::H264Level::kLevel3_1,
-                            "0",
-                            true
-                    )
+                CreateH264Format(
+                    webrtc::H264Profile::kProfileBaseline,
+                    webrtc::H264Level::kLevel3_1,
+                    "0",
+                    true
+                )
             );
             r.push_back(
-                    CreateH264Format(
-                            webrtc::H264Profile::kProfileConstrainedBaseline,
-                            webrtc::H264Level::kLevel3_1,
-                            "1",
-                            true
-                    )
+                CreateH264Format(
+                    webrtc::H264Profile::kProfileConstrainedBaseline,
+                    webrtc::H264Level::kLevel3_1,
+                    "1",
+                    true
+                )
             );
             r.push_back(
-                    CreateH264Format(
-                            webrtc::H264Profile::kProfileConstrainedBaseline,
-                            webrtc::H264Level::kLevel3_1,
-                            "0",
-                            true
-                    )
+                CreateH264Format(
+                    webrtc::H264Profile::kProfileConstrainedBaseline,
+                    webrtc::H264Level::kLevel3_1,
+                    "0",
+                    true
+                )
             );
         } else if (codec_ == webrtc::kVideoCodecH265) {
             r.emplace_back(webrtc::kH265CodecName);

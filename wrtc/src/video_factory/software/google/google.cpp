@@ -11,12 +11,12 @@
 
 namespace google {
 
-    void add_encoders(std::vector<wrtc::video_factory::VideoEncoderConfig> &encoders) {
+    void add_encoders(std::vector<wrtc::video_factory::VideoEncoderConfig>& encoders) {
         encoders.emplace_back(
-          webrtc::kVideoCodecVP8,
-          [](const auto&) {
-              return CreateVp8Encoder(webrtc::CreateEnvironment());
-          }
+            webrtc::kVideoCodecVP8,
+            [](const auto&) {
+                return CreateVp8Encoder(webrtc::CreateEnvironment());
+            }
         );
         encoders.emplace_back(
             webrtc::kVideoCodecVP9,
@@ -26,12 +26,12 @@ namespace google {
         );
     }
 
-    void add_decoders(std::vector<wrtc::video_factory::VideoDecoderConfig> &decoders) {
+    void add_decoders(std::vector<wrtc::video_factory::VideoDecoderConfig>& decoders) {
         decoders.emplace_back(
-           webrtc::kVideoCodecVP8,
-           [](const auto&) {
-               return CreateVp8Decoder(webrtc::CreateEnvironment());
-           }
+            webrtc::kVideoCodecVP8,
+            [](const auto&) {
+                return CreateVp8Decoder(webrtc::CreateEnvironment());
+            }
         );
         decoders.emplace_back(
             webrtc::kVideoCodecVP9,

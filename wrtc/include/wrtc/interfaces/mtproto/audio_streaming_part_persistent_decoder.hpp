@@ -21,8 +21,7 @@ namespace wrtc::interfaces::mtproto {
 
         ~AudioStreamingPartPersistentDecoder();
 
-        int decode(AVCodecParameters const* codec_parameters, AVRational time_base, const AVPacket &packet, AVFrame* frame);
+        int decode(AVCodecParameters const* codec_parameters, AVRational time_base, const AVPacket& packet, AVFrame* frame);
     };
-
 
 } // wrtc::interfaces::mtproto

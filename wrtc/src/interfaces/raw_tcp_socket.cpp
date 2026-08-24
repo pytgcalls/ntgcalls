@@ -13,9 +13,9 @@ namespace webrtc {
 
     static constexpr size_t kBufSize = kMaxPacketSize + 4;
 
-    RawTcpSocket::RawTcpSocket(std::unique_ptr<Socket> socket) : AsyncTCPSocketBase(std::move(socket), kBufSize) {}
+    RawTcpSocket::RawTcpSocket(std::unique_ptr<Socket> socket): AsyncTCPSocketBase(std::move(socket), kBufSize) {}
 
-    int RawTcpSocket::Send(const void *pv, const size_t cb, const AsyncSocketPacketOptions &options) {
+    int RawTcpSocket::Send(const void* pv, const size_t cb, const AsyncSocketPacketOptions& options) {
         if (cb > kBufSize) {
             SetError(EMSGSIZE);
             return -1;
@@ -67,8 +67,7 @@ namespace webrtc {
         }
     }
 
-    std::unique_ptr<Socket> RawTcpSocket::connect_socket(Socket *socket, const SocketAddress &bind_address,
-        const SocketAddress &remote_address) {
+    std::unique_ptr<Socket> RawTcpSocket::connect_socket(Socket* socket, const SocketAddress& bind_address, const SocketAddress& remote_address) {
         std::unique_ptr<Socket> owned_socket(socket);
         if (socket->Bind(bind_address) < 0) {
             RTC_LOG(LS_ERROR) << "Bind() failed with error " << socket->GetError();

@@ -12,7 +12,7 @@ namespace wrtc::models {
         std::string type;
         std::string address;
 
-        bool operator==(CandidateDescription const &rhs) const;
+        bool operator==(CandidateDescription const& rhs) const;
 
         bool operator!=(const CandidateDescription& rhs) const {
             return !(*this == rhs);

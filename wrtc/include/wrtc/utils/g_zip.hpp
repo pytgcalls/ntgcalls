@@ -10,6 +10,7 @@ namespace bytes {
 
     class GZip {
         static constexpr uint32_t kChunkSize = 16384;
+
     public:
         static bool is_gzip(const binary& data);
 

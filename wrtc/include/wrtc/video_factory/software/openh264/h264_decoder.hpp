@@ -11,19 +11,25 @@
 #include <wrtc/utils/binary.hpp>
 
 extern "C" {
-    #include <libavcodec/avcodec.h>
+#include <libavcodec/avcodec.h>
 }
 
 struct AVCodecContextDeleter {
-    void operator()(AVCodecContext* ptr) const { avcodec_free_context(&ptr); }
+    void operator()(AVCodecContext* ptr) const {
+        avcodec_free_context(&ptr);
+    }
 };
 
 struct AVFrameDeleter {
-    void operator()(AVFrame* ptr) const { av_frame_free(&ptr); }
+    void operator()(AVFrame* ptr) const {
+        av_frame_free(&ptr);
+    }
 };
 
 struct ScopedPtrAVFreePacket {
-    void operator()(AVPacket* packet) const { av_packet_free(&packet); }
+    void operator()(AVPacket* packet) const {
+        av_packet_free(&packet);
+    }
 };
 
 typedef std::unique_ptr<AVPacket, ScopedPtrAVFreePacket> ScopedAVPacket;

@@ -47,7 +47,6 @@ namespace openssl {
         static bytes::binary decrypt(bytes::const_span data, const bytes::array<32>& key, bytes::array<16> iv);
     };
 
-
     class Aes {
     public:
         struct KeyIv {

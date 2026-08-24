@@ -21,7 +21,7 @@ namespace wrtc::interfaces::media {
         return factory_->factory()->CreateAudioTrack(webrtc::CreateRandomUuid(), source_.get());
     }
 
-    void RTCAudioSource::on_data(const models::RTCOnDataEvent &data, const models::FrameData additional_data) const {
+    void RTCAudioSource::on_data(const models::RTCOnDataEvent& data, const models::FrameData additional_data) const {
         source_->push_data(data, additional_data.absolute_capture_timestamp_ms);
     }
 } // wrtc::interfaces::media

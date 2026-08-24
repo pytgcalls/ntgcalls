@@ -9,7 +9,7 @@
 
 namespace wrtc::video_factory {
 
-    class VideoDecoderConfig final : public VideoBaseConfig {
+    class VideoDecoderConfig final: public VideoBaseConfig {
     public:
         VideoDecoderConfig() = default;
 

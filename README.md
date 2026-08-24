@@ -84,7 +84,7 @@ For developers looking to use NTgCalls with C and C++, we provide C Bindings. Fo
    ```shell
    # Static library
    python3 setup.py build_lib --static
-   
+
    # Shared library
    python3 setup.py build_lib --shared
    ```

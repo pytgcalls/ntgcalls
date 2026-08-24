@@ -16,13 +16,13 @@ namespace wrtc::interfaces::media {
     public:
         VideoStreamingAVFrame();
 
-        VideoStreamingAVFrame(VideoStreamingAVFrame &&other) noexcept;
+        VideoStreamingAVFrame(VideoStreamingAVFrame&& other) noexcept;
 
         ~VideoStreamingAVFrame();
 
         [[nodiscard]] AVFrame* get_frame() const;
 
-        double pts(const AVStream* stream, double &first_frame_pts) const;
+        double pts(const AVStream* stream, double& first_frame_pts) const;
     };
 
 } // wrtc::interfaces::media

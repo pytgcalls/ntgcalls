@@ -37,12 +37,12 @@ namespace wrtc::interfaces::media::channels {
             channel_->SetRtpTransport(rtp_transport);
         });
         std::vector<webrtc::Codec> codecs;
-        for (const auto &[id, name, clockrate, channels, feedbackTypes, parameters] : media_content.payload_types) {
+        for (const auto& [id, name, clockrate, channels, feedbackTypes, parameters] : media_content.payload_types) {
             if (name == "opus") {
                 webrtc::Codec codec = webrtc::CreateAudioCodec(id, name, clockrate, channels);
                 codec.SetParam(webrtc::kCodecParamUseInbandFec, 1);
                 codec.SetParam(webrtc::kCodecParamPTime, 60);
-                for (const auto &[type, subtype] : feedbackTypes) {
+                for (const auto& [type, subtype] : feedbackTypes) {
                     codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
                 }
                 codecs.push_back(std::move(codec));
@@ -50,7 +50,7 @@ namespace wrtc::interfaces::media::channels {
             }
         }
         const auto outgoing_description = std::make_unique<webrtc::AudioContentDescription>();
-        for (const auto &rtp_extension : media_content.rtp_extensions) {
+        for (const auto& rtp_extension : media_content.rtp_extensions) {
             outgoing_description->AddRtpHeaderExtension(webrtc::RtpExtension(rtp_extension.uri, rtp_extension.id));
         }
         outgoing_description->set_rtcp_mux(true);
@@ -60,7 +60,7 @@ namespace wrtc::interfaces::media::channels {
         outgoing_description->set_bandwidth(-1);
         outgoing_description->AddStream(webrtc::StreamParams::CreateLegacy(ssrc_));
         const auto incoming_description = std::make_unique<webrtc::AudioContentDescription>();
-        for (const auto &rtp_extension : media_content.rtp_extensions) {
+        for (const auto& rtp_extension : media_content.rtp_extensions) {
             incoming_description->AddRtpHeaderExtension(webrtc::RtpExtension(rtp_extension.uri, rtp_extension.id));
         }
         incoming_description->set_rtcp_mux(true);

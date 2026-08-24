@@ -12,15 +12,15 @@
 #include <wrtc/video_factory/software/openh264/h264_decoder.hpp>
 
 extern "C" {
-    #include <libavutil/imgutils.h>
+#include <libavutil/imgutils.h>
 }
 
 // Currently updated with the latest commit from:
 // https://webrtc.googlesource.com/src/+/8037fc6ffa131805248c2a63c3edec69155b05cf
 
 constexpr std::array kPixelFormatsSupported = {
-    AV_PIX_FMT_YUV420P,     AV_PIX_FMT_YUV422P,     AV_PIX_FMT_YUV444P,
-    AV_PIX_FMT_YUVJ420P,    AV_PIX_FMT_YUVJ422P,    AV_PIX_FMT_YUVJ444P,
+    AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV422P, AV_PIX_FMT_YUV444P,
+    AV_PIX_FMT_YUVJ420P, AV_PIX_FMT_YUVJ422P, AV_PIX_FMT_YUVJ444P,
     AV_PIX_FMT_YUV420P10LE, AV_PIX_FMT_YUV422P10LE, AV_PIX_FMT_YUV444P10LE
 };
 
@@ -29,11 +29,10 @@ constexpr size_t kUPlaneIndex = 1;
 constexpr size_t kVPlaneIndex = 2;
 
 namespace openh264 {
-    H264Decoder::H264Decoder()
-        : ffmpeg_buffer_pool_(true),
-          decoded_image_callback_(nullptr),
-          has_reported_init_(false),
-          has_reported_error_(false) {}
+    H264Decoder::H264Decoder(): ffmpeg_buffer_pool_(true),
+                                decoded_image_callback_(nullptr),
+                                has_reported_init_(false),
+                                has_reported_error_(false) {}
 
     H264Decoder::~H264Decoder() {
         Release();
@@ -239,12 +238,13 @@ namespace openh264 {
         av_frame->buf[0] = av_buffer_create(
             av_frame->data[kYPlaneIndex], total_size, av_free_buffer2,
             std::make_unique<webrtc::VideoFrame>(webrtc::VideoFrame::Builder()
-                .set_video_frame_buffer(frame_buffer)
-                .set_rotation(webrtc::kVideoRotation_0)
-                .set_timestamp_us(0)
-                .build())
-            .release(),
-            0);
+                                                     .set_video_frame_buffer(frame_buffer)
+                                                     .set_rotation(webrtc::kVideoRotation_0)
+                                                     .set_timestamp_us(0)
+                                                     .build())
+                .release(),
+            0
+        );
         RTC_CHECK(av_frame->buf[0]);
         return 0;
     }
@@ -311,7 +311,7 @@ namespace openh264 {
         const webrtc::PlanarYuv8Buffer* planar_yuv8_buffer = nullptr;
         const webrtc::PlanarYuv16BBuffer* planar_yuv16_buffer = nullptr;
         const webrtc::VideoFrameBuffer::Type video_frame_buffer_type = frame_buffer->type();
-        
+
         switch (video_frame_buffer_type) {
         case webrtc::VideoFrameBuffer::Type::kI420:
             planar_yuv_buffer = frame_buffer->GetI420();
@@ -354,7 +354,7 @@ namespace openh264 {
             RTC_DCHECK_LE(
                 av_frame_->data[kYPlaneIndex] + av_frame_->linesize[kYPlaneIndex] * av_frame_->height,
                 planar_yuv8_buffer->DataY() +
-                planar_yuv8_buffer->StrideY() * planar_yuv8_buffer->height()
+                    planar_yuv8_buffer->StrideY() * planar_yuv8_buffer->height()
             );
             RTC_DCHECK_GE(av_frame_->data[kUPlaneIndex], planar_yuv8_buffer->DataU());
             RTC_DCHECK_LE(
@@ -476,10 +476,10 @@ namespace openh264 {
         const webrtc::ColorSpace& color_space = input_image.ColorSpace() ? *input_image.ColorSpace() : extract_h264_color_space(av_context_.get());
 
         auto decoded_frame = webrtc::VideoFrame::Builder()
-            .set_video_frame_buffer(cropped_buffer)
-            .set_rtp_timestamp(input_image.RtpTimestamp())
-            .set_color_space(color_space)
-            .build();
+                                 .set_video_frame_buffer(cropped_buffer)
+                                 .set_rtp_timestamp(input_image.RtpTimestamp())
+                                 .set_color_space(color_space)
+                                 .build();
 
         decoded_image_callback_->Decoded(decoded_frame, std::nullopt, qp);
         av_frame_unref(av_frame_.get());

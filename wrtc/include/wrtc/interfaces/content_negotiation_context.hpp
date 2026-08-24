@@ -17,14 +17,14 @@ namespace wrtc::interfaces {
             std::string id;
             models::MediaContent content;
 
-            OutgoingChannel(std::string id, models::MediaContent content):id(std::move(id)), content(std::move(content)) {}
+            OutgoingChannel(std::string id, models::MediaContent content): id(std::move(id)), content(std::move(content)) {}
         };
 
         struct PendingOutgoingChannel {
             webrtc::MediaDescriptionOptions description;
             uint32_t ssrc = 0;
             std::vector<models::SsrcGroup> ssrc_groups;
-            explicit PendingOutgoingChannel(webrtc::MediaDescriptionOptions &&description):description(std::move(description)) {}
+            explicit PendingOutgoingChannel(webrtc::MediaDescriptionOptions&& description): description(std::move(description)) {}
         };
 
         struct NegotiationContents {
@@ -35,7 +35,6 @@ namespace wrtc::interfaces {
         struct PendingOutgoingOffer {
             uint32_t exchange_id = 0;
         };
-
 
         struct CoordinatedState {
             std::vector<models::MediaContent> outgoing_contents;
@@ -59,17 +58,17 @@ namespace wrtc::interfaces {
 
         [[nodiscard]] std::unique_ptr<webrtc::SessionDescription> current_session_description_from_coordinated_state() const;
 
-        static webrtc::ContentInfo convert_signaling_content_to_content_info(const std::string &content_id, const models::MediaContent &content, webrtc::RtpTransceiverDirection direction);
+        static webrtc::ContentInfo convert_signaling_content_to_content_info(const std::string& content_id, const models::MediaContent& content, webrtc::RtpTransceiverDirection direction);
 
-        static models::MediaContent convert_content_info_to_signaling_content(const webrtc::ContentInfo &content);
+        static models::MediaContent convert_content_info_to_signaling_content(const webrtc::ContentInfo& content);
 
-        static webrtc::ContentInfo create_inactive_content_info(const std::string &content_id);
+        static webrtc::ContentInfo create_inactive_content_info(const std::string& content_id);
 
-        static webrtc::MediaDescriptionOptions get_incoming_content_description(const models::MediaContent &content);
+        static webrtc::MediaDescriptionOptions get_incoming_content_description(const models::MediaContent& content);
 
-        void set_answer(std::unique_ptr<NegotiationContents> &&answer);
+        void set_answer(std::unique_ptr<NegotiationContents>&& answer);
 
-        std::unique_ptr<NegotiationContents> get_answer(std::unique_ptr<NegotiationContents> &&offer);
+        std::unique_ptr<NegotiationContents> get_answer(std::unique_ptr<NegotiationContents>&& offer);
 
     public:
         ContentNegotiationContext(
@@ -92,7 +91,7 @@ namespace wrtc::interfaces {
 
         [[nodiscard]] std::unique_ptr<CoordinatedState> coordinated_state() const;
 
-        [[nodiscard]] std::optional<uint32_t> outgoing_channel_ssrc(const std::string &id) const;
+        [[nodiscard]] std::optional<uint32_t> outgoing_channel_ssrc(const std::string& id) const;
     };
 
 } // wrtc::interfaces

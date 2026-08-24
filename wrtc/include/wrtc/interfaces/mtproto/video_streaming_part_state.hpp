@@ -31,15 +31,15 @@ namespace wrtc::interfaces::mtproto {
 
         static int32_t round_up(int32_t num_to_round);
 
-        static std::optional<int32_t> read_int32(const bytes::binary &data, int &offset);
+        static std::optional<int32_t> read_int32(const bytes::binary& data, int& offset);
 
-        static std::optional<uint8_t> read_bytes_as_int32(const bytes::binary &data, int &offset, int count);
+        static std::optional<uint8_t> read_bytes_as_int32(const bytes::binary& data, int& offset, int count);
 
-        static std::optional<std::string> read_serialized_string(const bytes::binary &data, int &offset);
+        static std::optional<std::string> read_serialized_string(const bytes::binary& data, int& offset);
 
-        static std::optional<StreamEvent> read_video_stream_event(const bytes::binary &data, int &offset);
+        static std::optional<StreamEvent> read_video_stream_event(const bytes::binary& data, int& offset);
 
-        static std::optional<StreamInfo> consume_stream_info(bytes::binary &data);
+        static std::optional<StreamInfo> consume_stream_info(bytes::binary& data);
 
     public:
         explicit VideoStreamingPartState(bytes::binary&& data, webrtc::MediaType media_type);
@@ -52,7 +52,7 @@ namespace wrtc::interfaces::mtproto {
 
         [[nodiscard]] bool has_remaining_frames() const;
 
-        std::vector<AudioStreamingPartState::Channel> get_audio10ms_per_channel(AudioStreamingPartPersistentDecoder &persistent_decoder);
+        std::vector<AudioStreamingPartState::Channel> get_audio10ms_per_channel(AudioStreamingPartPersistentDecoder& persistent_decoder);
     };
 
 } // wrtc::interfaces::mtproto

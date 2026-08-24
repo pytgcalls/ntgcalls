@@ -15,8 +15,8 @@ namespace wrtc::interfaces::media {
         double pts = 0;
         int index = 0;
 
-        VideoStreamingPartFrame(std::string endpoint_id, webrtc::VideoFrame frame, const double pts, const int index) :
-            endpoint_id(std::move(endpoint_id)), frame(std::move(frame)), pts(pts), index(index) {}
+        VideoStreamingPartFrame(std::string endpoint_id, webrtc::VideoFrame frame, const double pts, const int index):
+        endpoint_id(std::move(endpoint_id)), frame(std::move(frame)), pts(pts), index(index) {}
     };
 
 } // wrtc::interfaces::media

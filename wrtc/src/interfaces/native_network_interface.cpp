@@ -112,7 +112,7 @@ namespace wrtc::interfaces {
         available_video_formats_ = filter_supported_video_formats(factory_->get_supported_video_formats());
 
         payload_type_mapping_.insert(std::make_pair(111, media::FrameTransformer::PayloadType::Opus));
-        for (const auto temp_video_payload_types = models::OutgoingVideoFormat::assign_payload_types(available_video_formats_); const auto &it : temp_video_payload_types) {
+        for (const auto temp_video_payload_types = models::OutgoingVideoFormat::assign_payload_types(available_video_formats_); const auto& it : temp_video_payload_types) {
             if (it.video_codec().name == webrtc::kVp8CodecName) {
                 payload_type_mapping_.insert(std::make_pair(it.video_codec().id.value(), media::FrameTransformer::PayloadType::VP8));
             } else if (it.video_codec().name == webrtc::kH264CodecName) {
@@ -318,7 +318,7 @@ namespace wrtc::interfaces {
             assert(strong->networkThread().IsCurrent());
             strong->update_aggregate_states_n();
         });
-        dtls_transport_->SubscribeWritableState(this,[weak](webrtc::PacketTransportInternal*) {
+        dtls_transport_->SubscribeWritableState(this, [weak](webrtc::PacketTransportInternal*) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -339,10 +339,10 @@ namespace wrtc::interfaces {
             return;
         }
         const auto reversed_role = transport_channel_->GetIceRole() == webrtc::ICEROLE_CONTROLLING
-            ? webrtc::ICEROLE_CONTROLLED
-            : webrtc::ICEROLE_CONTROLLING;
+                                       ? webrtc::ICEROLE_CONTROLLED
+                                       : webrtc::ICEROLE_CONTROLLING;
         RTC_LOG(LS_WARNING) << "Got ICE role conflict, switching to "
-            << (reversed_role == webrtc::ICEROLE_CONTROLLING ? "controlling" : "controlled") << " role";
+                            << (reversed_role == webrtc::ICEROLE_CONTROLLING ? "controlling" : "controlled") << " role";
         transport_channel_->SetIceRole(reversed_role);
     }
 
@@ -355,7 +355,7 @@ namespace wrtc::interfaces {
 
     std::vector<std::string> NativeNetworkInterface::get_endpoints() const {
         std::vector<std::string> endpoints;
-        for (const auto &[endpoint, media] : pending_content_) {
+        for (const auto& [endpoint, media] : pending_content_) {
             if (media.type == models::MediaContent::Type::Video) {
                 endpoints.push_back(endpoint);
             }
@@ -553,7 +553,7 @@ namespace wrtc::interfaces {
         std::vector<webrtc::SdpVideoFormat> vp9_formats;
         std::vector<webrtc::SdpVideoFormat> h264_formats;
 
-        for (const auto &format : formats) {
+        for (const auto& format : formats) {
             if (std::ranges::find(filter_codec_names, format.name) == filter_codec_names.end()) {
                 continue;
             }
@@ -569,11 +569,11 @@ namespace wrtc::interfaces {
 
         if (!vp9_formats.empty()) {
             bool added = false;
-            for (const auto &format : vp9_formats) {
+            for (const auto& format : vp9_formats) {
                 if (added) {
                     break;
                 }
-                for (const auto & [fst, snd] : format.parameters) {
+                for (const auto& [fst, snd] : format.parameters) {
                     if (fst == "profile-id") {
                         if (snd == "0") {
                             filtered_formats.push_back(format);
@@ -590,7 +590,7 @@ namespace wrtc::interfaces {
         }
 
         if (!h264_formats.empty()) {
-            std::ranges::sort(h264_formats, [](const webrtc::SdpVideoFormat &lhs, const webrtc::SdpVideoFormat &rhs) {
+            std::ranges::sort(h264_formats, [](const webrtc::SdpVideoFormat& lhs, const webrtc::SdpVideoFormat& rhs) {
                 auto [lProfileLevelId, lPacketizationMode, lLevelAssymetryAllowed] = parse_h264_format_parameters(lhs);
                 auto [rProfileLevelId, rPacketizationMode, rLevelAssymetryAllowed] = parse_h264_format_parameters(rhs);
 
@@ -623,7 +623,7 @@ namespace wrtc::interfaces {
 
     NativeNetworkInterface::H264FormatParameters NativeNetworkInterface::parse_h264_format_parameters(webrtc::SdpVideoFormat const& format) {
         H264FormatParameters result;
-        for (const auto & [fst, snd] : format.parameters) {
+        for (const auto& [fst, snd] : format.parameters) {
             if (fst == "profile-level-id") {
                 result.profile_level_id = snd;
             } else if (fst == "packetization-mode") {

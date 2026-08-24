@@ -27,8 +27,8 @@ namespace wrtc::models {
             const bool quality_update,
             const int32_t channel_id,
             const MediaSegment::Quality quality
-        ) : segment_id(segment_id), part_id(part_id), limit(limit), timestamp(timestamp),
-            quality_update(quality_update), channel_id(channel_id), quality(quality) {}
+        ): segment_id(segment_id), part_id(part_id), limit(limit), timestamp(timestamp),
+           quality_update(quality_update), channel_id(channel_id), quality(quality) {}
     };
 
 } // wrtc::models

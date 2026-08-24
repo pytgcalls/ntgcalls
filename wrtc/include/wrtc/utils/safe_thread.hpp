@@ -11,7 +11,7 @@ namespace wrtc::utils {
         std::unique_ptr<webrtc::Thread> thread_;
 
     public:
-        explicit SafeThread(std::unique_ptr<webrtc::Thread> t) : thread_(std::move(t)) {}
+        explicit SafeThread(std::unique_ptr<webrtc::Thread> t): thread_(std::move(t)) {}
 
         static std::unique_ptr<SafeThread> Create(); // NOLINT(*-identifier-naming)
 
@@ -29,14 +29,13 @@ namespace wrtc::utils {
 
         [[nodiscard]] bool IsCurrent() const; // NOLINT(*-identifier-naming)
 
-        [[nodiscard]] webrtc::SocketServer *socketServer() const; // NOLINT(*-identifier-naming)
+        [[nodiscard]] webrtc::SocketServer* socketServer() const; // NOLINT(*-identifier-naming)
 
         void AllowInvokesToThread(const SafeThread& other) const; // NOLINT(*-identifier-naming)
 
-        template <
+        template<
             typename Functor,
-            typename = std::enable_if_t<std::is_void_v<std::invoke_result_t<Functor>>>
-        >
+            typename = std::enable_if_t<std::is_void_v<std::invoke_result_t<Functor>>>>
         void BlockingCall(Functor&& functor) { // NOLINT(*-identifier-naming)
             if (thread_->IsCurrent()) {
                 functor();
@@ -45,11 +44,10 @@ namespace wrtc::utils {
             }
         }
 
-        template <
+        template<
             typename Functor,
             typename R = std::invoke_result_t<Functor>,
-            typename = std::enable_if_t<!std::is_void_v<R>>
-        >
+            typename = std::enable_if_t<!std::is_void_v<R>>>
         R BlockingCall(Functor&& functor) { // NOLINT(*-identifier-naming)
             if (thread_->IsCurrent()) {
                 return functor();
@@ -59,6 +57,6 @@ namespace wrtc::utils {
 
         void PostTask(absl::AnyInvocable<void() &&> task) const; // NOLINT(*-identifier-naming)
 
-        void PostDelayedTask(absl::AnyInvocable<void()&&> task, webrtc::TimeDelta delay) const; // NOLINT(*-identifier-naming)
+        void PostDelayedTask(absl::AnyInvocable<void() &&> task, webrtc::TimeDelta delay) const; // NOLINT(*-identifier-naming)
     };
 } // wrtc::utils

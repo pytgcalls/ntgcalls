@@ -25,7 +25,7 @@ namespace wrtc::interfaces::media::tracks {
         return needs_denoising_;
     }
 
-    void VideoTrackSource::push_frame(const webrtc::VideoFrame &frame) {
+    void VideoTrackSource::push_frame(const webrtc::VideoFrame& frame) {
         OnFrame(frame);
     }
 

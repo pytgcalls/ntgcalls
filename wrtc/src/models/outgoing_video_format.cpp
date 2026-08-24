@@ -7,8 +7,8 @@
 #include <wrtc/models/outgoing_video_format.hpp>
 
 namespace wrtc::models {
-    OutgoingVideoFormat::OutgoingVideoFormat(webrtc::Codec video_codec, std::optional<webrtc::Codec> rtx_codec) :
-    video_codec_(std::move(video_codec)), rtx_codec_(std::move(rtx_codec)){}
+    OutgoingVideoFormat::OutgoingVideoFormat(webrtc::Codec video_codec, std::optional<webrtc::Codec> rtx_codec):
+    video_codec_(std::move(video_codec)), rtx_codec_(std::move(rtx_codec)) {}
 
     std::vector<webrtc::Codec> OutgoingVideoFormat::get_video_codecs(
         const std::vector<webrtc::SdpVideoFormat>& formats,
@@ -17,19 +17,19 @@ namespace wrtc::models {
     ) {
         std::vector<webrtc::Codec> codecs;
         if (is_group_connection) {
-            for (const auto assigned_payloads = assign_payload_types(formats); const auto &payload_type : assigned_payloads) {
+            for (const auto assigned_payloads = assign_payload_types(formats); const auto& payload_type : assigned_payloads) {
                 codecs.push_back(payload_type.video_codec_);
                 if (payload_type.rtx_codec_) {
                     codecs.push_back(payload_type.rtx_codec_.value());
                 }
             }
         } else {
-            for (const auto &payload_type : payload_types) {
+            for (const auto& payload_type : payload_types) {
                 webrtc::Codec codec = webrtc::CreateVideoCodec(payload_type.id, payload_type.name);
-                for (const auto & [fst, snd] : payload_type.parameters) {
+                for (const auto& [fst, snd] : payload_type.parameters) {
                     codec.SetParam(fst, snd);
                 }
-                for (const auto & [type, subtype] : payload_type.feedback_types) {
+                for (const auto& [type, subtype] : payload_type.feedback_types) {
                     codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
                 }
                 codecs.push_back(std::move(codec));
@@ -59,8 +59,8 @@ namespace wrtc::models {
             webrtc::kH264CodecName,
         };
 
-        for (const auto &codec_name : filter_codec_names) {
-            for (const auto &format : formats) {
+        for (const auto& codec_name : filter_codec_names) {
+            for (const auto& format : formats) {
                 constexpr int kLastDynamicPayloadType = 127;
                 if (format.name != codec_name) {
                     continue;

@@ -6,9 +6,8 @@
 
 namespace wrtc::models {
     RouteDescription::RouteDescription(std::string local_description, std::string remote_description):
-        local_description(std::move(local_description)),
-        remote_description(std::move(remote_description)){}
-
+    local_description(std::move(local_description)),
+    remote_description(std::move(remote_description)) {}
 
     bool RouteDescription::operator==(RouteDescription const& rhs) const {
         if (local_description != rhs.local_description) {

@@ -9,7 +9,7 @@
 namespace wrtc::interfaces::mtproto {
 
     webrtc::scoped_refptr<webrtc::VideoFrameBuffer> extract_cv_pixel_buffer(void* data) {
-        auto pixel_buffer = (CVPixelBufferRef)(void *)data;
+        auto pixel_buffer = (CVPixelBufferRef) (void*) data;
         return webrtc::make_ref_counted<webrtc::ObjCFrameBuffer>([[RTCCVPixelBuffer alloc] initWithPixelBuffer:pixel_buffer]);
     }
 

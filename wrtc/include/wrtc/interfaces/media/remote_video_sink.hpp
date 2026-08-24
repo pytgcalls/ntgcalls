@@ -9,7 +9,7 @@
 
 namespace wrtc::interfaces::media {
 
-    class RemoteVideoSink final: public RemoteMediaInterface, public std::enable_shared_from_this<RemoteVideoSink>{
+    class RemoteVideoSink final: public RemoteMediaInterface, public std::enable_shared_from_this<RemoteVideoSink> {
         std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)> frame_callback_;
 
     public:

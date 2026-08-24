@@ -8,7 +8,7 @@
 
 namespace wrtc::interfaces {
 
-    class WrappedDtlsSrtpTransport final : public webrtc::DtlsSrtpTransport {
+    class WrappedDtlsSrtpTransport final: public webrtc::DtlsSrtpTransport {
         utils::synchronized_callback<void(webrtc::RtpPacketReceived)> rtp_packet_callback_;
         int decryption_failure_count_ = 0;
 

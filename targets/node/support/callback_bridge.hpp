@@ -9,13 +9,14 @@
 template<typename Payload, typename Convert>
 class CallbackBridge final {
 public:
-    CallbackBridge(const Napi::Env env, const Napi::Function& fn, Convert convert)
-        : convert_(std::move(convert)) {
+    CallbackBridge(const Napi::Env env, const Napi::Function& fn, Convert convert): convert_(std::move(convert)) {
         tsfn_ = Napi::ThreadSafeFunction::New(env, fn, "ntg_callback", 0, 1);
         tsfn_.Unref(env);
     }
 
-    ~CallbackBridge() { tsfn_.Release(); }
+    ~CallbackBridge() {
+        tsfn_.Release();
+    }
 
     CallbackBridge(const CallbackBridge&) = delete;
     CallbackBridge& operator=(const CallbackBridge&) = delete;

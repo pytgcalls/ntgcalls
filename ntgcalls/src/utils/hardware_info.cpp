@@ -81,7 +81,7 @@ namespace ntgcalls::utils {
         const auto now = times(&time_sample);
         if (now <= last_cpu_ || time_sample.tms_stime < last_sys_cpu_ || time_sample.tms_utime < last_user_cpu_) {
             percent = -1.0;
-        } else{
+        } else {
             percent = static_cast<double>(time_sample.tms_stime - last_sys_cpu_ + time_sample.tms_utime - last_user_cpu_);
             percent /= static_cast<double>(now - last_cpu_);
             percent /= num_processors_;

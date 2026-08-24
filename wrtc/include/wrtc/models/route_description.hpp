@@ -13,7 +13,7 @@ namespace wrtc::models {
         std::string local_description;
         std::string remote_description;
 
-        bool operator==(RouteDescription const &rhs) const;
+        bool operator==(RouteDescription const& rhs) const;
 
         bool operator!=(const RouteDescription& rhs) const;
     };

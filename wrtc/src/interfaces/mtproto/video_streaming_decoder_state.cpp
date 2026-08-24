@@ -5,7 +5,7 @@
 #include <wrtc/interfaces/mtproto/video_streaming_decoder_state.hpp>
 
 namespace wrtc::interfaces::mtproto {
-    VideoStreamingDecoderState::VideoStreamingDecoderState(AVCodecContext* codec_context, const AVCodecParameters* codec_parameters, const AVRational pkt_timebase) :
+    VideoStreamingDecoderState::VideoStreamingDecoderState(AVCodecContext* codec_context, const AVCodecParameters* codec_parameters, const AVRational pkt_timebase):
     codec_context_(codec_context), timebase_(pkt_timebase) {
         parameters_ = avcodec_parameters_alloc();
         avcodec_parameters_copy(parameters_, codec_parameters);

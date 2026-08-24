@@ -20,7 +20,7 @@ namespace wrtc::interfaces::media::channels {
         std::weak_ptr<RemoteVideoSink> remote_video_sink,
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
         E2EEncryptor* encryptor
-    ) : worker_thread_(worker_thread), network_thread_(network_thread) {
+    ): worker_thread_(worker_thread), network_thread_(network_thread) {
         sink_ = std::make_unique<RawVideoSink>();
         const uint32_t mid = random_id_generator->GenerateId();
         const auto stream_id = "video" + std::to_string(mid);
@@ -53,7 +53,7 @@ namespace wrtc::interfaces::media::channels {
 
         std::vector<uint32_t> all_ssrcs;
         webrtc::StreamParams video_recv_stream_params;
-        for (const auto & [semantics, ssrcs] : ssrc_groups) {
+        for (const auto& [semantics, ssrcs] : ssrc_groups) {
             for (auto ssrc : ssrcs) {
                 if (std::ranges::find(all_ssrcs, ssrc) == all_ssrcs.end()) {
                     all_ssrcs.push_back(ssrc);
@@ -76,7 +76,7 @@ namespace wrtc::interfaces::media::channels {
         video_recv_stream_params.ssrcs = all_ssrcs;
 
         video_recv_stream_params.cname = "cname";
-        video_recv_stream_params.set_stream_ids({ stream_id });
+        video_recv_stream_params.set_stream_ids({stream_id});
 
         auto incoming_video_description = std::make_unique<webrtc::VideoContentDescription>();
         incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAudioLevelUri, 1));
@@ -124,7 +124,7 @@ namespace wrtc::interfaces::media::channels {
     IncomingVideoChannel::~IncomingVideoChannel() {
         channel_->Enable(false);
         network_thread_.BlockingCall([&] {
-           channel_->SetRtpTransport(nullptr);
+            channel_->SetRtpTransport(nullptr);
         });
         worker_thread_.BlockingCall([&] {
             channel_ = nullptr;

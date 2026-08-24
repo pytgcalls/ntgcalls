@@ -9,7 +9,7 @@ namespace wrtc::interfaces::mtproto {
         const std::function<void(webrtc::MediaType, models::MediaSegment*, std::chrono::milliseconds)>& frame_callback,
         const std::function<models::MediaSegment*()>& get_segment_callback,
         const std::function<void(RequestType)>& request_callback
-    ) : request_callback_(request_callback), get_segment_callback_(get_segment_callback), frame_callback_(frame_callback) {
+    ): request_callback_(request_callback), get_segment_callback_(get_segment_callback), frame_callback_(frame_callback) {
         const auto current_time = std::chrono::steady_clock::now();
         audio_sync_ = std::make_unique<utils::SyncHelper>(10ms);
         video_sync_ = std::make_unique<utils::SyncHelper>(8ms);

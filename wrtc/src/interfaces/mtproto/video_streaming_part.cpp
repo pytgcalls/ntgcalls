@@ -23,7 +23,7 @@ namespace wrtc::interfaces::mtproto {
         return state_ ? state_->get_frame_at_relative_timestamp(shared_state, timestamp) : std::nullopt;
     }
 
-    std::vector<AudioStreamingPartState::Channel> VideoStreamingPart::get_audio10ms_per_channel(AudioStreamingPartPersistentDecoder &persistent_decoder) const {
+    std::vector<AudioStreamingPartState::Channel> VideoStreamingPart::get_audio10ms_per_channel(AudioStreamingPartPersistentDecoder& persistent_decoder) const {
         return state_ ? state_->get_audio10ms_per_channel(persistent_decoder) : std::vector<AudioStreamingPartState::Channel>();
     }
 } // wrtc::interfaces::mtproto

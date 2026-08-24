@@ -4,7 +4,6 @@
 
 #pragma once
 
-
 #include <memory>
 #include <api/scoped_refptr.h>
 #include <api/video/i420_buffer.h>
@@ -24,7 +23,6 @@ namespace wrtc::models {
         [[nodiscard]] bytes::byte* data_u() const;
 
         [[nodiscard]] bytes::byte* data_v() const;
-
 
     public:
         I420ImageData(uint16_t width, uint16_t height, const bytes::byte* contents, size_t size);

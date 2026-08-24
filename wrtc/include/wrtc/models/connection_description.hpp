@@ -10,7 +10,7 @@ namespace wrtc::models {
         CandidateDescription local;
         CandidateDescription remote;
 
-        bool operator==(ConnectionDescription const &rhs) const;
+        bool operator==(ConnectionDescription const& rhs) const;
 
         bool operator!=(const ConnectionDescription& rhs) const;
     };

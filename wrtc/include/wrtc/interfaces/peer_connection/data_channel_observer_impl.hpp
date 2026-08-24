@@ -7,18 +7,18 @@
 
 namespace wrtc::interfaces::peer_connection {
 
-    class DataChannelObserverImpl final : public webrtc::DataChannelObserver {
+    class DataChannelObserverImpl final: public webrtc::DataChannelObserver {
     public:
         struct Parameters {
             std::function<void()> on_state_change;
-            std::function<void(webrtc::DataBuffer const &)> on_message;
+            std::function<void(webrtc::DataBuffer const&)> on_message;
         };
 
-        explicit DataChannelObserverImpl(Parameters &&parameters);
+        explicit DataChannelObserverImpl(Parameters&& parameters);
 
         void OnStateChange() override;
 
-        void OnMessage(webrtc::DataBuffer const &buffer) override;
+        void OnMessage(webrtc::DataBuffer const& buffer) override;
 
         ~DataChannelObserverImpl() override;
 

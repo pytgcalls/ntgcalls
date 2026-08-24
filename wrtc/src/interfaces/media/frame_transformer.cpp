@@ -12,8 +12,8 @@ namespace wrtc::interfaces::media {
         E2EEncryptor* encryptor,
         const int64_t user_id,
         const std::map<int32_t, PayloadType>& payload_type_mapping,
-        const std::function<std::pair<uint8_t, bool>()> &get_audio_level_and_speech,
-        const std::function<void(uint8_t, bool)> &set_audio_level_and_speech
+        const std::function<std::pair<uint8_t, bool>()>& get_audio_level_and_speech,
+        const std::function<void(uint8_t, bool)>& set_audio_level_and_speech
     ): is_encryptor_(is_encryptor), user_id_(user_id), encryptor_(encryptor), payload_type_mapping_(payload_type_mapping) {
         this->get_audio_level_and_speech_ = get_audio_level_and_speech;
         this->set_audio_level_and_speech_ = set_audio_level_and_speech;
@@ -67,7 +67,7 @@ namespace wrtc::interfaces::media {
         return bytes_read + 1;
     }
 
-    bytes::binary FrameTransformer::calculate_h264_frame_plaintext_header_size(bytes::const_span frame, uint32_t &header_size) {
+    bytes::binary FrameTransformer::calculate_h264_frame_plaintext_header_size(bytes::const_span frame, uint32_t& header_size) {
         if (frame.empty()) {
             header_size = 0;
             return {};
@@ -87,7 +87,7 @@ namespace wrtc::interfaces::media {
         size_t max_offset = 0;
         std::vector<uint8_t> nalu_to_update;
 
-        for (const auto&[start_offset, payload_start_offset, payload_size] : nalu_indices) {
+        for (const auto& [start_offset, payload_start_offset, payload_size] : nalu_indices) {
             if (const auto start_code_length = payload_start_offset - start_offset; start_code_length == webrtc::H264::kNaluShortStartSequenceSize) {
                 nalu_to_update.push_back(start_offset);
             }
@@ -100,7 +100,7 @@ namespace wrtc::interfaces::media {
 
                         if ((frame[payload_start_offset + 1] & 0x80) != 0) {
                             if (const uint8_t original_nal_type = frame[payload_start_offset + 1] & kTypeMask; original_nal_type == webrtc::H264::kIdr || original_nal_type == 1) {
-                                 header_end_offset += 4;
+                                header_end_offset += 4;
                             }
                         }
                     }

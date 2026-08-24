@@ -7,7 +7,7 @@
 
 namespace py = pybind11;
 
-template <>
+template<>
 class pybind11::detail::type_caster<bytes::binary> {
     PYBIND11_TYPE_CASTER(::bytes::binary, const_name("bytes"));
 

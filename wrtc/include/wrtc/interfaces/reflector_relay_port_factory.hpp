@@ -9,11 +9,11 @@
 
 namespace wrtc::interfaces {
 
-    class ReflectorRelayPortFactory final : public webrtc::RelayPortFactoryInterface {
+    class ReflectorRelayPortFactory final: public webrtc::RelayPortFactoryInterface {
         std::vector<models::RTCServer> servers_;
         bool standalone_reflector_mode_;
         uint32_t standalone_reflector_role_id_;
-        webrtc::SocketFactory *underlying_socket_factory_;
+        webrtc::SocketFactory* underlying_socket_factory_;
 
     public:
         explicit ReflectorRelayPortFactory(

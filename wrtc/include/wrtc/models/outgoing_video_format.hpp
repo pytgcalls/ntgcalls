@@ -26,7 +26,7 @@ namespace wrtc::models {
 
         [[nodiscard]] webrtc::Codec video_codec() const;
 
-        static std::vector<OutgoingVideoFormat> assign_payload_types(std::vector<webrtc::SdpVideoFormat> const &formats);
+        static std::vector<OutgoingVideoFormat> assign_payload_types(std::vector<webrtc::SdpVideoFormat> const& formats);
     };
 
 } // wrtc::models

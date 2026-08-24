@@ -15,16 +15,16 @@ namespace py = pybind11;
 namespace ntgcalls::support {
     inline py::object py_log_level(const py::module_& logging, const utils::LogSink::Level level) {
         switch (level) {
-            case utils::LogSink::Level::Debug:
-                return logging.attr("DEBUG");
-            case utils::LogSink::Level::Info:
-                return logging.attr("INFO");
-            case utils::LogSink::Level::Warning:
-                return logging.attr("WARNING");
-            case utils::LogSink::Level::Error:
-                return logging.attr("ERROR");
-            default:
-                return logging.attr("NOTSET");
+        case utils::LogSink::Level::Debug:
+            return logging.attr("DEBUG");
+        case utils::LogSink::Level::Info:
+            return logging.attr("INFO");
+        case utils::LogSink::Level::Warning:
+            return logging.attr("WARNING");
+        case utils::LogSink::Level::Error:
+            return logging.attr("ERROR");
+        default:
+            return logging.attr("NOTSET");
         }
     }
 
@@ -38,7 +38,7 @@ namespace ntgcalls::support {
                 }
             }
         }
-        utils::LogSink::register_logger([](const utils::LogSink::LogMessage &m) {
+        utils::LogSink::register_logger([](const utils::LogSink::LogMessage& m) {
             if (Py_IsFinalizing()) {
                 return;
             }

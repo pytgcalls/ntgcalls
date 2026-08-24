@@ -304,7 +304,7 @@ namespace wrtc::interfaces::media {
         next_frame_time_ += 10;
         const int64_t current_time = webrtc::TimeMillis();
         const int64_t wait_time = next_frame_time_ > current_time ? next_frame_time_ - current_time : 0;
-        process_thread_->PostDelayedTask([this] { process_frame_p(); },webrtc::TimeDelta::Millis(wait_time));
+        process_thread_->PostDelayedTask([this] { process_frame_p(); }, webrtc::TimeDelta::Millis(wait_time));
     }
 
     void AudioDeviceModule::receive_frame_p() {

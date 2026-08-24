@@ -29,39 +29,39 @@ namespace wrtc::interfaces::mtproto {
             bytes::binary data_slice(data.begin() + stream_info_->events[i].offset, data.begin() + static_cast<ptrdiff_t>(end_offset));
             webrtc::VideoRotation rotation = webrtc::VideoRotation::kVideoRotation_0;
             switch (stream_info_->events[i].rotation) {
-                case 0: {
-                    rotation = webrtc::VideoRotation::kVideoRotation_0;
-                    break;
-                }
-                case 90: {
-                    rotation = webrtc::VideoRotation::kVideoRotation_90;
-                    break;
-                }
-                case 180: {
-                    rotation = webrtc::VideoRotation::kVideoRotation_180;
-                    break;
-                }
-                case 270: {
-                    rotation = webrtc::VideoRotation::kVideoRotation_270;
-                    break;
-                }
-                default: {
-                    break;
-                }
+            case 0: {
+                rotation = webrtc::VideoRotation::kVideoRotation_0;
+                break;
+            }
+            case 90: {
+                rotation = webrtc::VideoRotation::kVideoRotation_90;
+                break;
+            }
+            case 180: {
+                rotation = webrtc::VideoRotation::kVideoRotation_180;
+                break;
+            }
+            case 270: {
+                rotation = webrtc::VideoRotation::kVideoRotation_270;
+                break;
+            }
+            default: {
+                break;
+            }
             }
 
             switch (media_type) {
-                case webrtc::MediaType::AUDIO: {
-                    auto part = std::make_unique<AudioStreamingPart>(std::move(data_slice), stream_info_->container, true);
-                    parsed_audio_parts_.push_back(std::move(part));
-                } break;
-                case webrtc::MediaType::VIDEO: {
-                    auto part = std::make_unique<VideoStreamingPartInternal>(stream_info_->events[i].endpoint_id, rotation, std::move(data_slice), stream_info_->container);
-                    parsed_video_parts_.push_back(std::move(part));
-                } break;
-                default: {
-                    break;
-                }
+            case webrtc::MediaType::AUDIO: {
+                auto part = std::make_unique<AudioStreamingPart>(std::move(data_slice), stream_info_->container, true);
+                parsed_audio_parts_.push_back(std::move(part));
+            } break;
+            case webrtc::MediaType::VIDEO: {
+                auto part = std::make_unique<VideoStreamingPartInternal>(stream_info_->events[i].endpoint_id, rotation, std::move(data_slice), stream_info_->container);
+                parsed_video_parts_.push_back(std::move(part));
+            } break;
+            default: {
+                break;
+            }
             }
         }
     }
@@ -168,8 +168,7 @@ namespace wrtc::interfaces::mtproto {
                 } else {
                     return std::nullopt;
                 }
-            }
-            else {
+            } else {
                 length = tmp.value();
                 padding_bytes = round_up(length + 1) - (length + 1);
             }

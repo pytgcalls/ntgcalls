@@ -11,7 +11,7 @@
 #include <wrtc/utils/synchronized_callback.hpp>
 
 namespace wrtc::interfaces::media {
-    class FrameTransformer : public webrtc::FrameTransformerInterface  {
+    class FrameTransformer: public webrtc::FrameTransformerInterface {
     public:
         enum class PayloadType {
             Unknown,
@@ -25,8 +25,8 @@ namespace wrtc::interfaces::media {
             E2EEncryptor* encryptor,
             int64_t user_id,
             const std::map<int32_t, PayloadType>& payload_type_mapping,
-            const std::function<std::pair<uint8_t, bool>()> &get_audio_level_and_speech,
-            const std::function<void(uint8_t, bool)> &set_audio_level_and_speech
+            const std::function<std::pair<uint8_t, bool>()>& get_audio_level_and_speech,
+            const std::function<void(uint8_t, bool)>& set_audio_level_and_speech
         );
 
         void RegisterTransformedFrameSinkCallback(webrtc::scoped_refptr<webrtc::TransformedFrameCallback> callback, uint32_t ssrc) override;
@@ -36,6 +36,7 @@ namespace wrtc::interfaces::media {
         void RegisterTransformedFrameCallback(webrtc::scoped_refptr<webrtc::TransformedFrameCallback> callback) override;
 
         void Transform(std::unique_ptr<webrtc::TransformableFrameInterface> frame) override;
+
     private:
         using IndexStartCodeSizePair = std::pair<size_t, size_t>;
 
@@ -43,7 +44,7 @@ namespace wrtc::interfaces::media {
             size_t offset = 0;
             size_t size = 0;
 
-            UnencryptedRange(const size_t offset, const size_t size) : offset(offset), size(size) {}
+            UnencryptedRange(const size_t offset, const size_t size): offset(offset), size(size) {}
         };
 
         static constexpr uint8_t kH26XStartCodeEndByteValue = 1;
@@ -70,7 +71,7 @@ namespace wrtc::interfaces::media {
 
         static bytes::binary calculate_h264_frame_plaintext_header_size(bytes::const_span frame, uint32_t& header_size);
 
-        static bytes::binary calculate_vp8_frame_plaintext_header_size(bytes::const_span frame, uint32_t &header_size);
+        static bytes::binary calculate_vp8_frame_plaintext_header_size(bytes::const_span frame, uint32_t& header_size);
 
         static size_t calculate_slice_header_bytes_for_pps_id(const bytes::byte* data, size_t size);
 

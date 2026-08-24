@@ -17,6 +17,6 @@ namespace wrtc::interfaces::mtproto {
     bool WrappedCodecParameters::is_equal(const AVCodecParameters* other) const {
         return value_->codec_id == other->codec_id &&
                value_->format == other->format &&
-                   value_->ch_layout.nb_channels == other->ch_layout.nb_channels;
+               value_->ch_layout.nb_channels == other->ch_layout.nb_channels;
     }
 } // wrtc::interfaces::mtproto

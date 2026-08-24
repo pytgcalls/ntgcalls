@@ -7,9 +7,11 @@
 #include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
 
 namespace wrtc::interfaces {
-    template <typename Tag, typename Tag::pfn_t pfn>
+    template<typename Tag, typename Tag::pfn_t pfn>
     struct TagBindPfn {
-        friend constexpr Tag::pfn_t pfn_of(Tag) { return pfn; }
+        friend constexpr Tag::pfn_t pfn_of(Tag) {
+            return pfn;
+        }
     };
 
     struct TagSrtpTransportUnprotectRtp {

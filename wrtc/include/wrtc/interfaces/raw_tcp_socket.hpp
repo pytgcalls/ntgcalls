@@ -8,7 +8,7 @@
 #include <wrtc/utils/binary.hpp>
 
 namespace webrtc {
-    class RawTcpSocket final : public AsyncTCPSocketBase {
+    class RawTcpSocket final: public AsyncTCPSocketBase {
         bool did_send_mt_proto_prologue_ = false;
 
         static std::unique_ptr<Socket> connect_socket(

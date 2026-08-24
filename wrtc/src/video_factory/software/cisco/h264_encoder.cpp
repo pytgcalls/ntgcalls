@@ -58,13 +58,13 @@ namespace openh264 {
         }
 
         if (const int32_t release_ret = Release(); release_ret != WEBRTC_VIDEO_CODEC_OK) {
-          report_error();
-          return release_ret;
+            report_error();
+            return release_ret;
         }
 
         const int number_of_streams = webrtc::SimulcastUtility::NumberOfSimulcastStreams(*inst);
         if (const bool doing_simulcast = number_of_streams > 1; doing_simulcast && !webrtc::SimulcastUtility::ValidSimulcastParameters(*inst, number_of_streams)) {
-          return WEBRTC_VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED;
+            return WEBRTC_VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED;
         }
         downscaled_buffers_.resize(number_of_streams - 1);
         encoded_images_.resize(number_of_streams);
@@ -79,8 +79,8 @@ namespace openh264 {
         encoder_thread_limit_ = settings.encoder_thread_limit;
         codec_ = *inst;
         if (codec_.numberOfSimulcastStreams == 0) {
-          codec_.simulcastStream[0].width = codec_.width;
-          codec_.simulcastStream[0].height = codec_.height;
+            codec_.simulcastStream[0].width = codec_.width;
+            codec_.simulcastStream[0].height = codec_.height;
         }
 
         for (int i = 0, idx = number_of_streams - 1; i < number_of_streams; ++i, --idx) {
@@ -140,10 +140,10 @@ namespace openh264 {
             if (scalability_modes_[i].has_value()) {
                 svc_controllers_[i] = CreateScalabilityStructure(*scalability_modes_[i]);
                 if (svc_controllers_[i] == nullptr) {
-                  RTC_LOG(LS_ERROR) << "Failed to create scalability structure";
-                  Release();
-                  report_error();
-                  return WEBRTC_VIDEO_CODEC_ERROR;
+                    RTC_LOG(LS_ERROR) << "Failed to create scalability structure";
+                    Release();
+                    report_error();
+                    return WEBRTC_VIDEO_CODEC_ERROR;
                 }
             }
         }
@@ -205,7 +205,7 @@ namespace openh264 {
         RTC_CHECK(frame_buffer->type() == webrtc::VideoFrameBuffer::Type::kI420 || frame_buffer->type() == webrtc::VideoFrameBuffer::Type::kI420A);
 
         bool is_keyframe_needed = false;
-        for (auto & [simulcastIdx, width, height, sending, keyFrameRequest, maxFrameRate, targetBps, maxBps, frameDroppingOn, keyFrameInterval, numTemporalLayers] : configurations_) {
+        for (auto& [simulcastIdx, width, height, sending, keyFrameRequest, maxFrameRate, targetBps, maxBps, frameDroppingOn, keyFrameInterval, numTemporalLayers] : configurations_) {
             if (keyFrameRequest && sending) {
                 is_keyframe_needed = true;
                 break;
@@ -261,7 +261,7 @@ namespace openh264 {
             }
 
             const auto simulcast_idx = static_cast<size_t>(configurations_[i].simulcast_idx);
-            const bool send_key_frame = is_keyframe_needed || (frame_types && simulcast_idx < frame_types->size() &&  (*frame_types)[simulcast_idx] == webrtc::VideoFrameType::kVideoFrameKey);
+            const bool send_key_frame = is_keyframe_needed || (frame_types && simulcast_idx < frame_types->size() && (*frame_types)[simulcast_idx] == webrtc::VideoFrameType::kVideoFrameKey);
             if (send_key_frame) {
                 encoders_[i]->ForceIntraFrame(true);
                 configurations_[i].key_frame_request = false;
@@ -352,7 +352,7 @@ namespace openh264 {
         }
 
         if (parameters.bitrate.get_sum_bps() == 0) {
-            for (auto & configuration : configurations_) {
+            for (auto& configuration : configurations_) {
                 configuration.set_stream_state(false);
             }
             return;

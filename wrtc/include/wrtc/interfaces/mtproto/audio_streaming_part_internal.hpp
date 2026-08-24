@@ -38,7 +38,7 @@ namespace wrtc::interfaces::mtproto {
         int pcm_buffer_sample_size_ = 0;
         int read_sample_count_ = 0;
 
-        template <typename Out>
+        template<typename Out>
         static void split_string(const std::string& s, const char delim, Out result) {
             std::istringstream iss(s);
             std::string item;
@@ -49,13 +49,13 @@ namespace wrtc::interfaces::mtproto {
 
         static uint32_t string_to_uint32(const std::string& string);
 
-        static std::optional<uint32_t> read_int32(const std::string& data, int &offset);
+        static std::optional<uint32_t> read_int32(const std::string& data, int& offset);
 
-        static std::vector<ChannelUpdate> parse_channel_updates(const std::string& data, int &offset);
+        static std::vector<ChannelUpdate> parse_channel_updates(const std::string& data, int& offset);
 
         static int16_t sample_float_to_int16(float sample);
 
-        void fill_pcm_buffer(AudioStreamingPartPersistentDecoder &persistent_decoder);
+        void fill_pcm_buffer(AudioStreamingPartPersistentDecoder& persistent_decoder);
 
     public:
         struct ReadPcmResult {
@@ -73,7 +73,7 @@ namespace wrtc::interfaces::mtproto {
 
         [[nodiscard]] int get_duration_in_milliseconds() const;
 
-        ReadPcmResult read_pcm(AudioStreamingPartPersistentDecoder &persistent_decoder, std::vector<int16_t> &out_pcm);
+        ReadPcmResult read_pcm(AudioStreamingPartPersistentDecoder& persistent_decoder, std::vector<int16_t>& out_pcm);
     };
 
 } // wrtc::interfaces::mtproto

@@ -23,7 +23,7 @@ namespace wrtc::interfaces::mtproto {
         static int64_t seek(void* opaque, int64_t offset, int whence);
 
     public:
-        explicit AVIOContextImpl(bytes::binary &&file_data);
+        explicit AVIOContextImpl(bytes::binary&& file_data);
 
         ~AVIOContextImpl();
 

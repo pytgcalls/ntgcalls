@@ -10,7 +10,9 @@ import sys
 from pathlib import Path
 from urllib.request import urlopen
 
-from setuptools import Extension, setup, Command
+from setuptools import Command
+from setuptools import Extension
+from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
@@ -35,8 +37,10 @@ def install_cmake(cmake_version: str):
     if not fixed_name.exists():
         fixed_name.mkdir(parents=True)
     os_base = 'x86_64' if platform.machine() != 'aarch64' else 'aarch64'
-    url = (f'https://github.com/Kitware/CMake/releases/download/v{cmake_version}/'
-           f'cmake-{cmake_version}-linux-{os_base}.sh')
+    url = (
+        f'https://github.com/Kitware/CMake/releases/download/v{cmake_version}/'
+        f'cmake-{cmake_version}-linux-{os_base}.sh'
+    )
     download_sh = Path(fixed_name, 'install_cmake.sh')
     with urlopen(url) as response:
         with open(download_sh, 'wb') as file:
@@ -51,7 +55,9 @@ def install_cmake(cmake_version: str):
 LIGHT_COMMANDS = {'matrix', 'list_targets'}
 version = '0'
 if not any(cmd in sys.argv for cmd in LIGHT_COMMANDS):
-    with open(os.path.join(base_path, 'CMakeLists.txt'), 'r', encoding='utf-8') as f:
+    with open(
+        os.path.join(base_path, 'CMakeLists.txt'), encoding='utf-8'
+    ) as f:
         if sys.platform.startswith('linux'):
             install_cmake(CMAKE_VERSION)
         regex = re.compile(r'VERSION ([0-9.]+)', re.MULTILINE)
@@ -63,12 +69,19 @@ if not any(cmd in sys.argv for cmd in LIGHT_COMMANDS):
         ]
         if os.environ.get('PYPI_TAGS'):
             cmake_command.insert(-2, '-DPYPI_TAGS=ON')
-        output = subprocess.run(cmake_command, capture_output=True, text=True).stderr
+        output = subprocess.run(
+            cmake_command, capture_output=True, text=True
+        ).stderr
         output = re.sub(r'\x1b\[[0-9;]*m', '', output)
         version = next(
-            (line.strip() for line in reversed(output.splitlines()) if line.strip()),
+            (
+                line.strip()
+                for line in reversed(output.splitlines())
+                if line.strip()
+            ),
             '0',
         )
+
 
 class CMakeExtension(Extension):
     def __init__(self, name: str, sourcedir: str = '') -> None:
@@ -141,21 +154,27 @@ def execute_cfg(target, subst, archs=('auto',), section='build', keys=None):
                 args = [token.format(**ctx) for token in line.split()]
                 if os.name == 'nt':
                     args[0] = shutil.which(args[0]) or args[0]
-                    subprocess.run(args, cwd=workdir, check=True, env=env, shell=True)
+                    subprocess.run(
+                        args, cwd=workdir, check=True, env=env, shell=True
+                    )
                 else:
                     subprocess.run(args, cwd=workdir, check=True, env=env)
 
 
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
-        extdir = (Path.cwd() / self.get_ext_fullpath(ext.name)).parent.resolve()
+        extdir = (
+            Path.cwd() / self.get_ext_fullpath(ext.name)
+        ).parent.resolve()
         subst = base_subst()
-        subst.update({
-            'out': str(extdir),
-            'builddir': str(Path(self.build_temp) / ext.name),
-            'static': 'OFF',
-            'binding': 'python',
-        })
+        subst.update(
+            {
+                'out': str(extdir),
+                'builddir': str(Path(self.build_temp) / ext.name),
+                'static': 'OFF',
+                'binding': 'python',
+            }
+        )
         execute_cfg('python', subst)
 
 
@@ -196,7 +215,11 @@ def select_targets(spec):
         chosen = list(BINDING_TARGETS)
     else:
         chosen = [t.strip() for t in spec.split(',') if t.strip()]
-    return [t for t in chosen if {'platforms', 'publish'} & target_options(t).keys()]
+    return [
+        t
+        for t in chosen
+        if {'platforms', 'publish'} & target_options(t).keys()
+    ]
 
 
 class SharedCommand(Command):
@@ -221,19 +244,22 @@ class SharedCommand(Command):
             self.target = DEFAULT_TARGET
         if self.target not in BINDING_TARGETS:
             raise ValueError(
-                f'Unknown target "{self.target}", available: {", ".join(BINDING_TARGETS)}'
+                f'Unknown target "{self.target}", '
+                f'available: {", ".join(BINDING_TARGETS)}'
             )
 
     def run(self):
         target = self.target
         build_lib = Path(base_path, 'build_lib')
         subst = base_subst()
-        subst.update({
-            'out': str(build_lib),
-            'builddir': str(build_lib),
-            'static': 'ON' if self.static else 'OFF',
-            'binding': target,
-        })
+        subst.update(
+            {
+                'out': str(build_lib),
+                'builddir': str(build_lib),
+                'static': 'ON' if self.static else 'OFF',
+                'binding': target,
+            }
+        )
         subst.update(parse_defines(self.defines))
         execute_cfg(target, subst, BINDING_TARGETS[target])
         if self.no_preserve_cache:
@@ -242,7 +268,10 @@ class SharedCommand(Command):
 
 
 class GenerateCommand(Command):
-    description = 'Generate the language-agnostic NTL schema (SCHEMA_ONLY configure, no build)'
+    description = (
+        'Generate the language-agnostic NTL schema '
+        '(SCHEMA_ONLY configure, no build)'
+    )
     user_options = []
 
     def initialize_options(self):
@@ -256,9 +285,15 @@ class GenerateCommand(Command):
         builddir = Path(base_path, 'build_lib', 'schema')
         builddir.mkdir(parents=True, exist_ok=True)
         subprocess.run(
-            [subst['cmake'], '-B', str(builddir), '-DSCHEMA_ONLY=ON',
-             f'-DPython_EXECUTABLE={subst["python"]}',
-             f'-DCMAKE_TOOLCHAIN_FILE={subst["toolchain"]}', base_path],
+            [
+                subst['cmake'],
+                '-B',
+                str(builddir),
+                '-DSCHEMA_ONLY=ON',
+                f'-DPython_EXECUTABLE={subst["python"]}',
+                f'-DCMAKE_TOOLCHAIN_FILE={subst["toolchain"]}',
+                base_path,
+            ],
             check=True,
         )
 
@@ -289,18 +324,21 @@ class PublishCommand(Command):
             self.target = DEFAULT_TARGET
         if self.target not in BINDING_TARGETS:
             raise ValueError(
-                f'Unknown target "{self.target}", available: {", ".join(BINDING_TARGETS)}'
+                f'Unknown target "{self.target}", '
+                f'available: {", ".join(BINDING_TARGETS)}'
             )
 
     def run(self):
         build_lib = Path(base_path, 'build_lib')
         subst = base_subst()
-        subst.update({
-            'out': str(build_lib),
-            'builddir': str(build_lib),
-            'static': 'OFF',
-            'binding': self.target,
-        })
+        subst.update(
+            {
+                'out': str(build_lib),
+                'builddir': str(build_lib),
+                'static': 'OFF',
+                'binding': self.target,
+            }
+        )
         if self.platform:
             subst['platform'] = self.platform
         if self.set_version:
@@ -308,7 +346,9 @@ class PublishCommand(Command):
         subst['dist_tag'] = 'beta' if '-' in subst['version'] else 'latest'
         subst.update(parse_defines(self.defines))
         archs = (self.arch,) if self.arch else ('auto',)
-        execute_cfg(self.target, subst, archs, section='publish', keys=[self.phase])
+        execute_cfg(
+            self.target, subst, archs, section='publish', keys=[self.phase]
+        )
 
 
 class ListTargetsCommand(Command):
@@ -330,7 +370,11 @@ class MatrixCommand(Command):
     user_options = [
         ('targets=', None, 'Comma list of targets or "all"'),
         ('platforms=', None, 'Comma list of platform filters or "all"'),
-        ('final', None, 'Emit the final-publish matrix instead of the build matrix'),
+        (
+            'final',
+            None,
+            'Emit the final-publish matrix instead of the build matrix',
+        ),
     ]
 
     # noinspection PyAttributeOutsideInit
@@ -345,7 +389,9 @@ class MatrixCommand(Command):
     def run(self):
         plat_filter = None
         if self.platforms and self.platforms.strip().lower() != 'all':
-            plat_filter = {p.strip() for p in self.platforms.split(',') if p.strip()}
+            plat_filter = {
+                p.strip() for p in self.platforms.split(',') if p.strip()
+            }
         registry = load_platforms()
         include = []
         for target in select_targets(self.targets):
@@ -353,9 +399,15 @@ class MatrixCommand(Command):
             publish = opt.get('publish', 'none')
             if self.final:
                 if publish in ('final', 'both'):
-                    include.append({'target': target, 'tools': opt.get('tools', '')})
+                    include.append(
+                        {'target': target, 'tools': opt.get('tools', '')}
+                    )
                 continue
-            for plat in [p.strip() for p in opt.get('platforms', '').split(',') if p.strip()]:
+            for plat in [
+                p.strip()
+                for p in opt.get('platforms', '').split(',')
+                if p.strip()
+            ]:
                 if plat_filter and plat not in plat_filter:
                     continue
                 if not registry.has_section(plat):
@@ -389,7 +441,7 @@ setup(
         'publish_lib': PublishCommand,
         'list_targets': ListTargetsCommand,
         'matrix': MatrixCommand,
-        'generate': GenerateCommand
+        'generate': GenerateCommand,
     },
     zip_safe=False,
 )

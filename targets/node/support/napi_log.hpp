@@ -22,14 +22,14 @@ namespace ntgcalls::support {
 
     inline const char* log_console_method(const utils::LogSink::Level level) {
         switch (level) {
-            case utils::LogSink::Level::Error:
-                return "error";
-            case utils::LogSink::Level::Warning:
-                return "warn";
-            case utils::LogSink::Level::Info:
-                return "info";
-            default:
-                return "debug";
+        case utils::LogSink::Level::Error:
+            return "error";
+        case utils::LogSink::Level::Warning:
+            return "warn";
+        case utils::LogSink::Level::Info:
+            return "info";
+        default:
+            return "debug";
         }
     }
 

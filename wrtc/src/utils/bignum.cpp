@@ -41,7 +41,7 @@ namespace openssl {
         }
     }
 
-    void BigNum::set_mod_exp(const BigNum& base, const BigNum& power, const BigNum& m, const Context &context) const {
+    void BigNum::set_mod_exp(const BigNum& base, const BigNum& power, const BigNum& m, const Context& context) const {
         if (base.failed() || power.failed() || m.failed()) {
             failed_ = true;
         } else if (base.is_negative() || power.is_negative() || m.is_negative()) {

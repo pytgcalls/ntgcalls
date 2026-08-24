@@ -42,9 +42,9 @@ namespace wrtc::interfaces {
         }
         std::vector<uint32_t> simulcast_group_ssrcs;
         std::vector<webrtc::SsrcGroup> fid_groups;
-        for (const auto &layer : outgoing_video_ssrcs) {
+        for (const auto& layer : outgoing_video_ssrcs) {
             simulcast_group_ssrcs.push_back(layer.ssrc);
-            const webrtc::SsrcGroup fid_group(webrtc::kFidSsrcGroupSemantics, { layer.ssrc, layer.fid_ssrc });
+            const webrtc::SsrcGroup fid_group(webrtc::kFidSsrcGroupSemantics, {layer.ssrc, layer.fid_ssrc});
             fid_groups.push_back(fid_group);
         }
 
@@ -97,12 +97,12 @@ namespace wrtc::interfaces {
         );
 
         const std::weak_ptr weak(shared_from_this());
-        data_channel_interface_->on_message_received([weak](const bytes::binary &data) {
+        data_channel_interface_->on_message_received([weak](const bytes::binary& data) {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return;
             }
-           (void) strong->data_channel_message_callback_(data);
+            (void) strong->data_channel_message_callback_(data);
         });
 
         data_channel_interface_->on_state_changed([weak](const bool is_open) {
@@ -135,14 +135,9 @@ namespace wrtc::interfaces {
                 {"ufrag", strong->local_parameters_.ufrag},
                 {"pwd", strong->local_parameters_.pwd},
                 {"fingerprints",
-                    {
-                        {
-                            {"hash", fingerprint->algorithm},
-                            {"setup", "passive"},
-                            {"fingerprint", fingerprint->GetRfc4572Fingerprint()}
-                        }
-                    }
-                },
+                 {{{"hash", fingerprint->algorithm},
+                   {"setup", "passive"},
+                   {"fingerprint", fingerprint->GetRfc4572Fingerprint()}}}},
                 {"ssrc", *reinterpret_cast<const int32_t*>(&strong->outgoing_audio_ssrc_)},
                 {"ssrc-groups", utils::json::array()}
             };
@@ -150,11 +145,11 @@ namespace wrtc::interfaces {
                 std::vector<int32_t> signed_sources;
                 signed_sources.reserve(sources.size());
                 for (const auto source : sources) {
-                    signed_sources.push_back(*reinterpret_cast<const int32_t *>(&source));
+                    signed_sources.push_back(*reinterpret_cast<const int32_t*>(&source));
                 }
                 json_res["ssrc-groups"].push_back({
                     {"sources", signed_sources},
-                    {"semantics", semantics}
+                    {"semantics", semantics},
                 });
             }
             RTC_LOG(LS_VERBOSE) << "Join payload generated";
@@ -201,14 +196,17 @@ namespace wrtc::interfaces {
         mtproto_stream_->connect();
 
         const std::weak_ptr weak(shared_from_this());
-        network_thread().PostDelayedTask([weak] {
-            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
-            if (!strong) {
-                return;
-            }
-            strong->is_stream_connected_ = true;
-            strong->update_is_connected();
-        }, webrtc::TimeDelta::Millis(500));
+        network_thread().PostDelayedTask(
+            [weak] {
+                const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+                if (!strong) {
+                    return;
+                }
+                strong->is_stream_connected_ = true;
+                strong->update_is_connected();
+            },
+            webrtc::TimeDelta::Millis(500)
+        );
     }
 
     void GroupConnection::set_connection_mode(const ConnectionMode kind) {
@@ -315,15 +313,15 @@ namespace wrtc::interfaces {
         }
         bool is_effectively_connected = false;
         switch (connection_mode_) {
-            case ConnectionMode::Rtc:
-                is_effectively_connected = is_rtc_connected_;
-                break;
-            case ConnectionMode::Stream:
-            case ConnectionMode::Rtmp:
-                is_effectively_connected = is_stream_connected_;
-                break;
-            default:
-                break;
+        case ConnectionMode::Rtc:
+            is_effectively_connected = is_rtc_connected_;
+            break;
+        case ConnectionMode::Stream:
+        case ConnectionMode::Rtmp:
+            is_effectively_connected = is_stream_connected_;
+            break;
+        default:
+            break;
         }
         if (is_effectively_connected != last_effectively_connected_) {
             last_effectively_connected_ = is_effectively_connected;
@@ -369,7 +367,7 @@ namespace wrtc::interfaces {
             return;
         }
 
-        if (const auto it = audio_ssrc_to_user_id_.find(packet.Ssrc());it != audio_ssrc_to_user_id_.end()) {
+        if (const auto it = audio_ssrc_to_user_id_.find(packet.Ssrc()); it != audio_ssrc_to_user_id_.end()) {
             add_incoming_audio(it->second, packet.Ssrc(), endpoint);
             return;
         }
@@ -429,9 +427,9 @@ namespace wrtc::interfaces {
         }
     }
 
-    void GroupConnection::update_audio_ssrc_mappings(const std::vector<models::SsrcMapping> &audio_ssrcs) {
+    void GroupConnection::update_audio_ssrc_mappings(const std::vector<models::SsrcMapping>& audio_ssrcs) {
         audio_ssrc_to_user_id_.clear();
-        for (const auto&[userID, ssrc] : audio_ssrcs) {
+        for (const auto& [userID, ssrc] : audio_ssrcs) {
             audio_ssrc_to_user_id_[ssrc] = userID;
             if (auto endpoint = std::to_string(ssrc); pending_audio_ssrcs_.erase(ssrc) && !incoming_audio_channels_.contains(endpoint)) {
                 add_incoming_audio(userID, ssrc, endpoint);
@@ -471,11 +469,11 @@ namespace wrtc::interfaces {
         return true;
     }
 
-    void GroupConnection::on_request_participants(const std::function<void()> &callback) {
+    void GroupConnection::on_request_participants(const std::function<void()>& callback) {
         request_participants_callback_ = callback;
     }
 
-    void GroupConnection::set_e2e_encryptor(media::E2EEncryptor *encryptor) {
+    void GroupConnection::set_e2e_encryptor(media::E2EEncryptor* encryptor) {
         this->encryptor_ = encryptor;
     }
 
@@ -510,24 +508,27 @@ namespace wrtc::interfaces {
             return;
         }
         const std::weak_ptr weak(shared_from_this());
-        worker_thread().PostDelayedTask([weak] {
-            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
-            if (!strong) {
-                return;
-            }
-            const std::lock_guard lock(strong->mutex_);
-            const auto timestamp = webrtc::TimeMillis();
-            std::vector<std::string> remove_channels;
-            for (const auto& [channelId, channel] : strong->incoming_audio_channels_) {
-                if (channel->get_activity() < timestamp - 1000) {
-                    remove_channels.push_back(channelId);
+        worker_thread().PostDelayedTask(
+            [weak] {
+                const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+                if (!strong) {
+                    return;
                 }
-            }
-            for (const auto &channel_id : remove_channels) {
-                strong->remove_incoming_audio(channel_id);
-            }
-            strong->begin_audio_channel_cleanup_timer();
-        }, webrtc::TimeDelta::Millis(500));
+                const std::lock_guard lock(strong->mutex_);
+                const auto timestamp = webrtc::TimeMillis();
+                std::vector<std::string> remove_channels;
+                for (const auto& [channelId, channel] : strong->incoming_audio_channels_) {
+                    if (channel->get_activity() < timestamp - 1000) {
+                        remove_channels.push_back(channelId);
+                    }
+                }
+                for (const auto& channel_id : remove_channels) {
+                    strong->remove_incoming_audio(channel_id);
+                }
+                strong->begin_audio_channel_cleanup_timer();
+            },
+            webrtc::TimeDelta::Millis(500)
+        );
     }
 
     bool GroupConnection::is_group_connection() const {

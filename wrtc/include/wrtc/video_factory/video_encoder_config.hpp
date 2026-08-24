@@ -11,7 +11,7 @@
 
 namespace wrtc::video_factory {
 
-    class VideoEncoderConfig final : public VideoBaseConfig {
+    class VideoEncoderConfig final: public VideoBaseConfig {
     public:
         VideoEncoderConfig() = default;
 
@@ -23,7 +23,7 @@ namespace wrtc::video_factory {
 
         explicit VideoEncoderConfig(std::unique_ptr<webrtc::VideoEncoderFactory> factory): factory_(std::move(factory)) {}
 
-        [[nodiscard]] std::unique_ptr<webrtc::VideoEncoder> create_video_codec(const webrtc::Environment& env, const webrtc::SdpVideoFormat &format) const;
+        [[nodiscard]] std::unique_ptr<webrtc::VideoEncoder> create_video_codec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const;
 
     private:
         EncoderCallback encoder_;

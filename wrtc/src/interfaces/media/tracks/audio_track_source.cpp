@@ -22,11 +22,11 @@ namespace wrtc::interfaces::media::tracks {
         sink_ = sink;
     }
 
-    void AudioTrackSource::RemoveSink(webrtc::AudioTrackSinkInterface *) {
+    void AudioTrackSource::RemoveSink(webrtc::AudioTrackSinkInterface*) {
         sink_ = nullptr;
     }
 
-    void AudioTrackSource::push_data(const models::RTCOnDataEvent &data, const int64_t absolute_capture_timestamp_ms) const {
+    void AudioTrackSource::push_data(const models::RTCOnDataEvent& data, const int64_t absolute_capture_timestamp_ms) const {
         if (webrtc::AudioTrackSinkInterface* sink = sink_) {
             sink->OnData(
                 data.audio_data,

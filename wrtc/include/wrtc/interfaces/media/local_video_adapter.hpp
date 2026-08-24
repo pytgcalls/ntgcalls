@@ -6,7 +6,7 @@
 #include <media/base/video_source_base.h>
 
 namespace wrtc::interfaces::media {
-    class LocalVideoAdapter final : public webrtc::VideoSinkInterface<webrtc::VideoFrame>, public webrtc::VideoSourceBaseGuarded {
+    class LocalVideoAdapter final: public webrtc::VideoSinkInterface<webrtc::VideoFrame>, public webrtc::VideoSourceBaseGuarded {
         std::optional<SinkPair> sink_;
         webrtc::Mutex lock_;
 

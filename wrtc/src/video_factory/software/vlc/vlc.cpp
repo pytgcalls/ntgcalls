@@ -13,7 +13,7 @@
 
 namespace vlc {
 
-    void add_encoders(std::vector<wrtc::video_factory::VideoEncoderConfig> &encoders) {
+    void add_encoders(std::vector<wrtc::video_factory::VideoEncoderConfig>& encoders) {
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
         encoders.emplace_back(
             webrtc::kVideoCodecAV1,
@@ -24,7 +24,7 @@ namespace vlc {
 #endif
     }
 
-    void add_decoders(std::vector<wrtc::video_factory::VideoDecoderConfig> &decoders) {
+    void add_decoders(std::vector<wrtc::video_factory::VideoDecoderConfig>& decoders) {
 #if !defined(__arm__) || defined(__aarch64__) || defined(__ARM_NEON__)
         decoders.emplace_back(
             webrtc::kVideoCodecAV1,

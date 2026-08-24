@@ -40,7 +40,7 @@ namespace wrtc::models {
                 Quality quality;
                 int32_t channel_id = 0;
 
-                Video(const int32_t channel_id, const Quality quality) : quality(quality), channel_id(channel_id) {}
+                Video(const int32_t channel_id, const Quality quality): quality(quality), channel_id(channel_id) {}
             };
 
             std::optional<bytes::binary> data;
@@ -49,7 +49,7 @@ namespace wrtc::models {
             int64_t timestamp_milliseconds = 0;
             std::variant<Audio, Video, Unified> type_data;
 
-            explicit Part(const std::variant<Audio, Video, Unified> type_data) : type_data(type_data) {}
+            explicit Part(const std::variant<Audio, Video, Unified> type_data): type_data(type_data) {}
         };
 
         struct Video {

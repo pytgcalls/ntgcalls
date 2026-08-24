@@ -5,7 +5,7 @@
 #include <wrtc/interfaces/media/local_video_adapter.hpp>
 
 namespace wrtc::interfaces::media {
-    LocalVideoAdapter::LocalVideoAdapter(): sink_(std::nullopt){}
+    LocalVideoAdapter::LocalVideoAdapter(): sink_(std::nullopt) {}
 
     LocalVideoAdapter::~LocalVideoAdapter() {
         const webrtc::MutexLock lock(&lock_);
@@ -14,12 +14,12 @@ namespace wrtc::interfaces::media {
 
     void LocalVideoAdapter::OnFrame(const webrtc::VideoFrame& frame) {
         const webrtc::MutexLock lock(&lock_);
-        if(sink_.has_value()) {
+        if (sink_.has_value()) {
             sink_.value().sink->OnFrame(frame);
         }
     }
 
-    void LocalVideoAdapter::AddOrUpdateSink(VideoSinkInterface* sink, const webrtc::VideoSinkWants& wants){
+    void LocalVideoAdapter::AddOrUpdateSink(VideoSinkInterface* sink, const webrtc::VideoSinkWants& wants) {
         const webrtc::MutexLock lock(&lock_);
         RTC_DCHECK(!sink_ || !sink_.has_value());
         sink_ = SinkPair(sink, wants);

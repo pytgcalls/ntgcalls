@@ -17,7 +17,7 @@
 
 namespace openh264 {
 
-    class H264Encoder final : public webrtc::VideoEncoder {
+    class H264Encoder final: public webrtc::VideoEncoder {
         enum H264EncoderImplEvent {
             H264EncoderEventInit = 0,
             H264EncoderEventError = 1,

@@ -11,7 +11,7 @@ namespace wrtc::interfaces::mtproto {
         std::unique_ptr<AudioStreamingPartState> state_;
 
     public:
-        AudioStreamingPart(bytes::binary&& data, const std::string &container, bool is_single_channel);
+        AudioStreamingPart(bytes::binary&& data, const std::string& container, bool is_single_channel);
 
         ~AudioStreamingPart();
 
@@ -19,7 +19,7 @@ namespace wrtc::interfaces::mtproto {
 
         [[nodiscard]] std::map<std::string, int32_t> get_endpoint_mapping() const;
 
-        std::vector<AudioStreamingPartState::Channel> get_10ms_per_channel(AudioStreamingPartPersistentDecoder &persistent_decoder) const;
+        std::vector<AudioStreamingPartState::Channel> get_10ms_per_channel(AudioStreamingPartPersistentDecoder& persistent_decoder) const;
     };
 
 } // wrtc::interfaces::mtproto

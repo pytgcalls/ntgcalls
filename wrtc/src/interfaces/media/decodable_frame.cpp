@@ -5,7 +5,7 @@
 #include <wrtc/interfaces/media/decodable_frame.hpp>
 
 namespace wrtc::interfaces::media {
-    DecodableFrame::DecodableFrame(std::unique_ptr<MediaDataPacket> packet, const int64_t pts, const int64_t dts): packet_(std::move(packet)), pts_(pts), dts_(dts){}
+    DecodableFrame::DecodableFrame(std::unique_ptr<MediaDataPacket> packet, const int64_t pts, const int64_t dts): packet_(std::move(packet)), pts_(pts), dts_(dts) {}
 
     DecodableFrame::~DecodableFrame() {
         packet_ = nullptr;

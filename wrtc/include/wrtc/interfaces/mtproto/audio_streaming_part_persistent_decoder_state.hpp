@@ -19,7 +19,7 @@ namespace wrtc::interfaces::mtproto {
 
         ~AudioStreamingPartPersistentDecoderState();
 
-        int decode(const AVPacket &packet, AVFrame* frame) const;
+        int decode(const AVPacket& packet, AVFrame* frame) const;
 
         [[nodiscard]] AVRational get_time_base() const;
 

@@ -6,7 +6,7 @@
 #include <wrtc/interfaces/mtproto/audio_streaming_part_state.hpp>
 
 namespace wrtc::interfaces::mtproto {
-    AudioStreamingPartState::AudioStreamingPartState(bytes::binary&& data, const std::string& container, const bool is_single_channel) : is_single_channel_(is_single_channel) {
+    AudioStreamingPartState::AudioStreamingPartState(bytes::binary&& data, const std::string& container, const bool is_single_channel): is_single_channel_(is_single_channel) {
         parsed_part_ = std::make_unique<AudioStreamingPartInternal>(std::move(data), container);
         if (parsed_part_->get_channel_updates().empty() && !is_single_channel) {
             did_read_to_end_ = true;
@@ -15,7 +15,7 @@ namespace wrtc::interfaces::mtproto {
 
         remaining_milliseconds_ = parsed_part_->get_duration_in_milliseconds();
 
-        for (const auto &it : parsed_part_->get_channel_updates()) {
+        for (const auto& it : parsed_part_->get_channel_updates()) {
             all_ssrcs_.insert(it.ssrc);
         }
     }
@@ -29,7 +29,7 @@ namespace wrtc::interfaces::mtproto {
             return {};
         }
 
-        for (const auto & [updateFrameIndex, id, ssrc] : parsed_part_->get_channel_updates()) {
+        for (const auto& [updateFrameIndex, id, ssrc] : parsed_part_->get_channel_updates()) {
             if (updateFrameIndex == frame_index_) {
                 update_current_mapping(ssrc, id);
             }
@@ -64,7 +64,7 @@ namespace wrtc::interfaces::mtproto {
                 result_channels.push_back(empty_part);
             }
 
-            for (auto & [ssrc, pcmData] : result_channels) {
+            for (auto& [ssrc, pcmData] : result_channels) {
                 if (auto mapped_channel_index = get_current_mapped_channel_index(ssrc)) {
                     const int source_channel_index = mapped_channel_index.value();
                     for (int j = 0; j < numSamples; j++) {
@@ -97,7 +97,7 @@ namespace wrtc::interfaces::mtproto {
 
     void AudioStreamingPartState::update_current_mapping(uint32_t ssrc, int channel_index) {
         for (int i = static_cast<int>(current_channel_mapping_.size()) - 1; i >= 0; i--) {
-            const auto &entry = current_channel_mapping_[i];
+            const auto& entry = current_channel_mapping_[i];
             if (entry.ssrc == ssrc && entry.channel_index == channel_index) {
                 return;
             }
@@ -109,7 +109,7 @@ namespace wrtc::interfaces::mtproto {
     }
 
     std::optional<int> AudioStreamingPartState::get_current_mapped_channel_index(const uint32_t ssrc) const {
-        for (const auto &it : current_channel_mapping_) {
+        for (const auto& it : current_channel_mapping_) {
             if (it.ssrc == ssrc) {
                 return it.channel_index;
             }

@@ -112,7 +112,7 @@ namespace wrtc::interfaces {
                 sctp_transport_->Start({
                     5000,
                     5000,
-                    262144
+                    262144,
                 });
             }
         }

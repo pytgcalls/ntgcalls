@@ -10,7 +10,7 @@
 
 namespace wrtc::interfaces::mtproto {
 
-    MTProtoStream::MTProtoStream(utils::SafeThread& media_thread, const bool is_rtmp) : is_rtmp_(is_rtmp), media_thread_(media_thread) {}
+    MTProtoStream::MTProtoStream(utils::SafeThread& media_thread, const bool is_rtmp): is_rtmp_(is_rtmp), media_thread_(media_thread) {}
 
     void MTProtoStream::connect() {
         if (running_) {
@@ -34,7 +34,7 @@ namespace wrtc::interfaces::mtproto {
 
     void MTProtoStream::send_broadcast_timestamp(const int64_t timestamp) {
         const std::weak_ptr weak(shared_from_this());
-        media_thread_.PostTask([weak, timestamp]{
+        media_thread_.PostTask([weak, timestamp] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -50,18 +50,21 @@ namespace wrtc::interfaces::mtproto {
                 strong->pending_request_time_delay_task_id_ = task_id;
                 strong->next_pending_request_time_delay_task_id_++;
 
-                strong->media_thread_.PostDelayedTask([weak, task_id] {
-                    const auto strong_media = weak.lock();
-                    if (!strong_media) {
-                        return;
-                    }
-                    const std::lock_guard lock_media(strong_media->segment_mutex_);
-                    if (strong_media->pending_request_time_delay_task_id_ != task_id) {
-                        return;
-                    }
-                    strong_media->pending_request_time_delay_task_id_ = 0;
-                    strong_media->request_segments_if_needed();
-                }, webrtc::TimeDelta::Millis(1000));
+                strong->media_thread_.PostDelayedTask(
+                    [weak, task_id] {
+                        const auto strong_media = weak.lock();
+                        if (!strong_media) {
+                            return;
+                        }
+                        const std::lock_guard lock_media(strong_media->segment_mutex_);
+                        if (strong_media->pending_request_time_delay_task_id_ != task_id) {
+                            return;
+                        }
+                        strong_media->pending_request_time_delay_task_id_ = 0;
+                        strong_media->request_segments_if_needed();
+                    },
+                    webrtc::TimeDelta::Millis(1000)
+                );
             } else {
                 strong->next_segment_timestamp_ = adjusted_timestamp;
                 strong->request_segments_if_needed();
@@ -82,7 +85,7 @@ namespace wrtc::interfaces::mtproto {
             if (strong->segments_.contains(segment_id)) {
                 if (quality_update) {
                     found_part = strong->segments_[segment_id]->video.size() > part_id &&
-                        strong->segments_[segment_id]->video[part_id]->quality_update_part;
+                                 strong->segments_[segment_id]->video[part_id]->quality_update_part;
                 } else {
                     found_part = strong->segments_[segment_id]->parts.size() > part_id;
                 }
@@ -92,7 +95,7 @@ namespace wrtc::interfaces::mtproto {
                 return;
             }
 
-            const auto &segment = strong->segments_[segment_id];
+            const auto& segment = strong->segments_[segment_id];
             models::MediaSegment::Part* part;
             if (quality_update) {
                 part = segment->video[part_id]->quality_update_part.get();
@@ -189,7 +192,7 @@ namespace wrtc::interfaces::mtproto {
         request_broadcast_part_callback_ = callback;
     }
 
-    void MTProtoStream::on_audio_frame(const std::function<void(std::unique_ptr<models::AudioFrame>)>& callback){
+    void MTProtoStream::on_audio_frame(const std::function<void(std::unique_ptr<models::AudioFrame>)>& callback) {
         audio_frame_callback_ = callback;
     }
 
@@ -213,7 +216,7 @@ namespace wrtc::interfaces::mtproto {
 
     void MTProtoStream::render() {
         const std::weak_ptr weak(shared_from_this());
-        thread_buffer_ = std::make_unique<ThreadBuffer>([weak] (const webrtc::MediaType media_type, models::MediaSegment* segment, const std::chrono::milliseconds relative_timestamp) {
+        thread_buffer_ = std::make_unique<ThreadBuffer>([weak](const webrtc::MediaType media_type, models::MediaSegment* segment, const std::chrono::milliseconds relative_timestamp) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -323,9 +326,7 @@ namespace wrtc::interfaces::mtproto {
                         }
                     }
                 }
-            }
-        },
-        [weak] () -> models::MediaSegment* {
+            } }, [weak]() -> models::MediaSegment* {
             const auto strong = weak.lock();
             if (!strong) {
                 return nullptr;
@@ -342,9 +343,7 @@ namespace wrtc::interfaces::mtproto {
                 strong->wait_for_buffered_milliseconds_before_rendering_ = strong->segment_buffer_duration_ + strong->segment_duration_;
                 return nullptr;
             }
-            return available_segments.begin()->second;
-        },
-        [weak] (const ThreadBuffer::RequestType request_type) {
+            return available_segments.begin()->second; }, [weak](const ThreadBuffer::RequestType request_type) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -362,8 +361,7 @@ namespace wrtc::interfaces::mtproto {
                 }
                 strong->segments_.erase(segment);
                 break;
-            }
-        });
+            } });
     }
 
     int64_t MTProtoStream::get_available_buffer_duration() const {
@@ -410,7 +408,7 @@ namespace wrtc::interfaces::mtproto {
             }
             pending_segment->parts.push_back(std::move(audio_part));
 
-            for (const auto &[endpoint, videoChannel] : video_channels_) {
+            for (const auto& [endpoint, videoChannel] : video_channels_) {
                 if (!current_endpoint_mapping_.contains(endpoint)) {
                     continue;
                 }
@@ -472,7 +470,7 @@ namespace wrtc::interfaces::mtproto {
                         segment_timestamp,
                         false,
                         video_channel_id,
-                        video_quality
+                        video_quality,
                     });
 
                     if (requested) {
@@ -514,14 +512,17 @@ namespace wrtc::interfaces::mtproto {
 
         if (min_delayed_request_timeout < INT32_MAX) {
             const std::weak_ptr weak(shared_from_this());
-            media_thread_.PostDelayedTask([weak] {
-                const auto strong = weak.lock();
-                if (!strong) {
-                    return;
-                }
-                const std::lock_guard lock(strong->segment_mutex_);
-                strong->check_pending_segments();
-            }, webrtc::TimeDelta::Millis(std::max(static_cast<int32_t>(min_delayed_request_timeout), 10)));
+            media_thread_.PostDelayedTask(
+                [weak] {
+                    const auto strong = weak.lock();
+                    if (!strong) {
+                        return;
+                    }
+                    const std::lock_guard lock(strong->segment_mutex_);
+                    strong->check_pending_segments();
+                },
+                webrtc::TimeDelta::Millis(std::max(static_cast<int32_t>(min_delayed_request_timeout), 10))
+            );
         }
 
         if (should_request_more_segments) {
@@ -530,7 +531,7 @@ namespace wrtc::interfaces::mtproto {
     }
 
     void MTProtoStream::discard_all_pending_segments() {
-        for (auto it = segments_.begin(); it != segments_.end(); ) {
+        for (auto it = segments_.begin(); it != segments_.end();) {
             if (it->second->status == models::MediaSegment::Status::Pending) {
                 it = segments_.erase(it);
             } else {
@@ -547,8 +548,8 @@ namespace wrtc::interfaces::mtproto {
     }
 
     void MTProtoStream::check_pending_video_quality_update() {
-        for (const auto & [endpointId, videoChannel] : video_channels_) {
-            for (const auto &[segment_id, segment] : filter_segments(models::MediaSegment::Status::Ready)) {
+        for (const auto& [endpointId, videoChannel] : video_channels_) {
+            for (const auto& [segment_id, segment] : filter_segments(models::MediaSegment::Status::Ready)) {
                 for (int part_id = 0; part_id < segment->video.size(); part_id++) {
                     if (const auto video = segment->video[part_id].get(); video->part->get_active_endpoint_id() == endpointId) {
                         if (video->quality != videoChannel.quality) {
@@ -572,7 +573,7 @@ namespace wrtc::interfaces::mtproto {
         std::optional<int32_t> updated_channel_id;
         std::optional<models::MediaSegment::Quality> updated_quality;
 
-        for (const auto & [endpointId, videoChannel] : video_channels_) {
+        for (const auto& [endpointId, videoChannel] : video_channels_) {
             if (!current_endpoint_mapping_.contains(endpointId)) {
                 continue;
             }
@@ -606,7 +607,7 @@ namespace wrtc::interfaces::mtproto {
                 timestamp,
                 true,
                 updated_channel_id.value(),
-                updated_quality.value()
+                updated_quality.value(),
             });
         }
     }

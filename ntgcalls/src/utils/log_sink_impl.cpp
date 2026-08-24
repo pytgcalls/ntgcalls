@@ -36,27 +36,27 @@ namespace ntgcalls::utils {
 
     LogSink::Level LogSink::parse_severity(const webrtc::LoggingSeverity severity) {
         switch (severity) {
-            case webrtc::LS_VERBOSE:
-                return Level::Debug;
-            case webrtc::LS_INFO:
-                return Level::Info;
-            case webrtc::LS_WARNING:
-                return Level::Warning;
-            case webrtc::LS_ERROR:
-                return Level::Error;
-            default:
-                return Level::Unknown;
+        case webrtc::LS_VERBOSE:
+            return Level::Debug;
+        case webrtc::LS_INFO:
+            return Level::Info;
+        case webrtc::LS_WARNING:
+            return Level::Warning;
+        case webrtc::LS_ERROR:
+            return Level::Error;
+        default:
+            return Level::Unknown;
         }
     }
 
-    uint32_t LogSink::parse_line_number(const std::string &message) {
+    uint32_t LogSink::parse_line_number(const std::string& message) {
         uint32_t port = -1;
         std::stringstream ss(message);
         ss >> port;
         return port;
     }
 
-    void LogSink::register_log_message(const std::string &message, const webrtc::LoggingSeverity severity) const {
+    void LogSink::register_log_message(const std::string& message, const webrtc::LoggingSeverity severity) const {
         thread_->PostTask([message, severity] {
             const std::regex regex(R"(\((.*)\.(.*):([0-9]+)\):\s?(.*))");
             if (std::smatch match; std::regex_search(message, match, regex)) {
@@ -69,7 +69,7 @@ namespace ntgcalls::utils {
                     std::string(match[2]) == "cpp" ? Source::Self : Source::WebRTC,
                     file_name,
                     line_num,
-                    parsed_message
+                    parsed_message,
                 });
             }
         });

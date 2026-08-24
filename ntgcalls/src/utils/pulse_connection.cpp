@@ -8,7 +8,7 @@
 #include <ntgcalls/utils/pulse_connection.hpp>
 
 #define LATE(sym) \
-LATESYM_GET(webrtc::adm_linux_pulse::PulseAudioSymbolTable, GetPulseSymbolTable(), sym)
+    LATESYM_GET(webrtc::adm_linux_pulse::PulseAudioSymbolTable, GetPulseSymbolTable(), sym)
 
 namespace ntgcalls::utils {
     PulseConnection::PulseConnection() {
@@ -184,21 +184,21 @@ namespace ntgcalls::utils {
     void PulseConnection::pa_stream_read_callback(pa_stream*, const size_t size, void* p_this) {
         const auto thiz = static_cast<PulseConnection*>(p_this);
         size_t n_bytes = size;
-        while(n_bytes > 0) {
+        while (n_bytes > 0) {
             size_t count = n_bytes;
-            const void *audio_data;
+            const void* audio_data;
             const int result = LATE(pa_stream_peek)(thiz->stream_, &audio_data, &count);
-            if(count == 0) {
+            if (count == 0) {
                 return;
             }
-            if(audio_data == nullptr) {
+            if (audio_data == nullptr) {
                 LATE(pa_stream_drop)(thiz->stream_);
                 return;
             }
             auto buffer = bytes::make_unique_binary(n_bytes);
             std::memcpy(buffer.get(), audio_data, count);
             thiz->data_callback_(std::move(buffer));
-            if(result != 0) {
+            if (result != 0) {
                 return;
             }
             LATE(pa_stream_drop)(thiz->stream_);
@@ -237,7 +237,7 @@ namespace ntgcalls::utils {
     }
 
     void PulseConnection::setup_stream(const pa_sample_spec& sample_spec, std::string device_id, const bool is_capture) {
-        stream_ = LATE(pa_stream_new)(pa_context_, is_capture ? "recStream":"playStream", &sample_spec, nullptr);
+        stream_ = LATE(pa_stream_new)(pa_context_, is_capture ? "recStream" : "playStream", &sample_spec, nullptr);
         if (!stream_) {
             throw MediaDeviceError("Cannot create stream, err=" + std::to_string(LATE(pa_context_errno)(pa_context_)));
         }

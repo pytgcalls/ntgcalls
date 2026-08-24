@@ -8,7 +8,7 @@
 #include <api/video/color_space.h>
 
 extern "C" {
-    #include <libavcodec/avcodec.h>
+#include <libavcodec/avcodec.h>
 }
 
 namespace openh264 {

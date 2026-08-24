@@ -9,7 +9,7 @@ namespace wrtc::interfaces::media {
         webrtc::MediaEngineInterface* media_engine,
         const webrtc::TransportDescriptionFactory* transport_description_factory,
         webrtc::PayloadTypeSuggester* payload_type_suggester
-    ) : payload_type_suggester_(payload_type_suggester) {
+    ): payload_type_suggester_(payload_type_suggester) {
         codec_vendor_ = std::make_unique<webrtc::CodecVendor>(
             media_engine,
             true,

@@ -15,7 +15,7 @@
 
 namespace wrtc::interfaces {
 
-    class NativeConnection final : public NativeNetworkInterface {
+    class NativeConnection final: public NativeNetworkInterface {
         utils::json custom_parameters_;
         bool is_outgoing_, enable_p2p_;
         int64_t last_disconnected_timestamp_ = 0;
@@ -30,7 +30,7 @@ namespace wrtc::interfaces {
 
         void notify_state_updated();
 
-        void candidate_pair_changed(webrtc::CandidatePairChangeEvent const &event);
+        void candidate_pair_changed(webrtc::CandidatePairChangeEvent const& event);
 
         void check_connection_timeout();
 
@@ -39,7 +39,7 @@ namespace wrtc::interfaces {
 
         bool get_custom_parameter_bool(const std::string& name) const override;
 
-        static models::CandidateDescription connection_description_from_candidate(const webrtc::Candidate &candidate);
+        static models::CandidateDescription connection_description_from_candidate(const webrtc::Candidate& candidate);
 
         webrtc::RelayPortFactoryInterface* get_relay_port_factory() override;
 

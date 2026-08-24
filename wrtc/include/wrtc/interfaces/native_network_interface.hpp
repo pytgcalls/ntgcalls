@@ -39,15 +39,15 @@ namespace wrtc::interfaces {
 
         void update_aggregate_states_n();
 
-        static std::vector<webrtc::SdpVideoFormat> filter_supported_video_formats(std::vector<webrtc::SdpVideoFormat> const &formats);
+        static std::vector<webrtc::SdpVideoFormat> filter_supported_video_formats(std::vector<webrtc::SdpVideoFormat> const& formats);
 
-        static H264FormatParameters parse_h264_format_parameters(webrtc::SdpVideoFormat const &format);
+        static H264FormatParameters parse_h264_format_parameters(webrtc::SdpVideoFormat const& format);
 
-        static int get_h264_profile_level_id_priority(const std::string &profile_level_id);
+        static int get_h264_profile_level_id_priority(const std::string& profile_level_id);
 
-        static int get_h264_packetization_mode_priority(const std::string &packetization_mode);
+        static int get_h264_packetization_mode_priority(const std::string& packetization_mode);
 
-        static int get_h264_level_assymetry_allowed_priority(const std::string &level_assymetry_allowed);
+        static int get_h264_level_assymetry_allowed_priority(const std::string& level_assymetry_allowed);
 
     protected:
         std::mutex mutex_;

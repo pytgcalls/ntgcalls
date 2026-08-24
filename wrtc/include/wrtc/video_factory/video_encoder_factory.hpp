@@ -9,12 +9,12 @@
 
 namespace wrtc::video_factory {
 
-    class VideoEncoderFactory final : public webrtc::VideoEncoderFactory {
+    class VideoEncoderFactory final: public webrtc::VideoEncoderFactory {
         std::vector<VideoEncoderConfig> encoders_;
         mutable std::vector<std::vector<webrtc::SdpVideoFormat>> formats_;
 
     public:
-        explicit VideoEncoderFactory(const std::vector<VideoEncoderConfig>& encoders): encoders_(encoders){};
+        explicit VideoEncoderFactory(const std::vector<VideoEncoderConfig>& encoders): encoders_(encoders) {};
 
         std::unique_ptr<webrtc::VideoEncoder> Create(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) override;
 

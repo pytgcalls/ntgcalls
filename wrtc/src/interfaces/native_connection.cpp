@@ -10,9 +10,8 @@
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/reflector_relay_port_factory.hpp>
 
-
 namespace wrtc::interfaces {
-    NativeConnection::NativeConnection(std::vector<models::RTCServer> rtc_servers, const bool enable_p2p, const bool is_outgoing,  const utils::json& custom_parameters):
+    NativeConnection::NativeConnection(std::vector<models::RTCServer> rtc_servers, const bool enable_p2p, const bool is_outgoing, const utils::json& custom_parameters):
     custom_parameters_(custom_parameters),
     is_outgoing_(is_outgoing),
     enable_p2p_(enable_p2p),
@@ -54,14 +53,14 @@ namespace wrtc::interfaces {
             standalone_reflector_mode,
             standalone_reflector_role_id,
             underlying_socket_factory_
-         );
+        );
         return relay_port_factory_.get();
     }
 
     std::pair<webrtc::ServerAddresses, std::vector<webrtc::RelayServerConfig>> NativeConnection::get_stun_and_turn_servers() {
         webrtc::ServerAddresses stun_servers;
         std::vector<webrtc::RelayServerConfig> turn_servers;
-        for (auto &[id, host, port, login, password, isTurn, isTcp] : rtc_servers_) {
+        for (auto& [id, host, port, login, password, isTurn, isTcp] : rtc_servers_) {
             if (isTurn) {
                 turn_servers.emplace_back(
                     webrtc::SocketAddress(host, port),
@@ -114,7 +113,7 @@ namespace wrtc::interfaces {
 
     void NativeConnection::register_transport_callbacks(webrtc::P2PTransportChannel* transport_channel) {
         const std::weak_ptr weak(shared_from_this());
-        transport_channel->SubscribeCandidateGathered(this, [weak](webrtc::IceTransportInternal*, const webrtc::Candidate &candidate) {
+        transport_channel->SubscribeCandidateGathered(this, [weak](webrtc::IceTransportInternal*, const webrtc::Candidate& candidate) {
             assert(networkThread().IsCurrent());
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
@@ -127,12 +126,12 @@ namespace wrtc::interfaces {
                 }
                 webrtc::Candidate patched_candidate = candidate;
                 patched_candidate.set_component(1);
-                const webrtc::JsepIceCandidate ice_candidate{std::string(),0, patched_candidate};
+                const webrtc::JsepIceCandidate ice_candidate{std::string(), 0, patched_candidate};
                 (void) strong_signaling->ice_candidate_callback_(models::IceCandidate(&ice_candidate));
             });
         });
 
-        transport_channel->SetCandidatePairChangeCallback([weak](webrtc::CandidatePairChangeEvent const &event) {
+        transport_channel->SetCandidatePairChangeCallback([weak](webrtc::CandidatePairChangeEvent const& event) {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -140,7 +139,7 @@ namespace wrtc::interfaces {
             strong->candidate_pair_changed(event);
         });
 
-        transport_channel->SubscribeNetworkRouteChanged(this, [weak](const std::optional<webrtc::NetworkRoute> &route) {
+        transport_channel->SubscribeNetworkRouteChanged(this, [weak](const std::optional<webrtc::NetworkRoute>& route) {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -206,7 +205,7 @@ namespace wrtc::interfaces {
                     audio_channel_ = nullptr;
                 }
                 std::optional<models::MediaContent> audio_content;
-                for (const auto &content : coordinated_state->outgoing_contents) {
+                for (const auto& content : coordinated_state->outgoing_contents) {
                     if (content.type == models::MediaContent::Type::Audio && content.ssrc == audio_ssrc.value()) {
                         audio_content = content;
                         break;
@@ -236,7 +235,7 @@ namespace wrtc::interfaces {
                     video_channel_ = nullptr;
                 }
                 std::optional<models::MediaContent> video_content;
-                for (const auto &content : coordinated_state->outgoing_contents) {
+                for (const auto& content : coordinated_state->outgoing_contents) {
                     if (content.type == models::MediaContent::Type::Video && content.ssrc == video_ssrc.value()) {
                         video_content = content;
                         break;
@@ -261,11 +260,11 @@ namespace wrtc::interfaces {
         }
 
         std::unordered_set<uint32_t> remote_channels;
-        for (const auto &content : coordinated_state->incoming_contents) {
+        for (const auto& content : coordinated_state->incoming_contents) {
             remote_channels.insert(content.ssrc);
         }
-        auto remove_channel = [&](auto &channels) {
-            std::erase_if(channels, [&](const auto &entry) {
+        auto remove_channel = [&](auto& channels) {
+            std::erase_if(channels, [&](const auto& entry) {
                 if (const uint32_t ssrc = entry.second->ssrc(); !remote_channels.contains(ssrc)) {
                     pending_content_.erase(entry.first);
                     return true;
@@ -275,7 +274,7 @@ namespace wrtc::interfaces {
         };
         remove_channel(incoming_audio_channels_);
         remove_channel(incoming_video_channels_);
-        for (const auto &content : coordinated_state->incoming_contents) {
+        for (const auto& content : coordinated_state->incoming_contents) {
             add_incoming_smart_source(std::to_string(content.ssrc), content);
         }
     }
@@ -324,7 +323,7 @@ namespace wrtc::interfaces {
             network_thread()
         );
         const std::weak_ptr weak(shared_from_this());
-        data_channel_interface_->on_message_received([weak](const bytes::binary &data) {
+        data_channel_interface_->on_message_received([weak](const bytes::binary& data) {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -437,20 +436,23 @@ namespace wrtc::interfaces {
     void NativeConnection::check_connection_timeout() {
         const std::weak_ptr weak(shared_from_this());
         if (!closed_) {
-            network_thread().PostDelayedTask([weak] {
-                const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
-                if (!strong) {
-                    return;
-                }
-                const int64_t current_timestamp = webrtc::TimeMillis();
-                if (constexpr int64_t kMaxTimeout = 20000; !strong->connected_ && strong->last_disconnected_timestamp_ + kMaxTimeout < current_timestamp) {
-                    RTC_LOG(LS_INFO) << "NativeNetworkingImpl timeout " << current_timestamp - strong->last_disconnected_timestamp_ << " ms";
-                    strong->failed_ = true;
-                    strong->notify_state_updated();
-                    return;
-                }
-                strong->check_connection_timeout();
-            }, webrtc::TimeDelta::Millis(1000));
+            network_thread().PostDelayedTask(
+                [weak] {
+                    const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+                    if (!strong) {
+                        return;
+                    }
+                    const int64_t current_timestamp = webrtc::TimeMillis();
+                    if (constexpr int64_t kMaxTimeout = 20000; !strong->connected_ && strong->last_disconnected_timestamp_ + kMaxTimeout < current_timestamp) {
+                        RTC_LOG(LS_INFO) << "NativeNetworkingImpl timeout " << current_timestamp - strong->last_disconnected_timestamp_ << " ms";
+                        strong->failed_ = true;
+                        strong->notify_state_updated();
+                        return;
+                    }
+                    strong->check_connection_timeout();
+                },
+                webrtc::TimeDelta::Millis(1000)
+            );
         }
     }
 } // wrtc::interfaces

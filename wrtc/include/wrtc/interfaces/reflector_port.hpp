@@ -12,8 +12,7 @@
 
 namespace wrtc::interfaces {
 
-
-    class ReflectorPort final : public webrtc::Port {
+    class ReflectorPort final: public webrtc::Port {
     public:
         enum class State {
             Connecting,
@@ -31,7 +30,7 @@ namespace wrtc::interfaces {
 
         static std::unique_ptr<ReflectorPort> create(
             const webrtc::CreateRelayPortArgs& args,
-            webrtc::SocketFactory *underlying_socket_factory,
+            webrtc::SocketFactory* underlying_socket_factory,
             webrtc::AsyncPacketSocket* s,
             uint8_t server_id,
             int server_priority,
@@ -41,14 +40,14 @@ namespace wrtc::interfaces {
 
         static std::unique_ptr<ReflectorPort> create(
             const webrtc::CreateRelayPortArgs& args,
-            webrtc::SocketFactory *underlying_socket_factory,
+            webrtc::SocketFactory* underlying_socket_factory,
             uint16_t min_port,
             uint16_t max_port,
             uint8_t server_id,
             int server_priority,
             bool standalone_reflector_mode,
             uint32_t standalone_reflector_role_id
-       );
+        );
 
         [[nodiscard]] webrtc::SocketAddress get_local_address() const;
 
@@ -153,7 +152,7 @@ namespace wrtc::interfaces {
 
         void dispatch_packet(const webrtc::ReceivedIpPacket& packet);
 
-        static webrtc::CopyOnWriteBuffer parse_hex(const std::string &string);
+        static webrtc::CopyOnWriteBuffer parse_hex(const std::string& string);
 
         static int bind_socket(
             webrtc::Socket* socket,

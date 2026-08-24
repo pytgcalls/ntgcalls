@@ -10,9 +10,9 @@
 
 namespace openh264 {
 
-    void add_encoders(std::vector<wrtc::video_factory::VideoEncoderConfig> &encoders);
+    void add_encoders(std::vector<wrtc::video_factory::VideoEncoderConfig>& encoders);
 
-    void add_decoders(std::vector<wrtc::video_factory::VideoDecoderConfig> &decoders);
+    void add_decoders(std::vector<wrtc::video_factory::VideoDecoderConfig>& decoders);
 
 } // openh264
 

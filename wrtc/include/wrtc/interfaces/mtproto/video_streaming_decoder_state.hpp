@@ -18,7 +18,7 @@ namespace wrtc::interfaces::mtproto {
         AVCodecParameters* parameters_ = nullptr;
         AVRational timebase_;
 
-        static bool are_codec_parameters_equal(const AVCodecParameters& lhs, AVCodecParameters const &rhs);
+        static bool are_codec_parameters_equal(const AVCodecParameters& lhs, AVCodecParameters const& rhs);
 
     public:
         VideoStreamingDecoderState(AVCodecContext* codec_context, const AVCodecParameters* codec_parameters, AVRational pkt_timebase);

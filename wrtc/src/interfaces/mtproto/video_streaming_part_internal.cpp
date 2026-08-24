@@ -114,9 +114,9 @@ namespace wrtc::interfaces::mtproto {
         if (const auto rtc_frame = frame_->get_frame(); rtc_frame && rtc_frame->format == AV_PIX_FMT_VIDEOTOOLBOX && rtc_frame->data[3]) {
             const auto native_frame = extract_cv_pixel_buffer(rtc_frame->data[3]);
             const auto video_frame = webrtc::VideoFrame::Builder()
-                .set_video_frame_buffer(native_frame)
-                .set_rotation(rotation_)
-                .build();
+                                         .set_video_frame_buffer(native_frame)
+                                         .set_rotation(rotation_)
+                                         .build();
             return media::VideoStreamingPartFrame(endpoint_id_, video_frame, frame_->pts(stream_, first_frame_pts_), frame_index_);
         }
 #endif
@@ -132,9 +132,9 @@ namespace wrtc::interfaces::mtproto {
         );
         if (i420_buffer) {
             const auto video_frame = webrtc::VideoFrame::Builder()
-                .set_video_frame_buffer(i420_buffer)
-                .set_rotation(rotation_)
-                .build();
+                                         .set_video_frame_buffer(i420_buffer)
+                                         .set_rotation(rotation_)
+                                         .build();
             return media::VideoStreamingPartFrame(endpoint_id_, video_frame, frame_->pts(stream_, first_frame_pts_), frame_index_);
         }
         return std::nullopt;

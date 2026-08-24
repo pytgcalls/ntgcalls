@@ -5,7 +5,7 @@
 #pragma once
 
 namespace wrtc {
-    enum class IceState: int {
+    enum class IceState : int {
         Unknown,
         New,
         Checking,
@@ -16,14 +16,14 @@ namespace wrtc {
         Closed
     };
 
-    enum class GatheringState: int {
+    enum class GatheringState : int {
         Unknown,
         New,
         InProgress,
         Complete
     };
 
-    enum class SignalingState: int {
+    enum class SignalingState : int {
         Unknown,
         Stable,
         HaveLocalOffer,

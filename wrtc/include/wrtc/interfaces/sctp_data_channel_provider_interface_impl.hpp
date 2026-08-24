@@ -12,7 +12,7 @@
 
 namespace wrtc::interfaces {
 
-    class SctpDataChannelProviderInterfaceImpl final : public webrtc::SctpDataChannelControllerInterface, public webrtc::DataChannelObserver, public webrtc::DataChannelSink {
+    class SctpDataChannelProviderInterfaceImpl final: public webrtc::SctpDataChannelControllerInterface, public webrtc::DataChannelObserver, public webrtc::DataChannelSink {
         webrtc::WeakPtrFactory<SctpDataChannelProviderInterfaceImpl> weak_factory_;
         std::unique_ptr<webrtc::SctpTransportFactory> sctp_transport_factory_;
         std::unique_ptr<webrtc::SctpTransportInternal> sctp_transport_;
@@ -63,11 +63,15 @@ namespace wrtc::interfaces {
 
         // Unused
         void OnChannelClosing(int channel_id) override {}
-        void OnChannelClosed(int channel_id) override{}
-        void OnChannelStateChanged(webrtc::SctpDataChannel* data_channel, webrtc::DataChannelInterface::DataState state) override{}
+        void OnChannelClosed(int channel_id) override {}
+        void OnChannelStateChanged(webrtc::SctpDataChannel* data_channel, webrtc::DataChannelInterface::DataState state) override {}
         void OnBufferedAmountLow(int channel_id) override {}
-        size_t buffered_amount(webrtc::StreamId sid) const override { return 0; }
-        size_t buffered_amount_low_threshold(webrtc::StreamId sid) const override { return 0;}
+        size_t buffered_amount(webrtc::StreamId sid) const override {
+            return 0;
+        }
+        size_t buffered_amount_low_threshold(webrtc::StreamId sid) const override {
+            return 0;
+        }
         void SetBufferedAmountLowThreshold(webrtc::StreamId sid, size_t bytes) override {}
         void OnTransportConnected() override {}
         void OnMaxMessageSize(int max_message_size) override {}

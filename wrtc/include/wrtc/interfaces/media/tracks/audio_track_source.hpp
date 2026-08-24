@@ -22,10 +22,10 @@ namespace wrtc::interfaces::media::tracks {
 
         void RemoveSink(webrtc::AudioTrackSinkInterface* sink) override;
 
-        void push_data(const models::RTCOnDataEvent &, int64_t absolute_capture_timestamp_ms) const;
+        void push_data(const models::RTCOnDataEvent&, int64_t absolute_capture_timestamp_ms) const;
 
     private:
-        std::atomic<webrtc::AudioTrackSinkInterface *> sink_ = {nullptr};
+        std::atomic<webrtc::AudioTrackSinkInterface*> sink_ = {nullptr};
     };
 
 } // wrtc::interfaces::media::tracks

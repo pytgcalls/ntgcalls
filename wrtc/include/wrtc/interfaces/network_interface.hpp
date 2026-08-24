@@ -45,17 +45,17 @@ namespace wrtc::interfaces {
 
         const webrtc::Environment& environment() const;
 
-        void on_data_channel_opened(const std::function<void()> &callback);
+        void on_data_channel_opened(const std::function<void()>& callback);
 
         void on_ice_candidate(const std::function<void(const models::IceCandidate& candidate)>& callback);
 
-        void on_connection_change(const std::function<void(ConnectionState state, bool was_connected)> &callback);
+        void on_connection_change(const std::function<void(ConnectionState state, bool was_connected)>& callback);
 
         void on_data_channel_message(const std::function<void(const bytes::binary& data)>& callback);
 
         virtual void close();
 
-        virtual void send_data_channel_message(const bytes::binary &data) const = 0;
+        virtual void send_data_channel_message(const bytes::binary& data) const = 0;
 
         virtual void add_ice_candidate(const models::IceCandidate& raw_candidate) const = 0;
 

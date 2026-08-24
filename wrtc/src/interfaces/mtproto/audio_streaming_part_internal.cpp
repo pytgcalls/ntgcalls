@@ -9,7 +9,7 @@
 #include <wrtc/interfaces/mtproto/audio_streaming_part_internal.hpp>
 
 namespace wrtc::interfaces::mtproto {
-    AudioStreamingPartInternal::AudioStreamingPartInternal(bytes::binary &&data, const std::string& container) {
+    AudioStreamingPartInternal::AudioStreamingPartInternal(bytes::binary&& data, const std::string& container) {
         av_io_context_ = std::make_unique<AVIOContextImpl>(std::move(data));
         frame_ = av_frame_alloc();
 
@@ -182,7 +182,7 @@ namespace wrtc::interfaces::mtproto {
     }
 
     int16_t AudioStreamingPartInternal::sample_float_to_int16(const float sample) {
-        return av_clip_int16(static_cast<int32_t>(lrint(sample*32767)));
+        return av_clip_int16(static_cast<int32_t>(lrint(sample * 32767)));
     }
 
     AudioStreamingPartInternal::ReadPcmResult AudioStreamingPartInternal::read_pcm(AudioStreamingPartPersistentDecoder& persistent_decoder, std::vector<int16_t>& out_pcm) {
@@ -287,36 +287,36 @@ namespace wrtc::interfaces::mtproto {
         }
 
         switch (frame_->format) {
-            case AV_SAMPLE_FMT_S16: {
-                std::memcpy(pcm_buffer_.data(), frame_->data[0], frame_->nb_samples * 2 * frame_->ch_layout.nb_channels);
-            } break;
-            case AV_SAMPLE_FMT_S16P: {
-                int16_t* to_pcm = pcm_buffer_.data(); // NOLINT(misc-const-correctness)
-                for (int sample = 0; sample < frame_->nb_samples; ++sample) {
-                    for (int channel = 0; channel < frame_->ch_layout.nb_channels; ++channel) {
-                        const auto* short_channel = reinterpret_cast<int16_t*>(frame_->data[channel]);
-                        *to_pcm++ = short_channel[sample];
-                    }
+        case AV_SAMPLE_FMT_S16: {
+            std::memcpy(pcm_buffer_.data(), frame_->data[0], frame_->nb_samples * 2 * frame_->ch_layout.nb_channels);
+        } break;
+        case AV_SAMPLE_FMT_S16P: {
+            int16_t* to_pcm = pcm_buffer_.data(); // NOLINT(misc-const-correctness)
+            for (int sample = 0; sample < frame_->nb_samples; ++sample) {
+                for (int channel = 0; channel < frame_->ch_layout.nb_channels; ++channel) {
+                    const auto* short_channel = reinterpret_cast<int16_t*>(frame_->data[channel]);
+                    *to_pcm++ = short_channel[sample];
                 }
-            } break;
-            case AV_SAMPLE_FMT_FLT: {
-                const auto* float_data = reinterpret_cast<float*>(&frame_->data[0]);
-                for (int i = 0; i < frame_->nb_samples * frame_->ch_layout.nb_channels; i++) {
-                    pcm_buffer_[i] = sample_float_to_int16(float_data[i]);
-                }
-            } break;
-            case AV_SAMPLE_FMT_FLTP: {
-                int16_t* to_pcm = pcm_buffer_.data(); // NOLINT(misc-const-correctness)
-                for (int sample = 0; sample < frame_->nb_samples; ++sample) {
-                    for (int channel = 0; channel < frame_->ch_layout.nb_channels; ++channel) {
-                        const auto* float_channel = reinterpret_cast<float*>(frame_->data[channel]);
-                        *to_pcm++ = sample_float_to_int16(float_channel[sample]);
-                    }
-                }
-            } break;
-            default: {
-                RTC_FATAL() << "Unexpected sample_fmt";
             }
+        } break;
+        case AV_SAMPLE_FMT_FLT: {
+            const auto* float_data = reinterpret_cast<float*>(&frame_->data[0]);
+            for (int i = 0; i < frame_->nb_samples * frame_->ch_layout.nb_channels; i++) {
+                pcm_buffer_[i] = sample_float_to_int16(float_data[i]);
+            }
+        } break;
+        case AV_SAMPLE_FMT_FLTP: {
+            int16_t* to_pcm = pcm_buffer_.data(); // NOLINT(misc-const-correctness)
+            for (int sample = 0; sample < frame_->nb_samples; ++sample) {
+                for (int channel = 0; channel < frame_->ch_layout.nb_channels; ++channel) {
+                    const auto* float_channel = reinterpret_cast<float*>(frame_->data[channel]);
+                    *to_pcm++ = sample_float_to_int16(float_channel[sample]);
+                }
+            }
+        } break;
+        default: {
+            RTC_FATAL() << "Unexpected sample_fmt";
+        }
         }
 
         pcm_buffer_sample_size_ = frame_->nb_samples;

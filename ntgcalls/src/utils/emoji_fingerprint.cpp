@@ -18,7 +18,7 @@ namespace ntgcalls::utils {
         return value;
     }
 
-    void EmojiFingerprint::append_codepoint(std::string &out, const uint32_t codepoint) {
+    void EmojiFingerprint::append_codepoint(std::string& out, const uint32_t codepoint) {
         if (codepoint < 0x80) {
             out.push_back(static_cast<char>(codepoint));
         } else if (codepoint < 0x800) {
@@ -36,7 +36,7 @@ namespace ntgcalls::utils {
         }
     }
 
-    void EmojiFingerprint::append_emoji(std::string &out, const int index) {
+    void EmojiFingerprint::append_emoji(std::string& out, const int index) {
         uint16_t high = 0;
         for (int i = kOffsets[index]; i < kOffsets[index + 1]; ++i) {
             const uint16_t unit = kData[i];

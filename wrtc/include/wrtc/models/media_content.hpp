@@ -12,7 +12,7 @@ namespace wrtc::models {
         std::string semantics;
         std::vector<uint32_t> ssrcs;
 
-        bool operator==(SsrcGroup const &rhs) const {
+        bool operator==(SsrcGroup const& rhs) const {
             if (ssrcs != rhs.ssrcs) {
                 return false;
             }
@@ -27,7 +27,7 @@ namespace wrtc::models {
         std::string type;
         std::string subtype;
 
-        bool operator==(FeedbackType const &rhs) const {
+        bool operator==(FeedbackType const& rhs) const {
             if (type != rhs.type) {
                 return false;
             }
@@ -47,7 +47,7 @@ namespace wrtc::models {
         std::vector<FeedbackType> feedback_types;
         std::vector<std::pair<std::string, std::string>> parameters;
 
-        bool operator==(PayloadType const &rhs) const {
+        bool operator==(PayloadType const& rhs) const {
             if (id != rhs.id) {
                 return false;
             }
@@ -96,11 +96,11 @@ namespace wrtc::models {
             }
 
             std::vector<PayloadType> sorted_payload_types = payload_types;
-            std::ranges::sort(sorted_payload_types, [](PayloadType const &lhs, PayloadType const &rhs2) {
+            std::ranges::sort(sorted_payload_types, [](PayloadType const& lhs, PayloadType const& rhs2) {
                 return lhs.id < rhs2.id;
             });
             std::vector<PayloadType> sorted_rhs_payload_types = rhs.payload_types;
-            std::ranges::sort(sorted_rhs_payload_types, [](PayloadType const &lhs, PayloadType const &rhs2) {
+            std::ranges::sort(sorted_rhs_payload_types, [](PayloadType const& lhs, PayloadType const& rhs2) {
                 return lhs.id < rhs2.id;
             });
             if (sorted_payload_types != sorted_rhs_payload_types) {

@@ -19,7 +19,7 @@ namespace wrtc::interfaces::media {
 
         [[nodiscard]] webrtc::scoped_refptr<webrtc::AudioTrackInterface> create_track() const;
 
-        void on_data(const models::RTCOnDataEvent &, models::FrameData additional_data) const;
+        void on_data(const models::RTCOnDataEvent&, models::FrameData additional_data) const;
 
     private:
         webrtc::scoped_refptr<tracks::AudioTrackSource> source_;

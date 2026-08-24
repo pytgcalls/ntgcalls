@@ -78,11 +78,11 @@ namespace openssl {
             return false;
         }
         return ED25519_verify(
-            data.data(),
-            data.size(),
-            signature.data(),
-            public_key.data()
-        ) == 1;
+                   data.data(),
+                   data.size(),
+                   signature.data(),
+                   public_key.data()
+               ) == 1;
     }
 
     bytes::array<32> Key25519::compute_shared_secret(const bytes::const_span other_public_key) const {

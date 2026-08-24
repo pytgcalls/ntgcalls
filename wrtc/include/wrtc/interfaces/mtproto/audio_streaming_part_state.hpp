@@ -13,7 +13,7 @@ namespace wrtc::interfaces::mtproto {
             uint32_t ssrc = 0;
             int channel_index = 0;
 
-            ChannelMapping(const uint32_t ssrc, const int channel_index) : ssrc(ssrc), channel_index(channel_index) {}
+            ChannelMapping(const uint32_t ssrc, const int channel_index): ssrc(ssrc), channel_index(channel_index) {}
         };
 
         std::set<uint32_t> all_ssrcs_;
@@ -35,11 +35,11 @@ namespace wrtc::interfaces::mtproto {
             std::vector<int16_t> pcm_data;
         };
 
-        AudioStreamingPartState(bytes::binary&& data, const std::string &container, bool is_single_channel);
+        AudioStreamingPartState(bytes::binary&& data, const std::string& container, bool is_single_channel);
 
         ~AudioStreamingPartState();
 
-        std::vector<Channel> get_10ms_per_channel(AudioStreamingPartPersistentDecoder &persistent_decoder);
+        std::vector<Channel> get_10ms_per_channel(AudioStreamingPartPersistentDecoder& persistent_decoder);
 
         [[nodiscard]] int get_remaining_milliseconds() const;
 

@@ -7,7 +7,7 @@
 namespace wrtc::interfaces::media {
     MediaDataPacket::MediaDataPacket(): packet_(av_packet_alloc()) {}
 
-    MediaDataPacket::MediaDataPacket(MediaDataPacket* other) : packet_(other->packet_) {
+    MediaDataPacket::MediaDataPacket(MediaDataPacket* other): packet_(other->packet_) {
         other->packet_ = nullptr;
     }
 

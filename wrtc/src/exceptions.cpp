@@ -9,13 +9,13 @@ namespace wrtc {
         return msg_.c_str();
     }
 
-    BaseRTCException::BaseRTCException(std::string msg) : msg_(std::move(msg)) {}
+    BaseRTCException::BaseRTCException(std::string msg): msg_(std::move(msg)) {}
 
-    RTCException wrap_rtc_error(const webrtc::RTCError &error) {
+    RTCException wrap_rtc_error(const webrtc::RTCError& error) {
         return RTCException{"[" + std::string(ToString(error.type())) + "] " + error.message()};
     }
 
-    SdpParseException wrap_sdp_parse_error(const webrtc::SdpParseError &error) {
+    SdpParseException wrap_sdp_parse_error(const webrtc::SdpParseError& error) {
         if (error.line.empty()) {
             return SdpParseException{error.description};
         }

@@ -21,4 +21,4 @@ namespace webrtc::jni {
     extern "C" void JNIEXPORT JNICALL JNI_OnUnLoad(JavaVM*, void*) {
         RTC_CHECK(webrtc::CleanupSSL()) << "Failed to CleanupSSL()";
     }
-}  // namespace webrtc::jni
+} // namespace webrtc::jni
