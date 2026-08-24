@@ -55,3 +55,8 @@ force-single-line = true
 
 [tool.ruff.format]
 quote-style = "single"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+]
