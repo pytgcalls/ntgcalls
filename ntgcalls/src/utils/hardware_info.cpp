@@ -55,9 +55,14 @@ namespace ntgcalls::utils {
         GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
         std::memcpy(&sys, &fsys, sizeof(FILETIME));
         std::memcpy(&user, &fuser, sizeof(FILETIME));
-        percent = static_cast<double>(sys.QuadPart - last_sys_cpu_.QuadPart + user.QuadPart - last_user_cpu_.QuadPart);
-        percent /= static_cast<double>(now.QuadPart - last_cpu_.QuadPart);
-        percent /= num_processors_;
+        if (now.QuadPart <= last_cpu_.QuadPart || sys.QuadPart < last_sys_cpu_.QuadPart || user.QuadPart < last_user_cpu_.QuadPart) {
+            percent = -1.0;
+        } else {
+            percent = static_cast<double>(sys.QuadPart - last_sys_cpu_.QuadPart + user.QuadPart - last_user_cpu_.QuadPart);
+            percent /= static_cast<double>(now.QuadPart - last_cpu_.QuadPart);
+            percent /= num_processors_;
+            percent *= 100;
+        }
         last_cpu_ = now;
         last_user_cpu_ = user;
         last_sys_cpu_ = sys;
@@ -65,17 +70,19 @@ namespace ntgcalls::utils {
         struct rusage usage;
         getrusage(RUSAGE_SELF, &usage);
         const clock_t now = (usage.ru_utime.tv_sec + usage.ru_stime.tv_sec) * 1000000 + (usage.ru_utime.tv_usec + usage.ru_stime.tv_usec);
-        if (now <= last_cpu_ || usage.ru_stime.tv_sec < last_sys_cpu_ || usage.ru_utime.tv_sec < last_user_cpu_) {
+        const clock_t cur_sys = usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
+        const clock_t cur_user = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec;
+        if (now <= last_cpu_ || cur_sys < last_sys_cpu_ || cur_user < last_user_cpu_) {
             percent = -1.0;
         } else {
-            percent = static_cast<double>(usage.ru_stime.tv_sec - last_sys_cpu_ + usage.ru_utime.tv_sec - last_user_cpu_);
+            percent = static_cast<double>(cur_sys - last_sys_cpu_ + cur_user - last_user_cpu_);
             percent /= static_cast<double>(now - last_cpu_);
             percent /= num_processors_;
             percent *= 100;
         }
         last_cpu_ = now;
-        last_sys_cpu_ = usage.ru_stime.tv_sec;
-        last_user_cpu_ = usage.ru_utime.tv_sec;
+        last_sys_cpu_ = cur_sys;
+        last_user_cpu_ = cur_user;
 #else
         tms time_sample{};
         const auto now = times(&time_sample);
