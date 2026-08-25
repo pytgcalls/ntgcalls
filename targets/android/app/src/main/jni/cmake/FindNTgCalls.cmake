@@ -2,7 +2,6 @@ set(NTGCALLS_LIB ${CMAKE_SOURCE_DIR}/ntgcalls/${ANDROID_ABI}/${CMAKE_STATIC_LIBR
 set(WEBRTC_SRC ${DEPS_DIR}/libwebrtc/src)
 set(WEBRTC_INCLUDE ${WEBRTC_SRC}/include)
 set(WEBRTC_LIB_DIR ${WEBRTC_SRC}/lib/${ANDROID_ABI})
-message(${WEBRTC_LIB_DIR} FATAL_ERROR)
 
 add_library(NTgCalls::ntgcalls STATIC IMPORTED)
 
