@@ -15,7 +15,7 @@ namespace ntgcalls::instances {
         wrtc::utils::synchronized_callback<void()> broadcast_timestamp_callback_;
         wrtc::utils::synchronized_callback<void(wrtc::models::SegmentPartRequest)> segment_part_request_callback_;
 
-        static void update_remote_video_constraints(const wrtc::interfaces::GroupConnection* conn);
+        static void update_remote_video_constraints(wrtc::interfaces::GroupConnection* conn);
 
     protected:
         std::shared_ptr<wrtc::interfaces::GroupConnection> presentation_connection_;

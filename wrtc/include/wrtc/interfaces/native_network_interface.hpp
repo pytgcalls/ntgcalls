@@ -130,7 +130,7 @@ namespace wrtc::interfaces {
 
         static webrtc::CryptoOptions get_default_crypto_options();
 
-        std::vector<std::string> get_endpoints() const;
+        std::vector<std::string> get_endpoints();
 
         ConnectionMode get_connection_mode() const override;
 

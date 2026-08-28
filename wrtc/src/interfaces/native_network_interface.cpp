@@ -353,7 +353,7 @@ namespace wrtc::interfaces {
         return options;
     }
 
-    std::vector<std::string> NativeNetworkInterface::get_endpoints() const {
+    std::vector<std::string> NativeNetworkInterface::get_endpoints() {
         std::vector<std::string> endpoints;
         for (const auto& [endpoint, media] : pending_content_) {
             if (media.type == models::MediaContent::Type::Video) {

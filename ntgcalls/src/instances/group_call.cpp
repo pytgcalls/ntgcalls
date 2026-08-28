@@ -155,7 +155,7 @@ namespace ntgcalls::instances {
         );
     }
 
-    void GroupCall::update_remote_video_constraints(const wrtc::interfaces::GroupConnection* conn) {
+    void GroupCall::update_remote_video_constraints(wrtc::interfaces::GroupConnection* conn) {
         json json_res = {
             {"colibriClass", "ReceiverVideoConstraints"},
             {"constraints", json::object()},
