@@ -264,13 +264,23 @@ namespace wrtc::interfaces {
             remote_channels.insert(content.ssrc);
         }
         auto remove_channel = [&](auto& channels) {
-            std::erase_if(channels, [&](const auto& entry) {
-                if (const uint32_t ssrc = entry.second->ssrc(); !remote_channels.contains(ssrc)) {
-                    pending_content_.erase(entry.first);
-                    return true;
+            std::vector<std::string> removed_endpoints;
+            {
+                const std::lock_guard lock(mutex_);
+                for (const auto& [endpoint, channel] : channels) {
+                    if (!remote_channels.contains(channel->ssrc())) {
+                        removed_endpoints.push_back(endpoint);
+                    }
                 }
-                return false;
-            });
+            }
+            for (const auto& endpoint : removed_endpoints) {
+                typename std::decay_t<decltype(channels)>::node_type removed_channel;
+                {
+                    const std::lock_guard lock(mutex_);
+                    removed_channel = channels.extract(endpoint);
+                    pending_content_.erase(endpoint);
+                }
+            }
         };
         remove_channel(incoming_audio_channels_);
         remove_channel(incoming_video_channels_);

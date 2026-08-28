@@ -428,45 +428,73 @@ namespace wrtc::interfaces {
     }
 
     void GroupConnection::update_audio_ssrc_mappings(const std::vector<models::SsrcMapping>& audio_ssrcs) {
-        audio_ssrc_to_user_id_.clear();
-        for (const auto& [userID, ssrc] : audio_ssrcs) {
-            audio_ssrc_to_user_id_[ssrc] = userID;
-            if (auto endpoint = std::to_string(ssrc); pending_audio_ssrcs_.erase(ssrc) && !incoming_audio_channels_.contains(endpoint)) {
-                add_incoming_audio(userID, ssrc, endpoint);
+        const std::weak_ptr weak(shared_from_this());
+        worker_thread().BlockingCall([weak, audio_ssrcs] {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
             }
-        }
+            strong->audio_ssrc_to_user_id_.clear();
+            for (const auto& [userID, ssrc] : audio_ssrcs) {
+                strong->audio_ssrc_to_user_id_[ssrc] = userID;
+                if (auto endpoint = std::to_string(ssrc); strong->pending_audio_ssrcs_.erase(ssrc) && !strong->incoming_audio_channels_.contains(endpoint)) {
+                    strong->add_incoming_audio(userID, ssrc, endpoint);
+                }
+            }
+        });
     }
 
     uint32_t GroupConnection::add_incoming_video(const int64_t user_id, const std::string& endpoint, const std::vector<models::SsrcGroup>& ssrc_groups) {
-        if (pending_content_.contains(endpoint)) {
-            return 0;
-        }
-        models::MediaContent media_content;
-        media_content.type = models::MediaContent::Type::Video;
-        media_content.user_id = user_id;
-        media_content.ssrc_groups = ssrc_groups;
-        if (mtproto_stream_) {
-            mtproto_stream_->add_incoming_video(
-                endpoint,
-                media_content.main_ssrc(),
-                media_content.is_screen_cast()
-            );
-        } else {
-            add_incoming_smart_source(endpoint, media_content);
-        }
-        return media_content.main_ssrc();
+        const std::weak_ptr weak(shared_from_this());
+        return worker_thread().BlockingCall([weak, user_id, endpoint, ssrc_groups]() -> uint32_t {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return 0;
+            }
+            {
+                const std::lock_guard lock(strong->mutex_);
+                if (strong->pending_content_.contains(endpoint)) {
+                    return 0;
+                }
+            }
+            models::MediaContent media_content;
+            media_content.type = models::MediaContent::Type::Video;
+            media_content.user_id = user_id;
+            media_content.ssrc_groups = ssrc_groups;
+            if (strong->mtproto_stream_) {
+                strong->mtproto_stream_->add_incoming_video(
+                    endpoint,
+                    media_content.main_ssrc(),
+                    media_content.is_screen_cast()
+                );
+            } else {
+                strong->add_incoming_smart_source(endpoint, media_content);
+            }
+            return media_content.main_ssrc();
+        });
     }
 
     bool GroupConnection::remove_incoming_video(const std::string& endpoint) {
-        if (mtproto_stream_) {
-            return mtproto_stream_->remove_incoming_video(endpoint);
-        }
-        if (!pending_content_.contains(endpoint)) {
-            return false;
-        }
-        if (incoming_video_channels_.contains(endpoint)) incoming_video_channels_.erase(endpoint);
-        pending_content_.erase(endpoint);
-        return true;
+        const std::weak_ptr weak(shared_from_this());
+        return worker_thread().BlockingCall([weak, endpoint] {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return false;
+            }
+            if (strong->mtproto_stream_) {
+                return strong->mtproto_stream_->remove_incoming_video(endpoint);
+            }
+            decltype(strong->incoming_video_channels_)::node_type removed_channel;
+            {
+                const std::lock_guard lock(strong->mutex_);
+                if (!strong->pending_content_.contains(endpoint)) {
+                    return false;
+                }
+                removed_channel = strong->incoming_video_channels_.extract(endpoint);
+                strong->pending_content_.erase(endpoint);
+            }
+            return true;
+        });
     }
 
     void GroupConnection::on_request_participants(const std::function<void()>& callback) {
@@ -514,12 +542,14 @@ namespace wrtc::interfaces {
                 if (!strong) {
                     return;
                 }
-                const std::lock_guard lock(strong->mutex_);
-                const auto timestamp = webrtc::TimeMillis();
                 std::vector<std::string> remove_channels;
-                for (const auto& [channelId, channel] : strong->incoming_audio_channels_) {
-                    if (channel->get_activity() < timestamp - 1000) {
-                        remove_channels.push_back(channelId);
+                {
+                    const std::lock_guard lock(strong->mutex_);
+                    const auto timestamp = webrtc::TimeMillis();
+                    for (const auto& [channelId, channel] : strong->incoming_audio_channels_) {
+                        if (channel->get_activity() < timestamp - 1000) {
+                            remove_channels.push_back(channelId);
+                        }
                     }
                 }
                 for (const auto& channel_id : remove_channels) {
