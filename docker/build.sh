@@ -45,7 +45,6 @@ build_and_install "nasm" configure --setup-commands="patch_nasm"
 build_and_install "bison" make --update-submodules --setup-commands="bison_setup"
 build_and_install "llvm-project/llvm" cmake \
     -DLLVM_ENABLE_PROJECTS="clang" \
-    -DLLVM_ENABLE_RUNTIMES="libclc" \
     -DLLVM_TARGETS_TO_BUILD="all" \
     -DLLVM_ENABLE_PIC=ON \
     -DLLVM_BUILD_LLVM_DYLIB=ON \
@@ -54,6 +53,13 @@ build_and_install "llvm-project/llvm" cmake \
     -DLLVM_INCLUDE_EXAMPLES=OFF \
     -DLLVM_ENABLE_RTTI=ON \
     -DLLVM_INCLUDE_BENCHMARKS=OFF \
+    -DCMAKE_BUILD_TYPE=Release
+
+build_and_install "llvm-project/libclc" cmake \
+    -DLIBCLC_STANDALONE_BUILD=ON \
+    -DCMAKE_CLC_COMPILER=/usr/bin/clang \
+    -DLIBCLC_USE_SPIRV_BACKEND=ON \
+    -DLLVM_DEFAULT_TARGET_TRIPLE="spirv64-unknown-unknown" \
     -DCMAKE_BUILD_TYPE=Release
 
 ln -s /usr/local/bin/python3.13 /usr/local/bin/python3 >&/dev/null
