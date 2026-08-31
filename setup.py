@@ -189,7 +189,7 @@ def discover_targets():
     result = {}
     if TARGETS_DIR.is_dir():
         for entry in sorted(TARGETS_DIR.iterdir()):
-            if entry.is_dir():
+            if entry.is_dir() and (entry / 'build.cfg').is_file():
                 result[entry.name] = ARCH_OVERRIDES.get(entry.name, ['auto'])
     return result
 
@@ -201,6 +201,12 @@ def target_options(target):
     parser = configparser.ConfigParser(interpolation=None)
     parser.read(TARGETS_DIR / target / 'build.cfg')
     return dict(parser['options']) if parser.has_section('options') else {}
+
+
+def has_section(target, section):
+    parser = configparser.ConfigParser(interpolation=None)
+    parser.read(TARGETS_DIR / target / 'build.cfg')
+    return parser.has_section(section)
 
 
 def load_platforms():
@@ -246,6 +252,10 @@ class SharedCommand(Command):
             raise ValueError(
                 f'Unknown target "{self.target}", '
                 f'available: {", ".join(BINDING_TARGETS)}'
+            )
+        if not has_section(self.target, 'build'):
+            raise ValueError(
+                f'Target "{self.target}" declares no build section'
             )
 
     def run(self):
