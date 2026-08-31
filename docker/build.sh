@@ -44,7 +44,8 @@ fi
 build_and_install "nasm" configure --setup-commands="patch_nasm"
 build_and_install "bison" make --update-submodules --setup-commands="bison_setup"
 build_and_install "llvm-project/llvm" cmake \
-    -DLLVM_ENABLE_PROJECTS="libclc;clang" \
+    -DLLVM_ENABLE_PROJECTS="clang" \
+    -DLLVM_ENABLE_RUNTIMES="libclc" \
     -DLLVM_TARGETS_TO_BUILD="all" \
     -DLLVM_ENABLE_PIC=ON \
     -DLLVM_BUILD_LLVM_DYLIB=ON \
