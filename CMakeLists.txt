@@ -11,7 +11,7 @@ add_custom_target(clean_objects
     COMMENT "Removing all object (.o) files"
 )
 
-project(ntgcalls VERSION 3.0.0.20 LANGUAGES C CXX)
+project(ntgcalls VERSION 3.0.0.1 LANGUAGES C CXX)
 include(cmake/VersionUtil.cmake)
 
 if (MSVC)
