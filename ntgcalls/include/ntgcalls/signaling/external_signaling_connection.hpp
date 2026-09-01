@@ -1,20 +1,20 @@
 //
-// Created by Laky64 on 18/08/2024.
+// Created by Lauren on 18/08/24.
 //
 
 #pragma once
 
 #include <ntgcalls/signaling/signaling_interface.hpp>
 
-namespace signaling {
-    class ExternalSignalingConnection final : public SignalingInterface {
+namespace ntgcalls::signaling {
+    class ExternalSignalingConnection final: public SignalingInterface {
     public:
         ExternalSignalingConnection(
-            wrtc::SafeThread& networkThread,
-            wrtc::SafeThread& signalingThread,
-            const EncryptionKey &key,
-            const DataEmitter& onEmitData,
-            const DataReceiver& onSignalData
+            wrtc::utils::SafeThread& network_thread,
+            wrtc::utils::SafeThread& signaling_thread,
+            const crypto::EncryptionKey& key,
+            const DataEmitter& on_emit_data,
+            const DataReceiver& on_signal_data
         );
 
         void send(const bytes::binary& data) override;
@@ -22,6 +22,6 @@ namespace signaling {
         void receive(const bytes::binary& data) override;
 
     protected:
-        [[nodiscard]] bool supportsCompression() const override;
+        [[nodiscard]] bool supports_compression() const override;
     };
-} // signaling
+} // ntgcalls::signaling

@@ -1,0 +1,23 @@
+# TL generator inputs for ntgcalls — paths relative to the repo root.
+# Repeatable keys (types, errors) build a list. Edit here, not in the driver.
+
+api     = ntgcalls/include/ntgcalls/ntgcalls.hpp
+source  = ntgcalls/src/ntgcalls.cpp
+aliases = targets/aliases.tlgen
+
+# exposed-type headers (globs); internal io/signaling/utils/instances/tl skipped
+types = ntgcalls/include/ntgcalls/media/*.hpp
+types = ntgcalls/include/ntgcalls/media/devices/*.hpp
+types = ntgcalls/include/ntgcalls/p2p/*.hpp
+types = ntgcalls/include/ntgcalls/e2e/*.hpp
+types = ntgcalls/include/ntgcalls/models/*.hpp
+types = ntgcalls/include/ntgcalls/instances/call_interface.hpp
+types = wrtc/include/wrtc/models/*.hpp
+types = wrtc/include/wrtc/enums.hpp
+
+# external libwebrtc enums referenced by exposed types (scanned like any other)
+types = deps/libwebrtc/src/include/api/video/video_rotation.h
+
+# exception headers — order sets the error category order (wrtc first)
+errors = wrtc/include/wrtc/exceptions.hpp
+errors = ntgcalls/include/ntgcalls/exceptions.hpp

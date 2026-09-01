@@ -1,52 +1,55 @@
 //
-// Created by Laky64 on 29/03/2024.
+// Created by Lauren on 29/03/24.
 //
 
+#include <memory>
+#include <optional>
+#include <api/task_queue/pending_task_safety_flag.h>
+#include <p2p/base/dtls_transport.h>
 #include <wrtc/interfaces/sctp_data_channel_provider_interface_impl.hpp>
 
-#include <p2p/base/dtls_transport.h>
-#include <memory>
-
-namespace wrtc {
+namespace wrtc::interfaces {
     SctpDataChannelProviderInterfaceImpl::SctpDataChannelProviderInterfaceImpl(
         const webrtc::Environment& env,
-        webrtc::DtlsTransportInternal* transportChannel,
-        const bool isOutgoing,
-        webrtc::Thread* networkThread
-    ): weakFactory(this), networkThread(networkThread) {
+        webrtc::DtlsTransportInternal* transport_channel,
+        const bool is_outgoing,
+        webrtc::Thread* network_thread
+    ): weak_factory_(this), network_thread_(network_thread) {
         assert(networkThread->IsCurrent());
-        sctpTransportFactory = std::make_unique<webrtc::SctpTransportFactory>(networkThread);
-        sctpTransport = sctpTransportFactory->CreateSctpTransport(env, transportChannel);
-        sctpTransport->SetDataChannelSink(this);
+        sctp_transport_factory_ = std::make_unique<webrtc::SctpTransportFactory>(network_thread);
+        sctp_transport_ = sctp_transport_factory_->CreateSctpTransport(env, transport_channel);
+        sctp_transport_->SetDataChannelSink(this);
 
-        webrtc::InternalDataChannelInit dataChannelInit;
-        dataChannelInit.id = 0;
-        dataChannelInit.open_handshake_role = isOutgoing ? webrtc::InternalDataChannelInit::kOpener : webrtc::InternalDataChannelInit::kAcker;
-        dataChannel = webrtc::SctpDataChannel::Create(
-            weakFactory.GetWeakPtr(),
+        webrtc::InternalDataChannelInit data_channel_init;
+        data_channel_init.id = 0;
+        data_channel_init.open_handshake_role = is_outgoing ? webrtc::InternalDataChannelInit::kOpener : webrtc::InternalDataChannelInit::kAcker;
+        data_channel_ = webrtc::SctpDataChannel::Create(
+            weak_factory_.GetWeakPtr(),
             "data",
             true,
-            dataChannelInit,
-            networkThread,
-            networkThread
+            data_channel_init,
+            std::nullopt,
+            webrtc::PendingTaskSafetyFlag::CreateDetached(),
+            network_thread,
+            network_thread
         );
-        if (dataChannel == nullptr) {
+        if (data_channel_ == nullptr) {
             return;
         }
-        dataChannel->RegisterObserver(this);
+        data_channel_->RegisterObserver(this);
         AddSctpDataStream(webrtc::StreamId(0), webrtc::PriorityValue(webrtc::Priority::kVeryLow));
     }
 
     SctpDataChannelProviderInterfaceImpl::~SctpDataChannelProviderInterfaceImpl() {
         assert(networkThread->IsCurrent());
-        weakFactory.InvalidateWeakPtrs();
-        onStateChangedCallback = nullptr;
-        onMessageReceivedCallback = nullptr;
-        dataChannel->UnregisterObserver();
-        dataChannel->Close();
-        dataChannel = nullptr;
-        sctpTransport = nullptr;
-        sctpTransportFactory = nullptr;
+        weak_factory_.InvalidateWeakPtrs();
+        on_state_changed_callback_ = nullptr;
+        on_message_received_callback_ = nullptr;
+        data_channel_->UnregisterObserver();
+        data_channel_->Close();
+        data_channel_ = nullptr;
+        sctp_transport_ = nullptr;
+        sctp_transport_factory_ = nullptr;
     }
 
     bool SctpDataChannelProviderInterfaceImpl::IsOkToCallOnTheNetworkThread() {
@@ -55,75 +58,75 @@ namespace wrtc {
 
     void SctpDataChannelProviderInterfaceImpl::OnDataReceived(int channel_id, const webrtc::DataMessageType type, const webrtc::CopyOnWriteBuffer& buffer) {
         assert(networkThread->IsCurrent());
-        dataChannel->OnDataReceived(type, buffer);
+        data_channel_->OnDataReceived(type, buffer);
     }
 
     void SctpDataChannelProviderInterfaceImpl::OnReadyToSend() {
         assert(networkThread->IsCurrent());
-        dataChannel->OnTransportReady();
+        data_channel_->OnTransportReady();
     }
 
     void SctpDataChannelProviderInterfaceImpl::OnStateChange() {
         assert(networkThread->IsCurrent());
-        const auto state = dataChannel->state();
-        if (const bool isDataChannelOpen = state == webrtc::DataChannelInterface::DataState::kOpen; isOpen != isDataChannelOpen) {
-            isOpen = isDataChannelOpen;
-            if (isOpen) {
-                for (const auto& message : pendingMessages) {
-                    sendDataChannelMessage(message);
+        const auto state = data_channel_->state();
+        if (const bool is_data_channel_open = state == webrtc::DataChannelInterface::DataState::kOpen; is_open_ != is_data_channel_open) {
+            is_open_ = is_data_channel_open;
+            if (is_open_) {
+                for (const auto& message : pending_messages_) {
+                    send_data_channel_message(message);
                 }
-                pendingMessages.clear();
+                pending_messages_.clear();
             }
-            (void) onStateChangedCallback(isDataChannelOpen);
+            (void) on_state_changed_callback_(is_data_channel_open);
         }
     }
 
     void SctpDataChannelProviderInterfaceImpl::OnMessage(const webrtc::DataBuffer& buffer) {
         assert(networkThread->IsCurrent());
-        (void) onMessageReceivedCallback(bytes::binary(buffer.data.data(), buffer.data.data() + buffer.data.size()));
+        (void) on_message_received_callback_(bytes::binary(buffer.data.data(), buffer.data.data() + buffer.data.size()));
     }
 
     webrtc::RTCError SctpDataChannelProviderInterfaceImpl::SendData(const webrtc::StreamId sid, const webrtc::SendDataParams& params, const webrtc::CopyOnWriteBuffer& payload) {
         assert(networkThread->IsCurrent());
-        return sctpTransport->SendData(sid.stream_id_int(), params, payload);
+        return sctp_transport_->SendData(sid.stream_id_int(), params, payload);
     }
 
     webrtc::RTCError SctpDataChannelProviderInterfaceImpl::AddSctpDataStream(const webrtc::StreamId sid, const webrtc::PriorityValue priority) {
         assert(networkThread->IsCurrent());
-        sctpTransport->OpenStream(sid.stream_id_int(), priority);
+        sctp_transport_->OpenStream(sid.stream_id_int(), priority);
         return webrtc::RTCError::OK();
     }
 
     void SctpDataChannelProviderInterfaceImpl::RemoveSctpDataStream(const webrtc::StreamId sid) {
         assert(networkThread->IsCurrent());
-        networkThread->BlockingCall([this, sid] {
-            sctpTransport->ResetStream(sid.stream_id_int());
+        network_thread_->BlockingCall([this, sid] {
+            sctp_transport_->ResetStream(sid.stream_id_int());
         });
     }
 
-    void SctpDataChannelProviderInterfaceImpl::updateIsConnected(const bool isConnected) {
+    void SctpDataChannelProviderInterfaceImpl::update_is_connected(const bool is_connected) {
         assert(networkThread->IsCurrent());
-        if (isConnected) {
-            if (!isSctpTransportStarted) {
-                isSctpTransportStarted = true;
-                sctpTransport->Start({
+        if (is_connected) {
+            if (!is_sctp_transport_started_) {
+                is_sctp_transport_started_ = true;
+                sctp_transport_->Start({
                     5000,
                     5000,
-                    262144
+                    262144,
                 });
             }
         }
     }
 
-    void SctpDataChannelProviderInterfaceImpl::sendDataChannelMessage(const bytes::binary& data) {
-        if (isOpen) {
+    void SctpDataChannelProviderInterfaceImpl::send_data_channel_message(const bytes::binary& data) {
+        if (is_open_) {
             const std::string message = bytes::to_string(data);
             RTC_LOG(LS_VERBOSE) << "Outgoing DataChannel message: " << message;
             const webrtc::DataBuffer buffer(message);
-            dataChannel->Send(buffer);
+            data_channel_->Send(buffer);
         } else {
             RTC_LOG(LS_VERBOSE) << "Could not send an outgoing DataChannel message, adding to pending messages";
-            pendingMessages.push_back(data);
+            pending_messages_.push_back(data);
         }
     }
 
@@ -131,11 +134,11 @@ namespace wrtc {
         assert(networkThread->IsCurrent());
     }
 
-    void SctpDataChannelProviderInterfaceImpl::onStateChanged(const std::function<void(bool)>& callback) {
-        onStateChangedCallback = callback;
+    void SctpDataChannelProviderInterfaceImpl::on_state_changed(const std::function<void(bool)>& callback) {
+        on_state_changed_callback_ = callback;
     }
 
-    void SctpDataChannelProviderInterfaceImpl::onMessageReceived(const std::function<void(const bytes::binary&)>& callback) {
-        onMessageReceivedCallback = callback;
+    void SctpDataChannelProviderInterfaceImpl::on_message_received(const std::function<void(const bytes::binary&)>& callback) {
+        on_message_received_callback_ = callback;
     }
-} // wrtc
+} // wrtc::interfaces

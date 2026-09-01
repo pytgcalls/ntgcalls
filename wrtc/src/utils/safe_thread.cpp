@@ -1,10 +1,10 @@
 //
-// Created by laky64 on 06/02/26.
+// Created by Lauren on 06/02/26.
 //
 
 #include <wrtc/utils/safe_thread.hpp>
 
-namespace wrtc {
+namespace wrtc::utils {
     std::unique_ptr<SafeThread> SafeThread::Create() {
         return std::make_unique<SafeThread>(webrtc::Thread::Create());
     }
@@ -14,30 +14,34 @@ namespace wrtc {
     }
 
     void SafeThread::Start() const {
-        thread->Start();
+        thread_->Start();
     }
 
     void SafeThread::Stop() const {
-        thread->Stop();
+        thread_->Stop();
     }
 
     void SafeThread::SetName(const absl::string_view name, const void* obj) const {
-        thread->SetName(name, obj);
+        thread_->SetName(name, obj);
     }
 
     bool SafeThread::IsCurrent() const {
-        return thread->IsCurrent();
+        return thread_->IsCurrent();
+    }
+
+    webrtc::SocketServer* SafeThread::socketServer() const {
+        return thread_->socketserver();
     }
 
     void SafeThread::AllowInvokesToThread(const SafeThread& other) const {
-        thread->AllowInvokesToThread(other);
+        thread_->AllowInvokesToThread(other);
     }
 
     void SafeThread::PostTask(absl::AnyInvocable<void() &&> task) const {
-        thread->PostTask(std::move(task));
+        thread_->PostTask(std::move(task));
     }
 
     void SafeThread::PostDelayedTask(absl::AnyInvocable<void() &&> task, const webrtc::TimeDelta delay) const {
-        thread->PostDelayedTask(std::move(task), delay);
+        thread_->PostDelayedTask(std::move(task), delay);
     }
-} // wrtc
+} // wrtc::utils

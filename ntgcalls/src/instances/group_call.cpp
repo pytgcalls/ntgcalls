@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 15/03/2024.
+// Created by Lauren on 15/03/24.
 //
 
 #include <ntgcalls/instances/group_call.hpp>
@@ -7,240 +7,241 @@
 #include <future>
 #include <ntgcalls/exceptions.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
-#include <wrtc/models/response_payload.hpp>
+#include <wrtc/interfaces/response_payload.hpp>
 
-#define RTMP_UNSUPPORTED_THROW RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP"; \
+#define RTMP_UNSUPPORTED_THROW                                         \
+    RTC_LOG(LS_ERROR) << "Streaming is not supported when using RTMP"; \
     throw RTMPStreamingUnsupported("Streaming is not supported when using RTMP");
 
-namespace ntgcalls {
+namespace ntgcalls::instances {
 
     void GroupCall::stop() {
-        broadcastTimestampCallback = nullptr;
-        segmentPartRequestCallback = nullptr;
-        stopPresentation();
+        broadcast_timestamp_callback_ = nullptr;
+        segment_part_request_callback_ = nullptr;
+        stop_presentation();
         CallInterface::stop();
     }
 
     std::string GroupCall::init() {
         RTC_LOG(LS_INFO) << "Initializing group call";
-        if (connection) {
+        if (connection_) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        connection = std::make_shared<wrtc::GroupConnection>(false);
-        connection->open();
+        connection_ = std::make_shared<wrtc::interfaces::GroupConnection>(false, type() == Type::Conference);
+        connection_->open();
         RTC_LOG(LS_INFO) << "Group call initialized";
-        streamManager->setStreamSources(StreamManager::Mode::Capture);
-        streamManager->setStreamSources(StreamManager::Mode::Playback);
-        streamManager->optimizeSources(connection.get());
+        stream_manager_->set_stream_sources(media::StreamManager::Mode::Capture);
+        stream_manager_->set_stream_sources(media::StreamManager::Mode::Playback);
+        stream_manager_->optimize_sources(connection_.get());
 
-        std::weak_ptr weak(shared_from_this());
-        connection->onDataChannelOpened([weak] {
+        const std::weak_ptr weak(shared_from_this());
+        connection_->on_data_channel_opened([weak] {
             const auto strong = std::static_pointer_cast<GroupCall>(weak.lock());
             if (!strong) {
                 return;
             }
             RTC_LOG(LS_VERBOSE) << "Data channel opened";
-            updateRemoteVideoConstraints(Safe<wrtc::GroupConnection>(strong->connection));
+            update_remote_video_constraints(safe<wrtc::interfaces::GroupConnection>(strong->connection_));
         });
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection.get());
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection.get());
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Screen, connection.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Microphone, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Camera, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Microphone, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Camera, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Screen, connection_.get());
         RTC_LOG(LS_INFO) << "AVStream settings applied";
-        return Safe<wrtc::GroupConnection>(connection)->getJoinPayload();
+        return safe<wrtc::interfaces::GroupConnection>(connection_)->get_join_payload();
     }
 
-    std::string GroupCall::initPresentation() {
-        if (getConnectionMode() != wrtc::ConnectionMode::Rtc) {
+    std::string GroupCall::init_presentation() {
+        if (get_connection_mode() != wrtc::ConnectionMode::Rtc) {
             RTC_LOG(LS_ERROR) << "Presentation connection requires RTC connection";
             throw RTCConnectionNeeded("Presentation connection requires RTC connection");
         }
         RTC_LOG(LS_INFO) << "Initializing screen sharing";
-        if (presentationConnection) {
+        if (presentation_connection_) {
             RTC_LOG(LS_ERROR) << "Screen sharing already initialized";
             throw ConnectionError("Screen sharing already initialized");
         }
-        presentationConnection = std::make_shared<wrtc::GroupConnection>(true);
-        presentationConnection->open();
-        streamManager->optimizeSources(presentationConnection.get());
-        std::weak_ptr weak(shared_from_this());
-        presentationConnection->onDataChannelOpened([weak] {
+        presentation_connection_ = std::make_shared<wrtc::interfaces::GroupConnection>(true, type() == Type::Conference);
+        presentation_connection_->open();
+        stream_manager_->optimize_sources(presentation_connection_.get());
+        const std::weak_ptr weak(shared_from_this());
+        presentation_connection_->on_data_channel_opened([weak] {
             const auto strong = std::static_pointer_cast<GroupCall>(weak.lock());
             if (!strong) {
                 return;
             }
             RTC_LOG(LS_VERBOSE) << "Data channel opened";
-            updateRemoteVideoConstraints(Safe<wrtc::GroupConnection>(strong->presentationConnection));
+            update_remote_video_constraints(safe<wrtc::interfaces::GroupConnection>(strong->presentation_connection_));
         });
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Speaker, presentationConnection.get());
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Screen, presentationConnection.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Speaker, presentation_connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Screen, presentation_connection_.get());
         RTC_LOG(LS_INFO) << "Screen sharing initialized";
-        return presentationConnection->getJoinPayload();
+        return presentation_connection_->get_join_payload();
     }
 
-    void GroupCall::connect(const std::string& jsonData, const bool isPresentation) {
+    void GroupCall::connect(const std::string& json_data, const bool is_presentation) {
         RTC_LOG(LS_VERBOSE) << "Connecting to group call";
-        const auto &conn = isPresentation ? presentationConnection : connection;
+        const auto& conn = is_presentation ? presentation_connection_ : connection_;
         if (!conn) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionError("Connection not initialized");
         }
 
-        wrtc::ResponsePayload payload(jsonData);
-        wrtc::ConnectionMode connectionMode;
-        if (payload.isRtmp) {
-            connectionMode = wrtc::ConnectionMode::Rtmp;
-        } else if (payload.isStream) {
-            connectionMode = wrtc::ConnectionMode::Stream;
+        wrtc::interfaces::ResponsePayload payload(json_data);
+        wrtc::ConnectionMode connection_mode;
+        if (payload.is_rtmp) {
+            connection_mode = wrtc::ConnectionMode::Rtmp;
+        } else if (payload.is_stream) {
+            connection_mode = wrtc::ConnectionMode::Stream;
         } else {
-            connectionMode = wrtc::ConnectionMode::Rtc;
+            connection_mode = wrtc::ConnectionMode::Rtc;
         }
 
-        const auto currentConnectionMode = conn->getConnectionMode();
-        if (currentConnectionMode == connectionMode || currentConnectionMode == wrtc::ConnectionMode::Rtmp) {
+        const auto current_connection_mode = conn->get_connection_mode();
+        if (current_connection_mode == connection_mode || current_connection_mode == wrtc::ConnectionMode::Rtmp) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
 
-        if (currentConnectionMode == wrtc::ConnectionMode::Rtc && connectionMode != wrtc::ConnectionMode::Stream) {
+        if (current_connection_mode == wrtc::ConnectionMode::Rtc && connection_mode != wrtc::ConnectionMode::Stream) {
             RTC_LOG(LS_ERROR) << "Cannot switch connection mode from RTC to MTProto";
             throw ConnectionError("Cannot switch connection mode from RTC to MTProto");
         }
 
-        if (connectionMode == wrtc::ConnectionMode::Rtmp && streamManager->hasReaders()) {
+        if (connection_mode == wrtc::ConnectionMode::Rtmp && stream_manager_->has_readers()) {
             RTMP_UNSUPPORTED_THROW
         }
 
-        Safe<wrtc::GroupConnection>(conn)->setConnectionMode(connectionMode);
-        if (connectionMode == wrtc::ConnectionMode::Rtc) {
-            Safe<wrtc::GroupConnection>(conn)->setRemoteParams(payload.remoteIceParameters, std::move(payload.fingerprint));
-            for (const auto& rawCandidate : payload.candidates) {
-                webrtc::JsepIceCandidate iceCandidate{std::string(), 0, rawCandidate};
-                conn->addIceCandidate(wrtc::IceCandidate(&iceCandidate));
+        safe<wrtc::interfaces::GroupConnection>(conn)->set_connection_mode(connection_mode);
+        if (connection_mode == wrtc::ConnectionMode::Rtc) {
+            safe<wrtc::interfaces::GroupConnection>(conn)->set_remote_params(payload.remote_ice_parameters, std::move(payload.fingerprint));
+            for (const auto& raw_candidate : payload.candidates) {
+                const webrtc::JsepIceCandidate ice_candidate{std::string(), 0, raw_candidate};
+                conn->add_ice_candidate(wrtc::models::IceCandidate(&ice_candidate));
             }
-            if (isPresentation) {
-                const auto mediaConfig = Safe<wrtc::GroupConnection>(conn)->getMediaConfig();
-                payload.media.audioPayloadTypes = mediaConfig.audioPayloadTypes;
-                payload.media.audioRtpExtensions = mediaConfig.audioRtpExtensions;
+            if (is_presentation) {
+                const auto media_config = safe<wrtc::interfaces::GroupConnection>(conn)->get_media_config();
+                payload.media.audio_payload_types = media_config.audio_payload_types;
+                payload.media.audio_rtp_extensions = media_config.audio_rtp_extensions;
             }
-            streamManager->optimizeSources(conn.get());
-            Safe<wrtc::GroupConnection>(conn)->createChannels(payload.media);
+            stream_manager_->optimize_sources(conn.get());
+            safe<wrtc::interfaces::GroupConnection>(conn)->create_channels(payload.media);
             RTC_LOG(LS_VERBOSE) << "Remote parameters set";
         } else {
-            std::weak_ptr weak(shared_from_this());
-            Safe<wrtc::GroupConnection>(conn)->onRequestBroadcastPart([weak](const wrtc::SegmentPartRequest& request){
+            const std::weak_ptr weak(shared_from_this());
+            safe<wrtc::interfaces::GroupConnection>(conn)->on_request_broadcast_part([weak](const wrtc::models::SegmentPartRequest& request) {
                 const auto strong = std::static_pointer_cast<GroupCall>(weak.lock());
                 if (!strong) {
                     return;
                 }
-                (void) strong->segmentPartRequestCallback(request);
+                (void) strong->segment_part_request_callback_(request);
             });
-            Safe<wrtc::GroupConnection>(conn)->onRequestBroadcastTimestamp([weak]{
+            safe<wrtc::interfaces::GroupConnection>(conn)->on_request_broadcast_timestamp([weak] {
                 const auto strong = std::static_pointer_cast<GroupCall>(weak.lock());
                 if (!strong) {
                     return;
                 }
-                (void) strong->broadcastTimestampCallback();
+                (void) strong->broadcast_timestamp_callback_();
             });
-            Safe<wrtc::GroupConnection>(conn)->connectMediaStream();
-            streamManager->optimizeSources(conn.get());
+            safe<wrtc::interfaces::GroupConnection>(conn)->connect_media_stream();
+            stream_manager_->optimize_sources(conn.get());
             RTC_LOG(LS_VERBOSE) << "MTProto stream attached";
         }
-        setConnectionObserver(
+        set_connection_observer(
             conn,
-            isPresentation ? NetworkInfo::Kind::Presentation : NetworkInfo::Kind::Normal
+            is_presentation ? ConnectionInfo::Kind::Presentation : ConnectionInfo::Kind::Normal
         );
     }
 
-    void GroupCall::updateRemoteVideoConstraints(const wrtc::GroupConnection* conn) {
-        json jsonRes = {
+    void GroupCall::update_remote_video_constraints(wrtc::interfaces::GroupConnection* conn) {
+        json json_res = {
             {"colibriClass", "ReceiverVideoConstraints"},
             {"constraints", json::object()},
             {"defaultConstraints", {{"maxHeight", 0}}},
             {"onStageEndpoints", json::array()}
         };
-        for (const auto& endpoint : conn->getEndpoints()) {
-            jsonRes["constraints"][endpoint] = {
+        for (const auto& endpoint : conn->get_endpoints()) {
+            json_res["constraints"][endpoint] = {
                 {"maxHeight", 720},
                 {"minHeight", 180},
             };
         }
-        conn->sendDataChannelMessage(bytes::make_binary(jsonRes.dump()));
+        conn->send_data_channel_message(bytes::make_binary(json_res.dump()));
     }
 
-    uint32_t GroupCall::addIncomingVideo(const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroup) const {
-        const auto& conn = Safe<wrtc::GroupConnection>(connection);
+    uint32_t GroupCall::add_incoming_video(const int64_t user_id, const std::string& endpoint, const std::vector<wrtc::models::SsrcGroup>& ssrc_group) const {
+        const auto& conn = safe<wrtc::interfaces::GroupConnection>(connection_);
         if (!conn) {
             throw ConnectionError("Connection not initialized");
         }
-        const auto ssrc = conn->addIncomingVideo(endpoint, ssrcGroup);
-        if (getConnectionMode() == wrtc::ConnectionMode::Rtc) updateRemoteVideoConstraints(conn);
+        const auto ssrc = conn->add_incoming_video(user_id, endpoint, ssrc_group);
+        if (get_connection_mode() == wrtc::ConnectionMode::Rtc) update_remote_video_constraints(conn);
         return ssrc;
     }
 
-    bool GroupCall::removeIncomingVideo(const std::string& endpoint) const {
-        const auto& conn = Safe<wrtc::GroupConnection>(connection);
+    bool GroupCall::remove_incoming_video(const std::string& endpoint) const {
+        const auto& conn = safe<wrtc::interfaces::GroupConnection>(connection_);
         if (!conn) {
             throw ConnectionError("Connection not initialized");
         }
-        return conn->removeIncomingVideo(endpoint);
+        return conn->remove_incoming_video(endpoint);
     }
 
-    void GroupCall::stopPresentation(const bool force) {
-        if (!force && !presentationConnection) {
+    void GroupCall::stop_presentation(const bool force) {
+        if (!force && !presentation_connection_) {
             return;
         }
-        if (presentationConnection) {
-            presentationConnection->close();
-            presentationConnection = nullptr;
+        if (presentation_connection_) {
+            presentation_connection_->close();
+            presentation_connection_ = nullptr;
         } else {
             throw ConnectionError("Presentation not initialized");
         }
     }
 
-    void GroupCall::setStreamSources(const StreamManager::Mode mode, const MediaDescription& config) const {
-        if (mode == StreamManager::Mode::Capture && getConnectionMode() == wrtc::ConnectionMode::Rtmp) {
+    void GroupCall::set_stream_sources(const media::StreamManager::Mode mode, const media::MediaDescription& config) const {
+        if (mode == media::StreamManager::Mode::Capture && get_connection_mode() == wrtc::ConnectionMode::Rtmp) {
             RTMP_UNSUPPORTED_THROW
         }
-        CallInterface::setStreamSources(mode, config);
-        if (mode == StreamManager::Mode::Playback && presentationConnection) {
-            streamManager->optimizeSources(presentationConnection.get());
+        CallInterface::set_stream_sources(mode, config);
+        if (mode == media::StreamManager::Mode::Playback && presentation_connection_) {
+            stream_manager_->optimize_sources(presentation_connection_.get());
         }
     }
 
-    void GroupCall::onUpgrade(const std::function<void(MediaState)>& callback) const {
-        streamManager->onUpgrade(callback);
+    void GroupCall::on_upgrade(const std::function<void(media::MediaState)>& callback) const {
+        stream_manager_->on_upgrade(callback);
     }
 
-    void GroupCall::sendBroadcastPart(const int64_t segmentID, const int32_t partID, const wrtc::MediaSegment::Part::Status status, const bool qualityUpdate, const std::optional<bytes::binary>& data) const {
-        const auto groupConnection = Safe<wrtc::GroupConnection>(connection);
-        if (!groupConnection) {
+    void GroupCall::send_broadcast_part(const int64_t segment_id, const int32_t part_id, const wrtc::models::MediaSegment::Part::Status status, const bool quality_update, const std::optional<bytes::binary>& data) const {
+        const auto group_connection = safe<wrtc::interfaces::GroupConnection>(connection_);
+        if (!group_connection) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionError("Connection not initialized");
         }
-        groupConnection->sendBroadcastPart(segmentID, partID, status, qualityUpdate, data);
+        group_connection->send_broadcast_part(segment_id, part_id, status, quality_update, data);
     }
 
-    void GroupCall::onRequestedBroadcastPart(const std::function<void(wrtc::SegmentPartRequest)>& callback) {
-        segmentPartRequestCallback = callback;
+    void GroupCall::on_request_broadcast_part(const std::function<void(wrtc::models::SegmentPartRequest)>& callback) {
+        segment_part_request_callback_ = callback;
     }
 
-    void GroupCall::sendBroadcastTimestamp(const int64_t timestamp) const {
-        const auto groupConnection = Safe<wrtc::GroupConnection>(connection);
-        if (!groupConnection) {
+    void GroupCall::send_broadcast_timestamp(const int64_t timestamp) const {
+        const auto group_connection = safe<wrtc::interfaces::GroupConnection>(connection_);
+        if (!group_connection) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionError("Connection not initialized");
         }
-        groupConnection->sendBroadcastTimestamp(timestamp);
+        group_connection->send_broadcast_timestamp(timestamp);
     }
 
-    void GroupCall::onRequestedBroadcastTimestamp(const std::function<void()>& callback) {
-        broadcastTimestampCallback = callback;
+    void GroupCall::on_request_broadcast_timestamp(const std::function<void()>& callback) {
+        broadcast_timestamp_callback_ = callback;
     }
 
     CallInterface::Type GroupCall::type() const {
         return Type::Group;
     }
-} // ntgcalls
+} // ntgcalls::instances

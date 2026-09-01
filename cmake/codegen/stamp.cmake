@@ -1,0 +1,6 @@
+foreach(_f ${FILES})
+    file(READ "${_f}" _c)
+    string(REPLACE "0.0.0" "${VERSION}" _c "${_c}")
+    file(WRITE "${_f}" "${_c}")
+    message(STATUS "stamped ${_f} -> ${VERSION}")
+endforeach()

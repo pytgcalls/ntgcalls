@@ -1,177 +1,176 @@
 //
-// Created by Laky64 on 15/04/25.
+// Created by Lauren on 15/04/25.
 //
 
 #include <wrtc/interfaces/mtproto/video_streaming_part_state.hpp>
 
-namespace wrtc {
-    VideoStreamingPartState::VideoStreamingPartState(bytes::binary&& data, const webrtc::MediaType mediaType) {
-        streamInfo = consumeStreamInfo(data);
-        if (!streamInfo) {
+namespace wrtc::interfaces::mtproto {
+    VideoStreamingPartState::VideoStreamingPartState(bytes::binary&& data, const webrtc::MediaType media_type) {
+        stream_info_ = consume_stream_info(data);
+        if (!stream_info_) {
             return;
         }
-        for (size_t i = 0; i < streamInfo->events.size(); i++) {
-            if (streamInfo->events[i].offset < 0) {
+        for (size_t i = 0; i < stream_info_->events.size(); i++) {
+            if (stream_info_->events[i].offset < 0) {
                 continue;
             }
-            size_t endOffset = 0;
-            if (i == streamInfo->events.size() - 1) {
-                endOffset = data.size();
+            size_t end_offset = 0;
+            if (i == stream_info_->events.size() - 1) {
+                end_offset = data.size();
             } else {
-                endOffset = streamInfo->events[i + 1].offset;
+                end_offset = stream_info_->events[i + 1].offset;
             }
-            if (endOffset <= streamInfo->events[i].offset) {
+            if (end_offset <= stream_info_->events[i].offset) {
                 continue;
             }
-            if (endOffset > data.size()) {
+            if (end_offset > data.size()) {
                 continue;
             }
-            bytes::binary dataSlice(data.begin() + streamInfo->events[i].offset, data.begin() + static_cast<ptrdiff_t>(endOffset));
+            bytes::binary data_slice(data.begin() + stream_info_->events[i].offset, data.begin() + static_cast<ptrdiff_t>(end_offset));
             webrtc::VideoRotation rotation = webrtc::VideoRotation::kVideoRotation_0;
-            switch (streamInfo->events[i].rotation) {
-                case 0: {
-                    rotation = webrtc::VideoRotation::kVideoRotation_0;
-                    break;
-                }
-                case 90: {
-                    rotation = webrtc::VideoRotation::kVideoRotation_90;
-                    break;
-                }
-                case 180: {
-                    rotation = webrtc::VideoRotation::kVideoRotation_180;
-                    break;
-                }
-                case 270: {
-                    rotation = webrtc::VideoRotation::kVideoRotation_270;
-                    break;
-                }
-                default: {
-                    break;
-                }
+            switch (stream_info_->events[i].rotation) {
+            case 0: {
+                rotation = webrtc::VideoRotation::kVideoRotation_0;
+                break;
+            }
+            case 90: {
+                rotation = webrtc::VideoRotation::kVideoRotation_90;
+                break;
+            }
+            case 180: {
+                rotation = webrtc::VideoRotation::kVideoRotation_180;
+                break;
+            }
+            case 270: {
+                rotation = webrtc::VideoRotation::kVideoRotation_270;
+                break;
+            }
+            default: {
+                break;
+            }
             }
 
-            switch (mediaType) {
-                case webrtc::MediaType::AUDIO: {
-                    auto part = std::make_unique<AudioStreamingPart>(std::move(dataSlice), streamInfo->container, true);
-                    parsedAudioParts.push_back(std::move(part));
-                } break;
-                case webrtc::MediaType::VIDEO: {
-                    auto part = std::make_unique<VideoStreamingPartInternal>(streamInfo->events[i].endpointId, rotation, std::move(dataSlice), streamInfo->container);
-                    parsedVideoParts.push_back(std::move(part));
-                } break;
-                default: {
-                    break;
-                }
+            switch (media_type) {
+            case webrtc::MediaType::AUDIO: {
+                auto part = std::make_unique<AudioStreamingPart>(std::move(data_slice), stream_info_->container, true);
+                parsed_audio_parts_.push_back(std::move(part));
+            } break;
+            case webrtc::MediaType::VIDEO: {
+                auto part = std::make_unique<VideoStreamingPartInternal>(stream_info_->events[i].endpoint_id, rotation, std::move(data_slice), stream_info_->container);
+                parsed_video_parts_.push_back(std::move(part));
+            } break;
+            default: {
+                break;
+            }
             }
         }
     }
 
     VideoStreamingPartState::~VideoStreamingPartState() {
-        parsedAudioParts.clear();
-        parsedVideoParts.clear();
-        availableFrames.clear();
-        streamInfo = std::nullopt;
+        parsed_audio_parts_.clear();
+        parsed_video_parts_.clear();
+        available_frames_.clear();
+        stream_info_ = std::nullopt;
     }
 
-    std::optional<VideoStreamingPartFrame> VideoStreamingPartState::getFrameAtRelativeTimestamp(VideoStreamingSharedState* sharedState, const double timestamp) {
+    std::optional<media::VideoStreamingPartFrame> VideoStreamingPartState::get_frame_at_relative_timestamp(VideoStreamingSharedState* shared_state, const double timestamp) {
         while (true) {
-            while (availableFrames.size() >= 2) {
-                if (timestamp >= availableFrames[1].pts) {
-                    availableFrames.erase(availableFrames.begin());
+            while (available_frames_.size() >= 2) {
+                if (timestamp >= available_frames_[1].pts) {
+                    available_frames_.erase(available_frames_.begin());
                 } else {
                     break;
                 }
             }
 
-            if (availableFrames.size() < 2) {
-                if (!parsedVideoParts.empty()) {
-                    if (auto result = parsedVideoParts[0]->getNextFrame(sharedState)) {
-                        availableFrames.push_back(result.value());
+            if (available_frames_.size() < 2) {
+                if (!parsed_video_parts_.empty()) {
+                    if (auto result = parsed_video_parts_[0]->get_next_frame(shared_state)) {
+                        available_frames_.push_back(result.value());
                     } else {
-                        parsedVideoParts.erase(parsedVideoParts.begin());
+                        parsed_video_parts_.erase(parsed_video_parts_.begin());
                     }
                     continue;
                 }
             }
 
-            if (!availableFrames.empty()) {
-                for (size_t i = 1; i < availableFrames.size(); i++) {
-                    if (timestamp < availableFrames[i].pts) {
-                        return availableFrames[i - 1];
+            if (!available_frames_.empty()) {
+                for (size_t i = 1; i < available_frames_.size(); i++) {
+                    if (timestamp < available_frames_[i].pts) {
+                        return available_frames_[i - 1];
                     }
                 }
-                return availableFrames[availableFrames.size() - 1];
+                return available_frames_[available_frames_.size() - 1];
             }
             return std::nullopt;
         }
     }
 
-    std::optional<std::string> VideoStreamingPartState::getActiveEndpointId() const {
-        if (!parsedVideoParts.empty()) {
-            return parsedVideoParts[0]->getEndpointId();
+    std::optional<std::string> VideoStreamingPartState::get_active_endpoint_id() const {
+        if (!parsed_video_parts_.empty()) {
+            return parsed_video_parts_[0]->get_endpoint_id();
         }
         return std::nullopt;
     }
 
-    bool VideoStreamingPartState::hasRemainingFrames() const {
-        return !parsedVideoParts.empty();
+    bool VideoStreamingPartState::has_remaining_frames() const {
+        return !parsed_video_parts_.empty();
     }
 
-    std::vector<AudioStreamingPartState::Channel> VideoStreamingPartState::getAudio10msPerChannel(AudioStreamingPartPersistentDecoder& persistentDecoder) {
-        while (!parsedAudioParts.empty()) {
-            if (auto firstPartResult = parsedAudioParts[0]->get10msPerChannel(persistentDecoder); firstPartResult.empty()) {
-                parsedAudioParts.erase(parsedAudioParts.begin());
+    std::vector<AudioStreamingPartState::Channel> VideoStreamingPartState::get_audio10ms_per_channel(AudioStreamingPartPersistentDecoder& persistent_decoder) {
+        while (!parsed_audio_parts_.empty()) {
+            if (auto first_part_result = parsed_audio_parts_[0]->get_10ms_per_channel(persistent_decoder); first_part_result.empty()) {
+                parsed_audio_parts_.erase(parsed_audio_parts_.begin());
             } else {
-                return firstPartResult;
+                return first_part_result;
             }
         }
         return {};
     }
 
-    std::optional<int32_t> VideoStreamingPartState::readInt32(const bytes::binary& data, int& offset) {
+    std::optional<int32_t> VideoStreamingPartState::read_int32(const bytes::binary& data, int& offset) {
         if (offset + 4 > data.size()) {
             return std::nullopt;
         }
         int32_t value = 0;
-        memcpy(&value, data.data() + offset, 4);
+        std::memcpy(&value, data.data() + offset, 4);
         offset += 4;
         return value;
     }
 
-    std::optional<uint8_t> VideoStreamingPartState::readBytesAsInt32(const bytes::binary& data, int& offset, const int count) {
+    std::optional<uint8_t> VideoStreamingPartState::read_bytes_as_int32(const bytes::binary& data, int& offset, const int count) {
         if (offset + count > data.size()) {
             return std::nullopt;
         }
 
         int32_t value = 0;
-        memcpy(&value, data.data() + offset, count);
+        std::memcpy(&value, data.data() + offset, count);
         offset += count;
         return value;
     }
 
-    int32_t VideoStreamingPartState::roundUp(const int32_t numToRound) {
-        const int32_t remainder = numToRound % 4;
+    int32_t VideoStreamingPartState::round_up(const int32_t num_to_round) {
+        const int32_t remainder = num_to_round % 4;
         if (remainder == 0) {
-            return numToRound;
+            return num_to_round;
         }
-        return numToRound + 4 - remainder;
+        return num_to_round + 4 - remainder;
     }
 
-    std::optional<std::string> VideoStreamingPartState::readSerializedString(const bytes::binary& data, int& offset) {
-        if (const auto tmp = readBytesAsInt32(data, offset, 1)) {
-            int paddingBytes = 0;
+    std::optional<std::string> VideoStreamingPartState::read_serialized_string(const bytes::binary& data, int& offset) {
+        if (const auto tmp = read_bytes_as_int32(data, offset, 1)) {
+            int padding_bytes = 0;
             int length = 0;
             if (tmp.value() == 254) {
-                if (const auto len = readBytesAsInt32(data, offset, 3)) {
+                if (const auto len = read_bytes_as_int32(data, offset, 3)) {
                     length = len.value();
-                    paddingBytes = roundUp(length) - length;
+                    padding_bytes = round_up(length) - length;
                 } else {
                     return std::nullopt;
                 }
-            }
-            else {
+            } else {
                 length = tmp.value();
-                paddingBytes = roundUp(length + 1) - (length + 1);
+                padding_bytes = round_up(length + 1) - (length + 1);
             }
 
             if (offset + length > data.size()) {
@@ -181,35 +180,35 @@ namespace wrtc {
             std::string result(data.data() + offset, data.data() + offset + length);
 
             offset += length;
-            offset += paddingBytes;
+            offset += padding_bytes;
 
             return result;
         }
         return std::nullopt;
     }
 
-    std::optional<VideoStreamingPartState::StreamEvent> VideoStreamingPartState::readVideoStreamEvent(const bytes::binary& data, int& offset) {
+    std::optional<VideoStreamingPartState::StreamEvent> VideoStreamingPartState::read_video_stream_event(const bytes::binary& data, int& offset) {
         StreamEvent event;
 
-        if (const auto offsetValue = readInt32(data, offset)) {
-            event.offset = offsetValue.value();
+        if (const auto offset_value = read_int32(data, offset)) {
+            event.offset = offset_value.value();
         } else {
             return std::nullopt;
         }
 
-        if (const auto endpointId = readSerializedString(data, offset)) {
-            event.endpointId = endpointId.value();
+        if (const auto endpoint_id = read_serialized_string(data, offset)) {
+            event.endpoint_id = endpoint_id.value();
         } else {
             return std::nullopt;
         }
 
-        if (const auto rotation = readInt32(data, offset)) {
+        if (const auto rotation = read_int32(data, offset)) {
             event.rotation = rotation.value();
         } else {
             return std::nullopt;
         }
 
-        if (const auto extra = readInt32(data, offset)) {
+        if (const auto extra = read_int32(data, offset)) {
             event.extra = extra.value();
         } else {
             return std::nullopt;
@@ -218,9 +217,9 @@ namespace wrtc {
         return event;
     }
 
-    std::optional<VideoStreamingPartState::StreamInfo> VideoStreamingPartState::consumeStreamInfo(bytes::binary& data) {
+    std::optional<VideoStreamingPartState::StreamInfo> VideoStreamingPartState::consume_stream_info(bytes::binary& data) {
         int offset = 0;
-        if (const auto signature = readInt32(data, offset)) {
+        if (const auto signature = read_int32(data, offset)) {
             if (signature.value() != 0xa12e810d) {
                 return std::nullopt;
             }
@@ -230,21 +229,21 @@ namespace wrtc {
 
         StreamInfo info;
 
-        if (const auto container = readSerializedString(data, offset)) {
+        if (const auto container = read_serialized_string(data, offset)) {
             info.container = container.value();
         } else {
             return std::nullopt;
         }
 
-        if (const auto activeMask = readInt32(data, offset)) {
-            info.activeMask = activeMask.value();
+        if (const auto active_mask = read_int32(data, offset)) {
+            info.active_mask = active_mask.value();
         } else {
             return std::nullopt;
         }
 
-        if (const auto eventCount = readInt32(data, offset)) {
-            if (eventCount > 0) {
-                if (const auto event = readVideoStreamEvent(data, offset)) {
+        if (const auto event_count = read_int32(data, offset)) {
+            if (event_count > 0) {
+                if (const auto event = read_video_stream_event(data, offset)) {
                     info.events.push_back(event.value());
                 } else {
                     return std::nullopt;
@@ -258,4 +257,4 @@ namespace wrtc {
         data.erase(data.begin(), data.begin() + offset);
         return info;
     }
-} // wrtc
+} // wrtc::interfaces::mtproto

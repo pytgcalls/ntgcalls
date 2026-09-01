@@ -1,16 +1,16 @@
 //
-// Created by Laky64 on 15/03/2024.
+// Created by Lauren on 15/03/24.
 //
 
 #include <wrtc/models/ice_candidate.hpp>
 
-namespace wrtc {
-    IceCandidate::IceCandidate(std::string mid, const int mLine, std::string sdp): mid(std::move(mid)), mLine(mLine), sdp(std::move(sdp)) {}
+namespace wrtc::models {
+    IceCandidate::IceCandidate(std::string mid, const int m_line, std::string sdp): mid(std::move(mid)), m_line(m_line), sdp(std::move(sdp)) {}
 
-    IceCandidate::IceCandidate(const webrtc::IceCandidateInterface* candidate){
+    IceCandidate::IceCandidate(const webrtc::IceCandidateInterface* candidate) {
         candidate->ToString(&sdp);
         mid = candidate->sdp_mid();
-        mLine = candidate->sdp_mline_index();
+        m_line = candidate->sdp_mline_index();
     }
 
-} // wrtc
+} // wrtc::models

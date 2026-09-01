@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 14/03/2024.
+// Created by Lauren on 14/03/24.
 //
 
 #pragma once
@@ -8,17 +8,18 @@
 #include <rtc_base/rtc_certificate.h>
 #include <wrtc/utils/binary.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling {
 
-    class SignalingPacketTransport final : public webrtc::DtlsTransportInternal {
-        std::function<void(const bytes::binary&)> emitData;
-        std::string transportName;
+    class SignalingPacketTransport final: public webrtc::DtlsTransportInternal {
+        std::function<void(const bytes::binary&)> emit_data_;
+        std::string transport_name_;
+
     public:
-        explicit SignalingPacketTransport(const std::function<void(const bytes::binary&)>& emitData): emitData(emitData), transportName("signaling") {}
+        explicit SignalingPacketTransport(const std::function<void(const bytes::binary&)>& emit_data): emit_data_(emit_data), transport_name_("signaling") {}
 
         ~SignalingPacketTransport() override;
 
-        void receiveData(const bytes::binary& data);
+        void receive_data(const bytes::binary& data);
 
         [[nodiscard]] const std::string& transport_name() const override;
 
@@ -60,15 +61,13 @@ namespace signaling {
 
         std::unique_ptr<webrtc::SSLCertChain> GetRemoteSSLCertChain() const override;
 
-        bool ExportSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<uint8_t>& keying_material) override;
-
         webrtc::RTCError SetRemoteParameters(absl::string_view digest_alg, const uint8_t* digest, size_t digest_len, std::optional<webrtc::SSLRole> role) override;
 
         webrtc::IceTransportInternal* ice_transport() override;
 
         uint16_t GetSslGroupId() const override;
 
-        bool AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char> &keying_material) override;
+        bool AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char>& keying_material) override;
     };
 
-} // signaling
+} // ntgcalls::signaling

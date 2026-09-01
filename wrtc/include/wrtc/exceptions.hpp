@@ -1,12 +1,35 @@
 //
-// Created by Laky64 on 08/08/2023.
+// Created by Lauren on 08/08/23.
 //
 
 #pragma once
 
 #include <exception>
-#include <api/rtc_error.h>
+#include <string>
+#include <utility>
 #include <api/jsep.h>
+#include <api/rtc_error.h>
+
+#define EX_GROUP(name)                                                            \
+    class name: public wrtc::BaseRTCException {                                   \
+    public:                                                                       \
+        explicit name(std::string msg): wrtc::BaseRTCException(std::move(msg)) {} \
+    };
+
+#define EX_GROUP_INTERNAL(name) \
+    EX_GROUP(name)
+
+#define EX_GROUP_EXPORT(name) \
+    EX_GROUP(name)
+
+#define EX_DECLARE(name, base)                                  \
+    class name final: public base {                             \
+    public:                                                     \
+        explicit name(std::string msg): base(std::move(msg)) {} \
+    };
+
+#define EX_DECLARE_INTERNAL(name, base) \
+    EX_DECLARE(name, base)
 
 namespace wrtc {
 
@@ -17,22 +40,14 @@ namespace wrtc {
         [[nodiscard]] const char* what() const noexcept override;
 
     private:
-        std::string _msg;
+        std::string msg_;
     };
 
-    class RTCException final : public BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
+    EX_GROUP_EXPORT(RTCException)
+    EX_DECLARE(SdpParseException, RTCException)
+    EX_DECLARE(TransportParseException, RTCException)
 
-    class SdpParseException final : public BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
+    RTCException wrap_rtc_error(const webrtc::RTCError& error);
 
-    class TransportParseException final : public BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    RTCException wrapRTCError(const webrtc::RTCError &error);
-
-    SdpParseException wrapSdpParseError(const webrtc::SdpParseError &error);
+    SdpParseException wrap_sdp_parse_error(const webrtc::SdpParseError& error);
 } // wrtc

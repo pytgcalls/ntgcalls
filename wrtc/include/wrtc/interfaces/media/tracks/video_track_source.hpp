@@ -1,12 +1,12 @@
 //
-// Created by Laky64 on 19/08/2023.
+// Created by Lauren on 19/08/23.
 //
 
 #pragma once
 
-#include <media/base/adapted_video_track_source.h>
+#include <api/video/adapted_video_track_source.h>
 
-namespace wrtc {
+namespace wrtc::interfaces::media::tracks {
 
     class VideoTrackSource: public webrtc::AdaptedVideoTrackSource {
     public:
@@ -20,11 +20,11 @@ namespace wrtc {
 
         std::optional<bool> needs_denoising() const override;
 
-        void PushFrame(const webrtc::VideoFrame& frame);
+        void push_frame(const webrtc::VideoFrame& frame);
 
     private:
-        bool _is_screencast;
-        std::optional<bool> _needs_denoising;
+        bool is_screencast_;
+        std::optional<bool> needs_denoising_;
     };
 
-} // wrtc
+} // wrtc::interfaces::media::tracks

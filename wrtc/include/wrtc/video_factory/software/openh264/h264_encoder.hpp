@@ -1,64 +1,64 @@
 //
-// Created by Laky64 on 04/11/24.
+// Created by Lauren on 04/11/24.
 //
 
 #pragma once
 
 #ifndef IS_ANDROID
-#include <wels/codec_api.h>
 #include <api/environment/environment.h>
 #include <api/video/i420_buffer.h>
 #include <api/video_codecs/video_encoder.h>
 #include <common_video/h264/h264_bitstream_parser.h>
 #include <media/base/codec.h>
-#include <modules/video_coding/svc/scalable_video_controller.h>
-#include <wrtc/video_factory/software/openh264/layer_config.hpp>
 #include <modules/video_coding/codecs/h264/include/h264_globals.h>
+#include <modules/video_coding/svc/scalable_video_controller.h>
+#include <wels/codec_api.h>
+#include <wrtc/video_factory/software/openh264/layer_config.hpp>
 
 namespace openh264 {
 
-    class H264Encoder final : public webrtc::VideoEncoder {
+    class H264Encoder final: public webrtc::VideoEncoder {
         enum H264EncoderImplEvent {
-            kH264EncoderEventInit = 0,
-            kH264EncoderEventError = 1,
-            kH264EncoderEventMax = 16,
+            H264EncoderEventInit = 0,
+            H264EncoderEventError = 1,
+            H264EncoderEventMax = 16,
         };
 
         static constexpr int kLowH264QpThreshold = 24;
         static constexpr int kHighH264QpThreshold = 37;
 
-        bool hasReportedError;
-        bool hasReportedInit;
-        size_t maxPayloadSize;
-        int32_t numberOfCores;
-        std::optional<int> encoderThreadLimit;
-        webrtc::VideoCodec codec;
-        const webrtc::Environment env;
-        std::vector<uint8_t> tl0syncLimit;
-        std::vector<ISVCEncoder*> encoders;
-        std::vector<SSourcePicture> pictures;
-        std::vector<webrtc::EncodedImage> encodedImages;
-        webrtc::H264PacketizationMode packetizationMode;
-        webrtc::H264BitstreamParser h264BitstreamParser;
-        std::vector<webrtc::scoped_refptr<webrtc::I420Buffer>> downscaledBuffers;
-        std::vector<std::unique_ptr<webrtc::ScalableVideoController>> svcControllers;
-        std::vector<LayerConfig> configurations;
-        webrtc::EncodedImageCallback* encodedImageCallback;
-        absl::InlinedVector<std::optional<webrtc::ScalabilityMode>, webrtc::kMaxSimulcastStreams> scalabilityModes;
+        bool has_reported_error_;
+        bool has_reported_init_;
+        size_t max_payload_size_;
+        int32_t number_of_cores_;
+        std::optional<int> encoder_thread_limit_;
+        webrtc::VideoCodec codec_;
+        const webrtc::Environment env_;
+        std::vector<uint8_t> tl0sync_limit_;
+        std::vector<ISVCEncoder*> encoders_;
+        std::vector<SSourcePicture> pictures_;
+        std::vector<webrtc::EncodedImage> encoded_images_;
+        webrtc::H264PacketizationMode packetization_mode_;
+        webrtc::H264BitstreamParser h264_bitstream_parser_;
+        std::vector<webrtc::scoped_refptr<webrtc::I420Buffer>> downscaled_buffers_;
+        std::vector<std::unique_ptr<webrtc::ScalableVideoController>> svc_controllers_;
+        std::vector<LayerConfig> configurations_;
+        webrtc::EncodedImageCallback* encoded_image_callback_;
+        absl::InlinedVector<std::optional<webrtc::ScalabilityMode>, webrtc::kMaxSimulcastStreams> scalability_modes_;
 
-        void ReportError();
+        void report_error();
 
-        static webrtc::VideoFrameType ConvertToVideoFrameType(EVideoFrameType type);
+        static webrtc::VideoFrameType convert_to_video_frame_type(EVideoFrameType type);
 
-        static void RtpFragmentize(webrtc::EncodedImage* encodedImage, SFrameBSInfo* info);
+        static void rtp_fragmentize(webrtc::EncodedImage* encoded_image, SFrameBSInfo* info);
 
-        void ReportInit();
+        void report_init();
 
-        static std::optional<webrtc::ScalabilityMode> ScalabilityModeFromTemporalLayers(int numTemporalLayers);
+        static std::optional<webrtc::ScalabilityMode> scalability_mode_from_temporal_layers(int num_temporal_layers);
 
-        [[nodiscard]] SEncParamExt CreateEncoderParams(size_t i) const;
+        [[nodiscard]] SEncParamExt create_encoder_params(size_t i) const;
 
-        static int NumberOfThreads(std::optional<int> encoderThreadLimit, int width, int height, int numberOfCores);
+        static int number_of_threads(std::optional<int> encoder_thread_limit, int width, int height, int number_of_cores);
 
     public:
         explicit H264Encoder(webrtc::Environment env);

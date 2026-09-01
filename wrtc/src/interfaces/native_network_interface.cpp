@@ -1,11 +1,12 @@
 //
-// Created by Laky64 on 01/10/24.
+// Created by Lauren on 01/10/24.
 //
 
 #include <ranges>
 #include <p2p/base/basic_async_resolver_factory.h>
 #include <p2p/base/p2p_constants.h>
 #include <p2p/client/basic_port_allocator.h>
+#include <pc/ice_transport.h>
 #include <pc/media_factory.h>
 #include <rtc_base/crypto_random.h>
 #include <rtc_base/rtc_certificate_generator.h>
@@ -15,379 +16,466 @@
 #include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
 #include <wrtc/models/outgoing_video_format.hpp>
 
-namespace wrtc {
-    void NativeNetworkInterface::initConnection(bool supportsPacketSending) {
-        std::weak_ptr weak(shared_from_this());
-        networkThread().PostTask([weak, supportsPacketSending] {
+namespace wrtc::interfaces {
+    void NativeNetworkInterface::init_connection(bool supports_packet_sending) {
+        const std::weak_ptr weak(shared_from_this());
+        network_thread().BlockingCall([weak, supports_packet_sending] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            strong->localParameters = PeerIceParameters(
+            strong->local_parameters_ = models::PeerIceParameters(
                 webrtc::CreateRandomString(webrtc::ICE_UFRAG_LENGTH),
                 webrtc::CreateRandomString(webrtc::ICE_PWD_LENGTH),
                 true
             );
-            strong->localCertificate = webrtc::RTCCertificateGenerator::GenerateCertificate(
+            strong->local_certificate_ = webrtc::RTCCertificateGenerator::GenerateCertificate(
                 webrtc::KeyParams(webrtc::KT_ECDSA),
                 std::nullopt
             );
-            strong->asyncResolverFactory = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
-            strong->dtlsSrtpTransport = std::make_unique<WrappedDtlsSrtpTransport>(
+            strong->underlying_socket_factory_ = strong->network_thread().socketServer();
+            strong->async_resolver_factory_ = std::make_unique<webrtc::BasicAsyncDnsResolverFactory>();
+            strong->dtls_srtp_transport_ = std::make_unique<WrappedDtlsSrtpTransport>(
                 true,
                 strong->environment().field_trials(),
                 [weak](const webrtc::RtpPacketReceived& packet) {
-                    const auto strongListener = weak.lock();
-                    if (!strongListener) {
+                    const auto strong_listener = weak.lock();
+                    if (!strong_listener) {
                         return;
                     }
-                    strongListener->workerThread().PostTask([weak, packet] {
-                        const auto strongWorker = weak.lock();
-                        if (!strongWorker) {
+                    strong_listener->worker_thread().PostTask([weak, packet] {
+                        const auto strong_worker = weak.lock();
+                        if (!strong_worker) {
                             return;
                         }
-                        strongWorker->RtpPacketReceived(packet);
+                        strong_worker->rtp_packet_received(packet);
                     });
                 }
             );
-            strong->dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
-            strong->dtlsSrtpTransport->SubscribeReadyToSend(strong.get(), [weak](const bool readyToSend) {
-                const auto strongListener = weak.lock();
-                if (!strongListener) {
+            strong->dtls_srtp_transport_->SetDtlsTransports(nullptr, nullptr);
+            strong->dtls_srtp_transport_->SubscribeReadyToSend(strong.get(), [weak](const bool ready_to_send) {
+                const auto strong_listener = weak.lock();
+                if (!strong_listener) {
                     return;
                 }
-                strongListener->DtlsReadyToSend(readyToSend);
+                strong_listener->dtls_ready_to_send(ready_to_send);
             });
-            strong->dtlsSrtpTransport->SubscribeRtcpPacketReceived(strong.get(), [weak](const webrtc::CopyOnWriteBuffer& packet, std::optional<webrtc::Timestamp> time, webrtc::EcnMarking) {
-                const auto strongListener = weak.lock();
-                if (!strongListener) {
+            strong->dtls_srtp_transport_->SubscribeRtcpPacketReceived(strong.get(), [weak](const webrtc::CopyOnWriteBuffer& packet, std::optional<webrtc::Timestamp> time, webrtc::EcnMarking) {
+                const auto strong_listener = weak.lock();
+                if (!strong_listener) {
                     return;
                 }
-                strongListener->workerThread().PostTask([weak, packet] {
-                    const auto strongWorker = weak.lock();
-                    if (!strongWorker) {
+                strong_listener->worker_thread().PostTask([weak, packet] {
+                    const auto strong_worker = weak.lock();
+                    if (!strong_worker) {
                         return;
                     }
-                    if (strongWorker->call) strongWorker->call->Receiver()->DeliverRtcpPacket(packet);
+                    if (strong_worker->call_) strong_worker->call_->Receiver()->DeliverRtcpPacket(packet);
                 });
             });
-            if (supportsPacketSending) {
-                strong->dtlsSrtpTransport->SubscribeSentPacket(strong.get(), [weak](const webrtc::SentPacketInfo& packet) {
-                    const auto strongListener = weak.lock();
-                    if (!strongListener) {
+            if (supports_packet_sending) {
+                strong->dtls_srtp_transport_->SubscribeSentPacket(strong.get(), [weak](const webrtc::SentPacketInfo& packet) {
+                    const auto strong_listener = weak.lock();
+                    if (!strong_listener) {
                         return;
                     }
-                    strongListener->workerThread().PostTask([weak, packet] {
-                        const auto strongWorker = weak.lock();
-                        if (!strongWorker) {
+                    strong_listener->worker_thread().PostTask([weak, packet] {
+                        const auto strong_worker = weak.lock();
+                        if (!strong_worker) {
                             return;
                         }
-                        if (strongWorker->call) strongWorker->call->OnSentPacket(packet);
+                        if (strong_worker->call_) strong_worker->call_->OnSentPacket(packet);
                     });
                 });
             }
-            strong->resetDtlsSrtpTransport();
+            strong->reset_dtls_srtp_transport();
         });
-        channelManager = std::make_unique<ChannelManager>(
+        channel_manager_ = std::make_unique<media::ChannelManager>(
             environment(),
-            factory->mediaEngine(),
-            workerThread(),
-            networkThread(),
-            signalingThread()
+            factory_->media_engine(),
+            worker_thread(),
+            network_thread(),
+            signaling_thread()
         );
-        workerThread().BlockingCall([weak] {
+        worker_thread().BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            webrtc::CallConfig callConfig(strong->environment(), strong->networkThread());
-            callConfig.audio_state = strong->factory->mediaEngine()->voice().GetAudioState();
-            strong->call = strong->factory->mediaFactory()->CreateCall(std::move(callConfig));
-            strong->payloadTypeSuggester = std::make_unique<webrtc::SdpPayloadTypeSuggester>(
-                webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle
+            webrtc::CallConfig call_config(strong->environment(), strong->worker_thread(), strong->network_thread());
+            call_config.audio_state = strong->factory_->media_engine()->voice().GetAudioState();
+            strong->call_ = strong->factory_->media_factory()->CreateCall(std::move(call_config));
+            strong->payload_type_suggester_ = std::make_unique<webrtc::SdpPayloadTypeSuggester>(
+                webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle,
+                strong->environment()
             );
         });
-        availableVideoFormats = filterSupportedVideoFormats(factory->getSupportedVideoFormats());
+        available_video_formats_ = filter_supported_video_formats(factory_->get_supported_video_formats());
+
+        payload_type_mapping_.insert(std::make_pair(111, media::FrameTransformer::PayloadType::Opus));
+        for (const auto temp_video_payload_types = models::OutgoingVideoFormat::assign_payload_types(available_video_formats_); const auto& it : temp_video_payload_types) {
+            if (it.video_codec().name == webrtc::kVp8CodecName) {
+                payload_type_mapping_.insert(std::make_pair(it.video_codec().id.value(), media::FrameTransformer::PayloadType::VP8));
+            } else if (it.video_codec().name == webrtc::kH264CodecName) {
+                payload_type_mapping_.insert(std::make_pair(it.video_codec().id.value(), media::FrameTransformer::PayloadType::H264));
+            }
+        }
     }
 
-    void NativeNetworkInterface::addIncomingSmartSource(const std::string& endpoint, const MediaContent& mediaContent, const bool force) {
-        std::lock_guard lock(mutex);
-        if (pendingContent.contains(endpoint) && !force) {
-            return;
+    void NativeNetworkInterface::add_incoming_smart_source(const std::string& endpoint, const models::MediaContent& media_content, const bool force) {
+        {
+            const std::lock_guard lock(mutex_);
+            if (pending_content_.contains(endpoint) && !force) {
+                return;
+            }
         }
-        bool isAddable = false;
-        switch (mediaContent.type) {
-        case MediaContent::Type::Audio:
-            isAddable = audioIncoming;
+        bool is_addable = false;
+        switch (media_content.type) {
+        case models::MediaContent::Type::Audio:
+            is_addable = audio_incoming_;
             break;
-        case MediaContent::Type::Video:
-            if (mediaContent.isScreenCast()) {
-                isAddable = screenIncoming;
+        case models::MediaContent::Type::Video:
+            if (media_content.is_screen_cast()) {
+                is_addable = screen_incoming_;
             } else {
-                isAddable = cameraIncoming;
+                is_addable = camera_incoming_;
             }
             break;
         }
-        if (isAddable && mediaContent.type == MediaContent::Type::Audio) {
-            if (incomingAudioChannels.size() > 10) {
-                int64_t minActivity = INT64_MAX;
-                const auto timestamp = webrtc::TimeMillis();
-                std::string minActivityChannelId;
-                for (const auto& [channelId, channel] : incomingAudioChannels) {
-                    if (const auto activity = channel->getActivity(); activity < minActivity && activity < timestamp - 1000) {
-                        minActivity = activity;
-                        minActivityChannelId = channelId;
+        if (is_addable && media_content.type == models::MediaContent::Type::Audio) {
+            bool too_many_channels;
+            std::string min_activity_channel_id;
+            {
+                const std::lock_guard lock(mutex_);
+                too_many_channels = incoming_audio_channels_.size() > 10;
+                if (too_many_channels) {
+                    int64_t min_activity = INT64_MAX;
+                    const auto timestamp = webrtc::TimeMillis();
+                    for (const auto& [channelId, channel] : incoming_audio_channels_) {
+                        if (const auto activity = channel->get_activity(); activity < min_activity && activity < timestamp - 1000) {
+                            min_activity = activity;
+                            min_activity_channel_id = channelId;
+                        }
                     }
                 }
-                if (!minActivityChannelId.empty()) {
-                    removeIncomingAudio(minActivityChannelId);
+            }
+            if (too_many_channels) {
+                if (!min_activity_channel_id.empty()) {
+                    remove_incoming_audio(min_activity_channel_id);
                 }
-                if (incomingAudioChannels.size() > 10) {
+                const std::lock_guard lock(mutex_);
+                if (incoming_audio_channels_.size() > 10) {
                     RTC_LOG(LS_WARNING) << "Too many incoming audio channels, unable to add " << endpoint << " ssrc";
                     return;
                 }
             }
-            RTC_LOG(LS_INFO) << "Adding incoming audio channel with ssrc " << mediaContent.mainSsrc();
-            if (const auto sink = remoteAudioSink.lock()) sink->addSource();
-            incomingAudioChannels[endpoint] = std::make_unique<IncomingAudioChannel>(
-                call.get(),
-                channelManager.get(),
-                dtlsSrtpTransport.get(),
-                mediaContent,
-                workerThread(),
-                networkThread(),
-                remoteAudioSink
+            RTC_LOG(LS_INFO) << "Adding incoming audio channel with ssrc " << media_content.main_ssrc();
+            if (const auto sink = remote_audio_sink_.lock()) sink->add_source();
+            auto audio_channel = std::make_unique<media::channels::IncomingAudioChannel>(
+                call_.get(),
+                channel_manager_.get(),
+                dtls_srtp_transport_.get(),
+                media_content,
+                worker_thread(),
+                network_thread(),
+                remote_audio_sink_,
+                payload_type_mapping_,
+                encryptor_,
+                nullptr
             );
-        } else if (isAddable && mediaContent.type == MediaContent::Type::Video) {
-            auto videoCodecs = OutgoingVideoFormat::getVideoCodecs(
-                availableVideoFormats,
-                mediaContent.payloadTypes,
-                isGroupConnection()
+            decltype(incoming_audio_channels_)::node_type previous_audio_channel;
+            {
+                const std::lock_guard lock(mutex_);
+                previous_audio_channel = incoming_audio_channels_.extract(endpoint);
+                incoming_audio_channels_[endpoint] = std::move(audio_channel);
+            }
+        } else if (is_addable && media_content.type == models::MediaContent::Type::Video) {
+            auto video_codecs = models::OutgoingVideoFormat::get_video_codecs(
+                available_video_formats_,
+                media_content.payload_types,
+                is_group_connection()
             );
-            incomingVideoChannels[endpoint] = std::make_unique<IncomingVideoChannel>(
-                call.get(),
-                channelManager.get(),
-                dtlsSrtpTransport.get(),
-                mediaContent.ssrcGroups,
-                factory->ssrcGenerator(),
-                videoCodecs,
-                workerThread(),
-                networkThread(),
-                mediaContent.isScreenCast() ? remoteScreenCastSink : remoteVideoSink
+            auto video_channel = std::make_unique<media::channels::IncomingVideoChannel>(
+                call_.get(),
+                channel_manager_.get(),
+                dtls_srtp_transport_.get(),
+                media_content.ssrc_groups,
+                factory_->ssrc_generator(),
+                video_codecs,
+                worker_thread(),
+                network_thread(),
+                media_content.is_screen_cast() ? remote_screen_cast_sink_ : remote_video_sink_,
+                payload_type_mapping_,
+                encryptor_
             );
-        }
-        if (pendingContent.contains(endpoint)) {
-            return;
-        }
-        int audioChannelsCount = 0;
-        for (const auto& content : pendingContent | std::views::values) {
-            if (content.type == MediaContent::Type::Audio) {
-                audioChannelsCount++;
+            decltype(incoming_video_channels_)::node_type previous_video_channel;
+            {
+                const std::lock_guard lock(mutex_);
+                previous_video_channel = incoming_video_channels_.extract(endpoint);
+                incoming_video_channels_[endpoint] = std::move(video_channel);
             }
         }
-        if (audioChannelsCount >= 10) {
+        const std::lock_guard lock(mutex_);
+        if (pending_content_.contains(endpoint)) {
             return;
         }
-        pendingContent[endpoint] = mediaContent;
-    }
-
-    void NativeNetworkInterface::removeIncomingAudio(const std::string& endpoint) {
-        if (!pendingContent.contains(endpoint)) {
+        int audio_channels_count = 0;
+        for (const auto& content : pending_content_ | std::views::values) {
+            if (content.type == models::MediaContent::Type::Audio) {
+                audio_channels_count++;
+            }
+        }
+        if (audio_channels_count >= 10) {
             return;
         }
-        RTC_LOG(LS_INFO) << "Removing incoming audio channel with ssrc " << endpoint;
-        if (incomingAudioChannels.contains(endpoint)) incomingAudioChannels.erase(endpoint);
-        pendingContent.erase(endpoint);
-        if (const auto sink = remoteAudioSink.lock()) sink->removeSource();
+        pending_content_[endpoint] = media_content;
     }
 
-    void NativeNetworkInterface::DtlsReadyToSend(const bool isReadyToSend) {
-        UpdateAggregateStates_n();
+    void NativeNetworkInterface::remove_incoming_audio(const std::string& endpoint) {
+        decltype(incoming_audio_channels_)::node_type removed_channel;
+        {
+            const std::lock_guard lock(mutex_);
+            if (!pending_content_.contains(endpoint)) {
+                return;
+            }
+            RTC_LOG(LS_INFO) << "Removing incoming audio channel with ssrc " << endpoint;
+            removed_channel = incoming_audio_channels_.extract(endpoint);
+            pending_content_.erase(endpoint);
+        }
+        removed_channel = {};
+        if (const auto sink = remote_audio_sink_.lock()) sink->remove_source();
+    }
 
-        if (isReadyToSend) {
-            std::weak_ptr weak(shared_from_this());
-            networkThread().PostTask([weak] {
+    void NativeNetworkInterface::dtls_ready_to_send(const bool is_ready_to_send) {
+        update_aggregate_states_n();
+
+        if (is_ready_to_send) {
+            const std::weak_ptr weak(shared_from_this());
+            network_thread().PostTask([weak] {
                 const auto strong = weak.lock();
                 if (!strong) {
                     return;
                 }
-                strong->UpdateAggregateStates_n();
+                strong->update_aggregate_states_n();
             });
         }
     }
 
-    void NativeNetworkInterface::UpdateAggregateStates_n() {
-        const auto state = transportChannel->GetIceTransportState();
-        bool isConnected = false;
+    void NativeNetworkInterface::update_aggregate_states_n() {
+        if (closed_ || !transport_channel_ || !dtls_srtp_transport_) {
+            return;
+        }
+        const auto state = transport_channel_->GetIceTransportState();
+        bool is_connected = false;
         switch (state) {
         case webrtc::IceTransportState::kConnected:
         case webrtc::IceTransportState::kCompleted:
-            isConnected = true;
+            is_connected = true;
             break;
         default:
             break;
         }
-        if (!dtlsSrtpTransport->IsWritable(false)) {
-            isConnected = false;
+        if (!dtls_srtp_transport_->IsWritable(false)) {
+            is_connected = false;
         }
-        if (connected != isConnected) {
-            connected = isConnected;
-            stateUpdated(isConnected);
-            if (dataChannelInterface) {
-                dataChannelInterface->updateIsConnected(isConnected);
+        if (connected_ != is_connected) {
+            connected_ = is_connected;
+            state_updated(is_connected);
+            if (data_channel_interface_) {
+                data_channel_interface_->update_is_connected(is_connected);
             }
         }
     }
 
-    void NativeNetworkInterface::resetDtlsSrtpTransport() {
-        portAllocator = std::make_unique<webrtc::BasicPortAllocator>(
+    void NativeNetworkInterface::reset_dtls_srtp_transport() {
+        port_allocator_ = std::make_unique<webrtc::BasicPortAllocator>(
             environment(),
-            factory->networkManager(),
-            factory->socketFactory(),
+            factory_->network_manager(),
+            factory_->socket_factory(),
             nullptr,
-            getRelayPortFactory()
+            get_relay_port_factory()
         );
-        setPortAllocatorFlags(portAllocator.get());
-        portAllocator->Initialize();
-        auto [stunServers, turnServers] = getStunAndTurnServers();
-        portAllocator->SetConfiguration(stunServers, turnServers, candidatePoolSize(), webrtc::NO_PRUNE);
+        set_port_allocator_flags(port_allocator_.get());
+        port_allocator_->Initialize();
+        auto [stunServers, turnServers] = get_stun_and_turn_servers();
+        port_allocator_->SetConfiguration(stunServers, turnServers, candidate_pool_size(), webrtc::NO_PRUNE);
 
-        webrtc::IceTransportInit iceTransportInit(environment());
-        iceTransportInit.set_port_allocator(portAllocator.get());
-        iceTransportInit.set_async_dns_resolver_factory(asyncResolverFactory.get());
-        transportChannel = webrtc::P2PTransportChannel::Create("transport", 0, std::move(iceTransportInit));
+        webrtc::IceTransportInit ice_transport_init(environment());
+        ice_transport_init.set_port_allocator(port_allocator_.get());
+        ice_transport_init.set_async_dns_resolver_factory(async_resolver_factory_.get());
+        transport_channel_ = webrtc::P2PTransportChannel::Create("transport", 0, std::move(ice_transport_init));
 
-        webrtc::IceConfig iceConfig;
-        iceConfig.continual_gathering_policy = webrtc::GATHER_CONTINUALLY;
-        iceConfig.prioritize_most_likely_candidate_pairs = true;
-        iceConfig.regather_on_failed_networks_interval = getRegatherOnFailedNetworksInterval();
-        if (getCustomParameterBool("network_skip_initial_ping")) {
-            iceConfig.presume_writable_when_fully_relayed = true;
+        webrtc::IceConfig ice_config;
+        ice_config.continual_gathering_policy = webrtc::GATHER_CONTINUALLY;
+        ice_config.prioritize_most_likely_candidate_pairs = true;
+        ice_config.regather_on_failed_networks_interval = get_regather_on_failed_networks_interval();
+        if (get_custom_parameter_bool("network_skip_initial_ping")) {
+            ice_config.presume_writable_when_fully_relayed = true;
         }
-        transportChannel->SetIceConfig(iceConfig);
+        transport_channel_->SetIceConfig(ice_config);
 
-        std::weak_ptr weak(shared_from_this());
-        const webrtc::IceParameters localIceParameters(
-            localParameters.ufrag,
-            localParameters.pwd,
-            supportsRenomination()
+        const std::weak_ptr weak(shared_from_this());
+        const webrtc::IceParameters local_ice_parameters(
+            local_parameters_.ufrag,
+            local_parameters_.pwd,
+            supports_renomination()
         );
-        transportChannel->SetIceParameters(localIceParameters);
-        transportChannel->SetIceRole(iceRole());
-        transportChannel->SubscribeIceTransportStateChanged(this, [weak](webrtc::IceTransportInternal*) {
+        transport_channel_->SetIceParameters(local_ice_parameters);
+        transport_channel_->SetIceRole(ice_role());
+        transport_channel_->SubscribeRoleConflict(this, [weak](webrtc::IceTransportInternal*) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            strong->UpdateAggregateStates_n();
+            strong->handle_role_conflict();
         });
-        registerTransportCallbacks(transportChannel.get());
+        transport_channel_->SubscribeIceTransportStateChanged(this, [weak](webrtc::IceTransportInternal*) {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            strong->update_aggregate_states_n();
+        });
+        register_transport_callbacks(transport_channel_.get());
 
-        dtlsTransport = std::make_unique<webrtc::DtlsTransportInternalImpl>(environment(), transportChannel.get(), getDefaultCryptoOptions());
-        dtlsTransport->SubscribeReceivingState(this, [weak](webrtc::PacketTransportInternal*) {
+        ice_transport_ = webrtc::make_ref_counted<webrtc::IceTransportWithPointer>(transport_channel_.get());
+        dtls_transport_ = std::make_unique<webrtc::DtlsTransportInternalImpl>(environment(), ice_transport_, get_default_crypto_options());
+        dtls_transport_->SubscribeReceivingState(this, [weak](webrtc::PacketTransportInternal*) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
             assert(strong->networkThread().IsCurrent());
-            strong->UpdateAggregateStates_n();
+            strong->update_aggregate_states_n();
         });
-        dtlsTransport->SubscribeWritableState(this,[weak](webrtc::PacketTransportInternal*) {
+        dtls_transport_->SubscribeWritableState(this, [weak](webrtc::PacketTransportInternal*) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
             assert(strong->networkThread().IsCurrent());
-            strong->UpdateAggregateStates_n();
+            strong->update_aggregate_states_n();
         });
-        if (const auto role = dtlsRole(); role.has_value()) {
-            dtlsTransport->SetDtlsRole(role.value());
+        if (const auto role = dtls_role(); role.has_value()) {
+            dtls_transport_->SetDtlsRole(role.value());
         }
-        dtlsTransport->SetLocalCertificate(localCertificate);
-        dtlsSrtpTransport->SetDtlsTransports(dtlsTransport.get(), nullptr);
+        dtls_transport_->SetLocalCertificate(local_certificate_);
+        dtls_srtp_transport_->SetDtlsTransports(dtls_transport_.get(), nullptr);
     }
 
-    webrtc::CryptoOptions NativeNetworkInterface::getDefaultCryptoOptions() {
+    void NativeNetworkInterface::handle_role_conflict() {
+        assert(network_thread().IsCurrent());
+        if (!transport_channel_ || is_group_connection()) {
+            return;
+        }
+        const auto reversed_role = transport_channel_->GetIceRole() == webrtc::ICEROLE_CONTROLLING
+                                       ? webrtc::ICEROLE_CONTROLLED
+                                       : webrtc::ICEROLE_CONTROLLING;
+        RTC_LOG(LS_WARNING) << "Got ICE role conflict, switching to "
+                            << (reversed_role == webrtc::ICEROLE_CONTROLLING ? "controlling" : "controlled") << " role";
+        transport_channel_->SetIceRole(reversed_role);
+    }
+
+    webrtc::CryptoOptions NativeNetworkInterface::get_default_crypto_options() {
         auto options = webrtc::CryptoOptions();
         options.srtp.enable_aes128_sha1_80_crypto_cipher = true;
         options.srtp.enable_gcm_crypto_suites = true;
         return options;
     }
 
-    std::vector<std::string> NativeNetworkInterface::getEndpoints() const {
+    std::vector<std::string> NativeNetworkInterface::get_endpoints() {
+        const std::lock_guard lock(mutex_);
         std::vector<std::string> endpoints;
-        for (const auto &[endpoint, media] : pendingContent) {
-            if (media.type == MediaContent::Type::Video) {
+        for (const auto& [endpoint, media] : pending_content_) {
+            if (media.type == models::MediaContent::Type::Video) {
                 endpoints.push_back(endpoint);
             }
         }
         return endpoints;
     }
 
-    ConnectionMode NativeNetworkInterface::getConnectionMode() const {
+    ConnectionMode NativeNetworkInterface::get_connection_mode() const {
         return ConnectionMode::Rtc;
     }
 
-    void NativeNetworkInterface::enableAudioIncoming(const bool enable) {
-        if (audioIncoming == enable) {
+    void NativeNetworkInterface::enable_audio_incoming(const bool enable) {
+        if (audio_incoming_ == enable) {
             return;
         }
-        NetworkInterface::enableAudioIncoming(enable);
+        NetworkInterface::enable_audio_incoming(enable);
 
-        std::weak_ptr weak(shared_from_this());
-        workerThread().BlockingCall([weak, enable] {
+        const std::weak_ptr weak(shared_from_this());
+        worker_thread().BlockingCall([weak, enable] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
             if (enable) {
-                for (const auto& [endpoint, mediaContent] : strong->pendingContent) {
-                    if (mediaContent.type == MediaContent::Type::Audio) {
-                        strong->addIncomingSmartSource(endpoint, mediaContent, true);
+                std::map<std::string, models::MediaContent> pending_content;
+                {
+                    const std::lock_guard lock(strong->mutex_);
+                    pending_content = strong->pending_content_;
+                }
+                for (const auto& [endpoint, mediaContent] : pending_content) {
+                    if (mediaContent.type == models::MediaContent::Type::Audio) {
+                        strong->add_incoming_smart_source(endpoint, mediaContent, true);
                     }
                 }
             } else {
-                std::lock_guard lock(strong->mutex);
-                strong->incomingAudioChannels.clear();
+                decltype(strong->incoming_audio_channels_) removed_channels;
+                {
+                    const std::lock_guard lock(strong->mutex_);
+                    removed_channels = std::move(strong->incoming_audio_channels_);
+                    strong->incoming_audio_channels_.clear();
+                }
             }
         });
     }
 
-    void NativeNetworkInterface::enableVideoIncoming(const bool enable, const bool isScreenCast) {
-        if (isScreenCast) {
-            if (screenIncoming == enable) {
+    void NativeNetworkInterface::enable_video_incoming(const bool enable, const bool is_screen_cast) {
+        if (is_screen_cast) {
+            if (screen_incoming_ == enable) {
                 return;
             }
         } else {
-            if (cameraIncoming == enable) {
+            if (camera_incoming_ == enable) {
                 return;
             }
         }
-        NetworkInterface::enableVideoIncoming(enable, isScreenCast);
-        std::weak_ptr weak(shared_from_this());
-        workerThread().BlockingCall([weak, enable, isScreenCast] {
+        NetworkInterface::enable_video_incoming(enable, is_screen_cast);
+        const std::weak_ptr weak(shared_from_this());
+        worker_thread().BlockingCall([weak, enable, is_screen_cast] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
+            std::map<std::string, models::MediaContent> pending_content;
+            {
+                const std::lock_guard lock(strong->mutex_);
+                pending_content = strong->pending_content_;
+            }
             if (enable) {
-                for (const auto& [endpoint, mediaContent] : strong->pendingContent) {
-                    if (mediaContent.type == MediaContent::Type::Video && mediaContent.isScreenCast() == isScreenCast) {
-                        strong->addIncomingSmartSource(endpoint, mediaContent, true);
+                for (const auto& [endpoint, mediaContent] : pending_content) {
+                    if (mediaContent.type == models::MediaContent::Type::Video && mediaContent.is_screen_cast() == is_screen_cast) {
+                        strong->add_incoming_smart_source(endpoint, mediaContent, true);
                     }
                 }
             } else {
-                for (const auto& [endpoint, mediaContent] : strong->pendingContent) {
-                    if (mediaContent.type == MediaContent::Type::Video && mediaContent.isScreenCast() == isScreenCast) {
-                        strong->incomingVideoChannels.erase(endpoint);
+                for (const auto& [endpoint, mediaContent] : pending_content) {
+                    if (mediaContent.type == models::MediaContent::Type::Video && mediaContent.is_screen_cast() == is_screen_cast) {
+                        decltype(strong->incoming_video_channels_)::node_type removed_channel;
+                        {
+                            const std::lock_guard lock(strong->mutex_);
+                            removed_channel = strong->incoming_video_channels_.extract(endpoint);
+                        }
                     }
                 }
             }
         });
     }
 
-    std::unique_ptr<webrtc::SSLFingerprint> NativeNetworkInterface::localFingerprint() const {
-        const auto certificate = localCertificate;
+    std::unique_ptr<webrtc::SSLFingerprint> NativeNetworkInterface::local_fingerprint() const {
+        const auto certificate = local_certificate_;
         if (!certificate) {
             return nullptr;
         }
@@ -395,147 +483,165 @@ namespace wrtc {
     }
 
     void NativeNetworkInterface::close() {
-        std::weak_ptr weak(shared_from_this());
-        workerThread().BlockingCall([weak] {
+        const std::weak_ptr weak(shared_from_this());
+        worker_thread().BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            strong->pendingContent.clear();
-            strong->audioChannel = nullptr;
-            strong->videoChannel = nullptr;
-            strong->incomingAudioChannels.clear();
-            strong->incomingVideoChannels.clear();
-            strong->remoteAudioSink.reset();
-            strong->remoteVideoSink.reset();
-            strong->remoteScreenCastSink.reset();
-            strong->call = nullptr;
+            {
+                const std::lock_guard lock(strong->mutex_);
+                strong->pending_content_.clear();
+            }
+            strong->audio_channel_ = nullptr;
+            strong->video_channel_ = nullptr;
+            decltype(strong->incoming_audio_channels_) removed_audio_channels;
+            decltype(strong->incoming_video_channels_) removed_video_channels;
+            {
+                const std::lock_guard lock(strong->mutex_);
+                removed_audio_channels = std::move(strong->incoming_audio_channels_);
+                strong->incoming_audio_channels_.clear();
+                removed_video_channels = std::move(strong->incoming_video_channels_);
+                strong->incoming_video_channels_.clear();
+            }
+            removed_audio_channels.clear();
+            removed_video_channels.clear();
+            strong->remote_audio_sink_.reset();
+            strong->remote_video_sink_.reset();
+            strong->remote_screen_cast_sink_.reset();
+            strong->call_ = nullptr;
         });
-        channelManager = nullptr;
-        if (factory) {
+        channel_manager_ = nullptr;
+        if (!closed_) {
             RTC_LOG(LS_VERBOSE) << "Removed call";
-            networkThread().BlockingCall([weak] {
+            network_thread().BlockingCall([weak] {
                 const auto strong = weak.lock();
                 if (!strong) {
                     return;
                 }
-                if (strong->transportChannel) {
-                    strong->transportChannel->UnsubscribeNetworkRouteChanged(strong.get());
+                if (strong->transport_channel_) {
+                    strong->transport_channel_->UnsubscribeNetworkRouteChanged(strong.get());
                 }
-                strong->dataChannelInterface = nullptr;
-                if (strong->dtlsTransport) {
-                    strong->dtlsTransport->UnsubscribeWritableState(strong.get());
+                strong->data_channel_interface_ = nullptr;
+                if (strong->dtls_transport_) {
+                    strong->dtls_transport_->UnsubscribeWritableState(strong.get());
                 }
-                if (strong->dtlsSrtpTransport) {
-                    strong->dtlsSrtpTransport->UnsubscribeSentPacket(strong.get());
-                    strong->dtlsSrtpTransport->SetDtlsTransports(nullptr, nullptr);
+                if (strong->dtls_srtp_transport_) {
+                    strong->dtls_srtp_transport_->UnsubscribeSentPacket(strong.get());
+                    strong->dtls_srtp_transport_->SetDtlsTransports(nullptr, nullptr);
                 }
-                strong->dtlsSrtpTransport = nullptr;
-                strong->dtlsTransport = nullptr;
-                strong->transportChannel = nullptr;
-                strong->portAllocator = nullptr;
-                strong->asyncResolverFactory = nullptr;
-                strong->localCertificate = nullptr;
+                strong->dtls_srtp_transport_ = nullptr;
+                strong->dtls_transport_ = nullptr;
+                if (strong->ice_transport_) {
+                    strong->ice_transport_->Clear();
+                    strong->ice_transport_ = nullptr;
+                }
+                strong->transport_channel_ = nullptr;
+                strong->port_allocator_ = nullptr;
+                strong->underlying_socket_factory_ = nullptr;
+                strong->async_resolver_factory_ = nullptr;
+                strong->local_certificate_ = nullptr;
             });
-            signalingThread().BlockingCall([] {});
+            signaling_thread().BlockingCall([] {});
         }
         NetworkInterface::close();
+        encryptor_ = nullptr;
     }
 
-    void NativeNetworkInterface::addIncomingAudioTrack(const std::weak_ptr<RemoteAudioSink>& sink) {
-        remoteAudioSink = sink;
+    void NativeNetworkInterface::add_incoming_audio_track(const std::weak_ptr<media::RemoteAudioSink>& sink) {
+        remote_audio_sink_ = sink;
     }
 
-    void NativeNetworkInterface::addIncomingVideoTrack(const std::weak_ptr<RemoteVideoSink>& sink, const bool isScreenCast) {
-        if (isScreenCast) {
-            remoteScreenCastSink = sink;
+    void NativeNetworkInterface::add_incoming_video_track(const std::weak_ptr<media::RemoteVideoSink>& sink, const bool is_screen_cast) {
+        if (is_screen_cast) {
+            remote_screen_cast_sink_ = sink;
         } else {
-            remoteVideoSink = sink;
+            remote_video_sink_ = sink;
         }
     }
 
-    std::unique_ptr<MediaTrackInterface> NativeNetworkInterface::addOutgoingTrack(const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
-        std::weak_ptr weak(shared_from_this());
-        if (const auto audioTrack = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
-            audioTrack->AddSink(&audioSink);
-            return std::make_unique<MediaTrackInterface>([weak](const bool enable) {
+    std::unique_ptr<media::tracks::MediaTrackInterface> NativeNetworkInterface::add_outgoing_track(const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
+        const std::weak_ptr weak(shared_from_this());
+        if (const auto audio_track = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
+            audio_track->AddSink(&audio_sink_);
+            return std::make_unique<media::tracks::MediaTrackInterface>([weak](const bool enable) {
                 const auto strong = weak.lock();
                 if (!strong) {
                     return;
                 }
-                if (strong->audioChannel != nullptr) {
-                    strong->audioChannel->set_enabled(enable);
+                if (strong->audio_channel_ != nullptr) {
+                    strong->audio_channel_->set_enabled(enable);
                 }
             });
         }
-        if (const auto videoTrack = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
-            videoTrack->AddOrUpdateSink(&videoSink, webrtc::VideoSinkWants());
-            return std::make_unique<MediaTrackInterface>([weak](const bool enable) {
+        if (const auto video_track = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
+            video_track->AddOrUpdateSink(&video_sink_, webrtc::VideoSinkWants());
+            return std::make_unique<media::tracks::MediaTrackInterface>([weak](const bool enable) {
                 const auto strong = weak.lock();
                 if (!strong) {
                     return;
                 }
-                if (strong->videoChannel != nullptr) {
-                    strong->videoChannel->set_enabled(enable);
+                if (strong->video_channel_ != nullptr) {
+                    strong->video_channel_->set_enabled(enable);
                 }
             });
         }
         throw RTCException("Unsupported track type");
     }
 
-    PeerIceParameters NativeNetworkInterface::localIceParameters() {
-        return localParameters;
+    models::PeerIceParameters NativeNetworkInterface::local_ice_parameters() {
+        return local_parameters_;
     }
 
-    void NativeNetworkInterface::sendDataChannelMessage(const bytes::binary& data) const {
-        std::weak_ptr weak(shared_from_this());
-        networkThread().PostTask([weak, data] {
+    void NativeNetworkInterface::send_data_channel_message(const bytes::binary& data) const {
+        const std::weak_ptr weak(shared_from_this());
+        network_thread().PostTask([weak, data] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            if (strong->dataChannelInterface) {
-                strong->dataChannelInterface->sendDataChannelMessage(data);
+            if (strong->data_channel_interface_) {
+                strong->data_channel_interface_->send_data_channel_message(data);
             }
         });
     }
 
-    std::vector<webrtc::SdpVideoFormat> NativeNetworkInterface::filterSupportedVideoFormats(std::vector<webrtc::SdpVideoFormat> const& formats) {
-        std::vector<webrtc::SdpVideoFormat> filteredFormats;
+    std::vector<webrtc::SdpVideoFormat> NativeNetworkInterface::filter_supported_video_formats(std::vector<webrtc::SdpVideoFormat> const& formats) {
+        std::vector<webrtc::SdpVideoFormat> filtered_formats;
 
-        std::vector<std::string> filterCodecNames = {
+        std::vector<std::string> filter_codec_names = {
             webrtc::kVp8CodecName,
             webrtc::kVp9CodecName,
             webrtc::kH264CodecName
         };
 
-        std::vector<webrtc::SdpVideoFormat> vp9Formats;
-        std::vector<webrtc::SdpVideoFormat> h264Formats;
+        std::vector<webrtc::SdpVideoFormat> vp9_formats;
+        std::vector<webrtc::SdpVideoFormat> h264_formats;
 
-        for (const auto &format : formats) {
-            if (std::ranges::find(filterCodecNames, format.name) == filterCodecNames.end()) {
+        for (const auto& format : formats) {
+            if (std::ranges::find(filter_codec_names, format.name) == filter_codec_names.end()) {
                 continue;
             }
 
             if (format.name == webrtc::kVp9CodecName) {
-                vp9Formats.push_back(format);
+                vp9_formats.push_back(format);
             } else if (format.name == webrtc::kH264CodecName) {
-                h264Formats.push_back(format);
+                h264_formats.push_back(format);
             } else {
-                filteredFormats.push_back(format);
+                filtered_formats.push_back(format);
             }
         }
 
-        if (!vp9Formats.empty()) {
+        if (!vp9_formats.empty()) {
             bool added = false;
-            for (const auto &format : vp9Formats) {
+            for (const auto& format : vp9_formats) {
                 if (added) {
                     break;
                 }
-                for (const auto & [fst, snd] : format.parameters) {
+                for (const auto& [fst, snd] : format.parameters) {
                     if (fst == "profile-id") {
                         if (snd == "0") {
-                            filteredFormats.push_back(format);
+                            filtered_formats.push_back(format);
                             added = true;
                             break;
                         }
@@ -544,77 +650,77 @@ namespace wrtc {
             }
 
             if (!added) {
-                filteredFormats.push_back(vp9Formats[0]);
+                filtered_formats.push_back(vp9_formats[0]);
             }
         }
 
-        if (!h264Formats.empty()) {
-            std::ranges::sort(h264Formats, [](const webrtc::SdpVideoFormat &lhs, const webrtc::SdpVideoFormat &rhs) {
-                auto [lProfileLevelId, lPacketizationMode, lLevelAssymetryAllowed] = parseH264FormatParameters(lhs);
-                auto [rProfileLevelId, rPacketizationMode, rLevelAssymetryAllowed] = parseH264FormatParameters(rhs);
+        if (!h264_formats.empty()) {
+            std::ranges::sort(h264_formats, [](const webrtc::SdpVideoFormat& lhs, const webrtc::SdpVideoFormat& rhs) {
+                auto [lProfileLevelId, lPacketizationMode, lLevelAssymetryAllowed] = parse_h264_format_parameters(lhs);
+                auto [rProfileLevelId, rPacketizationMode, rLevelAssymetryAllowed] = parse_h264_format_parameters(rhs);
 
-                const int lhsLevelIdPriority = getH264ProfileLevelIdPriority(lProfileLevelId);
-                const int lhsPacketizationModePriority = getH264PacketizationModePriority(lPacketizationMode);
-                const int lhsLevelAssymetryAllowedPriority = getH264LevelAssymetryAllowedPriority(lLevelAssymetryAllowed);
+                const int lhs_level_id_priority = get_h264_profile_level_id_priority(lProfileLevelId);
+                const int lhs_packetization_mode_priority = get_h264_packetization_mode_priority(lPacketizationMode);
+                const int lhs_level_assymetry_allowed_priority = get_h264_level_assymetry_allowed_priority(lLevelAssymetryAllowed);
 
-                const int rhsLevelIdPriority = getH264ProfileLevelIdPriority(rProfileLevelId);
-                const int rhsPacketizationModePriority = getH264PacketizationModePriority(rPacketizationMode);
-                const int rhsLevelAssymetryAllowedPriority = getH264LevelAssymetryAllowedPriority(rLevelAssymetryAllowed);
+                const int rhs_level_id_priority = get_h264_profile_level_id_priority(rProfileLevelId);
+                const int rhs_packetization_mode_priority = get_h264_packetization_mode_priority(rPacketizationMode);
+                const int rhs_level_assymetry_allowed_priority = get_h264_level_assymetry_allowed_priority(rLevelAssymetryAllowed);
 
-                if (lhsLevelIdPriority != rhsLevelIdPriority) {
-                    return lhsLevelIdPriority < rhsLevelIdPriority;
+                if (lhs_level_id_priority != rhs_level_id_priority) {
+                    return lhs_level_id_priority < rhs_level_id_priority;
                 }
-                if (lhsPacketizationModePriority != rhsPacketizationModePriority) {
-                    return lhsPacketizationModePriority < rhsPacketizationModePriority;
+                if (lhs_packetization_mode_priority != rhs_packetization_mode_priority) {
+                    return lhs_packetization_mode_priority < rhs_packetization_mode_priority;
                 }
-                if (lhsLevelAssymetryAllowedPriority != rhsLevelAssymetryAllowedPriority) {
-                    return lhsLevelAssymetryAllowedPriority < rhsLevelAssymetryAllowedPriority;
+                if (lhs_level_assymetry_allowed_priority != rhs_level_assymetry_allowed_priority) {
+                    return lhs_level_assymetry_allowed_priority < rhs_level_assymetry_allowed_priority;
                 }
 
                 return false;
             });
 
-            filteredFormats.push_back(h264Formats[0]);
+            filtered_formats.push_back(h264_formats[0]);
         }
 
-        return filteredFormats;
+        return filtered_formats;
     }
 
-    NativeNetworkInterface::H264FormatParameters NativeNetworkInterface::parseH264FormatParameters(webrtc::SdpVideoFormat const& format) {
+    NativeNetworkInterface::H264FormatParameters NativeNetworkInterface::parse_h264_format_parameters(webrtc::SdpVideoFormat const& format) {
         H264FormatParameters result;
-        for (const auto & [fst, snd] : format.parameters) {
+        for (const auto& [fst, snd] : format.parameters) {
             if (fst == "profile-level-id") {
-                result.profileLevelId = snd;
+                result.profile_level_id = snd;
             } else if (fst == "packetization-mode") {
-                result.packetizationMode = snd;
+                result.packetization_mode = snd;
             } else if (fst == "level-asymmetry-allowed") {
-                result.levelAssymetryAllowed = snd;
+                result.level_assymetry_allowed = snd;
             }
         }
         return result;
     }
 
-    int NativeNetworkInterface::getH264ProfileLevelIdPriority(std::string const& profileLevelId) {
-        if (profileLevelId == webrtc::kH264ProfileLevelConstrainedHigh) {
+    int NativeNetworkInterface::get_h264_profile_level_id_priority(const std::string& profile_level_id) {
+        if (profile_level_id == webrtc::kH264ProfileLevelConstrainedHigh) {
             return 0;
         }
-        if (profileLevelId == webrtc::kH264ProfileLevelConstrainedBaseline) {
+        if (profile_level_id == webrtc::kH264ProfileLevelConstrainedBaseline) {
             return 1;
         }
         return 2;
     }
 
-    int NativeNetworkInterface::getH264PacketizationModePriority(std::string const& packetizationMode) {
-        if (packetizationMode == "1") {
+    int NativeNetworkInterface::get_h264_packetization_mode_priority(const std::string& packetization_mode) {
+        if (packetization_mode == "1") {
             return 0;
         }
         return 1;
     }
 
-    int NativeNetworkInterface::getH264LevelAssymetryAllowedPriority(std::string const& levelAssymetryAllowed) {
-        if (levelAssymetryAllowed == "1") {
+    int NativeNetworkInterface::get_h264_level_assymetry_allowed_priority(const std::string& level_assymetry_allowed) {
+        if (level_assymetry_allowed == "1") {
             return 0;
         }
         return 1;
     }
-} // wrtc
+} // wrtc::interfaces

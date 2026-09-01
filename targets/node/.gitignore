@@ -1,0 +1,7 @@
+/node_modules
+/package-lock.json
+/build
+/prebuilds
+/packages
+/README.md
+/LICENSE

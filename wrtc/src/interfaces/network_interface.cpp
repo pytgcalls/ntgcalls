@@ -1,85 +1,87 @@
 //
-// Created by Laky64 on 29/03/2024.
+// Created by Lauren on 29/03/24.
 //
 
 #include <wrtc/interfaces/network_interface.hpp>
 
-#include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
 #include <wrtc/exceptions.hpp>
+#include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
 
-namespace wrtc {
-    webrtc::IceCandidateInterface* NetworkInterface::parseIceCandidate(const IceCandidate& rawCandidate) {
+namespace wrtc::interfaces {
+    webrtc::IceCandidateInterface* NetworkInterface::parse_ice_candidate(const models::IceCandidate& raw_candidate) {
         webrtc::SdpParseError error;
-        const auto candidate = CreateIceCandidate(rawCandidate.mid, rawCandidate.mLine, rawCandidate.sdp, &error);
+        const auto candidate = CreateIceCandidate(raw_candidate.mid, raw_candidate.m_line, raw_candidate.sdp, &error);
         if (!candidate) {
-            throw wrapSdpParseError(error);
+            throw wrap_sdp_parse_error(error);
         }
         return candidate;
     }
 
-    NetworkInterface::NetworkInterface(): env(PeerConnectionFactory::environment()) {
-        factory = PeerConnectionFactory::GetOrCreateDefault();
+    NetworkInterface::NetworkInterface(): env_(peer_connection::PeerConnectionFactory::environment()) {
+        factory_ = peer_connection::PeerConnectionFactory::get_or_create_default();
     }
 
-    SafeThread& NetworkInterface::networkThread() const {
-        return factory->networkThread();
+    utils::SafeThread& NetworkInterface::network_thread() const {
+        return factory_->network_thread();
     }
 
-    SafeThread& NetworkInterface::signalingThread() const {
-        return factory->signalingThread();
+    utils::SafeThread& NetworkInterface::signaling_thread() const {
+        return factory_->signaling_thread();
     }
 
-    SafeThread& NetworkInterface::workerThread() const {
-        return factory->workerThread();
+    utils::SafeThread& NetworkInterface::worker_thread() const {
+        return factory_->worker_thread();
     }
 
     const webrtc::Environment& NetworkInterface::environment() const {
-        return env;
+        return env_;
     }
 
-    void NetworkInterface::onDataChannelOpened(const std::function<void()>& callback) {
-        dataChannelOpenedCallback = callback;
+    void NetworkInterface::on_data_channel_opened(const std::function<void()>& callback) {
+        data_channel_opened_callback_ = callback;
     }
 
-    void NetworkInterface::onIceCandidate(const std::function<void(const IceCandidate& candidate)>& callback) {
-        iceCandidateCallback = callback;
+    void NetworkInterface::on_ice_candidate(const std::function<void(const models::IceCandidate& candidate)>& callback) {
+        ice_candidate_callback_ = callback;
     }
 
-    void NetworkInterface::onConnectionChange(const std::function<void(ConnectionState state, bool wasConnected)>& callback) {
-        connectionChangeCallback = callback;
+    void NetworkInterface::on_connection_change(const std::function<void(ConnectionState state, bool was_connected)>& callback) {
+        connection_change_callback_ = callback;
     }
 
-    void NetworkInterface::onDataChannelMessage(const std::function<void(const bytes::binary& data)>& callback) {
-        dataChannelMessageCallback = callback;
+    void NetworkInterface::on_data_channel_message(const std::function<void(const bytes::binary& data)>& callback) {
+        data_channel_message_callback_ = callback;
     }
 
     void NetworkInterface::close() {
-        dataChannelOpenedCallback = nullptr;
-        iceCandidateCallback = nullptr;
-        connectionChangeCallback = nullptr;
-        dataChannelMessageCallback = nullptr;
-        if (factory) {
-            factory = nullptr;
-        }
+        data_channel_opened_callback_ = nullptr;
+        ice_candidate_callback_ = nullptr;
+        connection_change_callback_ = nullptr;
+        data_channel_message_callback_ = nullptr;
+        closed_ = true;
     }
 
-    bool NetworkInterface::isDataChannelOpen() const {
-        return dataChannelOpen;
+    bool NetworkInterface::is_data_channel_open() const {
+        return data_channel_open_;
     }
 
-    ConnectionState NetworkInterface::getConnectionState() const {
-        return currentState;
+    ConnectionState NetworkInterface::get_connection_state() const {
+        return current_state_;
     }
 
-    void NetworkInterface::enableAudioIncoming(const bool enable) {
-        audioIncoming = enable;
+    bool NetworkInterface::is_already_connected() const {
+        return already_connected_;
     }
 
-    void NetworkInterface::enableVideoIncoming(const bool enable, const bool isScreenCast) {
-        if (isScreenCast) {
-            screenIncoming = enable;
+    void NetworkInterface::enable_audio_incoming(const bool enable) {
+        audio_incoming_ = enable;
+    }
+
+    void NetworkInterface::enable_video_incoming(const bool enable, const bool is_screen_cast) {
+        if (is_screen_cast) {
+            screen_incoming_ = enable;
         } else {
-            cameraIncoming = enable;
+            camera_incoming_ = enable;
         }
     }
-} // wrtc
+} // wrtc::interfaces

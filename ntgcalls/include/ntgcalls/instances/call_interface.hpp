@@ -1,51 +1,51 @@
 //
-// Created by Laky64 on 15/03/2024.
+// Created by Lauren on 15/03/24.
 //
 
 #pragma once
 #include <memory>
-
-#include <ntgcalls/stream_manager.hpp>
-#include <ntgcalls/models/call_network_state.hpp>
+#include <ntgcalls/media/stream_manager.hpp>
+#include <ntgcalls/models/connection_info.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
 #include <ntgcalls/signaling/messages/media_state_message.hpp>
 #include <wrtc/interfaces/network_interface.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::instances {
 
     class CallInterface: public std::enable_shared_from_this<CallInterface> {
     protected:
-        std::shared_ptr<wrtc::NetworkInterface> connection;
-        std::shared_ptr<StreamManager> streamManager;
-        wrtc::synchronized_callback<NetworkInfo> connectionChangeCallback;
-        wrtc::synchronized_callback<RemoteSource> remoteSourceCallback;
-        wrtc::SafeThread& updateThread;
-        StreamManager::Status lastCameraState = StreamManager::Status::Idling;
-        StreamManager::Status lastScreenState = StreamManager::Status::Idling;
-        StreamManager::Status lastMicState = StreamManager::Status::Idling;
+        std::shared_ptr<wrtc::interfaces::NetworkInterface> connection_;
+        std::shared_ptr<media::StreamManager> stream_manager_;
+        wrtc::utils::synchronized_callback<void(ConnectionInfo)> connection_change_callback_;
+        wrtc::utils::synchronized_callback<void(RemoteSource)> remote_source_callback_;
+        wrtc::utils::SafeThread& update_thread_;
+        media::StreamManager::Status last_camera_state_ = media::StreamManager::Status::Idling;
+        media::StreamManager::Status last_screen_state_ = media::StreamManager::Status::Idling;
+        media::StreamManager::Status last_mic_state_ = media::StreamManager::Status::Idling;
 
-        void setConnectionObserver(
-            const std::shared_ptr<wrtc::NetworkInterface>& conn,
-            NetworkInfo::Kind kind = NetworkInfo::Kind::Normal
+        void set_connection_observer(
+            const std::shared_ptr<wrtc::interfaces::NetworkInterface>& conn,
+            ConnectionInfo::Kind kind = ConnectionInfo::Kind::Normal
         );
 
-        static StreamManager::Status parseVideoState(signaling::MediaStateMessage::VideoState state);
+        static media::StreamManager::Status parse_video_state(signaling::messages::MediaStateMessage::VideoState state);
 
     public:
         virtual ~CallInterface() = default;
 
-        explicit CallInterface(wrtc::SafeThread& updateThread);
+        explicit CallInterface(wrtc::utils::SafeThread& update_thread);
 
         enum class Type {
             Group = 1 << 0,
             Outgoing = 1 << 1,
             Incoming = 1 << 2,
-            P2P = Outgoing | Incoming
+            P2P = Outgoing | Incoming,
+            Conference = 1 << 3
         };
 
         virtual void stop();
 
-        wrtc::ConnectionMode getConnectionMode() const;
+        wrtc::ConnectionMode get_connection_mode() const;
 
         bool pause() const;
 
@@ -55,39 +55,45 @@ namespace ntgcalls {
 
         bool unmute() const;
 
-        virtual void setStreamSources(StreamManager::Mode mode, const MediaDescription& config) const;
+        virtual void set_stream_sources(media::StreamManager::Mode mode, const media::MediaDescription& config) const;
 
-        void onStreamEnd(const std::function<void(StreamManager::Type, StreamManager::Device)> &callback) const;
+        void on_stream_end(const std::function<void(media::StreamManager::Type, media::StreamManager::Device)>& callback) const;
 
-        void onConnectionChange(const std::function<void(NetworkInfo)> &callback);
+        void on_connection_change(const std::function<void(ConnectionInfo)>& callback);
 
-        void onFrames(const std::function<void(StreamManager::Mode, StreamManager::Device, const std::vector<wrtc::Frame>&)>& callback) const;
+        void on_frames(const std::function<void(media::StreamManager::Mode, media::StreamManager::Device, const std::vector<wrtc::models::Frame>&)>& callback) const;
 
-        void onRemoteSourceChange(const std::function<void(RemoteSource)>& callback);
+        void on_remote_source_change(const std::function<void(RemoteSource)>& callback);
 
-        uint64_t time(StreamManager::Mode mode) const;
+        uint64_t time(media::StreamManager::Mode mode) const;
 
-        MediaState getState() const;
+        media::MediaState get_state() const;
 
-        StreamManager::Status status(StreamManager::Mode mode) const;
+        media::StreamManager::Status status(media::StreamManager::Mode mode) const;
 
         virtual Type type() const = 0;
 
-        void sendExternalFrame(StreamManager::Device device, const bytes::binary& data, wrtc::FrameData frameData) const;
+        void send_external_frame(media::StreamManager::Device device, const bytes::binary& data, wrtc::models::FrameData frame_data) const;
 
         template<typename DestCallType, typename BaseCallType>
-        static DestCallType* Safe(const std::shared_ptr<BaseCallType>& call) {
+        static DestCallType* safe(const std::shared_ptr<BaseCallType>& call) {
             if (!call) {
                 throw std::runtime_error("Null pointer exception");
             }
-            if (auto* derivedCall = dynamic_cast<DestCallType*>(call.get())) {
-                return derivedCall;
+            if (auto* derived_call = dynamic_cast<DestCallType*>(call.get())) {
+                return derived_call;
             }
             throw std::runtime_error("Invalid NetworkInterface type");
         }
+
+        std::shared_ptr<media::StreamManager> stream_manager() const;
     };
 
-    inline int operator&(const CallInterface::Type& lhs, const CallInterface::Type rhs){
+    inline int operator&(const CallInterface::Type& lhs, const CallInterface::Type rhs) {
         return static_cast<int>(lhs) & static_cast<int>(rhs);
     }
-} // ntgcalls
+
+    inline CallInterface::Type operator|(const CallInterface::Type lhs, const CallInterface::Type rhs) {
+        return static_cast<CallInterface::Type>(static_cast<int>(lhs) | static_cast<int>(rhs));
+    }
+} // ntgcalls::instances

@@ -1,37 +1,37 @@
 //
-// Created by laky64 on 24/01/26.
+// Created by Lauren on 24/01/26.
 //
 
 #pragma once
 #include <any>
 #include <string>
-#include <vector>
-#include <variant>
 #include <type_traits>
+#include <variant>
+#include <vector>
 #include <boost/json.hpp>
 
-namespace wrtc {
+namespace wrtc::utils {
     template<typename T>
-    class iterable;
-    class iterable_items;
-    class iteration_proxy_value;
+    class iterable;              // NOLINT(*-identifier-naming)
+    class iterable_items;        // NOLINT(*-identifier-naming)
+    class iteration_proxy_value; // NOLINT(*-identifier-naming)
 
     template<typename>
-    struct is_vector : std::false_type {};
+    struct is_vector: std::false_type {}; // NOLINT(*-identifier-naming)
 
     template<typename T, typename A>
-    struct is_vector<std::vector<T, A>> : std::true_type {};
+    struct is_vector<std::vector<T, A>>: std::true_type {};
 
     template<typename T>
-    inline constexpr bool is_vector_v = is_vector<T>::value;
+    inline constexpr bool kIsVectorV = is_vector<T>::value;
 
     template<typename>
-    inline constexpr bool always_false_v = false;
+    inline constexpr bool kAlwaysFalseV = false;
 
     using obj_it = boost::json::object::const_iterator;
     using arr_it = boost::json::array::const_iterator;
 
-    class json {
+    class json { // NOLINT(*-identifier-naming)
         boost::json::value* ref_ = nullptr;
         boost::json::value storage_;
 
@@ -50,22 +50,21 @@ namespace wrtc {
         }
 
     public:
-        class exception final : public std::exception {
+        class exception final: public std::exception { // NOLINT(*-identifier-naming)
         public:
-            explicit exception(std::string msg): _msg(std::move(msg)) {}
+            explicit exception(std::string msg): msg_(std::move(msg)) {}
 
             [[nodiscard]] const char* what() const noexcept override {
-                return _msg.c_str();
+                return msg_.c_str();
             }
 
         private:
-            std::string _msg;
+            std::string msg_;
         };
 
         json() = default;
 
-        explicit json(boost::json::value v)
-            : storage_(std::move(v)) {}
+        explicit json(boost::json::value v): storage_(std::move(v)) {}
 
         json(const std::initializer_list<json> list) {
             bool maybe_object = list.size() != 0;
@@ -101,18 +100,17 @@ namespace wrtc {
             typename D = std::decay_t<T>,
             std::enable_if_t<
                 std::is_same_v<D, uint8_t> ||
-                std::is_integral_v<D> ||
-                std::is_floating_point_v<D> ||
-                std::is_same_v<D, bool> ||
-                std::is_same_v<D, std::string> ||
-                std::is_same_v<D, const char*> ||
-                std::is_enum_v<D> ||
-                is_vector_v<D>,
-                int
-            > = 0
-        >
+                    std::is_integral_v<D> ||
+                    std::is_floating_point_v<D> ||
+                    std::is_same_v<D, bool> ||
+                    std::is_same_v<D, std::string> ||
+                    std::is_same_v<D, const char*> ||
+                    std::is_same_v<D, char*> ||
+                    std::is_enum_v<D> ||
+                    kIsVectorV<D>,
+                int> = 0>
         json(T v) { // NOLINT
-            if constexpr (is_vector_v<D>) {
+            if constexpr (kIsVectorV<D>) {
                 boost::json::array arr;
                 for (const auto& el : v) {
                     arr.emplace_back(el);
@@ -121,7 +119,7 @@ namespace wrtc {
             } else if constexpr (std::is_enum_v<D>) {
                 using U = std::underlying_type_t<D>;
                 storage_ = static_cast<U>(v);
-            } else if constexpr (std::is_same_v<D, const char*>) {
+            } else if constexpr (std::is_same_v<D, const char*> || std::is_same_v<D, char*>) {
                 storage_ = std::string(v);
             } else {
                 storage_ = static_cast<D>(v);
@@ -149,8 +147,8 @@ namespace wrtc {
         }
 
         [[nodiscard]] bool empty() const {
-            if(value().is_object()) return value().as_object().empty();
-            if(value().is_array()) return value().as_array().empty();
+            if (value().is_object()) return value().as_object().empty();
+            if (value().is_array()) return value().as_array().empty();
             return false;
         }
 
@@ -169,11 +167,8 @@ namespace wrtc {
                     std::negation<std::is_same<T, iteration_proxy_value>>,
                     std::negation<std::is_same<T, std::any>>,
                     std::negation<std::is_same<T, std::initializer_list<std::string::value_type>>>,
-                    std::negation<std::is_same<T, std::string_view>>
-                >,
-                int
-            > = 0
-        >
+                    std::negation<std::is_same<T, std::string_view>>>,
+                int> = 0>
         operator T() const { // NOLINT
             return get<T>();
         }
@@ -202,15 +197,17 @@ namespace wrtc {
                 if (!v.is_number()) throw exception("JSON value is not a number");
                 using U = std::underlying_type_t<D>;
                 U val;
-                if (v.is_int64()) val = static_cast<U>(v.as_int64());
-                else if (v.is_uint64()) val = static_cast<U>(v.as_uint64());
-                else throw exception("JSON enum value not integral");
+                if (v.is_int64())
+                    val = static_cast<U>(v.as_int64());
+                else if (v.is_uint64())
+                    val = static_cast<U>(v.as_uint64());
+                else
+                    throw exception("JSON enum value not integral");
                 return static_cast<T>(val);
             } else {
-                static_assert(always_false_v<T>, "get<T>() type not supported");
+                static_assert(kAlwaysFalseV<T>, "get<T>() type not supported");
             }
         }
-
 
         bool operator==(const std::string_view rhs) const {
             const auto& v = value();
@@ -220,9 +217,7 @@ namespace wrtc {
         template<
             typename T,
             std::enable_if_t<
-                std::negation_v<std::is_pointer<T>>
-            > = 0
-        >
+                std::negation_v<std::is_pointer<T>>> = 0>
         bool operator==(T rhs) const {
             return get<T>() == rhs;
         }
@@ -257,14 +252,14 @@ namespace wrtc {
                     throw exception("Not an array");
                 return view(v.as_array()[key]);
             } else {
-                static_assert(always_false_v<D>, "Unsupported key type");
+                static_assert(kAlwaysFalseV<D>, "Unsupported key type");
                 throw exception("Unsupported key type");
             }
         }
 
         template<typename T>
         json operator[](const T& key) const {
-            auto &self = const_cast<json&>(*this);
+            auto& self = const_cast<json&>(*this);
             return self.operator[](key);
         }
 
@@ -280,7 +275,7 @@ namespace wrtc {
 
         [[nodiscard]] iterable_items items();
 
-        void push_back(const json &item);
+        void push_back(const json& item);
 
         [[nodiscard]] bool contains(const std::string& key) const;
 
@@ -305,16 +300,17 @@ namespace wrtc {
         json value_;
 
     public:
-        explicit iteration_proxy_value(std::string key, const json& v)
-            : key_(std::move(key)), value_(v) {}
+        explicit iteration_proxy_value(std::string key, const json& v): key_(std::move(key)), value_(v) {}
 
-        explicit iteration_proxy_value(const json& v) : iteration_proxy_value("", v) {}
+        explicit iteration_proxy_value(const json& v): iteration_proxy_value("", v) {}
 
         [[nodiscard]] std::string key() const {
             return key_;
         }
 
-        [[nodiscard]] json value() const { return value_; }
+        [[nodiscard]] json value() const {
+            return value_;
+        }
     };
 
     template<typename Mode>
@@ -325,14 +321,17 @@ namespace wrtc {
         static json deref(
             std::variant<obj_it, arr_it> it
         ) {
-            return std::visit([]<typename T0>(T0 ptr) {
-                using P = std::decay_t<T0>;
-                if constexpr (std::is_same_v<P, obj_it>) {
-                    return json(ptr->value());
-                } else {
-                    return json(*ptr);
-                }
-            }, it);
+            return std::visit(
+                []<typename T0>(T0 ptr) {
+                    using P = std::decay_t<T0>;
+                    if constexpr (std::is_same_v<P, obj_it>) {
+                        return json(ptr->value());
+                    } else {
+                        return json(*ptr);
+                    }
+                },
+                it
+            );
         }
     };
 
@@ -341,19 +340,22 @@ namespace wrtc {
         static iteration_proxy_value deref(
             std::variant<obj_it, arr_it> it
         ) {
-            return std::visit([]<typename T0>(T0 ptr) {
-                using P = std::decay_t<T0>;
-                if constexpr (std::is_same_v<P, obj_it>) {
-                    return iteration_proxy_value(
-                        ptr->key_c_str(),
-                        json(ptr->value())
-                    );
-                } else {
-                    return iteration_proxy_value(
-                        json(*ptr)
-                    );
-                }
-            }, it);
+            return std::visit(
+                []<typename T0>(T0 ptr) {
+                    using P = std::decay_t<T0>;
+                    if constexpr (std::is_same_v<P, obj_it>) {
+                        return iteration_proxy_value(
+                            ptr->key_c_str(),
+                            json(ptr->value())
+                        );
+                    } else {
+                        return iteration_proxy_value(
+                            json(*ptr)
+                        );
+                    }
+                },
+                it
+            );
         }
     };
 
@@ -361,14 +363,14 @@ namespace wrtc {
     class iterable {
         static_assert(
             std::is_same_v<T, json> ||
-            std::is_same_v<T, iteration_proxy_value>,
+                std::is_same_v<T, iteration_proxy_value>,
             "Unsupported iteration mode"
         );
         std::variant<obj_it, arr_it> it_;
 
     public:
-        explicit iterable(obj_it it) : it_(it) {}
-        explicit iterable(arr_it it) : it_(it) {}
+        explicit iterable(obj_it it): it_(it) {}
+        explicit iterable(arr_it it): it_(it) {}
 
         using value_type = decltype(iterable_policy<T>::deref(std::declval<obj_it>()));
 
@@ -379,7 +381,8 @@ namespace wrtc {
         iterable& operator++() {
             std::visit([]<typename T0>(T0& ptr) {
                 ++ptr;
-            }, it_);
+            },
+                       it_);
             return *this;
         }
 
@@ -391,24 +394,30 @@ namespace wrtc {
     class iterable_items {
         std::variant<
             const boost::json::array*,
-            const boost::json::object*
-        > data_;
+            const boost::json::object*>
+            data_;
 
     public:
-        explicit iterable_items(const boost::json::array& a) : data_(&a) {}
+        explicit iterable_items(const boost::json::array& a): data_(&a) {}
 
-        explicit iterable_items(const boost::json::object& o) : data_(&o) {}
+        explicit iterable_items(const boost::json::object& o): data_(&o) {}
 
         [[nodiscard]] iterable<iteration_proxy_value> begin() const {
-            return std::visit([](auto ptr) {
-                return iterable<iteration_proxy_value>(ptr->begin());
-            }, data_);
+            return std::visit(
+                [](auto ptr) {
+                    return iterable<iteration_proxy_value>(ptr->begin());
+                },
+                data_
+            );
         }
 
         [[nodiscard]] iterable<iteration_proxy_value> end() const {
-            return std::visit([](auto ptr) {
-                return iterable<iteration_proxy_value>(ptr->end());
-            }, data_);
+            return std::visit(
+                [](auto ptr) {
+                    return iterable<iteration_proxy_value>(ptr->end());
+                },
+                data_
+            );
         }
     };
-} // wrtc
+} // wrtc::utils

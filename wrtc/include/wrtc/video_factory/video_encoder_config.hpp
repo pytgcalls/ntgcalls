@@ -1,19 +1,17 @@
 //
-// Created by Laky64 on 18/08/2023.
+// Created by Lauren on 18/08/23.
 //
 
 #pragma once
 
 #include <functional>
-
 #include <api/video_codecs/video_encoder.h>
 #include <api/video_codecs/video_encoder_factory.h>
-
 #include <wrtc/video_factory/video_base_config.hpp>
 
-namespace wrtc {
+namespace wrtc::video_factory {
 
-    class VideoEncoderConfig final : public VideoBaseConfig {
+    class VideoEncoderConfig final: public VideoBaseConfig {
     public:
         VideoEncoderConfig() = default;
 
@@ -21,20 +19,21 @@ namespace wrtc {
 
         VideoEncoderConfig(webrtc::VideoCodecType codec, EncoderCallback encoder, int alignment = 0);
 
-        VideoEncoderConfig(FormatsRetriever formatsRetriever, EncoderCallback encoder, int alignment = 0);
+        VideoEncoderConfig(FormatsRetriever formats_retriever, EncoderCallback encoder, int alignment = 0);
 
-        explicit VideoEncoderConfig(std::unique_ptr<webrtc::VideoEncoderFactory> factory): factory(std::move(factory)) {}
+        explicit VideoEncoderConfig(std::unique_ptr<webrtc::VideoEncoderFactory> factory): factory_(std::move(factory)) {}
 
-        [[nodiscard]] std::unique_ptr<webrtc::VideoEncoder> CreateVideoCodec(const webrtc::Environment& env, const webrtc::SdpVideoFormat &format) const;
+        [[nodiscard]] std::unique_ptr<webrtc::VideoEncoder> create_video_codec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const;
 
     private:
-        EncoderCallback encoder;
-        std::shared_ptr<webrtc::VideoEncoderFactory> factory;
-        int alignment = 0;
+        EncoderCallback encoder_;
+        std::shared_ptr<webrtc::VideoEncoderFactory> factory_;
+        int alignment_ = 0;
 
-        bool isInternal() const override;
+    protected:
+        bool is_internal() const override;
 
-        std::vector<webrtc::SdpVideoFormat> getInternalFormats() const override;
+        std::vector<webrtc::SdpVideoFormat> get_internal_formats() const override;
     };
 
-} // wrtc
+} // wrtc::video_factory

@@ -13,6 +13,7 @@ type StreamDevice int
 type MediaSource int
 type MediaSegmentQuality int
 type MediaSegmentStatus int
+type CallType int
 
 type StreamEndCallback func(chatId int64, streamType StreamType, streamDevice StreamDevice)
 type UpgradeCallback func(chatId int64, state MediaState)
@@ -23,6 +24,11 @@ type RemoteSourceCallback func(chatId int64, source RemoteSource)
 type BroadcastTimestampCallback func(chatId int64)
 
 type BroadcastPartCallback func(chatId int64, segmentPartRequest SegmentPartRequest)
+
+type EmojisCallback func(chatId int64, emojis string)
+type RequestParticipantsCallback func(chatId int64)
+type OutboundBlockCallback func(chatId int64, block []byte)
+type SubchainRequestCallback func(chatId int64, subchainRequest SubchainRequest)
 
 const (
 	MicrophoneStream StreamDevice = iota
@@ -86,6 +92,12 @@ const (
 	SegmentStatusNotReady MediaSegmentStatus = iota
 	SegmentStatusResyncNeeded
 	SegmentStatusSuccess
+)
+
+const (
+	GroupCallType CallType = iota
+	P2PCallType
+	ConferenceCallType
 )
 
 func (ctx MediaSource) ParseToC() C.ntg_media_source_enum {

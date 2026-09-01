@@ -1,14 +1,14 @@
 //
-// Created by Laky64 on 19/08/2023.
+// Created by Lauren on 19/08/23.
 //
 
 #pragma once
-#include <wrtc/models/frame_data.hpp>
-#include <wrtc/models/i420_image_data.hpp>
 #include <wrtc/interfaces/media/tracks/video_track_source.hpp>
 #include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
+#include <wrtc/models/frame_data.hpp>
+#include <wrtc/models/i420_image_data.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
 
     class RTCVideoSource {
     public:
@@ -16,13 +16,13 @@ namespace wrtc {
 
         ~RTCVideoSource();
 
-        [[nodiscard]] webrtc::scoped_refptr<webrtc::VideoTrackInterface> createTrack() const;
+        [[nodiscard]] webrtc::scoped_refptr<webrtc::VideoTrackInterface> create_track() const;
 
-        void OnFrame(const i420ImageData& data, FrameData additionalData) const;
+        void on_frame(const models::I420ImageData& data, models::FrameData additional_data) const;
 
     private:
-        webrtc::scoped_refptr<VideoTrackSource> source;
-        PeerConnectionFactory* factory;
+        webrtc::scoped_refptr<tracks::VideoTrackSource> source_;
+        peer_connection::PeerConnectionFactory* factory_;
     };
 
-} // wrtc
+} // wrtc::interfaces::media

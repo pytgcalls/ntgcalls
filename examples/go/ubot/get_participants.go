@@ -6,7 +6,7 @@ import (
 	"slices"
 	"time"
 
-	tg "github.com/amarnathcjd/gogram/telegram"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func (ctx *Context) GetParticipants(chatId int64) ([]*tg.GroupCallParticipant, error) {
@@ -17,7 +17,7 @@ func (ctx *Context) GetParticipants(chatId int64) ([]*tg.GroupCallParticipant, e
 			CallParticipants: make(map[int64]*tg.GroupCallParticipant),
 		}
 	}
-	if time.Since(ctx.callParticipants[chatId].LastMtprotoUpdate) > time.Minute {
+	if time.Since(ctx.callParticipants[chatId].LastMTProtoUpdate) > time.Minute {
 		groupCall, err := ctx.getInputGroupCall(chatId)
 		if err != nil {
 			return nil, err
@@ -25,25 +25,25 @@ func (ctx *Context) GetParticipants(chatId int64) ([]*tg.GroupCallParticipant, e
 		ctx.callParticipants[chatId].CallParticipants = make(map[int64]*tg.GroupCallParticipant)
 		var nextOffset string
 		for {
-			res, err := ctx.app.PhoneGetGroupParticipants(
-				groupCall,
-				[]tg.InputPeer{},
-				[]int32{},
-				nextOffset,
-				0,
+			resRaw, err := ctx.invoke(
+				&tg.PhoneGetGroupParticipantsRequest{
+					Call:   groupCall,
+					Offset: nextOffset,
+				},
 			)
 			if err != nil {
 				return nil, err
 			}
+			res := resRaw.(*tg.PhoneGroupParticipants)
 			for _, participant := range res.Participants {
-				ctx.callParticipants[chatId].CallParticipants[getParticipantId(participant.Peer)] = participant
+				ctx.callParticipants[chatId].CallParticipants[parsePeer(participant.Peer)] = participant
 			}
 			if res.NextOffset == "" {
 				break
 			}
 			nextOffset = res.NextOffset
 		}
-		ctx.callParticipants[chatId].LastMtprotoUpdate = time.Now()
+		ctx.callParticipants[chatId].LastMTProtoUpdate = time.Now()
 	}
 	return slices.Collect(maps.Values(ctx.callParticipants[chatId].CallParticipants)), nil
 }

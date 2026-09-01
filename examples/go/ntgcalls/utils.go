@@ -158,6 +158,34 @@ func parseSsrcGroups(ssrcGroups []SsrcGroup) *C.ntg_ssrc_group_struct {
 	return nil
 }
 
+func parseSsrcMappings(mappings []SsrcMapping) *C.ntg_ssrc_mapping_struct {
+	if len(mappings) > 0 {
+		rawMappings := make([]C.ntg_ssrc_mapping_struct, len(mappings))
+		for i, mapping := range mappings {
+			rawMappings[i] = C.ntg_ssrc_mapping_struct{
+				userId: C.int64_t(mapping.UserID),
+				ssrc:   C.int32_t(mapping.Ssrc),
+			}
+		}
+		return (*C.ntg_ssrc_mapping_struct)(unsafe.Pointer(&rawMappings[0]))
+	}
+	return nil
+}
+
+func parseBlocks(blocks [][]byte) (**C.uint8_t, *C.int) {
+	if len(blocks) > 0 {
+		rawBlocks := make([]*C.uint8_t, len(blocks))
+		rawSizes := make([]C.int, len(blocks))
+		for i, block := range blocks {
+			blockC, blockSize := parseBytes(block)
+			rawBlocks[i] = blockC
+			rawSizes[i] = blockSize
+		}
+		return &rawBlocks[0], &rawSizes[0]
+	}
+	return nil, nil
+}
+
 func parseDeviceInfoVector(devices unsafe.Pointer, size C.int) []DeviceInfo {
 	rawDevices := make([]DeviceInfo, size)
 	for i := 0; i < int(size); i++ {

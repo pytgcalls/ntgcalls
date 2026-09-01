@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 15/09/24.
+// Created by Lauren on 15/09/24.
 //
 
 #include <wrtc/utils/java_context.hpp>
@@ -9,7 +9,7 @@
 #include <sdk/android/src/jni/jvm.h>
 #endif
 
-namespace wrtc {
+namespace wrtc::utils {
     void* GetJNIEnv() {
 #ifdef IS_ANDROID
         return webrtc::AttachCurrentThreadIfNeeded();
@@ -17,4 +17,4 @@ namespace wrtc {
         return nullptr;
 #endif
     }
-} // wrtc
+} // wrtc::utils

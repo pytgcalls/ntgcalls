@@ -55,7 +55,7 @@ DownloadProject(
 )
 
 if (NOT TARGET Boost::json)
-    add_library(Boost::json STATIC IMPORTED)
+    add_library(Boost::json STATIC IMPORTED GLOBAL)
     set_target_properties(Boost::json PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
         IMPORTED_LINK_INTERFACE_LANGUAGES CXX
@@ -65,7 +65,7 @@ endif ()
 
 if (NOT ANDROID)
     if (NOT TARGET Boost::atomic)
-        add_library(Boost::atomic STATIC IMPORTED)
+        add_library(Boost::atomic STATIC IMPORTED GLOBAL)
         set_target_properties(Boost::atomic PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
@@ -74,7 +74,7 @@ if (NOT ANDROID)
     endif ()
 
     if (NOT TARGET Boost::context)
-        add_library(Boost::context STATIC IMPORTED)
+        add_library(Boost::context STATIC IMPORTED GLOBAL)
         set_target_properties(Boost::context PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
@@ -83,7 +83,7 @@ if (NOT ANDROID)
     endif ()
 
     if (NOT TARGET Boost::date_time)
-        add_library(Boost::date_time STATIC IMPORTED)
+        add_library(Boost::date_time STATIC IMPORTED GLOBAL)
         set_target_properties(Boost::date_time PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
@@ -92,7 +92,7 @@ if (NOT ANDROID)
     endif ()
 
     if (NOT TARGET Boost::filesystem)
-        add_library(Boost::filesystem STATIC IMPORTED)
+        add_library(Boost::filesystem STATIC IMPORTED GLOBAL)
         set_target_properties(Boost::filesystem PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
@@ -102,7 +102,7 @@ if (NOT ANDROID)
     endif ()
 
     if(NOT TARGET Boost::process)
-        add_library(Boost::process STATIC IMPORTED)
+        add_library(Boost::process STATIC IMPORTED GLOBAL)
         set_target_properties(Boost::process PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${BOOST_SRC}/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES CXX
@@ -111,6 +111,6 @@ if (NOT ANDROID)
         target_link_libraries(Boost::process INTERFACE Boost::atomic Boost::context Boost::date_time Boost::filesystem)
     endif ()
 
-    add_compile_definitions(BOOST_ENABLED)
+    add_compile_definitions(BOOST_ENABLED BOOST_ASIO_NO_DEPRECATED)
     set(BOOST_ENABLED TRUE)
 endif ()

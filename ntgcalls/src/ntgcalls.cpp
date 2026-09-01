@@ -1,398 +1,424 @@
 //
-// Created by Laky64 on 22/08/2023.
+// Created by Lauren on 22/08/23.
 //
 
 #include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
-#include <ntgcalls/devices/media_device.hpp>
+#include <ntgcalls/media/devices/media_device.hpp>
 #include <ntgcalls/instances/group_call.hpp>
 #include <ntgcalls/instances/p2p_call.hpp>
-#include <ntgcalls/models/dh_config.hpp>
+#include <ntgcalls/instances/conference_call.hpp>
+#include <ntgcalls/p2p/dh_config.hpp>
 #include <ntgcalls/utils/g_lib_loop_manager.hpp>
 #include <wrtc/video_factory/video_factory_config.hpp>
 
 namespace ntgcalls {
     NTgCalls::NTgCalls() {
-        updateThread = wrtc::SafeThread::Create();
-        updateThread->Start();
-        hardwareInfo = std::make_unique<HardwareInfo>();
-        INIT_ASYNC
-        LogSink::GetOrCreate();
+        update_thread_ = wrtc::utils::SafeThread::Create();
+        update_thread_->Start();
+        hardware_info_ = std::make_unique<utils::HardwareInfo>();
+        utils::LogSink::get_or_create();
+        shutdown_token_ = utils::ShutdownHook::add([this] {
+            stop_connections();
+        });
     }
 
     NTgCalls::~NTgCalls() {
-        DESTROY_ASYNC
-#ifdef PYTHON_ENABLED
-        py::gil_scoped_release release;
-#endif
-        decltype(connections) localConnections;
+        utils::ShutdownHook::remove(shutdown_token_);
         {
-            std::lock_guard lock(mutex);
+            const std::lock_guard lock(mutex_);
             RTC_LOG(LS_VERBOSE) << "Destroying NTgCalls";
-            localConnections = std::move(connections);
-            onEof = nullptr;
-            mediaStateCallback = nullptr;
-            connectionChangeCallback = nullptr;
-            emitCallback = nullptr;
-            remoteSourceCallback = nullptr;
-            broadcastTimestampCallback = nullptr;
-            segmentPartRequestCallback = nullptr;
-            framesCallback = nullptr;
-            hardwareInfo = nullptr;
+            on_eof_callback_ = nullptr;
+            media_state_callback_ = nullptr;
+            connection_change_callback_ = nullptr;
+            emit_callback_ = nullptr;
+            remote_source_callback_ = nullptr;
+            broadcast_timestamp_callback_ = nullptr;
+            request_broadcast_part_callback_ = nullptr;
+            frames_callback_ = nullptr;
+            hardware_info_ = nullptr;
         }
-        for (const auto& connection : localConnections | std::views::values) {
-            connection->stop();
-        }
-        localConnections.clear();
-        updateThread->Stop();
-        updateThread = nullptr;
+        stop_connections();
+        update_thread_->Stop();
+        update_thread_ = nullptr;
         RTC_LOG(LS_VERBOSE) << "NTgCalls destroyed";
-        LogSink::UnRef();
+        utils::LogSink::un_ref();
     }
 
-    void NTgCalls::setupListeners(const int64_t chatId) {
-        connections[chatId]->onStreamEnd([this, chatId](const StreamManager::Type &type, const StreamManager::Device &device) {
-            WORKER("onStreamEnd", updateThread, this, chatId, type, device)
-            THREAD_SAFE
-            (void) onEof(chatId, type, device);
-            END_THREAD_SAFE
+    void NTgCalls::stop_connections() {
+        decltype(connections_) local_connections;
+        {
+            const std::lock_guard lock(mutex_);
+            local_connections = std::move(connections_);
+        }
+        for (const auto& connection : local_connections | std::views::values) {
+            connection->stop();
+        }
+    }
+
+    void NTgCalls::setup_listeners(const int64_t chat_id) {
+        connections_[chat_id]->on_stream_end([this, chat_id](const media::StreamManager::Type& type, const media::StreamManager::Device& device) {
+            WORKER("onStreamEnd", update_thread_, this, chat_id, type, device)
+            (void) on_eof_callback_(chat_id, type, device);
             END_WORKER
         });
-        if (connections[chatId]->type() & CallInterface::Type::Group) {
-            SafeCall<GroupCall>(connections[chatId].get())->onUpgrade([this, chatId](const MediaState &state) {
-                WORKER("onUpgrade", updateThread, this, chatId, state)
-                THREAD_SAFE
-                (void) mediaStateCallback(chatId, state);
-                END_THREAD_SAFE
+        if (connections_[chat_id]->type() & (instances::CallInterface::Type::Group | instances::CallInterface::Type::Conference)) {
+            safe_call<instances::GroupCall>(connections_[chat_id].get())->on_upgrade([this, chat_id](const media::MediaState& state) {
+                WORKER("onUpgrade", update_thread_, this, chat_id, state)
+                (void) media_state_callback_(chat_id, state);
                 END_WORKER
             });
 
-            SafeCall<GroupCall>(connections[chatId].get())->onRequestedBroadcastPart([this, chatId](const wrtc::SegmentPartRequest &request) {
-                WORKER_NO_LOG(updateThread, this, chatId, request)
-                THREAD_SAFE
-                (void) segmentPartRequestCallback(chatId, request);
-                END_THREAD_SAFE
+            safe_call<instances::GroupCall>(connections_[chat_id].get())->on_request_broadcast_part([this, chat_id](const wrtc::models::SegmentPartRequest& request) {
+                WORKER_NO_LOG(update_thread_, this, chat_id, request)
+                (void) request_broadcast_part_callback_(chat_id, request);
                 END_WORKER_NO_LOG
             });
 
-            SafeCall<GroupCall>(connections[chatId].get())->onRequestedBroadcastTimestamp([this, chatId] {
-                WORKER_NO_LOG(updateThread, this, chatId)
-                THREAD_SAFE
-                (void) broadcastTimestampCallback(chatId);
-                END_THREAD_SAFE
+            safe_call<instances::GroupCall>(connections_[chat_id].get())->on_request_broadcast_timestamp([this, chat_id] {
+                WORKER_NO_LOG(update_thread_, this, chat_id)
+                (void) broadcast_timestamp_callback_(chat_id);
                 END_WORKER_NO_LOG
             });
+            if (connections_[chat_id]->type() & instances::CallInterface::Type::Conference) {
+                safe_call<instances::ConferenceCall>(connections_[chat_id].get())->on_request_participants([this, chat_id] {
+                    WORKER("onRequestParticipants", update_thread_, this, chat_id)
+                    (void) request_participants_callback_(chat_id);
+                    END_WORKER
+                });
+                safe_call<instances::ConferenceCall>(connections_[chat_id].get())->on_outbound_block([this, chat_id](const bytes::binary& block) {
+                    WORKER("onOutboundBlock", update_thread_, this, chat_id, block)
+                    (void) outbound_block_callback_(chat_id, block);
+                    END_WORKER
+                });
+                safe_call<instances::ConferenceCall>(connections_[chat_id].get())->on_subchain_request([this, chat_id](e2e::SubchainRequest subchain_request) {
+                    WORKER("onSubchainRequest", update_thread_, this, chat_id, subchain_request)
+                    (void) subchain_request_callback_(chat_id, subchain_request);
+                    END_WORKER
+                });
+            }
         }
-        connections[chatId]->onConnectionChange([this, chatId](const NetworkInfo &state) {
-            WORKER("onConnectionChange", updateThread, this, chatId, state)
-            THREAD_SAFE
-            (void) connectionChangeCallback(chatId, state);
-            END_THREAD_SAFE
-            if (state.kind == NetworkInfo::Kind::Normal) {
+        if (connections_[chat_id]->type() & (instances::CallInterface::Type::P2P | instances::CallInterface::Type::Conference)) {
+            safe_call<instances::E2EInterface>(connections_[chat_id].get())->on_update_emojis([this, chat_id](const std::string& emojis) {
+                WORKER("onUpdateEmojis", update_thread_, this, chat_id, emojis)
+                (void) update_emojis_callback_(chat_id, emojis);
+                END_WORKER
+            });
+        }
+        connections_[chat_id]->on_connection_change([this, chat_id](const ConnectionInfo& state) {
+            WORKER("onConnectionChange", update_thread_, this, chat_id, state)
+            (void) connection_change_callback_(chat_id, state);
+            if (state.kind == ConnectionInfo::Kind::Normal) {
                 switch (state.state) {
-                    case NetworkInfo::ConnectionState::Closed:
-                    case NetworkInfo::ConnectionState::Failed:
-                    case NetworkInfo::ConnectionState::Timeout:
-                        updateThread->PostTask([this, chatId] {
-                            remove(chatId);
-                        });
-                        break;
-                    default:
-                        break;
+                case ConnectionInfo::State::Closed:
+                case ConnectionInfo::State::Failed:
+                case ConnectionInfo::State::Timeout:
+                    update_thread_->PostTask([this, chat_id] {
+                        remove(chat_id);
+                    });
+                    break;
+                default:
+                    break;
                 }
             }
             END_WORKER
         });
-        connections[chatId]->onFrames([this, chatId] (const StreamManager::Mode mode, const StreamManager::Device device, const std::vector<wrtc::Frame>& frames) {
-            THREAD_SAFE
-            (void) framesCallback(chatId, mode, device, frames);
-            END_THREAD_SAFE
+        connections_[chat_id]->on_frames([this, chat_id](const media::StreamManager::Mode mode, const media::StreamManager::Device device, const std::vector<wrtc::models::Frame>& frames) {
+            (void) frames_callback_(chat_id, mode, device, frames);
         });
-        connections[chatId]->onRemoteSourceChange([this, chatId](const RemoteSource &state) {
-            WORKER("onRemoteSourceChange", updateThread, this, chatId, state)
-            THREAD_SAFE
-            (void) remoteSourceCallback(chatId, state);
-            END_THREAD_SAFE
+        connections_[chat_id]->on_remote_source_change([this, chat_id](const RemoteSource& state) {
+            WORKER("onRemoteSourceChange", update_thread_, this, chat_id, state)
+            (void) remote_source_callback_(chat_id, state);
             END_WORKER
         });
-        if (connections[chatId]->type() & CallInterface::Type::P2P) {
-            SafeCall<P2PCall>(connections[chatId].get())->onSignalingData([this, chatId](const bytes::binary& data) {
-                WORKER("onSignalingData", updateThread, this, chatId, data)
-                THREAD_SAFE
-                (void) emitCallback(chatId, CAST_BYTES(data));
-                END_THREAD_SAFE
+        if (connections_[chat_id]->type() & instances::CallInterface::Type::P2P) {
+            safe_call<instances::P2PCall>(connections_[chat_id].get())->on_signaling_data([this, chat_id](const bytes::binary& data) {
+                WORKER("onSignalingData", update_thread_, this, chat_id, data)
+                (void) emit_callback_(chat_id, data);
                 END_WORKER
             });
         }
     }
 
-    ASYNC_RETURN(void) NTgCalls::createP2PCall(const int64_t userId) {
-        SMART_ASYNC(this, userId)
-        CHECK_AND_THROW_IF_EXISTS(userId)
-        std::lock_guard lock(mutex);
-        connections[userId] = std::make_shared<P2PCall>(*updateThread);
-        setupListeners(userId);
-        SafeCall<P2PCall>(connections[userId].get())->init();
-        END_ASYNC
+    void NTgCalls::create_p2p_call(const int64_t user_id) {
+        const std::lock_guard lock(mutex_);
+        CHECK_AND_THROW_IF_EXISTS(user_id)
+        connections_[user_id] = std::make_shared<instances::P2PCall>(*update_thread_);
+        setup_listeners(user_id);
+        safe_call<instances::P2PCall>(connections_[user_id].get())->init();
     }
 
-    ASYNC_RETURN(bytes::vector) NTgCalls::initExchange(const int64_t userId, const DhConfig& dhConfig, const std::optional<BYTES(bytes::vector)> &g_a_hash) {
-        SMART_ASYNC(this, userId, dhConfig, g_a_hash = CPP_BYTES(g_a_hash, bytes::vector))
-        const auto result = SafeCall<P2PCall>(safeConnection(userId))->initExchange(dhConfig, g_a_hash);
-        THREAD_SAFE
-        return CAST_BYTES(result);
-        END_THREAD_SAFE
-        END_ASYNC
+    bytes::binary NTgCalls::init_exchange(const int64_t user_id, const p2p::DhConfig& dh_config, const std::optional<bytes::binary>& ga_hash) {
+        return safe_call<instances::P2PCall>(safe_connection(user_id))->init_exchange(dh_config, ga_hash);
     }
 
-    ASYNC_RETURN(AuthParams) NTgCalls::exchangeKeys(const int64_t userId, const BYTES(bytes::vector) &g_a_or_b, const int64_t fingerprint) {
-        SMART_ASYNC(this, userId, g_a_or_b = CPP_BYTES(g_a_or_b, bytes::vector), fingerprint)
-        return SafeCall<P2PCall>(safeConnection(userId))->exchangeKeys(g_a_or_b, fingerprint);
-        END_ASYNC
+    p2p::AuthParams NTgCalls::exchange_keys(const int64_t user_id, const bytes::binary& g_a_or_b, const int64_t fingerprint) {
+        return safe_call<instances::P2PCall>(safe_connection(user_id))->exchange_keys(g_a_or_b, fingerprint);
     }
 
-    ASYNC_RETURN(void) NTgCalls::skipExchange(const int64_t userId, const BYTES(bytes::vector) &encryptionKey, const bool isOutgoing) {
-        SMART_ASYNC(this, userId, encryptionKey = CPP_BYTES(encryptionKey, bytes::vector), isOutgoing)
-        SafeCall<P2PCall>(safeConnection(userId))->skipExchange(encryptionKey, isOutgoing);
-        END_ASYNC
+    void NTgCalls::skip_exchange(const int64_t user_id, const bytes::binary& encryption_key, const bool is_outgoing) {
+        safe_call<instances::P2PCall>(safe_connection(user_id))->skip_exchange(encryption_key, is_outgoing);
     }
 
-    ASYNC_RETURN(void) NTgCalls::connectP2P(const int64_t userId, const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
-        SMART_ASYNC(this, userId, servers, versions, p2pAllowed)
-        SafeCall<P2PCall>(safeConnection(userId))->connect(servers, versions, p2pAllowed);
-        END_ASYNC
+    void NTgCalls::connect_p2p(const int64_t user_id, const std::vector<p2p::RTCServer>& servers, const std::vector<std::string>& versions, const bool p2p_allowed, const std::optional<std::string>& custom_parameters) {
+        safe_call<instances::P2PCall>(safe_connection(user_id))->connect(servers, versions, p2p_allowed, custom_parameters);
     }
 
-    ASYNC_RETURN(std::string) NTgCalls::createCall(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        CHECK_AND_THROW_IF_EXISTS(chatId)
-        std::lock_guard lock(mutex);
-        connections[chatId] = std::make_shared<GroupCall>(*updateThread);
-        setupListeners(chatId);
-        return SafeCall<GroupCall>(connections[chatId].get())->init();
-        END_ASYNC
+    std::string NTgCalls::create_call(const int64_t chat_id) {
+        const std::lock_guard lock(mutex_);
+        CHECK_AND_THROW_IF_EXISTS(chat_id)
+        connections_[chat_id] = std::make_shared<instances::GroupCall>(*update_thread_);
+        setup_listeners(chat_id);
+        return safe_call<instances::GroupCall>(connections_[chat_id].get())->init();
     }
 
-    ASYNC_RETURN(std::string) NTgCalls::initPresentation(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        return SafeCall<GroupCall>(safeConnection(chatId))->initPresentation();
-        END_ASYNC
+    std::string NTgCalls::init_presentation(const int64_t chat_id) {
+        return safe_call<instances::GroupCall>(safe_connection(chat_id))->init_presentation();
     }
 
-    ASYNC_RETURN(void) NTgCalls::connect(const int64_t chatId, const std::string& params, const bool isPresentation) {
-        SMART_ASYNC(this, chatId, params, isPresentation)
-        SafeCall<GroupCall>(safeConnection(chatId))->connect(params, isPresentation);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(uint32_t) NTgCalls::addIncomingVideo(const int64_t chatId, const std::string& endpoint, const std::vector<wrtc::SsrcGroup>& ssrcGroups) {
-        SMART_ASYNC(this, chatId, endpoint, ssrcGroups)
-        return SafeCall<GroupCall>(safeConnection(chatId))->addIncomingVideo(endpoint, ssrcGroups);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(bool) NTgCalls::removeIncomingVideo(const int64_t chatId, const std::string& endpoint) {
-        SMART_ASYNC(this, chatId, endpoint)
-        return SafeCall<GroupCall>(safeConnection(chatId))->removeIncomingVideo(endpoint);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(void) NTgCalls::setStreamSources(const int64_t chatId, const StreamManager::Mode mode, const MediaDescription& media) {
-        SMART_ASYNC(this, chatId, mode, media)
-        safeConnection(chatId)->setStreamSources(mode, media);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(bool) NTgCalls::pause(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        return safeConnection(chatId)->pause();
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(bool) NTgCalls::resume(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        return safeConnection(chatId)->resume();
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(bool) NTgCalls::mute(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        return safeConnection(chatId)->mute();
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(bool) NTgCalls::unmute(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        return safeConnection(chatId)->unmute();
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(void) NTgCalls::stop(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        remove(chatId);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(void) NTgCalls::stopPresentation(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        SafeCall<GroupCall>(safeConnection(chatId))->stopPresentation(true);
-        END_ASYNC
-    }
-
-    void NTgCalls::onStreamEnd(const std::function<void(int64_t, StreamManager::Type, StreamManager::Device)>& callback) {
-        std::lock_guard lock(mutex);
-        onEof = callback;
-    }
-
-    void NTgCalls::onUpgrade(const std::function<void(int64_t, MediaState)>& callback) {
-        std::lock_guard lock(mutex);
-        mediaStateCallback = callback;
-    }
-
-    void NTgCalls::onConnectionChange(const std::function<void(int64_t, NetworkInfo)>& callback) {
-       std::lock_guard lock(mutex);
-       connectionChangeCallback = callback;
-    }
-
-    void NTgCalls::onFrames(const std::function<void(int64_t, StreamManager::Mode, StreamManager::Device, const std::vector<wrtc::Frame>&)>& callback) {
-        std::lock_guard lock(mutex);
-        framesCallback = callback;
-    }
-
-    void NTgCalls::onSignalingData(const std::function<void(int64_t, const BYTES(bytes::binary)&)>& callback) {
-        std::lock_guard lock(mutex);
-        emitCallback = callback;
-    }
-
-    void NTgCalls::onRemoteSourceChange(const std::function<void(int64_t, RemoteSource)>& callback) {
-        std::lock_guard lock(mutex);
-        remoteSourceCallback = callback;
-    }
-
-    void NTgCalls::onRequestBroadcastPart(const std::function<void(int64_t, wrtc::SegmentPartRequest)>& callback) {
-        std::lock_guard lock(mutex);
-        segmentPartRequestCallback = callback;
-    }
-
-    void NTgCalls::onRequestBroadcastTimestamp(const std::function<void(int64_t)>& callback) {
-        std::lock_guard lock(mutex);
-        broadcastTimestampCallback = callback;
-    }
-
-    ASYNC_RETURN(void) NTgCalls::sendBroadcastTimestamp(int64_t chatId, int64_t timestamp) {
-        SMART_ASYNC(this, chatId, timestamp)
-        SafeCall<GroupCall>(safeConnection(chatId))->sendBroadcastTimestamp(timestamp);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(void) NTgCalls::sendBroadcastPart(int64_t chatId, int64_t segmentId, int32_t partId, wrtc::MediaSegment::Part::Status status, const bool qualityUpdate, const std::optional<BYTES(bytes::binary)> &data) {
-        SMART_ASYNC(this, chatId, segmentId, partId, status, qualityUpdate, data = CPP_BYTES(data, bytes::binary))
-        SafeCall<GroupCall>(safeConnection(chatId))->sendBroadcastPart(segmentId, partId, status, qualityUpdate, data);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(void) NTgCalls::sendSignalingData(const int64_t chatId, const BYTES(bytes::binary) &msgKey) {
-        SMART_ASYNC(this, chatId, msgKey = CPP_BYTES(msgKey, bytes::binary))
-        SafeCall<P2PCall>(safeConnection(chatId))->sendSignalingData(msgKey);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(void) NTgCalls::sendExternalFrame(const int64_t chatId, const StreamManager::Device device, const BYTES(bytes::binary) &data, const wrtc::FrameData frameData) {
-        SMART_ASYNC(this, chatId, device, data = CPP_BYTES(data, bytes::binary), frameData)
-        safeConnection(chatId)->sendExternalFrame(device, data, frameData);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(uint64_t) NTgCalls::time(const int64_t chatId, const StreamManager::Mode mode) {
-        SMART_ASYNC(this, chatId, mode)
-        return safeConnection(chatId)->time(mode);
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(MediaState) NTgCalls::getState(const int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        return safeConnection(chatId)->getState();
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(wrtc::ConnectionMode) NTgCalls::getConnectionMode(int64_t chatId) {
-        SMART_ASYNC(this, chatId)
-        return safeConnection(chatId)->getConnectionMode();
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(double) NTgCalls::cpuUsage() const {
-        SMART_ASYNC(this)
-        return hardwareInfo->getCpuUsage();
-        END_ASYNC
-    }
-
-    ASYNC_RETURN(std::map<int64_t, StreamManager::CallInfo>) NTgCalls::calls() {
-        SMART_ASYNC(this)
-        std::lock_guard lock(mutex);
-        std::map<int64_t, StreamManager::CallInfo> statusList;
-        for (const auto& [fst, snd] : connections) {
-            statusList.emplace(fst, StreamManager::CallInfo{
-                snd->status(StreamManager::Mode::Playback),
-                snd->status(StreamManager::Mode::Capture)
-            });
+    p2p::ConferenceJoinParams NTgCalls::init_conference(const int64_t chat_id, const int64_t user_id, const std::optional<bytes::binary>& last_block) {
+        const std::lock_guard lock(mutex_);
+        if (!exists(chat_id)) {
+            THROW_CONNECTION_NOT_FOUND(chat_id)
         }
-        return statusList;
-        END_ASYNC
+        auto conference_call = std::make_shared<instances::ConferenceCall>(*update_thread_);
+        if (auto* p2p_call = safe_call<instances::P2PCall>(connections_[chat_id].get())) {
+            RTC_LOG(LS_INFO) << "Migrating P2P call to conference call for " << chat_id;
+            conference_call->migrate(p2p_call);
+            p2p_call->stop();
+        }
+        connections_[chat_id] = std::move(conference_call);
+        auto result = safe_call<instances::ConferenceCall>(connections_[chat_id].get())->init_conference(user_id, last_block);
+        setup_listeners(chat_id);
+        return result;
     }
 
-    void NTgCalls::remove(const int64_t chatId) {
-        RTC_LOG(LS_VERBOSE) << "Removing call " << chatId << ", Acquiring lock";
-        std::shared_ptr<CallInterface> call;
+    void NTgCalls::connect(const int64_t chat_id, const std::string& params, const bool is_presentation) {
+        safe_call<instances::GroupCall>(safe_connection(chat_id))->connect(params, is_presentation);
+    }
+
+    uint32_t NTgCalls::add_incoming_video(const int64_t chat_id, const int64_t user_id, const std::string& endpoint, const std::vector<wrtc::models::SsrcGroup>& ssrc_groups) {
+        return safe_call<instances::GroupCall>(safe_connection(chat_id))->add_incoming_video(user_id, endpoint, ssrc_groups);
+    }
+
+    bool NTgCalls::remove_incoming_video(const int64_t chat_id, const std::string& endpoint) {
+        return safe_call<instances::GroupCall>(safe_connection(chat_id))->remove_incoming_video(endpoint);
+    }
+
+    void NTgCalls::update_audio_ssrc_mappings(const int64_t chat_id, const std::vector<wrtc::models::SsrcMapping>& ssrc_groups) {
+        return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->update_audio_ssrc_mappings(ssrc_groups);
+    }
+
+    void NTgCalls::apply_blocks(const int64_t chat_id, const int subchain, const int next_offset, const std::vector<bytes::binary>& blocks, const bool from_short_poll) {
+        return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->apply_blocks(subchain, next_offset, blocks, from_short_poll);
+    }
+
+    void NTgCalls::finish_subchain_request(const int64_t chat_id, const int subchain) {
+        return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->finish_subchain_request(subchain);
+    }
+
+    void NTgCalls::set_stream_sources(const int64_t chat_id, const media::StreamManager::Mode mode, const media::MediaDescription& media) {
+        safe_connection(chat_id)->set_stream_sources(mode, media);
+    }
+
+    bool NTgCalls::pause(const int64_t chat_id) {
+        return safe_connection(chat_id)->pause();
+    }
+
+    bool NTgCalls::resume(const int64_t chat_id) {
+        return safe_connection(chat_id)->resume();
+    }
+
+    bool NTgCalls::mute(const int64_t chat_id) {
+        return safe_connection(chat_id)->mute();
+    }
+
+    bool NTgCalls::unmute(const int64_t chat_id) {
+        return safe_connection(chat_id)->unmute();
+    }
+
+    void NTgCalls::stop(const int64_t chat_id) {
+        remove(chat_id);
+    }
+
+    void NTgCalls::stop_presentation(const int64_t chat_id) {
+        safe_call<instances::GroupCall>(safe_connection(chat_id))->stop_presentation(true);
+    }
+
+    std::string NTgCalls::get_emojis_fingerprint(const int64_t chat_id) {
+        return safe_call<instances::E2EInterface>(safe_connection(chat_id))->get_fingerprint_emojis();
+    }
+
+    void NTgCalls::on_stream_end(const std::function<void(int64_t, media::StreamManager::Type, media::StreamManager::Device)>& callback) {
+        const std::lock_guard lock(mutex_);
+        on_eof_callback_ = callback;
+    }
+
+    void NTgCalls::on_upgrade(const std::function<void(int64_t, media::MediaState)>& callback) {
+        const std::lock_guard lock(mutex_);
+        media_state_callback_ = callback;
+    }
+
+    void NTgCalls::on_connection_change(const std::function<void(int64_t, ConnectionInfo)>& callback) {
+        const std::lock_guard lock(mutex_);
+        connection_change_callback_ = callback;
+    }
+
+    void NTgCalls::on_frames(const std::function<void(int64_t, media::StreamManager::Mode, media::StreamManager::Device, const std::vector<wrtc::models::Frame>&)>& callback) {
+        const std::lock_guard lock(mutex_);
+        frames_callback_ = callback;
+    }
+
+    void NTgCalls::on_signaling_data(const std::function<void(int64_t, const bytes::binary&)>& callback) {
+        const std::lock_guard lock(mutex_);
+        emit_callback_ = callback;
+    }
+
+    void NTgCalls::on_remote_source_change(const std::function<void(int64_t, RemoteSource)>& callback) {
+        const std::lock_guard lock(mutex_);
+        remote_source_callback_ = callback;
+    }
+
+    void NTgCalls::on_request_broadcast_part(const std::function<void(int64_t, wrtc::models::SegmentPartRequest)>& callback) {
+        const std::lock_guard lock(mutex_);
+        request_broadcast_part_callback_ = callback;
+    }
+
+    void NTgCalls::on_request_broadcast_timestamp(const std::function<void(int64_t)>& callback) {
+        const std::lock_guard lock(mutex_);
+        broadcast_timestamp_callback_ = callback;
+    }
+
+    void NTgCalls::on_request_participants(const std::function<void(int64_t)>& callback) {
+        const std::lock_guard lock(mutex_);
+        request_participants_callback_ = callback;
+    }
+
+    void NTgCalls::on_outbound_block(const std::function<void(int64_t, const bytes::binary&)>& callback) {
+        const std::lock_guard lock(mutex_);
+        outbound_block_callback_ = callback;
+    }
+
+    void NTgCalls::on_subchain_request(const std::function<void(int64_t, e2e::SubchainRequest)>& callback) {
+        const std::lock_guard lock(mutex_);
+        subchain_request_callback_ = callback;
+    }
+
+    void NTgCalls::on_update_emojis(const std::function<void(int64_t, std::string)>& callback) {
+        const std::lock_guard lock(mutex_);
+        update_emojis_callback_ = callback;
+    }
+
+    void NTgCalls::send_broadcast_timestamp(const int64_t chat_id, const int64_t timestamp) {
+        safe_call<instances::GroupCall>(safe_connection(chat_id))->send_broadcast_timestamp(timestamp);
+    }
+
+    void NTgCalls::send_broadcast_part(const int64_t chat_id, const int64_t segment_id, const int32_t part_id, const wrtc::models::MediaSegment::Part::Status status, const bool quality_update, const std::optional<bytes::binary>& data) {
+        safe_call<instances::GroupCall>(safe_connection(chat_id))->send_broadcast_part(segment_id, part_id, status, quality_update, data);
+    }
+
+    void NTgCalls::send_signaling_data(const int64_t chat_id, const bytes::binary& msg_key) {
+        safe_call<instances::P2PCall>(safe_connection(chat_id))->send_signaling_data(msg_key);
+    }
+
+    void NTgCalls::send_external_frame(const int64_t chat_id, const media::StreamManager::Device device, const bytes::binary& data, const wrtc::models::FrameData frame_data) {
+        safe_connection(chat_id)->send_external_frame(device, data, frame_data);
+    }
+
+    uint64_t NTgCalls::time(const int64_t chat_id, const media::StreamManager::Mode mode) {
+        return safe_connection(chat_id)->time(mode);
+    }
+
+    media::MediaState NTgCalls::get_state(const int64_t chat_id) {
+        return safe_connection(chat_id)->get_state();
+    }
+
+    instances::CallInterface::Type NTgCalls::get_call_type(const int64_t chat_id) {
+        const auto type = safe_connection(chat_id)->type();
+        if (type & instances::CallInterface::Type::Conference) {
+            return instances::CallInterface::Type::Conference;
+        }
+        if (type & instances::CallInterface::Type::Group) {
+            return instances::CallInterface::Type::Group;
+        }
+        return instances::CallInterface::Type::P2P;
+    }
+
+    wrtc::ConnectionMode NTgCalls::get_connection_mode(const int64_t chat_id) {
+        return safe_connection(chat_id)->get_connection_mode();
+    }
+
+    double NTgCalls::cpu_usage() const {
+        return hardware_info_->get_cpu_usage();
+    }
+
+    std::map<int64_t, media::StreamManager::CallInfo> NTgCalls::calls() {
+        const std::lock_guard lock(mutex_);
+        std::map<int64_t, media::StreamManager::CallInfo> status_list;
+        for (const auto& [fst, snd] : connections_) {
+            status_list.emplace(
+                fst,
+                media::StreamManager::CallInfo{
+                    .playback = snd->status(media::StreamManager::Mode::Playback),
+                    .capture = snd->status(media::StreamManager::Mode::Capture),
+                }
+            );
+        }
+        return status_list;
+    }
+
+    void NTgCalls::remove(const int64_t chat_id) {
+        RTC_LOG(LS_VERBOSE) << "Removing call " << chat_id << ", Acquiring lock";
+        std::shared_ptr<instances::CallInterface> call;
         {
-            std::lock_guard lock(mutex);
-            RTC_LOG(LS_VERBOSE) << "Lock acquired, removing call " << chatId;
-            if (!exists(chatId)) {
-                RTC_LOG(LS_WARNING) << "Call " << chatId << " not found, already removed";
+            const std::lock_guard lock(mutex_);
+            RTC_LOG(LS_VERBOSE) << "Lock acquired, removing call " << chat_id;
+            if (!exists(chat_id)) {
+                RTC_LOG(LS_WARNING) << "Call " << chat_id << " not found, already removed";
                 return;
             }
-            call = std::move(connections[chatId]);
-            connections.erase(chatId);
+            call = std::move(connections_[chat_id]);
+            connections_.erase(chat_id);
         }
         call->stop();
-        RTC_LOG(LS_VERBOSE) << "Call " << chatId << " removed";
+        RTC_LOG(LS_VERBOSE) << "Call " << chat_id << " removed";
     }
 
-    bool NTgCalls::exists(const int64_t chatId) const {
-        return connections.contains(chatId);
+    bool NTgCalls::exists(const int64_t chat_id) const {
+        return connections_.contains(chat_id);
     }
 
-    CallInterface* NTgCalls::safeConnection(const int64_t chatId) {
-        std::lock_guard lock(mutex);
-        if (!exists(chatId)) {
-            THROW_CONNECTION_NOT_FOUND(chatId)
+    instances::CallInterface* NTgCalls::safe_connection(const int64_t chat_id) {
+        const std::lock_guard lock(mutex_);
+        if (!exists(chat_id)) {
+            THROW_CONNECTION_NOT_FOUND(chat_id)
         }
-        return connections[chatId].get();
+        return connections_[chat_id].get();
     }
 
-    Protocol NTgCalls::getProtocol() {
+    p2p::Protocol NTgCalls::get_protocol() {
         return {
             92,
             92,
             true,
             true,
-            signaling::Signaling::SupportedVersions(),
+            signaling::Signaling::supported_versions(),
         };
     }
 
 #ifndef IS_ANDROID
-    void NTgCalls::enableGlibLoop(const bool enable) {
-        GLibLoopManager::EnableEventLoop(enable);
+    void NTgCalls::enable_glib_loop(const bool enable) {
+        utils::GLibLoopManager::enable_event_loop(enable);
     }
 #endif
 
     template<typename DestCallType, typename BaseCallType>
-    DestCallType* NTgCalls::SafeCall(BaseCallType* call) {
+    DestCallType* NTgCalls::safe_call(BaseCallType* call) {
         if (!call) {
             return nullptr;
         }
-        if (auto* derivedCall = dynamic_cast<DestCallType*>(call)) {
-            return derivedCall;
+        if (auto* derived_call = dynamic_cast<DestCallType*>(call)) {
+            return derived_call;
         }
         throw ConnectionError("Invalid call type");
     }
@@ -401,11 +427,11 @@ namespace ntgcalls {
         return "pong";
     }
 
-    MediaDevices NTgCalls::getMediaDevices() {
-        const auto devices = MediaDevice::GetAudioDevices();
-        std::vector<DeviceInfo> microphones, speakers;
+    media::devices::MediaDevices NTgCalls::get_media_devices() {
+        const auto devices = media::devices::MediaDevice::get_audio_devices();
+        std::vector<media::devices::DeviceInfo> microphones, speakers;
         for (const auto& device : devices) {
-            if (json::parse(device.metadata)["is_microphone"]) {
+            if (wrtc::utils::json::parse(device.metadata)["is_microphone"]) {
                 microphones.emplace_back(device.name, device.metadata);
             } else {
                 speakers.emplace_back(device.name, device.metadata);
@@ -414,8 +440,8 @@ namespace ntgcalls {
         return {
             microphones,
             speakers,
-            MediaDevice::GetCameraDevices(),
-            MediaDevice::GetScreenDevices()
+            media::devices::MediaDevice::get_camera_devices(),
+            media::devices::MediaDevice::get_screen_devices()
         };
     }
 } // ntgcalls

@@ -1,69 +1,30 @@
 //
-// Created by Laky64 on 12/08/2023.
+// Created by Lauren on 12/08/23.
 //
 
 #pragma once
-
-#include <wrtc/wrtc.hpp>
+#include <wrtc/exceptions.hpp>
 
 namespace ntgcalls {
-    class ConnectionError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
+    EX_GROUP(ConnectionException)
+    EX_DECLARE(ConnectionNotFound, ConnectionException)
+    EX_DECLARE(ConnectionError, ConnectionException)
+    EX_DECLARE(CryptoError, ConnectionException)
+    EX_DECLARE(TelegramServerError, ConnectionException)
+    EX_DECLARE(RTCConnectionNeeded, ConnectionException)
+    EX_DECLARE(InvalidParams, ConnectionException)
 
-    class TelegramServerError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
+    EX_GROUP(SignalingException)
+    EX_DECLARE(SignalingError, SignalingException)
+    EX_DECLARE(SignalingUnsupported, SignalingException)
 
-    class ConnectionNotFound final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
+    EX_GROUP(MediaException)
+    EX_DECLARE(FileError, MediaException)
+    EX_DECLARE(FFmpegError, MediaException)
+    EX_DECLARE(ShellError, MediaException)
+    EX_DECLARE(MediaDeviceError, MediaException)
 
-    class RTCConnectionNeeded final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class RTMPStreamingUnsupported final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class SignalingUnsupported final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class SignalingError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class InvalidParams final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class CryptoError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class FileError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class FFmpegError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class ShellError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class MediaDeviceError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class NullPointer final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-
-    class EOFError final : public wrtc::BaseRTCException {
-        using BaseRTCException::BaseRTCException;
-    };
-}
+    EX_DECLARE(RTMPStreamingUnsupported, wrtc::RTCException)
+    EX_DECLARE_INTERNAL(EOFError, wrtc::RTCException)
+    EX_DECLARE_INTERNAL(NullPointer, wrtc::RTCException)
+} // ntgcalls

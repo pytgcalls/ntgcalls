@@ -1,16 +1,15 @@
 //
-// Created by Laky64 on 22/03/2024.
+// Created by Lauren on 22/03/24.
 //
 
 #pragma once
-#include <wrtc/utils/json.hpp>
 #include <rtc_base/byte_buffer.h>
 #include <rtc_base/copy_on_write_buffer.h>
-
 #include <wrtc/utils/binary.hpp>
+#include <wrtc/utils/json.hpp>
 
-namespace signaling {
-    using wrtc::json;
+namespace ntgcalls::signaling::messages {
+    using wrtc::utils::json;
 
     class Message {
     public:
@@ -28,9 +27,9 @@ namespace signaling {
 
         static Type type(const bytes::binary& data);
 
-        static std::optional<webrtc::CopyOnWriteBuffer> deserializeRaw(webrtc::ByteBufferReader &reader);
+        static std::optional<webrtc::CopyOnWriteBuffer> deserialize_raw(webrtc::ByteBufferReader& reader);
 
-        static uint32_t stringToUInt32(std::string const &string);
+        static uint32_t string_to_uint32(std::string const& string);
     };
 
-} // wrtc
+} // ntgcalls::signaling::messages

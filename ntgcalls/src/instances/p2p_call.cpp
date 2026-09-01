@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 15/03/2024.
+// Created by Lauren on 15/03/24.
 //
 
 #include <ntgcalls/instances/p2p_call.hpp>
@@ -11,307 +11,316 @@
 #include <ntgcalls/signaling/messages/media_state_message.hpp>
 #include <ntgcalls/signaling/messages/message.hpp>
 #include <ntgcalls/signaling/messages/negotiate_channels_message.hpp>
+#include <ntgcalls/utils/emoji_fingerprint.hpp>
 #include <wrtc/interfaces/native_connection.hpp>
 #include <wrtc/utils/encryption.hpp>
 
-namespace ntgcalls {
-
+namespace ntgcalls::instances {
     void P2PCall::stop() {
-        onEmitData = nullptr;
+        on_emit_data_ = nullptr;
         CallInterface::stop();
-        if (signaling) {
-            signaling->close();
-            signaling = nullptr;
+        if (signaling_) {
+            signaling_->close();
+            signaling_ = nullptr;
         }
     }
 
     void P2PCall::init() const {
         RTC_LOG(LS_INFO) << "Initializing P2P call";
-        streamManager->enableVideoSimulcast(false);
-        streamManager->setStreamSources(StreamManager::Mode::Capture);
-        streamManager->setStreamSources(StreamManager::Mode::Playback);
+        stream_manager_->enable_video_simulcast(false);
+        stream_manager_->set_stream_sources(media::StreamManager::Mode::Capture);
+        stream_manager_->set_stream_sources(media::StreamManager::Mode::Playback);
         RTC_LOG(LS_INFO) << "AVStream settings applied";
     }
 
-    bytes::vector P2PCall::initExchange(const DhConfig& dhConfig, const std::optional<bytes::vector>& g_a_hash) {
-        if (g_a_or_b) {
+    bytes::binary P2PCall::init_exchange(const p2p::DhConfig& dh_config, const std::optional<bytes::binary>& ga_hash) {
+        if (g_a_or_b_) {
             RTC_LOG(LS_ERROR) << "Exchange already initialized";
             throw ConnectionError("Exchange already initialized");
         }
-        auto first = signaling::ModExpFirst(dhConfig.g, dhConfig.p, dhConfig.random);
+        auto first = signaling::crypto::ModExpFirst(dh_config.g, dh_config.p, dh_config.random);
         if (first.modexp.empty()) {
             RTC_LOG(LS_ERROR) << "Invalid modexp";
             throw CryptoError("Invalid modexp");
         }
-        randomPower = std::move(first.randomPower);
-        prime = dhConfig.p;
-        if (g_a_hash) {
-            this->g_a_hash = g_a_hash;
+        random_power_ = std::move(first.random_power);
+        prime_ = dh_config.p;
+        if (ga_hash) {
+            ga_hash_ = ga_hash;
         }
-        g_a_or_b = std::move(first.modexp);
+        g_a_or_b_ = std::move(first.modexp);
         RTC_LOG(LS_INFO) << "P2P call initialized";
-        return g_a_hash ? g_a_or_b.value() : openssl::Sha256::Digest(g_a_or_b.value());
+        return ga_hash ? g_a_or_b_.value() : openssl::Sha256::digest(g_a_or_b_.value());
     }
 
-    AuthParams P2PCall::exchangeKeys(const bytes::vector &g_a_or_b, const int64_t fingerprint) {
-        if (connection) {
+    p2p::AuthParams P2PCall::exchange_keys(const bytes::binary& g_a_or_b, const int64_t fingerprint) {
+        if (connection_) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        if (!this->g_a_or_b) {
+        if (!g_a_or_b_) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
             throw ConnectionNotFound("Connection not initialized");
         }
-        if (key) {
+        if (key_) {
             RTC_LOG(LS_ERROR) << "Key already exchanged";
             throw ConnectionError("Key already exchanged");
         }
-        if (g_a_hash) {
+        if (ga_hash_) {
             if (!fingerprint) {
                 RTC_LOG(LS_ERROR) << "Fingerprint not found";
                 throw InvalidParams("Fingerprint not found");
             }
-            if (g_a_hash != openssl::Sha256::Digest(g_a_or_b)) {
+            if (ga_hash_ != openssl::Sha256::digest(g_a_or_b)) {
                 RTC_LOG(LS_ERROR) << "Hash mismatch";
                 throw CryptoError("Hash mismatch");
             }
         }
-        const auto computedAuthKey = signaling::AuthKey::CreateAuthKey(
+        const auto computed_auth_key = signaling::crypto::AuthKey::create_auth_key(
             g_a_or_b,
-            randomPower,
-            prime
+            random_power_,
+            prime_
         );
-        if (computedAuthKey.empty()) {
+        if (computed_auth_key.empty()) {
             RTC_LOG(LS_ERROR) << "Could not create auth key";
             throw CryptoError("Could not create auth key");
         }
-        signaling::RawKey authKey;
-        signaling::AuthKey::FillData(authKey, computedAuthKey);
-        const auto computedFingerprint = signaling::AuthKey::Fingerprint(authKey);
-        if (g_a_hash && computedFingerprint != static_cast<uint64_t>(fingerprint)) {
+        signaling::crypto::RawKey auth_key;
+        signaling::crypto::AuthKey::fill_data(auth_key, computed_auth_key);
+        const auto computed_fingerprint = signaling::crypto::AuthKey::fingerprint(auth_key);
+        if (ga_hash_ && computed_fingerprint != static_cast<uint64_t>(fingerprint)) {
             RTC_LOG(LS_ERROR) << "Fingerprint mismatch";
             throw CryptoError("Fingerprint mismatch");
         }
-        key = authKey;
-        RTC_LOG(LS_INFO) << "Key exchanged, fingerprint: " << computedFingerprint;
-        return AuthParams{
-            static_cast<int64_t>(computedFingerprint),
-            this->g_a_or_b.value(),
+        key_ = auth_key;
+        RTC_LOG(LS_INFO) << "Key exchanged, fingerprint: " << computed_fingerprint;
+
+        const auto& ga = ga_hash_ ? g_a_or_b : g_a_or_b_.value();
+        bytes::binary fingerprint_data = computed_auth_key;
+        fingerprint_data.insert(fingerprint_data.end(), ga.begin(), ga.end());
+        const auto digest = openssl::Sha256::digest(bytes::view(fingerprint_data));
+        fingerprint_emojis_ = utils::EmojiFingerprint::from_hash(digest);
+        (void) update_emojis_callback_(fingerprint_emojis_);
+        return p2p::AuthParams{
+            static_cast<int64_t>(computed_fingerprint),
+            g_a_or_b_.value(),
         };
     }
 
-    void P2PCall::skipExchange(bytes::vector encryptionKey, const bool isOutgoing) {
-        if (connection) {
+    void P2PCall::skip_exchange(bytes::binary encryption_key, const bool is_outgoing) {
+        if (connection_) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        if (!skipExchangeKey.empty()) {
+        if (!skip_exchange_key_.empty()) {
             RTC_LOG(LS_ERROR) << "Key already exchanged";
             throw ConnectionError("Key already exchanged");
         }
-        skipExchangeKey = std::move(encryptionKey);
-        skipIsOutgoing = isOutgoing;
+        skip_exchange_key_ = std::move(encryption_key);
+        skip_is_outgoing_ = is_outgoing;
         RTC_LOG(LS_VERBOSE) << "Exchange skipped";
     }
 
-    void P2PCall::connect(const std::vector<RTCServer>& servers, const std::vector<std::string>& versions, const bool p2pAllowed) {
-        RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2pAllowed ? "true" : "false");
-        if (connection) {
+    void P2PCall::connect(const std::vector<p2p::RTCServer>& servers, const std::vector<std::string>& versions, const bool p2p_allowed, const std::optional<std::string>& custom_parameters) {
+        RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2p_allowed ? "true" : "false");
+        if (connection_) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");
         }
-        auto encryptionKey = std::make_shared<std::array<uint8_t, signaling::EncryptionKey::kSize>>();
-        if (skipExchangeKey.empty()) {
-            if (!g_a_or_b || !key) {
+        auto encryption_key = std::make_shared<std::array<uint8_t, signaling::crypto::EncryptionKey::kSize>>();
+        if (skip_exchange_key_.empty()) {
+            if (!g_a_or_b_ || !key_) {
                 RTC_LOG(LS_ERROR) << "Connection not initialized";
                 throw ConnectionNotFound("Connection not initialized");
             }
-            memcpy(encryptionKey->data(), key.value().data(), signaling::EncryptionKey::kSize);
+            std::memcpy(encryption_key->data(), key_.value().data(), signaling::crypto::EncryptionKey::kSize);
         } else {
-            memcpy(encryptionKey->data(), skipExchangeKey.data(), signaling::EncryptionKey::kSize);
+            std::memcpy(encryption_key->data(), skip_exchange_key_.data(), signaling::crypto::EncryptionKey::kSize);
         }
-        protocolVersion = signaling::Signaling::matchVersion(versions);
-        std::weak_ptr weak(shared_from_this());
-        if (protocolVersion == signaling::Signaling::Version::V2) {
-            connection = std::make_shared<wrtc::NativeConnection>(
-                RTCServer::toRtcServers(servers),
-                p2pAllowed,
-                type() == Type::Outgoing
-            );
-        } else {
-            throw InvalidParams("Unsupported protocol version");
+        wrtc::utils::json custom_parameters_json;
+        if (custom_parameters) {
+            custom_parameters_json = wrtc::utils::json::parse(*custom_parameters);
         }
-        connection->open();
-        streamManager->optimizeSources(connection.get());
-        signaling = signaling::Signaling::Create(
-            protocolVersion,
-            connection->networkThread(),
-            connection->signalingThread(),
-            connection->environment(),
-            signaling::EncryptionKey(std::move(encryptionKey), type() == Type::Outgoing),
-            [weak](const bytes::binary &data) {
+        protocol_version_ = signaling::Signaling::match_version(versions);
+        const std::weak_ptr weak(shared_from_this());
+        connection_ = std::make_shared<wrtc::interfaces::NativeConnection>(
+            p2p::RTCServer::to_rtc_servers(servers),
+            p2p_allowed,
+            type() == Type::Outgoing,
+            custom_parameters_json
+        );
+        connection_->open();
+        stream_manager_->optimize_sources(connection_.get());
+        signaling_ = signaling::Signaling::create(
+            protocol_version_,
+            connection_->network_thread(),
+            connection_->signaling_thread(),
+            connection_->environment(),
+            signaling::crypto::EncryptionKey(std::move(encryption_key), type() == Type::Outgoing),
+            [weak](const bytes::binary& data) {
                 const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
                 if (!strong) {
                     return;
                 }
-                (void) strong->onEmitData(data);
+                (void) strong->on_emit_data_(data);
             },
-            [weak](const std::vector<bytes::binary> &data) {
+            [weak](const std::vector<bytes::binary>& data) {
                 const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
                 if (!strong) {
                     return;
                 }
-                strong->connection->signalingThread().PostTask([weak, data] {
+                strong->connection_->signaling_thread().PostTask([weak, data] {
                     const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
                     if (!strong) {
                         return;
                     }
-                    for (const auto &packet : data) {
-                        strong->processSignalingData(packet);
+                    for (const auto& packet : data) {
+                        strong->process_signaling_data(packet);
                     }
                 });
             }
         );
-        connection->onIceCandidate([weak](const wrtc::IceCandidate& candidate) {
+        connection_->on_ice_candidate([weak](const wrtc::models::IceCandidate& candidate) {
             const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
             if (!strong) {
                 return;
             }
-            bytes::binary message;
-            if (strong->protocolVersion == signaling::Signaling::Version::V2) {
-                signaling::CandidatesMessage candMess;
-                candMess.iceCandidates.push_back({candidate.sdp});
-                message = candMess.serialize();
-            }
+            signaling::messages::CandidatesMessage cand_mess;
+            cand_mess.ice_candidates.push_back({
+                candidate.sdp,
+                candidate.mid,
+                candidate.m_line,
+            });
+            const auto message = cand_mess.serialize();
             RTC_LOG(LS_VERBOSE) << "Sending candidate: " << bytes::to_string(message);
-            strong->signaling->send(message);
+            strong->signaling_->send(message);
         });
-        connection->onDataChannelOpened([weak] {
+        connection_->on_data_channel_opened([weak] {
             const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
             if (!strong) {
                 return;
             }
-            strong->sendMediaState(strong->streamManager->getState());
+            strong->send_media_state(strong->stream_manager_->get_state());
             RTC_LOG(LS_VERBOSE) << "Data channel opened";
         });
-        connection->onDataChannelMessage([weak](const bytes::binary& data) {
+        connection_->on_data_channel_message([weak](const bytes::binary& data) {
             const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
             if (!strong) {
                 return;
             }
-            strong->connection->signalingThread().PostTask([weak, data] {
+            strong->connection_->signaling_thread().PostTask([weak, data] {
                 const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
                 if (!strong) {
                     return;
                 }
-                strong->processSignalingData(data);
+                strong->process_signaling_data(data);
             });
         });
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Microphone, connection.get());
-        streamManager->addTrack(StreamManager::Mode::Capture, StreamManager::Device::Camera, connection.get());
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Microphone, connection.get());
-        streamManager->addTrack(StreamManager::Mode::Playback, StreamManager::Device::Camera, connection.get());
-        streamManager->onUpgrade([weak] (const MediaState mediaState) {
+        stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Microphone, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Camera, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Screen, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Microphone, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Camera, connection_.get());
+        stream_manager_->add_track(media::StreamManager::Mode::Playback, media::StreamManager::Device::Screen, connection_.get());
+        stream_manager_->on_upgrade([weak](const media::MediaState media_state) {
             const auto strong = std::static_pointer_cast<P2PCall>(weak.lock());
             if (!strong) {
                 return;
             }
-            strong->sendMediaState(mediaState);
+            strong->send_media_state(media_state);
         });
         if (type() == Type::Outgoing) {
-            if (protocolVersion == signaling::Signaling::Version::V2) {
-                sendInitialSetup();
-                sendOfferIfNeeded();
-            }
+            send_initial_setup();
+            send_offer_if_needed();
         }
-        setConnectionObserver(connection);
+        set_connection_observer(connection_);
     }
 
-    void P2PCall::processSignalingData(const bytes::binary& buffer) {
-        if (signaling == nullptr) {
+    void P2PCall::process_signaling_data(const bytes::binary& buffer) {
+        if (signaling_ == nullptr) {
             return;
         }
         RTC_LOG(LS_VERBOSE) << "processSignalingData: " << std::string(buffer.begin(), buffer.end());
         try {
-            switch (signaling::Message::type(buffer)) {
-            case signaling::Message::Type::InitialSetup: {
-                const auto message = signaling::InitialSetupMessage::deserialize(buffer);
-                wrtc::PeerIceParameters remoteIceParameters;
-                remoteIceParameters.ufrag = message->ufrag;
-                remoteIceParameters.pwd = message->pwd;
-                remoteIceParameters.supportsRenomination = message->supportsRenomination;
+            switch (signaling::messages::Message::type(buffer)) {
+            case signaling::messages::Message::Type::InitialSetup: {
+                const auto message = signaling::messages::InitialSetupMessage::deserialize(buffer);
+                wrtc::models::PeerIceParameters remote_ice_parameters;
+                remote_ice_parameters.ufrag = message->ufrag;
+                remote_ice_parameters.pwd = message->pwd;
+                remote_ice_parameters.supports_renomination = message->supports_renomination;
 
                 std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
-                std::string sslSetup;
+                std::string ssl_setup;
                 if (!message->fingerprints.empty()) {
-                    fingerprint = webrtc::SSLFingerprint::CreateUniqueFromRfc4572(message->fingerprints[0].hash, message->fingerprints[0].fingerprint);
-                    sslSetup = message->fingerprints[0].setup;
+                    fingerprint = webrtc::SSLFingerprint::CreateFromRfc4572(message->fingerprints[0].hash, message->fingerprints[0].fingerprint);
+                    ssl_setup = message->fingerprints[0].setup;
                 }
-                Safe<wrtc::NativeConnection>(connection)->setRemoteParams(remoteIceParameters, std::move(fingerprint), sslSetup);
-                handshakeCompleted = true;
+                safe<wrtc::interfaces::NativeConnection>(connection_)->set_remote_params(remote_ice_parameters, std::move(fingerprint), ssl_setup);
+                handshake_completed_ = true;
                 if (type() == Type::Incoming) {
-                    sendInitialSetup();
+                    send_initial_setup();
                 }
-                applyPendingIceCandidates();
+                apply_pending_ice_candidates();
                 break;
             }
-            case signaling::Message::Type::Candidates: {
-                for (const auto message = signaling::CandidatesMessage::deserialize(buffer); const auto&[sdpString] : message->iceCandidates) {
+            case signaling::messages::Message::Type::Candidates: {
+                for (const auto message = signaling::messages::CandidatesMessage::deserialize(buffer); const auto& [sdpString, sdpMid, sdpMLineIndex] : message->ice_candidates) {
                     webrtc::SdpParseError error;
-                    std::unique_ptr<webrtc::IceCandidate> parseCandidate = webrtc::IceCandidate::Create(
-                        "",
-                        0,
+                    std::unique_ptr<webrtc::IceCandidate> parse_candidate = webrtc::IceCandidate::Create(
+                        sdpMid,
+                        sdpMLineIndex,
                         sdpString,
                         &error
                     );
-                    if (!parseCandidate) {
+                    if (!parse_candidate) {
                         RTC_LOG(LS_ERROR) << "Failed to parse ICE candidate: " << error.description;
                         continue;
                     }
-                    pendingIceCandidates.emplace_back(
-                        parseCandidate->sdp_mid(),
-                        parseCandidate->sdp_mline_index(),
-                        parseCandidate->ToString()
+                    pending_ice_candidates_.emplace_back(
+                        parse_candidate->sdp_mid(),
+                        parse_candidate->sdp_mline_index(),
+                        parse_candidate->ToString()
                     );
                 }
-                if (handshakeCompleted) {
-                    applyPendingIceCandidates();
+                if (handshake_completed_) {
+                    apply_pending_ice_candidates();
                 }
                 break;
             }
-            case signaling::Message::Type::NegotiateChannels: {
-                const auto message = signaling::NegotiateChannelsMessage::deserialize(buffer);
-                auto negotiationContents = std::make_unique<wrtc::ContentNegotiationContext::NegotiationContents>();
-                negotiationContents->exchangeId = message->exchangeId;
-                negotiationContents->contents = message->contents;
+            case signaling::messages::Message::Type::NegotiateChannels: {
+                const auto message = signaling::messages::NegotiateChannelsMessage::deserialize(buffer);
+                auto negotiation_contents = std::make_unique<wrtc::interfaces::ContentNegotiationContext::NegotiationContents>();
+                negotiation_contents->exchange_id = message->exchange_id;
+                negotiation_contents->contents = message->contents;
                 auto negotiation = message->serialize();
-                if (const auto response = Safe<wrtc::NativeConnection>(connection)->setPendingAnswer(std::move(negotiationContents))) {
-                    signaling::NegotiateChannelsMessage channelMessage;
-                    channelMessage.exchangeId = response->exchangeId;
-                    channelMessage.contents = response->contents;
-                    RTC_LOG(LS_VERBOSE) << "Sending negotiate channels: " << bytes::to_string(channelMessage.serialize());
-                    signaling->send(channelMessage.serialize());
+                if (const auto response = safe<wrtc::interfaces::NativeConnection>(connection_)->set_pending_answer(std::move(negotiation_contents))) {
+                    signaling::messages::NegotiateChannelsMessage channel_message;
+                    channel_message.exchange_id = response->exchange_id;
+                    channel_message.contents = response->contents;
+                    RTC_LOG(LS_VERBOSE) << "Sending negotiate channels: " << bytes::to_string(channel_message.serialize());
+                    signaling_->send(channel_message.serialize());
                 }
-                sendOfferIfNeeded();
-                Safe<wrtc::NativeConnection>(connection)->createChannels();
+                send_offer_if_needed();
+                safe<wrtc::interfaces::NativeConnection>(connection_)->create_channels();
                 break;
             }
-            case signaling::Message::Type::MediaState: {
-                const auto message = signaling::MediaStateMessage::deserialize(buffer);
-                const auto cameraState = parseVideoState(message->videoState);
-                const auto screenState = parseVideoState(message->screencastState);
-                const auto micState = message->isMuted ? StreamManager::Status::Idling : StreamManager::Status::Active;
-                if (lastCameraState != cameraState) {
-                    lastCameraState = cameraState;
-                    (void) remoteSourceCallback({0, cameraState, StreamManager::Device::Camera});
+            case signaling::messages::Message::Type::MediaState: {
+                const auto message = signaling::messages::MediaStateMessage::deserialize(buffer);
+                const auto camera_state = parse_video_state(message->video_state);
+                const auto screen_state = parse_video_state(message->screencast_state);
+                const auto mic_state = message->is_muted ? media::StreamManager::Status::Idling : media::StreamManager::Status::Active;
+                if (last_camera_state_ != camera_state) {
+                    last_camera_state_ = camera_state;
+                    (void) remote_source_callback_({0, camera_state, media::StreamManager::Device::Camera});
                 }
-                if (lastScreenState != screenState) {
-                    lastScreenState = screenState;
-                    (void) remoteSourceCallback({0, screenState, StreamManager::Device::Screen});
+                if (last_screen_state_ != screen_state) {
+                    last_screen_state_ = screen_state;
+                    (void) remote_source_callback_({0, screen_state, media::StreamManager::Device::Screen});
                 }
-                if (lastMicState != micState) {
-                    lastMicState = micState;
-                    (void) remoteSourceCallback({0, micState, StreamManager::Device::Microphone});
+                if (last_mic_state_ != mic_state) {
+                    last_mic_state_ = mic_state;
+                    (void) remote_source_callback_({0, mic_state, media::StreamManager::Device::Microphone});
                 }
                 break;
             }
@@ -323,70 +332,70 @@ namespace ntgcalls {
         }
     }
 
-    void P2PCall::applyPendingIceCandidates() {
-        if (pendingIceCandidates.empty()) {
+    void P2PCall::apply_pending_ice_candidates() {
+        if (pending_ice_candidates_.empty()) {
             return;
         }
-        for (const auto& candidate : pendingIceCandidates) {
-            connection->addIceCandidate(candidate);
+        for (const auto& candidate : pending_ice_candidates_) {
+            connection_->add_ice_candidate(candidate);
         }
-        pendingIceCandidates.clear();
+        pending_ice_candidates_.clear();
     }
 
-    void P2PCall::sendMediaState(const MediaState mediaState) const {
-        if (!connection -> isDataChannelOpen()) {
+    void P2PCall::send_media_state(const media::MediaState media_state) const {
+        if (!connection_->is_data_channel_open()) {
             return;
         }
-        signaling::MediaStateMessage message;
-        message.isMuted = mediaState.muted;
+        signaling::messages::MediaStateMessage message;
+        message.is_muted = media_state.muted;
 
-        if (!streamManager->hasDevice(StreamManager::Capture, StreamManager::Camera)) {
-            message.videoState = signaling::MediaStateMessage::VideoState::Inactive;
-        } else if (mediaState.videoPaused) {
-            message.videoState = signaling::MediaStateMessage::VideoState::Suspended;
+        if (!stream_manager_->has_device(media::StreamManager::Capture, media::StreamManager::Camera)) {
+            message.video_state = signaling::messages::MediaStateMessage::VideoState::Inactive;
+        } else if (media_state.videoPaused) {
+            message.video_state = signaling::messages::MediaStateMessage::VideoState::Suspended;
         } else {
-            message.videoState = signaling::MediaStateMessage::VideoState::Active;
+            message.video_state = signaling::messages::MediaStateMessage::VideoState::Active;
         }
 
-        if (!streamManager->hasDevice(StreamManager::Capture, StreamManager::Screen)) {
-            message.screencastState = signaling::MediaStateMessage::VideoState::Inactive;
-        } else if (mediaState.presentationPaused) {
-            message.screencastState = signaling::MediaStateMessage::VideoState::Suspended;
+        if (!stream_manager_->has_device(media::StreamManager::Capture, media::StreamManager::Screen)) {
+            message.screencast_state = signaling::messages::MediaStateMessage::VideoState::Inactive;
+        } else if (media_state.presentationPaused) {
+            message.screencast_state = signaling::messages::MediaStateMessage::VideoState::Suspended;
         } else {
-            message.screencastState = signaling::MediaStateMessage::VideoState::Active;
+            message.screencast_state = signaling::messages::MediaStateMessage::VideoState::Active;
         }
 
         RTC_LOG(LS_VERBOSE) << "Sending media state: " << bytes::to_string(message.serialize());
-        connection->sendDataChannelMessage(message.serialize());
+        connection_->send_data_channel_message(message.serialize());
     }
 
-    void P2PCall::sendOfferIfNeeded() const {
-        if (signaling == nullptr) {
+    void P2PCall::send_offer_if_needed() const {
+        if (signaling_ == nullptr) {
             return;
         }
-        if (const auto offer = Safe<wrtc::NativeConnection>(connection)->getPendingOffer()) {
-            signaling::NegotiateChannelsMessage data;
-            data.exchangeId = offer->exchangeId;
+        if (const auto offer = safe<wrtc::interfaces::NativeConnection>(connection_)->get_pending_offer()) {
+            signaling::messages::NegotiateChannelsMessage data;
+            data.exchange_id = offer->exchange_id;
             data.contents = offer->contents;
             RTC_LOG(LS_VERBOSE) << "Sending offer: " << bytes::to_string(data.serialize());
-            signaling->send(data.serialize());
+            signaling_->send(data.serialize());
         }
     }
 
-    void P2PCall::sendInitialSetup() const {
-        std::weak_ptr weak(shared_from_this());
-        connection->networkThread().PostTask([weak] {
+    void P2PCall::send_initial_setup() const {
+        const std::weak_ptr weak(shared_from_this());
+        connection_->network_thread().PostTask([weak] {
             const auto strong = std::static_pointer_cast<const P2PCall>(weak.lock());
             if (!strong) {
                 return;
             }
-            const auto connection = Safe<wrtc::NativeConnection>(strong->connection);
-            const auto localFingerprint = connection->localFingerprint();
+            const auto connection = safe<wrtc::interfaces::NativeConnection>(strong->connection_);
+            const auto local_fingerprint = connection->local_fingerprint();
             std::string hash;
             std::string fingerprint;
-            if (localFingerprint) {
-                hash = localFingerprint->algorithm;
-                fingerprint = localFingerprint->GetRfc4572Fingerprint();
+            if (local_fingerprint) {
+                hash = local_fingerprint->algorithm;
+                fingerprint = local_fingerprint->GetRfc4572Fingerprint();
             }
             std::string setup;
             if (strong->type() == Type::Outgoing) {
@@ -394,50 +403,59 @@ namespace ntgcalls {
             } else {
                 setup = "passive";
             }
-            const auto localIceParams = connection->localIceParameters();
-            connection->signalingThread().PostTask([weak, localIceParams, hash, fingerprint, setup] {
-                const auto strongMessage = std::static_pointer_cast<const P2PCall>(weak.lock());
-                if (!strongMessage) {
+            const auto local_ice_params = connection->local_ice_parameters();
+            connection->signaling_thread().PostTask([weak, local_ice_params, hash, fingerprint, setup] {
+                const auto strong_message = std::static_pointer_cast<const P2PCall>(weak.lock());
+                if (!strong_message) {
                     return;
                 }
-                signaling::InitialSetupMessage message;
-                message.ufrag = localIceParams.ufrag;
-                message.pwd = localIceParams.pwd;
-                message.supportsRenomination = localIceParams.supportsRenomination;
-                signaling::InitialSetupMessage::DtlsFingerprint dtlsFingerprint;
-                dtlsFingerprint.hash = hash;
-                dtlsFingerprint.fingerprint = fingerprint;
-                dtlsFingerprint.setup = setup;
-                message.fingerprints.push_back(std::move(dtlsFingerprint));
-                const auto serializedMessage = message.serialize();
-                RTC_LOG(LS_VERBOSE) << "Sending initial setup: " << bytes::to_string(serializedMessage);
-                strongMessage->signaling->send(serializedMessage);
+                signaling::messages::InitialSetupMessage message;
+                message.ufrag = local_ice_params.ufrag;
+                message.pwd = local_ice_params.pwd;
+                message.supports_renomination = local_ice_params.supports_renomination;
+                signaling::messages::InitialSetupMessage::DtlsFingerprint dtls_fingerprint;
+                dtls_fingerprint.hash = hash;
+                dtls_fingerprint.fingerprint = fingerprint;
+                dtls_fingerprint.setup = setup;
+                message.fingerprints.push_back(std::move(dtls_fingerprint));
+
+                const auto serialized_message = message.serialize();
+                RTC_LOG(LS_VERBOSE) << "Sending initial setup: " << bytes::to_string(serialized_message);
+                strong_message->signaling_->send(serialized_message);
             });
         });
     }
 
-    void P2PCall::onSignalingData(const std::function<void(const bytes::binary&)>& callback) {
-        onEmitData = callback;
+    void P2PCall::on_signaling_data(const std::function<void(const bytes::binary&)>& callback) {
+        on_emit_data_ = callback;
     }
 
-    void P2PCall::sendSignalingData(const bytes::binary& buffer) const {
-        if (!signaling) {
+    void P2PCall::on_update_emojis(const std::function<void(std::string)>& callback) {
+        update_emojis_callback_ = callback;
+    }
+
+    void P2PCall::send_signaling_data(const bytes::binary& buffer) const {
+        if (!signaling_) {
             throw ConnectionError("Connection not initialized");
         }
-        signaling->receive(buffer);
+        signaling_->receive(buffer);
     }
 
     CallInterface::Type P2PCall::type() const {
-        if (skipExchangeKey.empty()) {
-            if (g_a_or_b) {
-                if (g_a_hash) {
+        if (skip_exchange_key_.empty()) {
+            if (g_a_or_b_) {
+                if (ga_hash_) {
                     return Type::Incoming;
                 }
                 return Type::Outgoing;
             }
         } else {
-            return skipIsOutgoing ? Type::Outgoing : Type::Incoming;
+            return skip_is_outgoing_ ? Type::Outgoing : Type::Incoming;
         }
         return Type::P2P;
     }
-} // ntgcalls
+
+    std::string P2PCall::get_fingerprint_emojis() {
+        return fingerprint_emojis_;
+    }
+} // ntgcalls::instances

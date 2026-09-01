@@ -1,9 +1,15 @@
 import asyncio
 
-from ntgcalls import NTgCalls, MediaDescription, AudioDescription, VideoDescription, MediaSource, StreamMode
-from pyrogram import Client, idle
-
+from pyrogram import Client
+from pyrogram import idle
 from utils import connect_call
+
+from ntgcalls import AudioDescription
+from ntgcalls import MediaDescription
+from ntgcalls import MediaSource
+from ntgcalls import NTgCalls
+from ntgcalls import StreamMode
+from ntgcalls import VideoDescription
 
 api_id = 2799555
 api_hash = '47d66bbf0939d0ddf32caf8bad590ed7'
@@ -24,13 +30,13 @@ async def main():
             MediaDescription(
                 microphone=AudioDescription(
                     media_source=MediaSource.FILE,
-                    input="output.pcm",
+                    input='output.pcm',
                     sample_rate=48000,
                     channel_count=2,
                 ),
                 camera=VideoDescription(
                     media_source=MediaSource.FILE,
-                    input="output.i420",
+                    input='output.i420',
                     width=1280,
                     height=720,
                     fps=30,
@@ -39,9 +45,9 @@ async def main():
         )
         result = await connect_call(client, chat_id, call_params)
         await wrtc.connect(chat_id, result, False)
-        print("Connected!")
+        print('Connected!')
         await idle()
-        print("Closed!")
+        print('Closed!')
 
 
 asyncio.run(main())

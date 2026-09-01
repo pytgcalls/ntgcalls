@@ -1,46 +1,42 @@
 //
-// Created by Laky64 on 09/03/2024.
+// Created by Lauren on 09/03/24.
 //
 #pragma once
-#include <cstdint>
 #include <optional>
-#include <rtc_base/byte_buffer.h>
+#include <ntgcalls/signaling/crypto/auth_key.hpp>
 #include <rtc_base/copy_on_write_buffer.h>
-
-
 #include <wrtc/utils/binary.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
-#include <ntgcalls/signaling/crypto/auth_key.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling::crypto {
 
     class SignalingEncryption {
         struct MessageForResend {
             webrtc::CopyOnWriteBuffer data;
-            int64_t lastSent = 0;
+            int64_t last_sent = 0;
         };
 
-        uint64_t counter = 0;
-        std::mutex mutex;
-        EncryptionKey _key;
-        std::vector<uint32_t> largestIncomingCounters;
-        std::vector<MessageForResend> myNotYetAckedMessages;
-        std::vector<uint32_t> acksSentCounters;
-        std::vector<uint32_t> acksToSendSeqs;
-        bool sendAcksTimerActive, resendTimerActive;
+        uint64_t counter_ = 0;
+        std::mutex mutex_;
+        EncryptionKey key_;
+        std::vector<uint32_t> largest_incoming_counters_;
+        std::vector<MessageForResend> my_not_yet_acked_messages_;
+        std::vector<uint32_t> acks_sent_counters_;
+        std::vector<uint32_t> acks_to_send_seqs_;
+        bool send_acks_timer_active_, resend_timer_active_;
 
         static constexpr auto kSingleMessagePacketSeqBit = static_cast<uint32_t>(1) << 31;
         static constexpr auto kMessageRequiresAckSeqBit = static_cast<uint32_t>(1) << 30;
         static constexpr auto kMaxAllowedCounter = std::numeric_limits<uint32_t>::max() & ~kSingleMessagePacketSeqBit & ~kMessageRequiresAckSeqBit;
-        static constexpr auto kKeepIncomingCountersCount = 64;
+        static constexpr auto kEepIncomingCountersCount = 64;
         static constexpr auto kMaxSignalingPacketSize = 16 * 1024;
         static constexpr auto kMaxIncomingPacketSize = 128 * 1024;
         static constexpr auto kAckSerializedSize = sizeof(uint32_t) + sizeof(uint8_t);
         static constexpr auto kNotAckedMessagesLimit = 64 * 1024;
 
-        static constexpr auto minDelayBeforeMessageResend = 3000;
-        static constexpr auto maxDelayBeforeAckResend = 5000;
-        static constexpr auto maxDelayBeforeMessageResend = 5000;
+        static constexpr auto kMinDelayBeforeMessageResend = 3000;
+        static constexpr auto kMaxDelayBeforeAckResend = 5000;
+        static constexpr auto kMaxDelayBeforeMessageResend = 5000;
 
         static constexpr auto kAckId = static_cast<uint8_t>(-1);
         static constexpr auto kEmptyId = static_cast<uint8_t>(-2);
@@ -48,59 +44,58 @@ namespace signaling {
         static constexpr auto kServiceCauseAcks = 1;
         static constexpr auto kServiceCauseResend = 2;
 
-        wrtc::synchronized_callback<int, int> requestSendServiceCallback;
+        wrtc::utils::synchronized_callback<void(int, int)> request_send_service_callback_;
 
-        [[nodiscard]] bytes::binary encryptPrepared(const webrtc::CopyOnWriteBuffer &buffer);
+        [[nodiscard]] bytes::binary encrypt_prepared(const webrtc::CopyOnWriteBuffer& buffer);
 
-        static void WriteSeq(void *bytes, uint32_t seq);
+        static void write_seq(void* bytes, uint32_t seq);
 
-        static uint32_t ReadSeq(const void* bytes);
+        static uint32_t read_seq(const void* bytes);
 
-        static void AppendSeq(webrtc::CopyOnWriteBuffer &buffer, uint32_t seq);
+        static void append_seq(webrtc::CopyOnWriteBuffer& buffer, uint32_t seq);
 
-        static uint32_t CounterFromSeq(uint32_t seq);
+        static uint32_t counter_from_seq(uint32_t seq);
 
-        static bool ConstTimeIsDifferent(const void *a, const void *b, size_t size);
+        static bool const_time_is_different(const void* a, const void* b, size_t size);
 
-        bool registerIncomingCounter(uint32_t incomingCounter);
+        bool register_incoming_counter(uint32_t incoming_counter);
 
-        void ackMyMessage(uint32_t seq);
+        void ack_my_message(uint32_t seq);
 
-        void sendAckPostponed(uint32_t incomingSeq);
+        void send_ack_postponed(uint32_t incoming_seq);
 
-        bool registerSentAck(uint32_t counter, bool firstInPacket);
+        bool register_sent_ack(uint32_t counter, bool first_in_packet);
 
-        std::vector<webrtc::CopyOnWriteBuffer> processRawPacket(const webrtc::Buffer &fullBuffer,uint32_t packetSeq);
+        std::vector<webrtc::CopyOnWriteBuffer> process_raw_packet(const webrtc::Buffer& full_buffer, uint32_t packet_seq);
 
-        std::optional<uint32_t> computeNextSeq(bool messageRequiresAck);
+        std::optional<uint32_t> compute_next_seq(bool message_requires_ack);
 
-        static bool enoughSpaceInPacket(const webrtc::CopyOnWriteBuffer &buffer, size_t amount);
+        static bool enough_space_in_packet(const webrtc::CopyOnWriteBuffer& buffer, size_t amount);
 
-        static webrtc::CopyOnWriteBuffer SerializeEmptyMessageWithSeq(uint32_t seq);
+        static webrtc::CopyOnWriteBuffer serialize_empty_message_with_seq(uint32_t seq);
 
-        static webrtc::CopyOnWriteBuffer SerializeRawMessageWithSeq(const webrtc::CopyOnWriteBuffer &message, uint32_t seq);
+        static webrtc::CopyOnWriteBuffer serialize_raw_message_with_seq(const webrtc::CopyOnWriteBuffer& message, uint32_t seq);
 
-        void appendMessages(webrtc::CopyOnWriteBuffer &buffer);
+        void append_messages(webrtc::CopyOnWriteBuffer& buffer);
 
-        void appendAcksToSend(webrtc::CopyOnWriteBuffer &buffer);
+        void append_acks_to_send(webrtc::CopyOnWriteBuffer& buffer);
 
-        bool haveMessages() const;
+        bool have_messages() const;
 
-        std::optional<bytes::binary> prepareForSendingMessageInternal(webrtc::CopyOnWriteBuffer &serialized, uint32_t seq);
+        std::optional<bytes::binary> prepare_for_sending_message_internal(webrtc::CopyOnWriteBuffer& serialized, uint32_t seq);
 
     public:
         explicit SignalingEncryption(EncryptionKey key);
 
         ~SignalingEncryption();
 
-        std::optional<bytes::binary> encrypt(const webrtc::CopyOnWriteBuffer &buffer, bool isRaw);
+        std::optional<bytes::binary> encrypt(const webrtc::CopyOnWriteBuffer& buffer, bool is_raw);
 
-        std::vector<webrtc::CopyOnWriteBuffer> decrypt(const webrtc::CopyOnWriteBuffer &buffer, bool isRaw);
+        std::vector<webrtc::CopyOnWriteBuffer> decrypt(const webrtc::CopyOnWriteBuffer& buffer, bool is_raw);
 
-        void onServiceMessage(const std::function<void(int delayMs, int cause)> &requestSendService);
+        void on_service_message(const std::function<void(int delay_ms, int cause)>& request_send_service);
 
-        std::optional<bytes::binary> prepareForSendingService(int cause);
+        std::optional<bytes::binary> prepare_for_sending_service(int cause);
     };
 
-} // signaling
-
+} // ntgcalls::signaling::crypto

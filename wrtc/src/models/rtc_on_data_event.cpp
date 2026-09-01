@@ -1,18 +1,18 @@
 //
-// Created by Laky64 on 08/08/2023.
+// Created by Lauren on 08/08/23.
 //
 
 #include <wrtc/models/rtc_on_data_event.hpp>
 
-namespace wrtc {
+namespace wrtc::models {
 
-  RTCOnDataEvent::RTCOnDataEvent(uint8_t* data, const uint16_t length) {
-    audioData = data;
-    numberOfFrames = length;
-  }
+    RTCOnDataEvent::RTCOnDataEvent(bytes::byte* data, const uint16_t length) {
+        audio_data = data;
+        number_of_frames = length;
+    }
 
-  RTCOnDataEvent::~RTCOnDataEvent() {
-    audioData = nullptr;
-  }
+    RTCOnDataEvent::~RTCOnDataEvent() {
+        audio_data = nullptr;
+    }
 
 } // namespace wrtc

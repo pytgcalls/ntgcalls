@@ -1,0 +1,17 @@
+[package]
+name = "ntgcalls"
+version = "0.0.0"
+edition = "2021"
+description = "A Library for creating group calls and P2P calls with WebRTC and MTProto"
+license = "LGPL-3.0-only"
+repository = "https://github.com/pytgcalls/ntgcalls"
+homepage = "https://pytgcalls.github.io/"
+readme = "README.md"
+keywords = ["telegram", "webrtc", "voip", "mtproto", "calls"]
+categories = ["multimedia", "api-bindings"]
+include = ["src/**/*.rs", "build.rs", "Cargo.toml", "README.md"]
+
+[dependencies]
+ntgcalls-sys = { version = "0.0.0", path = "../ntgcalls-sys" }
+log = "0.4"
+tokio = { version = "1", features = ["rt"] }

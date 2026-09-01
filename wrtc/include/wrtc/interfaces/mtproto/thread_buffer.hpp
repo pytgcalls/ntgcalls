@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 02/05/25.
+// Created by Lauren on 02/05/25.
 //
 
 #pragma once
@@ -7,11 +7,11 @@
 #include <chrono>
 #include <api/media_types.h>
 #include <rtc_base/platform_thread.h>
-#include <wrtc/utils/sync_helper.hpp>
 #include <wrtc/models/media_segment.hpp>
 #include <wrtc/utils/synchronized_callback.hpp>
+#include <wrtc/utils/sync_helper.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::mtproto {
 
     using namespace std::chrono_literals;
 
@@ -23,30 +23,30 @@ namespace wrtc {
         };
 
         explicit ThreadBuffer(
-            const std::function<void(webrtc::MediaType, MediaSegment*, std::chrono::milliseconds)>& frameCallback,
-            const std::function<MediaSegment*()>& getSegmentCallback,
-            const std::function<void(RequestType)>& requestCallback
+            const std::function<void(webrtc::MediaType, models::MediaSegment*, std::chrono::milliseconds)>& frame_callback,
+            const std::function<models::MediaSegment*()>& get_segment_callback,
+            const std::function<void(RequestType)>& request_callback
         );
 
         ~ThreadBuffer();
 
     private:
-        std::mutex mutex;
-        MediaSegment* lastSegment = nullptr;
-        int checkSyncCount = 0;
-        std::atomic_bool running = true;
-        std::unique_ptr<SyncHelper> audioSync, videoSync;
-        std::chrono::milliseconds audioConsumedTime = 0ms, videoConsumedTime = 0ms;
-        std::vector<webrtc::PlatformThread> threads;
-        std::function<void(RequestType)> requestCallback;
-        std::function<MediaSegment*()> getSegmentCallback;
-        std::function<void(webrtc::MediaType, MediaSegment*, std::chrono::milliseconds)> frameCallback;
+        std::mutex mutex_;
+        models::MediaSegment* last_segment_ = nullptr;
+        int check_sync_count_ = 0;
+        std::atomic_bool running_ = true;
+        std::unique_ptr<utils::SyncHelper> audio_sync_, video_sync_;
+        std::chrono::milliseconds audio_consumed_time_ = 0ms, video_consumed_time_ = 0ms;
+        std::vector<webrtc::PlatformThread> threads_;
+        std::function<void(RequestType)> request_callback_;
+        std::function<models::MediaSegment*()> get_segment_callback_;
+        std::function<void(webrtc::MediaType, models::MediaSegment*, std::chrono::milliseconds)> frame_callback_;
 
-        void startThread(webrtc::MediaType mediaType);
+        void start_thread(webrtc::MediaType media_type);
 
-        void checkSegmentsSync();
+        void check_segments_sync();
 
-        MediaSegment* getSegmentSync(webrtc::MediaType mediaType);
+        models::MediaSegment* get_segment_sync(webrtc::MediaType media_type);
     };
 
-} // wrtc
+} // wrtc::interfaces::mtproto

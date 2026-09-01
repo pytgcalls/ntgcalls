@@ -1,26 +1,25 @@
 //
-// Created by Laky64 on 08/08/2023.
+// Created by Lauren on 08/08/23.
 //
 
 #pragma once
 
 #include <cstdint>
-
 #include <wrtc/utils/binary.hpp>
 
-namespace wrtc {
+namespace wrtc::models {
 
-  class RTCOnDataEvent {
-  public:
-    RTCOnDataEvent(uint8_t*, uint16_t);
+    class RTCOnDataEvent {
+    public:
+        bytes::byte* audio_data;
+        uint16_t number_of_frames;
+        uint32_t sample_rate = 48000;
+        uint8_t bits_per_sample = 16;
+        uint8_t channel_count = 1;
 
-    ~RTCOnDataEvent();
+        RTCOnDataEvent(bytes::byte*, uint16_t);
 
-    uint8_t* audioData;
-    uint16_t numberOfFrames;
-    uint32_t sampleRate = 48000;
-    uint8_t bitsPerSample = 16;
-    uint8_t channelCount = 1;
-  };
+        ~RTCOnDataEvent();
+    };
 
 } // namespace wrtc

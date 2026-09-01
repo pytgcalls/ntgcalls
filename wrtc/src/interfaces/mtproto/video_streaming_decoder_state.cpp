@@ -1,26 +1,26 @@
 //
-// Created by Laky64 on 15/04/25.
+// Created by Lauren on 15/04/25.
 //
 
 #include <wrtc/interfaces/mtproto/video_streaming_decoder_state.hpp>
 
-namespace wrtc {
-    VideoStreamingDecoderState::VideoStreamingDecoderState(AVCodecContext* codecContext, const AVCodecParameters* codecParameters, const AVRational pktTimebase) :
-    codecContext(codecContext), timebase(pktTimebase) {
-        parameters = avcodec_parameters_alloc();
-        avcodec_parameters_copy(parameters, codecParameters);
+namespace wrtc::interfaces::mtproto {
+    VideoStreamingDecoderState::VideoStreamingDecoderState(AVCodecContext* codec_context, const AVCodecParameters* codec_parameters, const AVRational pkt_timebase):
+    codec_context_(codec_context), timebase_(pkt_timebase) {
+        parameters_ = avcodec_parameters_alloc();
+        avcodec_parameters_copy(parameters_, codec_parameters);
     }
 
     VideoStreamingDecoderState::~VideoStreamingDecoderState() {
-        if (codecContext) {
-            avcodec_free_context(&codecContext);
+        if (codec_context_) {
+            avcodec_free_context(&codec_context_);
         }
-        if (parameters) {
-            avcodec_parameters_free(&parameters);
+        if (parameters_) {
+            avcodec_parameters_free(&parameters_);
         }
     }
 
-    bool VideoStreamingDecoderState::areCodecParametersEqual(const AVCodecParameters& lhs, AVCodecParameters const& rhs) {
+    bool VideoStreamingDecoderState::are_codec_parameters_equal(const AVCodecParameters& lhs, AVCodecParameters const& rhs) {
         if (lhs.codec_id != rhs.codec_id) {
             return false;
         }
@@ -28,7 +28,7 @@ namespace wrtc {
             return false;
         }
         if (lhs.extradata_size != 0) {
-            if (memcmp(lhs.extradata, rhs.extradata, lhs.extradata_size) != 0) {
+            if (std::memcmp(lhs.extradata, rhs.extradata, lhs.extradata_size) != 0) {
                 return false;
             }
         }
@@ -75,55 +75,55 @@ namespace wrtc {
         return true;
     }
 
-    std::unique_ptr<VideoStreamingDecoderState> VideoStreamingDecoderState::create(const AVCodecParameters* codecParameters, AVRational pktTimebase) {
-        const AVCodec* codec = avcodec_find_decoder(codecParameters->codec_id);
+    std::unique_ptr<VideoStreamingDecoderState> VideoStreamingDecoderState::create(const AVCodecParameters* codec_parameters, AVRational pkt_timebase) {
+        const AVCodec* codec = avcodec_find_decoder(codec_parameters->codec_id);
         if (!codec) {
             return nullptr;
         }
-        AVCodecContext* codecContext = avcodec_alloc_context3(codec);
-        int ret = avcodec_parameters_to_context(codecContext, codecParameters);
+        AVCodecContext* codec_context = avcodec_alloc_context3(codec);
+        int ret = avcodec_parameters_to_context(codec_context, codec_parameters);
         if (ret < 0) {
-            avcodec_free_context(&codecContext);
+            avcodec_free_context(&codec_context);
             return nullptr;
         }
-        codecContext->pkt_timebase = pktTimebase;
-        ret = avcodec_open2(codecContext, codec, nullptr);
+        codec_context->pkt_timebase = pkt_timebase;
+        ret = avcodec_open2(codec_context, codec, nullptr);
         if (ret < 0) {
-            avcodec_free_context(&codecContext);
+            avcodec_free_context(&codec_context);
             return nullptr;
         }
         return std::make_unique<VideoStreamingDecoderState>(
-            codecContext,
-            codecParameters,
-            pktTimebase
+            codec_context,
+            codec_parameters,
+            pkt_timebase
         );
     }
 
-    bool VideoStreamingDecoderState::supportsDecoding(const AVCodecParameters* codecParameters, const AVRational pktTimebase) const {
-        if (!areCodecParametersEqual(*parameters, *codecParameters)) {
+    bool VideoStreamingDecoderState::supports_decoding(const AVCodecParameters* codec_parameters, const AVRational pkt_timebase) const {
+        if (!are_codec_parameters_equal(*parameters_, *codec_parameters)) {
             return false;
         }
-        if (timebase.num != pktTimebase.num) {
+        if (timebase_.num != pkt_timebase.num) {
             return false;
         }
-        if (timebase.den != pktTimebase.den) {
+        if (timebase_.den != pkt_timebase.den) {
             return false;
         }
         return true;
     }
 
-    int VideoStreamingDecoderState::sendFrame(const DecodableFrame* frame) const {
+    int VideoStreamingDecoderState::send_frame(const media::DecodableFrame* frame) const {
         if (frame) {
-            return avcodec_send_packet(codecContext, frame->getPacket()->getPacket());
+            return avcodec_send_packet(codec_context_, frame->get_packet()->get_packet());
         }
-        return avcodec_send_packet(codecContext, nullptr);
+        return avcodec_send_packet(codec_context_, nullptr);
     }
 
-    int VideoStreamingDecoderState::receiveFrame(const VideoStreamingAVFrame* frame) const {
-        return avcodec_receive_frame(codecContext, frame->getFrame());
+    int VideoStreamingDecoderState::receive_frame(const media::VideoStreamingAVFrame* frame) const {
+        return avcodec_receive_frame(codec_context_, frame->get_frame());
     }
 
     void VideoStreamingDecoderState::reset() const {
-        avcodec_flush_buffers(codecContext);
+        avcodec_flush_buffers(codec_context_);
     }
-} // wrtc
+} // wrtc::interfaces::mtproto

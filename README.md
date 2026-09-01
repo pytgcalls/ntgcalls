@@ -14,6 +14,18 @@
         PyPi
     </a>
     •
+    <a href="https://www.npmjs.com/package/ntgcalls">
+        npm
+    </a>
+    •
+    <a href="https://crates.io/crates/ntgcalls">
+        crates.io
+    </a>
+    •
+    <a href="https://central.sonatype.com/artifact/io.github.pytgcalls/ntgcalls">
+        Maven Central
+    </a>
+    •
     <a href="https://github.com/pytgcalls/ntgcalls/releases">
         Releases
     </a>
@@ -27,12 +39,13 @@
     </a>
 </p>
 
-# NTgCalls [![PyPI - Version](https://img.shields.io/pypi/v/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37)](https://pypi.org/project/ntgcalls/) [![Downloads](https://img.shields.io/pepy/dt/ntgcalls?logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)](https://pepy.tech/project/ntgcalls)
+# NTgCalls [![Release](https://img.shields.io/github/v/release/pytgcalls/ntgcalls?include_prereleases&logo=github&logoColor=%23959DA5&label=release&labelColor=%23282f37)](https://github.com/pytgcalls/ntgcalls/releases) [![PyPI - Downloads](https://img.shields.io/pepy/dt/ntgcalls?logo=python&logoColor=%23959DA5&label=pypi&labelColor=%23282f37&color=%2328A745)](https://pepy.tech/project/ntgcalls) [![npm - Downloads](https://img.shields.io/npm/dm/ntgcalls?logo=npm&logoColor=%23959DA5&label=npm&labelColor=%23282f37&color=%2328A745)](https://www.npmjs.com/package/ntgcalls) [![Crates.io - Downloads](https://img.shields.io/crates/d/ntgcalls?logo=rust&logoColor=%23959DA5&label=crates.io&labelColor=%23282f37&color=%2328A745)](https://crates.io/crates/ntgcalls)
+
 NTgCalls is a lightweight open-source library for media streaming in Telegram calls. Built from scratch in C++ with WebRTC & Boost, it prioritizes accessibility to developers and resource efficiency.
 
 |                                                                                     Powerful                                                                                      |                                                                                            Simple                                                                                            |                                                                                                   Light                                                                                                    |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/fast.gif" width=150 alt="Fast Logo"/><br>Built from scratch in C++ using Boost and libwebrtc | <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/simple.gif" width=150 alt="Simple Logo"/><br>Simple Python, GO, C Bindings and Java for Android SDK<br> | <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/light.gif" width=150 alt="Light logo"/><br>We removed anything that could burden the library, including <b>NodeJS</b> |
+| <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/fast.gif" width=150 alt="Fast Logo"/><br>Built from scratch in C++ using Boost and libwebrtc | <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/simple.gif" width=150 alt="Simple Logo"/><br>Simple Python, Node.js, Rust, GO, C Bindings and Java for Android SDK<br> | <img src="https://raw.githubusercontent.com/pytgcalls/ntgcalls/master/.github/images/light.gif" width=150 alt="Light logo"/><br>We removed anything that could burden the library, keeping every binding a thin layer over the same native core |
 
 ## Build Status
 | Architecture |                                                                   Windows                                                                   |                                                                Linux                                                                |                                                                  MacOS                                                                  |
@@ -46,52 +59,56 @@ NTgCalls is a lightweight open-source library for media streaming in Telegram ca
 - Media controls: pause/resume and mute/unmute
 - Codec compatibility: H.264, HEVC (H.265), VP8, VP9, AV1, AAC, MP3, Opus
 - Content sharing: Screen streaming, Microphone and Camera streaming
-- Pre-built wheels for Python & AAR SDK library for Android
+- Pre-built wheels for Python, npm packages for Node.js, crates for Rust & AAR SDK library for Android
 
-## Compiling
+## Installing
+Prebuilt packages are published for every supported language, so most users never need to compile anything.
 
-### Python Bindings
-NTgCalls includes Python bindings for seamless integration. Follow these steps to compile it with Python Bindings:
-1. Ensure you are in the root directory of the NTgCalls project.
-2. Run the following command to install the Py Bindings:
+| Language          | Package                                                                                              | Install                          |
+|:------------------|:-----------------------------------------------------------------------------------------------------|:---------------------------------|
+| Python            | [ntgcalls](https://pypi.org/project/ntgcalls/)                                                        | `pip install ntgcalls`           |
+| Node.js           | [ntgcalls](https://www.npmjs.com/package/ntgcalls)                                                    | `npm install ntgcalls`           |
+| Rust              | [ntgcalls](https://crates.io/crates/ntgcalls)                                                         | `cargo add ntgcalls`             |
+| Java (Android)    | [io.github.pytgcalls:ntgcalls](https://central.sonatype.com/artifact/io.github.pytgcalls/ntgcalls)    | Gradle dependency                |
+| C, C++ and Go     | [Release archives](https://github.com/pytgcalls/ntgcalls/releases)                                    | Download the shared or static zip |
 
-   ```shell
-   python3 setup.py install
-   ```
-### Go Bindings
+## Building from source
+Prerequisites are listed in the
+[Build Guide](https://pytgcalls.github.io/NTgCalls/Build%20Guide#Installing=Prerequisites).
+All commands are run from the root of the repository.
+
+| Target       | Command                                    | Output                                     |
+|:-------------|:-------------------------------------------|:-------------------------------------------|
+| Python       | `python3 setup.py install`                 | Installed in the current environment       |
+| Node.js      | `python3 setup.py build_lib --target=node` | `targets/node/build/Release/ntgcalls.node` |
+| C and C++    | `python3 setup.py build_lib`               | `shared-output` and `static-output`        |
+
+The C target builds both the shared and the static library in a single run. Each output directory also
+contains an `include` folder with the headers to add to your project.
+
+The Rust bindings do not build the native library: the `ntgcalls-sys` build script downloads the matching
+static libraries from the GitHub release for your platform. Set `NTGCALLS_RELEASE_BASE` to build against a
+local release instead.
+
+<details>
+<summary><b>Using the library from Go</b></summary>
+
 > [!WARNING]
 > Static linking for Windows is not supported yet since our library is built with MSVC and Go uses MinGW for static linking.
 > More info can be found [here](https://github.com/golang/go/issues/63903)
 
-NTgCalls includes Go Bindings, enabling seamless integration with Go. Follow these steps to compile it with Go Bindings:
-1. There is an example project for Go in `./examples/go/` directory, ensure you are in that directory
-2. Prerequisites for building are the same as for building a library itself and can be found [here](https://pytgcalls.github.io/NTgCalls/Build%20Guide#Installing=Prerequisites)
-3. Download **shared** or **static** release of the library from https://github.com/pytgcalls/ntgcalls/releases
-4. Copy `ntgcalls.h` file into `./examples/go/ntgcalls/` directory
-5. The rest of the files should be copied to `./examples/go/` directory
-    * `ntgcalls.dll` or `ntgcalls.lib` files in case of Windows amd64
-    * `libntgcalls.so` or `libntgcalls.a` files in case of Linux amd64
-    * `libntgcalls.dylib` or `libntgcalls.a` files in case of macOS
-6. Then in `./examples/go/` directory run `go build` or `go run .` with CGO_ENABLED=1 env variable set
-    * `$env:CGO_ENABLED=1; go run .` for Windows PowerShell
-    * `CGO_ENABLED=1 go run .` for UNIX
+Go consumes the C bindings through an example project in `./examples/go/`:
+1. Download the **shared** or **static** release from the [Releases](https://github.com/pytgcalls/ntgcalls/releases) page
+2. Copy `ntgcalls.h` into `./examples/go/ntgcalls/`
+3. Copy the remaining files into `./examples/go/`
+    * `ntgcalls.dll` or `ntgcalls.lib` on Windows amd64
+    * `libntgcalls.so` or `libntgcalls.a` on Linux amd64
+    * `libntgcalls.dylib` or `libntgcalls.a` on macOS
+4. Run `go build` or `go run .` with `CGO_ENABLED=1`
+    * `$env:CGO_ENABLED=1; go run .` on Windows PowerShell
+    * `CGO_ENABLED=1 go run .` on UNIX
 
-
-### C Bindings
-For developers looking to use NTgCalls with C and C++, we provide C Bindings. Follow these steps to compile it with C Bindings:
-1. Ensure you are in the root directory of the NTgCalls project.
-2. Run the following command to generate the library:
-   ```shell
-   # Static library
-   python3 setup.py build_lib --static
-   
-   # Shared library
-   python3 setup.py build_lib --shared
-   ```
-3. Upon successful execution, a library will be generated in the "shared-output" or "static-output" directory, depending on the chosen option.
-   Now you can use this library to develop applications with NTgCalls.
-4. To include the necessary headers in your C/C++ projects, you will find the "include" folder in the "shared-output" or "static-output" directory.
-   Use this folder by including the required header files.
+</details>
 
 ## Key Contributors
 * <b><a href="https://github.com/Laky-64">@Laky-64</a> (DevOps Engineer, Software Architect, Porting Engineer):</b>
@@ -109,6 +126,9 @@ For developers looking to use NTgCalls with C and C++, we provide C Bindings. Fo
 * <b><a href="https://github.com/vrumger">@vrumger</a> (Mid-level NodeJS Developer):</b>
     * Avrumy has made important fixes and enhancements to the WebRTC component of the library,
       improving its stability and performance.
+* <b><a href="https://github.com/ankit-chaubey">@ankit-chaubey</a> (Rust Developer):</b>
+    * Authored the first Rust bindings for NTgCalls and generously transferred the
+      <a href="https://crates.io/crates/ntgcalls">ntgcalls</a> crate to the official project.
 
 ## Junior Developers
 * <b><a href="https://github.com/TuriOG">@TuriOG</a> (Junior Python Developer):</b>

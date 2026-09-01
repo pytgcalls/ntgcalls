@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 07/10/24.
+// Created by Lauren on 07/10/24.
 //
 
 #pragma once
@@ -7,16 +7,16 @@
 #include <ntgcalls/io/audio_writer.hpp>
 #include <ntgcalls/media/base_sink.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::io {
 
     class AudioMixer: public AudioWriter {
     protected:
-        virtual void onData(bytes::unique_binary data) = 0;
+        virtual void on_data(bytes::unique_binary data) = 0;
 
     public:
-        explicit AudioMixer(BaseSink* sink);
+        explicit AudioMixer(media::BaseSink* sink);
 
-        void sendFrames(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) override;
+        void send_frames(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) override;
     };
 
-} // ntgcalls
+} // ntgcalls::io

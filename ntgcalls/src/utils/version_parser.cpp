@@ -1,12 +1,12 @@
 //
-// Created by Laky64 on 13/10/24.
+// Created by Lauren on 13/10/24.
 //
 
 #include <ntgcalls/utils/version_parser.hpp>
 #include <sstream>
 #include <vector>
 
-namespace ntgcalls {
+namespace ntgcalls::utils {
     VersionParser VersionParser::Parse(const std::string& version) {
         try {
             std::vector<std::string> parts;
@@ -47,4 +47,4 @@ namespace ntgcalls {
     std::string VersionParser::toString() const {
         return std::to_string(major) + '.' + std::to_string(minor) + '.' + std::to_string(micro);
     }
-} // ntgcalls
+} // ntgcalls::utils

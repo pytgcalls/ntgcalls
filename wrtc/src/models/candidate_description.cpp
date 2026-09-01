@@ -1,10 +1,10 @@
 //
-// Created by Laky64 on 10/09/2024.
+// Created by Lauren on 10/09/24.
 //
 
 #include <wrtc/models/candidate_description.hpp>
 
-namespace wrtc {
+namespace wrtc::models {
     bool CandidateDescription::operator==(CandidateDescription const& rhs) const {
         if (protocol != rhs.protocol) {
             return false;
@@ -18,4 +18,4 @@ namespace wrtc {
 
         return true;
     }
-} // wrtc
+} // wrtc::models

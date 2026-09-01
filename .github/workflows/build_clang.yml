@@ -22,7 +22,7 @@ jobs:
             host: ${{ inputs.use-blacksmith == true && 'blacksmith-8vcpu-ubuntu-2404' || 'ubuntu-latest' }}
             gcc_suffix: manylinux
           - name: arm64
-            host: ${{ inputs.use-blacksmith == true && 'blacksmith-8vcpu-ubuntu-2404-arm' || 'arm64-server' }}
+            host: ${{ inputs.use-blacksmith == true && 'blacksmith-8vcpu-ubuntu-2404-arm' || 'ubuntu-24.04-arm' }}
             gcc_suffix: manylinux
           - name: x86_64
             host: ${{ inputs.use-blacksmith == true && 'blacksmith-8vcpu-ubuntu-2404' || 'ubuntu-latest' }}

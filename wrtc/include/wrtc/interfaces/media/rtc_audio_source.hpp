@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 19/08/2023.
+// Created by Lauren on 19/08/23.
 //
 
 #pragma once
@@ -9,7 +9,7 @@
 #include <wrtc/models/frame_data.hpp>
 #include <wrtc/models/rtc_on_data_event.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
 
     class RTCAudioSource {
     public:
@@ -17,13 +17,13 @@ namespace wrtc {
 
         ~RTCAudioSource();
 
-        [[nodiscard]] webrtc::scoped_refptr<webrtc::AudioTrackInterface> createTrack() const;
+        [[nodiscard]] webrtc::scoped_refptr<webrtc::AudioTrackInterface> create_track() const;
 
-        void OnData(const RTCOnDataEvent &, FrameData additionalData) const;
+        void on_data(const models::RTCOnDataEvent&, models::FrameData additional_data) const;
 
     private:
-        webrtc::scoped_refptr<AudioTrackSource> source;
-        PeerConnectionFactory* factory;
+        webrtc::scoped_refptr<tracks::AudioTrackSource> source_;
+        peer_connection::PeerConnectionFactory* factory_;
     };
 
-} // wrtc
+} // wrtc::interfaces::media

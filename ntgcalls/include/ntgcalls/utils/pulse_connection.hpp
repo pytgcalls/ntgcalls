@@ -1,76 +1,75 @@
 //
-// Created by Laky64 on 22/09/24.
+// Created by Lauren on 22/09/24.
 //
 
 #pragma once
-#include <atomic>
-#include <map>
-#include <wrtc/utils/synchronized_callback.hpp>
-
 
 #ifdef IS_LINUX
-#include <wrtc/utils/binary.hpp>
-#include <pulse/pulseaudio.h>
+#include <atomic>
+#include <map>
 #include <string>
+#include <pulse/pulseaudio.h>
+#include <wrtc/utils/binary.hpp>
+#include <wrtc/utils/synchronized_callback.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::utils {
 
     class PulseConnection {
-        pa_threaded_mainloop* paMainloop;
-        pa_mainloop_api* paMainloopApi;
-        pa_context* paContext;
-        char paServerVersion[32]{};
-        std::atomic_bool versionReceived, running, paStateChanged = false;
-        pa_stream* stream{};
-        std::string deviceID;
-        std::map<std::string, std::string> playDevices, recordDevices;
-        wrtc::synchronized_callback<bytes::unique_binary> dataCallback;
-        bool isCapture = false;
+        pa_threaded_mainloop* pa_main_loop_;
+        pa_mainloop_api* pa_main_loop_api_;
+        pa_context* pa_context_;
+        char pa_server_version_[32]{};
+        std::atomic_bool version_received_, running_, pa_state_changed_ = false;
+        pa_stream* stream_{};
+        std::string device_id_;
+        std::map<std::string, std::string> play_devices_, record_devices_;
+        wrtc::utils::synchronized_callback<void(bytes::unique_binary)> data_callback_;
+        bool is_capture_ = false;
 
-        void paLock() const;
+        void pa_lock() const;
 
-        void paUnLock() const;
+        void pa_unlock() const;
 
-        void enableReadCallback();
+        void enable_read_callback();
 
-        void disableReadCallback() const;
+        void disable_read_callback() const;
 
-        void waitForOperationCompletion(pa_operation* paOperation) const;
+        void wait_for_operation_completion(pa_operation* pa_operation) const;
 
-        static void paContextStateCallback(pa_context* c, void* pThis);
+        static void pa_context_state_callback(pa_context* c, void* p_this);
 
-        static void paServerInfoCallback(pa_context*, const pa_server_info* i, void* pThis);
+        static void pa_server_info_callback(pa_context*, const pa_server_info* i, void* p_this);
 
-        static void paStreamReadCallback(pa_stream*, size_t, void* pThis);
+        static void pa_stream_read_callback(pa_stream*, size_t, void* p_this);
 
-        static void paStreamStateCallback(pa_stream* p, void* pThis);
+        static void pa_stream_state_callback(pa_stream* p, void* p_this);
 
-        static void paSinkInfoCallback(pa_context*, const pa_sink_info* i, int eol, void* pThis);
+        static void pa_sink_info_callback(pa_context*, const pa_sink_info* i, int eol, void* p_this);
 
-        static void paSourceInfoCallback(pa_context*, const pa_source_info* i, int eol, void* pThis);
+        static void pa_source_info_callback(pa_context*, const pa_source_info* i, int eol, void* p_this);
 
     public:
         PulseConnection();
 
         ~PulseConnection();
 
-        std::string getVersion();
+        std::string get_version();
 
         void disconnect();
 
-        void setupStream(const pa_sample_spec& sampleSpec, std::string deviceId, bool isCapture);
+        void setup_stream(const pa_sample_spec& sample_spec, std::string device_id, bool is_capture);
 
-        void start(int64_t bufferSize);
+        void start(int64_t buffer_size);
 
-        std::map<std::string, std::string> getPlayDevices();
+        std::map<std::string, std::string> get_play_devices();
 
-        std::map<std::string, std::string> getRecordDevices();
+        std::map<std::string, std::string> get_record_devices();
 
-        void onData(const std::function<void(bytes::unique_binary)> &callback);
+        void on_data(const std::function<void(bytes::unique_binary)>& callback);
 
-        void writeData(const bytes::unique_binary& data, size_t size) const;
+        void write_data(const bytes::unique_binary& data, size_t size) const;
     };
 
-} // ntgcalls
+} // ntgcalls::utils
 
 #endif

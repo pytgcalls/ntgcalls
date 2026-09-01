@@ -1,27 +1,27 @@
 //
-// Created by Laky64 on 06/10/24.
+// Created by Lauren on 06/10/24.
 //
 
 #pragma once
 #include <pc/dtls_srtp_transport.h>
 #include <wrtc/utils/synchronized_callback.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces {
 
-    class WrappedDtlsSrtpTransport final : public webrtc::DtlsSrtpTransport {
-        synchronized_callback<webrtc::RtpPacketReceived> rtpPacketCallback;
-        int decryptionFailureCount = 0;
+    class WrappedDtlsSrtpTransport final: public webrtc::DtlsSrtpTransport {
+        utils::synchronized_callback<void(webrtc::RtpPacketReceived)> rtp_packet_callback_;
+        int decryption_failure_count_ = 0;
+
+        void OnRtpPacketReceived(const webrtc::ReceivedIpPacket& packet) override;
 
     public:
         WrappedDtlsSrtpTransport(
-            bool rtcpMuxEnabled,
+            bool rtcp_mux_enabled,
             const webrtc::FieldTrialsView& field_trials,
             const std::function<void(webrtc::RtpPacketReceived)>& callback
         );
 
         ~WrappedDtlsSrtpTransport() override;
-
-        void OnRtpPacketReceived(const webrtc::ReceivedIpPacket& packet) override;
     };
 
-} // wrtc
+} // wrtc::interfaces

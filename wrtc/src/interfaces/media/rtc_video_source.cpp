@@ -1,33 +1,33 @@
 //
-// Created by Laky64 on 19/08/2023.
+// Created by Lauren on 19/08/23.
 //
 
-#include <wrtc/interfaces/media/rtc_video_source.hpp>
-#include <rtc_base/crypto_random.h>
 #include <api/make_ref_counted.h>
+#include <rtc_base/crypto_random.h>
+#include <wrtc/interfaces/media/rtc_video_source.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
     RTCVideoSource::RTCVideoSource() {
-        factory = PeerConnectionFactory::GetOrCreateDefault();
-        source = webrtc::make_ref_counted<VideoTrackSource>();
+        factory_ = peer_connection::PeerConnectionFactory::get_or_create_default();
+        source_ = webrtc::make_ref_counted<tracks::VideoTrackSource>();
     }
 
     RTCVideoSource::~RTCVideoSource() {
-        factory = nullptr;
-        source = nullptr;
+        factory_ = nullptr;
+        source_ = nullptr;
     }
 
-    webrtc::scoped_refptr<webrtc::VideoTrackInterface> RTCVideoSource::createTrack() const {
-        return factory->factory()->CreateVideoTrack(source, webrtc::CreateRandomUuid());
+    webrtc::scoped_refptr<webrtc::VideoTrackInterface> RTCVideoSource::create_track() const {
+        return factory_->factory()->CreateVideoTrack(source_, webrtc::CreateRandomUuid());
     }
 
-    void RTCVideoSource::OnFrame(const i420ImageData& data, const FrameData additionalData) const {
+    void RTCVideoSource::on_frame(const models::I420ImageData& data, const models::FrameData additional_data) const {
         const auto frame = webrtc::VideoFrame::Builder()
-            .set_video_frame_buffer(data.buffer())
-            .set_timestamp_rtp(0)
-            .set_timestamp_ms(additionalData.absoluteCaptureTimestampMs)
-            .set_rotation(additionalData.rotation)
-            .build();
-        source->PushFrame(frame);
+                               .set_video_frame_buffer(data.buffer())
+                               .set_timestamp_rtp(0)
+                               .set_timestamp_ms(additional_data.absolute_capture_timestamp_ms)
+                               .set_rotation(additional_data.rotation)
+                               .build();
+        source_->push_frame(frame);
     }
-} // wrtc
+} // wrtc::interfaces::media

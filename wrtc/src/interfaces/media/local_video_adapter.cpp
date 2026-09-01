@@ -1,27 +1,34 @@
 //
-// Created by Laky64 on 04/09/2024.
+// Created by Lauren on 04/09/24.
 //
 
 #include <wrtc/interfaces/media/local_video_adapter.hpp>
 
-namespace wrtc {
-    LocalVideoAdapter::LocalVideoAdapter(): _sink(std::nullopt){}
+namespace wrtc::interfaces::media {
+    LocalVideoAdapter::LocalVideoAdapter(): sink_(std::nullopt) {}
 
     LocalVideoAdapter::~LocalVideoAdapter() {
-        webrtc::MutexLock lock(&lock_);
-        _sink = std::nullopt;
+        const webrtc::MutexLock lock(&lock_);
+        sink_ = std::nullopt;
     }
 
     void LocalVideoAdapter::OnFrame(const webrtc::VideoFrame& frame) {
-        webrtc::MutexLock lock(&lock_);
-        if(_sink.has_value()) {
-            _sink.value().sink->OnFrame(frame);
+        const webrtc::MutexLock lock(&lock_);
+        if (sink_.has_value()) {
+            sink_.value().sink->OnFrame(frame);
         }
     }
 
-    void LocalVideoAdapter::AddOrUpdateSink(VideoSinkInterface* sink, const webrtc::VideoSinkWants& wants){
-        webrtc::MutexLock lock(&lock_);
-        RTC_DCHECK(!sink || !_sink.has_value());
-        _sink = SinkPair(sink, wants);
+    void LocalVideoAdapter::AddOrUpdateSink(VideoSinkInterface* sink, const webrtc::VideoSinkWants& wants) {
+        const webrtc::MutexLock lock(&lock_);
+        RTC_DCHECK(!sink_ || !sink_.has_value());
+        sink_ = SinkPair(sink, wants);
     }
-} // wrtc
+
+    void LocalVideoAdapter::RemoveSink(VideoSinkInterface* sink) {
+        const webrtc::MutexLock lock(&lock_);
+        if (sink_.has_value() && sink_.value().sink == sink) {
+            sink_ = std::nullopt;
+        }
+    }
+} // wrtc::interfaces::media

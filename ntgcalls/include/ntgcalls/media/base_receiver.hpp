@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 07/10/24.
+// Created by Lauren on 07/10/24.
 //
 
 #pragma once
@@ -7,12 +7,12 @@
 #include <memory>
 #include <wrtc/interfaces/media/remote_media_interface.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::media {
 
     class BaseReceiver {
     protected:
-        std::mutex mutex;
-        std::weak_ptr<wrtc::RemoteMediaInterface> weakSink;
+        std::mutex mutex_;
+        std::weak_ptr<wrtc::interfaces::media::RemoteMediaInterface> weakSink_;
 
     public:
         virtual ~BaseReceiver() = default;

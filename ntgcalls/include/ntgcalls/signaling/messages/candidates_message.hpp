@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 30/03/2024.
+// Created by Lauren on 30/03/24.
 //
 
 #pragma once
@@ -8,18 +8,20 @@
 
 #include <ntgcalls/signaling/messages/message.hpp>
 
-namespace signaling {
-    class CandidatesMessage final : public Message {
+namespace ntgcalls::signaling::messages {
+    class CandidatesMessage final: public Message {
     public:
         struct IceCandidate {
-            std::string sdpString;
+            std::string sdp_string;
+            std::string sdp_mid;
+            int sdp_m_line_index = 0;
         };
 
-        std::vector<IceCandidate> iceCandidates;
+        std::vector<IceCandidate> ice_candidates;
 
         [[nodiscard]] bytes::binary serialize() const override;
 
         static std::unique_ptr<CandidatesMessage> deserialize(const bytes::binary& data);
     };
 
-} // signaling
+} // ntgcalls::signaling::messages

@@ -1,20 +1,19 @@
 //
-// Created by Laky64 on 10/09/2024.
+// Created by Lauren on 10/09/24.
 //
 
 #include <wrtc/models/route_description.hpp>
 
-namespace wrtc {
-    RouteDescription::RouteDescription(std::string localDescription, std::string remoteDescription):
-        localDescription(std::move(localDescription)),
-        remoteDescription(std::move(remoteDescription)){}
-
+namespace wrtc::models {
+    RouteDescription::RouteDescription(std::string local_description, std::string remote_description):
+    local_description(std::move(local_description)),
+    remote_description(std::move(remote_description)) {}
 
     bool RouteDescription::operator==(RouteDescription const& rhs) const {
-        if (localDescription != rhs.localDescription) {
+        if (local_description != rhs.local_description) {
             return false;
         }
-        if (remoteDescription != rhs.remoteDescription) {
+        if (remote_description != rhs.remote_description) {
             return false;
         }
 
@@ -24,4 +23,4 @@ namespace wrtc {
     bool RouteDescription::operator!=(const RouteDescription& rhs) const {
         return !(*this == rhs);
     }
-} // wrtc
+} // wrtc::models

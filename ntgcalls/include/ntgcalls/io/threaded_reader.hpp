@@ -1,34 +1,34 @@
 //
-// Created by Laky64 on 28/09/24.
+// Created by Lauren on 28/09/24.
 //
 
 #pragma once
 
 #include <condition_variable>
 #include <ntgcalls/io/base_reader.hpp>
-#include <wrtc/utils/sync_helper.hpp>
 #include <rtc_base/platform_thread.h>
+#include <wrtc/utils/sync_helper.hpp>
 
-namespace ntgcalls {
+namespace ntgcalls::io {
 
-    class ThreadedReader: public BaseReader, public wrtc::SyncHelper {
-        std::vector<webrtc::PlatformThread> bufferThreads;
-        size_t activeBuffer = 0;
-        size_t activeBufferCount = 0;
-        std::condition_variable cv;
-        std::mutex mtx;
+    class ThreadedReader: public BaseReader, public wrtc::utils::SyncHelper {
+        std::vector<webrtc::PlatformThread> buffer_threads_;
+        size_t active_buffer_ = 0;
+        size_t active_buffer_count_ = 0;
+        std::condition_variable cv_;
+        std::mutex mtx_;
 
     public:
-        explicit ThreadedReader(BaseSink *sink, size_t threadCount = 2);
+        explicit ThreadedReader(media::BaseSink* sink, size_t thread_count = 2);
 
         void close();
 
-    protected:
-        int64_t readChunks = 0;
-
-        void run(const std::function<bytes::unique_binary(int64_t)>& readCallback);
-
         bool set_enabled(bool enable) override;
+
+    protected:
+        int64_t read_chunks_ = 0;
+
+        void run(const std::function<bytes::unique_binary(int64_t)>& read_callback);
     };
 
-} // ntgcalls
+} // ntgcalls::io

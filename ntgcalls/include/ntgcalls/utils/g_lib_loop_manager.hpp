@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 16/10/24.
+// Created by Lauren on 16/10/24.
 //
 
 #pragma once
@@ -8,24 +8,24 @@
 #include <rtc_base/platform_thread.h>
 #endif
 
-namespace ntgcalls {
+namespace ntgcalls::utils {
 
     class GLibLoopManager {
-        static int references;
-        static bool isRunnable;
-        static bool allowEventloop;
+        static int references_;
+        static bool is_runnable_;
+        static bool allow_eventloop_;
 #ifdef IS_LINUX
-        static GMainLoop *loop;
-        static webrtc::PlatformThread thread;
+        static GMainLoop* loop_;
+        static webrtc::PlatformThread thread_;
 #endif
-        static bool isEventLoopRunning();
+        static bool is_event_loop_running();
 
     public:
-        static void EnableEventLoop(bool enable);
+        static void enable_event_loop(bool enable);
 
-        static void AddInstance();
+        static void add_instance();
 
-        static void RemoveInstance();
+        static void remove_instance();
     };
 
-} // ntgcalls
+} // ntgcalls::utils

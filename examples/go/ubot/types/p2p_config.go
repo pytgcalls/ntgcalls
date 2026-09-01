@@ -1,10 +1,10 @@
 package types
 
-import tg "github.com/amarnathcjd/gogram/telegram"
+import "github.com/mtgo-labs/mtgo/tg"
 
 type P2PConfig struct {
-	DhConfig       *tg.MessagesDhConfigObj
-	PhoneCall      *tg.PhoneCallObj
+	DhConfig       *tg.MessagesDHConfig
+	PhoneCall      *tg.PhoneCall
 	IsOutgoing     bool
 	KeyFingerprint int64
 	GAorB          []byte

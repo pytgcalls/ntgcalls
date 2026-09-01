@@ -1,41 +1,41 @@
 //
-// Created by Laky64 on 18/08/2023.
+// Created by Lauren on 18/08/23.
 //
 
 #include <wrtc/video_factory/video_encoder_config.hpp>
 
-namespace wrtc {
+namespace wrtc::video_factory {
 
     VideoEncoderConfig::VideoEncoderConfig(const webrtc::VideoCodecType codec, EncoderCallback encoder, const int alignment) {
-        this->codec = codec;
-        this->encoder = std::move(encoder);
-        this->alignment = alignment;
+        this->codec_ = codec;
+        this->encoder_ = std::move(encoder);
+        this->alignment_ = alignment;
     }
 
-    VideoEncoderConfig::VideoEncoderConfig(FormatsRetriever formatsRetriever, EncoderCallback encoder, const int alignment) {
-        this->formatsRetriever = std::move(formatsRetriever);
-        this->encoder = std::move(encoder);
-        this->alignment = alignment;
+    VideoEncoderConfig::VideoEncoderConfig(FormatsRetriever formats_retriever, EncoderCallback encoder, const int alignment) {
+        this->formats_retriever_ = std::move(formats_retriever);
+        this->encoder_ = std::move(encoder);
+        this->alignment_ = alignment;
     }
 
-    bool VideoEncoderConfig::isInternal() const {
-        return factory != nullptr;
+    bool VideoEncoderConfig::is_internal() const {
+        return factory_ != nullptr;
     }
 
-    std::vector<webrtc::SdpVideoFormat> VideoEncoderConfig::getInternalFormats() const {
-        return factory->GetSupportedFormats();
+    std::vector<webrtc::SdpVideoFormat> VideoEncoderConfig::get_internal_formats() const {
+        return factory_->GetSupportedFormats();
     }
 
-    std::unique_ptr<webrtc::VideoEncoder> VideoEncoderConfig::CreateVideoCodec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const {
-        if (factory) {
-            return factory->Create(env, format);
+    std::unique_ptr<webrtc::VideoEncoder> VideoEncoderConfig::create_video_codec(const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) const {
+        if (factory_) {
+            return factory_->Create(env, format);
         }
-        return encoder(format);
+        return encoder_(format);
     }
 
     VideoEncoderConfig::~VideoEncoderConfig() {
-        factory = nullptr;
-        formatsRetriever = nullptr;
-        encoder = nullptr;
+        factory_ = nullptr;
+        formats_retriever_ = nullptr;
+        encoder_ = nullptr;
     }
-} // wrtc
+} // wrtc::video_factory

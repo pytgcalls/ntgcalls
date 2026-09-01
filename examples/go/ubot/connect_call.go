@@ -6,17 +6,120 @@ import (
 	"gotgcalls/ubot/types"
 	"time"
 
-	tg "github.com/amarnathcjd/gogram/telegram"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
-func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDescription, jsonParams string) error {
+func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDescription, jsonParams string, conference bool, lastBlock []byte) error {
 	defer func() {
 		if ctx.waitConnect[chatId] != nil {
 			delete(ctx.waitConnect, chatId)
 		}
+		delete(ctx.pendingConnections, chatId)
 	}()
 	ctx.waitConnect[chatId] = make(chan error)
-	if chatId >= 0 {
+	if conference {
+		if lastBlock == nil {
+			if err := ctx.binding.CreateP2PCall(chatId); err != nil {
+				return err
+			}
+		}
+		conferenceParams, err := ctx.binding.InitConference(chatId, ctx.self.UserID, lastBlock)
+		if err != nil {
+			return err
+		}
+		if lastBlock == nil {
+			if err = ctx.binding.SetStreamSources(chatId, ntgcalls.CaptureStream, mediaDescription); err != nil {
+				return err
+			}
+		}
+		state, err := ctx.binding.GetState(chatId)
+		if err != nil {
+			return err
+		}
+
+		var rawUpdates []tg.UpdateClass
+		if lastBlock == nil {
+			callResRaw, err := ctx.invoke(
+				&tg.PhoneCreateConferenceCallRequest{
+					Muted:        false,
+					VideoStopped: state.VideoStopped,
+					Join:         true,
+					RandomID:     int32(ctx.app.RandomID()),
+					Block:        conferenceParams.Block,
+					Params: &tg.DataJSON{
+						Data: conferenceParams.Payload,
+					},
+					PublicKey: (*[32]byte)(conferenceParams.PublicKey),
+				},
+			)
+			if err != nil {
+				return err
+			}
+			rawUpdates = callResRaw.(*tg.Updates).Updates
+		} else {
+			inputCall, err := ctx.getInputGroupCall(chatId)
+			if err != nil {
+				return err
+			}
+			callResRaw, err := ctx.invoke(
+				&tg.PhoneJoinGroupCallRequest{
+					Muted:        false,
+					VideoStopped: state.VideoStopped,
+					Call:         inputCall,
+					JoinAs:       ctx.self,
+					Block:        conferenceParams.Block,
+					Params: &tg.DataJSON{
+						Data: conferenceParams.Payload,
+					},
+					PublicKey: (*[32]byte)(conferenceParams.PublicKey),
+				},
+			)
+			if err != nil {
+				return err
+			}
+			rawUpdates = callResRaw.(*tg.Updates).Updates
+		}
+
+		resultParams := "{\"transport\": null}"
+		for _, update := range rawUpdates {
+			switch u := update.(type) {
+			case *tg.UpdateGroupCall:
+				if groupCall, ok := u.Call.(*tg.GroupCall); ok {
+					ctx.inputGroupCalls[chatId] = &tg.InputGroupCall{
+						ID:         groupCall.ID,
+						AccessHash: groupCall.AccessHash,
+					}
+				}
+			case *tg.UpdateGroupCallConnection:
+				resultParams = u.Params.Data
+			}
+		}
+
+		if lastBlock == nil {
+			inputCall, err := ctx.getInputGroupCall(chatId)
+			if err != nil {
+				return err
+			}
+			inputUser, err := ctx.getSendableUser(chatId)
+			if err != nil {
+				return err
+			}
+			_, err = ctx.invoke(
+				&tg.PhoneInviteConferenceCallParticipantRequest{
+					Video:  !state.VideoStopped,
+					Call:   inputCall,
+					UserID: inputUser,
+				},
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err = ctx.binding.Connect(chatId, resultParams, false); err != nil {
+			return err
+		}
+	} else if chatId >= 0 {
 		defer func() {
 			if ctx.p2pConfigs[chatId] != nil {
 				delete(ctx.p2pConfigs, chatId)
@@ -51,24 +154,24 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 
 		protocolRaw := ntgcalls.GetProtocol()
 		protocol := &tg.PhoneCallProtocol{
-			UdpP2P:          protocolRaw.UdpP2P,
-			UdpReflector:    protocolRaw.UdpReflector,
+			UDPP2p:          protocolRaw.UdpP2P,
+			UDPReflector:    protocolRaw.UdpReflector,
 			MinLayer:        protocolRaw.MinLayer,
 			MaxLayer:        protocolRaw.MaxLayer,
 			LibraryVersions: protocolRaw.Versions,
 		}
 
-		userId, err := ctx.app.GetSendableUser(chatId)
+		userId, err := ctx.getSendableUser(chatId)
 		if err != nil {
 			return err
 		}
 		if ctx.p2pConfigs[chatId].IsOutgoing {
-			_, err = ctx.app.PhoneRequestCall(
-				&tg.PhoneRequestCallParams{
+			_, err = ctx.invoke(
+				&tg.PhoneRequestCallRequest{
 					Protocol: protocol,
 					UserID:   userId,
 					GAHash:   ctx.p2pConfigs[chatId].GAorB,
-					RandomID: int32(tg.GenRandInt()),
+					RandomID: int32(ctx.app.RandomID()),
 					Video:    mediaDescription.Camera != nil || mediaDescription.Screen != nil,
 				},
 			)
@@ -76,10 +179,12 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 				return err
 			}
 		} else {
-			_, err = ctx.app.PhoneAcceptCall(
-				ctx.inputCalls[chatId],
-				ctx.p2pConfigs[chatId].GAorB,
-				protocol,
+			_, err = ctx.invoke(
+				&tg.PhoneAcceptCallRequest{
+					Peer:     ctx.inputCalls[chatId],
+					GB:       ctx.p2pConfigs[chatId].GAorB,
+					Protocol: protocol,
+				},
 			)
 			if err != nil {
 				return err
@@ -103,23 +208,26 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 		}
 
 		if ctx.p2pConfigs[chatId].IsOutgoing {
-			confirmRes, err := ctx.app.PhoneConfirmCall(
-				ctx.inputCalls[chatId],
-				res.GAOrB,
-				res.KeyFingerprint,
-				protocol,
+			confirmRes, err := ctx.invoke(
+				&tg.PhoneConfirmCallRequest{
+					Peer:           ctx.inputCalls[chatId],
+					GA:             res.GAOrB,
+					KeyFingerprint: res.KeyFingerprint,
+					Protocol:       protocol,
+				},
 			)
 			if err != nil {
 				return err
 			}
-			ctx.p2pConfigs[chatId].PhoneCall = confirmRes.PhoneCall.(*tg.PhoneCallObj)
+			ctx.p2pConfigs[chatId].PhoneCall = confirmRes.(*tg.PhonePhoneCall).PhoneCall.(*tg.PhoneCall)
 		}
 
 		err = ctx.binding.ConnectP2P(
 			chatId,
 			parseRTCServers(ctx.p2pConfigs[chatId].PhoneCall.Connections),
 			ctx.p2pConfigs[chatId].PhoneCall.Protocol.LibraryVersions,
-			ctx.p2pConfigs[chatId].PhoneCall.P2PAllowed,
+			ctx.p2pConfigs[chatId].PhoneCall.P2pAllowed,
+			"",
 		)
 		if err != nil {
 			return err
@@ -145,25 +253,21 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 		}
 
 		resultParams := "{\"transport\": null}"
-		callResRaw, err := ctx.app.PhoneJoinGroupCall(
-			&tg.PhoneJoinGroupCallParams{
+		callRes, err := ctx.invoke(
+			&tg.PhoneJoinGroupCallRequest{
 				Muted:        false,
 				VideoStopped: mediaDescription.Camera == nil,
 				Call:         inputGroupCall,
-				Params: &tg.DataJson{
+				Params: &tg.DataJSON{
 					Data: jsonParams,
 				},
-				JoinAs: &tg.InputPeerUser{
-					UserID:     ctx.self.ID,
-					AccessHash: ctx.self.AccessHash,
-				},
+				JoinAs: ctx.self,
 			},
 		)
 		if err != nil {
 			return err
 		}
-		callRes := callResRaw.(*tg.UpdatesObj)
-		for _, update := range callRes.Updates {
+		for _, update := range callRes.(*tg.Updates).Updates {
 			switch update.(type) {
 			case *tg.UpdateGroupCallConnection:
 				resultParams = update.(*tg.UpdateGroupCallConnection).Params.Data
@@ -191,5 +295,26 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 			}
 		}
 	}
-	return <-ctx.waitConnect[chatId]
+
+	if err := <-ctx.waitConnect[chatId]; err != nil {
+		return err
+	}
+
+	if conference || chatId < 0 {
+		state, err := ctx.binding.GetState(chatId)
+		if err != nil {
+			return err
+		}
+		if err = ctx.joinPresentation(chatId, !state.PresentationStopped); err != nil {
+			return err
+		}
+		if ctx.callSources[chatId] == nil {
+			ctx.callSources[chatId] = &types.CallSources{
+				CameraSources: make(map[int64]string),
+				ScreenSources: make(map[int64]string),
+			}
+		}
+		return ctx.updateSources(chatId)
+	}
+	return nil
 }

@@ -1,23 +1,22 @@
 //
-// Created by Laky64 on 18/08/2023.
+// Created by Lauren on 18/08/23.
 //
 
 #ifndef IS_ANDROID
 
-#include <wrtc/video_factory/software/google/google.hpp>
-
 #include <api/environment/environment_factory.h>
 #include <modules/video_coding/codecs/vp8/include/vp8.h>
 #include <modules/video_coding/codecs/vp9/include/vp9.h>
+#include <wrtc/video_factory/software/google/google.hpp>
 
 namespace google {
 
-    void addEncoders(std::vector<wrtc::VideoEncoderConfig> &encoders) {
+    void add_encoders(std::vector<wrtc::video_factory::VideoEncoderConfig>& encoders) {
         encoders.emplace_back(
-          webrtc::kVideoCodecVP8,
-          [](const auto&) {
-              return CreateVp8Encoder(webrtc::CreateEnvironment());
-          }
+            webrtc::kVideoCodecVP8,
+            [](const auto&) {
+                return CreateVp8Encoder(webrtc::CreateEnvironment());
+            }
         );
         encoders.emplace_back(
             webrtc::kVideoCodecVP9,
@@ -27,12 +26,12 @@ namespace google {
         );
     }
 
-    void addDecoders(std::vector<wrtc::VideoDecoderConfig> &decoders) {
+    void add_decoders(std::vector<wrtc::video_factory::VideoDecoderConfig>& decoders) {
         decoders.emplace_back(
-           webrtc::kVideoCodecVP8,
-           [](const auto&) {
-               return CreateVp8Decoder(webrtc::CreateEnvironment());
-           }
+            webrtc::kVideoCodecVP8,
+            [](const auto&) {
+                return CreateVp8Decoder(webrtc::CreateEnvironment());
+            }
         );
         decoders.emplace_back(
             webrtc::kVideoCodecVP9,

@@ -1,17 +1,17 @@
 //
-// Created by Laky64 on 26/10/24.
+// Created by Lauren on 26/10/24.
 //
 
 #include <wrtc/interfaces/media/remote_video_sink.hpp>
 
-namespace wrtc {
-    RemoteVideoSink::RemoteVideoSink(const std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)>& callback): frameCallback(callback) {}
+namespace wrtc::interfaces::media {
+    RemoteVideoSink::RemoteVideoSink(const std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)>& callback): frame_callback_(callback) {}
 
     RemoteVideoSink::~RemoteVideoSink() {
-        frameCallback = nullptr;
+        frame_callback_ = nullptr;
     }
 
-    void RemoteVideoSink::sendFrame(const uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) const {
-        frameCallback(ssrc, std::move(frame));
+    void RemoteVideoSink::send_frame(const uint32_t ssrc, std::unique_ptr<webrtc::VideoFrame> frame) const {
+        frame_callback_(ssrc, std::move(frame));
     }
-} // wrtc
+} // wrtc::interfaces::media

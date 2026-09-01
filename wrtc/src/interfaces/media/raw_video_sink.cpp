@@ -1,22 +1,22 @@
 //
-// Created by Laky64 on 26/10/24.
+// Created by Lauren on 26/10/24.
 //
 
 #include <wrtc/interfaces/media/raw_video_sink.hpp>
 
-namespace wrtc {
+namespace wrtc::interfaces::media {
     RawVideoSink::~RawVideoSink() {
-        callbackData = nullptr;
+        callback_ = nullptr;
     }
 
     void RawVideoSink::OnFrame(const webrtc::VideoFrame& frame) {
-        if (callbackData) {
-            callbackData(ssrc, std::make_unique<webrtc::VideoFrame>(frame));
+        if (callback_) {
+            callback_(ssrc_, std::make_unique<webrtc::VideoFrame>(frame));
         }
     }
 
-    void RawVideoSink::setRemoteVideoSink(const uint32_t ssrc, std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)> callback) {
-        callbackData = std::move(callback);
-        this->ssrc = ssrc;
+    void RawVideoSink::set_remote_video_sink(const uint32_t ssrc, std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)> callback) {
+        ssrc_ = ssrc;
+        callback_ = std::move(callback);
     }
-} // wrtc
+} // wrtc::interfaces::media

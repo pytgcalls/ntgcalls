@@ -1,5 +1,5 @@
 //
-// Created by Laky64 on 06/11/24.
+// Created by Lauren on 06/11/24.
 //
 
 #pragma once
@@ -8,12 +8,12 @@
 #include <api/video/color_space.h>
 
 extern "C" {
-    #include <libavcodec/avcodec.h>
+#include <libavcodec/avcodec.h>
 }
 
 namespace openh264 {
 
-    webrtc::ColorSpace ExtractH264ColorSpace(const AVCodecContext* codec);
+    webrtc::ColorSpace extract_h264_color_space(const AVCodecContext* codec);
 
 } // openh264
 #endif

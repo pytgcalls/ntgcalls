@@ -1,16 +1,15 @@
 //
-// Created by Laky64 on 28/03/2024.
+// Created by Lauren on 28/03/24.
 //
 
 #pragma once
 #include <string>
 #include <vector>
-
 #include <ntgcalls/signaling/messages/message.hpp>
 
-namespace signaling {
+namespace ntgcalls::signaling::messages {
 
-    class InitialSetupMessage final: public Message{
+    class InitialSetupMessage final: public Message {
     public:
         struct DtlsFingerprint {
             std::string hash;
@@ -20,7 +19,7 @@ namespace signaling {
 
         std::string ufrag;
         std::string pwd;
-        bool supportsRenomination = false;
+        bool supports_renomination = false;
         std::vector<DtlsFingerprint> fingerprints;
 
         [[nodiscard]] bytes::binary serialize() const override;
@@ -28,4 +27,4 @@ namespace signaling {
         static std::unique_ptr<InitialSetupMessage> deserialize(const bytes::binary& data);
     };
 
-} // signaling
+} // ntgcalls::signaling::messages

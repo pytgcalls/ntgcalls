@@ -1,64 +1,64 @@
 //
-// Created by Laky64 on 07/10/24.
+// Created by Lauren on 07/10/24.
 //
 
 #include <ntgcalls/io/threaded_audio_mixer.hpp>
 
-namespace ntgcalls {
-    ThreadedAudioMixer::ThreadedAudioMixer(BaseSink* sink): AudioMixer(sink) {}
+namespace ntgcalls::io {
+    ThreadedAudioMixer::ThreadedAudioMixer(media::BaseSink* sink): AudioMixer(sink) {}
 
     ThreadedAudioMixer::~ThreadedAudioMixer() {
-        eofCallback = nullptr;
-        const bool wasRunning = running;
-        if (running) {
+        eof_callback_ = nullptr;
+        const bool was_running = running_;
+        if (running_) {
             {
-                std::lock_guard lock(mtx);
-                running = false;
+                const std::lock_guard lock(mtx_);
+                running_ = false;
             }
-            cv.notify_all();
+            cv_.notify_all();
         }
-        if (wasRunning) thread.Finalize();
+        if (was_running) thread_.Finalize();
     }
 
     void ThreadedAudioMixer::open() {
-        if (running) return;
-        running = true;
-        auto frameSize = sink->frameSize();
-        auto frameTime = sink->frameTime();
-        thread = webrtc::PlatformThread::SpawnJoinable(
-        [this, frameSize, frameTime] {
-                while (running) {
-                    std::unique_lock lock(mtx);
-                    const auto ok = cv.wait_for(lock, frameTime + std::chrono::milliseconds(20), [this] {
-                        std::lock_guard queueLock(queueMutex);
-                        return !queue.empty() || !running;
+        if (running_) return;
+        running_ = true;
+        auto frame_size = sink_->frame_size();
+        auto frame_time = sink_->frame_time();
+        thread_ = webrtc::PlatformThread::SpawnJoinable(
+            [this, frame_size, frame_time] {
+                while (running_) {
+                    std::unique_lock lock(mtx_);
+                    const auto ok = cv_.wait_for(lock, frame_time + std::chrono::milliseconds(20), [this] {
+                        const std::lock_guard queue_lock(queue_mutex_);
+                        return !queue_.empty() || !running_;
                     });
-                    if (!running) {
+                    if (!running_) {
                         break;
                     }
                     try {
                         if (ok) {
-                            std::lock_guard queueLock(queueMutex);
-                            write(queue.front());
-                            queue.pop();
+                            const std::lock_guard queue_lock(queue_mutex_);
+                            write(queue_.front());
+                            queue_.pop();
                         } else {
-                            write(bytes::make_unique_binary(frameSize));
+                            write(bytes::make_unique_binary(frame_size));
                         }
                     } catch (...) {
-                        running = false;
+                        running_ = false;
                         break;
                     }
                 }
-                (void) eofCallback();
+                (void) eof_callback_();
             },
             "ThreadedMixer",
             webrtc::ThreadAttributes().SetPriority(webrtc::ThreadPriority::kRealtime)
         );
     }
 
-    void ThreadedAudioMixer::onData(bytes::unique_binary data) {
-        std::lock_guard queueLock(queueMutex);
-        queue.push(std::move(data));
-        cv.notify_one();
+    void ThreadedAudioMixer::on_data(bytes::unique_binary data) {
+        const std::lock_guard queue_lock(queue_mutex_);
+        queue_.push(std::move(data));
+        cv_.notify_one();
     }
-} // ntgcalls
+} // ntgcalls::io

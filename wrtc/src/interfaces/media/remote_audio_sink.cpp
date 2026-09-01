@@ -1,36 +1,36 @@
 //
-// Created by Laky64 on 07/10/24.
+// Created by Lauren on 07/10/24.
 //
 
 #include <wrtc/interfaces/media/remote_audio_sink.hpp>
 
-namespace wrtc {
-    RemoteAudioSink::RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<AudioFrame>>&)>& callback): numSources(0) {
-        framesCallback = callback;
+namespace wrtc::interfaces::media {
+    RemoteAudioSink::RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<models::AudioFrame>>&)>& callback): num_sources_(0) {
+        frames_callback_ = callback;
     }
 
     RemoteAudioSink::~RemoteAudioSink() {
-        framesCallback = nullptr;
-        audioFrames.clear();
+        frames_callback_ = nullptr;
+        audio_frames_.clear();
     }
 
-    void RemoteAudioSink::sendData(std::unique_ptr<AudioFrame> frame) {
-        audioFrames.push_back(std::move(frame));
-        if (audioFrames.size() >= numSources) {
-            framesCallback(audioFrames);
-            audioFrames.clear();
+    void RemoteAudioSink::send_data(std::unique_ptr<models::AudioFrame> frame) {
+        audio_frames_.push_back(std::move(frame));
+        if (audio_frames_.size() >= num_sources_) {
+            frames_callback_(audio_frames_);
+            audio_frames_.clear();
         }
     }
 
-    void RemoteAudioSink::addSource() {
-        ++numSources;
+    void RemoteAudioSink::add_source() {
+        ++num_sources_;
     }
 
-    void RemoteAudioSink::removeSource() {
-        --numSources;
+    void RemoteAudioSink::remove_source() {
+        --num_sources_;
     }
 
-    void RemoteAudioSink::updateAudioSourceCount(const int count) {
-        numSources = count;
+    void RemoteAudioSink::update_audio_source_count(const int count) {
+        num_sources_ = count;
     }
-} // wrtc
+} // wrtc::interfaces::media

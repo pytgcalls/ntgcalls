@@ -1,22 +1,23 @@
 //
-// Created by Laky64 on 08/04/25.
+// Created by Lauren on 08/04/25.
 //
 
 #pragma once
 
 #include <chrono>
 
-namespace wrtc {
+namespace wrtc::utils {
 
     class SyncHelper {
-        std::chrono::nanoseconds frameTime;
-        std::chrono::steady_clock::time_point nextFrameTime;
+        std::chrono::nanoseconds frame_time_;
+        std::chrono::steady_clock::time_point next_frame_time_;
+
     public:
-        explicit SyncHelper(std::chrono::nanoseconds frameTime);
+        explicit SyncHelper(std::chrono::nanoseconds frame_time);
 
-        void synchronizeTime(std::chrono::steady_clock::time_point time = std::chrono::steady_clock::time_point{});
+        void synchronize_time(std::chrono::steady_clock::time_point time = std::chrono::steady_clock::time_point{});
 
-        void waitNextFrame();
+        void wait_next_frame();
     };
 
-} // wrtc
+} // wrtc::utils

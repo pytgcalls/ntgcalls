@@ -1,29 +1,29 @@
 //
-// Created by Laky64 on 15/04/25.
+// Created by Lauren on 15/04/25.
 //
 
 #include <wrtc/interfaces/mtproto/video_streaming_part.hpp>
 
-namespace wrtc {
-    VideoStreamingPart::VideoStreamingPart(bytes::binary&& data, webrtc::MediaType mediaType) {
+namespace wrtc::interfaces::mtproto {
+    VideoStreamingPart::VideoStreamingPart(bytes::binary&& data, webrtc::MediaType media_type) {
         if (!data.empty()) {
-            state = std::make_unique<VideoStreamingPartState>(std::move(data), mediaType);
+            state_ = std::make_unique<VideoStreamingPartState>(std::move(data), media_type);
         }
     }
 
     VideoStreamingPart::~VideoStreamingPart() {
-        state = nullptr;
+        state_ = nullptr;
     }
 
-    std::optional<std::string> VideoStreamingPart::getActiveEndpointId() const {
-        return state ? state->getActiveEndpointId() : std::nullopt;
+    std::optional<std::string> VideoStreamingPart::get_active_endpoint_id() const {
+        return state_ ? state_->get_active_endpoint_id() : std::nullopt;
     }
 
-    std::optional<VideoStreamingPartFrame> VideoStreamingPart::getFrameAtRelativeTimestamp(VideoStreamingSharedState* sharedState, const double timestamp) const {
-        return state ? state->getFrameAtRelativeTimestamp(sharedState, timestamp) : std::nullopt;
+    std::optional<media::VideoStreamingPartFrame> VideoStreamingPart::get_frame_at_relative_timestamp(VideoStreamingSharedState* shared_state, const double timestamp) const {
+        return state_ ? state_->get_frame_at_relative_timestamp(shared_state, timestamp) : std::nullopt;
     }
 
-    std::vector<AudioStreamingPartState::Channel> VideoStreamingPart::getAudio10msPerChannel(AudioStreamingPartPersistentDecoder &persistentDecoder) const {
-        return state ? state->getAudio10msPerChannel(persistentDecoder) : std::vector<AudioStreamingPartState::Channel>();
+    std::vector<AudioStreamingPartState::Channel> VideoStreamingPart::get_audio10ms_per_channel(AudioStreamingPartPersistentDecoder& persistent_decoder) const {
+        return state_ ? state_->get_audio10ms_per_channel(persistent_decoder) : std::vector<AudioStreamingPartState::Channel>();
     }
-} // wrtc
+} // wrtc::interfaces::mtproto
