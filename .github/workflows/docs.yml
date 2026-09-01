@@ -82,7 +82,7 @@ jobs:
                 -P cmake/codegen/UpdateDocsIndex.cmake
 
       - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           repository: docsdata
           commit_message: "Regenerated the NTgCalls reference"
