@@ -17,6 +17,7 @@ from setuptools.command.build_ext import build_ext
 
 base_path = os.path.abspath(os.path.dirname(__file__))
 CMAKE_VERSION = '4.1.2'
+DIST_TAGS = {'a': 'alpha', 'b': 'beta'}
 TOOLS_PATH = Path(Path.cwd(), 'build_tools')
 
 
@@ -114,6 +115,15 @@ def base_subst():
         'version': version,
         'platform': sys.platform,
     }
+
+
+def resolve_dist_tag(version_name):
+    channel = re.search(
+        r'-?(alpha|beta|rc|a|b)[0-9]+$', version_name.partition('+')[0]
+    )
+    if not channel:
+        return 'latest'
+    return DIST_TAGS.get(channel.group(1), channel.group(1))
 
 
 def parse_defines(raw):
@@ -353,7 +363,7 @@ class PublishCommand(Command):
             subst['platform'] = self.platform
         if self.set_version:
             subst['version'] = self.set_version
-        subst['dist_tag'] = 'beta' if '-' in subst['version'] else 'latest'
+        subst['dist_tag'] = resolve_dist_tag(subst['version'])
         subst.update(parse_defines(self.defines))
         archs = (self.arch,) if self.arch else ('auto',)
         execute_cfg(
