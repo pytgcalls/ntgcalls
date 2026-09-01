@@ -298,7 +298,7 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-latest, blacksmith: blacksmith-4vcpu-ubuntu-2404, shared_name: linux-x86_64, cibw: manylinux_, container: ghcr.io/pytgcalls/ntgcalls/manylinux-x86_64:latest }
-          - { os: arm64-server, blacksmith: blacksmith-4vcpu-ubuntu-2404-arm, shared_name: linux-arm64, cibw: manylinux_, container: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest }
+          - { os: ubuntu-24.04-arm, blacksmith: blacksmith-4vcpu-ubuntu-2404-arm, shared_name: linux-arm64, cibw: manylinux_, container: ghcr.io/pytgcalls/ntgcalls/manylinux-arm64:latest }
           - { os: macos-15, blacksmith: blacksmith-6vcpu-macos-15, shared_name: macos-arm64, cibw: macosx_, container: '' }
           - { os: windows-2022, blacksmith: blacksmith-4vcpu-windows-2025, shared_name: windows-x86_64, cibw: '', container: '' }
     steps:
