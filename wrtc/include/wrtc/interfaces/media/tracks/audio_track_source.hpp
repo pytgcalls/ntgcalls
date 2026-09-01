@@ -12,6 +12,8 @@ namespace wrtc::interfaces::media::tracks {
 
     class AudioTrackSource: public webrtc::LocalAudioSource {
     public:
+        AudioTrackSource();
+
         ~AudioTrackSource() override;
 
         [[nodiscard]] SourceState state() const override;

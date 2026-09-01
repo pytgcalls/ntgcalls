@@ -12,6 +12,7 @@ namespace ntgcalls::utils {
     webrtc::scoped_refptr<LogSink> LogSink::instance_ = nullptr;
     std::mutex LogSink::mutex_{};
     uint32_t LogSink::references_ = 0;
+    const std::regex LogSink::message_pattern_(R"(\((.*)\.(.*):([0-9]+)\):\s?(.*))");
     wrtc::utils::synchronized_callback<void(LogSink::LogMessage)> LogSink::on_log_message_{};
 
     LogSink::LogSink() {
@@ -57,9 +58,11 @@ namespace ntgcalls::utils {
     }
 
     void LogSink::register_log_message(const std::string& message, const webrtc::LoggingSeverity severity) const {
+        if (!on_log_message_) {
+            return;
+        }
         thread_->PostTask([message, severity] {
-            const std::regex regex(R"(\((.*)\.(.*):([0-9]+)\):\s?(.*))");
-            if (std::smatch match; std::regex_search(message, match, regex)) {
+            if (std::smatch match; std::regex_search(message, match, message_pattern_)) {
                 const auto file_name = std::string(match[1]) + "." + std::string(match[2]);
                 const auto line_num = parse_line_number(match[3]);
                 const auto level = parse_severity(severity);

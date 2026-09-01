@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <media/base/adapted_video_track_source.h>
+#include <api/video/adapted_video_track_source.h>
 
 namespace wrtc::interfaces::media::tracks {
 

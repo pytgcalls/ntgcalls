@@ -115,7 +115,6 @@ namespace wrtc::interfaces::media {
             environment_,
             call,
             media_config,
-            options,
             crypto_options
         );
         return std::make_unique<webrtc::BaseChannel>(

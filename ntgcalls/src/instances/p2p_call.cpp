@@ -253,7 +253,7 @@ namespace ntgcalls::instances {
                 std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                 std::string ssl_setup;
                 if (!message->fingerprints.empty()) {
-                    fingerprint = webrtc::SSLFingerprint::CreateUniqueFromRfc4572(message->fingerprints[0].hash, message->fingerprints[0].fingerprint);
+                    fingerprint = webrtc::SSLFingerprint::CreateFromRfc4572(message->fingerprints[0].hash, message->fingerprints[0].fingerprint);
                     ssl_setup = message->fingerprints[0].setup;
                 }
                 safe<wrtc::interfaces::NativeConnection>(connection_)->set_remote_params(remote_ice_parameters, std::move(fingerprint), ssl_setup);

@@ -6,6 +6,8 @@
 
 namespace wrtc::interfaces::media::tracks {
 
+    AudioTrackSource::AudioTrackSource(): LocalAudioSource(nullptr) {}
+
     AudioTrackSource::~AudioTrackSource() {
         sink_ = nullptr;
     }

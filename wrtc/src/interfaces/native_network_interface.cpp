@@ -6,6 +6,7 @@
 #include <p2p/base/basic_async_resolver_factory.h>
 #include <p2p/base/p2p_constants.h>
 #include <p2p/client/basic_port_allocator.h>
+#include <pc/ice_transport.h>
 #include <pc/media_factory.h>
 #include <rtc_base/crypto_random.h>
 #include <rtc_base/rtc_certificate_generator.h>
@@ -101,7 +102,7 @@ namespace wrtc::interfaces {
             if (!strong) {
                 return;
             }
-            webrtc::CallConfig call_config(strong->environment(), strong->network_thread());
+            webrtc::CallConfig call_config(strong->environment(), strong->worker_thread(), strong->network_thread());
             call_config.audio_state = strong->factory_->media_engine()->voice().GetAudioState();
             strong->call_ = strong->factory_->media_factory()->CreateCall(std::move(call_config));
             strong->payload_type_suggester_ = std::make_unique<webrtc::SdpPayloadTypeSuggester>(
@@ -337,7 +338,8 @@ namespace wrtc::interfaces {
         });
         register_transport_callbacks(transport_channel_.get());
 
-        dtls_transport_ = std::make_unique<webrtc::DtlsTransportInternalImpl>(environment(), transport_channel_.get(), get_default_crypto_options());
+        ice_transport_ = webrtc::make_ref_counted<webrtc::IceTransportWithPointer>(transport_channel_.get());
+        dtls_transport_ = std::make_unique<webrtc::DtlsTransportInternalImpl>(environment(), ice_transport_, get_default_crypto_options());
         dtls_transport_->SubscribeReceivingState(this, [weak](webrtc::PacketTransportInternal*) {
             const auto strong = weak.lock();
             if (!strong) {
@@ -530,6 +532,10 @@ namespace wrtc::interfaces {
                 }
                 strong->dtls_srtp_transport_ = nullptr;
                 strong->dtls_transport_ = nullptr;
+                if (strong->ice_transport_) {
+                    strong->ice_transport_->Clear();
+                    strong->ice_transport_ = nullptr;
+                }
                 strong->transport_channel_ = nullptr;
                 strong->port_allocator_ = nullptr;
                 strong->underlying_socket_factory_ = nullptr;

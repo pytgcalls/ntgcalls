@@ -41,10 +41,10 @@ namespace wrtc::interfaces::media::channels {
         });
 
         auto outgoing_video_description = std::make_unique<webrtc::VideoContentDescription>();
-        outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAudioLevelUri, 1));
-        outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri, 2));
-        outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri, 3));
-        outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kVideoRotationUri, 13));
+        outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAudioLevelUri, webrtc::RtpHeaderExtensionId(1)));
+        outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri, webrtc::RtpHeaderExtensionId(2)));
+        outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri, webrtc::RtpHeaderExtensionId(3)));
+        outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kVideoRotationUri, webrtc::RtpHeaderExtensionId(13)));
         outgoing_video_description->set_rtcp_mux(true);
         outgoing_video_description->set_rtcp_reduced_size(true);
         outgoing_video_description->set_direction(webrtc::RtpTransceiverDirection::kRecvOnly);
@@ -79,10 +79,10 @@ namespace wrtc::interfaces::media::channels {
         video_recv_stream_params.set_stream_ids({stream_id});
 
         auto incoming_video_description = std::make_unique<webrtc::VideoContentDescription>();
-        incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAudioLevelUri, 1));
-        incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri, 2));
-        incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri, 3));
-        incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kVideoRotationUri, 13));
+        incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAudioLevelUri, webrtc::RtpHeaderExtensionId(1)));
+        incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri, webrtc::RtpHeaderExtensionId(2)));
+        incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri, webrtc::RtpHeaderExtensionId(3)));
+        incoming_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kVideoRotationUri, webrtc::RtpHeaderExtensionId(13)));
         incoming_video_description->set_rtcp_mux(true);
         incoming_video_description->set_rtcp_reduced_size(true);
         incoming_video_description->set_direction(webrtc::RtpTransceiverDirection::kSendOnly);

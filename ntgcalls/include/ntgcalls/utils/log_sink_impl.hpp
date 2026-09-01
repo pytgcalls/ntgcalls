@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <regex>
 #include <api/ref_count.h>
 #include <rtc_base/logging.h>
 #include <wrtc/utils/safe_thread.hpp>
@@ -56,6 +57,7 @@ namespace ntgcalls::utils {
 
         void register_log_message(const std::string& message, webrtc::LoggingSeverity severity) const;
 
+        static const std::regex message_pattern_;
         static webrtc::scoped_refptr<LogSink> instance_;
         static std::mutex mutex_;
         static uint32_t references_;

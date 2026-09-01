@@ -66,6 +66,7 @@ namespace wrtc::interfaces {
         std::unique_ptr<webrtc::DtlsTransportInternal> dtls_transport_;
         std::unique_ptr<webrtc::DtlsSrtpTransport> dtls_srtp_transport_;
         std::unique_ptr<webrtc::P2PTransportChannel> transport_channel_;
+        webrtc::scoped_refptr<webrtc::IceTransportWithPointer> ice_transport_;
         std::vector<webrtc::SdpVideoFormat> available_video_formats_;
         media::E2EEncryptor* encryptor_ = nullptr;
         std::map<int32_t, media::FrameTransformer::PayloadType> payload_type_mapping_;

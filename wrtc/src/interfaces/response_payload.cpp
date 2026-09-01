@@ -65,7 +65,7 @@ namespace wrtc::interfaces {
                 );
             }
             if (!transport["fingerprints"].empty()) {
-                fingerprint = webrtc::SSLFingerprint::CreateUniqueFromRfc4572(
+                fingerprint = webrtc::SSLFingerprint::CreateFromRfc4572(
                     transport["fingerprints"][0]["hash"].get<std::string>(),
                     transport["fingerprints"][0]["fingerprint"].get<std::string>()
                 );
