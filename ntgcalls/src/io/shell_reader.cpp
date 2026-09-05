@@ -3,6 +3,9 @@
 //
 
 #ifdef BOOST_ENABLED
+#ifndef IS_WINDOWS
+#include <boost/process/v2/posix/vfork_launcher.hpp>
+#endif
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/shell_reader.hpp>
 
@@ -12,7 +15,12 @@ namespace ntgcalls::io {
     BaseIO(sink), ThreadedReader(sink) {
         try {
             const auto cmd = bp::shell(command);
-            shell_process_ = bp::process(ctx_, cmd.exe(), cmd.args(), bp::process_stdio{nullptr, std_out_, {}});
+            const asio::any_io_executor executor = ctx_.get_executor();
+#ifdef IS_WINDOWS
+            shell_process_ = bp::process(executor, cmd.exe(), cmd.args(), bp::process_stdio{nullptr, std_out_, {}});
+#else
+            shell_process_ = bp::posix::vfork_launcher()(executor, cmd.exe(), cmd.args(), bp::process_stdio{nullptr, std_out_, {}});
+#endif
         } catch (std::runtime_error& e) {
             throw ShellError(e.what());
         }

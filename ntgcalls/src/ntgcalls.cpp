@@ -353,9 +353,13 @@ namespace ntgcalls {
     }
 
     std::map<int64_t, media::StreamManager::CallInfo> NTgCalls::calls() {
-        const std::lock_guard lock(mutex_);
+        std::unordered_map<int64_t, std::shared_ptr<instances::CallInterface>> connections;
+        {
+            const std::lock_guard lock(mutex_);
+            connections = connections_;
+        }
         std::map<int64_t, media::StreamManager::CallInfo> status_list;
-        for (const auto& [fst, snd] : connections_) {
+        for (const auto& [fst, snd] : connections) {
             status_list.emplace(
                 fst,
                 media::StreamManager::CallInfo{

@@ -34,7 +34,10 @@ namespace ntgcalls::io {
             buffer_threads_.push_back(
                 webrtc::PlatformThread::SpawnJoinable(
                     [this, i, buffer_count, frame_size = sink_->frame_size(), max_buffer_size = std::max<int64_t>(1, std::chrono::seconds(1) / frame_time / 10), read_callback] {
-                        active_buffer_count_++;
+                        {
+                            const std::lock_guard lock(mtx_);
+                            active_buffer_count_++;
+                        }
                         std::vector<bytes::unique_binary> frames;
                         frames.reserve(max_buffer_size);
                         while (running_) {

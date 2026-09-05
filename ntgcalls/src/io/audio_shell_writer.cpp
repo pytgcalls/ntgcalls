@@ -3,6 +3,9 @@
 //
 
 #ifdef BOOST_ENABLED
+#ifndef IS_WINDOWS
+#include <boost/process/v2/posix/vfork_launcher.hpp>
+#endif
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/audio_shell_writer.hpp>
 
@@ -10,7 +13,12 @@ namespace ntgcalls::io {
     AudioShellWriter::AudioShellWriter(const std::string& command, media::BaseSink* sink): BaseIO(sink), ThreadedAudioMixer(sink) {
         try {
             const auto cmd = bp::shell(command);
-            shell_process_ = bp::process(ctx_, cmd.exe(), cmd.args(), bp::process_stdio{std_in_, nullptr, {}});
+            const asio::any_io_executor executor = ctx_.get_executor();
+#ifdef IS_WINDOWS
+            shell_process_ = bp::process(executor, cmd.exe(), cmd.args(), bp::process_stdio{std_in_, nullptr, {}});
+#else
+            shell_process_ = bp::posix::vfork_launcher()(executor, cmd.exe(), cmd.args(), bp::process_stdio{std_in_, nullptr, {}});
+#endif
         } catch (std::runtime_error& e) {
             throw ShellError(e.what());
         }
