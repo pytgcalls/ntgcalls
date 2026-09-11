@@ -12,16 +12,33 @@
 
 namespace ntgcalls::media::devices {
 
-    class OboeDeviceModule final: public BaseDeviceModule, public io::BaseReader, public io::AudioMixer, oboe::AudioStreamCallback {
+    class OboeDeviceModule;
+
+    class OboeErrorCallback final: public oboe::AudioStreamErrorCallback {
+        std::mutex mutex_;
+        OboeDeviceModule* owner_;
+
+    public:
+        explicit OboeErrorCallback(OboeDeviceModule* owner);
+
+        void detach();
+
+        void onErrorAfterClose(oboe::AudioStream* audio_stream, oboe::Result error) override;
+    };
+
+    class OboeDeviceModule final: public BaseDeviceModule, public io::BaseReader, public io::AudioMixer, oboe::AudioStreamDataCallback {
+        friend class OboeErrorCallback;
+
+        std::shared_ptr<OboeErrorCallback> error_callback_;
+        std::mutex stream_mutex_;
         std::shared_ptr<oboe::AudioStream> stream_;
         std::mutex buffer_mutex_;
         std::vector<uint8_t> buffer_;
         size_t frame_size_ = 0;
-        std::atomic_bool restart_required_;
 
         oboe::Result create_stream();
 
-        void restart_stream();
+        void restart_stream(const oboe::AudioStream* audio_stream);
 
     protected:
         void on_data(bytes::unique_binary data) override;
@@ -34,8 +51,6 @@ namespace ntgcalls::media::devices {
         void open() override;
 
         oboe::DataCallbackResult onAudioReady(oboe::AudioStream* audio_stream, void* audio_data, int32_t num_frames) override;
-
-        void onErrorAfterClose(oboe::AudioStream* audio_stream, oboe::Result error) override;
     };
 
 } // ntgcalls::media::devices

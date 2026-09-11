@@ -9,18 +9,40 @@
 
 namespace ntgcalls::media::devices {
 
+    OboeErrorCallback::OboeErrorCallback(OboeDeviceModule* owner): owner_(owner) {}
+
+    void OboeErrorCallback::detach() {
+        const std::lock_guard lock(mutex_);
+        owner_ = nullptr;
+    }
+
+    void OboeErrorCallback::onErrorAfterClose(oboe::AudioStream* audio_stream, const oboe::Result error) {
+        RTC_LOG(LS_WARNING) << "OboeDeviceModule stream error: " << oboe::convertToText(error);
+        if (error != oboe::Result::ErrorDisconnected) {
+            return;
+        }
+        const std::lock_guard lock(mutex_);
+        if (owner_) {
+            owner_->restart_stream(audio_stream);
+        }
+    }
+
     OboeDeviceModule::OboeDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink):
     BaseIO(sink),
     BaseDeviceModule(desc, is_capture),
     BaseReader(sink),
-    AudioMixer(sink) {
+    AudioMixer(sink),
+    error_callback_(std::make_shared<OboeErrorCallback>(this)) {
         frame_size_ = static_cast<size_t>(sink->frame_size());
         if (const auto r = create_stream(); r != oboe::Result::OK) {
+            error_callback_->detach();
             throw MediaDeviceError("Failed to open Oboe stream: " + std::string(oboe::convertToText(r)));
         }
     }
 
     OboeDeviceModule::~OboeDeviceModule() {
+        error_callback_->detach();
+        const std::lock_guard lock(stream_mutex_);
         if (stream_) {
             stream_->close();
         }
@@ -36,13 +58,20 @@ namespace ntgcalls::media::devices {
         const size_t bytes_per_frame = audio_stream->getBytesPerFrame();
         const size_t required_bytes = num_frames * bytes_per_frame;
         if (is_capture_) {
-            const auto* src = static_cast<const bytes::byte*>(audio_data);
-            buffer_.insert(buffer_.end(), src, src + required_bytes);
-            while (buffer_.size() >= frame_size_) {
-                auto result = bytes::make_unique_binary(frame_size_);
-                std::memcpy(result.get(), buffer_.data(), frame_size_);
-                buffer_.erase(buffer_.begin(), buffer_.begin() + static_cast<std::ptrdiff_t>(frame_size_));
-                data_callback_(std::move(result), {});
+            std::vector<bytes::unique_binary> frames;
+            {
+                const std::lock_guard lock(buffer_mutex_);
+                const auto* src = static_cast<const bytes::byte*>(audio_data);
+                buffer_.insert(buffer_.end(), src, src + required_bytes);
+                while (buffer_.size() >= frame_size_) {
+                    auto result = bytes::make_unique_binary(frame_size_);
+                    std::memcpy(result.get(), buffer_.data(), frame_size_);
+                    buffer_.erase(buffer_.begin(), buffer_.begin() + static_cast<std::ptrdiff_t>(frame_size_));
+                    frames.push_back(std::move(result));
+                }
+            }
+            for (auto& frame : frames) {
+                data_callback_(std::move(frame), {});
             }
         } else {
             const std::lock_guard lock(buffer_mutex_);
@@ -71,7 +100,8 @@ namespace ntgcalls::media::devices {
             ->setFormat(oboe::AudioFormat::I16)
             ->setUsage(oboe::Usage::VoiceCommunication)
             ->setContentType(oboe::ContentType::Speech)
-            ->setCallback(this);
+            ->setDataCallback(this)
+            ->setErrorCallback(error_callback_);
 
         if (is_capture_) {
             builder.setInputPreset(oboe::InputPreset::VoiceCommunication);
@@ -85,37 +115,28 @@ namespace ntgcalls::media::devices {
         return r;
     }
 
-    void OboeDeviceModule::restart_stream() {
-        if (restart_required_.exchange(true)) {
+    void OboeDeviceModule::restart_stream(const oboe::AudioStream* audio_stream) {
+        const std::lock_guard lock(stream_mutex_);
+        if (!stream_ || stream_.get() != audio_stream) {
             return;
         }
 
         RTC_LOG(LS_INFO) << "OboeDeviceModule restarting stream";
-        if (stream_) {
-            stream_->close();
-            stream_ = nullptr;
-        }
+        stream_->close();
+        stream_ = nullptr;
 
         {
-            const std::lock_guard lock(buffer_mutex_);
+            const std::lock_guard buffer_lock(buffer_mutex_);
             buffer_.clear();
         }
 
         if (create_stream() == oboe::Result::OK) {
             stream_->requestStart();
         }
-
-        restart_required_ = false;
-    }
-
-    void OboeDeviceModule::onErrorAfterClose(oboe::AudioStream* audio_stream, const oboe::Result error) {
-        RTC_LOG(LS_WARNING) << "OboeDeviceModule stream error: " << oboe::convertToText(error);
-        if (error == oboe::Result::ErrorDisconnected) {
-            restart_stream();
-        }
     }
 
     void OboeDeviceModule::open() {
+        const std::lock_guard lock(stream_mutex_);
         if (stream_) {
             if (const auto r = stream_->requestStart(); r != oboe::Result::OK) {
                 throw MediaDeviceError("Failed to start Oboe stream: " + std::string(oboe::convertToText(r)));
