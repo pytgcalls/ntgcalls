@@ -120,7 +120,6 @@ namespace wrtc::interfaces::media::channels {
             channel_->SetRtpTransport(nullptr);
         });
         worker_thread_.BlockingCall([&] {
-            channel_->voice_media_receive_channel()->SetDepacketizerToDecoderFrameTransformer(ssrc_, nullptr);
             channel_->voice_media_receive_channel()->SetRawAudioSink(ssrc_, nullptr);
             channel_ = nullptr;
         });

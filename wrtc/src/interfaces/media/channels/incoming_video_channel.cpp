@@ -127,7 +127,6 @@ namespace wrtc::interfaces::media::channels {
             channel_->SetRtpTransport(nullptr);
         });
         worker_thread_.BlockingCall([&] {
-            channel_->video_media_receive_channel()->SetDepacketizerToDecoderFrameTransformer(ssrc_, nullptr);
             channel_->video_media_receive_channel()->SetSink(ssrc_, nullptr);
             channel_ = nullptr;
             sink_ = nullptr;
