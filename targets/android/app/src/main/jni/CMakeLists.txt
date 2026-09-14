@@ -29,6 +29,6 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE IS_ANDROID)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE NTgCalls::ntgcalls android log OpenSLES EGL)
 target_link_options(${CMAKE_PROJECT_NAME}
     PRIVATE
-    ${WEBRTC_ANDROID_LDFLAGS}
+    -Wl,--undefined-glob=Java_*
 )
 include(${ANDROID_CMAKE_DIR})
