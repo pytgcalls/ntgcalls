@@ -68,19 +68,21 @@ namespace ntgcalls::signaling {
     void SignalingSctpConnection::OnReadyToSend() {
         assert(networkThread.IsCurrent());
         is_ready_to_send_ = true;
-        for (const auto& data : pending_data_) {
+        auto pending_data = std::move(pending_data_);
+        pending_data_.clear();
+        for (auto it = pending_data.begin(); it != pending_data.end(); ++it) {
             webrtc::SendDataParams params;
             params.type = webrtc::DataMessageType::kBinary;
             params.ordered = true;
             webrtc::CopyOnWriteBuffer payload;
-            payload.AppendData(data.data(), data.size());
+            payload.AppendData(it->data(), it->size());
             if (const auto result = sctp_transport_->SendData(0, params, payload); !result.ok()) {
                 RTC_LOG(LS_ERROR) << "Failed to send data: " << result.message();
-                pending_data_.push_back(data);
+                pending_data_.assign(std::make_move_iterator(it), std::make_move_iterator(pending_data.end()));
                 is_ready_to_send_ = false;
+                break;
             }
         }
-        pending_data_.clear();
     }
 
     void SignalingSctpConnection::OnDataReceived(int channel_id, webrtc::DataMessageType type, const webrtc::CopyOnWriteBuffer& buffer) {
