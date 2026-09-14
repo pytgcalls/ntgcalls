@@ -19,6 +19,8 @@ namespace ntgcalls::instances {
     void P2PCall::stop() {
         on_emit_data_ = nullptr;
         CallInterface::stop();
+        const std::lock_guard lock(signaling_mutex_);
+        pending_signaling_data_.reset();
         if (signaling_) {
             signaling_->close();
             signaling_ = nullptr;
@@ -234,6 +236,7 @@ namespace ntgcalls::instances {
             send_offer_if_needed();
         }
         set_connection_observer(connection_);
+        flush_pending_signaling_data();
     }
 
     void P2PCall::process_signaling_data(const bytes::binary& buffer) {
@@ -330,6 +333,18 @@ namespace ntgcalls::instances {
         } catch (InvalidParams& e) {
             RTC_LOG(LS_ERROR) << "Invalid params: " << e.what();
         }
+    }
+
+    void P2PCall::flush_pending_signaling_data() {
+        const std::lock_guard lock(signaling_mutex_);
+        if (!pending_signaling_data_) {
+            return;
+        }
+        RTC_LOG(LS_INFO) << "Flushing " << pending_signaling_data_->size() << " signaling packets received before connect";
+        for (const auto& buffer : *pending_signaling_data_) {
+            signaling_->receive(buffer);
+        }
+        pending_signaling_data_.reset();
     }
 
     void P2PCall::apply_pending_ice_candidates() {
@@ -434,7 +449,12 @@ namespace ntgcalls::instances {
         update_emojis_callback_ = callback;
     }
 
-    void P2PCall::send_signaling_data(const bytes::binary& buffer) const {
+    void P2PCall::send_signaling_data(const bytes::binary& buffer) {
+        const std::lock_guard lock(signaling_mutex_);
+        if (pending_signaling_data_) {
+            pending_signaling_data_->push_back(buffer);
+            return;
+        }
         if (!signaling_) {
             throw ConnectionError("Connection not initialized");
         }

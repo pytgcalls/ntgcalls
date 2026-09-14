@@ -20,7 +20,9 @@ namespace ntgcalls::instances {
         std::string fingerprint_emojis_;
         std::optional<bytes::binary> ga_hash_, g_a_or_b_;
         std::atomic_bool handshake_completed_ = false;
+        std::mutex signaling_mutex_;
         std::shared_ptr<signaling::SignalingInterface> signaling_;
+        std::optional<std::vector<bytes::binary>> pending_signaling_data_ = std::vector<bytes::binary>{};
         wrtc::utils::synchronized_callback<void(bytes::binary)> on_emit_data_;
         wrtc::utils::synchronized_callback<void(std::string)> update_emojis_callback_;
         std::vector<wrtc::models::IceCandidate> pending_ice_candidates_;
@@ -29,6 +31,8 @@ namespace ntgcalls::instances {
         void process_signaling_data(const bytes::binary& buffer);
 
         void apply_pending_ice_candidates();
+
+        void flush_pending_signaling_data();
 
         void send_media_state(media::MediaState media_state) const;
 
@@ -59,7 +63,7 @@ namespace ntgcalls::instances {
 
         void on_update_emojis(const std::function<void(std::string)>& callback) override;
 
-        void send_signaling_data(const bytes::binary& buffer) const;
+        void send_signaling_data(const bytes::binary& buffer);
     };
 
 } // ntgcalls
