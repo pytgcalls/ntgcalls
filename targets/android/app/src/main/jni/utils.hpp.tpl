@@ -45,6 +45,7 @@
 #include <vector>
 #include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
+#include <sdk/android/native_api/jni/class_loader.h>
 #include <sdk/android/native_api/jni/scoped_java_ref.h>
 #include <wrtc/utils/java_context.hpp>
 
@@ -61,7 +62,7 @@ struct JavaCallback {
 };
 
 inline webrtc::ScopedJavaLocalRef<jclass> findClass(JNIEnv* env, const char* name) {
-    return webrtc::ScopedJavaLocalRef<jclass>::Adopt(env, env->FindClass(name));
+    return webrtc::GetClass(env, name);
 }
 
 inline void throwJavaException(JNIEnv* env, const std::string& name, const std::string& message) {
