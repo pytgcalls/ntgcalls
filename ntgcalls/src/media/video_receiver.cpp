@@ -40,8 +40,10 @@ namespace ntgcalls::media {
             } else {
                 new_height = description_->height;
             }
+            const auto chroma_width = (new_width + 1) / 2;
+            const auto chroma_height = (new_height + 1) / 2;
             const auto y_scaled_size = new_width * new_height;
-            const auto uv_scaled_size = y_scaled_size / 4;
+            const auto uv_scaled_size = chroma_width * chroma_height;
             const auto total_size = y_scaled_size + uv_scaled_size * 2;
             auto yuv = bytes::make_unique_binary(total_size);
             const auto buffer = frame->video_frame_buffer()->ToI420();
@@ -57,8 +59,8 @@ namespace ntgcalls::media {
                 buffer->DataV(), buffer->StrideV(),
                 width, height,
                 y_scaled_plane.get(), new_width,
-                u_scaled_plane.get(), new_width / 2,
-                v_scaled_plane.get(), new_width / 2,
+                u_scaled_plane.get(), chroma_width,
+                v_scaled_plane.get(), chroma_width,
                 new_width, new_height,
                 libyuv::kFilterBox
             );

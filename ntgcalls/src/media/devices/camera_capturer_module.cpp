@@ -94,6 +94,8 @@ namespace ntgcalls::media::devices {
     }
 
     void CameraCapturerModule::OnFrame(const webrtc::VideoFrame& frame) {
+        const auto chroma_width = (desc_.width + 1) / 2;
+        const auto chroma_height = (desc_.height + 1) / 2;
         const auto y_scaled_size = desc_.width * desc_.height;
         const auto uv_scaled_size = y_scaled_size / 4;
         auto yuv = bytes::make_unique_binary(y_scaled_size + uv_scaled_size * 2);
@@ -102,8 +104,8 @@ namespace ntgcalls::media::devices {
         const auto width = buffer->width();
         const auto height = buffer->height();
         const auto y_scaled_plane = std::make_unique<uint8_t[]>(y_scaled_size);
-        const auto u_scaled_plane = std::make_unique<uint8_t[]>(uv_scaled_size);
-        const auto v_scaled_plane = std::make_unique<uint8_t[]>(uv_scaled_size);
+        const auto u_scaled_plane = std::make_unique<uint8_t[]>(chroma_width * chroma_height);
+        const auto v_scaled_plane = std::make_unique<uint8_t[]>(chroma_width * chroma_height);
 
         I420Scale(
             buffer->DataY(), buffer->StrideY(),
@@ -111,8 +113,8 @@ namespace ntgcalls::media::devices {
             buffer->DataV(), buffer->StrideV(),
             width, height,
             y_scaled_plane.get(), desc_.width,
-            u_scaled_plane.get(), desc_.width / 2,
-            v_scaled_plane.get(), desc_.width / 2,
+            u_scaled_plane.get(), chroma_width,
+            v_scaled_plane.get(), chroma_width,
             desc_.width, desc_.height,
             libyuv::kFilterBox
         );
