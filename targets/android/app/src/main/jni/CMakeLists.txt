@@ -17,6 +17,7 @@ find_package(Threads REQUIRED)
 add_library(${CMAKE_PROJECT_NAME} SHARED
     jni.cpp
     jni_onload.cpp
+    java_video_capturer_module_jni.cpp
 )
 
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -B ${DEPS_DIR}/clang/bin")
