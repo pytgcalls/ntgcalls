@@ -107,6 +107,10 @@ inline bytes::binary parseByteArray(JNIEnv* env, jbyteArray value) {
 
 inline webrtc::ScopedJavaLocalRef<jbyteArray> parseJByteArray(JNIEnv* env, const bytes::binary& value) {
     auto array = webrtc::ScopedJavaLocalRef<jbyteArray>::Adopt(env, env->NewByteArray(static_cast<jsize>(value.size())));
+    if (!array.obj()) {
+        CAPTURE_JAVA_EXCEPTION
+        return nullptr;
+    }
     env->SetByteArrayRegion(array.obj(), 0, static_cast<jsize>(value.size()), reinterpret_cast<const jbyte*>(value.data()));
     return array;
 }

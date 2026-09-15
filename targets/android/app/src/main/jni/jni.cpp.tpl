@@ -128,12 +128,17 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_@{c.name}_init(JNIEnv *env, jobj
             return;
         }
         auto env = (JNIEnv*) wrtc::utils::GetJNIEnv();
+        if (env->PushLocalFrame(16) != 0) {
+            CAPTURE_JAVA_EXCEPTION
+            return;
+        }
         env->CallVoidMethod(cb->callback, cb->methodId
 @for a in cb.cbargs
                 , @{a.name|camel|conv#cb2jni#a.type}
 @end
         );
         CAPTURE_JAVA_EXCEPTION
+        env->PopLocalFrame(nullptr);
     });
 @end
 }
