@@ -4,6 +4,7 @@
 
 #include <wrtc/interfaces/native_connection.hpp>
 
+#include <charconv>
 #include <memory>
 #include <utility>
 #include <rtc_base/time_utils.h>
@@ -363,13 +364,23 @@ namespace wrtc::interfaces {
     }
 
     void NativeConnection::add_ice_candidate(const models::IceCandidate& raw_candidate) const {
-        const bool standalone_reflector_mode = get_custom_parameter_bool("network_standalone_reflectors");
         const auto candidate = parse_ice_candidate(raw_candidate)->candidate();
-        if (standalone_reflector_mode) {
-            if (absl::EndsWith(candidate.address().hostname(), ".reflector")) {
+        if (absl::EndsWith(candidate.address().hostname(), ".reflector")) {
+            if (get_custom_parameter_bool("network_standalone_reflectors")) {
                 return;
             }
+            if (const auto resolved = resolve_reflector_candidates(candidate, rtc_servers_); !resolved.empty()) {
+                for (const auto& reflector_candidate : resolved) {
+                    add_remote_candidate(reflector_candidate);
+                }
+                return;
+            }
+            RTC_LOG(LS_WARNING) << "No REFLECTOR server matches " << candidate.address().hostname();
         }
+        add_remote_candidate(candidate);
+    }
+
+    void NativeConnection::add_remote_candidate(const webrtc::Candidate& candidate) const {
         const std::weak_ptr weak(shared_from_this());
         network_thread().PostTask([weak, candidate] {
             const auto strong = std::static_pointer_cast<const NativeConnection>(weak.lock());
@@ -378,6 +389,39 @@ namespace wrtc::interfaces {
             }
             strong->transport_channel_->AddRemoteCandidate(candidate);
         });
+    }
+
+    std::vector<webrtc::Candidate> NativeConnection::resolve_reflector_candidates(const webrtc::Candidate& candidate, const std::vector<models::RTCServer>& servers) {
+        constexpr std::string_view prefix = "reflector-";
+        const auto hostname = candidate.address().hostname();
+        if (!absl::StartsWith(hostname, prefix)) {
+            return {};
+        }
+        const auto separator = hostname.find('-', prefix.size());
+        if (separator == std::string::npos) {
+            return {};
+        }
+        uint32_t server_id = 0;
+        if (const auto [ptr, ec] = std::from_chars(hostname.data() + prefix.size(), hostname.data() + separator, server_id); ec != std::errc() || ptr != hostname.data() + separator || server_id == 0) {
+            return {};
+        }
+        std::vector<webrtc::Candidate> candidates;
+        for (const auto& server : servers) {
+            if (server.login != "reflector" || server.id != server_id || server.port != candidate.address().port()) {
+                continue;
+            }
+            webrtc::IPAddress ip;
+            if (!webrtc::IPFromString(server.host, &ip)) {
+                continue;
+            }
+            auto address = candidate.address();
+            address.SetResolvedIP(ip);
+            auto resolved_candidate = candidate;
+            resolved_candidate.set_address(address);
+            RTC_LOG(LS_VERBOSE) << "Resolved REFLECTOR candidate " << hostname << " to " << server.host;
+            candidates.push_back(std::move(resolved_candidate));
+        }
+        return candidates;
     }
 
     void NativeConnection::set_remote_params(models::PeerIceParameters remote_ice_parameters, std::unique_ptr<webrtc::SSLFingerprint> fingerprint, const std::string& ssl_setup) {
