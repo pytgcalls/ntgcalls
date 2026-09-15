@@ -25,20 +25,21 @@ namespace ntgcalls::media::devices {
         }
         const auto env = static_cast<JNIEnv*>(wrtc::utils::GetJNIEnv());
         const auto video_capturer_class = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
-        auto local_java_module = webrtc::ScopedJavaLocalRef<>::Adopt(
+        const auto java_device_name = webrtc::ScopedJavaLocalRef<jstring>::Adopt(env, env->NewStringUTF(device_name.c_str()));
+        const auto local_java_module = webrtc::ScopedJavaLocalRef<>::Adopt(
             env,
             env->NewObject(
                 video_capturer_class.obj(),
                 env->GetMethodID(video_capturer_class.obj(), "<init>", "(ZLjava/lang/String;IIIJ)V"),
                 is_screencast,
-                env->NewStringUTF(device_name.c_str()),
+                java_device_name.obj(),
                 desc.width,
                 desc.height,
                 desc.fps,
                 reinterpret_cast<jlong>(this)
             )
         );
-        java_module_ = env->NewGlobalRef(local_java_module.Release());
+        java_module_ = env->NewGlobalRef(local_java_module.obj());
     }
 
     JavaVideoCapturerModule::~JavaVideoCapturerModule() {
