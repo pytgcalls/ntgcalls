@@ -4,15 +4,13 @@
 
 #include <ntgcalls/utils/log_sink_impl.hpp>
 
-#include <regex>
-#include <sstream>
+#include <charconv>
 #include <rtc_base/ref_counted_object.h>
 
 namespace ntgcalls::utils {
     webrtc::scoped_refptr<LogSink> LogSink::instance_ = nullptr;
     std::mutex LogSink::mutex_{};
     uint32_t LogSink::references_ = 0;
-    const std::regex LogSink::message_pattern_(R"(\((.*)\.(.*):([0-9]+)\):\s?(.*))");
     wrtc::utils::synchronized_callback<void(LogSink::LogMessage)> LogSink::on_log_message_{};
 
     LogSink::LogSink() {
@@ -50,11 +48,43 @@ namespace ntgcalls::utils {
         }
     }
 
-    uint32_t LogSink::parse_line_number(const std::string& message) {
-        uint32_t port = -1;
-        std::stringstream ss(message);
-        ss >> port;
-        return port;
+    bool LogSink::parse_message(const std::string& message, std::string& file_name, std::string& extension, uint32_t& line_number, std::string& body) {
+        const auto view = std::string_view(message);
+        const auto open = view.find('(');
+        if (open == std::string_view::npos) {
+            return false;
+        }
+        const auto close = view.find("):", open);
+        if (close == std::string_view::npos) {
+            return false;
+        }
+        const auto header = view.substr(open + 1, close - open - 1);
+        const auto colon = header.rfind(':');
+        if (colon == std::string_view::npos) {
+            return false;
+        }
+        const auto dot = header.rfind('.', colon);
+        if (dot == std::string_view::npos) {
+            return false;
+        }
+        const auto digits = header.substr(colon + 1);
+        if (digits.empty()) {
+            return false;
+        }
+        if (const auto [ptr, ec] = std::from_chars(digits.data(), digits.data() + digits.size(), line_number); ec != std::errc() || ptr != digits.data() + digits.size()) {
+            return false;
+        }
+        file_name = std::string(header.substr(0, colon));
+        extension = std::string(header.substr(dot + 1, colon - dot - 1));
+        auto rest = view.substr(close + 2);
+        if (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t')) {
+            rest.remove_prefix(1);
+        }
+        if (const auto end_of_line = rest.find('\n'); end_of_line != std::string_view::npos) {
+            rest = rest.substr(0, end_of_line);
+        }
+        body = std::string(rest);
+        return true;
     }
 
     void LogSink::register_log_message(const std::string& message, const webrtc::LoggingSeverity severity) const {
@@ -62,19 +92,20 @@ namespace ntgcalls::utils {
             return;
         }
         thread_->PostTask([message, severity] {
-            if (std::smatch match; std::regex_search(message, match, message_pattern_)) {
-                const auto file_name = std::string(match[1]) + "." + std::string(match[2]);
-                const auto line_num = parse_line_number(match[3]);
-                const auto level = parse_severity(severity);
-                const auto parsed_message = std::string(match[4]);
-                (void) on_log_message_({
-                    level,
-                    std::string(match[2]) == "cpp" ? Source::Self : Source::WebRTC,
-                    file_name,
-                    line_num,
-                    parsed_message,
-                });
+            std::string file_name;
+            std::string extension;
+            std::string parsed_message;
+            uint32_t line_num = 0;
+            if (!parse_message(message, file_name, extension, line_num, parsed_message)) {
+                return;
             }
+            (void) on_log_message_({
+                parse_severity(severity),
+                extension == "cpp" ? Source::Self : Source::WebRTC,
+                file_name,
+                line_num,
+                parsed_message,
+            });
         });
     }
 
