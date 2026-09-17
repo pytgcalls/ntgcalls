@@ -23,7 +23,6 @@ namespace ntgcalls::media {
         std::vector<std::unique_ptr<io::BaseReader>> readers_to_close;
         {
             const std::lock_guard lock(mutex_);
-            if (detached_) return;
             {
                 const std::lock_guard sync_lock(sync_mutex_);
                 sync_readers_.clear();
@@ -115,7 +114,7 @@ namespace ntgcalls::media {
     void StreamManager::detach() {
         const std::lock_guard lock(mutex_);
         tracks_.clear();
-        detached_ = initialized_;
+        detached_ = true;
         resume_on_reconnect_ = !is_paused();
         initialized_ = false;
         for (const auto& reader : readers_ | std::views::values) {

@@ -39,8 +39,8 @@ namespace ntgcalls::instances {
         session_->short_poll(1);
     }
 
-    void ConferenceCall::migrate(const P2PCall* p2p_call) {
-        stream_manager_ = std::move(p2p_call->stream_manager());
+    void ConferenceCall::migrate(P2PCall* p2p_call) {
+        stream_manager_ = p2p_call->release_stream_manager();
         stream_manager_->enable_video_simulcast(true);
         stream_manager_->detach();
     }

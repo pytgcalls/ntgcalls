@@ -23,7 +23,7 @@ namespace ntgcalls::instances {
 
         void connect(const std::string& json_data, bool is_presentation) override;
 
-        void migrate(const P2PCall* p2p_call);
+        void migrate(P2PCall* p2p_call);
 
         void apply_blocks(
             int subchain,
