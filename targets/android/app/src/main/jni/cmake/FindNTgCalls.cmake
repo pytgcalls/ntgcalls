@@ -21,4 +21,3 @@ set_target_properties(
     INTERFACE_INCLUDE_DIRECTORIES "${_DIRS}"
     IMPORTED_LOCATION "${NTGCALLS_LIB}"
 )
-
