@@ -519,12 +519,14 @@ namespace ntgcalls::media {
                 if (!strong_thread) {
                     return;
                 }
+                bool notify_upgrade;
                 {
                     const std::lock_guard lock(strong_thread->mutex_);
                     strong_thread->remove_reader(device);
-                    if (strong_thread->initialized_) {
-                        strong_thread->check_upgrade();
-                    }
+                    notify_upgrade = strong_thread->initialized_;
+                }
+                if (notify_upgrade) {
+                    (void) strong_thread->on_change_status_(strong_thread->get_state());
                 }
                 (void) strong_thread->on_eof_(get_stream_type(device), device);
             });
