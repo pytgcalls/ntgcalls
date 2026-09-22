@@ -36,6 +36,9 @@ namespace ntgcalls::signaling::messages {
         res["feedbackTypes"] = feedback_types_json;
         auto parameters_json = json::object();
         for (const auto& [key, value] : payload_type.parameters) {
+            if (key.empty()) {
+                continue;
+            }
             parameters_json[key] = value;
         }
         res["parameters"] = parameters_json;
