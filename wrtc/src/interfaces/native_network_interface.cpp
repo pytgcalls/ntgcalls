@@ -123,6 +123,10 @@ namespace wrtc::interfaces {
     }
 
     void NativeNetworkInterface::add_incoming_smart_source(const std::string& endpoint, const models::MediaContent& media_content, const bool force) {
+        if (closed_ || !call_ || !channel_manager_) {
+            RTC_LOG(LS_WARNING) << "Ignoring incoming source " << endpoint << " on a closed connection";
+            return;
+        }
         {
             const std::lock_guard lock(mutex_);
             if (pending_content_.contains(endpoint) && !force) {
@@ -483,12 +487,14 @@ namespace wrtc::interfaces {
     }
 
     void NativeNetworkInterface::close() {
+        const auto was_closed = closed_;
         const std::weak_ptr weak(shared_from_this());
         worker_thread().BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
+            strong->closed_ = true;
             {
                 const std::lock_guard lock(strong->mutex_);
                 strong->pending_content_.clear();
@@ -510,9 +516,9 @@ namespace wrtc::interfaces {
             strong->remote_video_sink_.reset();
             strong->remote_screen_cast_sink_.reset();
             strong->call_ = nullptr;
+            strong->channel_manager_ = nullptr;
         });
-        channel_manager_ = nullptr;
-        if (!closed_) {
+        if (!was_closed) {
             RTC_LOG(LS_VERBOSE) << "Removed call";
             network_thread().BlockingCall([weak] {
                 const auto strong = weak.lock();
