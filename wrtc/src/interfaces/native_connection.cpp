@@ -196,96 +196,114 @@ namespace wrtc::interfaces {
     }
 
     void NativeConnection::create_channels() {
-        const auto coordinated_state = content_negotiation_context_->coordinated_state();
+        auto coordinated_state = content_negotiation_context_->coordinated_state();
         if (!coordinated_state) {
             return;
         }
+        std::optional<uint32_t> audio_ssrc;
         if (audio_channel_id_) {
-            if (const auto audio_ssrc = content_negotiation_context_->outgoing_channel_ssrc(*audio_channel_id_)) {
-                if (audio_channel_ && audio_channel_->ssrc() != audio_ssrc.value()) {
-                    audio_channel_ = nullptr;
+            audio_ssrc = content_negotiation_context_->outgoing_channel_ssrc(*audio_channel_id_);
+        }
+        std::optional<uint32_t> video_ssrc;
+        if (video_channel_id_) {
+            video_ssrc = content_negotiation_context_->outgoing_channel_ssrc(*video_channel_id_);
+        }
+        const std::weak_ptr weak(shared_from_this());
+        const std::shared_ptr state(std::move(coordinated_state));
+        worker_thread().BlockingCall([weak, state, audio_ssrc, video_ssrc] {
+            const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->apply_channels(*state, audio_ssrc, video_ssrc);
+        });
+    }
+
+    void NativeConnection::apply_channels(const ContentNegotiationContext::CoordinatedState& coordinated_state, const std::optional<uint32_t>& audio_ssrc, const std::optional<uint32_t>& video_ssrc) {
+        if (closed_ || !call_ || !channel_manager_) {
+            RTC_LOG(LS_WARNING) << "Ignoring channel negotiation on a closed connection";
+            return;
+        }
+        if (audio_ssrc) {
+            if (audio_channel_ && audio_channel_->ssrc() != audio_ssrc.value()) {
+                audio_channel_ = nullptr;
+            }
+            std::optional<models::MediaContent> audio_content;
+            for (const auto& content : coordinated_state.outgoing_contents) {
+                if (content.type == models::MediaContent::Type::Audio && content.ssrc == audio_ssrc.value()) {
+                    audio_content = content;
+                    break;
                 }
-                std::optional<models::MediaContent> audio_content;
-                for (const auto& content : coordinated_state->outgoing_contents) {
-                    if (content.type == models::MediaContent::Type::Audio && content.ssrc == audio_ssrc.value()) {
-                        audio_content = content;
-                        break;
-                    }
-                }
-                if (audio_content) {
-                    if (!audio_channel_) {
-                        audio_channel_ = std::make_unique<media::channels::OutgoingAudioChannel>(
-                            call_.get(),
-                            channel_manager_.get(),
-                            dtls_srtp_transport_.get(),
-                            *audio_content,
-                            worker_thread(),
-                            network_thread(),
-                            &audio_sink_,
-                            payload_type_mapping_,
-                            encryptor_,
-                            nullptr
-                        );
-                    }
+            }
+            if (audio_content) {
+                if (!audio_channel_) {
+                    audio_channel_ = std::make_unique<media::channels::OutgoingAudioChannel>(
+                        call_.get(),
+                        channel_manager_.get(),
+                        dtls_srtp_transport_.get(),
+                        *audio_content,
+                        worker_thread(),
+                        network_thread(),
+                        &audio_sink_,
+                        payload_type_mapping_,
+                        encryptor_,
+                        nullptr
+                    );
                 }
             }
         }
-        if (video_channel_id_) {
-            if (const auto video_ssrc = content_negotiation_context_->outgoing_channel_ssrc(*video_channel_id_)) {
-                if (video_channel_ && video_channel_->ssrc() != video_ssrc.value()) {
-                    video_channel_ = nullptr;
+        if (video_ssrc) {
+            if (video_channel_ && video_channel_->ssrc() != video_ssrc.value()) {
+                video_channel_ = nullptr;
+            }
+            std::optional<models::MediaContent> video_content;
+            for (const auto& content : coordinated_state.outgoing_contents) {
+                if (content.type == models::MediaContent::Type::Video && content.ssrc == video_ssrc.value()) {
+                    video_content = content;
+                    break;
                 }
-                std::optional<models::MediaContent> video_content;
-                for (const auto& content : coordinated_state->outgoing_contents) {
-                    if (content.type == models::MediaContent::Type::Video && content.ssrc == video_ssrc.value()) {
-                        video_content = content;
-                        break;
-                    }
-                }
-                if (video_content) {
-                    if (!video_channel_) {
-                        video_channel_ = std::make_unique<media::channels::OutgoingVideoChannel>(
-                            call_.get(),
-                            channel_manager_.get(),
-                            dtls_srtp_transport_.get(),
-                            *video_content,
-                            worker_thread(),
-                            network_thread(),
-                            &video_sink_,
-                            payload_type_mapping_,
-                            encryptor_
-                        );
-                    }
+            }
+            if (video_content) {
+                if (!video_channel_) {
+                    video_channel_ = std::make_unique<media::channels::OutgoingVideoChannel>(
+                        call_.get(),
+                        channel_manager_.get(),
+                        dtls_srtp_transport_.get(),
+                        *video_content,
+                        worker_thread(),
+                        network_thread(),
+                        &video_sink_,
+                        payload_type_mapping_,
+                        encryptor_
+                    );
                 }
             }
         }
 
         std::unordered_set<uint32_t> remote_channels;
-        for (const auto& content : coordinated_state->incoming_contents) {
+        for (const auto& content : coordinated_state.incoming_contents) {
             remote_channels.insert(content.ssrc);
         }
-        auto remove_channel = [&](auto& channels) {
-            std::vector<std::string> removed_endpoints;
+        auto remove_channel = [&]<typename T>(T& channels) {
+            std::decay_t<T> removed_channels;
             {
                 const std::lock_guard lock(mutex_);
+                std::vector<std::string> removed_endpoints;
                 for (const auto& [endpoint, channel] : channels) {
                     if (!remote_channels.contains(channel->ssrc())) {
                         removed_endpoints.push_back(endpoint);
                     }
                 }
-            }
-            for (const auto& endpoint : removed_endpoints) {
-                typename std::decay_t<decltype(channels)>::node_type removed_channel;
-                {
-                    const std::lock_guard lock(mutex_);
-                    removed_channel = channels.extract(endpoint);
+                for (const auto& endpoint : removed_endpoints) {
+                    removed_channels.insert(channels.extract(endpoint));
                     pending_content_.erase(endpoint);
                 }
             }
+            removed_channels.clear();
         };
         remove_channel(incoming_audio_channels_);
         remove_channel(incoming_video_channels_);
-        for (const auto& content : coordinated_state->incoming_contents) {
+        for (const auto& content : coordinated_state.incoming_contents) {
             add_incoming_smart_source(std::to_string(content.ssrc), content);
         }
     }

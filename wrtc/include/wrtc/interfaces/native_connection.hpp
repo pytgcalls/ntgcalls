@@ -34,6 +34,8 @@ namespace wrtc::interfaces {
 
         void check_connection_timeout();
 
+        void apply_channels(const ContentNegotiationContext::CoordinatedState& coordinated_state, const std::optional<uint32_t>& audio_ssrc, const std::optional<uint32_t>& video_ssrc);
+
         void add_remote_candidate(const webrtc::Candidate& candidate) const;
 
         static std::vector<webrtc::Candidate> resolve_reflector_candidates(const webrtc::Candidate& candidate, const std::vector<models::RTCServer>& servers);
