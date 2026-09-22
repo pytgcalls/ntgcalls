@@ -6,6 +6,6 @@
 
 namespace wrtc::utils {
 
-    void* GetJNIEnv();
+    void* get_jni_env();
 
 } // wrtc::utils

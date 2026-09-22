@@ -127,7 +127,7 @@ JNIEXPORT void JNICALL Java_io_github_pytgcalls_@{c.name}_init(JNIEnv *env, jobj
         if (!cb) {
             return;
         }
-        auto env = (JNIEnv*) wrtc::utils::GetJNIEnv();
+        auto env = (JNIEnv*) wrtc::utils::get_jni_env();
         if (env->PushLocalFrame(16) != 0) {
             CAPTURE_JAVA_EXCEPTION
             return;

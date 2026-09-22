@@ -294,7 +294,7 @@ private:
 static Napi::Object InitModule(Napi::Env env, Napi::Object exports) {
     ntgcalls::support::install_log_bridge(env);
     env.AddCleanupHook([] {
-        ntgcalls::utils::ShutdownHook::runAll();
+        ntgcalls::utils::ShutdownHook::run_all();
     });
 @for c in classes
     @{c.name}::Init(env, exports);

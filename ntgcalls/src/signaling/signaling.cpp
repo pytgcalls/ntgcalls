@@ -57,7 +57,7 @@ namespace ntgcalls::signaling {
             throw SignalingError("No versions provided");
         }
         std::ranges::sort(versions, [](const std::string& a, const std::string& b) {
-            return utils::VersionParser::Parse(b) < utils::VersionParser::Parse(a);
+            return utils::VersionParser::parse(b) < utils::VersionParser::parse(a);
         });
         auto supported = supported_versions();
         for (const auto& version : versions) {

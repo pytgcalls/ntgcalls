@@ -50,7 +50,7 @@ namespace wrtc::interfaces::peer_connection {
         dependencies.signaling_thread = *signaling_thread_;
         dependencies.env = env;
         dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>();
-        jni_env_ = utils::GetJNIEnv();
+        jni_env_ = utils::get_jni_env();
         dependencies.adm = worker_thread_->BlockingCall([&] {
             if (!audio_device_module_)
                 audio_device_module_ = webrtc::make_ref_counted<media::AudioDeviceModule>();
@@ -63,8 +63,8 @@ namespace wrtc::interfaces::peer_connection {
         dependencies.video_decoder_factory = android::create_video_decoder_factory(static_cast<JNIEnv*>(jni_env_));
 #else
         auto config = video_factory::VideoFactoryConfig();
-        dependencies.video_encoder_factory = config.CreateVideoEncoderFactory();
-        dependencies.video_decoder_factory = config.CreateVideoDecoderFactory();
+        dependencies.video_encoder_factory = config.create_video_encoder_factory();
+        dependencies.video_decoder_factory = config.create_video_decoder_factory();
 #endif
         dependencies.audio_mixer = nullptr;
         supported_video_formats_ = dependencies.video_encoder_factory->GetSupportedFormats();

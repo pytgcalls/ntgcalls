@@ -12,7 +12,7 @@ namespace ntgcalls::instances {
         if (last_block) {
             session_->set_last_block(*last_block);
         }
-        std::weak_ptr weak(shared_from_this());
+        const std::weak_ptr weak(shared_from_this());
         safe<wrtc::interfaces::GroupConnection>(connection_)->on_request_participants([weak] {
             const auto strong = std::static_pointer_cast<ConferenceCall>(weak.lock());
             if (!strong) {
@@ -59,11 +59,11 @@ namespace ntgcalls::instances {
     }
 
     void ConferenceCall::update_audio_ssrc_mappings(const std::vector<wrtc::models::SsrcMapping>& audio_ssrcs) const {
-        const auto groupConnection = safe<wrtc::interfaces::GroupConnection>(connection_);
-        if (!groupConnection) {
+        const auto group_connection = safe<wrtc::interfaces::GroupConnection>(connection_);
+        if (!group_connection) {
             throw ConnectionError("Conference connection not initialized");
         }
-        groupConnection->update_audio_ssrc_mappings(audio_ssrcs);
+        group_connection->update_audio_ssrc_mappings(audio_ssrcs);
     }
 
     void ConferenceCall::on_outbound_block(const std::function<void(bytes::binary)>& callback) const {

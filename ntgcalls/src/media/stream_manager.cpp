@@ -175,7 +175,7 @@ namespace ntgcalls::media {
     void StreamManager::add_track(Mode mode, Device device, wrtc::interfaces::NetworkInterface* pc) {
         const StreamId id(mode, device);
         if (mode == Capture) {
-            tracks_[id] = pc->add_outgoing_track(dynamic_cast<BaseStreamer*>(streams_[id].get())->createTrack());
+            tracks_[id] = pc->add_outgoing_track(dynamic_cast<BaseStreamer*>(streams_[id].get())->create_track());
         } else {
             if (id.second == Microphone || id.second == Speaker) {
                 pc->add_incoming_audio_track(dynamic_cast<AudioReceiver*>(streams_[id].get())->remote_sink());
@@ -229,7 +229,7 @@ namespace ntgcalls::media {
         if (const auto stream = dynamic_cast<BaseStreamer*>(streams_[id].get())) {
             const auto unique_data = bytes::make_unique_binary(data.size());
             std::memcpy(unique_data.get(), data.data(), data.size());
-            stream->sendData(unique_data.get(), data.size(), frame_data);
+            stream->send_data(unique_data.get(), data.size(), frame_data);
         }
     }
 
@@ -500,7 +500,7 @@ namespace ntgcalls::media {
                         if (stream_type == Video && is_shared) {
                             frames_to_emit.push_back({0, {data.get(), data.get() + frame_size}, frame_data});
                         }
-                        stream->sendData(data.get(), frame_size, frame_data);
+                        stream->send_data(data.get(), frame_size, frame_data);
                     }
                 }
             }

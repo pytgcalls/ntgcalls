@@ -25,7 +25,7 @@ namespace ntgcalls::media {
             if (!description_) {
                 return;
             }
-            if (const auto sink = weakSink_.lock(); !sink) {
+            if (const auto sink = weak_sink_.lock(); !sink) {
                 return;
             }
             const std::lock_guard lock(mutex_);
@@ -81,6 +81,6 @@ namespace ntgcalls::media {
                 }
             );
         });
-        weakSink_ = sink_;
+        weak_sink_ = sink_;
     }
 } // ntgcalls::media

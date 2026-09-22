@@ -18,9 +18,9 @@ namespace wrtc::video_factory {
 
         explicit VideoFactoryConfig();
 
-        std::unique_ptr<VideoEncoderFactory> CreateVideoEncoderFactory();
+        std::unique_ptr<VideoEncoderFactory> create_video_encoder_factory();
 
-        std::unique_ptr<VideoDecoderFactory> CreateVideoDecoderFactory();
+        std::unique_ptr<VideoDecoderFactory> create_video_decoder_factory();
     };
 
 } // wrtc::video_factory

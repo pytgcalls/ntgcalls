@@ -13,11 +13,11 @@ namespace ntgcalls::media {
         audio_ = nullptr;
     }
 
-    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> AudioStreamer::createTrack() {
+    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> AudioStreamer::create_track() {
         return audio_->create_track();
     }
 
-    void AudioStreamer::sendData(uint8_t* sample, size_t size, const wrtc::models::FrameData additional_data) {
+    void AudioStreamer::send_data(uint8_t* sample, size_t size, const wrtc::models::FrameData additional_data) {
         frames_++;
         auto event = wrtc::models::RTCOnDataEvent(sample, frame_size() / (2 * description_->channel_count));
         event.channel_count = description_->channel_count;

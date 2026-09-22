@@ -24,14 +24,14 @@ namespace wrtc::utils {
         }
 
         synchronized_callback& operator=(std::function<R(Args...)> func) {
-            std::lock_guard lock(mutex_);
+            const std::lock_guard lock(mutex_);
             callback_ = std::move(func);
             return *this;
         }
 
         // ReSharper disable once CppNonExplicitConversionOperator
         operator bool() const {
-            std::lock_guard lock(mutex_);
+            const std::lock_guard lock(mutex_);
             return static_cast<bool>(callback_);
         }
 

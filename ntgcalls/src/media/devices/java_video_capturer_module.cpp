@@ -23,7 +23,7 @@ namespace ntgcalls::media::devices {
         if (device_name == "screen" && !is_screencast) {
             throw MediaDeviceError("Wrong device type");
         }
-        const auto env = static_cast<JNIEnv*>(wrtc::utils::GetJNIEnv());
+        const auto env = static_cast<JNIEnv*>(wrtc::utils::get_jni_env());
         const auto video_capturer_class = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
         const auto java_device_name = webrtc::ScopedJavaLocalRef<jstring>::Adopt(env, env->NewStringUTF(device_name.c_str()));
         const auto local_java_module = webrtc::ScopedJavaLocalRef<>::Adopt(
@@ -44,7 +44,7 @@ namespace ntgcalls::media::devices {
 
     JavaVideoCapturerModule::~JavaVideoCapturerModule() {
         running_ = false;
-        const auto env = static_cast<JNIEnv*>(wrtc::utils::GetJNIEnv());
+        const auto env = static_cast<JNIEnv*>(wrtc::utils::get_jni_env());
         // ReSharper disable once CppLocalVariableMayBeConst
         const auto java_module_class = webrtc::ScopedJavaLocalRef<jclass>::Adopt(
             env,
@@ -62,7 +62,7 @@ namespace ntgcalls::media::devices {
     }
 
     std::vector<DeviceInfo> JavaVideoCapturerModule::get_devices() {
-        const auto env = static_cast<JNIEnv*>(wrtc::utils::GetJNIEnv());
+        const auto env = static_cast<JNIEnv*>(wrtc::utils::get_jni_env());
         const auto video_capturer_class = webrtc::GetClass(env, "io/github/pytgcalls/devices/JavaVideoCapturerModule");
         // ReSharper disable once CppLocalVariableMayBeConst
         jmethodID get_devices_method = env->GetStaticMethodID(video_capturer_class.obj(), "getDevices", "()Ljava/util/List;");
@@ -155,7 +155,7 @@ namespace ntgcalls::media::devices {
     void JavaVideoCapturerModule::open() {
         if (running_) return;
         running_ = true;
-        const auto env = static_cast<JNIEnv*>(wrtc::utils::GetJNIEnv());
+        const auto env = static_cast<JNIEnv*>(wrtc::utils::get_jni_env());
         const auto java_module_class = webrtc::ScopedJavaLocalRef<jclass>::Adopt(
             env,
             env->GetObjectClass(java_module_)

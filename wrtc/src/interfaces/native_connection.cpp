@@ -410,17 +410,17 @@ namespace wrtc::interfaces {
     }
 
     std::vector<webrtc::Candidate> NativeConnection::resolve_reflector_candidates(const webrtc::Candidate& candidate, const std::vector<models::RTCServer>& servers) {
-        constexpr std::string_view prefix = "reflector-";
+        constexpr std::string_view kPrefix = "reflector-";
         const auto hostname = candidate.address().hostname();
-        if (!absl::StartsWith(hostname, prefix)) {
+        if (!absl::StartsWith(hostname, kPrefix)) {
             return {};
         }
-        const auto separator = hostname.find('-', prefix.size());
+        const auto separator = hostname.find('-', kPrefix.size());
         if (separator == std::string::npos) {
             return {};
         }
         uint32_t server_id = 0;
-        if (const auto [ptr, ec] = std::from_chars(hostname.data() + prefix.size(), hostname.data() + separator, server_id); ec != std::errc() || ptr != hostname.data() + separator || server_id == 0) {
+        if (const auto [ptr, ec] = std::from_chars(hostname.data() + kPrefix.size(), hostname.data() + separator, server_id); ec != std::errc() || ptr != hostname.data() + separator || server_id == 0) {
             return {};
         }
         std::vector<webrtc::Candidate> candidates;

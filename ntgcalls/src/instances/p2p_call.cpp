@@ -366,7 +366,7 @@ namespace ntgcalls::instances {
 
         if (!stream_manager_->has_device(media::StreamManager::Capture, media::StreamManager::Camera)) {
             message.video_state = signaling::messages::MediaStateMessage::VideoState::Inactive;
-        } else if (media_state.videoPaused) {
+        } else if (media_state.video_paused) {
             message.video_state = signaling::messages::MediaStateMessage::VideoState::Suspended;
         } else {
             message.video_state = signaling::messages::MediaStateMessage::VideoState::Active;
@@ -374,7 +374,7 @@ namespace ntgcalls::instances {
 
         if (!stream_manager_->has_device(media::StreamManager::Capture, media::StreamManager::Screen)) {
             message.screencast_state = signaling::messages::MediaStateMessage::VideoState::Inactive;
-        } else if (media_state.presentationPaused) {
+        } else if (media_state.presentation_paused) {
             message.screencast_state = signaling::messages::MediaStateMessage::VideoState::Suspended;
         } else {
             message.screencast_state = signaling::messages::MediaStateMessage::VideoState::Active;

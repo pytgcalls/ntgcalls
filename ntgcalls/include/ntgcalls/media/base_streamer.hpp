@@ -13,9 +13,9 @@ namespace ntgcalls::media {
     public:
         virtual ~BaseStreamer() = default;
 
-        virtual void sendData(uint8_t* sample, size_t size, wrtc::models::FrameData additionalData) = 0;
+        virtual void send_data(uint8_t* sample, size_t size, wrtc::models::FrameData additional_data) = 0;
 
-        virtual webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() = 0;
+        virtual webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> create_track() = 0;
     };
 
 } // ntgcalls

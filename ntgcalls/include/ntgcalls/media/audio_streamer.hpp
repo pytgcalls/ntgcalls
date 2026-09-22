@@ -17,8 +17,8 @@ namespace ntgcalls::media {
 
         ~AudioStreamer() override;
 
-        webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> createTrack() override;
+        webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> create_track() override;
 
-        void sendData(uint8_t* sample, size_t size, wrtc::models::FrameData additional_data) override;
+        void send_data(uint8_t* sample, size_t size, wrtc::models::FrameData additional_data) override;
     };
 } // ntgcalls::media

@@ -13,7 +13,7 @@ namespace ntgcalls::utils {
         int minor = 0;
         int micro = 0;
 
-        static VersionParser Parse(const std::string& version);
+        static VersionParser parse(const std::string& version);
 
         bool operator>=(const VersionParser& other);
 
@@ -25,7 +25,7 @@ namespace ntgcalls::utils {
 
         bool operator==(const VersionParser& other);
 
-        [[nodiscard]] std::string toString() const;
+        [[nodiscard]] std::string to_string() const;
     };
 
 } // ntgcalls::utils

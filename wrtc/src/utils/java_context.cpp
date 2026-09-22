@@ -10,7 +10,7 @@
 #endif
 
 namespace wrtc::utils {
-    void* GetJNIEnv() {
+    void* get_jni_env() {
 #ifdef IS_ANDROID
         return webrtc::AttachCurrentThreadIfNeeded();
 #else

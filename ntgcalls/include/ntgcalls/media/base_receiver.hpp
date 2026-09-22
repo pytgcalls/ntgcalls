@@ -12,7 +12,7 @@ namespace ntgcalls::media {
     class BaseReceiver {
     protected:
         std::mutex mutex_;
-        std::weak_ptr<wrtc::interfaces::media::RemoteMediaInterface> weakSink_;
+        std::weak_ptr<wrtc::interfaces::media::RemoteMediaInterface> weak_sink_;
 
     public:
         virtual ~BaseReceiver() = default;

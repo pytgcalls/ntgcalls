@@ -25,15 +25,15 @@ namespace ntgcalls::utils {
     public:
         static uint64_t add(std::function<void()> hook) {
             auto& self = instance();
-            std::lock_guard lock(self.mutex_);
+            const std::lock_guard lock(self.mutex_);
             const auto token = ++self.next_token_;
             self.hooks_[token] = std::move(hook);
             return token;
         }
 
-        static void runAll() {
+        static void run_all() {
             auto& self = instance();
-            std::lock_guard lock(self.mutex_);
+            const std::lock_guard lock(self.mutex_);
             for (const auto& hook : self.hooks_ | std::views::values) {
                 hook();
             }
@@ -41,7 +41,7 @@ namespace ntgcalls::utils {
 
         static void remove(const uint64_t token) {
             auto& self = instance();
-            std::lock_guard lock(self.mutex_);
+            const std::lock_guard lock(self.mutex_);
             self.hooks_.erase(token);
         }
     };

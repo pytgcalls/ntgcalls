@@ -91,7 +91,7 @@ namespace ntgcalls::media {
             if (!description_) {
                 return;
             }
-            if (!weakSink_.lock()) {
+            if (!weak_sink_.lock()) {
                 return;
             }
             const std::lock_guard lock(mutex_);
@@ -119,7 +119,7 @@ namespace ntgcalls::media {
             frames_++;
             (void) frames_callback_(processed_frames);
         });
-        weakSink_ = sink_;
+        weak_sink_ = sink_;
     }
 
     std::weak_ptr<wrtc::interfaces::media::RemoteAudioSink> AudioReceiver::remote_sink() {

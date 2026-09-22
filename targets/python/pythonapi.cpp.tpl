@@ -109,6 +109,6 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
     py::register_exception<@{er.cpp}>(m, "@{er.cpp|base}", baseExc);
 @end
     install_log_bridge();
-    Py_AtExit(&ntgcalls::utils::ShutdownHook::runAll);
+    Py_AtExit(&ntgcalls::utils::ShutdownHook::run_all);
     m.attr("__version__") = NTG_VERSION;
 }

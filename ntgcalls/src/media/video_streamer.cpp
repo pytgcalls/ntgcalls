@@ -13,11 +13,11 @@ namespace ntgcalls::media {
         video_ = nullptr;
     }
 
-    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> VideoStreamer::createTrack() {
+    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> VideoStreamer::create_track() {
         return video_->create_track();
     }
 
-    void VideoStreamer::sendData(uint8_t* sample, const size_t size, wrtc::models::FrameData additional_data) {
+    void VideoStreamer::send_data(uint8_t* sample, const size_t size, wrtc::models::FrameData additional_data) {
         frames_++;
         if (additional_data.width == 0) {
             additional_data.width = description_->width;

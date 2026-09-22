@@ -27,11 +27,11 @@ namespace wrtc::video_factory {
         // TODO: @Lauren Add NVCODEC encoder-decoder when available
     }
 
-    std::unique_ptr<VideoEncoderFactory> VideoFactoryConfig::CreateVideoEncoderFactory() {
+    std::unique_ptr<VideoEncoderFactory> VideoFactoryConfig::create_video_encoder_factory() {
         return absl::make_unique<VideoEncoderFactory>(encoders);
     }
 
-    std::unique_ptr<VideoDecoderFactory> VideoFactoryConfig::CreateVideoDecoderFactory() {
+    std::unique_ptr<VideoDecoderFactory> VideoFactoryConfig::create_video_decoder_factory() {
         return absl::make_unique<VideoDecoderFactory>(decoders);
     }
 

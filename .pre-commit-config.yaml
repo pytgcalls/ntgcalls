@@ -20,6 +20,14 @@ repos:
       hooks:
           - id: clang-format
             types_or: [c++, c]
+    - repo: local
+      hooks:
+          - id: clang-tidy
+            name: clang-tidy
+            entry: python3 scripts/run_clang_tidy.py
+            language: system
+            files: ^(ntgcalls|wrtc)/src/.*\.(cpp|cc)$
+            require_serial: true
     - repo: https://github.com/astral-sh/ruff-pre-commit
       rev: v0.16.4
       hooks:
