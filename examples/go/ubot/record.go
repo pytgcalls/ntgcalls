@@ -7,9 +7,12 @@ func (ctx *Context) Record(chatId any, mediaDescription ntgcalls.MediaDescriptio
 	if err != nil {
 		return err
 	}
-	if ctx.binding.Calls()[parsedChatId] == nil {
-		err = ctx.Play(chatId, ntgcalls.MediaDescription{})
-		if err != nil {
+	calls, err := ctx.binding.Calls()
+	if err != nil {
+		return err
+	}
+	if _, ok := calls[parsedChatId]; !ok {
+		if err = ctx.Play(chatId, ntgcalls.MediaDescription{}); err != nil {
 			return err
 		}
 	}

@@ -92,7 +92,7 @@ func (ctx *Context) handleUpdates() {
 				reasonMessage = fmt.Sprintf("call declined by %d", userId)
 			}
 			if ctx.p2pConfigs[userId] != nil {
-				ctx.p2pConfigs[userId].WaitData <- fmt.Errorf(reasonMessage)
+				ctx.p2pConfigs[userId].WaitData <- fmt.Errorf("%s", reasonMessage)
 			}
 			delete(ctx.inputCalls, userId)
 			_ = ctx.binding.Stop(userId)
@@ -146,7 +146,7 @@ func (ctx *Context) handleUpdates() {
 								parseVideoSources(participant.Video.SourceGroups),
 							)
 						} else {
-							_ = ctx.binding.RemoveIncomingVideo(
+							_, _ = ctx.binding.RemoveIncomingVideo(
 								chatId,
 								ctx.callSources[chatId].CameraSources[participantId],
 							)
@@ -164,7 +164,7 @@ func (ctx *Context) handleUpdates() {
 								parseVideoSources(participant.Presentation.SourceGroups),
 							)
 						} else {
-							_ = ctx.binding.RemoveIncomingVideo(
+							_, _ = ctx.binding.RemoveIncomingVideo(
 								chatId,
 								ctx.callSources[chatId].ScreenSources[participantId],
 							)

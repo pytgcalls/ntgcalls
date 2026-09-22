@@ -152,7 +152,10 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 			return err
 		}
 
-		protocolRaw := ntgcalls.GetProtocol()
+		protocolRaw, err := ntgcalls.GetProtocol()
+		if err != nil {
+			return err
+		}
 		protocol := &tg.PhoneCallProtocol{
 			UDPP2p:          protocolRaw.UdpP2P,
 			UDPReflector:    protocolRaw.UdpReflector,

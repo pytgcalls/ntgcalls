@@ -9,7 +9,11 @@ func (ctx *Context) Play(chatId any, mediaDescription ntgcalls.MediaDescription)
 	if err != nil {
 		return err
 	}
-	if ctx.binding.Calls()[parsedChatId] != nil {
+	calls, err := ctx.binding.Calls()
+	if err != nil {
+		return err
+	}
+	if _, ok := calls[parsedChatId]; ok {
 		return ctx.binding.SetStreamSources(parsedChatId, ntgcalls.CaptureStream, mediaDescription)
 	}
 	return ctx.connectCall(parsedChatId, mediaDescription, "", false, nil)

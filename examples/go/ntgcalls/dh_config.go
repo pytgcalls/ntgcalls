@@ -9,14 +9,13 @@ type DhConfig struct {
 	Random []byte
 }
 
-func (ctx *DhConfig) ParseToC() C.ntg_dh_config_struct {
-	var x C.ntg_dh_config_struct
+func (ctx *DhConfig) ParseToC() (C.ntg_dh_config, func()) {
+	var x C.ntg_dh_config
 	x.g = C.int32_t(ctx.G)
-	pC, pSize := parseBytes(ctx.P)
-	rC, rSize := parseBytes(ctx.Random)
-	x.p = pC
-	x.sizeP = pSize
-	x.random = rC
-	x.sizeRandom = rSize
-	return x
+	x.p, x.p_len = parseBytes(ctx.P)
+	x.random, x.random_len = parseBytes(ctx.Random)
+	return x, func() {
+		freeBytes(x.p)
+		freeBytes(x.random)
+	}
 }

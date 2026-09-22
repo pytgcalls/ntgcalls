@@ -8,11 +8,11 @@ type FrameData struct {
 	Width, Height, Rotation    uint16
 }
 
-func (ctx *FrameData) ParseToC() C.ntg_frame_data_struct {
-	var x C.ntg_frame_data_struct
-	x.absoluteCaptureTimestampMs = C.int64_t(ctx.AbsoluteCaptureTimestampMs)
+func (ctx *FrameData) ParseToC() C.ntg_frame_data {
+	var x C.ntg_frame_data
+	x.absolute_capture_timestamp_ms = C.int64_t(ctx.AbsoluteCaptureTimestampMs)
 	x.width = C.uint16_t(ctx.Width)
 	x.height = C.uint16_t(ctx.Height)
-	x.rotation = C.uint16_t(ctx.Rotation)
+	x.rotation = C.ntg_video_rotation(ctx.Rotation)
 	return x
 }

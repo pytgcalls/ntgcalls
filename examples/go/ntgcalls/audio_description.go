@@ -3,6 +3,7 @@ package ntgcalls
 //#include "ntgcalls.h"
 //#include <stdlib.h>
 import "C"
+import "unsafe"
 
 type AudioDescription struct {
 	MediaSource  MediaSource
@@ -12,12 +13,14 @@ type AudioDescription struct {
 	KeepOpen     bool
 }
 
-func (ctx *AudioDescription) ParseToC() C.ntg_audio_description_struct {
-	var x C.ntg_audio_description_struct
-	x.mediaSource = ctx.MediaSource.ParseToC()
+func (ctx *AudioDescription) ParseToC() (C.ntg_audio_description, func()) {
+	var x C.ntg_audio_description
+	x.media_source = ctx.MediaSource.ParseToC()
 	x.input = C.CString(ctx.Input)
-	x.sampleRate = C.uint32_t(ctx.SampleRate)
-	x.channelCount = C.uint8_t(ctx.ChannelCount)
-	x.keepOpen = C.bool(ctx.KeepOpen)
-	return x
+	x.sample_rate = C.uint32_t(ctx.SampleRate)
+	x.channel_count = C.uint8_t(ctx.ChannelCount)
+	x.keep_open = C.bool(ctx.KeepOpen)
+	return x, func() {
+		C.free(unsafe.Pointer(x.input))
+	}
 }
