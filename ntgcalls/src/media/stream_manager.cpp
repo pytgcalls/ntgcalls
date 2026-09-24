@@ -62,13 +62,8 @@ namespace ntgcalls::media {
         const std::lock_guard lock(mutex_);
         RTC_LOG(LS_VERBOSE) << "Setting Configuration, Lock acquired";
 
-        const bool was_idling = is_paused();
-
         maybe_reconfigure_device<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
         maybe_reconfigure_device<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
-
-        const bool was_camera = has_device_internal(mode, Camera);
-        const bool was_screen = has_device_internal(mode, Screen);
 
         if (!video_simulcast_ && desc.camera && desc.screen && mode == Capture) {
             throw InvalidParams("Cannot mix camera and screen sources");
@@ -77,7 +72,7 @@ namespace ntgcalls::media {
         maybe_reconfigure_device<VideoSink, VideoDescription>(mode, Camera, desc.camera);
         maybe_reconfigure_device<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
-        if (mode == Capture && (was_camera != has_device_internal(mode, Camera) || was_screen != has_device_internal(mode, Screen) || was_idling) && initialized_) {
+        if (mode == Capture && initialized_) {
             check_upgrade();
         }
     }
@@ -86,7 +81,13 @@ namespace ntgcalls::media {
         pc->enable_audio_incoming(writers_.contains(Microphone) || external_writers_.contains(Microphone));
         pc->enable_video_incoming(writers_.contains(Camera) || external_writers_.contains(Camera), false);
         pc->enable_video_incoming(writers_.contains(Screen) || external_writers_.contains(Screen), true);
+        const auto was_initialized = initialized_;
         initialized_ = pc->get_connection_mode() != wrtc::ConnectionMode::None;
+        if (!was_initialized && initialized_) {
+            const auto state = get_state();
+            const std::lock_guard lock(state_mutex_);
+            last_state_ = state;
+        }
     }
 
     MediaState StreamManager::get_state() {
@@ -543,14 +544,9 @@ namespace ntgcalls::media {
                 if (!strong_thread) {
                     return;
                 }
-                bool notify_upgrade;
                 {
                     const std::lock_guard lock(strong_thread->mutex_);
                     strong_thread->remove_reader(device);
-                    notify_upgrade = strong_thread->initialized_;
-                }
-                if (notify_upgrade) {
-                    strong_thread->emit_state_if_changed();
                 }
                 (void) strong_thread->on_eof_(get_stream_type(device), device);
             });
