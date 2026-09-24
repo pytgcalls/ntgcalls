@@ -5,6 +5,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <optional>
 #include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/io/base_writer.hpp>
 #include <ntgcalls/media/base_sink.hpp>
@@ -102,6 +103,8 @@ namespace ntgcalls::media {
         std::mutex mutex_;
         wrtc::utils::synchronized_callback<void(Type, Device)> on_eof_;
         wrtc::utils::synchronized_callback<void(MediaState)> on_change_status_;
+        std::mutex state_mutex_;
+        std::optional<MediaState> last_state_;
         wrtc::utils::synchronized_callback<void(Mode, Device, std::vector<wrtc::models::Frame>)> frames_callback_;
 
         enum class ReconfigureReason {
@@ -154,6 +157,10 @@ namespace ntgcalls::media {
         void handle_no_description(Mode mode, Device device);
 
         void check_upgrade();
+
+        void emit_state_if_changed();
+
+        static bool same_state(const MediaState& a, const MediaState& b);
 
         bool update_mute(bool is_muted);
 

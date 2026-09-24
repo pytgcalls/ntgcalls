@@ -169,6 +169,10 @@ namespace ntgcalls::media {
     }
 
     void StreamManager::on_upgrade(const std::function<void(MediaState)>& callback) {
+        {
+            const std::lock_guard lock(state_mutex_);
+            last_state_.reset();
+        }
         on_change_status_ = callback;
     }
 
@@ -341,8 +345,28 @@ namespace ntgcalls::media {
             if (!strong) {
                 return;
             }
-            (void) strong->on_change_status_(strong->get_state());
+            strong->emit_state_if_changed();
         });
+    }
+
+    void StreamManager::emit_state_if_changed() {
+        const auto state = get_state();
+        {
+            const std::lock_guard lock(state_mutex_);
+            if (last_state_ && same_state(*last_state_, state)) {
+                return;
+            }
+            last_state_ = state;
+        }
+        (void) on_change_status_(state);
+    }
+
+    bool StreamManager::same_state(const MediaState& a, const MediaState& b) {
+        return a.muted == b.muted &&
+               a.video_paused == b.video_paused &&
+               a.video_stopped == b.video_stopped &&
+               a.presentation_paused == b.presentation_paused &&
+               a.presentation_stopped == b.presentation_stopped;
     }
 
     template<typename SinkType, typename DescriptionType>
@@ -526,7 +550,7 @@ namespace ntgcalls::media {
                     notify_upgrade = strong_thread->initialized_;
                 }
                 if (notify_upgrade) {
-                    (void) strong_thread->on_change_status_(strong_thread->get_state());
+                    strong_thread->emit_state_if_changed();
                 }
                 (void) strong_thread->on_eof_(get_stream_type(device), device);
             });
