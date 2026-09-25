@@ -5,9 +5,8 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'docsdata branch to publish to (defaults to the branch being pushed)'
+        description: 'docsdata branch to publish to (defaults to dev for pre-releases and master for stable releases)'
         required: false
-        default: dev
         type: string
   push:
     branches: [ master, dev ]
@@ -18,6 +17,7 @@ on:
       - 'targets/sources.ntlgen'
       - 'targets/aliases.tlgen'
       - 'cmake/codegen/**'
+      - 'CMakeLists.txt'
       - '.github/workflows/docs.yml'
 
 jobs:
@@ -30,14 +30,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Check out docsdata
-        uses: actions/checkout@v7
-        with:
-          repository: pytgcalls/docsdata
-          ref: ${{ inputs.branch || (github.ref_name == 'master' && 'master' || 'dev') }}
-          ssh-key: ${{ secrets.DOCS_DEPLOY_KEY }}
-          path: docsdata
-
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
@@ -45,6 +37,32 @@ jobs:
 
       - name: Install Python Requirements
         run: python -m pip install setuptools
+
+      - name: Select the docsdata branch
+        id: target
+        env:
+          REQUESTED_BRANCH: ${{ inputs.branch }}
+        run: |
+          version="$(python setup.py --version)"
+          if [ -n "$REQUESTED_BRANCH" ]; then
+            branch="$REQUESTED_BRANCH"
+          elif [ "$GITHUB_REF_NAME" != "master" ]; then
+            branch=dev
+          elif [[ "$version" =~ (a|b|rc|\.dev)[0-9]+$ ]]; then
+            branch=dev
+          else
+            branch=master
+          fi
+          echo "Publishing $version to docsdata/$branch"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Check out docsdata
+        uses: actions/checkout@v7
+        with:
+          repository: pytgcalls/docsdata
+          ref: ${{ steps.target.outputs.branch }}
+          ssh-key: ${{ secrets.DOCS_DEPLOY_KEY }}
+          path: docsdata
 
       - name: Generate schema
         run: python setup.py generate
@@ -87,4 +105,4 @@ jobs:
           repository: docsdata
           commit_message: "Regenerated the NTgCalls reference"
           commit_options: "--no-verify"
-          branch: ${{ inputs.branch || (github.ref_name == 'master' && 'master' || 'dev') }}
+          branch: ${{ steps.target.outputs.branch }}
