@@ -12,13 +12,11 @@ namespace ntgcalls::instances {
     void CallInterface::stop() {
         connection_change_callback_ = nullptr;
         remote_source_callback_ = nullptr;
-        if (stream_manager_) {
+        if (stream_manager_ && owns_stream_manager_) {
             stream_manager_->close();
-            stream_manager_ = nullptr;
         }
         if (connection_) {
             connection_->close();
-            connection_ = nullptr;
         }
     }
 
@@ -82,7 +80,8 @@ namespace ntgcalls::instances {
     }
 
     std::shared_ptr<media::StreamManager> CallInterface::release_stream_manager() {
-        return std::move(stream_manager_);
+        owns_stream_manager_ = false;
+        return stream_manager_;
     }
 
     void CallInterface::set_connection_observer(const std::shared_ptr<wrtc::interfaces::NetworkInterface>& conn, ConnectionInfo::Kind kind) {

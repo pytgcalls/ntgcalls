@@ -392,12 +392,12 @@ namespace ntgcalls {
         return connections_.contains(chat_id);
     }
 
-    instances::CallInterface* NTgCalls::safe_connection(const int64_t chat_id) {
+    std::shared_ptr<instances::CallInterface> NTgCalls::safe_connection(const int64_t chat_id) {
         const std::lock_guard lock(mutex_);
         if (!exists(chat_id)) {
             THROW_CONNECTION_NOT_FOUND(chat_id)
         }
-        return connections_[chat_id].get();
+        return connections_[chat_id];
     }
 
     p2p::Protocol NTgCalls::get_protocol() {
@@ -422,6 +422,17 @@ namespace ntgcalls {
             return nullptr;
         }
         if (auto* derived_call = dynamic_cast<DestCallType*>(call)) {
+            return derived_call;
+        }
+        throw ConnectionError("Invalid call type");
+    }
+
+    template<typename DestCallType, typename BaseCallType>
+    std::shared_ptr<DestCallType> NTgCalls::safe_call(const std::shared_ptr<BaseCallType>& call) {
+        if (!call) {
+            return nullptr;
+        }
+        if (auto derived_call = std::dynamic_pointer_cast<DestCallType>(call)) {
             return derived_call;
         }
         throw ConnectionError("Invalid call type");

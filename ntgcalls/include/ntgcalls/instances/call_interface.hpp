@@ -16,6 +16,7 @@ namespace ntgcalls::instances {
     protected:
         std::shared_ptr<wrtc::interfaces::NetworkInterface> connection_;
         std::shared_ptr<media::StreamManager> stream_manager_;
+        bool owns_stream_manager_ = true;
         wrtc::utils::synchronized_callback<void(ConnectionInfo)> connection_change_callback_;
         wrtc::utils::synchronized_callback<void(RemoteSource)> remote_source_callback_;
         wrtc::utils::SafeThread& update_thread_;
