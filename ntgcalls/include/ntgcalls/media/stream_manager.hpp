@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
 #include <optional>
 #include <ntgcalls/io/base_reader.hpp>
@@ -91,9 +92,11 @@ namespace ntgcalls::media {
 
         wrtc::utils::SafeThread& worker_thread_;
         bool initialized_ = false, video_simulcast_ = true, resume_on_reconnect_ = false, detached_ = false;
+        std::atomic_bool closed_ = false;
         std::map<StreamId, std::unique_ptr<BaseSink>> streams_;
         std::map<StreamId, std::unique_ptr<wrtc::interfaces::media::tracks::MediaTrackInterface>> tracks_;
         std::map<Device, std::unique_ptr<io::BaseReader>> readers_;
+        std::vector<std::pair<Device, std::unique_ptr<io::BaseReader>>> removed_readers_;
         std::map<Device, std::unique_ptr<io::BaseWriter>> writers_;
         std::set<Device> external_writers_;
         std::set<Device> external_readers_;
@@ -173,5 +176,7 @@ namespace ntgcalls::media {
         static Type get_stream_type(Device device);
 
         void remove_reader(Device device);
+
+        void destroy_removed_readers();
     };
 } // ntgcalls::media

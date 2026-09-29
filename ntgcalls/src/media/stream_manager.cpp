@@ -23,6 +23,7 @@ namespace ntgcalls::media {
         std::vector<std::unique_ptr<io::BaseReader>> readers_to_close;
         {
             const std::lock_guard lock(mutex_);
+            closed_ = true;
             {
                 const std::lock_guard sync_lock(sync_mutex_);
                 sync_readers_.clear();
@@ -34,7 +35,11 @@ namespace ntgcalls::media {
             for (auto& reader : readers_ | std::views::values) {
                 readers_to_close.push_back(std::move(reader));
             }
+            for (auto& reader : removed_readers_ | std::views::values) {
+                readers_to_close.push_back(std::move(reader));
+            }
             readers_.clear();
+            removed_readers_.clear();
             writers_.clear();
             for (const auto& stream : streams_ | std::views::values) {
                 if (const auto audio_receiver = dynamic_cast<AudioReceiver*>(stream.get())) {
@@ -58,26 +63,34 @@ namespace ntgcalls::media {
     }
 
     void StreamManager::set_stream_sources(const Mode mode, const MediaDescription& desc) {
-        RTC_LOG(LS_VERBOSE) << "Setting Configuration, Acquiring lock";
-        const std::lock_guard lock(mutex_);
-        RTC_LOG(LS_VERBOSE) << "Setting Configuration, Lock acquired";
-
-        maybe_reconfigure_device<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
-        maybe_reconfigure_device<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
-
         if (!video_simulcast_ && desc.camera && desc.screen && mode == Capture) {
             throw InvalidParams("Cannot mix camera and screen sources");
         }
+        {
+            RTC_LOG(LS_VERBOSE) << "Setting Configuration, Acquiring lock";
+            const std::lock_guard lock(mutex_);
+            RTC_LOG(LS_VERBOSE) << "Setting Configuration, Lock acquired";
+            if (closed_) {
+                RTC_LOG(LS_WARNING) << "Stream sources ignored, the call is closed";
+                return;
+            }
 
-        maybe_reconfigure_device<VideoSink, VideoDescription>(mode, Camera, desc.camera);
-        maybe_reconfigure_device<VideoSink, VideoDescription>(mode, Screen, desc.screen);
+            maybe_reconfigure_device<AudioSink, AudioDescription>(mode, Microphone, desc.microphone);
+            maybe_reconfigure_device<AudioSink, AudioDescription>(mode, Speaker, desc.speaker);
+            maybe_reconfigure_device<VideoSink, VideoDescription>(mode, Camera, desc.camera);
+            maybe_reconfigure_device<VideoSink, VideoDescription>(mode, Screen, desc.screen);
 
-        if (mode == Capture && initialized_) {
-            check_upgrade();
+            if (mode == Capture && initialized_) {
+                check_upgrade();
+            }
         }
+        destroy_removed_readers();
     }
 
     void StreamManager::optimize_sources(wrtc::interfaces::NetworkInterface* pc) {
+        if (closed_) {
+            return;
+        }
         pc->enable_audio_incoming(writers_.contains(Microphone) || external_writers_.contains(Microphone));
         pc->enable_video_incoming(writers_.contains(Camera) || external_writers_.contains(Camera), false);
         pc->enable_video_incoming(writers_.contains(Screen) || external_writers_.contains(Screen), true);
@@ -320,21 +333,30 @@ namespace ntgcalls::media {
         if (was_syncing) {
             sync_cv_.notify_all();
         }
-        std::unique_ptr<io::BaseReader> reader_to_destroy;
         if (readers_.contains(device)) {
-            reader_to_destroy = std::move(readers_[device]);
+            removed_readers_.emplace_back(device, std::move(readers_[device]));
             readers_.erase(device);
-        }
-        if (reader_to_destroy) {
-            mutex_.unlock();
-            reader_to_destroy->on_data(nullptr);
-            reader_to_destroy->on_eof(nullptr);
-            reader_to_destroy.reset();
-            mutex_.lock();
+        } else if (was_syncing) {
+            const std::lock_guard sync_lock(sync_mutex_);
+            cancel_sync_readers_.erase(device);
         }
         external_readers_.erase(device);
+    }
+
+    void StreamManager::destroy_removed_readers() {
+        std::vector<std::pair<Device, std::unique_ptr<io::BaseReader>>> removed;
         {
-            const std::lock_guard sync_lock(sync_mutex_);
+            const std::lock_guard lock(mutex_);
+            removed = std::move(removed_readers_);
+            removed_readers_.clear();
+        }
+        for (auto& reader : removed | std::views::values) {
+            reader->on_data(nullptr);
+            reader->on_eof(nullptr);
+            reader.reset();
+        }
+        const std::lock_guard sync_lock(sync_mutex_);
+        for (const auto& device : removed | std::views::keys) {
             cancel_sync_readers_.erase(device);
         }
     }
@@ -548,6 +570,7 @@ namespace ntgcalls::media {
                     const std::lock_guard lock(strong_thread->mutex_);
                     strong_thread->remove_reader(device);
                 }
+                strong_thread->destroy_removed_readers();
                 (void) strong_thread->on_eof_(get_stream_type(device), device);
             });
         });
