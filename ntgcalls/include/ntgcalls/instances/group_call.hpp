@@ -2,6 +2,7 @@
 // Created by Lauren on 15/03/24.
 //
 #pragma once
+#include <mutex>
 #include <ntgcalls/instances/call_interface.hpp>
 #include <ntgcalls/instances/p2p_call.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
@@ -17,8 +18,12 @@ namespace ntgcalls::instances {
 
         static void update_remote_video_constraints(wrtc::interfaces::GroupConnection* conn);
 
+        mutable std::mutex presentation_mutex_;
+
     protected:
         std::shared_ptr<wrtc::interfaces::GroupConnection> presentation_connection_;
+
+        std::shared_ptr<wrtc::interfaces::GroupConnection> presentation_connection() const;
 
     public:
         explicit GroupCall(wrtc::utils::SafeThread& update_thread): CallInterface(update_thread) {}

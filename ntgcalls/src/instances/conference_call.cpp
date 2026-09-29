@@ -29,7 +29,9 @@ namespace ntgcalls::instances {
 
     std::string ConferenceCall::init_presentation() {
         auto res = GroupCall::init_presentation();
-        presentation_connection_->set_e2e_encryptor(session_.get());
+        if (const auto presentation = presentation_connection()) {
+            presentation->set_e2e_encryptor(session_.get());
+        }
         return res;
     }
 
