@@ -1,4 +1,3 @@
-include(${CMAKE_CURRENT_LIST_DIR}/Base64Utils.cmake)
 
 function(GitClone)
     cmake_parse_arguments(ARG "" "" "URL;COMMIT;DIRECTORY" ${ARGN})
@@ -63,14 +62,53 @@ function(GitClone)
     endif ()
 endfunction()
 
+function(GitSourceFile url ref path output_var)
+    string(MD5 GIT_FILE_HASH "${url}${ref}${path}")
+    set(GIT_FILE_REPO ${CMAKE_BINARY_DIR}/git_file_${GIT_FILE_HASH})
+    file(REMOVE_RECURSE ${GIT_FILE_REPO})
+    file(MAKE_DIRECTORY ${GIT_FILE_REPO})
+    execute_process(
+        COMMAND git init
+        WORKING_DIRECTORY ${GIT_FILE_REPO}
+        RESULT_VARIABLE GIT_RESULT_CODE
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if (GIT_RESULT_CODE EQUAL 0)
+        execute_process(
+            COMMAND git fetch --depth=1 --filter=blob:none ${url} ${ref}
+            WORKING_DIRECTORY ${GIT_FILE_REPO}
+            RESULT_VARIABLE GIT_RESULT_CODE
+            OUTPUT_QUIET
+            ERROR_VARIABLE GIT_ERROR
+        )
+    endif ()
+    if (GIT_RESULT_CODE EQUAL 0)
+        execute_process(
+            COMMAND git show FETCH_HEAD:${path}
+            WORKING_DIRECTORY ${GIT_FILE_REPO}
+            RESULT_VARIABLE GIT_RESULT_CODE
+            OUTPUT_VARIABLE FILE_CONTENT
+            ERROR_VARIABLE GIT_ERROR
+        )
+    endif ()
+    file(REMOVE_RECURSE ${GIT_FILE_REPO})
+    set(${output_var}_RESULT ${GIT_RESULT_CODE} PARENT_SCOPE)
+    set(${output_var}_ERROR "${GIT_ERROR}" PARENT_SCOPE)
+    set(${output_var} "${FILE_CONTENT}" PARENT_SCOPE)
+endfunction()
+
 function(GitFile)
     cmake_parse_arguments(ARG "" "URL;DIRECTORY;OUTPUT_VARIABLE" "" ${ARGN})
     if (NOT ARG_DIRECTORY AND NOT ARG_OUTPUT_VARIABLE)
         message(FATAL_ERROR "GitFile requires either DIRECTORY or OUTPUT_VARIABLE.")
     endif ()
-    if ("${ARG_URL}" MATCHES "googlesource.com")
-        set(BASE64 TRUE)
-        set(ARG_URL ${ARG_URL}?format=text)
+    set(GIT_SOURCE FALSE)
+    if ("${ARG_URL}" MATCHES "^(https://[^/]*googlesource\\.com/.+)/\\+/(refs/[a-z]+/[^/]+|[0-9a-f]+)/(.+)$")
+        set(GIT_SOURCE TRUE)
+        set(GIT_SOURCE_URL ${CMAKE_MATCH_1})
+        set(GIT_SOURCE_REF ${CMAKE_MATCH_2})
+        set(GIT_SOURCE_PATH ${CMAKE_MATCH_3})
     elseif ("${ARG_URL}" MATCHES "github.com/.+/blob/")
         string(REPLACE "github.com" "raw.githubusercontent.com" ARG_URL "${ARG_URL}")
         string(REPLACE "/blob/" "/" ARG_URL "${ARG_URL}")
@@ -81,12 +119,18 @@ function(GitFile)
         if(GIT_ATTEMPT GREATER 0)
             execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 5)
         endif ()
-        execute_process(
-            COMMAND curl -sSL --fail ${ARG_URL}
-            RESULT_VARIABLE GIT_RESULT_CODE
-            OUTPUT_VARIABLE FILE_CONTENT
-            ERROR_VARIABLE GIT_ERROR
-        )
+        if (GIT_SOURCE)
+            GitSourceFile(${GIT_SOURCE_URL} ${GIT_SOURCE_REF} ${GIT_SOURCE_PATH} FILE_CONTENT)
+            set(GIT_RESULT_CODE ${FILE_CONTENT_RESULT})
+            set(GIT_ERROR "${FILE_CONTENT_ERROR}")
+        else ()
+            execute_process(
+                COMMAND curl -sSL --fail ${ARG_URL}
+                RESULT_VARIABLE GIT_RESULT_CODE
+                OUTPUT_VARIABLE FILE_CONTENT
+                ERROR_VARIABLE GIT_ERROR
+            )
+        endif ()
         if(GIT_RESULT_CODE EQUAL 0 AND "${FILE_CONTENT}" STREQUAL "")
             set(GIT_RESULT_CODE 1)
         endif ()
@@ -94,9 +138,6 @@ function(GitFile)
     endwhile ()
     if(NOT GIT_RESULT_CODE EQUAL 0)
         message(FATAL_ERROR "Failed to fetch ${ARG_URL} after ${GIT_ATTEMPT} attempts: ${GIT_ERROR}")
-    endif ()
-    if (BASE64)
-        base64_decode("${FILE_CONTENT}" FILE_CONTENT)
     endif ()
     if (ARG_OUTPUT_VARIABLE)
         set(${ARG_OUTPUT_VARIABLE} "${FILE_CONTENT}" PARENT_SCOPE)
