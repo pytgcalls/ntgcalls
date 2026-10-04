@@ -205,11 +205,19 @@ namespace ntgcalls::media {
 
     void StreamManager::start() {
         const std::lock_guard lock(mutex_);
-        for (const auto& reader : readers_ | std::views::values) {
-            reader->open();
+        for (const auto& [device, reader] : readers_) {
+            try {
+                reader->open();
+            } catch (const std::exception& e) {
+                RTC_LOG(LS_ERROR) << "Failed to open the reader for device " << device << ": " << e.what();
+            }
         }
-        for (const auto& writer : writers_ | std::views::values) {
-            writer->open();
+        for (const auto& [device, writer] : writers_) {
+            try {
+                writer->open();
+            } catch (const std::exception& e) {
+                RTC_LOG(LS_ERROR) << "Failed to open the writer for device " << device << ": " << e.what();
+            }
         }
         detached_ = false;
         if (resume_on_reconnect_) {

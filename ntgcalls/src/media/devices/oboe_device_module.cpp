@@ -130,8 +130,10 @@ namespace ntgcalls::media::devices {
             buffer_.clear();
         }
 
-        if (create_stream() == oboe::Result::OK) {
-            stream_->requestStart();
+        if (const auto r = create_stream(); r != oboe::Result::OK) {
+            RTC_LOG(LS_ERROR) << "OboeDeviceModule failed to recreate the stream: " << oboe::convertToText(r);
+        } else if (const auto start_result = stream_->requestStart(); start_result != oboe::Result::OK) {
+            RTC_LOG(LS_ERROR) << "OboeDeviceModule failed to restart the stream: " << oboe::convertToText(start_result);
         }
     }
 
