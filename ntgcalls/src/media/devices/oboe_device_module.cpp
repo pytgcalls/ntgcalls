@@ -144,8 +144,8 @@ namespace ntgcalls::media::devices {
     void OboeDeviceModule::open() {
         const std::lock_guard lock(stream_mutex_);
         auto r = stream_ ? stream_->requestStart() : oboe::Result::ErrorDisconnected;
-        if (r == oboe::Result::ErrorDisconnected) {
-            RTC_LOG(LS_INFO) << "OboeDeviceModule stream disconnected before starting, recreating it";
+        if (r == oboe::Result::ErrorDisconnected || r == oboe::Result::ErrorInvalidState) {
+            RTC_LOG(LS_INFO) << "OboeDeviceModule stream unusable before starting (" << oboe::convertToText(r) << "), recreating it";
             r = recreate_stream();
         }
         if (r != oboe::Result::OK) {
