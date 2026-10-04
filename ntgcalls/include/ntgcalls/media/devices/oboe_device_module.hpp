@@ -38,6 +38,8 @@ namespace ntgcalls::media::devices {
 
         oboe::Result create_stream();
 
+        oboe::Result recreate_stream();
+
         void restart_stream(const oboe::AudioStream* audio_stream);
 
     protected:

@@ -115,36 +115,41 @@ namespace ntgcalls::media::devices {
         return r;
     }
 
+    oboe::Result OboeDeviceModule::recreate_stream() {
+        if (stream_) {
+            stream_->close();
+            stream_ = nullptr;
+        }
+        {
+            const std::lock_guard buffer_lock(buffer_mutex_);
+            buffer_.clear();
+        }
+        if (const auto r = create_stream(); r != oboe::Result::OK) {
+            return r;
+        }
+        return stream_->requestStart();
+    }
+
     void OboeDeviceModule::restart_stream(const oboe::AudioStream* audio_stream) {
         const std::lock_guard lock(stream_mutex_);
         if (!stream_ || stream_.get() != audio_stream) {
             return;
         }
-
         RTC_LOG(LS_INFO) << "OboeDeviceModule restarting stream";
-        stream_->close();
-        stream_ = nullptr;
-
-        {
-            const std::lock_guard buffer_lock(buffer_mutex_);
-            buffer_.clear();
-        }
-
-        if (const auto r = create_stream(); r != oboe::Result::OK) {
-            RTC_LOG(LS_ERROR) << "OboeDeviceModule failed to recreate the stream: " << oboe::convertToText(r);
-        } else if (const auto start_result = stream_->requestStart(); start_result != oboe::Result::OK) {
-            RTC_LOG(LS_ERROR) << "OboeDeviceModule failed to restart the stream: " << oboe::convertToText(start_result);
+        if (const auto r = recreate_stream(); r != oboe::Result::OK) {
+            RTC_LOG(LS_ERROR) << "OboeDeviceModule failed to restart the stream: " << oboe::convertToText(r);
         }
     }
 
     void OboeDeviceModule::open() {
         const std::lock_guard lock(stream_mutex_);
-        if (stream_) {
-            if (const auto r = stream_->requestStart(); r != oboe::Result::OK) {
-                throw MediaDeviceError("Failed to start Oboe stream: " + std::string(oboe::convertToText(r)));
-            }
-        } else {
-            throw MediaDeviceError("Stream is not initialized");
+        auto r = stream_ ? stream_->requestStart() : oboe::Result::ErrorDisconnected;
+        if (r == oboe::Result::ErrorDisconnected) {
+            RTC_LOG(LS_INFO) << "OboeDeviceModule stream disconnected before starting, recreating it";
+            r = recreate_stream();
+        }
+        if (r != oboe::Result::OK) {
+            throw MediaDeviceError("Failed to start Oboe stream: " + std::string(oboe::convertToText(r)));
         }
     }
 
