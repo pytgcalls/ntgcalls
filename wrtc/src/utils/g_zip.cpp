@@ -68,11 +68,13 @@ namespace bytes {
             if (inflateEnd(&stream) == Z_OK) {
                 if (status == Z_STREAM_END) {
                     output.resize(stream.total_out);
-                } else if (size_limit > 0 && output.size() > size_limit) {
-                    return std::nullopt;
                 }
             }
         }
+        if (size_limit > 0 && output.size() > size_limit) {
+            return std::nullopt;
+        }
+
         return output;
     }
 } // bytes
