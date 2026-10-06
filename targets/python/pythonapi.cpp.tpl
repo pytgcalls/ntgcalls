@@ -4,6 +4,7 @@
 
 #include <py_async.hpp>
 #include <py_bytes.hpp>
+#include <py_callback.hpp>
 #include <py_holder.hpp>
 #include <py_log.hpp>
 #include <py_str.hpp>
@@ -58,7 +59,11 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
 @end
         );
 @else
+@if m.iscb
+        w.def("@{m.name|snake}", finalize_safe(&@{c.cpp}::@{m.name|snake}),
+@else
         w.def("@{m.name|snake}", &@{c.cpp}::@{m.name|snake},
+@end
 @for p in m.params
             py::arg("@{p.name|snake}"),
 @end
