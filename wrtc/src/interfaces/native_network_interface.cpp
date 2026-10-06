@@ -197,7 +197,7 @@ namespace wrtc::interfaces {
             auto video_codecs = models::OutgoingVideoFormat::get_video_codecs(
                 available_video_formats_,
                 media_content.payload_types,
-                is_group_connection()
+                is_group_connection() && media_content.payload_types.empty()
             );
             auto video_channel = std::make_unique<media::channels::IncomingVideoChannel>(
                 call_.get(),

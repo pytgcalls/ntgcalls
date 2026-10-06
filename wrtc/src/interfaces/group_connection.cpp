@@ -6,6 +6,8 @@
 #include <modules/rtp_rtcp/source/rtp_header_extensions.h>
 #include <p2p/base/dtls_transport.h>
 #include <p2p/client/basic_port_allocator.h>
+#include <absl/strings/match.h>
+#include <media/base/media_constants.h>
 #include <rtc_base/time_utils.h>
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
@@ -378,7 +380,28 @@ namespace wrtc::interfaces {
     }
 
     void GroupConnection::create_channels(const ResponsePayload::Media& media) {
-        media_config_ = media;
+        const std::weak_ptr weak(shared_from_this());
+        worker_thread().BlockingCall([weak, &media] {
+            const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
+            if (!strong) {
+                return;
+            }
+            strong->media_config_ = media;
+            for (const auto& payload_type : media.video_payload_types) {
+                if (absl::EqualsIgnoreCase(payload_type.name, webrtc::kH264CodecName)) {
+                    strong->payload_type_mapping_[payload_type.id] = media::FrameTransformer::PayloadType::H264;
+                } else if (absl::EqualsIgnoreCase(payload_type.name, webrtc::kVp8CodecName)) {
+                    strong->payload_type_mapping_[payload_type.id] = media::FrameTransformer::PayloadType::VP8;
+                } else {
+                    strong->payload_type_mapping_.erase(payload_type.id);
+                }
+            }
+            for (const auto& payload_type : media.audio_payload_types) {
+                if (absl::EqualsIgnoreCase(payload_type.name, webrtc::kOpusCodecName)) {
+                    strong->payload_type_mapping_[payload_type.id] = media::FrameTransformer::PayloadType::Opus;
+                }
+            }
+        });
         if (audio_channel_ && audio_channel_->ssrc() != outgoing_audio_ssrc_) {
             audio_channel_ = nullptr;
         }
@@ -461,6 +484,8 @@ namespace wrtc::interfaces {
             media_content.type = models::MediaContent::Type::Video;
             media_content.user_id = user_id;
             media_content.ssrc_groups = ssrc_groups;
+            media_content.payload_types = strong->media_config_.video_payload_types;
+            media_content.rtp_extensions = strong->media_config_.video_rtp_extensions;
             if (strong->mtproto_stream_) {
                 strong->mtproto_stream_->add_incoming_video(
                     endpoint,
