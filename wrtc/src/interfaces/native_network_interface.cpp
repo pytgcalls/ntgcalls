@@ -174,7 +174,16 @@ namespace wrtc::interfaces {
                 }
             }
             RTC_LOG(LS_INFO) << "Adding incoming audio channel with ssrc " << media_content.main_ssrc();
-            if (const auto sink = remote_audio_sink_.lock()) sink->add_source();
+            decltype(incoming_audio_channels_)::node_type previous_audio_channel;
+            {
+                const std::lock_guard lock(mutex_);
+                previous_audio_channel = incoming_audio_channels_.extract(endpoint);
+            }
+            if (previous_audio_channel) {
+                previous_audio_channel = {};
+            } else if (const auto sink = remote_audio_sink_.lock()) {
+                sink->add_source();
+            }
             auto audio_channel = std::make_unique<media::channels::IncomingAudioChannel>(
                 call_.get(),
                 channel_manager_.get(),
@@ -187,10 +196,8 @@ namespace wrtc::interfaces {
                 encryptor_,
                 nullptr
             );
-            decltype(incoming_audio_channels_)::node_type previous_audio_channel;
             {
                 const std::lock_guard lock(mutex_);
-                previous_audio_channel = incoming_audio_channels_.extract(endpoint);
                 incoming_audio_channels_[endpoint] = std::move(audio_channel);
             }
         } else if (is_addable && media_content.type == models::MediaContent::Type::Video) {
@@ -199,6 +206,12 @@ namespace wrtc::interfaces {
                 media_content.payload_types,
                 is_group_connection() && media_content.payload_types.empty()
             );
+            decltype(incoming_video_channels_)::node_type previous_video_channel;
+            {
+                const std::lock_guard lock(mutex_);
+                previous_video_channel = incoming_video_channels_.extract(endpoint);
+            }
+            previous_video_channel = {};
             auto video_channel = std::make_unique<media::channels::IncomingVideoChannel>(
                 call_.get(),
                 channel_manager_.get(),
@@ -213,12 +226,8 @@ namespace wrtc::interfaces {
                 payload_type_mapping_,
                 encryptor_
             );
-            decltype(incoming_video_channels_)::node_type previous_video_channel;
-            {
-                const std::lock_guard lock(mutex_);
-                previous_video_channel = incoming_video_channels_.extract(endpoint);
-                incoming_video_channels_[endpoint] = std::move(video_channel);
-            }
+            const std::lock_guard lock(mutex_);
+            incoming_video_channels_[endpoint] = std::move(video_channel);
         }
         const std::lock_guard lock(mutex_);
         if (pending_content_.contains(endpoint)) {
