@@ -77,7 +77,7 @@ namespace wrtc::interfaces::media::channels {
         incoming_description->AddStream(stream_params);
 
         worker_thread.BlockingCall([&] {
-            channel_->rtp_transport()->SetActivePayloadTypeDemuxing(true);
+            channel_->rtp_transport()->SetActivePayloadTypeDemuxing(false);
             channel_->SetLocalContent(outgoing_description.get(), webrtc::SdpType::kOffer);
             channel_->SetRemoteContent(incoming_description.get(), webrtc::SdpType::kAnswer);
         });
