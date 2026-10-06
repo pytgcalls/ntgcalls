@@ -13,6 +13,7 @@ namespace wrtc::interfaces::media::channels {
         ChannelManager* channel_manager,
         webrtc::RtpTransport* rtp_transport,
         std::vector<models::SsrcGroup> ssrc_groups,
+        const int64_t user_id,
         webrtc::UniqueRandomIdGenerator* random_id_generator,
         const std::vector<webrtc::Codec>& codecs,
         utils::SafeThread& worker_thread,
@@ -110,7 +111,7 @@ namespace wrtc::interfaces::media::channels {
                     webrtc::make_ref_counted<FrameTransformer>(
                         false,
                         encryptor,
-                        ssrc_,
+                        user_id,
                         payload_type_mapping,
                         nullptr,
                         nullptr

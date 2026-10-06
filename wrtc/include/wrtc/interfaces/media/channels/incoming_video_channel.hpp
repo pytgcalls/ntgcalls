@@ -26,6 +26,7 @@ namespace wrtc::interfaces::media::channels {
             ChannelManager* channel_manager,
             webrtc::RtpTransport* rtp_transport,
             std::vector<models::SsrcGroup> ssrc_groups,
+            int64_t user_id,
             webrtc::UniqueRandomIdGenerator* random_id_generator,
             const std::vector<webrtc::Codec>& codecs,
             utils::SafeThread& worker_thread,

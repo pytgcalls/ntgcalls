@@ -204,6 +204,7 @@ namespace wrtc::interfaces {
                 channel_manager_.get(),
                 dtls_srtp_transport_.get(),
                 media_content.ssrc_groups,
+                media_content.user_id,
                 factory_->ssrc_generator(),
                 video_codecs,
                 worker_thread(),
