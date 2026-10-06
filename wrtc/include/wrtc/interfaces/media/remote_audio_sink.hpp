@@ -25,10 +25,6 @@ namespace wrtc::interfaces::media {
 
         void send_data(std::unique_ptr<models::AudioFrame> frame);
 
-        void add_source();
-
-        void remove_source();
-
         void update_audio_source_count(int count);
     };
 

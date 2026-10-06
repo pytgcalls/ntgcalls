@@ -116,6 +116,8 @@ namespace wrtc::interfaces {
 
         void remove_incoming_audio(const std::string& endpoint);
 
+        void update_audio_source_count();
+
     public:
         void close() override;
 

@@ -303,6 +303,7 @@ namespace wrtc::interfaces {
         };
         remove_channel(incoming_audio_channels_);
         remove_channel(incoming_video_channels_);
+        update_audio_source_count();
         for (const auto& content : coordinated_state.incoming_contents) {
             add_incoming_smart_source(std::to_string(content.ssrc), content);
         }

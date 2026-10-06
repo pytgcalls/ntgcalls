@@ -15,19 +15,18 @@ namespace wrtc::interfaces::media {
     }
 
     void RemoteAudioSink::send_data(std::unique_ptr<models::AudioFrame> frame) {
+        for (const auto& pending_frame : audio_frames_) {
+            if (pending_frame->ssrc == frame->ssrc) {
+                frames_callback_(audio_frames_);
+                audio_frames_.clear();
+                break;
+            }
+        }
         audio_frames_.push_back(std::move(frame));
         if (audio_frames_.size() >= num_sources_) {
             frames_callback_(audio_frames_);
             audio_frames_.clear();
         }
-    }
-
-    void RemoteAudioSink::add_source() {
-        ++num_sources_;
-    }
-
-    void RemoteAudioSink::remove_source() {
-        --num_sources_;
     }
 
     void RemoteAudioSink::update_audio_source_count(const int count) {

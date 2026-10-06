@@ -7,18 +7,14 @@
 #include <rtc_base/logging.h>
 
 namespace ntgcalls::media {
-    AudioReceiver::AudioReceiver() {
-        resampler_ = std::make_unique<webrtc::Resampler>();
-    }
-
     AudioReceiver::~AudioReceiver() {
         const std::lock_guard lock(mutex_);
         sink_ = nullptr;
-        resampler_ = nullptr;
+        resamplers_.clear();
         frames_callback_ = nullptr;
     }
 
-    bytes::unique_binary AudioReceiver::resample_frame(bytes::unique_binary data, const size_t size, const uint8_t channels, const uint16_t sample_rate) {
+    bytes::unique_binary AudioReceiver::resample_frame(const uint32_t ssrc, bytes::unique_binary data, const size_t size, const uint8_t channels, const uint16_t sample_rate) {
         bytes::unique_binary converted_data;
         size_t pre_sample_size;
         if (channels != description_->channel_count) {
@@ -42,9 +38,13 @@ namespace ntgcalls::media {
         if (description_->sample_rate == sample_rate) {
             std::memcpy(new_frame.get(), converted_data.get(), pre_sample_size);
         } else {
-            resampler_->ResetIfNeeded(sample_rate, static_cast<int>(description_->sample_rate), description_->channel_count);
+            auto& resampler = resamplers_[ssrc];
+            if (!resampler) {
+                resampler = std::make_unique<webrtc::Resampler>();
+            }
+            resampler->ResetIfNeeded(sample_rate, static_cast<int>(description_->sample_rate), description_->channel_count);
             size_t new_frame_size = 0;
-            const auto resampled = resampler_->Push(
+            const auto resampled = resampler->Push(
                 reinterpret_cast<const int16_t*>(converted_data.get()),
                 pre_sample_size / sizeof(int16_t),
                 reinterpret_cast<int16_t*>(new_frame.get()),
@@ -104,6 +104,7 @@ namespace ntgcalls::media {
                         frame->ssrc,
                         std::pair{
                             resample_frame(
+                                frame->ssrc,
                                 std::move(data),
                                 frame->size,
                                 frame->channels,

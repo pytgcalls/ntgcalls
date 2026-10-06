@@ -179,11 +179,7 @@ namespace wrtc::interfaces {
                 const std::lock_guard lock(mutex_);
                 previous_audio_channel = incoming_audio_channels_.extract(endpoint);
             }
-            if (previous_audio_channel) {
-                previous_audio_channel = {};
-            } else if (const auto sink = remote_audio_sink_.lock()) {
-                sink->add_source();
-            }
+            previous_audio_channel = {};
             auto audio_channel = std::make_unique<media::channels::IncomingAudioChannel>(
                 call_.get(),
                 channel_manager_.get(),
@@ -200,6 +196,7 @@ namespace wrtc::interfaces {
                 const std::lock_guard lock(mutex_);
                 incoming_audio_channels_[endpoint] = std::move(audio_channel);
             }
+            update_audio_source_count();
         } else if (is_addable && media_content.type == models::MediaContent::Type::Video) {
             auto video_codecs = models::OutgoingVideoFormat::get_video_codecs(
                 available_video_formats_,
@@ -257,7 +254,18 @@ namespace wrtc::interfaces {
             pending_content_.erase(endpoint);
         }
         removed_channel = {};
-        if (const auto sink = remote_audio_sink_.lock()) sink->remove_source();
+        update_audio_source_count();
+    }
+
+    void NativeNetworkInterface::update_audio_source_count() {
+        size_t count;
+        {
+            const std::lock_guard lock(mutex_);
+            count = incoming_audio_channels_.size();
+        }
+        if (const auto sink = remote_audio_sink_.lock()) {
+            sink->update_audio_source_count(static_cast<int>(count));
+        }
     }
 
     void NativeNetworkInterface::dtls_ready_to_send(const bool is_ready_to_send) {
@@ -442,6 +450,10 @@ namespace wrtc::interfaces {
                     removed_channels = std::move(strong->incoming_audio_channels_);
                     strong->incoming_audio_channels_.clear();
                 }
+                if (!removed_channels.empty()) {
+                    removed_channels.clear();
+                    strong->update_audio_source_count();
+                }
             }
         });
     }
@@ -522,6 +534,7 @@ namespace wrtc::interfaces {
             }
             removed_audio_channels.clear();
             removed_video_channels.clear();
+            strong->update_audio_source_count();
             strong->remote_audio_sink_.reset();
             strong->remote_video_sink_.reset();
             strong->remote_screen_cast_sink_.reset();
@@ -580,6 +593,7 @@ namespace wrtc::interfaces {
 
     void NativeNetworkInterface::add_incoming_audio_track(const std::weak_ptr<media::RemoteAudioSink>& sink) {
         remote_audio_sink_ = sink;
+        update_audio_source_count();
     }
 
     void NativeNetworkInterface::add_incoming_video_track(const std::weak_ptr<media::RemoteVideoSink>& sink, const bool is_screen_cast) {

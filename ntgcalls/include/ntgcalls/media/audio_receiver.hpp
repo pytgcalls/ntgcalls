@@ -16,17 +16,15 @@ namespace ntgcalls::media {
     class AudioReceiver final: public AudioSink, public BaseReceiver {
         wrtc::utils::synchronized_callback<void(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>&)> frames_callback_;
         std::shared_ptr<wrtc::interfaces::media::RemoteAudioSink> sink_;
-        std::unique_ptr<webrtc::Resampler> resampler_;
+        std::map<uint32_t, std::unique_ptr<webrtc::Resampler>> resamplers_;
 
-        bytes::unique_binary resample_frame(bytes::unique_binary data, size_t size, uint8_t channels, uint16_t sample_rate);
+        bytes::unique_binary resample_frame(uint32_t ssrc, bytes::unique_binary data, size_t size, uint8_t channels, uint16_t sample_rate);
 
         static bytes::unique_binary stereo_to_mono(const bytes::unique_binary& data, size_t size, size_t* new_size);
 
         static bytes::unique_binary mono_to_stereo(const bytes::unique_binary& data, size_t size, size_t* new_size);
 
     public:
-        AudioReceiver();
-
         ~AudioReceiver() override;
 
         std::weak_ptr<wrtc::interfaces::media::RemoteAudioSink> remote_sink();
