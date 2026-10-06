@@ -55,6 +55,8 @@ namespace wrtc::interfaces {
         std::unique_ptr<webrtc::SdpPayloadTypeSuggester> payload_type_suggester_;
         webrtc::LocalAudioSinkAdapter audio_sink_;
         media::LocalVideoAdapter video_sink_;
+        std::vector<webrtc::scoped_refptr<webrtc::AudioTrackInterface>> outgoing_audio_tracks_;
+        std::vector<webrtc::scoped_refptr<webrtc::VideoTrackInterface>> outgoing_video_tracks_;
         std::weak_ptr<media::RemoteAudioSink> remote_audio_sink_;
         std::weak_ptr<media::RemoteVideoSink> remote_video_sink_;
         std::weak_ptr<media::RemoteVideoSink> remote_screen_cast_sink_;

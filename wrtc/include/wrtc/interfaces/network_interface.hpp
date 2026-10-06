@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <atomic>
 #include <wrtc/enums.hpp>
 #include <wrtc/interfaces/media/remote_audio_sink.hpp>
 #include <wrtc/interfaces/media/remote_video_sink.hpp>
@@ -25,7 +26,7 @@ namespace wrtc::interfaces {
         ConnectionState current_state_ = ConnectionState::Connecting;
         bool data_channel_open_ = false;
         bool already_connected_ = false;
-        bool closed_ = false;
+        std::atomic_bool closed_ = false;
         bool audio_incoming_ = false, camera_incoming_ = false, screen_incoming_ = false;
 
         static webrtc::IceCandidateInterface* parse_ice_candidate(const models::IceCandidate& raw_candidate);

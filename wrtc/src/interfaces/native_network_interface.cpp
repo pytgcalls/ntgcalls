@@ -497,7 +497,7 @@ namespace wrtc::interfaces {
     }
 
     void NativeNetworkInterface::close() {
-        const auto was_closed = closed_;
+        const bool was_closed = closed_;
         const std::weak_ptr weak(shared_from_this());
         worker_thread().BlockingCall([weak] {
             const auto strong = weak.lock();
@@ -527,6 +527,20 @@ namespace wrtc::interfaces {
             strong->remote_screen_cast_sink_.reset();
             strong->call_ = nullptr;
             strong->channel_manager_ = nullptr;
+        });
+        signaling_thread().BlockingCall([weak] {
+            const auto strong = weak.lock();
+            if (!strong) {
+                return;
+            }
+            for (const auto& audio_track : strong->outgoing_audio_tracks_) {
+                audio_track->RemoveSink(&strong->audio_sink_);
+            }
+            strong->outgoing_audio_tracks_.clear();
+            for (const auto& video_track : strong->outgoing_video_tracks_) {
+                video_track->RemoveSink(&strong->video_sink_);
+            }
+            strong->outgoing_video_tracks_.clear();
         });
         if (!was_closed) {
             RTC_LOG(LS_VERBOSE) << "Removed call";
@@ -579,7 +593,14 @@ namespace wrtc::interfaces {
     std::unique_ptr<media::tracks::MediaTrackInterface> NativeNetworkInterface::add_outgoing_track(const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
         const std::weak_ptr weak(shared_from_this());
         if (const auto audio_track = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
-            audio_track->AddSink(&audio_sink_);
+            signaling_thread().BlockingCall([weak, audio_track] {
+                const auto strong = weak.lock();
+                if (!strong || strong->closed_) {
+                    return;
+                }
+                strong->outgoing_audio_tracks_.emplace_back(audio_track);
+                audio_track->AddSink(&strong->audio_sink_);
+            });
             return std::make_unique<media::tracks::MediaTrackInterface>([weak](const bool enable) {
                 const auto strong = weak.lock();
                 if (!strong) {
@@ -591,7 +612,14 @@ namespace wrtc::interfaces {
             });
         }
         if (const auto video_track = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
-            video_track->AddOrUpdateSink(&video_sink_, webrtc::VideoSinkWants());
+            signaling_thread().BlockingCall([weak, video_track] {
+                const auto strong = weak.lock();
+                if (!strong || strong->closed_) {
+                    return;
+                }
+                strong->outgoing_video_tracks_.emplace_back(video_track);
+                video_track->AddOrUpdateSink(&strong->video_sink_, webrtc::VideoSinkWants());
+            });
             return std::make_unique<media::tracks::MediaTrackInterface>([weak](const bool enable) {
                 const auto strong = weak.lock();
                 if (!strong) {
