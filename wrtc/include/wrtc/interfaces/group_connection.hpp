@@ -8,6 +8,7 @@
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/mtproto/mtproto_stream.hpp>
 #include <wrtc/interfaces/response_payload.hpp>
+#include <wrtc/models/participants_request.hpp>
 #include <wrtc/models/ssrc_mapping.hpp>
 
 namespace wrtc::interfaces {
@@ -24,7 +25,8 @@ namespace wrtc::interfaces {
         std::shared_ptr<mtproto::MTProtoStream> mtproto_stream_;
         std::map<uint32_t, int64_t> audio_ssrc_to_user_id_;
         std::unordered_set<uint32_t> pending_audio_ssrcs_;
-        utils::synchronized_callback<void()> request_participants_callback_;
+        int64_t last_participants_request_ = 0;
+        utils::synchronized_callback<void(models::ParticipantsRequest)> request_participants_callback_;
 
     protected:
         bool supports_renomination() const override;
@@ -96,7 +98,7 @@ namespace wrtc::interfaces {
 
         bool remove_incoming_video(const std::string& endpoint);
 
-        void on_request_participants(const std::function<void()>& callback);
+        void on_request_participants(const std::function<void(models::ParticipantsRequest)>& callback);
 
         void set_e2e_encryptor(media::E2EEncryptor* encryptor);
 

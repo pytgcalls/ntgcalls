@@ -12,7 +12,7 @@ namespace ntgcalls::instances {
 
     class ConferenceCall final: public GroupCall, public E2EInterface {
         std::shared_ptr<e2e::Session> session_;
-        wrtc::utils::synchronized_callback<void()> request_participants_callback_;
+        wrtc::utils::synchronized_callback<void(wrtc::models::ParticipantsRequest)> request_participants_callback_;
 
     public:
         explicit ConferenceCall(wrtc::utils::SafeThread& update_thread): GroupCall(update_thread) {}
@@ -40,7 +40,7 @@ namespace ntgcalls::instances {
 
         void on_subchain_request(const std::function<void(e2e::SubchainRequest)>& callback) const;
 
-        void on_request_participants(const std::function<void()>& callback);
+        void on_request_participants(const std::function<void(wrtc::models::ParticipantsRequest)>& callback);
 
         void on_update_emojis(const std::function<void(std::string)>& callback) override;
 

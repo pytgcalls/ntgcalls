@@ -13,12 +13,12 @@ namespace ntgcalls::instances {
             session_->set_last_block(*last_block);
         }
         const std::weak_ptr weak(shared_from_this());
-        safe<wrtc::interfaces::GroupConnection>(connection_)->on_request_participants([weak] {
+        safe<wrtc::interfaces::GroupConnection>(connection_)->on_request_participants([weak](wrtc::models::ParticipantsRequest request) {
             const auto strong = std::static_pointer_cast<ConferenceCall>(weak.lock());
             if (!strong) {
                 return;
             }
-            (void) strong->request_participants_callback_();
+            (void) strong->request_participants_callback_(std::move(request));
         });
         return {
             std::move(payload),
@@ -76,7 +76,7 @@ namespace ntgcalls::instances {
         session_->on_subchain_request(callback);
     }
 
-    void ConferenceCall::on_request_participants(const std::function<void()>& callback) {
+    void ConferenceCall::on_request_participants(const std::function<void(wrtc::models::ParticipantsRequest)>& callback) {
         request_participants_callback_ = callback;
     }
 

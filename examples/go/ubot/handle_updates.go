@@ -256,7 +256,7 @@ func (ctx *Context) handleUpdates() {
 		_ = ctx.binding.FinishSubchainRequest(chatId, request.Subchain)
 	})
 
-	ctx.binding.OnRequestParticipants(func(chatId int64) {
+	ctx.binding.OnRequestParticipants(func(chatId int64, _ ntgcalls.ParticipantsRequest) {
 		_, _ = ctx.GetParticipants(chatId)
 	})
 

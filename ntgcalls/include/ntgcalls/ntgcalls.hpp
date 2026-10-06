@@ -16,6 +16,7 @@
 #include <ntgcalls/utils/log_sink_impl.hpp>
 #include <ntgcalls/utils/shutdown_hook.hpp>
 #include <wrtc/models/media_content.hpp>
+#include <wrtc/models/participants_request.hpp>
 #include <wrtc/models/segment_part_request.hpp>
 #include <wrtc/models/ssrc_mapping.hpp>
 
@@ -46,7 +47,7 @@ namespace ntgcalls {
 
     class NTgCalls {
         std::unordered_map<int64_t, std::shared_ptr<instances::CallInterface>> connections_;
-        wrtc::utils::synchronized_callback<void(int64_t)> request_participants_callback_;
+        wrtc::utils::synchronized_callback<void(int64_t, wrtc::models::ParticipantsRequest)> request_participants_callback_;
         wrtc::utils::synchronized_callback<void(int64_t, bytes::binary)> outbound_block_callback_;
         wrtc::utils::synchronized_callback<void(int64_t, e2e::SubchainRequest)> subchain_request_callback_;
         wrtc::utils::synchronized_callback<void(int64_t, media::StreamManager::Type, media::StreamManager::Device)> on_eof_callback_;
@@ -158,7 +159,7 @@ namespace ntgcalls {
 
         void on_request_broadcast_timestamp(const std::function<void(int64_t)>& callback);
 
-        void on_request_participants(const std::function<void(int64_t)>& callback);
+        void on_request_participants(const std::function<void(int64_t, wrtc::models::ParticipantsRequest)>& callback);
 
         void on_outbound_block(const std::function<void(int64_t, const bytes::binary&)>& callback);
 

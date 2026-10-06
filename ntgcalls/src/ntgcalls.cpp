@@ -81,9 +81,9 @@ namespace ntgcalls {
                 END_WORKER_NO_LOG
             });
             if (connections_[chat_id]->type() & instances::CallInterface::Type::Conference) {
-                safe_call<instances::ConferenceCall>(connections_[chat_id].get())->on_request_participants([this, chat_id] {
-                    WORKER("onRequestParticipants", update_thread_, this, chat_id)
-                    (void) request_participants_callback_(chat_id);
+                safe_call<instances::ConferenceCall>(connections_[chat_id].get())->on_request_participants([this, chat_id](wrtc::models::ParticipantsRequest request) {
+                    WORKER("onRequestParticipants", update_thread_, this, chat_id, request)
+                    (void) request_participants_callback_(chat_id, request);
                     END_WORKER
                 });
                 safe_call<instances::ConferenceCall>(connections_[chat_id].get())->on_outbound_block([this, chat_id](const bytes::binary& block) {
@@ -289,7 +289,7 @@ namespace ntgcalls {
         broadcast_timestamp_callback_ = callback;
     }
 
-    void NTgCalls::on_request_participants(const std::function<void(int64_t)>& callback) {
+    void NTgCalls::on_request_participants(const std::function<void(int64_t, wrtc::models::ParticipantsRequest)>& callback) {
         const std::lock_guard lock(mutex_);
         request_participants_callback_ = callback;
     }

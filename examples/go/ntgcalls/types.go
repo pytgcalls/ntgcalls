@@ -26,7 +26,7 @@ type BroadcastTimestampCallback func(chatId int64)
 type BroadcastPartCallback func(chatId int64, segmentPartRequest SegmentPartRequest)
 
 type EmojisCallback func(chatId int64, emojis string)
-type RequestParticipantsCallback func(chatId int64)
+type RequestParticipantsCallback func(chatId int64, request ParticipantsRequest)
 type OutboundBlockCallback func(chatId int64, block []byte)
 type SubchainRequestCallback func(chatId int64, subchainRequest SubchainRequest)
 

@@ -375,8 +375,14 @@ namespace wrtc::interfaces {
         }
 
         if (pending_audio_ssrcs_.insert(packet.Ssrc()).second) {
-            (void) request_participants_callback_();
+            RTC_LOG(LS_INFO) << "Unknown audio ssrc " << packet.Ssrc() << ", requesting participants";
+        } else if (webrtc::TimeMillis() - last_participants_request_ < 5000) {
+            return;
         }
+        last_participants_request_ = webrtc::TimeMillis();
+        models::ParticipantsRequest request;
+        request.ssrcs.assign(pending_audio_ssrcs_.begin(), pending_audio_ssrcs_.end());
+        (void) request_participants_callback_(std::move(request));
     }
 
     void GroupConnection::create_channels(const ResponsePayload::Media& media) {
@@ -522,7 +528,7 @@ namespace wrtc::interfaces {
         });
     }
 
-    void GroupConnection::on_request_participants(const std::function<void()>& callback) {
+    void GroupConnection::on_request_participants(const std::function<void(models::ParticipantsRequest)>& callback) {
         request_participants_callback_ = callback;
     }
 
