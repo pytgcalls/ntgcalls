@@ -151,8 +151,6 @@ namespace ntgcalls::instances {
             type() == Type::Outgoing,
             custom_parameters_json
         );
-        connection_->open();
-        stream_manager_->optimize_sources(connection_.get());
         signaling_ = signaling::Signaling::create(
             protocol_version_,
             connection_->network_thread(),
@@ -218,6 +216,10 @@ namespace ntgcalls::instances {
                 strong->process_signaling_data(data);
             });
         });
+        // open() starts ICE gathering on the network thread. It must run after the callbacks above
+        // are registered, otherwise early host candidates reach an empty callback and are dropped.
+        connection_->open();
+        stream_manager_->optimize_sources(connection_.get());
         stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Microphone, connection_.get());
         stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Camera, connection_.get());
         stream_manager_->add_track(media::StreamManager::Mode::Capture, media::StreamManager::Device::Screen, connection_.get());
