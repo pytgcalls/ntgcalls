@@ -19,9 +19,9 @@ namespace wrtc::utils {
 
     void SyncHelper::wait_next_frame() {
         const auto now = std::chrono::steady_clock::now();
-         if (next_frame_time_ < now) {
-             next_frame_time_ = now;
-         }
+        if (next_frame_time_ < now) {
+            next_frame_time_ = now;
+        }
         next_frame_time_ += frame_time_;
         std::this_thread::sleep_until(next_frame_time_);
     }
