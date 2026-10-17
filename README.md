@@ -156,6 +156,9 @@ Go consumes the C bindings through an example project in `./examples/go/`:
   Their assistance has been instrumental in enhancing the functionality of our library.
 
 * <b><a href="https://github.com/MarshalX">@MarshalX</a>:</b> for their generous assistance in answering questions and providing insights regarding WebRTC.
+  The first version of the wrtc module (August 2023) was based on <a href="https://github.com/MarshalX/python-webrtc">python-webrtc</a>
+  (BSD-3-Clause, © 2022 Il'ya (Marshal)), itself based on <a href="https://github.com/node-webrtc/node-webrtc">node-webrtc</a>
+  (BSD, © 2019 The node-webrtc project authors). wrtc has since been completely rewritten.
 
 * <b><a href="https://github.com/LyzCoote">@LyzCoote</a>:</b> for providing an ARM64 Server and allowing us to build an image with clang-18 preinstalled on manylinux2014 arm64.
 
