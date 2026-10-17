@@ -28,7 +28,7 @@ namespace ntgcalls::io {
         if (running_) return;
         const auto buffer_count = buffer_threads_.capacity();
         running_ = true;
-        synchronize_time();
+        synchronized_ = false;
         const auto frame_time = sink_->frame_time();
         for (size_t i = 0; i < buffer_count; ++i) {
             buffer_threads_.push_back(
@@ -63,6 +63,10 @@ namespace ntgcalls::io {
                                 cv_.wait(lock, [this, i] {
                                     return !running_ || (active_buffer_ == i && status_);
                                 });
+                                if (!synchronized_) {
+                                    synchronized_ = true;
+                                    synchronize_time();
+                                }
                             }
                             if (!running_) break;
                             for (auto& chunk : frames) {

@@ -15,6 +15,7 @@ namespace ntgcalls::io {
         std::vector<webrtc::PlatformThread> buffer_threads_;
         size_t active_buffer_ = 0;
         size_t active_buffer_count_ = 0;
+        bool synchronized_ = false;
         std::condition_variable cv_;
         std::mutex mtx_;
 
