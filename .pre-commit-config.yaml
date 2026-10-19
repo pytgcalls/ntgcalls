@@ -1,4 +1,4 @@
-exclude: ^(deps/|examples/go/)
+exclude: ^(deps/|examples/go/|THIRD_PARTY_NOTICES\.md$)
 ci:
     skip: [clang-tidy]
 repos:
