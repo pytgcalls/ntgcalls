@@ -85,6 +85,36 @@ abstract class VersionInfoProvider implements ValueSource<Details, Params> {
     }
 }
 
+abstract class GenerateNotices extends DefaultTask {
+    @Internal
+    abstract DirectoryProperty getRootDir()
+
+    @InputFiles
+    abstract ConfigurableFileCollection getSources()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir()
+
+    @Inject
+    abstract FileSystemOperations getFileSystem()
+
+    @Inject
+    abstract ExecOperations getExecOperations()
+
+    @TaskAction
+    void generate() {
+        def metaInf = outputDir.dir("META-INF/ntgcalls").get().asFile
+        fileSystem.delete { it.delete(outputDir) }
+        fileSystem.copy {
+            from(rootDir.file("LICENSE"))
+            into(metaInf)
+        }
+        execOperations.exec { execSpec ->
+            execSpec.commandLine "cmake", "-DNOTICES_OUTPUT=${metaInf}/THIRD_PARTY_NOTICES.md", "-P", rootDir.file("cmake/ThirdPartyNotices.cmake").get().asFile.absolutePath
+        }
+    }
+}
+
 def baseDir = "$projectDir/../../.."
 def depsDir = "$baseDir/deps"
 def ndkDir = "$depsDir/ndk/src"
@@ -100,6 +130,22 @@ new File("$baseDir/version.properties").withInputStream {
 def versionInfoProvider = providers.of(VersionInfoProvider) {
     parameters.module = layout.projectDirectory
 }.get()
+
+def generateNotices = tasks.register("generateNotices", GenerateNotices) {
+    rootDir = layout.projectDirectory.dir("../../..")
+    sources.from(
+            "$baseDir/LICENSE",
+            "$baseDir/version.properties",
+            "$baseDir/cmake/ThirdPartyNotices.cmake",
+            "$depsDir/libwebrtc/src/NOTICE"
+    )
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.sources.resources?.addGeneratedSourceDirectory(generateNotices) { it.outputDir }
+    }
+}
 
 android {
     namespace = "io.github.pytgcalls"

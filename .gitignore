@@ -26,6 +26,7 @@ deps/ndk/
 deps/libx11/
 deps/mesa/
 deps/glib/
+deps/notices/
 ntgcalls/src/tl/e2e_api.cpp
 ntgcalls/include/ntgcalls/tl/e2e_api.hpp
 build/
@@ -47,3 +48,4 @@ uv.lock
 *.so
 
 /docs-output
+graphify-out/

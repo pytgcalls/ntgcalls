@@ -82,6 +82,11 @@ if not any(cmd in sys.argv for cmd in LIGHT_COMMANDS):
             ),
             '0',
         )
+    subprocess.run(
+        [str(cmake_bin()), '-P', 'cmake/ThirdPartyNotices.cmake'],
+        cwd=base_path,
+        check=True,
+    )
 
 
 class CMakeExtension(Extension):

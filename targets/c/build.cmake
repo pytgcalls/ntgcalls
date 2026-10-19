@@ -26,6 +26,7 @@ else ()
 endif ()
 set(ARCHIVE_DIR "${CMAKE_SOURCE_DIR}/${ARCHIVE_TYPE_NAME}-output")
 file(COPY "${TARGET_CODE_DIR}/ntgcalls.h" DESTINATION "${ARCHIVE_DIR}/include")
+file(COPY "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/THIRD_PARTY_NOTICES.md" DESTINATION "${ARCHIVE_DIR}")
 
 if (NOT STATIC_BUILD)
     set_target_properties(${NTG_LIB_NAME} PROPERTIES

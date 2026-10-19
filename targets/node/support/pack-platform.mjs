@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
+const repoRoot = resolve(root, '..', '..');
+const notices = ['LICENSE', 'THIRD_PARTY_NOTICES.md'];
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -23,6 +25,9 @@ const pkgDir = join(outDir, `${platform}-${arch}`);
 mkdirSync(pkgDir, { recursive: true });
 
 copyFileSync(binary, join(pkgDir, 'ntgcalls.node'));
+for (const notice of notices) {
+  copyFileSync(join(repoRoot, notice), join(pkgDir, notice));
+}
 
 const pkg = {
   name: `@ntgcalls/${platform}-${arch}`,
@@ -36,7 +41,7 @@ const pkg = {
   os: [platform],
   cpu: [arch],
   main: 'ntgcalls.node',
-  files: ['ntgcalls.node'],
+  files: ['ntgcalls.node', ...notices],
 };
 
 writeFileSync(join(pkgDir, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`);
