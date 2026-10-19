@@ -14,6 +14,7 @@ namespace ntgcalls::io {
     class ThreadedReader: public BaseReader, public wrtc::utils::SyncHelper {
         std::vector<webrtc::PlatformThread> buffer_threads_;
         size_t active_buffer_ = 0;
+        size_t next_read_ = 0;
         size_t active_buffer_count_ = 0;
         bool synchronized_ = false;
         std::condition_variable cv_;

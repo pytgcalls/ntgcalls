@@ -33,6 +33,10 @@ namespace ntgcalls::io {
             auto file_data = bytes::make_unique_binary(size);
             source_.read(reinterpret_cast<char*>(file_data.get()), size);
             read_chunks_ += size;
+            if (source_.eof()) {
+                RTC_LOG(LS_WARNING) << "Reached end of the file";
+                throw EOFError("Reached end of the file");
+            }
             if (source_.fail()) {
                 RTC_LOG(LS_ERROR) << "Error while reading the file";
                 throw FileError("Error while reading the file");

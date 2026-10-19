@@ -29,6 +29,8 @@ namespace ntgcalls::io {
         const auto buffer_count = buffer_threads_.capacity();
         running_ = true;
         synchronized_ = false;
+        active_buffer_ = 0;
+        next_read_ = 0;
         const auto frame_time = sink_->frame_time();
         for (size_t i = 0; i < buffer_count; ++i) {
             buffer_threads_.push_back(
@@ -42,9 +44,19 @@ namespace ntgcalls::io {
                         frames.reserve(max_buffer_size);
                         while (running_) {
                             try {
-                                std::unique_lock lock(mtx_);
+                                {
+                                    std::unique_lock lock(mtx_);
+                                    cv_.wait(lock, [this, i] {
+                                        return !running_ || next_read_ == i;
+                                    });
+                                    if (!running_) break;
+                                }
                                 auto data = read_callback(frame_size * max_buffer_size);
-                                lock.unlock();
+                                {
+                                    const std::lock_guard lock(mtx_);
+                                    next_read_ = (next_read_ + 1) % buffer_count;
+                                    cv_.notify_all();
+                                }
                                 frames.clear();
                                 for (size_t j = 0; j < max_buffer_size; j++) {
                                     const size_t offset = j * frame_size;
