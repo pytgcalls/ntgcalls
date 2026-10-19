@@ -44,7 +44,7 @@ namespace ntgcalls::io {
             auto file_data = bytes::make_unique_binary(size);
             boost::system::error_code ec;
             asio::read(std_out_, asio::buffer(file_data.get(), size), ec);
-            if (ec || !std_out_.is_open() || !shell_process_.running()) {
+            if (ec) {
                 RTC_LOG(LS_WARNING) << "Reached end of the file";
                 throw EOFError("Reached end of the stream");
             }
