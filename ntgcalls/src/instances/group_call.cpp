@@ -218,6 +218,9 @@ namespace ntgcalls::instances {
             RTMP_UNSUPPORTED_THROW
         }
         CallInterface::set_stream_sources(mode, config);
+        if (mode == media::StreamManager::Mode::Playback && get_connection_mode() == wrtc::ConnectionMode::Rtc) {
+            update_remote_video_constraints(safe<wrtc::interfaces::GroupConnection>(connection_));
+        }
         if (const auto presentation = presentation_connection(); mode == media::StreamManager::Mode::Playback && presentation) {
             stream_manager_->optimize_sources(presentation.get());
         }

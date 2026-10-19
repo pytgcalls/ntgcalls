@@ -408,10 +408,9 @@ namespace wrtc::interfaces {
     std::vector<std::string> NativeNetworkInterface::get_endpoints() {
         const std::lock_guard lock(mutex_);
         std::vector<std::string> endpoints;
-        for (const auto& [endpoint, media] : pending_content_) {
-            if (media.type == models::MediaContent::Type::Video) {
-                endpoints.push_back(endpoint);
-            }
+        endpoints.reserve(incoming_video_channels_.size());
+        for (const auto& endpoint : incoming_video_channels_ | std::views::keys) {
+            endpoints.push_back(endpoint);
         }
         return endpoints;
     }
