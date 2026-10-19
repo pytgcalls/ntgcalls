@@ -1,0 +1,4 @@
+deps/
+build*/
+targets/*/node_modules/
+targets/rust/target/
