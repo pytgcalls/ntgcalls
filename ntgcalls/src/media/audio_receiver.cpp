@@ -38,23 +38,19 @@ namespace ntgcalls::media {
         if (description_->sample_rate == sample_rate) {
             std::memcpy(new_frame.get(), converted_data.get(), pre_sample_size);
         } else {
-            auto& resampler = resamplers_[ssrc];
-            if (!resampler) {
-                resampler = std::make_unique<webrtc::Resampler>();
-            }
-            resampler->ResetIfNeeded(sample_rate, static_cast<int>(description_->sample_rate), description_->channel_count);
-            size_t new_frame_size = 0;
-            const auto resampled = resampler->Push(
-                reinterpret_cast<const int16_t*>(converted_data.get()),
-                pre_sample_size / sizeof(int16_t),
-                reinterpret_cast<int16_t*>(new_frame.get()),
-                new_size / sizeof(int16_t),
-                new_frame_size
-            );
-            if (resampled != 0) {
-                RTC_LOG(LS_ERROR) << "Failed to resample audio frame";
+            const size_t src_samples_per_channel = pre_sample_size / sizeof(int16_t) / description_->channel_count;
+            if (src_samples_per_channel != static_cast<size_t>(sample_rate / 100)) {
+                RTC_LOG(LS_ERROR) << "Unsupported audio frame duration: " << src_samples_per_channel << " samples at " << sample_rate << "Hz";
                 throw InvalidParams("Failed to resample audio frame");
             }
+            auto& resampler = resamplers_[ssrc];
+            if (!resampler) {
+                resampler = std::make_unique<webrtc::PushResampler<int16_t>>();
+            }
+            resampler->Resample(
+                webrtc::InterleavedView<const int16_t>(reinterpret_cast<const int16_t*>(converted_data.get()), src_samples_per_channel, description_->channel_count),
+                webrtc::InterleavedView<int16_t>(reinterpret_cast<int16_t*>(new_frame.get()), new_size / sizeof(int16_t) / description_->channel_count, description_->channel_count)
+            );
         }
         return std::move(new_frame);
     }

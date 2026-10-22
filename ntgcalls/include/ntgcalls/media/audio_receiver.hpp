@@ -4,7 +4,7 @@
 
 #pragma once
 #include <map>
-#include <common_audio/resampler/include/resampler.h>
+#include <common_audio/resampler/include/push_resampler.h>
 #include <ntgcalls/media/audio_sink.hpp>
 #include <ntgcalls/media/base_receiver.hpp>
 #include <wrtc/interfaces/media/remote_audio_sink.hpp>
@@ -16,7 +16,7 @@ namespace ntgcalls::media {
     class AudioReceiver final: public AudioSink, public BaseReceiver {
         wrtc::utils::synchronized_callback<void(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>&)> frames_callback_;
         std::shared_ptr<wrtc::interfaces::media::RemoteAudioSink> sink_;
-        std::map<uint32_t, std::unique_ptr<webrtc::Resampler>> resamplers_;
+        std::map<uint32_t, std::unique_ptr<webrtc::PushResampler<int16_t>>> resamplers_;
 
         bytes::unique_binary resample_frame(uint32_t ssrc, bytes::unique_binary data, size_t size, uint8_t channels, uint16_t sample_rate);
 
