@@ -180,19 +180,24 @@ namespace wrtc::interfaces {
                 previous_audio_channel = incoming_audio_channels_.extract(endpoint);
             }
             previous_audio_channel = {};
-            auto audio_channel = std::make_unique<media::channels::IncomingAudioChannel>(
-                call_.get(),
-                channel_manager_.get(),
-                dtls_srtp_transport_.get(),
-                media_content,
-                worker_thread(),
-                network_thread(),
-                remote_audio_sink_,
-                payload_type_mapping_,
-                encryptor_,
-                nullptr
-            );
-            {
+            std::unique_ptr<media::channels::IncomingAudioChannel> audio_channel;
+            try {
+                audio_channel = std::make_unique<media::channels::IncomingAudioChannel>(
+                    call_.get(),
+                    channel_manager_.get(),
+                    dtls_srtp_transport_.get(),
+                    media_content,
+                    worker_thread(),
+                    network_thread(),
+                    remote_audio_sink_,
+                    payload_type_mapping_,
+                    encryptor_,
+                    nullptr
+                );
+            } catch (const RTCException& e) {
+                RTC_LOG(LS_ERROR) << "Unable to add incoming audio channel " << endpoint << ": " << e.what();
+            }
+            if (audio_channel) {
                 const std::lock_guard lock(mutex_);
                 incoming_audio_channels_[endpoint] = std::move(audio_channel);
             }
@@ -209,22 +214,29 @@ namespace wrtc::interfaces {
                 previous_video_channel = incoming_video_channels_.extract(endpoint);
             }
             previous_video_channel = {};
-            auto video_channel = std::make_unique<media::channels::IncomingVideoChannel>(
-                call_.get(),
-                channel_manager_.get(),
-                dtls_srtp_transport_.get(),
-                media_content.ssrc_groups,
-                media_content.user_id,
-                factory_->ssrc_generator(),
-                video_codecs,
-                worker_thread(),
-                network_thread(),
-                media_content.is_screen_cast() ? remote_screen_cast_sink_ : remote_video_sink_,
-                payload_type_mapping_,
-                encryptor_
-            );
-            const std::lock_guard lock(mutex_);
-            incoming_video_channels_[endpoint] = std::move(video_channel);
+            std::unique_ptr<media::channels::IncomingVideoChannel> video_channel;
+            try {
+                video_channel = std::make_unique<media::channels::IncomingVideoChannel>(
+                    call_.get(),
+                    channel_manager_.get(),
+                    dtls_srtp_transport_.get(),
+                    media_content.ssrc_groups,
+                    media_content.user_id,
+                    factory_->ssrc_generator(),
+                    video_codecs,
+                    worker_thread(),
+                    network_thread(),
+                    media_content.is_screen_cast() ? remote_screen_cast_sink_ : remote_video_sink_,
+                    payload_type_mapping_,
+                    encryptor_
+                );
+            } catch (const RTCException& e) {
+                RTC_LOG(LS_ERROR) << "Unable to add incoming video channel " << endpoint << ": " << e.what();
+            }
+            if (video_channel) {
+                const std::lock_guard lock(mutex_);
+                incoming_video_channels_[endpoint] = std::move(video_channel);
+            }
         }
         const std::lock_guard lock(mutex_);
         if (pending_content_.contains(endpoint)) {

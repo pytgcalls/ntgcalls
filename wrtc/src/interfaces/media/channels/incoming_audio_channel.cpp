@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <rtc_base/time_utils.h>
+#include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/interfaces/media/raw_audio_sink.hpp>
 #include <wrtc/interfaces/media/channels/incoming_audio_channel.hpp>
@@ -37,9 +38,16 @@ namespace wrtc::interfaces::media::channels {
             NativeNetworkInterface::get_default_crypto_options(),
             audio_options
         );
+        bool attached = false;
         network_thread.BlockingCall([&] {
-            channel_->SetRtpTransport(rtp_transport);
+            attached = channel_->SetRtpTransport(rtp_transport);
         });
+        if (!attached) {
+            worker_thread.BlockingCall([&] {
+                channel_ = nullptr;
+            });
+            throw RTCException("Failed to attach the incoming audio channel to the RTP transport");
+        }
         std::vector<webrtc::Codec> codecs;
         for (const auto& [id, name, clockrate, channels, feedbackTypes, parameters] : media_content.payload_types) {
             webrtc::Codec codec = webrtc::CreateAudioCodec(id, name, clockrate, channels);

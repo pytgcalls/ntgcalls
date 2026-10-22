@@ -3,6 +3,7 @@
 //
 
 #include <api/video/builtin_video_bitrate_allocator_factory.h>
+#include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/interfaces/media/channels/incoming_video_channel.hpp>
 #include <wrtc/models/outgoing_video_format.hpp>
@@ -37,9 +38,16 @@ namespace wrtc::interfaces::media::channels {
             video_bitrate_allocator_factory_.get()
         );
 
+        bool attached = false;
         network_thread.BlockingCall([&] {
-            channel_->SetRtpTransport(rtp_transport);
+            attached = channel_->SetRtpTransport(rtp_transport);
         });
+        if (!attached) {
+            worker_thread.BlockingCall([&] {
+                channel_ = nullptr;
+            });
+            throw RTCException("Failed to attach the incoming video channel to the RTP transport");
+        }
 
         auto outgoing_video_description = std::make_unique<webrtc::VideoContentDescription>();
         outgoing_video_description->AddRtpHeaderExtension(webrtc::RtpExtension(webrtc::RtpExtension::kAudioLevelUri, webrtc::RtpHeaderExtensionId(1)));
