@@ -107,6 +107,9 @@ namespace ntgcalls::signaling::messages {
                 throw InvalidParams("Signaling: ssrcs item must be a string or a number");
             }
         }
+        if (result.ssrcs.empty()) {
+            throw InvalidParams("Signaling: ssrc group must contain at least one ssrc");
+        }
         return result;
     }
 
