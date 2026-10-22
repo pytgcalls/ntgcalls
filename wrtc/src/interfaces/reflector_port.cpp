@@ -7,7 +7,6 @@
 #include <functional>
 #include <memory>
 #include <random>
-#include <ranges>
 #include <sstream>
 #include <utility>
 #include <absl/algorithm/container.h>
@@ -128,7 +127,7 @@ namespace wrtc::interfaces {
             socket_->UnsubscribeSentPacket(this);
             release();
         }
-        if (server_address_.proto == webrtc::PROTO_TCP) {
+        if (socket_) {
             socket_->UnsubscribeCloseEvent(this);
         }
         socket_ = nullptr;
@@ -660,9 +659,7 @@ namespace wrtc::interfaces {
             on_allocate_error(webrtc::STUN_ERROR_SERVER_NOT_REACHABLE, "");
         }
         state_ = State::Disconnected;
-        for (const auto connection : connections() | std::views::values) {
-            connection->Destroy();
-        }
+        DestroyAllConnections();
         signal_reflector_port_closed_.Send(this);
     }
 
