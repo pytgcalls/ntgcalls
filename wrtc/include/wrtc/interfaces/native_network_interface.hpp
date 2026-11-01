@@ -10,6 +10,7 @@
 #include <p2p/client/basic_port_allocator.h>
 #include <pc/dtls_srtp_transport.h>
 #include <pc/sdp_payload_type_suggester.h>
+#include <rtc_base/network.h>
 #include <rtc_base/rtc_certificate.h>
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/sctp_data_channel_provider_interface_impl.hpp>
