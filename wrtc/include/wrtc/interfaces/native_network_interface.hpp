@@ -30,6 +30,7 @@ namespace wrtc::interfaces {
             std::string level_assymetry_allowed;
         };
 
+        std::unique_ptr<webrtc::NetworkManager> own_network_manager_;
         std::unique_ptr<webrtc::BasicPortAllocator> port_allocator_;
         webrtc::scoped_refptr<webrtc::RTCCertificate> local_certificate_;
         std::unique_ptr<webrtc::AsyncDnsResolverFactoryInterface> async_resolver_factory_;
