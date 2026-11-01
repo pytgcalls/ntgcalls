@@ -68,6 +68,7 @@ jobs:
             ghcr.io/sanji78/stefano-ntgcalls/muslinux-${{ matrix.arch.name }}:latest \
             bash -euxo pipefail -c '
               git config --global --add safe.directory "*"
+              sh musl/glibc_pthread_abi.sh
               for PY in cp313-cp313 cp314-cp314; do
                 PYBIN=/opt/python/$PY/bin/python
                 $PYBIN -m pip install -U pip setuptools wheel cmake ninja auditwheel
