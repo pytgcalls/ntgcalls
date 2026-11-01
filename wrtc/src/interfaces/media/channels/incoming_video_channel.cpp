@@ -63,6 +63,9 @@ namespace wrtc::interfaces::media::channels {
         std::vector<uint32_t> all_ssrcs;
         webrtc::StreamParams video_recv_stream_params;
         for (const auto& [semantics, ssrcs] : ssrc_groups) {
+            if (ssrcs.empty()) {
+                continue;
+            }
             for (auto ssrc : ssrcs) {
                 if (std::ranges::find(all_ssrcs, ssrc) == all_ssrcs.end()) {
                     all_ssrcs.push_back(ssrc);
@@ -79,7 +82,7 @@ namespace wrtc::interfaces::media::channels {
             video_recv_stream_params.ssrc_groups.push_back(parsed_group);
         }
 
-        if (ssrc_ == 0 && ssrc_groups.size() == 1) {
+        if (ssrc_ == 0 && ssrc_groups.size() == 1 && !ssrc_groups[0].ssrcs.empty()) {
             ssrc_ = ssrc_groups[0].ssrcs[0];
         }
         video_recv_stream_params.ssrcs = all_ssrcs;
