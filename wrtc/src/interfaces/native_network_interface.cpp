@@ -2,7 +2,9 @@
 // Created by Lauren on 01/10/24.
 //
 
+#include <cstdio>
 #include <ranges>
+#include <rtc_base/network.h>
 #include <p2p/base/basic_async_resolver_factory.h>
 #include <p2p/base/p2p_constants.h>
 #include <p2p/client/basic_port_allocator.h>
@@ -322,9 +324,23 @@ namespace wrtc::interfaces {
     }
 
     void NativeNetworkInterface::reset_dtls_srtp_transport() {
+        webrtc::NetworkManager* network_manager = factory_->network_manager();
+        std::fprintf(stderr, "NTG-DEBUG: factory network_manager=%p\n", static_cast<void*>(network_manager));
+        std::fflush(stderr);
+        if (!network_manager) {
+            if (!own_network_manager_) {
+                own_network_manager_ = std::make_unique<webrtc::BasicNetworkManager>(
+                    environment(),
+                    network_thread().socketServer()
+                );
+            }
+            network_manager = own_network_manager_.get();
+            std::fprintf(stderr, "NTG-DEBUG: using own network manager=%p\n", static_cast<void*>(network_manager));
+            std::fflush(stderr);
+        }
         port_allocator_ = std::make_unique<webrtc::BasicPortAllocator>(
             environment(),
-            factory_->network_manager(),
+            network_manager,
             factory_->socket_factory(),
             nullptr,
             get_relay_port_factory()
