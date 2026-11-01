@@ -3,6 +3,7 @@
 //
 
 #include <cstdio>
+#include <cstdlib>
 #include <ranges>
 #include <rtc_base/network.h>
 #include <p2p/base/basic_async_resolver_factory.h>
@@ -327,7 +328,7 @@ namespace wrtc::interfaces {
         webrtc::NetworkManager* network_manager = factory_->network_manager();
         std::fprintf(stderr, "NTG-DEBUG: factory network_manager=%p\n", static_cast<void*>(network_manager));
         std::fflush(stderr);
-        if (!network_manager) {
+        if (!network_manager || std::getenv("NTG_FORCE_OWN_NETMGR")) {
             if (!own_network_manager_) {
                 own_network_manager_ = std::make_unique<webrtc::BasicNetworkManager>(
                     environment(),
