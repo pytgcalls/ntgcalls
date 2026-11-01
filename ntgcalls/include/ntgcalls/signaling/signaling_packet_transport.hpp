@@ -13,13 +13,16 @@ namespace ntgcalls::signaling {
     class SignalingPacketTransport final: public webrtc::DtlsTransportInternal {
         std::function<void(const bytes::binary&)> emit_data_;
         std::string transport_name_;
+        bool writable_;
 
     public:
-        explicit SignalingPacketTransport(const std::function<void(const bytes::binary&)>& emit_data): emit_data_(emit_data), transport_name_("signaling") {}
+        SignalingPacketTransport(const std::function<void(const bytes::binary&)>& emit_data, const bool writable): emit_data_(emit_data), transport_name_("signaling"), writable_(writable) {}
 
         ~SignalingPacketTransport() override;
 
         void receive_data(const bytes::binary& data);
+
+        void set_writable(bool writable);
 
         [[nodiscard]] const std::string& transport_name() const override;
 

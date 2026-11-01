@@ -3,14 +3,19 @@
 //
 
 #pragma once
-#include <media/sctp/sctp_transport_factory.h>
+#include <media/sctp/sctp_transport_internal.h>
+#include <net/dcsctp/public/dcsctp_socket_factory.h>
 #include <ntgcalls/signaling/signaling_interface.hpp>
 #include <ntgcalls/signaling/signaling_packet_transport.hpp>
 
 namespace ntgcalls::signaling {
 
     class SignalingSctpConnection final: public SignalingInterface, public webrtc::DataChannelSink {
-        std::unique_ptr<webrtc::SctpTransportFactory> sctp_transport_factory_;
+        class SocketFactory final: public dcsctp::DcSctpSocketFactory {
+        public:
+            std::unique_ptr<dcsctp::DcSctpSocketInterface> Create(absl::string_view log_prefix, dcsctp::DcSctpSocketCallbacks& callbacks, std::unique_ptr<dcsctp::PacketObserver> packet_observer, const dcsctp::DcSctpOptions& options) override;
+        };
+
         std::unique_ptr<SignalingPacketTransport> packet_transport_;
         std::unique_ptr<webrtc::SctpTransportInternal> sctp_transport_;
         std::vector<bytes::binary> pending_data_;

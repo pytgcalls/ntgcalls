@@ -21,12 +21,19 @@ namespace ntgcalls::signaling {
         );
     }
 
+    void SignalingPacketTransport::set_writable(const bool writable) {
+        if (writable_ != writable) {
+            writable_ = writable;
+            NotifyWritableState(this);
+        }
+    }
+
     const std::string& SignalingPacketTransport::transport_name() const {
         return transport_name_;
     }
 
     bool SignalingPacketTransport::writable() const {
-        return true;
+        return writable_;
     }
 
     bool SignalingPacketTransport::receiving() const {

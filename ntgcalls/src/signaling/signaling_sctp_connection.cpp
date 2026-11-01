@@ -3,9 +3,19 @@
 //
 
 #include <api/environment/environment_factory.h>
+#include <media/sctp/dcsctp_transport.h>
+#include <net/dcsctp/socket/dcsctp_socket.h>
 #include <ntgcalls/signaling/signaling_sctp_connection.hpp>
 
 namespace ntgcalls::signaling {
+    std::unique_ptr<dcsctp::DcSctpSocketInterface> SignalingSctpConnection::SocketFactory::Create(absl::string_view log_prefix, dcsctp::DcSctpSocketCallbacks& callbacks, std::unique_ptr<dcsctp::PacketObserver> packet_observer, const dcsctp::DcSctpOptions& options) {
+        dcsctp::DcSctpOptions custom_options = options;
+        custom_options.t1_init_timeout = dcsctp::DurationMs(400);
+        custom_options.t1_cookie_timeout = dcsctp::DurationMs(400);
+        custom_options.max_timer_backoff_duration = dcsctp::DurationMs(750);
+        return std::make_unique<dcsctp::DcSctpSocket>(log_prefix, callbacks, std::move(packet_observer), custom_options);
+    }
+
     SignalingSctpConnection::SignalingSctpConnection(
         wrtc::utils::SafeThread& network_thread,
         wrtc::utils::SafeThread& signaling_thread,
@@ -16,9 +26,8 @@ namespace ntgcalls::signaling {
         const bool allow_compression
     ): SignalingInterface(network_thread, signaling_thread, key, on_emit_data, on_signal_data), allow_compression_(allow_compression) {
         network_thread.BlockingCall([&] {
-            packet_transport_ = std::make_unique<SignalingPacketTransport>(on_emit_data);
-            sctp_transport_factory_ = std::make_unique<webrtc::SctpTransportFactory>(network_thread);
-            sctp_transport_ = sctp_transport_factory_->CreateSctpTransport(env, packet_transport_.get());
+            packet_transport_ = std::make_unique<SignalingPacketTransport>(on_emit_data, key.is_outgoing);
+            sctp_transport_ = std::make_unique<webrtc::DcSctpTransport>(env, network_thread, packet_transport_.get(), std::make_unique<SocketFactory>());
             sctp_transport_->OpenStream(0, webrtc::PriorityValue(webrtc::Priority::kVeryLow));
             sctp_transport_->SetDataChannelSink(this);
             sctp_transport_->Start({
@@ -32,13 +41,13 @@ namespace ntgcalls::signaling {
         SignalingInterface::close();
         network_thread_.BlockingCall([&] {
             sctp_transport_ = nullptr;
-            sctp_transport_factory_ = nullptr;
             packet_transport_ = nullptr;
         });
     }
 
     void SignalingSctpConnection::receive(const bytes::binary& data) {
         network_thread_.BlockingCall([&] {
+            packet_transport_->set_writable(true);
             packet_transport_->receive_data(data);
         });
     }
