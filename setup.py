@@ -26,7 +26,9 @@ def cmake_path():
 
 
 def is_musl():
-    return sys.platform.startswith('linux') and platform.libc_ver()[0] != 'glibc'
+    return (
+        sys.platform.startswith('linux') and platform.libc_ver()[0] != 'glibc'
+    )
 
 
 def cmake_bin():
