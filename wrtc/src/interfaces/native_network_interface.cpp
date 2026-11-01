@@ -326,9 +326,7 @@ namespace wrtc::interfaces {
 
     void NativeNetworkInterface::reset_dtls_srtp_transport() {
         webrtc::NetworkManager* network_manager = factory_->network_manager();
-        std::fprintf(stderr, "NTG-DEBUG: factory network_manager=%p\n", static_cast<void*>(network_manager));
-        std::fflush(stderr);
-        if (!network_manager || std::getenv("NTG_FORCE_OWN_NETMGR")) {
+        if (!network_manager) {
             if (!own_network_manager_) {
                 own_network_manager_ = std::make_unique<webrtc::BasicNetworkManager>(
                     environment(),
@@ -336,8 +334,6 @@ namespace wrtc::interfaces {
                 );
             }
             network_manager = own_network_manager_.get();
-            std::fprintf(stderr, "NTG-DEBUG: using own network manager=%p\n", static_cast<void*>(network_manager));
-            std::fflush(stderr);
         }
         port_allocator_ = std::make_unique<webrtc::BasicPortAllocator>(
             environment(),
