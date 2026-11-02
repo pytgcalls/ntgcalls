@@ -54,7 +54,7 @@ fn lib_dir() -> PathBuf {
 fn host_glibc_ge_234() -> bool {
     use std::ffi::CStr;
     use std::os::raw::c_char;
-    extern "C" {
+    unsafe extern "C" {
         fn gnu_get_libc_version() -> *const c_char;
     }
     let raw = unsafe { CStr::from_ptr(gnu_get_libc_version()) };

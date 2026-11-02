@@ -5,4 +5,4 @@
 [submodule "deps/oboe"]
 	path = deps/oboe
 	url = https://github.com/google/oboe.git
-	branch = 1.10.0
+	branch = 1.11.0

@@ -1,7 +1,7 @@
 [package]
 name = "ntgcalls-sys"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 description = "Raw FFI bindings to the ntgcalls C ABI"
 license = "LGPL-3.0-only"
 repository = "https://github.com/pytgcalls/ntgcalls"
@@ -17,4 +17,4 @@ include = ["src/**/*.rs", "build.rs", "Cargo.toml", "README.md"]
 
 [build-dependencies]
 ureq = "3"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }

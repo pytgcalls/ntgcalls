@@ -135,7 +135,7 @@ pub type ntg_@{cb.name|snake}_cb = Option<unsafe extern "C" fn(
 )>;
 
 @end
-extern "C" {
+unsafe extern "C" {
     pub fn ntg_get_version() -> *const c_char;
     pub fn ntg_last_error() -> *const c_char;
     pub fn ntg_set_log_callback(callback: ntg_log_cb, user_data: *mut c_void);
@@ -212,18 +212,18 @@ extern "C" {
 mod glibc_resolv_compat {
     use std::os::raw::{c_char, c_int, c_uchar, c_void};
 
-    extern "C" {
+    unsafe extern "C" {
         fn dn_expand(msg: *const c_uchar, eom: *const c_uchar, src: *const c_uchar, dst: *mut c_char, dstsiz: c_int) -> c_int;
         fn res_nquery(statp: *mut c_void, dname: *const c_char, class_: c_int, type_: c_int, answer: *mut c_uchar, anslen: c_int) -> c_int;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn __dn_expand(msg: *const c_uchar, eom: *const c_uchar, src: *const c_uchar, dst: *mut c_char, dstsiz: c_int) -> c_int {
-        dn_expand(msg, eom, src, dst, dstsiz)
+        unsafe { dn_expand(msg, eom, src, dst, dstsiz) }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn __res_nquery(statp: *mut c_void, dname: *const c_char, class_: c_int, type_: c_int, answer: *mut c_uchar, anslen: c_int) -> c_int {
-        res_nquery(statp, dname, class_, type_, answer, anslen)
+        unsafe { res_nquery(statp, dname, class_, type_, answer, anslen) }
     }
 }

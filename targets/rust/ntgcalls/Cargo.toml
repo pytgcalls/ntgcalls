@@ -1,7 +1,7 @@
 [package]
 name = "ntgcalls"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 description = "A Library for creating group calls and P2P calls with WebRTC and MTProto"
 license = "LGPL-3.0-only"
 repository = "https://github.com/pytgcalls/ntgcalls"

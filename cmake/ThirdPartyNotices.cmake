@@ -82,7 +82,7 @@ add_notice(NAME "WebRTC" VERSION_KEY version.webrtc LICENSE "BSD-3-Clause"
     PLATFORMS "All")
 add_notice(NAME "Boost" VERSION_KEY version.boost LICENSE "BSL-1.0"
     UPSTREAM https://github.com/boostorg/boost BUILD https://github.com/pytgcalls/boost
-    PLATFORMS "All" URL https://raw.githubusercontent.com/boostorg/boost/boost-{version}/LICENSE_1_0.txt)
+    PLATFORMS "All" URL https://raw.githubusercontent.com/boostorg/boost/master/LICENSE_1_0.txt)
 add_notice(NAME "LLVM libc++ / libc++abi" LICENSE "Apache-2.0 WITH LLVM-exception"
     UPSTREAM https://github.com/llvm/llvm-project
     PLATFORMS "Linux, macOS, Android")

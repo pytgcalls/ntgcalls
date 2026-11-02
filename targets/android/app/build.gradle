@@ -149,7 +149,7 @@ androidComponents {
 
 android {
     namespace = "io.github.pytgcalls"
-    compileSdk = 36
+    compileSdk = 37
     testBuildType = "release"
 
     compileOptions {
@@ -159,7 +159,7 @@ android {
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 36
+        targetSdk = 37
 
         buildConfigField 'String', 'GIT_COMMIT', "\"${versionInfoProvider.gitCommit}\""
         buildConfigField 'int', 'VERSION_CODE', "${versionInfoProvider.versionCode}"
