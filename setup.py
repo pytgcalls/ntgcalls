@@ -150,6 +150,8 @@ def execute_cfg(target, subst, archs=('auto',), section='build', keys=None):
     workdir_tmpl = parser.get('options', 'workdir', fallback='{builddir}')
     base_env = os.environ.copy()
     base_env['CMAKE_BUILD_PARALLEL_LEVEL'] = subst['jobs']
+    if os.name == 'nt':
+        base_env.setdefault('CMAKE_GENERATOR', 'Ninja')
     blocks = [parser[section][k] for k in (keys or parser[section])]
     for arch in archs:
         ctx = dict(subst)

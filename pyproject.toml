@@ -28,7 +28,7 @@ keywords = [
 requires-python = ">=3.10"
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools", "wheel", "ninja; sys_platform == 'win32'"]
 build-backend = "setuptools.build_meta"
 
 [project.urls]
