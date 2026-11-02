@@ -266,6 +266,7 @@ namespace wrtc::interfaces::mtproto {
                         frame->sample_rate = static_cast<int>(buffer->sample_rate);
                         frame->data = buffer->data.data();
                         frame->size = buffer->data.size() * sizeof(int16_t);
+                        frame->absolute_capture_timestamp_ms = webrtc::TimeMillis();
                         strong->audio_frame_callback_(std::move(frame));
                     }
                 }

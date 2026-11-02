@@ -3,6 +3,7 @@
 //
 
 #include <utility>
+#include <rtc_base/time_utils.h>
 #include <wrtc/interfaces/media/raw_audio_sink.hpp>
 
 namespace wrtc::interfaces::media {
@@ -17,6 +18,7 @@ namespace wrtc::interfaces::media {
             frame->data = audio.data;
             frame->sample_rate = audio.sample_rate;
             frame->channels = audio.channels;
+            frame->absolute_capture_timestamp_ms = webrtc::TimeMillis();
             callback_(std::move(frame));
         }
     }

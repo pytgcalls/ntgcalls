@@ -15,6 +15,7 @@ namespace wrtc::models {
         size_t size = 0;
         int sample_rate = 0;
         size_t channels = 0;
+        int64_t absolute_capture_timestamp_ms = 0;
 
         explicit AudioFrame(uint32_t ssrc);
     };

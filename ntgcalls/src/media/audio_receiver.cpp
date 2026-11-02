@@ -78,7 +78,7 @@ namespace ntgcalls::media {
         return std::move(stereo_data);
     }
 
-    void AudioReceiver::on_frames(const std::function<void(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>&)>& callback) {
+    void AudioReceiver::on_frames(const std::function<void(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>&, const std::map<uint32_t, int64_t>&)>& callback) {
         frames_callback_ = callback;
     }
 
@@ -92,6 +92,7 @@ namespace ntgcalls::media {
             }
             const std::lock_guard lock(mutex_);
             std::map<uint32_t, std::pair<bytes::unique_binary, size_t>> processed_frames;
+            std::map<uint32_t, int64_t> timestamps;
             for (const auto& frame : samples) {
                 try {
                     bytes::unique_binary data = bytes::make_unique_binary(frame->size);
@@ -109,12 +110,13 @@ namespace ntgcalls::media {
                             frame_size()
                         }
                     );
+                    timestamps[frame->ssrc] = frame->absolute_capture_timestamp_ms;
                 } catch (const InvalidParams& e) {
                     RTC_LOG(LS_ERROR) << "Failed to adapt audio frame: " << e.what();
                 }
             }
             frames_++;
-            (void) frames_callback_(processed_frames);
+            (void) frames_callback_(processed_frames, timestamps);
         });
         weak_sink_ = sink_;
     }

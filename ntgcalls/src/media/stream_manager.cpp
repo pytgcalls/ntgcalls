@@ -620,7 +620,7 @@ namespace ntgcalls::media {
 
     void StreamManager::setup_audio_playback_callbacks(const StreamId& id, bool is_external) {
         const std::weak_ptr weak(shared_from_this());
-        dynamic_cast<AudioReceiver*>(streams_[id].get())->on_frames([weak, id, is_external](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
+        dynamic_cast<AudioReceiver*>(streams_[id].get())->on_frames([weak, id, is_external](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames, const std::map<uint32_t, int64_t>& timestamps) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -629,10 +629,14 @@ namespace ntgcalls::media {
                 std::vector<wrtc::models::Frame> external_frames;
                 for (const auto& [ssrc, data] : frames) {
                     if (strong->external_writers_.contains(id.second)) {
+                        wrtc::models::FrameData frame_data{};
+                        if (const auto it = timestamps.find(ssrc); it != timestamps.end()) {
+                            frame_data.absolute_capture_timestamp_ms = it->second;
+                        }
                         external_frames.push_back({
                             ssrc,
                             {data.first.get(), data.first.get() + data.second},
-                            {},
+                            frame_data,
                         });
                     }
                 }
