@@ -43,7 +43,7 @@ namespace wrtc::interfaces::peer_connection {
         static std::mutex mutex_;
         static bool initialized_;
         void* jni_env_;
-        static std::unique_ptr<PeerConnectionFactory, void(*)(PeerConnectionFactory*)> default_;
+        static std::unique_ptr<PeerConnectionFactory, void (*)(PeerConnectionFactory*)> default_;
 
         std::unique_ptr<utils::SafeThread> network_thread_;
         std::unique_ptr<utils::SafeThread> signaling_thread_;

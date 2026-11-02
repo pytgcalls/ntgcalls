@@ -25,7 +25,7 @@ extern "C" {
 namespace wrtc::interfaces::peer_connection {
     std::mutex PeerConnectionFactory::mutex_{};
     bool PeerConnectionFactory::initialized_ = false;
-    std::unique_ptr<PeerConnectionFactory, void(*)(PeerConnectionFactory*)> PeerConnectionFactory::default_{nullptr, &PeerConnectionFactory::destroy_default};
+    std::unique_ptr<PeerConnectionFactory, void (*)(PeerConnectionFactory*)> PeerConnectionFactory::default_{nullptr, &PeerConnectionFactory::destroy_default};
 
     PeerConnectionFactory::PeerConnectionFactory() {
         av_log_set_level(AV_LOG_QUIET);
