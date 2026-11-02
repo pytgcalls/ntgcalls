@@ -387,7 +387,7 @@ namespace wrtc::interfaces {
 
     void GroupConnection::create_channels(const ResponsePayload::Media& media) {
         const std::weak_ptr weak(shared_from_this());
-        worker_thread().BlockingCall([weak, &media] {
+        network_thread().BlockingCall([weak, &media] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -422,7 +422,6 @@ namespace wrtc::interfaces {
                 channel_manager_.get(),
                 dtls_srtp_transport_.get(),
                 audio_content,
-                worker_thread(),
                 network_thread(),
                 &audio_sink_,
                 payload_type_mapping_,
@@ -447,7 +446,6 @@ namespace wrtc::interfaces {
                 channel_manager_.get(),
                 dtls_srtp_transport_.get(),
                 video_content,
-                worker_thread(),
                 network_thread(),
                 &video_sink_,
                 payload_type_mapping_,
@@ -458,7 +456,7 @@ namespace wrtc::interfaces {
 
     void GroupConnection::update_audio_ssrc_mappings(const std::vector<models::SsrcMapping>& audio_ssrcs) {
         const std::weak_ptr weak(shared_from_this());
-        worker_thread().BlockingCall([weak, audio_ssrcs] {
+        network_thread().BlockingCall([weak, audio_ssrcs] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -475,7 +473,7 @@ namespace wrtc::interfaces {
 
     uint32_t GroupConnection::add_incoming_video(const int64_t user_id, const std::string& endpoint, const std::vector<models::SsrcGroup>& ssrc_groups) {
         const std::weak_ptr weak(shared_from_this());
-        return worker_thread().BlockingCall([weak, user_id, endpoint, ssrc_groups]() -> uint32_t {
+        return network_thread().BlockingCall([weak, user_id, endpoint, ssrc_groups]() -> uint32_t {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return 0;
@@ -507,7 +505,7 @@ namespace wrtc::interfaces {
 
     bool GroupConnection::remove_incoming_video(const std::string& endpoint) {
         const std::weak_ptr weak(shared_from_this());
-        return worker_thread().BlockingCall([weak, endpoint] {
+        return network_thread().BlockingCall([weak, endpoint] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
             if (!strong) {
                 return false;
@@ -567,7 +565,7 @@ namespace wrtc::interfaces {
             return;
         }
         const std::weak_ptr weak(shared_from_this());
-        worker_thread().PostDelayedTask(
+        network_thread().PostDelayedTask(
             [weak] {
                 const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
                 if (!strong) {

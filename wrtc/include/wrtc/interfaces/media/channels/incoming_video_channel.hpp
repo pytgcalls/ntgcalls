@@ -16,7 +16,6 @@ namespace wrtc::interfaces::media::channels {
         uint32_t ssrc_ = 0;
         std::unique_ptr<webrtc::BaseChannel> channel_;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> video_bitrate_allocator_factory_;
-        utils::SafeThread& worker_thread_;
         utils::SafeThread& network_thread_;
         std::unique_ptr<RawVideoSink> sink_;
 
@@ -29,7 +28,6 @@ namespace wrtc::interfaces::media::channels {
             int64_t user_id,
             webrtc::UniqueRandomIdGenerator* random_id_generator,
             const std::vector<webrtc::Codec>& codecs,
-            utils::SafeThread& worker_thread,
             utils::SafeThread& network_thread,
             std::weak_ptr<RemoteVideoSink> remote_video_sink,
             const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,

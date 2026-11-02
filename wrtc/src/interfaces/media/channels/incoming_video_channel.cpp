@@ -17,12 +17,11 @@ namespace wrtc::interfaces::media::channels {
         const int64_t user_id,
         webrtc::UniqueRandomIdGenerator* random_id_generator,
         const std::vector<webrtc::Codec>& codecs,
-        utils::SafeThread& worker_thread,
         utils::SafeThread& network_thread,
         std::weak_ptr<RemoteVideoSink> remote_video_sink,
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
         E2EEncryptor* encryptor
-    ): worker_thread_(worker_thread), network_thread_(network_thread) {
+    ): network_thread_(network_thread) {
         sink_ = std::make_unique<RawVideoSink>();
         const uint32_t mid = random_id_generator->GenerateId();
         const auto stream_id = "video" + std::to_string(mid);
@@ -43,7 +42,7 @@ namespace wrtc::interfaces::media::channels {
             attached = channel_->SetRtpTransport(rtp_transport);
         });
         if (!attached) {
-            worker_thread.BlockingCall([&] {
+            network_thread.BlockingCall([&] {
                 channel_ = nullptr;
             });
             throw RTCException("Failed to attach the incoming video channel to the RTP transport");
@@ -103,7 +102,7 @@ namespace wrtc::interfaces::media::channels {
 
         incoming_video_description->AddStream(video_recv_stream_params);
 
-        worker_thread.BlockingCall([&] {
+        network_thread.BlockingCall([&] {
             channel_->rtp_transport()->SetActivePayloadTypeDemuxing(false);
             channel_->SetLocalContent(outgoing_video_description.get(), webrtc::SdpType::kOffer);
             channel_->SetRemoteContent(incoming_video_description.get(), webrtc::SdpType::kAnswer);
@@ -138,7 +137,7 @@ namespace wrtc::interfaces::media::channels {
         network_thread_.BlockingCall([&] {
             channel_->SetRtpTransport(nullptr);
         });
-        worker_thread_.BlockingCall([&] {
+        network_thread_.BlockingCall([&] {
             channel_->video_media_receive_channel()->SetSink(ssrc_, nullptr);
             channel_ = nullptr;
             sink_ = nullptr;

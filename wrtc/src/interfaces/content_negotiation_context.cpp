@@ -30,8 +30,6 @@ namespace wrtc::interfaces {
         );
         session_description_factory_ = std::make_unique<webrtc::MediaSessionDescriptionFactory>(
             env,
-            media_engine,
-            true,
             unique_random_id_generator,
             transport_description_factory_.get(),
             nullptr,
@@ -64,12 +62,12 @@ namespace wrtc::interfaces {
             transport_sequence_number_uri_id = 2;
             video_rotation_uri = 4;
         }
-        rtp_audio_extensions_.emplace_back(webrtc::RtpExtension::kAbsSendTimeUri, abs_send_time_uri_id);
-        rtp_audio_extensions_.emplace_back(webrtc::RtpExtension::kTransportSequenceNumberUri, transport_sequence_number_uri_id);
-        rtp_video_extensions_.emplace_back(webrtc::RtpExtension::kAudioLevelUri, 1);
-        rtp_video_extensions_.emplace_back(webrtc::RtpExtension::kAbsSendTimeUri, abs_send_time_uri_id);
-        rtp_video_extensions_.emplace_back(webrtc::RtpExtension::kTransportSequenceNumberUri, transport_sequence_number_uri_id);
-        rtp_video_extensions_.emplace_back(webrtc::RtpExtension::kVideoRotationUri, video_rotation_uri);
+        rtp_audio_extensions_.emplace_back(webrtc::RtpExtension::kAbsSendTimeUri, webrtc::RtpHeaderExtensionId(abs_send_time_uri_id));
+        rtp_audio_extensions_.emplace_back(webrtc::RtpExtension::kTransportSequenceNumberUri, webrtc::RtpHeaderExtensionId(transport_sequence_number_uri_id));
+        rtp_video_extensions_.emplace_back(webrtc::RtpExtension::kAudioLevelUri, webrtc::RtpHeaderExtensionId(1));
+        rtp_video_extensions_.emplace_back(webrtc::RtpExtension::kAbsSendTimeUri, webrtc::RtpHeaderExtensionId(abs_send_time_uri_id));
+        rtp_video_extensions_.emplace_back(webrtc::RtpExtension::kTransportSequenceNumberUri, webrtc::RtpHeaderExtensionId(transport_sequence_number_uri_id));
+        rtp_video_extensions_.emplace_back(webrtc::RtpExtension::kVideoRotationUri, webrtc::RtpHeaderExtensionId(video_rotation_uri));
     }
 
     std::string ContentNegotiationContext::add_outgoing_channel(const webrtc::MediaStreamTrackInterface* track) {

@@ -12,13 +12,12 @@ namespace wrtc::interfaces::media::channels {
         ChannelManager* channel_manager,
         webrtc::RtpTransport* rtp_transport,
         const models::MediaContent& media_content,
-        utils::SafeThread& worker_thread,
         utils::SafeThread& network_thread,
         webrtc::LocalAudioSinkAdapter* sink,
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
         E2EEncryptor* encryptor,
         const std::function<std::pair<uint8_t, bool>()>& get_audio_level_and_speech
-    ): ssrc_(media_content.ssrc), worker_thread_(worker_thread), network_thread_(network_thread), sink_(sink) {
+    ): ssrc_(media_content.ssrc), network_thread_(network_thread), sink_(sink) {
         webrtc::AudioOptions audio_options;
         audio_options.echo_cancellation = false;
         audio_options.noise_suppression = false;
@@ -68,13 +67,13 @@ namespace wrtc::interfaces::media::channels {
         incoming_description->set_direction(webrtc::RtpTransceiverDirection::kRecvOnly);
         incoming_description->set_codecs(codecs);
         incoming_description->set_bandwidth(-1);
-        worker_thread.BlockingCall([&] {
+        network_thread.BlockingCall([&] {
             channel_->rtp_transport()->SetActivePayloadTypeDemuxing(false);
             channel_->SetLocalContent(outgoing_description.get(), webrtc::SdpType::kOffer);
             channel_->SetRemoteContent(incoming_description.get(), webrtc::SdpType::kAnswer);
         });
         set_enabled(true);
-        worker_thread.BlockingCall([&] {
+        network_thread.BlockingCall([&] {
             const webrtc::RtpParameters initial_parameters = channel_->voice_media_send_channel()->GetRtpSendParameters(ssrc_);
             webrtc::RtpParameters updated_parameters = initial_parameters;
             if (updated_parameters.encodings.empty()) {
@@ -102,7 +101,7 @@ namespace wrtc::interfaces::media::channels {
 
     void OutgoingAudioChannel::set_enabled(const bool enable) const {
         channel_->Enable(enable);
-        worker_thread_.BlockingCall([&] {
+        network_thread_.BlockingCall([&] {
             channel_->voice_media_send_channel()->SetAudioSend(ssrc_, enable, nullptr, sink_);
         });
     }
@@ -112,7 +111,7 @@ namespace wrtc::interfaces::media::channels {
         network_thread_.BlockingCall([&] {
             channel_->SetRtpTransport(nullptr);
         });
-        worker_thread_.BlockingCall([&] {
+        network_thread_.BlockingCall([&] {
             channel_ = nullptr;
         });
         sink_ = nullptr;

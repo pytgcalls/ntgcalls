@@ -29,10 +29,6 @@ namespace wrtc::interfaces {
         return factory_->signaling_thread();
     }
 
-    utils::SafeThread& NetworkInterface::worker_thread() const {
-        return factory_->worker_thread();
-    }
-
     const webrtc::Environment& NetworkInterface::environment() const {
         return env_;
     }

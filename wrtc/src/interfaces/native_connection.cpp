@@ -210,7 +210,7 @@ namespace wrtc::interfaces {
         }
         const std::weak_ptr weak(shared_from_this());
         const std::shared_ptr state(std::move(coordinated_state));
-        worker_thread().BlockingCall([weak, state, audio_ssrc, video_ssrc] {
+        network_thread().BlockingCall([weak, state, audio_ssrc, video_ssrc] {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
             if (!strong) {
                 return;
@@ -242,7 +242,6 @@ namespace wrtc::interfaces {
                         channel_manager_.get(),
                         dtls_srtp_transport_.get(),
                         *audio_content,
-                        worker_thread(),
                         network_thread(),
                         &audio_sink_,
                         payload_type_mapping_,
@@ -270,7 +269,6 @@ namespace wrtc::interfaces {
                         channel_manager_.get(),
                         dtls_srtp_transport_.get(),
                         *video_content,
-                        worker_thread(),
                         network_thread(),
                         &video_sink_,
                         payload_type_mapping_,

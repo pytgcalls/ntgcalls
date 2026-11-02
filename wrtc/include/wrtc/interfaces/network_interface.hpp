@@ -42,8 +42,6 @@ namespace wrtc::interfaces {
 
         [[nodiscard]] utils::SafeThread& signaling_thread() const;
 
-        [[nodiscard]] utils::SafeThread& worker_thread() const;
-
         const webrtc::Environment& environment() const;
 
         void on_data_channel_opened(const std::function<void()>& callback);

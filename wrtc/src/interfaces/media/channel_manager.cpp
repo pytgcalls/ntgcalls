@@ -10,12 +10,10 @@ namespace wrtc::interfaces::media {
     ChannelManager::ChannelManager(
         const webrtc::Environment& environment,
         webrtc::MediaEngineInterface* media_engine,
-        utils::SafeThread& worker_thread,
         webrtc::Thread* network_thread,
         webrtc::Thread* signaling_thread
-    ): environment_(environment), media_engine_(media_engine), worker_thread_(worker_thread), signaling_thread_(signaling_thread), network_thread_(network_thread) {
+    ): environment_(environment), media_engine_(media_engine), signaling_thread_(signaling_thread), network_thread_(network_thread) {
         RTC_DCHECK_RUN_ON(signaling_thread);
-        RTC_DCHECK(&worker_thread);
         RTC_DCHECK(network_thread);
     }
 
@@ -29,14 +27,14 @@ namespace wrtc::interfaces::media {
     ) {
         RTC_DCHECK(call);
         RTC_DCHECK(media_engine_);
-        if (!worker_thread_.IsCurrent()) {
+        if (!network_thread_->IsCurrent()) {
             std::unique_ptr<webrtc::BaseChannel> temp;
-            worker_thread_.BlockingCall([&] {
+            network_thread_->BlockingCall([&] {
                 temp = create_voice_channel(call, media_config, mid, srtp_required, crypto_options, options);
             });
             return std::move(temp);
         }
-        RTC_DCHECK_RUN_ON(&worker_thread_);
+        RTC_DCHECK_RUN_ON(network_thread_);
         auto send_media_channel = media_engine_->voice().CreateSendChannel(
             environment_,
             call,
@@ -52,13 +50,15 @@ namespace wrtc::interfaces::media {
             call,
             media_config,
             options,
-            crypto_options
+            crypto_options,
+            nullptr,
+            on_frame_delivered
         );
         if (!receive_media_channel) {
             return nullptr;
         }
         return std::make_unique<webrtc::BaseChannel>(
-            worker_thread_,
+            network_thread_,
             network_thread_,
             signaling_thread_,
             std::move(send_media_channel),
@@ -82,9 +82,9 @@ namespace wrtc::interfaces::media {
     ) {
         RTC_DCHECK(call);
         RTC_DCHECK(media_engine_);
-        if (!worker_thread_.IsCurrent()) {
+        if (!network_thread_->IsCurrent()) {
             std::unique_ptr<webrtc::BaseChannel> temp = nullptr;
-            worker_thread_.BlockingCall([&] {
+            network_thread_->BlockingCall([&] {
                 temp = create_video_channel(
                     call,
                     media_config,
@@ -97,7 +97,7 @@ namespace wrtc::interfaces::media {
             });
             return temp;
         }
-        RTC_DCHECK_RUN_ON(&worker_thread_);
+        RTC_DCHECK_RUN_ON(network_thread_);
         std::unique_ptr<webrtc::VideoMediaSendChannelInterface> send_media_channel = media_engine_->video().CreateSendChannel(
             environment_,
             call,
@@ -115,10 +115,12 @@ namespace wrtc::interfaces::media {
             environment_,
             call,
             media_config,
-            crypto_options
+            crypto_options,
+            nullptr,
+            on_frame_delivered
         );
         return std::make_unique<webrtc::BaseChannel>(
-            worker_thread_,
+            network_thread_,
             network_thread_,
             signaling_thread_,
             std::move(send_media_channel),
@@ -131,4 +133,5 @@ namespace wrtc::interfaces::media {
         );
     }
 
+    void ChannelManager::on_frame_delivered(uint32_t, const webrtc::RtpPacketInfos&, webrtc::Timestamp) {}
 } // wrtc::interfaces::media

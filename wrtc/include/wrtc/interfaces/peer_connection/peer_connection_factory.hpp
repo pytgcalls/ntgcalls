@@ -25,8 +25,6 @@ namespace wrtc::interfaces::peer_connection {
 
         [[nodiscard]] utils::SafeThread& signaling_thread() const;
 
-        [[nodiscard]] utils::SafeThread& worker_thread() const;
-
         [[nodiscard]] webrtc::NetworkManager* network_manager() const;
 
         [[nodiscard]] webrtc::PacketSocketFactory* socket_factory() const;
@@ -48,9 +46,8 @@ namespace wrtc::interfaces::peer_connection {
         static std::unique_ptr<PeerConnectionFactory> default_;
 
         std::unique_ptr<utils::SafeThread> network_thread_;
-        std::unique_ptr<utils::SafeThread> worker_thread_;
         std::unique_ptr<utils::SafeThread> signaling_thread_;
-        std::unique_ptr<webrtc::ConnectionContext::MediaEngineReference> media_engine_ref_ RTC_GUARDED_BY(worker_thread_);
+        std::unique_ptr<webrtc::ConnectionContext::MediaEngineReference> media_engine_ref_ RTC_GUARDED_BY(network_thread_);
 
         webrtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
 

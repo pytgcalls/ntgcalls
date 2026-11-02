@@ -3,11 +3,13 @@
 //
 
 #pragma once
-#include <media/base/video_source_base.h>
+#include <api/video/video_frame.h>
+#include <api/video/video_source_interface.h>
+#include <rtc_base/synchronization/mutex.h>
 
 namespace wrtc::interfaces::media {
-    class LocalVideoAdapter final: public webrtc::VideoSinkInterface<webrtc::VideoFrame>, public webrtc::VideoSourceBaseGuarded {
-        std::optional<SinkPair> sink_;
+    class LocalVideoAdapter final: public webrtc::VideoSinkInterface<webrtc::VideoFrame>, public webrtc::VideoSourceInterface<webrtc::VideoFrame> {
+        VideoSinkInterface* sink_;
         webrtc::Mutex lock_;
 
     public:

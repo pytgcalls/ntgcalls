@@ -15,7 +15,6 @@ namespace wrtc::interfaces::media::channels {
     class IncomingAudioChannel {
         uint32_t ssrc_ = 0;
         std::unique_ptr<webrtc::BaseChannel> channel_;
-        utils::SafeThread& worker_thread_;
         utils::SafeThread& network_thread_;
         int64_t activity_timestamp_ = 0;
 
@@ -25,7 +24,6 @@ namespace wrtc::interfaces::media::channels {
             ChannelManager* channel_manager,
             webrtc::RtpTransport* rtp_transport,
             const models::MediaContent& media_content,
-            utils::SafeThread& worker_thread,
             utils::SafeThread& network_thread,
             std::weak_ptr<RemoteAudioSink> remote_audio_sink,
             const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,

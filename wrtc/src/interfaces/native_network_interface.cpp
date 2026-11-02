@@ -43,7 +43,7 @@ namespace wrtc::interfaces {
                     if (!strong_listener) {
                         return;
                     }
-                    strong_listener->worker_thread().PostTask([weak, packet] {
+                    strong_listener->network_thread().PostTask([weak, packet] {
                         const auto strong_worker = weak.lock();
                         if (!strong_worker) {
                             return;
@@ -65,7 +65,7 @@ namespace wrtc::interfaces {
                 if (!strong_listener) {
                     return;
                 }
-                strong_listener->worker_thread().PostTask([weak, packet] {
+                strong_listener->network_thread().PostTask([weak, packet] {
                     const auto strong_worker = weak.lock();
                     if (!strong_worker) {
                         return;
@@ -79,7 +79,7 @@ namespace wrtc::interfaces {
                     if (!strong_listener) {
                         return;
                     }
-                    strong_listener->worker_thread().PostTask([weak, packet] {
+                    strong_listener->network_thread().PostTask([weak, packet] {
                         const auto strong_worker = weak.lock();
                         if (!strong_worker) {
                             return;
@@ -93,16 +93,15 @@ namespace wrtc::interfaces {
         channel_manager_ = std::make_unique<media::ChannelManager>(
             environment(),
             factory_->media_engine(),
-            worker_thread(),
             network_thread(),
             signaling_thread()
         );
-        worker_thread().BlockingCall([weak] {
+        network_thread().BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            webrtc::CallConfig call_config(strong->environment(), strong->worker_thread(), strong->network_thread());
+            webrtc::CallConfig call_config(strong->environment(), strong->network_thread(), strong->network_thread());
             call_config.audio_state = strong->factory_->media_engine()->voice().GetAudioState();
             strong->call_ = strong->factory_->media_factory()->CreateCall(std::move(call_config));
             strong->payload_type_suggester_ = std::make_unique<webrtc::SdpPayloadTypeSuggester>(
@@ -187,7 +186,6 @@ namespace wrtc::interfaces {
                     channel_manager_.get(),
                     dtls_srtp_transport_.get(),
                     media_content,
-                    worker_thread(),
                     network_thread(),
                     remote_audio_sink_,
                     payload_type_mapping_,
@@ -224,7 +222,6 @@ namespace wrtc::interfaces {
                     media_content.user_id,
                     factory_->ssrc_generator(),
                     video_codecs,
-                    worker_thread(),
                     network_thread(),
                     media_content.is_screen_cast() ? remote_screen_cast_sink_ : remote_video_sink_,
                     payload_type_mapping_,
@@ -438,7 +435,7 @@ namespace wrtc::interfaces {
         NetworkInterface::enable_audio_incoming(enable);
 
         const std::weak_ptr weak(shared_from_this());
-        worker_thread().BlockingCall([weak, enable] {
+        network_thread().BlockingCall([weak, enable] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -481,7 +478,7 @@ namespace wrtc::interfaces {
         }
         NetworkInterface::enable_video_incoming(enable, is_screen_cast);
         const std::weak_ptr weak(shared_from_this());
-        worker_thread().BlockingCall([weak, enable, is_screen_cast] {
+        network_thread().BlockingCall([weak, enable, is_screen_cast] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -522,7 +519,7 @@ namespace wrtc::interfaces {
     void NativeNetworkInterface::close() {
         const bool was_closed = closed_;
         const std::weak_ptr weak(shared_from_this());
-        worker_thread().BlockingCall([weak] {
+        network_thread().BlockingCall([weak] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;

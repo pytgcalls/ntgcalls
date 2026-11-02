@@ -11,16 +11,16 @@ namespace wrtc::interfaces::media {
     class ChannelManager {
         const webrtc::Environment& environment_;
         webrtc::MediaEngineInterface* media_engine_;
-        utils::SafeThread& worker_thread_;
         webrtc::Thread* signaling_thread_;
         webrtc::Thread* network_thread_;
         webrtc::UniqueRandomIdGenerator ssrc_generator_;
+
+        static void on_frame_delivered(uint32_t ssrc, const webrtc::RtpPacketInfos& packet_infos, webrtc::Timestamp timestamp);
 
     public:
         ChannelManager(
             const webrtc::Environment& environment,
             webrtc::MediaEngineInterface* media_engine,
-            utils::SafeThread& worker_thread,
             webrtc::Thread* network_thread,
             webrtc::Thread* signaling_thread
         );

@@ -13,7 +13,6 @@ namespace wrtc::interfaces::media::channels {
     class OutgoingVideoChannel {
         uint32_t ssrc_ = 0;
         std::unique_ptr<webrtc::BaseChannel> channel_;
-        utils::SafeThread& worker_thread_;
         utils::SafeThread& network_thread_;
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> bitrate_allocator_factory_;
         LocalVideoAdapter* sink_;
@@ -24,7 +23,6 @@ namespace wrtc::interfaces::media::channels {
             ChannelManager* channel_manager,
             webrtc::RtpTransport* rtp_transport,
             const models::MediaContent& media_content,
-            utils::SafeThread& worker_thread,
             utils::SafeThread& network_thread,
             LocalVideoAdapter* sink,
             const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,

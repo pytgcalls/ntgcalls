@@ -71,6 +71,8 @@ namespace ntgcalls::signaling {
         uint16_t GetSslGroupId() const override;
 
         bool AppendSrtpKeyingMaterial(webrtc::ZeroOnFreeBuffer<unsigned char>& keying_material) override;
+
+        void MaybeStartDtlsInStun() override;
     };
 
 } // ntgcalls::signaling

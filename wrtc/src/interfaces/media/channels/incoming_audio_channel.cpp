@@ -15,13 +15,12 @@ namespace wrtc::interfaces::media::channels {
         ChannelManager* channel_manager,
         webrtc::RtpTransport* rtp_transport,
         const models::MediaContent& media_content,
-        utils::SafeThread& worker_thread,
         utils::SafeThread& network_thread,
         std::weak_ptr<RemoteAudioSink> remote_audio_sink,
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
         E2EEncryptor* encryptor,
         const std::function<void(uint32_t, uint8_t, bool)>& set_audio_level_and_speech
-    ): ssrc_(media_content.ssrc), worker_thread_(worker_thread), network_thread_(network_thread) {
+    ): ssrc_(media_content.ssrc), network_thread_(network_thread) {
         update_activity();
 
         const auto stream_id = std::to_string(ssrc_);
@@ -43,7 +42,7 @@ namespace wrtc::interfaces::media::channels {
             attached = channel_->SetRtpTransport(rtp_transport);
         });
         if (!attached) {
-            worker_thread.BlockingCall([&] {
+            network_thread.BlockingCall([&] {
                 channel_ = nullptr;
             });
             throw RTCException("Failed to attach the incoming audio channel to the RTP transport");
@@ -84,7 +83,7 @@ namespace wrtc::interfaces::media::channels {
         stream_params.set_stream_ids({stream_id});
         incoming_description->AddStream(stream_params);
 
-        worker_thread.BlockingCall([&] {
+        network_thread.BlockingCall([&] {
             channel_->rtp_transport()->SetActivePayloadTypeDemuxing(false);
             channel_->SetLocalContent(outgoing_description.get(), webrtc::SdpType::kOffer);
             channel_->SetRemoteContent(incoming_description.get(), webrtc::SdpType::kAnswer);
@@ -96,7 +95,7 @@ namespace wrtc::interfaces::media::channels {
                 set_audio_level_and_speech(media_content.ssrc, audio_level, has_speech);
             };
         }
-        worker_thread.BlockingCall([&] {
+        network_thread.BlockingCall([&] {
             auto raw_sink = std::make_unique<RawAudioSink>();
             raw_sink->set_remote_audio_sink(ssrc_, [remote_audio_sink](std::unique_ptr<models::AudioFrame> frame) {
                 if (const auto remote_audio = remote_audio_sink.lock()) {
@@ -127,7 +126,7 @@ namespace wrtc::interfaces::media::channels {
         network_thread_.BlockingCall([&] {
             channel_->SetRtpTransport(nullptr);
         });
-        worker_thread_.BlockingCall([&] {
+        network_thread_.BlockingCall([&] {
             channel_->voice_media_receive_channel()->SetRawAudioSink(ssrc_, nullptr);
             channel_ = nullptr;
         });
