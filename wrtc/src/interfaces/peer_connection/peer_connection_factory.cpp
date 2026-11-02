@@ -25,7 +25,7 @@ extern "C" {
 namespace wrtc::interfaces::peer_connection {
     std::mutex PeerConnectionFactory::mutex_{};
     bool PeerConnectionFactory::initialized_ = false;
-    std::unique_ptr<PeerConnectionFactory> PeerConnectionFactory::default_ = nullptr;
+    std::unique_ptr<PeerConnectionFactory, void(*)(PeerConnectionFactory*)> PeerConnectionFactory::default_{nullptr, &PeerConnectionFactory::destroy_default};
 
     PeerConnectionFactory::PeerConnectionFactory() {
         av_log_set_level(AV_LOG_QUIET);
@@ -139,8 +139,14 @@ namespace wrtc::interfaces::peer_connection {
             webrtc::InitializeSSL();
 #endif
             initialized_ = true;
-            default_ = std::make_unique<PeerConnectionFactory>();
+            default_.reset(new PeerConnectionFactory());
         }
         return default_.get();
+    }
+
+    void PeerConnectionFactory::destroy_default([[maybe_unused]] PeerConnectionFactory* factory) {
+#ifndef IS_WINDOWS
+        delete factory;
+#endif
     }
 } // wrtc::interfaces::peer_connection

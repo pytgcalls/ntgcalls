@@ -43,7 +43,7 @@ namespace wrtc::interfaces::peer_connection {
         static std::mutex mutex_;
         static bool initialized_;
         void* jni_env_;
-        static std::unique_ptr<PeerConnectionFactory> default_;
+        static std::unique_ptr<PeerConnectionFactory, void(*)(PeerConnectionFactory*)> default_;
 
         std::unique_ptr<utils::SafeThread> network_thread_;
         std::unique_ptr<utils::SafeThread> signaling_thread_;
@@ -55,6 +55,8 @@ namespace wrtc::interfaces::peer_connection {
         webrtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module_;
 
         std::vector<webrtc::SdpVideoFormat> supported_video_formats_;
+
+        static void destroy_default(PeerConnectionFactory* factory);
     };
 
 } // wrtc::interfaces::peer_connection
