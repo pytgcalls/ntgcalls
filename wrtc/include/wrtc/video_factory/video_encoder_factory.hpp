@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <api/video_codecs/video_encoder_factory.h>
 #include <wrtc/video_factory/video_encoder_config.hpp>
 
@@ -12,6 +13,7 @@ namespace wrtc::video_factory {
     class VideoEncoderFactory final: public webrtc::VideoEncoderFactory {
         std::vector<VideoEncoderConfig> encoders_;
         mutable std::vector<std::vector<webrtc::SdpVideoFormat>> formats_;
+        mutable std::mutex mutex_;
 
     public:
         explicit VideoEncoderFactory(const std::vector<VideoEncoderConfig>& encoders): encoders_(encoders) {};
