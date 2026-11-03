@@ -14,10 +14,10 @@ add_custom_target(clean_objects
 project(ntgcalls VERSION 3.0.6 LANGUAGES C CXX)
 include(cmake/VersionUtil.cmake)
 
-if (MSVC)
-    add_compile_options(/wd4068 /wd5030)
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-unknown-attributes)
+elseif (MSVC)
+    add_compile_options(/wd4068 /wd5030)
 else ()
     add_compile_options(-Wno-attributes)
 endif ()

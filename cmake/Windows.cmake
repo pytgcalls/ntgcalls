@@ -7,8 +7,6 @@ target_compile_definitions(${target_name} PRIVATE
 )
 target_compile_definitions(${target_name} PUBLIC
     WEBRTC_WIN
-    _LIBCPP_ABI_NAMESPACE=Cr
-    _LIBCPP_ABI_VERSION=2
     _LIBCPP_DISABLE_AVAILABILITY
     _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS
     BOOST_NO_CXX98_FUNCTION_BASE
