@@ -45,6 +45,16 @@ build_and_install "nasm" configure --setup-commands="patch_nasm"
 build_and_install "bison" make --update-submodules --setup-commands="bison_setup"
 build_and_install "llvm-project/llvm" cmake \
     -DLLVM_ENABLE_PROJECTS="clang" \
+    -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
+    -DCOMPILER_RT_BUILD_BUILTINS=ON \
+    -DCOMPILER_RT_BUILD_SANITIZERS=OFF \
+    -DCOMPILER_RT_BUILD_XRAY=OFF \
+    -DCOMPILER_RT_BUILD_LIBFUZZER=OFF \
+    -DCOMPILER_RT_BUILD_PROFILE=OFF \
+    -DCOMPILER_RT_BUILD_MEMPROF=OFF \
+    -DCOMPILER_RT_BUILD_ORC=OFF \
+    -DCOMPILER_RT_BUILD_CTX_PROFILE=OFF \
+    -DCOMPILER_RT_BUILD_GWP_ASAN=OFF \
     -DLLVM_TARGETS_TO_BUILD="all" \
     -DLLVM_ENABLE_PIC=ON \
     -DLLVM_BUILD_LLVM_DYLIB=ON \
