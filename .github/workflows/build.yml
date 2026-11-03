@@ -149,7 +149,7 @@ jobs:
 
       - name: Install Python Requirements
         run: |
-          "${{ steps.python.outputs.path }}" -m pip install setuptools
+          "${{ steps.python.outputs.path }}" -m pip install setuptools ninja
         shell: bash
 
       - name: Install Media Foundation

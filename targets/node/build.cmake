@@ -38,6 +38,7 @@ target_compile_definitions(${NTG_LIB_NAME} PRIVATE
 
 if (WINDOWS AND MSVC)
     target_link_options(${NTG_LIB_NAME} PRIVATE /DELAYLOAD:NODE.EXE /FORCE:MULTIPLE /IGNORE:4006)
+    target_link_libraries(${NTG_LIB_NAME} PRIVATE delayimp)
 endif ()
 
 set(NODE_PKG_DIR "${TARGET_CODE_DIR}/build/Release")
