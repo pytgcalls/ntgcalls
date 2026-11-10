@@ -4,6 +4,7 @@ ulimit -n 1048576
 
 import libraries.properties
 import patch-nasm.sh
+import patch-gcompat.sh
 import bison-setup.sh
 
 if command -v yum >/dev/null 2>&1; then
@@ -39,6 +40,12 @@ else
       perl \
       gperf \
       help2man
+fi
+
+if is_musl && is_arm64; then
+  apk add --no-cache libucontext-dev musl-obstack-dev
+  build_and_install "gcompat" make --setup-commands="patch_gcompat"
+  sed -i "s:^ID=alpine:ID=musllinux:" /etc/os-release
 fi
 
 build_and_install "nasm" configure --setup-commands="patch_nasm"
