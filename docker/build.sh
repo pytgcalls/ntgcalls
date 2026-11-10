@@ -43,7 +43,14 @@ fi
 
 build_and_install "nasm" configure --setup-commands="patch_nasm"
 build_and_install "bison" make --update-submodules --setup-commands="bison_setup"
+
+llvm_target_args=()
+if is_musl; then
+  llvm_target_args+=("-DLLVM_DEFAULT_TARGET_TRIPLE=$(gcc -dumpmachine)")
+fi
+
 build_and_install "llvm-project/llvm" cmake \
+    "${llvm_target_args[@]}" \
     -DLLVM_ENABLE_PROJECTS="clang" \
     -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
     -DCOMPILER_RT_BUILD_BUILTINS=ON \
