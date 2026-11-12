@@ -34,6 +34,10 @@ if (import_libraries)
         xorg::Xtst
     )
 
+    if (USE_LIBCXX)
+        target_link_options(${target_name} PUBLIC -nostdlib++)
+    endif ()
+
     target_link_libraries(${target_name} PRIVATE
         dl
         rt
