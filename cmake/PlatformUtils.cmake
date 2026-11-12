@@ -29,6 +29,16 @@ endif ()
 
 set(OS_FULL_NAME ${CMAKE_SYSTEM_NAME};${OS_ARCH})
 
+if (LINUX)
+    file(GLOB MUSL_LOADER /lib/ld-musl-*.so.1)
+    if (MUSL_LOADER)
+        set(LINUX_MUSL ON)
+        set(LINUX_PLATFORM muslinux)
+    else ()
+        set(LINUX_PLATFORM linux)
+    endif ()
+endif ()
+
 function(GetProperty key result)
     file(READ "${props_loc}" file_content)
     string(REPLACE "." "\." key "${key}")

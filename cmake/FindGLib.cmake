@@ -8,13 +8,14 @@ set(GMODULE_2_0_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}gmodule-2.0${CMAKE_STATIC_LIBR
 set(FFI_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}ffi${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(EXPAT_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}expat${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(PCRE2_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}pcre2-8${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(INTL_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}intl${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 if (LINUX_ARM64)
-    set(PLATFORM linux)
+    set(PLATFORM ${LINUX_PLATFORM})
     set(ARCHIVE_FORMAT .tar.gz)
     set(ARCH arm64)
 elseif (LINUX_x86_64)
-    set(PLATFORM linux)
+    set(PLATFORM ${LINUX_PLATFORM})
     set(ARCHIVE_FORMAT .tar.gz)
     set(ARCH x86_64)
 else ()
@@ -49,6 +50,12 @@ if(NOT TARGET gnu::pcre2)
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${PCRE2_LIB}")
 endif ()
 
+if(LINUX_MUSL AND NOT TARGET gnu::intl)
+    add_library(gnu::intl STATIC IMPORTED GLOBAL)
+    set_target_properties(gnu::intl PROPERTIES
+            IMPORTED_LOCATION "${GLIB_SRC}/lib/${INTL_LIB}")
+endif ()
+
 if(NOT TARGET gnome::gmodule-2.0)
     add_library(gnome::gmodule-2.0 STATIC IMPORTED GLOBAL)
     set_target_properties(gnome::gmodule-2.0 PROPERTIES
@@ -61,6 +68,9 @@ if(NOT TARGET gnome::glib-2.0)
             INTERFACE_INCLUDE_DIRECTORIES "${GLIB_SRC}/include/glib-2.0"
             IMPORTED_LOCATION "${GLIB_SRC}/lib/${GLIB_2_0_LIB}")
     target_link_libraries(gnome::glib-2.0 INTERFACE gnu::pcre2)
+    if (LINUX_MUSL)
+        target_link_libraries(gnome::glib-2.0 INTERFACE gnu::intl)
+    endif ()
 endif ()
 
 if(NOT TARGET gnome::gio-2.0)

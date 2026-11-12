@@ -25,8 +25,16 @@ def cmake_path():
     return Path(TOOLS_PATH, f'cmake_{CMAKE_VERSION.replace(".", "_")}')
 
 
+def is_musl():
+    return any(Path('/lib').glob('ld-musl-*.so.1'))
+
+
+def use_bundled_cmake():
+    return sys.platform.startswith('linux') and not is_musl()
+
+
 def cmake_bin():
-    if sys.platform.startswith('linux'):
+    if use_bundled_cmake():
         return Path(cmake_path(), 'bin', 'cmake')
     return shutil.which('cmake') or 'cmake'
 
@@ -59,7 +67,7 @@ if not any(cmd in sys.argv for cmd in LIGHT_COMMANDS):
     with open(
         os.path.join(base_path, 'CMakeLists.txt'), encoding='utf-8'
     ) as f:
-        if sys.platform.startswith('linux'):
+        if use_bundled_cmake():
             install_cmake(CMAKE_VERSION)
         regex = re.compile(r'VERSION ([0-9.]+)', re.MULTILINE)
         cmake_command = [

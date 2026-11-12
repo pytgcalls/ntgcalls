@@ -5,11 +5,11 @@ set(OPENH264_LIB ${CMAKE_STATIC_LIBRARY_PREFIX}openh264${CMAKE_STATIC_LIBRARY_SU
 
 if(NOT TARGET cisco::OpenH264)
     if (LINUX_ARM64)
-        set(PLATFORM linux)
+        set(PLATFORM ${LINUX_PLATFORM})
         set(ARCHIVE_FORMAT .tar.gz)
         set(ARCH arm64)
     elseif (LINUX_x86_64)
-        set(PLATFORM linux)
+        set(PLATFORM ${LINUX_PLATFORM})
         set(ARCHIVE_FORMAT .tar.gz)
         set(ARCH x86_64)
     elseif (MACOS_ARM64)
