@@ -5,11 +5,14 @@ use std::path::PathBuf;
 fn shared_name() -> Option<&'static str> {
     let os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
     let arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
-    match (os.as_str(), arch.as_str()) {
-        ("linux", "x86_64") => Some("linux-x86_64"),
-        ("linux", "aarch64") => Some("linux-arm64"),
-        ("macos", _) => Some("macos-arm64"),
-        ("windows", "x86_64") => Some("windows-x86_64"),
+    let libc = env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
+    match (os.as_str(), arch.as_str(), libc.as_str()) {
+        ("linux", "x86_64", "musl") => Some("muslinux-x86_64"),
+        ("linux", "aarch64", "musl") => Some("muslinux-arm64"),
+        ("linux", "x86_64", _) => Some("linux-x86_64"),
+        ("linux", "aarch64", _) => Some("linux-arm64"),
+        ("macos", _, _) => Some("macos-arm64"),
+        ("windows", "x86_64", _) => Some("windows-x86_64"),
         _ => None,
     }
 }

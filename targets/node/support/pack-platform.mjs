@@ -19,6 +19,7 @@ const platform = arg('platform', process.platform);
 const arch = arg('arch', process.arch);
 const version = arg('version', JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version);
 const outDir = resolve(arg('out', join(root, 'packages')));
+const [cpu, libc = 'glibc'] = arch.split('-');
 
 const main = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const pkgDir = join(outDir, `${platform}-${arch}`);
@@ -39,7 +40,8 @@ const pkg = {
   repository: main.repository,
   engines: main.engines,
   os: [platform],
-  cpu: [arch],
+  cpu: [cpu],
+  ...(platform === 'linux' && { libc: [libc] }),
   main: 'ntgcalls.node',
   files: ['ntgcalls.node', ...notices],
 };

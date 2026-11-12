@@ -128,11 +128,16 @@ jobs:
         shell: bash
 
       - name: Set up Node
-        if: contains(matrix.tools, 'node')
+        if: contains(matrix.tools, 'node') && !startsWith(matrix.shared_name, 'muslinux')
         uses: actions/setup-node@v7
         with:
           node-version: '24'
           registry-url: https://registry.npmjs.org
+
+      - name: Set up Node (Musl)
+        if: contains(matrix.tools, 'node') && startsWith(matrix.shared_name, 'muslinux')
+        run: apk add --no-cache nodejs npm
+        shell: bash
 
       - name: Upgrade npm for trusted publishing
         if: contains(matrix.tools, 'node')
