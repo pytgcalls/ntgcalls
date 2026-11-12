@@ -112,7 +112,7 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v7
-        if: ${{ !(startsWith(matrix.shared_name, 'linux')) }}
+        if: matrix.container == ''
         id: python-setup
         with:
           python-version: "3.10 - 3.15"
