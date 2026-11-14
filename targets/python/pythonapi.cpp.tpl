@@ -96,7 +96,11 @@ PYBIND11_MODULE(ntgcalls, m, py::mod_gil_not_used()) {
 @end
         >(),
 @for a in s.ctorargs
+@if a.trailing
+            py::arg("@{a.name|snake}") = py::none()@{a.sep}
+@else
             py::arg("@{a.name|snake}")@{a.sep}
+@end
 @end
         );
 @end
