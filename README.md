@@ -54,7 +54,7 @@ NTgCalls is a lightweight open-source library for media streaming in Telegram ca
 |    ARM64     | ![BUILD](https://img.shields.io/badge/build-unsupported-dark_green?logo=windows11&logoColor=%23959DA5&labelColor=%23282f37&color=%23959DA5) | ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=linux&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745) |   ![BUILD](https://img.shields.io/badge/build-passing-dark_green?logo=apple&logoColor=%23959DA5&labelColor=%23282f37&color=%2328A745)   |
 
 ## Features
-- Pre-built binaries for macOS (arm64-v8a), Linux (x86_64, arm64-v8a), Windows (x86_64), and Android (x86, 86_64, arm64-v8a, armv7)
+- Pre-built binaries for macOS (arm64-v8a), Linux (x86_64, arm64-v8a, glibc and musl), Windows (x86_64), and Android (x86, 86_64, arm64-v8a, armv7)
 - Call flexibility: Group and private call support
 - Media controls: pause/resume and mute/unmute
 - Codec compatibility: H.264, HEVC (H.265), VP8, VP9, AV1, AAC, MP3, Opus
