@@ -8,7 +8,7 @@ The prebuilt binaries (Python wheels, npm packages, Android AAR, C shared/static
 
 | Component | Version | License | Upstream source | Build scripts and configuration | Platforms |
 |---|---|---|---|---|---|
-| WebRTC | 157.8103.4.0 | BSD-3-Clause | <https://webrtc.googlesource.com/src> | <https://github.com/pytgcalls/webrtc-build> | All |
+| WebRTC | 157.8103.4.1 | BSD-3-Clause | <https://webrtc.googlesource.com/src> | <https://github.com/pytgcalls/webrtc-build> | All |
 | Boost | 1.92.1 | BSL-1.0 | <https://github.com/boostorg/boost> | <https://github.com/pytgcalls/boost> | All |
 | LLVM libc++ / libc++abi | - | Apache-2.0 WITH LLVM-exception | <https://github.com/llvm/llvm-project> | - | Linux, macOS, Android |
 | FFmpeg | 9.0.2 | LGPL-2.1-or-later | <https://github.com/FFmpeg/FFmpeg> | <https://github.com/pytgcalls/ffmpeg> | All |
@@ -21,7 +21,7 @@ The prebuilt binaries (Python wheels, npm packages, Android AAR, C shared/static
 | libffi | 3.5.2 | MIT | <https://github.com/libffi/libffi> | <https://github.com/pytgcalls/glib> | Linux |
 | PCRE2 | 10.46 | BSD-3-Clause WITH PCRE2-exception | <https://github.com/PCRE2Project/pcre2> | <https://github.com/pytgcalls/glib> | Linux |
 | Expat | 2.8.3 | MIT | <https://github.com/libexpat/libexpat> | <https://github.com/pytgcalls/glib> | Linux |
-| Mesa (libgbm) | 26.2.6 | MIT | <https://gitlab.freedesktop.org/mesa/mesa> | <https://github.com/pytgcalls/mesa> | Linux |
+| Mesa (libgbm) | 26.3.0 | MIT | <https://gitlab.freedesktop.org/mesa/mesa> | <https://github.com/pytgcalls/mesa> | Linux |
 | libdrm | 2.4.134 | MIT | <https://gitlab.freedesktop.org/mesa/drm> | <https://github.com/pytgcalls/mesa> | Linux |
 | libX11 | 1.8.14 | MIT / X11 | <https://gitlab.freedesktop.org/xorg/lib/libx11> | <https://github.com/pytgcalls/libx11> | Linux |
 | libxcb | 1.17.0 | MIT / X11 | <https://gitlab.freedesktop.org/xorg/lib/libxcb> | <https://github.com/pytgcalls/libx11> | Linux |
