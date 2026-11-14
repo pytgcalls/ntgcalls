@@ -80,7 +80,7 @@ namespace wrtc::interfaces {
 
         void close() override;
 
-        void create_channels();
+        void create_channels() override;
 
         void add_ice_candidate(const models::IceCandidate& raw_candidate) const override;
 

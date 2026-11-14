@@ -16,8 +16,9 @@ namespace wrtc::interfaces::media::channels {
         webrtc::LocalAudioSinkAdapter* sink,
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
         E2EEncryptor* encryptor,
-        const std::function<std::pair<uint8_t, bool>()>& get_audio_level_and_speech
-    ): ssrc_(media_content.ssrc), network_thread_(network_thread), sink_(sink) {
+        const std::function<std::pair<uint8_t, bool>()>& get_audio_level_and_speech,
+        const models::AudioEncoding& encoding
+    ): ssrc_(media_content.ssrc), network_thread_(network_thread), sink_(sink), encoding_(encoding) {
         webrtc::AudioOptions audio_options;
         audio_options.echo_cancellation = false;
         audio_options.noise_suppression = false;
@@ -40,7 +41,14 @@ namespace wrtc::interfaces::media::channels {
             if (name == "opus") {
                 webrtc::Codec codec = webrtc::CreateAudioCodec(id, name, clockrate, channels);
                 codec.SetParam(webrtc::kCodecParamUseInbandFec, 1);
-                codec.SetParam(webrtc::kCodecParamPTime, 60);
+                codec.SetParam(webrtc::kCodecParamPTime, packet_time(encoding.bitrate));
+                if (encoding.channel_count == 2) {
+                    codec.SetParam(webrtc::kCodecParamStereo, 1);
+                    codec.SetParam(webrtc::kCodecParamSPropStereo, 1);
+                }
+                if (encoding.bitrate) {
+                    codec.SetParam(webrtc::kCodecParamMaxAverageBitrate, static_cast<int>(*encoding.bitrate));
+                }
                 for (const auto& [type, subtype] : feedbackTypes) {
                     codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
                 }
@@ -99,6 +107,15 @@ namespace wrtc::interfaces::media::channels {
         });
     }
 
+    int OutgoingAudioChannel::packet_time(const std::optional<uint32_t>& bitrate) {
+        for (const int ptime : {60, 40}) {
+            if (!bitrate || *bitrate / 8 * ptime / 1000 <= max_payload_size) {
+                return ptime;
+            }
+        }
+        return 20;
+    }
+
     void OutgoingAudioChannel::set_enabled(const bool enable) const {
         channel_->Enable(enable);
         network_thread_.BlockingCall([&] {
@@ -119,5 +136,9 @@ namespace wrtc::interfaces::media::channels {
 
     uint32_t OutgoingAudioChannel::ssrc() const {
         return ssrc_;
+    }
+
+    models::AudioEncoding OutgoingAudioChannel::encoding() const {
+        return encoding_;
     }
 } // wrtc::interfaces::media::channels

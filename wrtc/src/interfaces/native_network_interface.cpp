@@ -631,6 +631,18 @@ namespace wrtc::interfaces {
                 if (strong->audio_channel_ != nullptr) {
                     strong->audio_channel_->set_enabled(enable);
                 }
+            }, [weak](const models::AudioEncoding& encoding) {
+                const auto strong = weak.lock();
+                if (!strong) {
+                    return;
+                }
+                bool changed = false;
+                strong->network_thread().BlockingCall([&] {
+                    changed = std::exchange(strong->audio_encoding_, encoding) != encoding && strong->audio_channel_ != nullptr;
+                });
+                if (changed) {
+                    strong->create_channels();
+                }
             });
         }
         if (const auto video_track = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {

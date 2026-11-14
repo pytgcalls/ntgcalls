@@ -52,6 +52,7 @@ namespace wrtc::interfaces::media::channels {
             webrtc::Codec codec = webrtc::CreateAudioCodec(id, name, clockrate, channels);
             codec.SetParam(webrtc::kCodecParamUseInbandFec, 1);
             codec.SetParam(webrtc::kCodecParamPTime, 60);
+            codec.SetParam(webrtc::kCodecParamStereo, 1);
             for (const auto& [type, subtype] : feedbackTypes) {
                 codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
             }

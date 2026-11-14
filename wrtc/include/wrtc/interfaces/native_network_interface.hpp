@@ -62,6 +62,7 @@ namespace wrtc::interfaces {
         std::weak_ptr<media::RemoteVideoSink> remote_screen_cast_sink_;
         std::unique_ptr<media::ChannelManager> channel_manager_;
         std::unique_ptr<media::channels::OutgoingAudioChannel> audio_channel_;
+        models::AudioEncoding audio_encoding_;
         std::unique_ptr<media::channels::OutgoingVideoChannel> video_channel_;
         models::PeerIceParameters local_parameters_, remote_parameters_;
         webrtc::SocketFactory* underlying_socket_factory_ = nullptr;
@@ -107,6 +108,8 @@ namespace wrtc::interfaces {
         virtual void start() = 0;
 
         virtual void rtp_packet_received(const webrtc::RtpPacketReceived& packet) = 0;
+
+        virtual void create_channels() = 0;
 
         void init_connection(bool supports_packet_sending = false);
 

@@ -33,14 +33,16 @@ namespace ntgcalls::media {
     public:
         uint32_t sample_rate;
         uint8_t channel_count;
+        std::optional<uint32_t> bitrate;
 
-        AudioDescription(const MediaSource media_source, const uint32_t sample_rate, const uint8_t channel_count, const std::string& input, const bool keep_open):
-        BaseMediaDescription(input, media_source, keep_open), sample_rate(sample_rate), channel_count(channel_count) {}
+        AudioDescription(const MediaSource media_source, const uint32_t sample_rate, const uint8_t channel_count, const std::string& input, const bool keep_open, const std::optional<uint32_t>& bitrate = std::nullopt):
+        BaseMediaDescription(input, media_source, keep_open), sample_rate(sample_rate), channel_count(channel_count), bitrate(bitrate) {}
     };
 
     inline bool operator==(const AudioDescription& lhs, const AudioDescription& rhs) {
         return lhs.sample_rate == rhs.sample_rate &&
                lhs.channel_count == rhs.channel_count &&
+               lhs.bitrate == rhs.bitrate &&
                lhs.input == rhs.input &&
                lhs.media_source == rhs.media_source;
     }
