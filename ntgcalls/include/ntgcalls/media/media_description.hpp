@@ -14,7 +14,6 @@ namespace ntgcalls::media {
             Unknown = 0,
             File = 1 << 0,
             Shell = 1 << 1,
-            FFmpeg = 1 << 2,
             Device = 1 << 3,
             Desktop = 1 << 4,
             External = 1 << 5
