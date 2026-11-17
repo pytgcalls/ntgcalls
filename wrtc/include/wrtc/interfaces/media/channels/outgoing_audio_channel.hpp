@@ -8,6 +8,7 @@
 #include <pc/rtp_sender.h>
 #include <wrtc/interfaces/media/channel_manager.hpp>
 #include <wrtc/interfaces/media/frame_transformer.hpp>
+#include <wrtc/models/audio_encoding.hpp>
 #include <wrtc/models/media_content.hpp>
 
 namespace wrtc::interfaces::media::channels {
@@ -17,6 +18,11 @@ namespace wrtc::interfaces::media::channels {
         std::unique_ptr<webrtc::BaseChannel> channel_;
         utils::SafeThread& network_thread_;
         webrtc::LocalAudioSinkAdapter* sink_;
+        models::AudioEncoding encoding_;
+
+        static constexpr uint32_t kMaxPayloadSize = 1000;
+
+        static int packet_time(const std::optional<uint32_t>& bitrate);
 
     public:
         OutgoingAudioChannel(
@@ -28,7 +34,8 @@ namespace wrtc::interfaces::media::channels {
             webrtc::LocalAudioSinkAdapter* sink,
             const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
             E2EEncryptor* encryptor,
-            const std::function<std::pair<uint8_t, bool>()>& get_audio_level_and_speech
+            const std::function<std::pair<uint8_t, bool>()>& get_audio_level_and_speech,
+            const models::AudioEncoding& encoding
         );
 
         void set_enabled(bool enable) const;
@@ -36,6 +43,8 @@ namespace wrtc::interfaces::media::channels {
         ~OutgoingAudioChannel();
 
         [[nodiscard]] uint32_t ssrc() const;
+
+        [[nodiscard]] models::AudioEncoding encoding() const;
     };
 
 } // wrtc::interfaces::media::channels

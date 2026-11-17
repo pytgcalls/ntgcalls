@@ -94,6 +94,7 @@ name **is** the folder name, `setup.py` auto-discovers `targets/*/`.
 | `base` | strip namespace (`a.b.C` / `a::b::C` → `C`) | — |
 | `slash` | `a.b.C` → `a/b/C` | — |
 | `type` | apply the active `@typemap` | `ntg_CallInfo` |
+| `box` | apply the active `@boxmap`, falling back to `@typemap` | `Integer` |
 | `reserve` | escape language keywords (see below) | — |
 | `conv#MAP#typepath` | apply a `@wrapmap` named MAP | see below |
 
@@ -245,14 +246,18 @@ Top-level lists: `classes`, `structs`, `enums`, `excs`, `callbacks`,
 `p.string`, `p.bytes`, `p.vector`, `p.elcpp` (vector element C++ type).
 
 ### `structs` → `s`
-`s.name`, `s.cpp`, `s.ns` (namespace), `s.fields`, `s.ctorargs`, `s.ctorable`.
+`s.name`, `s.cpp`, `s.ns` (namespace), `s.fields`, `s.ctorargs`, `s.ctorable`,
+`s.trailingopt` (the last fields are optional, so a shorter constructor can
+default them). Each ctor arg also has `a.trailing`.
 > Structs are **topologically sorted**: a struct's by-value dependencies come
 > first, safe to emit in order.
 
 ### field (`s.fields`) → `f`
 `f.name`, `f.cpp` (C++ member name), `f.type`, `f.sep`, `f.scalar`, `f.string`,
 `f.bytes`, `f.vector`, `f.optional`, `f.isstruct` (nested struct, not enum),
-`f.elcpp`, `f.cpptype`, `f.intenum`.
+`f.elcpp`, `f.cpptype`, `f.intenum`, `f.optscalar` (optional scalar),
+`f.trailing` (optional and only optional fields follow), `f.leadsep` (like
+`f.sep`, but over the non-trailing fields only).
 
 ### `enums` → `e`   (members `e.members` → `mem`)
 `e.name`, `e.cpp`, `e.ns`, `e.emit` (skip if false), `e.members`;

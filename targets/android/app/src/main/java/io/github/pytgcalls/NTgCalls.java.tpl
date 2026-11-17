@@ -64,18 +64,51 @@ package @{config.java_pkg};
 
 public class @{s.name} {
 @for f in s.fields
+@if f.optscalar
+    public final @{f.type|box} @{f.cpp};
+@else
     public final @{f.type|type} @{f.cpp};
+@end
 @end
 
     public @{s.name}(
 @for f in s.fields
+@if f.optscalar
+        @{f.type|box} @{f.cpp}@{f.sep}
+@else
         @{f.type|type} @{f.cpp}@{f.sep}
+@end
 @end
     ) {
 @for f in s.fields
         this.@{f.cpp} = @{f.cpp};
 @end
     }
+@if s.trailingopt
+
+    public @{s.name}(
+@for f in s.fields
+@if f.trailing
+@else
+@if f.optscalar
+        @{f.type|box} @{f.cpp}@{f.leadsep}
+@else
+        @{f.type|type} @{f.cpp}@{f.leadsep}
+@end
+@end
+@end
+    ) {
+        this(
+@for f in s.fields
+@if f.trailing
+            null@{f.sep}
+@else
+            @{f.cpp}@{f.sep}
+@end
+@end
+        );
+    }
+@end
 }
 @endfile
 @end

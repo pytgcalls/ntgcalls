@@ -194,6 +194,11 @@ namespace ntgcalls::media {
         const StreamId id(mode, device);
         if (mode == Capture) {
             tracks_[id] = pc->add_outgoing_track(dynamic_cast<BaseStreamer*>(streams_[id].get())->create_track());
+            if (const auto sink = dynamic_cast<AudioSink*>(streams_[id].get())) {
+                if (const auto config = sink->get_config()) {
+                    tracks_[id]->set_encoding({config->bitrate, config->channel_count});
+                }
+            }
         } else {
             if (id.second == Microphone || id.second == Speaker) {
                 pc->add_incoming_audio_track(dynamic_cast<AudioReceiver*>(streams_[id].get())->remote_sink());
@@ -445,6 +450,11 @@ namespace ntgcalls::media {
         switch (mode) {
         case Capture:
             handle_capture_config(id, d, reason, stream_type, is_external);
+            if constexpr (std::is_same_v<DescriptionType, AudioDescription>) {
+                if (const auto track = tracks_.find(id); track != tracks_.end()) {
+                    track->second->set_encoding({d.bitrate, d.channel_count});
+                }
+            }
             break;
         case Playback:
             handle_playback_config(id, d, reason, stream_type, is_external);

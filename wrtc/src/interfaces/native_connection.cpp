@@ -225,7 +225,7 @@ namespace wrtc::interfaces {
             return;
         }
         if (audio_ssrc) {
-            if (audio_channel_ && audio_channel_->ssrc() != audio_ssrc.value()) {
+            if (audio_channel_ && (audio_channel_->ssrc() != audio_ssrc.value() || audio_channel_->encoding() != audio_encoding_)) {
                 audio_channel_ = nullptr;
             }
             std::optional<models::MediaContent> audio_content;
@@ -246,7 +246,8 @@ namespace wrtc::interfaces {
                         &audio_sink_,
                         payload_type_mapping_,
                         encryptor_,
-                        nullptr
+                        nullptr,
+                        audio_encoding_
                     );
                 }
             }

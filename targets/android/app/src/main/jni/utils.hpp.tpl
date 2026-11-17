@@ -16,6 +16,16 @@
 @wrapmap jnidesc Vector<*> = Ljava/util/List;
 @wrapmap jnidesc Map<*, *> = Ljava/util/Map;
 @wrapmap jnidesc * = Lio/github/pytgcalls/@;
+@wrapmap jboxdesc long = Ljava/lang/Long;
+@wrapmap jboxdesc ulong = Ljava/lang/Long;
+@wrapmap jboxdesc int = Ljava/lang/Integer;
+@wrapmap jboxdesc uint = Ljava/lang/Integer;
+@wrapmap jboxdesc int8 = Ljava/lang/Integer;
+@wrapmap jboxdesc uint8 = Ljava/lang/Integer;
+@wrapmap jboxdesc int16 = Ljava/lang/Integer;
+@wrapmap jboxdesc uint16 = Ljava/lang/Integer;
+@wrapmap jboxdesc bool = Ljava/lang/Boolean;
+@wrapmap jboxdesc double = Ljava/lang/Double;
 @wrapmap jget long = GetLongField
 @wrapmap jget ulong = GetLongField
 @wrapmap jget int = GetIntField
@@ -246,6 +256,11 @@ inline @{s.cpp} parse@{s.name}(JNIEnv* env, jobject value) {
     const auto clazz = webrtc::ScopedJavaLocalRef<jclass>::Adopt(env, env->GetObjectClass(value));
     return @{s.cpp}(
 @for f in s.fields
+@if f.optscalar
+        parseOptional(env, env->GetObjectField(value, env->GetFieldID(clazz.obj(), "@{f.name}", "@{f.type|conv#jboxdesc#f.type}")), [env](jobject o) {
+            return convElem(env, o, static_cast<@{f.cpptype}*>(nullptr));
+        })@{f.sep}
+@else
 @if f.scalar
         static_cast<@{f.cpptype}>(env->@{f.type|conv#jget#f.type}(value, env->GetFieldID(clazz.obj(), "@{f.name}", "@{f.type|conv#jnidesc#f.type}")))@{f.sep}
 @else
@@ -282,6 +297,7 @@ inline @{s.cpp} parse@{s.name}(JNIEnv* env, jobject value) {
 @end
 @end
 @end
+@end
     );
 }
 
@@ -293,11 +309,20 @@ inline webrtc::ScopedJavaLocalRef<jobject> parseJ@{s.name}(JNIEnv* env, const @{
 @end
     const jmethodID ctor = env->GetMethodID(clazz.obj(), "<init>", "("
 @for f in s.fields
+@if f.optscalar
+        "@{f.type|conv#jboxdesc#f.type}"
+@else
         "@{f.type|conv#jnidesc#f.type}"
+@end
 @end
         ")V");
     return webrtc::ScopedJavaLocalRef<jobject>::Adopt(env, env->NewObject(clazz.obj(), ctor
 @for f in s.fields
+@if f.optscalar
+        , parseJOptional(env, value.@{f.cpp}, [env](const auto& o) -> jobject {
+            return convElemJ(env, o);
+        })
+@else
 @if f.scalar
         , static_cast<@{f.type|conv#jcast#f.type}>(value.@{f.cpp})
 @else
@@ -328,6 +353,7 @@ inline webrtc::ScopedJavaLocalRef<jobject> parseJ@{s.name}(JNIEnv* env, const @{
         , parseJList(env, value.@{f.cpp}).Release()
 @else
         , parseJ@{f.type|base}(env, value.@{f.cpp}).Release()
+@end
 @end
 @end
 @end

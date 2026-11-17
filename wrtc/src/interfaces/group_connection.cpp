@@ -385,6 +385,10 @@ namespace wrtc::interfaces {
         (void) request_participants_callback_(std::move(request));
     }
 
+    void GroupConnection::create_channels() {
+        create_channels(media_config_);
+    }
+
     void GroupConnection::create_channels(const ResponsePayload::Media& media) {
         const std::weak_ptr weak(shared_from_this());
         network_thread().BlockingCall([weak, &media] {
@@ -408,7 +412,7 @@ namespace wrtc::interfaces {
                 }
             }
         });
-        if (audio_channel_ && audio_channel_->ssrc() != outgoing_audio_ssrc_) {
+        if (audio_channel_ && (audio_channel_->ssrc() != outgoing_audio_ssrc_ || audio_channel_->encoding() != audio_encoding_)) {
             audio_channel_ = nullptr;
         }
         models::MediaContent audio_content;
@@ -426,7 +430,8 @@ namespace wrtc::interfaces {
                 &audio_sink_,
                 payload_type_mapping_,
                 encryptor_,
-                nullptr
+                nullptr,
+                audio_encoding_
             );
         }
 

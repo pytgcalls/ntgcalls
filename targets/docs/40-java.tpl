@@ -22,6 +22,16 @@
 @typemap wrtc.* = *
 @typemap webrtc.* = *
 @typemap * = *
+@boxmap int = Integer
+@boxmap uint = Integer
+@boxmap int8 = Integer
+@boxmap uint8 = Integer
+@boxmap int16 = Integer
+@boxmap uint16 = Integer
+@boxmap long = Long
+@boxmap ulong = Long
+@boxmap double = Double
+@boxmap bool = Boolean
 @for m in docpages
 @file @{config.frag_dir}/@{m.docid}.java.xml
     <lang-block language="java">
@@ -102,8 +112,8 @@
                 <pg-title>PARAMETERS</pg-title>
                 <subtext>
 @for f in s.fields
-@if f.optional
-                    <category-title><shi>@{f.type|type}</shi> <ref><sb>@{f.cpp}</sb></ref></category-title>
+@if f.optscalar
+                    <category-title><shi>@{f.type|box}</shi> <ref><sb>@{f.cpp}</sb></ref></category-title>
 @else
                     <category-title><shi>@{f.type|type}</shi> <ref><sb>@{f.cpp}</sb></ref></category-title>
 @end

@@ -92,6 +92,8 @@ namespace wrtc::interfaces {
 
         void create_channels(const ResponsePayload::Media& media);
 
+        void create_channels() override;
+
         void update_audio_ssrc_mappings(const std::vector<models::SsrcMapping>& audio_ssrcs);
 
         uint32_t add_incoming_video(int64_t user_id, const std::string& endpoint, const std::vector<models::SsrcGroup>& ssrc_groups);

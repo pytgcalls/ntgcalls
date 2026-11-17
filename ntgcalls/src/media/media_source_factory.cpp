@@ -40,9 +40,6 @@ namespace ntgcalls::media {
                 return devices::MediaDevice::create_camera_capture(*video, sink);
             }
             return devices::MediaDevice::create_device<io::BaseReader>(desc, sink, true);
-        case BaseMediaDescription::MediaSource::FFmpeg:
-            RTC_LOG(LS_ERROR) << "FFmpeg encoder is not yet supported";
-            throw FFmpegError("FFmpeg encoder is not yet supported");
         case BaseMediaDescription::MediaSource::Desktop:
             if (const auto* video = dynamic_cast<const VideoDescription*>(&desc)) {
                 return devices::MediaDevice::create_desktop_capture(*video, sink);
@@ -69,9 +66,6 @@ namespace ntgcalls::media {
 #endif
         case BaseMediaDescription::MediaSource::Device:
             return devices::MediaDevice::create_device<io::AudioWriter>(desc, sink, false);
-        case BaseMediaDescription::MediaSource::FFmpeg:
-            RTC_LOG(LS_ERROR) << "FFmpeg encoder is not yet supported";
-            throw FFmpegError("FFmpeg encoder is not yet supported");
         default:
             RTC_LOG(LS_ERROR) << "Invalid input mode";
             throw InvalidParams("Invalid input mode");
