@@ -49,5 +49,9 @@ namespace ntgcalls::instances {
         void stop() override;
 
         std::string get_fingerprint_emojis() override;
+
+        bytes::binary encrypt_message(const bytes::binary& data) const;
+
+        bytes::binary decrypt_message(int64_t user_id, const bytes::binary& data) const;
     };
 } // ntgcalls::instances

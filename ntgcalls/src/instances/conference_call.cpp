@@ -2,6 +2,7 @@
 // Created by Lauren on 11/06/26.
 //
 
+#include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/instances/conference_call.hpp>
 
 namespace ntgcalls::instances {
@@ -99,5 +100,21 @@ namespace ntgcalls::instances {
 
     std::string ConferenceCall::get_fingerprint_emojis() {
         return session_->get_fingerprint_emojis();
+    }
+
+    bytes::binary ConferenceCall::encrypt_message(const bytes::binary& data) const {
+        auto encrypted = session_->encrypt(data, 0);
+        if (encrypted.empty()) {
+            throw CryptoError("Failed to encrypt the message");
+        }
+        return encrypted;
+    }
+
+    bytes::binary ConferenceCall::decrypt_message(const int64_t user_id, const bytes::binary& data) const {
+        auto decrypted = session_->decrypt(user_id, data);
+        if (decrypted.empty()) {
+            throw CryptoError("Failed to decrypt the message");
+        }
+        return decrypted;
     }
 } // ntgcalls::instances
