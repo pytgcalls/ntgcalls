@@ -123,6 +123,10 @@ namespace ntgcalls {
 
         [[ntg::async]] std::string get_emojis_fingerprint(int64_t chat_id);
 
+        [[ntg::async]] bytes::binary encrypt_message(int64_t chat_id, const bytes::binary& data);
+
+        [[ntg::async]] bytes::binary decrypt_message(int64_t chat_id, int64_t user_id, const bytes::binary& data);
+
         [[ntg::async]] uint64_t time(int64_t chat_id, media::StreamManager::Mode mode);
 
         [[ntg::async]] media::MediaState get_state(int64_t chat_id);

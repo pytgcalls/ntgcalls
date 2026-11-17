@@ -249,6 +249,14 @@ namespace ntgcalls {
         return safe_call<instances::E2EInterface>(safe_connection(chat_id))->get_fingerprint_emojis();
     }
 
+    bytes::binary NTgCalls::encrypt_message(const int64_t chat_id, const bytes::binary& data) {
+        return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->encrypt_message(data);
+    }
+
+    bytes::binary NTgCalls::decrypt_message(const int64_t chat_id, const int64_t user_id, const bytes::binary& data) {
+        return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->decrypt_message(user_id, data);
+    }
+
     void NTgCalls::on_stream_end(const std::function<void(int64_t, media::StreamManager::Type, media::StreamManager::Device)>& callback) {
         const std::lock_guard lock(mutex_);
         on_eof_callback_ = callback;
