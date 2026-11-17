@@ -623,27 +623,30 @@ namespace wrtc::interfaces {
                 strong->outgoing_audio_tracks_.emplace_back(audio_track);
                 audio_track->AddSink(&strong->audio_sink_);
             });
-            return std::make_unique<media::tracks::MediaTrackInterface>([weak](const bool enable) {
-                const auto strong = weak.lock();
-                if (!strong) {
-                    return;
+            return std::make_unique<media::tracks::MediaTrackInterface>(
+                [weak](const bool enable) {
+                    const auto strong = weak.lock();
+                    if (!strong) {
+                        return;
+                    }
+                    if (strong->audio_channel_ != nullptr) {
+                        strong->audio_channel_->set_enabled(enable);
+                    }
+                },
+                [weak](const models::AudioEncoding& encoding) {
+                    const auto strong = weak.lock();
+                    if (!strong) {
+                        return;
+                    }
+                    bool changed = false;
+                    strong->network_thread().BlockingCall([&] {
+                        changed = std::exchange(strong->audio_encoding_, encoding) != encoding && strong->audio_channel_ != nullptr;
+                    });
+                    if (changed) {
+                        strong->create_channels();
+                    }
                 }
-                if (strong->audio_channel_ != nullptr) {
-                    strong->audio_channel_->set_enabled(enable);
-                }
-            }, [weak](const models::AudioEncoding& encoding) {
-                const auto strong = weak.lock();
-                if (!strong) {
-                    return;
-                }
-                bool changed = false;
-                strong->network_thread().BlockingCall([&] {
-                    changed = std::exchange(strong->audio_encoding_, encoding) != encoding && strong->audio_channel_ != nullptr;
-                });
-                if (changed) {
-                    strong->create_channels();
-                }
-            });
+            );
         }
         if (const auto video_track = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
             signaling_thread().BlockingCall([weak, video_track] {

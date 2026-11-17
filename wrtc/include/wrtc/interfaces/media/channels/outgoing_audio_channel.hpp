@@ -20,7 +20,7 @@ namespace wrtc::interfaces::media::channels {
         webrtc::LocalAudioSinkAdapter* sink_;
         models::AudioEncoding encoding_;
 
-        static constexpr uint32_t max_payload_size = 1000;
+        static constexpr uint32_t kMaxPayloadSize = 1000;
 
         static int packet_time(const std::optional<uint32_t>& bitrate);
 

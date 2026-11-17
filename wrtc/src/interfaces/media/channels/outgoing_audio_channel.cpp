@@ -109,7 +109,7 @@ namespace wrtc::interfaces::media::channels {
 
     int OutgoingAudioChannel::packet_time(const std::optional<uint32_t>& bitrate) {
         for (const int ptime : {60, 40}) {
-            if (!bitrate || *bitrate / 8 * ptime / 1000 <= max_payload_size) {
+            if (!bitrate || *bitrate / 8 * ptime / 1000 <= kMaxPayloadSize) {
                 return ptime;
             }
         }
