@@ -32,7 +32,12 @@ type Context struct {
 	streamEndCallbacks    []ntgcalls.StreamEndCallback
 	frameCallbacks        []ntgcalls.FrameCallback
 	emojisCallbacks       []ntgcalls.EmojisCallback
+	messagesMutex         sync.Mutex
+	callMessages          map[int64]*types.CallMessagesCache
+	callMessageCallbacks  []CallMessageCallback
 }
+
+type CallMessageCallback func(chatId int64, action types.CallMessageAction, messageId int32, message *types.CallMessage)
 
 func NewInstance(app *telegram.Client) *Context {
 	client := &Context{
@@ -46,6 +51,7 @@ func NewInstance(app *telegram.Client) *Context {
 		callParticipants:    make(map[int64]*types.CallParticipantsCache),
 		callSources:         make(map[int64]*types.CallSources),
 		waitConnect:         make(map[int64]chan error),
+		callMessages:        make(map[int64]*types.CallMessagesCache),
 	}
 	if app.IsConnected() {
 		self, err := app.GetMe(context.Background())
@@ -95,6 +101,10 @@ func (ctx *Context) OnStreamEnd(callback ntgcalls.StreamEndCallback) {
 
 func (ctx *Context) OnUpdateEmojis(callback ntgcalls.EmojisCallback) {
 	ctx.emojisCallbacks = append(ctx.emojisCallbacks, callback)
+}
+
+func (ctx *Context) OnCallMessage(callback CallMessageCallback) {
+	ctx.callMessageCallbacks = append(ctx.callMessageCallbacks, callback)
 }
 
 func (ctx *Context) OnFrame(callback ntgcalls.FrameCallback) {

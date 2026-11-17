@@ -45,7 +45,6 @@ const (
 const (
 	MediaSourceFile MediaSource = 1 << iota
 	MediaSourceShell
-	MediaSourceFFmpeg
 	MediaSourceDevice
 	MediaSourceDesktop
 	MediaSourceExternal
@@ -106,8 +105,6 @@ func (ctx MediaSource) ParseToC() C.ntg_media_source {
 		return C.NTG_MEDIA_SOURCE_FILE
 	case MediaSourceShell:
 		return C.NTG_MEDIA_SOURCE_SHELL
-	case MediaSourceFFmpeg:
-		return C.NTG_MEDIA_SOURCE_FFMPEG
 	case MediaSourceDevice:
 		return C.NTG_MEDIA_SOURCE_DEVICE
 	case MediaSourceDesktop:

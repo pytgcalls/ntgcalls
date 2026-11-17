@@ -314,6 +314,30 @@ func (ctx *Client) GetEmojisFingerprint(chatId int64) (string, error) {
 	return C.GoString(buffer), nil
 }
 
+func (ctx *Client) EncryptMessage(chatId int64, data []byte) ([]byte, error) {
+	dataC, dataSize := parseBytes(data)
+	defer freeBytes(dataC)
+	var buffer *C.uint8_t
+	var size C.size_t
+	if err := parseResult(C.ntg_encrypt_message(ctx.handle, C.int64_t(chatId), dataC, dataSize, &buffer, &size)); err != nil {
+		return nil, err
+	}
+	defer C.ntg_bytes_free(unsafe.Pointer(buffer))
+	return C.GoBytes(unsafe.Pointer(buffer), C.int(size)), nil
+}
+
+func (ctx *Client) DecryptMessage(chatId int64, userId int64, data []byte) ([]byte, error) {
+	dataC, dataSize := parseBytes(data)
+	defer freeBytes(dataC)
+	var buffer *C.uint8_t
+	var size C.size_t
+	if err := parseResult(C.ntg_decrypt_message(ctx.handle, C.int64_t(chatId), C.int64_t(userId), dataC, dataSize, &buffer, &size)); err != nil {
+		return nil, err
+	}
+	defer C.ntg_bytes_free(unsafe.Pointer(buffer))
+	return C.GoBytes(unsafe.Pointer(buffer), C.int(size)), nil
+}
+
 func (ctx *Client) GetCallType(chatId int64) (CallType, error) {
 	var buffer C.ntg_call_type
 	if err := parseResult(C.ntg_get_call_type(ctx.handle, C.int64_t(chatId), &buffer)); err != nil {

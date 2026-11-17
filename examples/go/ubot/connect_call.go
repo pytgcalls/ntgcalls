@@ -92,6 +92,8 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 				}
 			case *tg.UpdateGroupCallConnection:
 				resultParams = u.Params.Data
+			case *tg.UpdateGroupCallEncryptedMessage:
+				ctx.encryptedCallMessageReceived(chatId, u.FromID, u.EncryptedMessage)
 			}
 		}
 
@@ -271,9 +273,11 @@ func (ctx *Context) connectCall(chatId int64, mediaDescription ntgcalls.MediaDes
 			return err
 		}
 		for _, update := range callRes.(*tg.Updates).Updates {
-			switch update.(type) {
+			switch u := update.(type) {
 			case *tg.UpdateGroupCallConnection:
-				resultParams = update.(*tg.UpdateGroupCallConnection).Params.Data
+				resultParams = u.Params.Data
+			case *tg.UpdateGroupCallMessage:
+				ctx.callMessageReceived(chatId, u.Message)
 			}
 		}
 

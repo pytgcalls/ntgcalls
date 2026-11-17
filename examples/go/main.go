@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"gotgcalls/ntgcalls"
 	"gotgcalls/ubot"
+	ubotTypes "gotgcalls/ubot/types"
 	"log"
 
 	"github.com/Laky-64/gologging"
@@ -146,6 +147,19 @@ func main() {
 			return
 		}
 	}, telegram.Regex("^[!/.]conference"))
+	uBotInstance.OnCallMessage(func(chatId int64, action ubotTypes.CallMessageAction, messageId int32, message *ubotTypes.CallMessage) {
+		if action == ubotTypes.CallMessageDeleted {
+			fmt.Println("Call message deleted in chatId:", chatId, "messageId:", messageId)
+			return
+		}
+		fmt.Println("Call message from", message.SenderID, "in chatId:", chatId, "html:", message.HTML)
+		if message.Text == "!ping" {
+			_, err := uBotInstance.SendMessage(chatId, "<b>Pong!</b> 🏓", 0)
+			if err != nil {
+				gologging.Error(err)
+			}
+		}
+	})
 	uBotInstance.OnUpdateEmojis(func(chatId int64, emojis string) {
 		fmt.Println("Emojis updated for chatId:", chatId, "emojis:", emojis)
 	})
@@ -153,10 +167,12 @@ func main() {
 }
 
 func getMediaDescription(url string) ntgcalls.MediaDescription {
+	bitrate := uint32(192000)
 	audioDescription := &ntgcalls.AudioDescription{
 		MediaSource:  ntgcalls.MediaSourceShell,
 		SampleRate:   96000,
 		ChannelCount: 2,
+		Bitrate:      &bitrate,
 	}
 	videoDescription := &ntgcalls.VideoDescription{
 		MediaSource: ntgcalls.MediaSourceShell,

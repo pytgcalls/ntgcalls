@@ -229,6 +229,22 @@ func (ctx *Context) handleUpdates() {
 		}
 	})
 
+	ctx.app.OnRawUpdate(func(update *tg.UpdateMessageID) {
+		ctx.handleCallMessageUpdate(update)
+	})
+
+	ctx.app.OnRawUpdate(func(update *tg.UpdateGroupCallMessage) {
+		ctx.handleCallMessageUpdate(update)
+	})
+
+	ctx.app.OnRawUpdate(func(update *tg.UpdateDeleteGroupCallMessages) {
+		ctx.handleCallMessageUpdate(update)
+	})
+
+	ctx.app.OnRawUpdate(func(update *tg.UpdateGroupCallEncryptedMessage) {
+		ctx.handleCallMessageUpdate(update)
+	})
+
 	ctx.app.OnRawUpdate(func(update *tg.UpdateGroupCallChainBlocks) {
 		if inputCall, ok := update.Call.(*tg.InputGroupCall); ok {
 			chatId, err := ctx.convertGroupCallId(inputCall.ID)
