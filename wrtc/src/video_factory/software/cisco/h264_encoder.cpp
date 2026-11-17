@@ -205,8 +205,8 @@ namespace openh264 {
         RTC_CHECK(frame_buffer->type() == webrtc::VideoFrameBuffer::Type::kI420 || frame_buffer->type() == webrtc::VideoFrameBuffer::Type::kI420A);
 
         bool is_keyframe_needed = false;
-        for (auto& [simulcastIdx, width, height, sending, keyFrameRequest, maxFrameRate, targetBps, maxBps, frameDroppingOn, keyFrameInterval, numTemporalLayers] : configurations_) {
-            if (keyFrameRequest && sending) {
+        for (auto& [simulcast_idx, width, height, sending, key_frame_request, max_frame_rate, target_bps, max_bps, frame_dropping_on, key_frame_interval, num_temporal_layers] : configurations_) {
+            if (key_frame_request && sending) {
                 is_keyframe_needed = true;
                 break;
             }
@@ -417,11 +417,11 @@ namespace openh264 {
         size_t required_capacity = 0;
         size_t fragments_count = 0;
         for (int layer = 0; layer < info->iLayerNum; ++layer) {
-            const auto& [uiTemporalId, uiSpatialId, uiQualityId, eFrameType, uiLayerType, iSubSeqId, iNalCount, pNalLengthInByte, pBsBuf, rPsnr] = info->sLayerInfo[layer];
-            for (int nal = 0; nal < iNalCount; ++nal, ++fragments_count) {
-                RTC_CHECK_GE(pNalLengthInByte[nal], 0);
-                RTC_CHECK_LE(pNalLengthInByte[nal], std::numeric_limits<size_t>::max() - required_capacity);
-                required_capacity += pNalLengthInByte[nal];
+            const auto& [ui_temporal_id, ui_spatial_id, ui_quality_id, e_frame_type, ui_layer_type, i_sub_seq_id, i_nal_count, p_nal_length_in_byte, p_bs_buf, r_psnr] = info->sLayerInfo[layer];
+            for (int nal = 0; nal < i_nal_count; ++nal, ++fragments_count) {
+                RTC_CHECK_GE(p_nal_length_in_byte[nal], 0);
+                RTC_CHECK_LE(p_nal_length_in_byte[nal], std::numeric_limits<size_t>::max() - required_capacity);
+                required_capacity += p_nal_length_in_byte[nal];
             }
         }
         const auto buffer = webrtc::EncodedImageBuffer::Create(required_capacity);
@@ -429,18 +429,18 @@ namespace openh264 {
         size_t frag = 0;
         encoded_image->set_size(0);
         for (int layer = 0; layer < info->iLayerNum; ++layer) {
-            const auto& [uiTemporalId, uiSpatialId, uiQualityId, eFrameType, uiLayerType, iSubSeqId, iNalCount, pNalLengthInByte, pBsBuf, rPsnr] = info->sLayerInfo[layer];
+            const auto& [ui_temporal_id, ui_spatial_id, ui_quality_id, e_frame_type, ui_layer_type, i_sub_seq_id, i_nal_count, p_nal_length_in_byte, p_bs_buf, r_psnr] = info->sLayerInfo[layer];
             size_t layer_len = 0;
-            for (int nal = 0; nal < iNalCount; ++nal, ++frag) {
+            for (int nal = 0; nal < i_nal_count; ++nal, ++frag) {
                 constexpr uint8_t kStartCode[4] = {0, 0, 0, 1};
-                RTC_DCHECK_GE(pNalLengthInByte[nal], 4);
-                RTC_DCHECK_EQ(pBsBuf[layer_len + 0], kStartCode[0]);
-                RTC_DCHECK_EQ(pBsBuf[layer_len + 1], kStartCode[1]);
-                RTC_DCHECK_EQ(pBsBuf[layer_len + 2], kStartCode[2]);
-                RTC_DCHECK_EQ(pBsBuf[layer_len + 3], kStartCode[3]);
-                layer_len += pNalLengthInByte[nal];
+                RTC_DCHECK_GE(p_nal_length_in_byte[nal], 4);
+                RTC_DCHECK_EQ(p_bs_buf[layer_len + 0], kStartCode[0]);
+                RTC_DCHECK_EQ(p_bs_buf[layer_len + 1], kStartCode[1]);
+                RTC_DCHECK_EQ(p_bs_buf[layer_len + 2], kStartCode[2]);
+                RTC_DCHECK_EQ(p_bs_buf[layer_len + 3], kStartCode[3]);
+                layer_len += p_nal_length_in_byte[nal];
             }
-            std::memcpy(buffer->data() + encoded_image->size(), pBsBuf, layer_len);
+            std::memcpy(buffer->data() + encoded_image->size(), p_bs_buf, layer_len);
             encoded_image->set_size(encoded_image->size() + layer_len);
         }
     }

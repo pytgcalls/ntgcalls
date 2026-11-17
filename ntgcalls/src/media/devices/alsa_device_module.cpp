@@ -105,7 +105,7 @@ namespace ntgcalls::media::devices {
                     continue;
                 }
                 const char* dev_name = LATE(snd_ctl_card_info_get_name)(info);
-                auto id = "hw:" + std::to_string(card) + "," + std::to_string(dev);
+                const auto id = "hw:" + std::to_string(card) + "," + std::to_string(dev);
                 devices[id] = dev_name;
             }
             LATE(snd_ctl_close)(handle);
@@ -114,7 +114,7 @@ namespace ntgcalls::media::devices {
     }
 
     std::vector<DeviceInfo> AlsaDeviceModule::get_devices() {
-        auto append_device = [](std::vector<DeviceInfo>& devices, const char* name, const char* desc, const bool is_capture) {
+        const auto append_device = [](std::vector<DeviceInfo>& devices, const char* name, const char* desc, const bool is_capture) {
             const json metadata = {
                 {"is_microphone", is_capture},
                 {"id", name},
@@ -122,8 +122,8 @@ namespace ntgcalls::media::devices {
             devices.emplace_back(desc, metadata.dump());
         };
         std::vector<DeviceInfo> devices;
-        auto capture_devices = get_devices(SND_PCM_STREAM_CAPTURE);
-        auto playback_devices = get_devices(SND_PCM_STREAM_PLAYBACK);
+        const auto capture_devices = get_devices(SND_PCM_STREAM_CAPTURE);
+        const auto playback_devices = get_devices(SND_PCM_STREAM_PLAYBACK);
         for (const auto& [id, name] : capture_devices) {
             append_device(devices, id.c_str(), name.c_str(), true);
         }

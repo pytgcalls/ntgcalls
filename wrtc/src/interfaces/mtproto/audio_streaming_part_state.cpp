@@ -29,14 +29,14 @@ namespace wrtc::interfaces::mtproto {
             return {};
         }
 
-        for (const auto& [updateFrameIndex, id, ssrc] : parsed_part_->get_channel_updates()) {
-            if (updateFrameIndex == frame_index_) {
+        for (const auto& [update_frame_index, id, ssrc] : parsed_part_->get_channel_updates()) {
+            if (update_frame_index == frame_index_) {
                 update_current_mapping(ssrc, id);
             }
         }
 
-        auto [numSamples, numChannels] = parsed_part_->read_pcm(persistent_decoder, pcm10ms_);
-        if (numSamples <= 0) {
+        auto [num_samples, num_channels] = parsed_part_->read_pcm(persistent_decoder, pcm10ms_);
+        if (num_samples <= 0) {
             did_read_to_end_ = true;
             return {};
         }
@@ -44,17 +44,17 @@ namespace wrtc::interfaces::mtproto {
         std::vector<Channel> result_channels;
 
         if (is_single_channel_) {
-            for (int i = 0; i < numChannels; i++) {
+            for (int i = 0; i < num_channels; i++) {
                 Channel empty_part;
                 empty_part.ssrc = i + 1;
                 result_channels.push_back(empty_part);
             }
 
-            for (int i = 0; i < numChannels; i++) {
+            for (int i = 0; i < num_channels; i++) {
                 const auto channel = result_channels.begin() + i;
                 const int source_channel_index = i;
-                for (int j = 0; j < numSamples; j++) {
-                    channel->pcm_data.push_back(pcm10ms_[source_channel_index + j * numChannels]);
+                for (int j = 0; j < num_samples; j++) {
+                    channel->pcm_data.push_back(pcm10ms_[source_channel_index + j * num_channels]);
                 }
             }
         } else {
@@ -64,15 +64,15 @@ namespace wrtc::interfaces::mtproto {
                 result_channels.push_back(empty_part);
             }
 
-            for (auto& [ssrc, pcmData] : result_channels) {
+            for (auto& [ssrc, pcm_data] : result_channels) {
                 if (auto mapped_channel_index = get_current_mapped_channel_index(ssrc)) {
                     const int source_channel_index = mapped_channel_index.value();
-                    for (int j = 0; j < numSamples; j++) {
-                        pcmData.push_back(pcm10ms_[source_channel_index + j * numChannels]);
+                    for (int j = 0; j < num_samples; j++) {
+                        pcm_data.push_back(pcm10ms_[source_channel_index + j * num_channels]);
                     }
                 } else {
-                    for (int j = 0; j < numSamples; j++) {
-                        pcmData.push_back(0);
+                    for (int j = 0; j < num_samples; j++) {
+                        pcm_data.push_back(0);
                     }
                 }
             }

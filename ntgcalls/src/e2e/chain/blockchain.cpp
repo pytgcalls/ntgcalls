@@ -83,7 +83,7 @@ namespace ntgcalls::e2e::chain {
         if (block.height == 0) {
             state_return.group_state = GroupState{{}, Permissions::AllPermissions};
         }
-        for (const auto& [valueChange] : block.changes) {
+        for (const auto& [value_change] : block.changes) {
             std::visit([&]<typename T>(const T& value) {
                 if constexpr (std::is_same_v<T, ChangeSetGroupState>) {
                     state_return.group_state = value.group_state;
@@ -96,7 +96,7 @@ namespace ntgcalls::e2e::chain {
                     state_return.has_set_value = true;
                 }
             },
-                       valueChange);
+                       value_change);
         }
         if (block.state_proof.group_state) {
             state_return.group_state = *block.state_proof.group_state;

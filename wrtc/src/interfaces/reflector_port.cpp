@@ -444,9 +444,9 @@ namespace wrtc::interfaces {
 
     int ReflectorPort::SendTo(std::span<const bytes::byte> data, const webrtc::SocketAddress& addr, const webrtc::AsyncSocketPacketOptions& options, bool payload) {
         webrtc::CopyOnWriteBuffer target_peer_tag;
-        auto synthetic_hostname = addr.hostname();
+        const auto synthetic_hostname = addr.hostname();
         uint32_t resolved_peer_tag = 0;
-        if (auto resolved_peer_tag_it = resolved_peer_tags_by_hostname_.find(synthetic_hostname); resolved_peer_tag_it != resolved_peer_tags_by_hostname_.end()) {
+        if (const auto resolved_peer_tag_it = resolved_peer_tags_by_hostname_.find(synthetic_hostname); resolved_peer_tag_it != resolved_peer_tags_by_hostname_.end()) {
             resolved_peer_tag = resolved_peer_tag_it->second;
         } else {
             const auto prefix_format = "reflector-" + std::to_string(static_cast<uint32_t>(server_id_)) + "-";
@@ -455,8 +455,8 @@ namespace wrtc::interfaces {
                 RTC_LOG(LS_ERROR) << ToString() << ": Discarding SendTo request with destination " << addr.ToString();
                 return -1;
             }
-            auto start_position = prefix_format.size();
-            auto tag_string = synthetic_hostname.substr(start_position, synthetic_hostname.size() - kSuffixFormat.size() - start_position);
+            const auto start_position = prefix_format.size();
+            const auto tag_string = synthetic_hostname.substr(start_position, synthetic_hostname.size() - kSuffixFormat.size() - start_position);
             std::stringstream tag_string_stream(tag_string);
             tag_string_stream >> resolved_peer_tag;
             if (resolved_peer_tag == 0) {

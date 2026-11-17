@@ -268,12 +268,12 @@ namespace ntgcalls::instances {
                 break;
             }
             case signaling::messages::Message::Type::Candidates: {
-                for (const auto message = signaling::messages::CandidatesMessage::deserialize(buffer); const auto& [sdpString, sdpMid, sdpMLineIndex] : message->ice_candidates) {
+                for (const auto message = signaling::messages::CandidatesMessage::deserialize(buffer); const auto& [sdp_string, sdp_mid, sdp_m_line_index] : message->ice_candidates) {
                     webrtc::SdpParseError error;
                     std::unique_ptr<webrtc::IceCandidate> parse_candidate = webrtc::IceCandidate::Create(
-                        sdpMid,
-                        sdpMLineIndex,
-                        sdpString,
+                        sdp_mid,
+                        sdp_m_line_index,
+                        sdp_string,
                         &error
                     );
                     if (!parse_candidate) {
@@ -296,7 +296,7 @@ namespace ntgcalls::instances {
                 auto negotiation_contents = std::make_unique<wrtc::interfaces::ContentNegotiationContext::NegotiationContents>();
                 negotiation_contents->exchange_id = message->exchange_id;
                 negotiation_contents->contents = message->contents;
-                auto negotiation = message->serialize();
+                const auto negotiation = message->serialize();
                 if (const auto response = safe<wrtc::interfaces::NativeConnection>(connection_)->set_pending_answer(std::move(negotiation_contents))) {
                     signaling::messages::NegotiateChannelsMessage channel_message;
                     channel_message.exchange_id = response->exchange_id;

@@ -37,7 +37,7 @@ namespace wrtc::interfaces::media::channels {
             channel_->SetRtpTransport(rtp_transport);
         });
         std::vector<webrtc::Codec> codecs;
-        for (const auto& [id, name, clockrate, channels, feedbackTypes, parameters] : media_content.payload_types) {
+        for (const auto& [id, name, clockrate, channels, feedback_types, parameters] : media_content.payload_types) {
             if (name == "opus") {
                 webrtc::Codec codec = webrtc::CreateAudioCodec(id, name, clockrate, channels);
                 codec.SetParam(webrtc::kCodecParamUseInbandFec, 1);
@@ -49,7 +49,7 @@ namespace wrtc::interfaces::media::channels {
                 if (encoding.bitrate) {
                     codec.SetParam(webrtc::kCodecParamMaxAverageBitrate, static_cast<int>(*encoding.bitrate));
                 }
-                for (const auto& [type, subtype] : feedbackTypes) {
+                for (const auto& [type, subtype] : feedback_types) {
                     codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
                 }
                 codecs.push_back(std::move(codec));

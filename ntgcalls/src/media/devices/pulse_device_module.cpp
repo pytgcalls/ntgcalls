@@ -40,7 +40,7 @@ namespace ntgcalls::media::devices {
     }
 
     std::vector<DeviceInfo> PulseDeviceModule::get_devices() {
-        auto append_device = [](std::vector<DeviceInfo>& devices, std::string name, const std::string& desc, const bool is_capture) {
+        const auto append_device = [](std::vector<DeviceInfo>& devices, std::string name, const std::string& desc, const bool is_capture) {
             const json metadata = {
                 {"is_microphone", is_capture},
                 {"id", name},
@@ -48,8 +48,8 @@ namespace ntgcalls::media::devices {
             devices.emplace_back(desc, metadata.dump());
         };
         const auto pulse_connection = std::make_unique<utils::PulseConnection>();
-        auto record_devices = pulse_connection->get_record_devices();
-        auto play_devices = pulse_connection->get_play_devices();
+        const auto record_devices = pulse_connection->get_record_devices();
+        const auto play_devices = pulse_connection->get_play_devices();
         pulse_connection->disconnect();
         std::vector<DeviceInfo> devices;
         for (const auto& [fst, snd] : record_devices) {

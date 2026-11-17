@@ -61,16 +61,16 @@ namespace wrtc::interfaces {
     std::pair<webrtc::ServerAddresses, std::vector<webrtc::RelayServerConfig>> NativeConnection::get_stun_and_turn_servers() {
         webrtc::ServerAddresses stun_servers;
         std::vector<webrtc::RelayServerConfig> turn_servers;
-        for (auto& [id, host, port, login, password, isTurn, isTcp] : rtc_servers_) {
-            if (isTurn) {
+        for (auto& [id, host, port, login, password, is_turn, is_tcp] : rtc_servers_) {
+            if (is_turn) {
                 turn_servers.emplace_back(
                     webrtc::SocketAddress(host, port),
                     login,
                     password,
-                    isTcp ? webrtc::PROTO_TCP : webrtc::PROTO_UDP
+                    is_tcp ? webrtc::PROTO_TCP : webrtc::PROTO_UDP
                 );
             } else {
-                auto stun_address = webrtc::SocketAddress(host, port);
+                const auto stun_address = webrtc::SocketAddress(host, port);
                 stun_servers.insert(stun_address);
             }
         }
@@ -293,7 +293,7 @@ namespace wrtc::interfaces {
             incoming_contents.push_back(content);
             remote_channels.insert(content.ssrc);
         }
-        auto remove_channel = [&]<typename T>(T& channels) {
+        const auto remove_channel = [&]<typename T>(T& channels) {
             std::decay_t<T> removed_channels;
             {
                 const std::lock_guard lock(mutex_);

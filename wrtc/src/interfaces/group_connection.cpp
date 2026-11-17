@@ -467,10 +467,10 @@ namespace wrtc::interfaces {
                 return;
             }
             strong->audio_ssrc_to_user_id_.clear();
-            for (const auto& [userID, ssrc] : audio_ssrcs) {
-                strong->audio_ssrc_to_user_id_[ssrc] = userID;
-                if (auto endpoint = std::to_string(ssrc); strong->pending_audio_ssrcs_.erase(ssrc) && !strong->incoming_audio_channels_.contains(endpoint)) {
-                    strong->add_incoming_audio(userID, ssrc, endpoint);
+            for (const auto& [user_id, ssrc] : audio_ssrcs) {
+                strong->audio_ssrc_to_user_id_[ssrc] = user_id;
+                if (const auto endpoint = std::to_string(ssrc); strong->pending_audio_ssrcs_.erase(ssrc) && !strong->incoming_audio_channels_.contains(endpoint)) {
+                    strong->add_incoming_audio(user_id, ssrc, endpoint);
                 }
             }
         });
@@ -580,9 +580,9 @@ namespace wrtc::interfaces {
                 {
                     const std::lock_guard lock(strong->mutex_);
                     const auto timestamp = webrtc::TimeMillis();
-                    for (const auto& [channelId, channel] : strong->incoming_audio_channels_) {
+                    for (const auto& [channel_id, channel] : strong->incoming_audio_channels_) {
                         if (channel->get_activity() < timestamp - 1000) {
-                            remove_channels.push_back(channelId);
+                            remove_channels.push_back(channel_id);
                         }
                     }
                 }

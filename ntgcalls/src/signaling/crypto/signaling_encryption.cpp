@@ -262,8 +262,8 @@ namespace ntgcalls::signaling::crypto {
             return;
         }
         const auto now = webrtc::TimeMillis();
-        for (auto& [data, lastSent] : my_not_yet_acked_messages_) {
-            const auto sent = lastSent;
+        for (auto& [data, last_sent] : my_not_yet_acked_messages_) {
+            const auto sent = last_sent;
             const auto when = sent ? sent + kMinDelayBeforeMessageResend : 0;
             assert(data.size() >= 5);
             const auto c = counter_from_seq(read_seq(data.data()));
@@ -275,7 +275,7 @@ namespace ntgcalls::signaling::crypto {
             if (enough_space_in_packet(buffer, data.size())) {
                 RTC_LOG(LS_VERBOSE) << "Add RESEND:type" << type << "#" << c;
                 buffer.AppendData(data);
-                lastSent = now;
+                last_sent = now;
             } else {
                 RTC_LOG(LS_VERBOSE) << "Skip RESEND:type" << type << "#" << c << " (no space, length: " << data.size() << ", already: " << buffer.size() << ")";
                 break;
@@ -327,8 +327,8 @@ namespace ntgcalls::signaling::crypto {
         if (!send_enqueued) {
             return encrypt_prepared(serialized);
         }
-        for (auto& [data, lastSent] : my_not_yet_acked_messages_) {
-            lastSent = 0;
+        for (auto& [data, last_sent] : my_not_yet_acked_messages_) {
+            last_sent = 0;
         }
         return prepare_for_sending_service(0);
     }

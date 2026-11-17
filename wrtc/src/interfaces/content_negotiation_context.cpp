@@ -104,7 +104,7 @@ namespace wrtc::interfaces {
         need_negotiation_ = false;
         pending_outgoing_offer_ = std::make_unique<PendingOutgoingOffer>();
         pending_outgoing_offer_->exchange_id = unique_random_id_generator_->GenerateId();
-        auto current_session_description = current_session_description_from_coordinated_state();
+        const auto current_session_description = current_session_description_from_coordinated_state();
         webrtc::MediaSessionOptions offer_options;
         offer_options.offer_extmap_allow_mixed = true;
         offer_options.bundle_enabled = true;
@@ -232,7 +232,7 @@ namespace wrtc::interfaces {
                 if (std::to_string(channel.ssrc) == id) {
                     found = true;
                     auto mapped_content = convert_signaling_content_to_content_info(std::to_string(channel.ssrc), channel, webrtc::RtpTransceiverDirection::kRecvOnly);
-                    auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                    const auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
                     std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                     if (local_certificate) {
                         fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*local_certificate);
@@ -255,7 +255,7 @@ namespace wrtc::interfaces {
                 if (channel.id == id) {
                     found = true;
                     auto mapped_content = convert_signaling_content_to_content_info(channel.id, channel.content, webrtc::RtpTransceiverDirection::kSendOnly);
-                    auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                    const auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
                     std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                     if (local_certificate) {
                         fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*local_certificate);
@@ -277,7 +277,7 @@ namespace wrtc::interfaces {
 
             if (!found) {
                 auto mapped_content = create_inactive_content_info("_" + id);
-                auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                const auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
                 std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                 if (local_certificate) {
                     fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*local_certificate);
@@ -481,7 +481,7 @@ namespace wrtc::interfaces {
     }
 
     std::unique_ptr<ContentNegotiationContext::NegotiationContents> ContentNegotiationContext::get_answer(std::unique_ptr<NegotiationContents>&& offer) {
-        auto current_session_description = current_session_description_from_coordinated_state();
+        const auto current_session_description = current_session_description_from_coordinated_state();
         auto mapped_offer = std::make_unique<webrtc::SessionDescription>();
         webrtc::MediaSessionOptions answer_options;
         answer_options.offer_extmap_allow_mixed = true;
@@ -498,7 +498,7 @@ namespace wrtc::interfaces {
                         content_description.header_extensions.emplace_back(extension.uri, extension.id);
                     }
                     answer_options.media_description_options.push_back(content_description);
-                    auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                    const auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
                     std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                     if (local_certificate) {
                         fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*local_certificate);
@@ -526,7 +526,7 @@ namespace wrtc::interfaces {
                         content_description.header_extensions.emplace_back(extension.uri, extension.id);
                     }
                     answer_options.media_description_options.push_back(content_description);
-                    auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                    const auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
                     std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                     if (local_certificate) {
                         fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*local_certificate);
@@ -549,7 +549,7 @@ namespace wrtc::interfaces {
                 auto mapped_content = create_inactive_content_info("_" + id);
                 const webrtc::MediaDescriptionOptions content_description(webrtc::MediaType::AUDIO, "_" + id, webrtc::RtpTransceiverDirection::kInactive, false);
                 answer_options.media_description_options.push_back(content_description);
-                auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                const auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
                 std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                 if (local_certificate) {
                     fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*local_certificate);
@@ -572,7 +572,7 @@ namespace wrtc::interfaces {
                 channel_id_order_.push_back(std::to_string(content.ssrc));
                 answer_options.media_description_options.push_back(get_incoming_content_description(content));
                 auto mapped_content = convert_signaling_content_to_content_info(std::to_string(content.ssrc), content, webrtc::RtpTransceiverDirection::kSendOnly);
-                auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
+                const auto local_certificate = webrtc::RTCCertificateGenerator::GenerateCertificate(webrtc::KeyParams(webrtc::KT_ECDSA), std::nullopt);
                 std::unique_ptr<webrtc::SSLFingerprint> fingerprint;
                 if (local_certificate) {
                     fingerprint = webrtc::SSLFingerprint::CreateFromCertificate(*local_certificate);
@@ -609,11 +609,11 @@ namespace wrtc::interfaces {
             auto mapped_content = convert_content_info_to_signaling_content(content);
 
             if (content.media_description()->direction() == webrtc::RtpTransceiverDirection::kRecvOnly) {
-                for (const auto& [type, ssrc, userID, ssrc_groups, payload_types, rtp_extensions] : offer->contents) {
+                for (const auto& [type, ssrc, user_id, ssrc_groups, payload_types, rtp_extensions] : offer->contents) {
                     if (std::to_string(ssrc) == content.mid()) {
                         mapped_content.ssrc = ssrc;
                         mapped_content.ssrc_groups = ssrc_groups;
-                        mapped_content.user_id = userID;
+                        mapped_content.user_id = user_id;
                         break;
                     }
                 }

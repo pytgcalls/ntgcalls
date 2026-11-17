@@ -15,7 +15,7 @@ namespace wrtc::interfaces {
     std::unique_ptr<webrtc::Port> ReflectorRelayPortFactory::Create(const webrtc::CreateRelayPortArgs& args, webrtc::AsyncPacketSocket* udp_socket) {
         if (args.config->credentials.username == "reflector") {
             uint8_t found_id = 0;
-            for (const auto& [id, host, port, login, password, isTurn, isTcp] : servers_) {
+            for (const auto& [id, host, port, login, password, is_turn, is_tcp] : servers_) {
                 if (const webrtc::SocketAddress server_address(host, port); args.server_address->address == server_address) {
                     found_id = id;
                     break;
@@ -50,7 +50,7 @@ namespace wrtc::interfaces {
     std::unique_ptr<webrtc::Port> ReflectorRelayPortFactory::Create(const webrtc::CreateRelayPortArgs& args, const int min_port, const int max_port) {
         if (args.config->credentials.username == "reflector") {
             uint8_t found_id = 0;
-            for (const auto& [id, host, port, login, password, isTurn, isTcp] : servers_) {
+            for (const auto& [id, host, port, login, password, is_turn, is_tcp] : servers_) {
                 if (const webrtc::SocketAddress server_address(host, port); args.server_address->address == server_address) {
                     found_id = id;
                     break;

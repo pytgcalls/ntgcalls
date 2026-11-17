@@ -154,10 +154,10 @@ namespace wrtc::interfaces {
                 if (too_many_channels) {
                     int64_t min_activity = INT64_MAX;
                     const auto timestamp = webrtc::TimeMillis();
-                    for (const auto& [channelId, channel] : incoming_audio_channels_) {
+                    for (const auto& [channel_id, channel] : incoming_audio_channels_) {
                         if (const auto activity = channel->get_activity(); activity < min_activity && activity < timestamp - 1000) {
                             min_activity = activity;
-                            min_activity_channel_id = channelId;
+                            min_activity_channel_id = channel_id;
                         }
                     }
                 }
@@ -201,7 +201,7 @@ namespace wrtc::interfaces {
             }
             update_audio_source_count();
         } else if (is_addable && media_content.type == models::MediaContent::Type::Video) {
-            auto video_codecs = models::OutgoingVideoFormat::get_video_codecs(
+            const auto video_codecs = models::OutgoingVideoFormat::get_video_codecs(
                 available_video_formats_,
                 media_content.payload_types,
                 is_group_connection() && media_content.payload_types.empty()
@@ -328,8 +328,8 @@ namespace wrtc::interfaces {
         );
         set_port_allocator_flags(port_allocator_.get());
         port_allocator_->Initialize();
-        auto [stunServers, turnServers] = get_stun_and_turn_servers();
-        port_allocator_->SetConfiguration(stunServers, turnServers, candidate_pool_size(), webrtc::NO_PRUNE);
+        auto [stun_servers, turn_servers] = get_stun_and_turn_servers();
+        port_allocator_->SetConfiguration(stun_servers, turn_servers, candidate_pool_size(), webrtc::NO_PRUNE);
 
         webrtc::IceTransportInit ice_transport_init(environment());
         ice_transport_init.set_port_allocator(port_allocator_.get());
@@ -446,9 +446,9 @@ namespace wrtc::interfaces {
                     const std::lock_guard lock(strong->mutex_);
                     pending_content = strong->pending_content_;
                 }
-                for (const auto& [endpoint, mediaContent] : pending_content) {
-                    if (mediaContent.type == models::MediaContent::Type::Audio) {
-                        strong->add_incoming_smart_source(endpoint, mediaContent, true);
+                for (const auto& [endpoint, media_content] : pending_content) {
+                    if (media_content.type == models::MediaContent::Type::Audio) {
+                        strong->add_incoming_smart_source(endpoint, media_content, true);
                     }
                 }
             } else {
@@ -489,14 +489,14 @@ namespace wrtc::interfaces {
                 pending_content = strong->pending_content_;
             }
             if (enable) {
-                for (const auto& [endpoint, mediaContent] : pending_content) {
-                    if (mediaContent.type == models::MediaContent::Type::Video && mediaContent.is_screen_cast() == is_screen_cast) {
-                        strong->add_incoming_smart_source(endpoint, mediaContent, true);
+                for (const auto& [endpoint, media_content] : pending_content) {
+                    if (media_content.type == models::MediaContent::Type::Video && media_content.is_screen_cast() == is_screen_cast) {
+                        strong->add_incoming_smart_source(endpoint, media_content, true);
                     }
                 }
             } else {
-                for (const auto& [endpoint, mediaContent] : pending_content) {
-                    if (mediaContent.type == models::MediaContent::Type::Video && mediaContent.is_screen_cast() == is_screen_cast) {
+                for (const auto& [endpoint, media_content] : pending_content) {
+                    if (media_content.type == models::MediaContent::Type::Video && media_content.is_screen_cast() == is_screen_cast) {
                         decltype(strong->incoming_video_channels_)::node_type removed_channel;
                         {
                             const std::lock_guard lock(strong->mutex_);
@@ -737,16 +737,16 @@ namespace wrtc::interfaces {
 
         if (!h264_formats.empty()) {
             std::ranges::sort(h264_formats, [](const webrtc::SdpVideoFormat& lhs, const webrtc::SdpVideoFormat& rhs) {
-                auto [lProfileLevelId, lPacketizationMode, lLevelAssymetryAllowed] = parse_h264_format_parameters(lhs);
-                auto [rProfileLevelId, rPacketizationMode, rLevelAssymetryAllowed] = parse_h264_format_parameters(rhs);
+                auto [l_profile_level_id, l_packetization_mode, l_level_assymetry_allowed] = parse_h264_format_parameters(lhs);
+                auto [r_profile_level_id, r_packetization_mode, r_level_assymetry_allowed] = parse_h264_format_parameters(rhs);
 
-                const int lhs_level_id_priority = get_h264_profile_level_id_priority(lProfileLevelId);
-                const int lhs_packetization_mode_priority = get_h264_packetization_mode_priority(lPacketizationMode);
-                const int lhs_level_assymetry_allowed_priority = get_h264_level_assymetry_allowed_priority(lLevelAssymetryAllowed);
+                const int lhs_level_id_priority = get_h264_profile_level_id_priority(l_profile_level_id);
+                const int lhs_packetization_mode_priority = get_h264_packetization_mode_priority(l_packetization_mode);
+                const int lhs_level_assymetry_allowed_priority = get_h264_level_assymetry_allowed_priority(l_level_assymetry_allowed);
 
-                const int rhs_level_id_priority = get_h264_profile_level_id_priority(rProfileLevelId);
-                const int rhs_packetization_mode_priority = get_h264_packetization_mode_priority(rPacketizationMode);
-                const int rhs_level_assymetry_allowed_priority = get_h264_level_assymetry_allowed_priority(rLevelAssymetryAllowed);
+                const int rhs_level_id_priority = get_h264_profile_level_id_priority(r_profile_level_id);
+                const int rhs_packetization_mode_priority = get_h264_packetization_mode_priority(r_packetization_mode);
+                const int rhs_level_assymetry_allowed_priority = get_h264_level_assymetry_allowed_priority(r_level_assymetry_allowed);
 
                 if (lhs_level_id_priority != rhs_level_id_priority) {
                     return lhs_level_id_priority < rhs_level_id_priority;

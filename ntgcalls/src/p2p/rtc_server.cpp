@@ -105,8 +105,8 @@ namespace ntgcalls::p2p {
 
     webrtc::PeerConnectionInterface::IceServers RTCServer::to_ice_servers(const std::vector<RTCServer>& servers) {
         webrtc::PeerConnectionInterface::IceServers ice_servers;
-        for (const std::vector<wrtc::models::RTCServer> wrtc_servers = to_rtc_servers(servers); const auto& [id, host, port, login, password, isTurn, isTcp] : wrtc_servers) {
-            if (isTcp) {
+        for (const std::vector<wrtc::models::RTCServer> wrtc_servers = to_rtc_servers(servers); const auto& [id, host, port, login, password, is_turn, is_tcp] : wrtc_servers) {
+            if (is_tcp) {
                 continue;
             }
             const webrtc::SocketAddress address(host, port);
@@ -115,7 +115,7 @@ namespace ntgcalls::p2p {
                 continue;
             }
             webrtc::PeerConnectionInterface::IceServer ice_server;
-            if (isTurn) {
+            if (is_turn) {
                 ice_server.urls.push_back("turn:" + address.HostAsURIString() + ":" + std::to_string(port));
                 ice_server.username = login;
                 ice_server.password = password;

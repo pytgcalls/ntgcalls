@@ -39,7 +39,7 @@ namespace wrtc::interfaces::peer_connection {
         signaling_thread_->AllowInvokesToThread(*network_thread_);
 
         webrtc::PeerConnectionFactoryDependencies dependencies;
-        auto env = environment();
+        const auto env = environment();
         dependencies.network_thread = *network_thread_;
         dependencies.signaling_thread = *signaling_thread_;
         dependencies.env = env;

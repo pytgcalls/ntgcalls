@@ -71,7 +71,7 @@ namespace ntgcalls::signaling {
         RTC_LOG(LS_VERBOSE) << "Packets decrypted";
         std::vector<bytes::binary> packets;
         for (auto& packet : raw) {
-            auto decrypted_data = bytes::binary(packet.data(), packet.data() + packet.size());
+            const auto decrypted_data = bytes::binary(packet.data(), packet.data() + packet.size());
             if (bytes::GZip::is_gzip(decrypted_data)) {
                 RTC_LOG(LS_VERBOSE) << "Decompressing packet";
                 if (auto unzipped = bytes::GZip::unzip(decrypted_data, 2 * 1024 * 1024); unzipped.has_value()) {

@@ -12,7 +12,7 @@ namespace wrtc::video_factory {
         const std::lock_guard lock(mutex_);
         int n = 0;
         for (const auto& enc : encoders_) {
-            for (auto supported_formats = formats_[n++]; const auto& f : supported_formats) {
+            for (const auto supported_formats = formats_[n++]; const auto& f : supported_formats) {
                 if (f.IsSameCodec(format)) {
                     return enc.create_video_codec(env, format);
                 }

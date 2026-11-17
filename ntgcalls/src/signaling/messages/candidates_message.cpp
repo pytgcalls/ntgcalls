@@ -10,11 +10,11 @@ namespace ntgcalls::signaling::messages {
             {"@type", "Candidates"},
         };
         auto ice_candidates_json = json::array();
-        for (const auto& [sdpString, sdpMid, sdpMLineIndex] : ice_candidates) {
+        for (const auto& [sdp_string, sdp_mid, sdp_m_line_index] : ice_candidates) {
             ice_candidates_json.push_back(json{
-                {"sdpString", sdpString},
-                {"sdpMid", sdpMid},
-                {"sdpMLineIndex", sdpMLineIndex},
+                {"sdpString", sdp_string},
+                {"sdpMid", sdp_mid},
+                {"sdpMLineIndex", sdp_m_line_index},
             });
         }
         res["candidates"] = ice_candidates_json;

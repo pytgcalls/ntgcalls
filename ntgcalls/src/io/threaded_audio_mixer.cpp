@@ -23,8 +23,8 @@ namespace ntgcalls::io {
     void ThreadedAudioMixer::open() {
         if (running_) return;
         running_ = true;
-        auto frame_size = sink_->frame_size();
-        auto frame_time = sink_->frame_time();
+        const auto frame_size = sink_->frame_size();
+        const auto frame_time = sink_->frame_time();
         thread_ = webrtc::PlatformThread::SpawnJoinable(
             [this, frame_size, frame_time] {
                 while (running_) {

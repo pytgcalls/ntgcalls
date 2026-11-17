@@ -34,12 +34,12 @@ namespace wrtc::interfaces::media::channels {
             channel_->SetRtpTransport(rtp_transport);
         });
         std::vector<webrtc::Codec> unsorted_codecs;
-        for (const auto& [id, name, clockrate, channels, feedbackTypes, parameters] : media_content.payload_types) {
+        for (const auto& [id, name, clockrate, channels, feedback_types, parameters] : media_content.payload_types) {
             webrtc::Codec codec = webrtc::CreateVideoCodec(id, name);
             for (const auto& [fst, snd] : parameters) {
                 codec.SetParam(fst, snd);
             }
-            for (const auto& [type, subtype] : feedbackTypes) {
+            for (const auto& [type, subtype] : feedback_types) {
                 codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
             }
             unsorted_codecs.push_back(std::move(codec));
@@ -72,7 +72,7 @@ namespace wrtc::interfaces::media::channels {
         outgoing_video_description->set_bandwidth(-1);
         webrtc::StreamParams video_send_stream_params;
         for (const auto& [semantics, ssrcs] : media_content.ssrc_groups) {
-            for (auto ssrc : ssrcs) {
+            for (const auto ssrc : ssrcs) {
                 if (!video_send_stream_params.has_ssrc(ssrc)) {
                     video_send_stream_params.ssrcs.push_back(ssrc);
                 }

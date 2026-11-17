@@ -48,12 +48,12 @@ namespace wrtc::interfaces::media::channels {
             throw RTCException("Failed to attach the incoming audio channel to the RTP transport");
         }
         std::vector<webrtc::Codec> codecs;
-        for (const auto& [id, name, clockrate, channels, feedbackTypes, parameters] : media_content.payload_types) {
+        for (const auto& [id, name, clockrate, channels, feedback_types, parameters] : media_content.payload_types) {
             webrtc::Codec codec = webrtc::CreateAudioCodec(id, name, clockrate, channels);
             codec.SetParam(webrtc::kCodecParamUseInbandFec, 1);
             codec.SetParam(webrtc::kCodecParamPTime, 60);
             codec.SetParam(webrtc::kCodecParamStereo, 1);
-            for (const auto& [type, subtype] : feedbackTypes) {
+            for (const auto& [type, subtype] : feedback_types) {
                 codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
             }
             codecs.push_back(std::move(codec));

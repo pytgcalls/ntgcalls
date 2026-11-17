@@ -51,7 +51,7 @@ namespace ntgcalls::io {
                                     });
                                     if (!running_) break;
                                 }
-                                auto data = read_callback(frame_size * max_buffer_size);
+                                const auto data = read_callback(frame_size * max_buffer_size);
                                 {
                                     const std::lock_guard lock(mtx_);
                                     next_read_ = (next_read_ + 1) % buffer_count;

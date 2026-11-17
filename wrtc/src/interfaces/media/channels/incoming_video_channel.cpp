@@ -65,7 +65,7 @@ namespace wrtc::interfaces::media::channels {
             if (ssrcs.empty()) {
                 continue;
             }
-            for (auto ssrc : ssrcs) {
+            for (const auto ssrc : ssrcs) {
                 if (std::ranges::find(all_ssrcs, ssrc) == all_ssrcs.end()) {
                     all_ssrcs.push_back(ssrc);
                 }

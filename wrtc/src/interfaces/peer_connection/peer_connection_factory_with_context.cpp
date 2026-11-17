@@ -20,8 +20,8 @@ namespace wrtc::interfaces::peer_connection {
             if (factory == nullptr) {
                 return result_type(nullptr, nullptr);
             }
-            auto connection_context = factory->get_context();
-            auto proxy = webrtc::PeerConnectionFactoryProxy::Create(
+            const auto connection_context = factory->get_context();
+            const auto proxy = webrtc::PeerConnectionFactoryProxy::Create(
                 factory->signaling_thread(), factory->worker_thread(), factory
             );
             return result_type(proxy, connection_context);
@@ -65,8 +65,8 @@ namespace wrtc::interfaces::peer_connection {
             if (factory == nullptr) {
                 return result_type(nullptr, nullptr);
             }
-            auto ctx = factory->get_context();
-            auto proxy = webrtc::PeerConnectionFactoryProxy::Create(factory->signaling_thread(), factory->worker_thread(), factory);
+            const auto ctx = factory->get_context();
+            const auto proxy = webrtc::PeerConnectionFactoryProxy::Create(factory->signaling_thread(), factory->worker_thread(), factory);
             return result_type(proxy, ctx);
         });
         context = snd;

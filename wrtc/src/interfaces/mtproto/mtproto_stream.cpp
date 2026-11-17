@@ -236,9 +236,9 @@ namespace wrtc::interfaces::mtproto {
                     }
 
                     std::map<uint32_t, std::unique_ptr<AudioBuffer>> interleaved_audio_by_ssrc;
-                    for (const auto& [ssrc, pcmData] : audio_channels) {
+                    for (const auto& [ssrc, pcm_data] : audio_channels) {
                         const uint32_t real_ssrc = strong->is_rtmp_ ? 1 : ssrc;
-                        const size_t sample_count = strong->is_rtmp_ ? 480 : pcmData.size();
+                        const size_t sample_count = strong->is_rtmp_ ? 480 : pcm_data.size();
 
                         auto &prev_buffer = interleaved_audio_by_ssrc[real_ssrc];
                         if (!prev_buffer) {
@@ -256,7 +256,7 @@ namespace wrtc::interfaces::mtproto {
                             for (int j = 0; j < channel_count; ++j) {
                                 output.push_back(i < prev_buffer->data.size() ? prev_buffer->data[i] : static_cast<int16_t>(0));
                             }
-                            output.push_back(i < pcmData.size() ? pcmData[i] : static_cast<int16_t>(0));
+                            output.push_back(i < pcm_data.size() ? pcm_data[i] : static_cast<int16_t>(0));
                         }
                         prev_buffer->data = std::move(output);
                     }
@@ -409,12 +409,12 @@ namespace wrtc::interfaces::mtproto {
             }
             pending_segment->parts.push_back(std::move(audio_part));
 
-            for (const auto& [endpoint, videoChannel] : video_channels_) {
+            for (const auto& [endpoint, video_channel] : video_channels_) {
                 if (!current_endpoint_mapping_.contains(endpoint)) {
                     continue;
                 }
                 const int32_t channel_id = current_endpoint_mapping_[endpoint] + 1;
-                auto video_part = std::make_unique<models::MediaSegment::Part>(models::MediaSegment::Part::Video(channel_id, videoChannel.quality));
+                auto video_part = std::make_unique<models::MediaSegment::Part>(models::MediaSegment::Part::Video(channel_id, video_channel.quality));
                 pending_segment->parts.push_back(std::move(video_part));
             }
             if (segments_.contains(next_segment_timestamp_)) {
@@ -437,11 +437,11 @@ namespace wrtc::interfaces::mtproto {
 
         bool should_request_more_segments = false;
         int i = 0;
-        for (auto& [segmentID, pendingSegment] : filter_segments(models::MediaSegment::Status::Pending)) {
-            const auto segment_timestamp = pendingSegment->timestamp;
+        for (auto& [segment_id, pending_segment] : filter_segments(models::MediaSegment::Status::Pending)) {
+            const auto segment_timestamp = pending_segment->timestamp;
             bool all_parts_done = true;
-            for (int part_id = 0; part_id < pendingSegment->parts.size(); part_id++) {
-                const auto part = pendingSegment->parts[part_id].get();
+            for (int part_id = 0; part_id < pending_segment->parts.size(); part_id++) {
+                const auto part = pending_segment->parts[part_id].get();
                 if (!part->data) {
                     all_parts_done = false;
                 }
@@ -465,7 +465,7 @@ namespace wrtc::interfaces::mtproto {
                     }
 
                     const auto requested = request_broadcast_part_callback_({
-                        segmentID,
+                        segment_id,
                         part_id,
                         models::SegmentPartRequest::kDefaultSize,
                         segment_timestamp,
@@ -482,29 +482,29 @@ namespace wrtc::interfaces::mtproto {
             }
 
             if (all_parts_done && i == 0) {
-                pendingSegment->duration = segment_duration_;
-                pendingSegment->status = models::MediaSegment::Status::Ready;
-                for (const auto& part : pendingSegment->parts) {
+                pending_segment->duration = segment_duration_;
+                pending_segment->status = models::MediaSegment::Status::Ready;
+                for (const auto& part : pending_segment->parts) {
                     if (const auto type_data = &part->type_data; std::get_if<models::MediaSegment::Part::Audio>(type_data)) {
-                        pendingSegment->audio = std::make_unique<AudioStreamingPart>(std::move(part->data.value()), "ogg", false);
-                        current_endpoint_mapping_ = pendingSegment->audio->get_endpoint_mapping();
+                        pending_segment->audio = std::make_unique<AudioStreamingPart>(std::move(part->data.value()), "ogg", false);
+                        current_endpoint_mapping_ = pending_segment->audio->get_endpoint_mapping();
                     } else if (const auto video_data = std::get_if<models::MediaSegment::Part::Video>(type_data)) {
                         auto video_segment = std::make_unique<models::MediaSegment::Video>();
                         video_segment->quality = video_data->quality;
                         if (part->data.value().empty()) {
-                            RTC_LOG(LS_VERBOSE) << "Video part " << pendingSegment->timestamp << " is empty";
+                            RTC_LOG(LS_VERBOSE) << "Video part " << pending_segment->timestamp << " is empty";
                         }
                         video_segment->part = std::make_unique<VideoStreamingPart>(std::move(part->data.value()));
-                        pendingSegment->video.push_back(std::move(video_segment));
+                        pending_segment->video.push_back(std::move(video_segment));
                     } else if (std::get_if<models::MediaSegment::Part::Unified>(type_data)) {
                         auto unified_segment = std::make_unique<models::MediaSegment::Video>();
                         bytes::binary data_copy = part->data.value();
                         unified_segment->part = std::make_unique<VideoStreamingPart>(std::move(part->data.value()));
-                        pendingSegment->video.push_back(std::move(unified_segment));
-                        pendingSegment->unified_audio = std::make_unique<VideoStreamingPart>(std::move(data_copy), webrtc::MediaType::AUDIO);
+                        pending_segment->video.push_back(std::move(unified_segment));
+                        pending_segment->unified_audio = std::make_unique<VideoStreamingPart>(std::move(data_copy), webrtc::MediaType::AUDIO);
                     }
                 }
-                pendingSegment->parts.clear();
+                pending_segment->parts.clear();
                 should_request_more_segments = true;
                 i--;
             }
@@ -549,11 +549,11 @@ namespace wrtc::interfaces::mtproto {
     }
 
     void MTProtoStream::check_pending_video_quality_update() {
-        for (const auto& [endpointId, videoChannel] : video_channels_) {
+        for (const auto& [endpoint_id, video_channel] : video_channels_) {
             for (const auto& [segment_id, segment] : filter_segments(models::MediaSegment::Status::Ready)) {
                 for (int part_id = 0; part_id < segment->video.size(); part_id++) {
-                    if (const auto video = segment->video[part_id].get(); video->part->get_active_endpoint_id() == endpointId) {
-                        if (video->quality != videoChannel.quality) {
+                    if (const auto video = segment->video[part_id].get(); video->part->get_active_endpoint_id() == endpoint_id) {
+                        if (video->quality != video_channel.quality) {
                             request_pending_video_quality_update(segment_id, part_id, video, segment->timestamp);
                         }
                     }
@@ -574,13 +574,13 @@ namespace wrtc::interfaces::mtproto {
         std::optional<int32_t> updated_channel_id;
         std::optional<models::MediaSegment::Quality> updated_quality;
 
-        for (const auto& [endpointId, videoChannel] : video_channels_) {
-            if (!current_endpoint_mapping_.contains(endpointId)) {
+        for (const auto& [endpoint_id, video_channel] : video_channels_) {
+            if (!current_endpoint_mapping_.contains(endpoint_id)) {
                 continue;
             }
 
-            updated_channel_id = current_endpoint_mapping_[endpointId] + 1;
-            updated_quality = videoChannel.quality;
+            updated_channel_id = current_endpoint_mapping_[endpoint_id] + 1;
+            updated_quality = video_channel.quality;
         }
 
         if (updated_channel_id && updated_quality) {

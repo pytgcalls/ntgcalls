@@ -179,7 +179,7 @@ namespace wrtc::interfaces::media {
                 i += kH26XNaluShortStartSequenceSize;
             } else if (buffer[i + 2] == kH26XStartCodeEndByteValue) {
                 if (buffer[i + 1] == kH26XStartCodeLeadingBytesValue && buffer[i] == kH26XStartCodeLeadingBytesValue) {
-                    auto nal_unit_start_index = i + kH26XNaluShortStartSequenceSize;
+                    const auto nal_unit_start_index = i + kH26XNaluShortStartSequenceSize;
                     if (i >= 1 && buffer[i - 1] == kH26XStartCodeLeadingBytesValue) {
                         return IndexStartCodeSizePair({nal_unit_start_index, 4});
                     }

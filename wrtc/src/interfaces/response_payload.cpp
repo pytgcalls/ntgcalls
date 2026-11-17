@@ -38,7 +38,7 @@ namespace wrtc::interfaces {
             for (const auto& candidate : transport["candidates"]) {
                 webrtc::SocketAddress address(candidate["ip"].get<std::string>(), std::stoi(candidate["port"].get<std::string>()));
                 webrtc::IceCandidateType candidate_type;
-                if (auto raw_candidate_type = candidate["type"].get<std::string>(); raw_candidate_type == "srflx") {
+                if (const auto raw_candidate_type = candidate["type"].get<std::string>(); raw_candidate_type == "srflx") {
                     candidate_type = webrtc::IceCandidateType::kSrflx;
                 } else if (raw_candidate_type == "prflx") {
                     candidate_type = webrtc::IceCandidateType::kPrflx;
@@ -70,11 +70,11 @@ namespace wrtc::interfaces {
                     transport["fingerprints"][0]["fingerprint"].get<std::string>()
                 );
             }
-            if (auto audio = data["audio"]; !audio.is_null()) {
+            if (const auto audio = data["audio"]; !audio.is_null()) {
                 media.audio_payload_types = parse_payload_types(audio);
                 media.audio_rtp_extensions = parse_rtp_extensions(audio);
             }
-            auto video = data["video"];
+            const auto video = data["video"];
             media.video_payload_types = parse_payload_types(video);
             media.video_rtp_extensions = parse_rtp_extensions(video);
         } catch (utils::json::exception& e) {

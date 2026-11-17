@@ -320,22 +320,22 @@ namespace ntgcalls::e2e {
     }
 
     std::optional<bytes::binary> Session::decrypt_shared_key() const {
-        const auto& [ek, encryptedSharedKey, destUserId, destHeader] = blockchain_->group_shared_key();
-        for (size_t i = 0; i < destUserId.size(); ++i) {
-            if (destUserId[i] != session_encryption_->user_id()) {
+        const auto& [ek, encrypted_shared_key, dest_user_id, dest_header] = blockchain_->group_shared_key();
+        for (size_t i = 0; i < dest_user_id.size(); ++i) {
+            if (dest_user_id[i] != session_encryption_->user_id()) {
                 continue;
             }
             const auto shared_secret = private_key_.compute_shared_secret(bytes::view(ek));
             const auto one_time_secret = chain::MessageEncryption::decrypt_header(
-                bytes::view(destHeader[i]),
-                bytes::view(encryptedSharedKey),
+                bytes::view(dest_header[i]),
+                bytes::view(encrypted_shared_key),
                 bytes::view(shared_secret)
             );
             if (!one_time_secret) {
                 return std::nullopt;
             }
             auto decrypted = chain::MessageEncryption::decrypt_data(
-                bytes::view(encryptedSharedKey),
+                bytes::view(encrypted_shared_key),
                 bytes::view(*one_time_secret)
             );
             if (!decrypted || decrypted->size() != 32) {
