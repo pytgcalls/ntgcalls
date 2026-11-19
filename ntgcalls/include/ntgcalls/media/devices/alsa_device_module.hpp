@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <map>
 #ifdef IS_LINUX
 #include <alsa/asoundlib.h>
 #include <ntgcalls/io/audio_mixer.hpp>

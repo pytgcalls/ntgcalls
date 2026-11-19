@@ -21,6 +21,7 @@ namespace wrtc::interfaces::media::channels {
         std::unique_ptr<RawVideoSink> sink_;
         video_factory::PassthroughDecoderFactory* decoder_factory_;
         std::optional<uint64_t> queue_id_;
+        std::weak_ptr<RemoteVideoSink> remote_video_sink_;
 
     public:
         IncomingVideoChannel(

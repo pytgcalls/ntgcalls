@@ -29,17 +29,17 @@ namespace ntgcalls::io {
         return description ? description->channel_count : 2;
     }
 
-    void OggWriter::send_frames(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
+    void OggWriter::send_frames(std::vector<wrtc::models::Frame> frames) {
         const std::lock_guard lock(mutex_);
         if (!muxer_) {
             muxer_ = std::make_unique<media::containers::OggMuxer>(channels());
         }
         elapsed_ += wrtc::audio_factory::OpusPacket::kFrameSamples;
         if (!transcoding_) {
-            for (const auto& ssrc : frames | std::views::keys) {
+            for (const auto& frame : frames) {
                 if (!source_ssrc_) {
-                    source_ssrc_ = ssrc;
-                } else if (*source_ssrc_ != ssrc) {
+                    source_ssrc_ = frame.ssrc;
+                } else if (*source_ssrc_ != frame.ssrc) {
                     RTC_LOG(LS_INFO) << "More than one participant, re-encoding the Opus recording";
                     transcoding_ = true;
                     break;
@@ -53,10 +53,10 @@ namespace ntgcalls::io {
         }
     }
 
-    void OggWriter::forward(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
-        for (const auto& [data, size] : frames | std::views::values) {
-            if (const int samples = wrtc::audio_factory::OpusPacket::samples(data.get(), size); samples > 0) {
-                write_packet({data.get(), data.get() + size}, samples);
+    void OggWriter::forward(const std::vector<wrtc::models::Frame>& frames) {
+        for (const auto& frame : frames) {
+            if (const int samples = wrtc::audio_factory::OpusPacket::samples(frame.data.data(), frame.data.size()); samples > 0) {
+                write_packet(frame.data, samples);
             }
         }
         while (muxer_->granule() + kPacketSamples * 2 <= elapsed_) {
@@ -65,11 +65,11 @@ namespace ntgcalls::io {
         }
     }
 
-    void OggWriter::transcode(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) {
+    void OggWriter::transcode(const std::vector<wrtc::models::Frame>& frames) {
         ensure_encoder();
         const auto count = channels();
-        for (const auto& [ssrc, frame] : frames) {
-            auto& decoder = decoders_[ssrc];
+        for (const auto& frame : frames) {
+            auto& decoder = decoders_[frame.ssrc];
             if (!decoder) {
                 int error = 0;
                 decoder = opus_decoder_create(wrtc::audio_factory::OpusPacket::kSampleRate, count, &error);
@@ -79,9 +79,9 @@ namespace ntgcalls::io {
                 }
             }
             std::vector<int16_t> pcm(static_cast<size_t>(kMaxPacketSamples) * count);
-            const int samples = opus_decode(decoder, frame.first.get(), static_cast<opus_int32>(frame.second), pcm.data(), kMaxPacketSamples, 0);
+            const int samples = opus_decode(decoder, frame.data.data(), static_cast<opus_int32>(frame.data.size()), pcm.data(), kMaxPacketSamples, 0);
             if (samples > 0) {
-                auto& buffer = decoded_[ssrc];
+                auto& buffer = decoded_[frame.ssrc];
                 buffer.insert(buffer.end(), pcm.begin(), pcm.begin() + static_cast<std::ptrdiff_t>(samples) * count);
             }
         }
@@ -135,7 +135,7 @@ namespace ntgcalls::io {
         push_pages(muxer_->add(std::move(packet), samples));
     }
 
-    void OggWriter::push_pages(const std::vector<bytes::binary> &pages) {
+    void OggWriter::push_pages(const std::vector<bytes::binary>& pages) {
         for (auto& page : pages) {
             auto data = bytes::make_unique_binary(page.size());
             std::memcpy(data.get(), page.data(), page.size());

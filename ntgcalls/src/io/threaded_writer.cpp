@@ -19,21 +19,24 @@ namespace ntgcalls::io {
     }
 
     void ThreadedWriter::run() {
-        const auto timeout = sink_->frame_time() + std::chrono::milliseconds(20);
+        const auto interval = idle_interval();
+        auto deadline = std::chrono::steady_clock::now() + interval;
         while (true) {
             std::optional<std::pair<bytes::unique_binary, size_t>> item;
             {
                 std::unique_lock lock(mutex_);
-                const auto ready = cv_.wait_for(lock, timeout, [this] {
+                const auto ready = cv_.wait_until(lock, deadline, [this] {
                     return !queue_.empty() || !running_;
                 });
                 if (!queue_.empty()) {
                     item = std::move(queue_.front());
                     queue_.pop();
+                    deadline = std::chrono::steady_clock::now() + interval;
                 } else if (!running_) {
                     break;
                 } else if (!ready) {
                     lock.unlock();
+                    deadline += interval;
                     item = idle_data();
                 }
             }
@@ -60,6 +63,10 @@ namespace ntgcalls::io {
 
     std::optional<std::pair<bytes::unique_binary, size_t>> ThreadedWriter::idle_data() {
         return std::nullopt;
+    }
+
+    std::chrono::nanoseconds ThreadedWriter::idle_interval() const {
+        return sink_->frame_time() + std::chrono::milliseconds(20);
     }
 
     void ThreadedWriter::close() {

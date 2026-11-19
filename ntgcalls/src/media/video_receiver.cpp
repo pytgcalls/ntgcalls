@@ -10,14 +10,19 @@ namespace ntgcalls::media {
         const std::lock_guard lock(mutex_);
         sink_ = nullptr;
         frame_callback_ = nullptr;
+        removed_callback_ = nullptr;
     }
 
     std::weak_ptr<wrtc::interfaces::media::RemoteVideoSink> VideoReceiver::remote_sink() {
         return sink_;
     }
 
-    void VideoReceiver::on_frame(const std::function<void(uint32_t, bytes::unique_binary, size_t, wrtc::models::FrameData)>& callback) {
+    void VideoReceiver::on_frame(const std::function<void(uint32_t, bytes::binary, wrtc::models::FrameData)>& callback) {
         frame_callback_ = callback;
+    }
+
+    void VideoReceiver::on_source_removed(const std::function<void(uint32_t)>& callback) {
+        removed_callback_ = callback;
     }
 
     void VideoReceiver::set_encoded(const bool encoded) const {
@@ -35,12 +40,13 @@ namespace ntgcalls::media {
                 }
                 const std::lock_guard lock(mutex_);
                 uint16_t new_width, new_height;
-                if (description_->width <= 0) {
+                const bool native = description_->media_source != VideoDescription::MediaSource::External;
+                if (native || description_->width <= 0) {
                     new_width = static_cast<int16_t>(frame->width());
                 } else {
                     new_width = description_->width;
                 }
-                if (description_->height <= 0) {
+                if (native || description_->height <= 0) {
                     new_height = static_cast<int16_t>(frame->height());
                 } else {
                     new_height = description_->height;
@@ -50,34 +56,23 @@ namespace ntgcalls::media {
                 const auto y_scaled_size = new_width * new_height;
                 const auto uv_scaled_size = chroma_width * chroma_height;
                 const auto total_size = y_scaled_size + uv_scaled_size * 2;
-                auto yuv = bytes::make_unique_binary(total_size);
+                bytes::binary yuv(total_size);
                 const auto buffer = frame->video_frame_buffer()->ToI420();
-                const auto width = buffer->width();
-                const auto height = buffer->height();
-                const auto y_scaled_plane = std::make_unique<uint8_t[]>(y_scaled_size);
-                const auto u_scaled_plane = std::make_unique<uint8_t[]>(uv_scaled_size);
-                const auto v_scaled_plane = std::make_unique<uint8_t[]>(uv_scaled_size);
-
                 I420Scale(
                     buffer->DataY(), buffer->StrideY(),
                     buffer->DataU(), buffer->StrideU(),
                     buffer->DataV(), buffer->StrideV(),
-                    width, height,
-                    y_scaled_plane.get(), new_width,
-                    u_scaled_plane.get(), chroma_width,
-                    v_scaled_plane.get(), chroma_width,
+                    buffer->width(), buffer->height(),
+                    yuv.data(), new_width,
+                    yuv.data() + y_scaled_size, chroma_width,
+                    yuv.data() + y_scaled_size + uv_scaled_size, chroma_width,
                     new_width, new_height,
                     libyuv::kFilterBox
                 );
 
-                std::memcpy(yuv.get(), y_scaled_plane.get(), y_scaled_size);
-                std::memcpy(yuv.get() + y_scaled_size, u_scaled_plane.get(), uv_scaled_size);
-                std::memcpy(yuv.get() + y_scaled_size + uv_scaled_size, v_scaled_plane.get(), uv_scaled_size);
-
                 (void) frame_callback_(
                     ssrc,
                     std::move(yuv),
-                    total_size,
                     {
                         frame->timestamp_us(),
                         frame->rotation(),
@@ -88,7 +83,7 @@ namespace ntgcalls::media {
                     }
                 );
             },
-            [this](const uint32_t ssrc, const wrtc::utils::encoded::EncodedFrame &frame) {
+            [this](const uint32_t ssrc, const wrtc::utils::encoded::EncodedFrame& frame) {
                 if (!description_) {
                     return;
                 }
@@ -96,10 +91,10 @@ namespace ntgcalls::media {
                     return;
                 }
                 const std::lock_guard lock(mutex_);
-                const auto size = frame.payload.size();
-                auto data = bytes::make_unique_binary(size);
-                std::memcpy(data.get(), frame.payload.data(), size);
-                (void) frame_callback_(ssrc, std::move(data), size, frame.frame_data);
+                (void) frame_callback_(ssrc, std::move(frame.payload), frame.frame_data);
+            },
+            [this](const uint32_t ssrc) {
+                (void) removed_callback_(ssrc);
             }
         );
         weak_sink_ = sink_;

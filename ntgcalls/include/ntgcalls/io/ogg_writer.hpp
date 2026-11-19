@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <ntgcalls/io/threaded_writer.hpp>
 #include <ntgcalls/media/containers/ogg/ogg_muxer.hpp>
@@ -20,10 +21,10 @@ namespace ntgcalls::io {
         std::mutex mutex_;
         std::unique_ptr<media::containers::OggMuxer> muxer_;
         uint64_t elapsed_ = 0;
-        std::optional<uint32_t> source_ssrc_;
+        std::optional<int64_t> source_ssrc_;
         bool transcoding_ = false;
-        std::map<uint32_t, OpusDecoder*> decoders_;
-        std::map<uint32_t, std::vector<int16_t>> decoded_;
+        std::map<int64_t, OpusDecoder*> decoders_;
+        std::map<int64_t, std::vector<int16_t>> decoded_;
         OpusEncoder* encoder_ = nullptr;
         std::vector<int16_t> mixed_;
         bytes::binary silence_packet_;
@@ -34,18 +35,18 @@ namespace ntgcalls::io {
 
         void write_packet(bytes::binary packet, int samples);
 
-        void push_pages(const std::vector<bytes::binary> &pages);
+        void push_pages(const std::vector<bytes::binary>& pages);
 
-        void forward(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames);
+        void forward(const std::vector<wrtc::models::Frame>& frames);
 
-        void transcode(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames);
+        void transcode(const std::vector<wrtc::models::Frame>& frames);
 
     public:
         explicit OggWriter(media::BaseSink* sink);
 
         ~OggWriter() override;
 
-        void send_frames(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) override;
+        void send_frames(std::vector<wrtc::models::Frame> frames) override;
 
         void flush() override;
     };

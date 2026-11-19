@@ -16,9 +16,9 @@ namespace ntgcalls::io {
     public:
         explicit AudioMixer(media::BaseSink* sink);
 
-        void send_frames(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) override;
+        void send_frames(std::vector<wrtc::models::Frame> frames) override;
 
-        static bytes::unique_binary mix(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames, int64_t frame_size);
+        static bytes::unique_binary mix(const std::vector<wrtc::models::Frame>& frames, int64_t frame_size);
     };
 
 } // ntgcalls::io

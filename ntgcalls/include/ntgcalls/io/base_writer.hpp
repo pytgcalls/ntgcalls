@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include <map>
+#include <vector>
 #include <ntgcalls/io/base_io.hpp>
-#include <wrtc/utils/binary.hpp>
+#include <wrtc/models/frame.hpp>
 
 namespace ntgcalls::io {
 
@@ -15,7 +15,9 @@ namespace ntgcalls::io {
 
         virtual void open() = 0;
 
-        virtual void send_frames(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames) = 0;
+        virtual void send_frames(std::vector<wrtc::models::Frame> frames) = 0;
+
+        virtual void remove_source(int64_t) {}
     };
 
 } // ntgcalls::io

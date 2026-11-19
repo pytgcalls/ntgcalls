@@ -40,13 +40,18 @@ namespace ntgcalls::media {
             }
             readers_.clear();
             removed_readers_.clear();
-            writers_.clear();
             for (const auto& stream : streams_ | std::views::values) {
                 if (const auto audio_receiver = dynamic_cast<AudioReceiver*>(stream.get())) {
                     audio_receiver->on_frames(nullptr);
                 } else if (const auto video_receiver = dynamic_cast<VideoReceiver*>(stream.get())) {
                     video_receiver->on_frame(nullptr);
+                    video_receiver->on_source_removed(nullptr);
                 }
+            }
+            std::map<Device, std::unique_ptr<io::BaseWriter>> writers_to_close;
+            {
+                const std::unique_lock lock(writers_mutex_);
+                writers_to_close.swap(writers_);
             }
             streams_.clear();
             tracks_.clear();
@@ -285,7 +290,7 @@ namespace ntgcalls::media {
         frames_callback_ = callback;
     }
 
-    void StreamManager::send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData &frame_data) {
+    void StreamManager::send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData& frame_data) {
         const StreamId id(Capture, device);
         if (!external_readers_.contains(device) || !streams_.contains(id)) {
             throw InvalidParams("External source not initialized");
@@ -496,7 +501,7 @@ namespace ntgcalls::media {
             remove_reader(device);
             return;
         }
-        writers_.erase(device);
+        replace_writer(device, nullptr);
         external_writers_.erase(device);
     }
 
@@ -642,17 +647,17 @@ namespace ntgcalls::media {
                 dynamic_cast<AudioReceiver*>(streams_[id].get())->set_encoded(desc.is_encoded());
             }
             if (!is_external) {
-                writers_.erase(device);
-                writers_[device] = MediaSourceFactory::from_audio_output(desc, streams_[id].get());
+                replace_writer(device, MediaSourceFactory::from_output(desc, streams_[id].get()));
             }
             setup_audio_playback_callbacks(id, is_external);
-        } else if (is_external) {
+        } else {
             if constexpr (std::is_same_v<DescriptionType, VideoDescription>) {
                 dynamic_cast<VideoReceiver*>(streams_[id].get())->set_encoded(desc.is_encoded());
             }
-            setup_video_playback_callbacks(id);
-        } else {
-            throw InvalidParams("Invalid input mode");
+            if (!is_external) {
+                replace_writer(device, MediaSourceFactory::from_output(desc, streams_[id].get()));
+            }
+            setup_video_playback_callbacks(id, is_external);
         }
 
         if (!is_external) {
@@ -669,57 +674,84 @@ namespace ntgcalls::media {
             if (!strong) {
                 return;
             }
-            if (is_external) {
-                std::vector<wrtc::models::Frame> external_frames;
-                const auto receiver = dynamic_cast<AudioReceiver*>(strong->streams_[id].get());
-                for (const auto& [ssrc, data] : frames) {
-                    if (strong->external_writers_.contains(id.second)) {
-                        wrtc::models::FrameData frame_data{};
-                        frame_data.codec = receiver->codec();
-                        if (const auto it = timestamps.find(ssrc); it != timestamps.end()) {
-                            frame_data.absolute_capture_timestamp_ms = it->second;
-                        }
-                        external_frames.push_back({
-                            ssrc,
-                            {data.first.get(), data.first.get() + data.second},
-                            frame_data,
-                        });
-                    }
+            std::vector<wrtc::models::Frame> converted_frames;
+            const auto receiver = dynamic_cast<AudioReceiver*>(strong->streams_[id].get());
+            for (const auto& [ssrc, data] : frames) {
+                wrtc::models::FrameData frame_data{};
+                frame_data.codec = receiver->codec();
+                if (const auto it = timestamps.find(ssrc); it != timestamps.end()) {
+                    frame_data.absolute_capture_timestamp_ms = it->second;
                 }
-                if (!external_frames.empty()) {
+                converted_frames.push_back({
+                    ssrc,
+                    {data.first.get(), data.first.get() + data.second},
+                    frame_data,
+                });
+            }
+            if (is_external) {
+                if (strong->external_writers_.contains(id.second) && !converted_frames.empty()) {
                     (void) strong->frames_callback_(
                         id.first,
                         id.second,
-                        external_frames
+                        converted_frames
                     );
                 }
             } else {
-                if (strong->writers_.contains(id.second)) {
-                    if (const auto audio_writer = dynamic_cast<io::BaseWriter*>(strong->writers_[id.second].get())) {
-                        audio_writer->send_frames(frames);
-                    }
-                }
+                strong->send_to_writer(id.second, std::move(converted_frames));
             }
         });
     }
 
-    void StreamManager::setup_video_playback_callbacks(const StreamId& id) {
+    void StreamManager::setup_video_playback_callbacks(const StreamId& id, bool is_external) {
         const std::weak_ptr weak(shared_from_this());
-        dynamic_cast<VideoReceiver*>(streams_[id].get())->on_frame([weak, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::models::FrameData &frame_data) {
+        dynamic_cast<VideoReceiver*>(streams_[id].get())->on_frame([weak, id, is_external](const uint32_t ssrc, bytes::binary frame, const wrtc::models::FrameData& frame_data) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            if (strong->external_writers_.contains(id.second)) {
-                (void) strong->frames_callback_(
-                    id.first,
-                    id.second,
-                    {{ssrc,
-                      {frame.get(), frame.get() + size},
-                      frame_data}}
-                );
+            std::vector<wrtc::models::Frame> frames;
+            frames.emplace_back(ssrc, std::move(frame), frame_data);
+            if (is_external) {
+                if (strong->external_writers_.contains(id.second)) {
+                    (void) strong->frames_callback_(id.first, id.second, frames);
+                }
+            } else {
+                strong->send_to_writer(id.second, std::move(frames));
             }
         });
+        dynamic_cast<VideoReceiver*>(streams_[id].get())->on_source_removed([weak, id](const uint32_t ssrc) {
+            if (const auto strong = weak.lock()) {
+                strong->remove_writer_source(id.second, ssrc);
+            }
+        });
+    }
+
+    void StreamManager::send_to_writer(const Device device, std::vector<wrtc::models::Frame> frames) {
+        const std::shared_lock lock(writers_mutex_);
+        if (const auto writer = writers_.find(device); writer != writers_.end()) {
+            writer->second->send_frames(std::move(frames));
+        }
+    }
+
+    void StreamManager::remove_writer_source(const Device device, const int64_t ssrc) {
+        const std::shared_lock lock(writers_mutex_);
+        if (const auto writer = writers_.find(device); writer != writers_.end()) {
+            writer->second->remove_source(ssrc);
+        }
+    }
+
+    void StreamManager::replace_writer(const Device device, std::unique_ptr<io::BaseWriter> writer) {
+        std::unique_ptr<io::BaseWriter> previous;
+        {
+            const std::unique_lock lock(writers_mutex_);
+            if (const auto it = writers_.find(device); it != writers_.end()) {
+                previous = std::move(it->second);
+                writers_.erase(it);
+            }
+            if (writer) {
+                writers_[device] = std::move(writer);
+            }
+        }
     }
 
 } // ntgcalls::media

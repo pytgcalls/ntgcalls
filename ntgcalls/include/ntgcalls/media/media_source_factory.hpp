@@ -15,7 +15,7 @@ namespace ntgcalls::media {
     public:
         static std::unique_ptr<io::BaseReader> from_input(const BaseMediaDescription& desc, BaseSink* sink);
 
-        static std::unique_ptr<io::BaseWriter> from_audio_output(const BaseMediaDescription& desc, BaseSink* sink);
+        static std::unique_ptr<io::BaseWriter> from_output(const BaseMediaDescription& desc, BaseSink* sink);
     };
 
 } // ntgcalls::media

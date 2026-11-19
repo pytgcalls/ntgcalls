@@ -25,6 +25,8 @@ namespace ntgcalls::io {
 
         virtual std::optional<std::pair<bytes::unique_binary, size_t>> idle_data();
 
+        virtual std::chrono::nanoseconds idle_interval() const;
+
         virtual void write(const bytes::unique_binary& data, size_t size) = 0;
 
     public:

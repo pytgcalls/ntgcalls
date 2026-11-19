@@ -7,6 +7,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <optional>
+#include <shared_mutex>
 #include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/io/base_writer.hpp>
 #include <ntgcalls/media/base_sink.hpp>
@@ -88,7 +89,7 @@ namespace ntgcalls::media {
 
         void on_frames(const std::function<void(Mode, Device, const std::vector<wrtc::models::Frame>&)>& callback);
 
-        void send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData &frame_data);
+        void send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData& frame_data);
 
     private:
         using StreamId = std::pair<Mode, Device>;
@@ -101,6 +102,7 @@ namespace ntgcalls::media {
         std::map<Device, std::unique_ptr<io::BaseReader>> readers_;
         std::vector<std::pair<Device, std::unique_ptr<io::BaseReader>>> removed_readers_;
         std::map<Device, std::unique_ptr<io::BaseWriter>> writers_;
+        std::shared_mutex writers_mutex_;
         std::set<Device> external_writers_;
         std::set<Device> external_readers_;
         std::mutex sync_mutex_;
@@ -142,6 +144,12 @@ namespace ntgcalls::media {
 
         void update_encoding(const StreamId& id);
 
+        void send_to_writer(Device device, std::vector<wrtc::models::Frame> frames);
+
+        void remove_writer_source(Device device, int64_t ssrc);
+
+        void replace_writer(Device device, std::unique_ptr<io::BaseWriter> writer);
+
         void setup_capture_callbacks(
             const StreamId& id,
             Type stream_type,
@@ -163,7 +171,8 @@ namespace ntgcalls::media {
         );
 
         void setup_video_playback_callbacks(
-            const StreamId& id
+            const StreamId& id,
+            bool is_external
         );
 
         void handle_no_description(Mode mode, Device device);

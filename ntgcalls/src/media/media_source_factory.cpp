@@ -4,6 +4,7 @@
 
 #include <ntgcalls/io/file_reader.hpp>
 #include <ntgcalls/io/matroska_reader.hpp>
+#include <ntgcalls/io/matroska_writer.hpp>
 #include <ntgcalls/io/file_writer.hpp>
 #include <ntgcalls/io/ogg_reader.hpp>
 #include <ntgcalls/io/ogg_writer.hpp>
@@ -84,11 +85,19 @@ namespace ntgcalls::media {
         return desc.is_encoded();
     }
 
-    std::unique_ptr<io::BaseWriter> MediaSourceFactory::from_audio_output(const BaseMediaDescription& desc, BaseSink* sink) {
-        // SUPPORTED OUTPUT AUDIO MODES
+    std::unique_ptr<io::BaseWriter> MediaSourceFactory::from_output(const BaseMediaDescription& desc, BaseSink* sink) {
+        const auto* video = dynamic_cast<const VideoDescription*>(&desc);
+        if (video && (video->width <= 0 || video->height <= 0 || video->fps == 0)) {
+            RTC_LOG(LS_ERROR) << "Invalid video resolution or fps";
+            throw InvalidParams("Invalid video resolution or fps");
+        }
+        // SUPPORTED OUTPUT MODES
         switch (desc.media_source) {
         case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file writer for " << desc.input;
+            if (is_encoded(desc) && video) {
+                return std::make_unique<io::FileWriter<io::MatroskaWriter>>(desc.input, sink);
+            }
             if (is_encoded(desc)) {
                 return std::make_unique<io::FileWriter<io::OggWriter>>(desc.input, sink);
             }
@@ -96,6 +105,9 @@ namespace ntgcalls::media {
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell writer for " << desc.input;
+            if (is_encoded(desc) && video) {
+                return std::make_unique<io::ShellWriter<io::MatroskaWriter>>(desc.input, sink);
+            }
             if (is_encoded(desc)) {
                 return std::make_unique<io::ShellWriter<io::OggWriter>>(desc.input, sink);
             }
@@ -104,6 +116,9 @@ namespace ntgcalls::media {
             BOOST_THROW
 #endif
         case BaseMediaDescription::MediaSource::Device:
+            if (video) {
+                throw InvalidParams("Video playback to a device is not supported");
+            }
             return devices::MediaDevice::create_device<io::BaseWriter>(desc, sink, false);
         default:
             RTC_LOG(LS_ERROR) << "Invalid input mode";

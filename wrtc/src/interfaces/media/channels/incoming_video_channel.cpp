@@ -22,7 +22,7 @@ namespace wrtc::interfaces::media::channels {
         std::weak_ptr<RemoteVideoSink> remote_video_sink,
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
         E2EEncryptor* encryptor
-    ): network_thread_(network_thread), decoder_factory_(decoder_factory) {
+    ): network_thread_(network_thread), decoder_factory_(decoder_factory), remote_video_sink_(remote_video_sink) {
         sink_ = std::make_unique<RawVideoSink>();
         std::shared_ptr<utils::encoded::EncodedQueue> encoded_queue;
         if (const auto remote_video = remote_video_sink.lock(); remote_video && remote_video->encoded()) {
@@ -160,6 +160,9 @@ namespace wrtc::interfaces::media::channels {
         });
         if (queue_id_) {
             decoder_factory_->unregister_queue(*queue_id_);
+        }
+        if (const auto remote_video_sink = remote_video_sink_.lock()) {
+            remote_video_sink->remove_source(ssrc_);
         }
     }
 
