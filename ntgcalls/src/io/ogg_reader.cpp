@@ -20,7 +20,7 @@ namespace ntgcalls::io {
             }
             auto& [data, size] = *packet;
             const auto packet_duration = std::chrono::milliseconds(10) * std::max<size_t>(wrtc::audio_factory::OpusPacket::frames(data.get(), size), 1);
-            frames.push_back({std::move(data), size, packet_duration, {0, webrtc::kVideoRotation_0, 0, 0, wrtc::models::Codec::Opus}});
+            frames.push_back({std::move(data), size, packet_duration, {0, webrtc::kVideoRotation_0, 0, 0, wrtc::models::Codec::Opus, true}});
             total += packet_duration;
         }
         if (frames.empty()) {

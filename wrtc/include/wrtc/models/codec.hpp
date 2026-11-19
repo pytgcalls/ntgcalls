@@ -8,6 +8,10 @@ namespace wrtc::models {
     enum class Codec {
         PCM,
         Opus,
-        I420
+        I420,
+        H264,
+        VP8,
+        VP9,
+        AV1
     };
 } // wrtc::models

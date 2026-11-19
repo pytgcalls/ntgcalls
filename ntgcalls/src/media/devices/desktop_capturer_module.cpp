@@ -118,6 +118,7 @@ namespace ntgcalls::media::devices {
                     static_cast<uint16_t>(out_w),
                     static_cast<uint16_t>(out_h),
                     wrtc::models::Codec::I420,
+                    true,
                 }
             );
         } else if (result == webrtc::DesktopCapturer::Result::ERROR_PERMANENT) {

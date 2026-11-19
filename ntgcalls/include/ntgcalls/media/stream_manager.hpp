@@ -16,6 +16,7 @@
 #include <wrtc/interfaces/media/tracks/encoded_track_interface.hpp>
 #include <wrtc/models/audio_encoding.hpp>
 #include <wrtc/models/frame.hpp>
+#include <wrtc/models/video_encoding.hpp>
 
 namespace ntgcalls::media {
     class StreamManager: public std::enable_shared_from_this<StreamManager> {
@@ -87,7 +88,7 @@ namespace ntgcalls::media {
 
         void on_frames(const std::function<void(Mode, Device, const std::vector<wrtc::models::Frame>&)>& callback);
 
-        void send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData& frame_data);
+        void send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData &frame_data);
 
     private:
         using StreamId = std::pair<Mode, Device>;
@@ -136,6 +137,8 @@ namespace ntgcalls::media {
         );
 
         wrtc::models::AudioEncoding audio_encoding(const StreamId& id, const AudioDescription& description);
+
+        wrtc::models::VideoEncoding video_encoding(const StreamId& id, const VideoDescription& description);
 
         void update_encoding(const StreamId& id);
 

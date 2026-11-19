@@ -254,7 +254,7 @@ namespace wrtc::interfaces {
             }
         }
         if (video_ssrc) {
-            if (video_channel_ && video_channel_->ssrc() != video_ssrc.value()) {
+            if (video_channel_ && (video_channel_->ssrc() != video_ssrc.value() || video_channel_->encoding() != video_encoding_)) {
                 video_channel_ = nullptr;
             }
             std::optional<models::MediaContent> video_content;
@@ -269,12 +269,14 @@ namespace wrtc::interfaces {
                     video_channel_ = std::make_unique<media::channels::OutgoingVideoChannel>(
                         call_.get(),
                         channel_manager_.get(),
+                        factory_->video_encoder_factory(),
                         dtls_srtp_transport_.get(),
                         *video_content,
                         network_thread(),
                         &video_sink_,
                         payload_type_mapping_,
-                        encryptor_
+                        encryptor_,
+                        video_encoding_
                     );
                 }
             }

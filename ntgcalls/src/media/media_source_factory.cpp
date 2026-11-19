@@ -3,6 +3,7 @@
 //
 
 #include <ntgcalls/io/file_reader.hpp>
+#include <ntgcalls/io/matroska_reader.hpp>
 #include <ntgcalls/io/file_writer.hpp>
 #include <ntgcalls/io/ogg_reader.hpp>
 #include <ntgcalls/io/ogg_writer.hpp>
@@ -31,6 +32,9 @@ namespace ntgcalls::media {
         switch (desc.media_source) {
         case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file reader for " << desc.input;
+            if (is_encoded(desc) && dynamic_cast<const VideoDescription*>(&desc)) {
+                return std::make_unique<io::FileReader<io::MatroskaReader>>(desc.input, sink);
+            }
             if (is_encoded(desc)) {
                 return std::make_unique<io::FileReader<io::OggReader>>(desc.input, sink);
             }
@@ -38,6 +42,9 @@ namespace ntgcalls::media {
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell reader for " << desc.input;
+            if (is_encoded(desc) && dynamic_cast<const VideoDescription*>(&desc)) {
+                return std::make_unique<io::ShellReader<io::MatroskaReader>>(desc.input, sink);
+            }
             if (is_encoded(desc)) {
                 return std::make_unique<io::ShellReader<io::OggReader>>(desc.input, sink);
             }
@@ -66,6 +73,12 @@ namespace ntgcalls::media {
             if (const auto format = audio->format; format && *format != BaseMediaDescription::Format::Ogg && *format != BaseMediaDescription::Format::PCM) {
                 RTC_LOG(LS_ERROR) << "Invalid audio format";
                 throw InvalidParams("Audio supports only the Ogg and PCM formats");
+            }
+        }
+        if (const auto* video = dynamic_cast<const VideoDescription*>(&desc)) {
+            if (const auto format = video->format; format && *format != BaseMediaDescription::Format::Matroska && *format != BaseMediaDescription::Format::I420) {
+                RTC_LOG(LS_ERROR) << "Invalid video format";
+                throw InvalidParams("Video supports only the Matroska and I420 formats");
             }
         }
         return desc.is_encoded();

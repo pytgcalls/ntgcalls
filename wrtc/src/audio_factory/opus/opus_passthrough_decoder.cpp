@@ -28,7 +28,7 @@ namespace wrtc::audio_factory {
         if (samples <= 0) {
             return -1;
         }
-        queue_->push({{encoded, encoded + encoded_len}, {0, webrtc::kVideoRotation_0, 0, 0, models::Codec::Opus}});
+        queue_->push({{encoded, encoded + encoded_len}, {0, webrtc::kVideoRotation_0, 0, 0, models::Codec::Opus, true}});
         const auto total = static_cast<size_t>(samples) * channels_;
         std::memset(decoded, 0, total * sizeof(int16_t));
         *speech_type = kSpeech;

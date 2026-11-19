@@ -19,6 +19,7 @@
 #include <wrtc/interfaces/media/channels/outgoing_audio_channel.hpp>
 #include <wrtc/interfaces/media/channels/outgoing_video_channel.hpp>
 #include <wrtc/models/peer_ice_parameters.hpp>
+#include <wrtc/models/video_encoding.hpp>
 
 namespace wrtc::interfaces {
 
@@ -63,6 +64,7 @@ namespace wrtc::interfaces {
         std::unique_ptr<media::ChannelManager> channel_manager_;
         std::unique_ptr<media::channels::OutgoingAudioChannel> audio_channel_;
         models::AudioEncoding audio_encoding_;
+        models::VideoEncoding video_encoding_;
         std::unique_ptr<media::channels::OutgoingVideoChannel> video_channel_;
         models::PeerIceParameters local_parameters_, remote_parameters_;
         webrtc::SocketFactory* underlying_socket_factory_ = nullptr;

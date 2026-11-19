@@ -15,6 +15,7 @@ namespace wrtc::models {
         webrtc::VideoRotation rotation = webrtc::kVideoRotation_0;
         uint16_t width = 0, height = 0;
         Codec codec = Codec::PCM;
+        bool keyframe = true;
 
         FrameData() = default;
 
@@ -23,7 +24,8 @@ namespace wrtc::models {
             webrtc::VideoRotation rotation,
             uint16_t width,
             uint16_t height,
-            Codec codec
+            Codec codec,
+            bool keyframe
         );
     };
 

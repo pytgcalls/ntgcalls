@@ -189,6 +189,7 @@ namespace ntgcalls::media::devices {
                 static_cast<uint16_t>(desc_.width),
                 static_cast<uint16_t>(desc_.height),
                 wrtc::models::Codec::I420,
+                true,
             }
         );
     }

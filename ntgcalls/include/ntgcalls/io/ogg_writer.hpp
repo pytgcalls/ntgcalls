@@ -34,7 +34,7 @@ namespace ntgcalls::io {
 
         void write_packet(bytes::binary packet, int samples);
 
-        void push_pages(const std::vector<bytes::binary>& pages);
+        void push_pages(const std::vector<bytes::binary> &pages);
 
         void forward(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames);
 

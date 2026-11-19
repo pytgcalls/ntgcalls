@@ -135,7 +135,7 @@ namespace ntgcalls::io {
         push_pages(muxer_->add(std::move(packet), samples));
     }
 
-    void OggWriter::push_pages(const std::vector<bytes::binary>& pages) {
+    void OggWriter::push_pages(const std::vector<bytes::binary> &pages) {
         for (auto& page : pages) {
             auto data = bytes::make_unique_binary(page.size());
             std::memcpy(data.get(), page.data(), page.size());

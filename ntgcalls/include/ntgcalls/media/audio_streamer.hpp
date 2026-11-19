@@ -15,9 +15,9 @@ namespace ntgcalls::media {
         std::shared_ptr<wrtc::utils::encoded::EncodedQueue> encoded_;
         bytes::binary silence_;
 
-        void send_pcm(uint8_t* sample, uint32_t sample_rate, const wrtc::models::FrameData& additional_data) const;
+        void send_pcm(uint8_t* sample, uint32_t sample_rate, const wrtc::models::FrameData &additional_data) const;
 
-        void send_encoded(const uint8_t* packet, size_t size, const wrtc::models::FrameData& additional_data);
+        void send_encoded(const uint8_t* packet, size_t size, const wrtc::models::FrameData &additional_data);
 
     public:
         AudioStreamer();

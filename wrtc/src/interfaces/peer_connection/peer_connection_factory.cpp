@@ -53,13 +53,19 @@ namespace wrtc::interfaces::peer_connection {
         audio_decoder_factory_ = webrtc::make_ref_counted<audio_factory::AudioDecoderFactory>();
         dependencies.audio_decoder_factory = audio_decoder_factory_;
 #ifdef IS_ANDROID
-        dependencies.video_encoder_factory = android::create_video_encoder_factory(static_cast<JNIEnv*>(jni_env_));
-        dependencies.video_decoder_factory = android::create_video_decoder_factory(static_cast<JNIEnv*>(jni_env_));
+        auto video_encoder_factory = android::create_video_encoder_factory(static_cast<JNIEnv*>(jni_env_));
+        auto video_decoder_factory = android::create_video_decoder_factory(static_cast<JNIEnv*>(jni_env_));
 #else
         auto config = video_factory::VideoFactoryConfig();
-        dependencies.video_encoder_factory = config.create_video_encoder_factory();
-        dependencies.video_decoder_factory = config.create_video_decoder_factory();
+        std::unique_ptr<webrtc::VideoEncoderFactory> video_encoder_factory = config.create_video_encoder_factory();
+        std::unique_ptr<webrtc::VideoDecoderFactory> video_decoder_factory = config.create_video_decoder_factory();
 #endif
+        auto passthrough_decoder_factory = std::make_unique<video_factory::PassthroughDecoderFactory>(std::move(video_decoder_factory));
+        auto passthrough_encoder_factory = std::make_unique<video_factory::PassthroughEncoderFactory>(std::move(video_encoder_factory), passthrough_decoder_factory->inner());
+        video_encoder_factory_ = passthrough_encoder_factory.get();
+        video_decoder_factory_ = passthrough_decoder_factory.get();
+        dependencies.video_encoder_factory = std::move(passthrough_encoder_factory);
+        dependencies.video_decoder_factory = std::move(passthrough_decoder_factory);
         dependencies.audio_mixer = nullptr;
         supported_video_formats_ = dependencies.video_encoder_factory->GetSupportedFormats();
         EnableMedia(dependencies);
@@ -138,6 +144,14 @@ namespace wrtc::interfaces::peer_connection {
 
     audio_factory::AudioDecoderFactory* PeerConnectionFactory::audio_decoder_factory() const {
         return audio_decoder_factory_.get();
+    }
+
+    video_factory::PassthroughEncoderFactory* PeerConnectionFactory::video_encoder_factory() const {
+        return video_encoder_factory_;
+    }
+
+    video_factory::PassthroughDecoderFactory* PeerConnectionFactory::video_decoder_factory() const {
+        return video_decoder_factory_;
     }
 
     PeerConnectionFactory* PeerConnectionFactory::get_or_create_default() {

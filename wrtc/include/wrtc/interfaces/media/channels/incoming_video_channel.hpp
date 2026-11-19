@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <wrtc/video_factory/passthrough/passthrough_decoder_factory.hpp>
 #include <pc/channel.h>
 #include <pc/rtp_transport.h>
 #include <wrtc/interfaces/media/channel_manager.hpp>
@@ -18,16 +19,19 @@ namespace wrtc::interfaces::media::channels {
         std::unique_ptr<webrtc::VideoBitrateAllocatorFactory> video_bitrate_allocator_factory_;
         utils::SafeThread& network_thread_;
         std::unique_ptr<RawVideoSink> sink_;
+        video_factory::PassthroughDecoderFactory* decoder_factory_;
+        std::optional<uint64_t> queue_id_;
 
     public:
         IncomingVideoChannel(
             webrtc::Call* call,
             ChannelManager* channel_manager,
+            video_factory::PassthroughDecoderFactory* decoder_factory,
             webrtc::RtpTransport* rtp_transport,
             std::vector<models::SsrcGroup> ssrc_groups,
             int64_t user_id,
             webrtc::UniqueRandomIdGenerator* random_id_generator,
-            const std::vector<webrtc::Codec>& codecs,
+            std::vector<webrtc::Codec> codecs,
             utils::SafeThread& network_thread,
             std::weak_ptr<RemoteVideoSink> remote_video_sink,
             const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,

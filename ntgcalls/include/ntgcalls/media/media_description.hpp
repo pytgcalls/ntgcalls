@@ -21,7 +21,9 @@ namespace ntgcalls::media {
 
         enum class Format {
             PCM,
-            Ogg
+            Ogg,
+            I420,
+            Matroska
         };
 
         std::string input;
@@ -63,12 +65,13 @@ namespace ntgcalls::media {
     public:
         int16_t width, height;
         uint8_t fps;
+        std::optional<Format> format;
 
-        VideoDescription(const MediaSource media_source, const int16_t width, const int16_t height, const uint8_t fps, const std::string& input, const bool keep_open):
-        BaseMediaDescription(input, media_source, keep_open), width(width), height(height), fps(fps) {}
+        VideoDescription(const MediaSource media_source, const int16_t width, const int16_t height, const uint8_t fps, const std::string& input, const bool keep_open, const std::optional<Format>& format = std::nullopt):
+        BaseMediaDescription(input, media_source, keep_open), width(width), height(height), fps(fps), format(format) {}
 
         [[nodiscard]] bool is_encoded() const override {
-            return false;
+            return media_source != MediaSource::Device && media_source != MediaSource::Desktop && format.value_or(Format::Matroska) == Format::Matroska;
         }
     };
 
@@ -76,6 +79,7 @@ namespace ntgcalls::media {
         return lhs.width == rhs.width &&
                lhs.height == rhs.height &&
                lhs.fps == rhs.fps &&
+               lhs.format == rhs.format &&
                lhs.input == rhs.input &&
                lhs.media_source == rhs.media_source;
     }

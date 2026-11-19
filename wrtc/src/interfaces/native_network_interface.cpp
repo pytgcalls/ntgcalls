@@ -219,6 +219,7 @@ namespace wrtc::interfaces {
                 video_channel = std::make_unique<media::channels::IncomingVideoChannel>(
                     call_.get(),
                     channel_manager_.get(),
+                    factory_->video_decoder_factory(),
                     dtls_srtp_transport_.get(),
                     media_content.ssrc_groups,
                     media_content.user_id,
@@ -659,15 +660,30 @@ namespace wrtc::interfaces {
                 strong->outgoing_video_tracks_.emplace_back(video_track);
                 video_track->AddOrUpdateSink(&strong->video_sink_, webrtc::VideoSinkWants());
             });
-            return std::make_unique<media::tracks::MediaTrackInterface>([weak](const bool enable) {
-                const auto strong = weak.lock();
-                if (!strong) {
-                    return;
+            return std::make_unique<media::tracks::EncodedTrackInterface<models::VideoEncoding>>(
+                [weak](const bool enable) {
+                    const auto strong = weak.lock();
+                    if (!strong) {
+                        return;
+                    }
+                    if (strong->video_channel_ != nullptr) {
+                        strong->video_channel_->set_enabled(enable);
+                    }
+                },
+                [weak](const models::VideoEncoding& encoding) {
+                    const auto strong = weak.lock();
+                    if (!strong) {
+                        return;
+                    }
+                    bool changed = false;
+                    strong->network_thread().BlockingCall([&] {
+                        changed = std::exchange(strong->video_encoding_, encoding) != encoding && strong->video_channel_ != nullptr;
+                    });
+                    if (changed) {
+                        strong->create_channels();
+                    }
                 }
-                if (strong->video_channel_ != nullptr) {
-                    strong->video_channel_->set_enabled(enable);
-                }
-            });
+            );
         }
         throw RTCException("Unsupported track type");
     }

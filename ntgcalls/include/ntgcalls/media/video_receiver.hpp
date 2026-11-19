@@ -19,6 +19,8 @@ namespace ntgcalls::media {
     public:
         ~VideoReceiver() override;
 
+        void set_encoded(bool encoded) const;
+
         void on_frame(const std::function<void(uint32_t, bytes::unique_binary, size_t, wrtc::models::FrameData)>& callback);
 
         std::weak_ptr<wrtc::interfaces::media::RemoteVideoSink> remote_sink();

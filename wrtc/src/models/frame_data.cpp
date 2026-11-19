@@ -11,7 +11,8 @@ namespace wrtc::models {
         const webrtc::VideoRotation rotation,
         const uint16_t width,
         const uint16_t height,
-        const Codec codec
-    ): absolute_capture_timestamp_ms(absolute_capture_timestamp_ms), rotation(rotation), width(width), height(height), codec(codec) {}
+        const Codec codec,
+        const bool keyframe
+    ): absolute_capture_timestamp_ms(absolute_capture_timestamp_ms), rotation(rotation), width(width), height(height), codec(codec), keyframe(keyframe) {}
 
 } // wrtc::models

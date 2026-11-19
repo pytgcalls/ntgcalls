@@ -198,6 +198,14 @@ namespace ntgcalls::media {
         return {description.bitrate, description.channel_count, passthrough};
     }
 
+    wrtc::models::VideoEncoding StreamManager::video_encoding(const StreamId& id, const VideoDescription& description) {
+        std::shared_ptr<wrtc::utils::encoded::EncodedQueue> passthrough;
+        if (description.is_encoded()) {
+            passthrough = dynamic_cast<VideoStreamer*>(streams_[id].get())->encoded_queue();
+        }
+        return {passthrough};
+    }
+
     void StreamManager::update_encoding(const StreamId& id) {
         const auto track = tracks_.find(id);
         if (track == tracks_.end()) {
@@ -207,6 +215,13 @@ namespace ntgcalls::media {
             if (const auto config = sink->get_config()) {
                 if (const auto audio_track = dynamic_cast<wrtc::interfaces::media::tracks::EncodedTrackInterface<wrtc::models::AudioEncoding>*>(track->second.get())) {
                     audio_track->set_encoding(audio_encoding(id, *config));
+                }
+            }
+        }
+        if (const auto sink = dynamic_cast<VideoSink*>(streams_[id].get())) {
+            if (const auto config = sink->get_config()) {
+                if (const auto video_track = dynamic_cast<wrtc::interfaces::media::tracks::EncodedTrackInterface<wrtc::models::VideoEncoding>*>(track->second.get())) {
+                    video_track->set_encoding(video_encoding(id, *config));
                 }
             }
         }
@@ -270,7 +285,7 @@ namespace ntgcalls::media {
         frames_callback_ = callback;
     }
 
-    void StreamManager::send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData& frame_data) {
+    void StreamManager::send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData &frame_data) {
         const StreamId id(Capture, device);
         if (!external_readers_.contains(device) || !streams_.contains(id)) {
             throw InvalidParams("External source not initialized");
@@ -632,6 +647,9 @@ namespace ntgcalls::media {
             }
             setup_audio_playback_callbacks(id, is_external);
         } else if (is_external) {
+            if constexpr (std::is_same_v<DescriptionType, VideoDescription>) {
+                dynamic_cast<VideoReceiver*>(streams_[id].get())->set_encoded(desc.is_encoded());
+            }
             setup_video_playback_callbacks(id);
         } else {
             throw InvalidParams("Invalid input mode");
@@ -687,7 +705,7 @@ namespace ntgcalls::media {
 
     void StreamManager::setup_video_playback_callbacks(const StreamId& id) {
         const std::weak_ptr weak(shared_from_this());
-        dynamic_cast<VideoReceiver*>(streams_[id].get())->on_frame([weak, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::models::FrameData& frame_data) {
+        dynamic_cast<VideoReceiver*>(streams_[id].get())->on_frame([weak, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::models::FrameData &frame_data) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;

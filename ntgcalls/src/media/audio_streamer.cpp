@@ -28,7 +28,7 @@ namespace ntgcalls::media {
         send_pcm(sample, description_->sample_rate, additional_data);
     }
 
-    void AudioStreamer::send_pcm(uint8_t* sample, const uint32_t sample_rate, const wrtc::models::FrameData& additional_data) const {
+    void AudioStreamer::send_pcm(uint8_t* sample, const uint32_t sample_rate, const wrtc::models::FrameData &additional_data) const {
         auto event = wrtc::models::RTCOnDataEvent(sample, sample_rate / 100);
         event.channel_count = description_->channel_count;
         event.sample_rate = sample_rate;
@@ -36,7 +36,7 @@ namespace ntgcalls::media {
         audio_->on_data(event, additional_data);
     }
 
-    void AudioStreamer::send_encoded(const uint8_t* packet, const size_t size, const wrtc::models::FrameData& additional_data) {
+    void AudioStreamer::send_encoded(const uint8_t* packet, const size_t size, const wrtc::models::FrameData &additional_data) {
         const auto frames = wrtc::audio_factory::OpusPacket::frames(packet, size);
         if (frames == 0) {
             return;
