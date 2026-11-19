@@ -78,11 +78,13 @@ func main() {
 		}
 	}, telegram.Regex("^[!/.]play"))
 	mtProto.OnMessage(func(client *telegram.Client, message *types.Message) {
+		format := ntgcalls.FormatPCM
 		err := uBotInstance.Record(message.ChatID, ntgcalls.MediaDescription{
 			Microphone: &ntgcalls.AudioDescription{
 				MediaSource:  ntgcalls.MediaSourceExternal,
 				SampleRate:   96000,
 				ChannelCount: 2,
+				Format:       &format,
 			},
 		})
 		if err != nil {
@@ -168,17 +170,21 @@ func main() {
 
 func getMediaDescription(url string) ntgcalls.MediaDescription {
 	bitrate := uint32(192000)
+	format := ntgcalls.FormatPCM
 	audioDescription := &ntgcalls.AudioDescription{
 		MediaSource:  ntgcalls.MediaSourceShell,
 		SampleRate:   96000,
 		ChannelCount: 2,
 		Bitrate:      &bitrate,
+		Format:       &format,
 	}
+	videoFormat := ntgcalls.FormatI420
 	videoDescription := &ntgcalls.VideoDescription{
 		MediaSource: ntgcalls.MediaSourceShell,
 		Width:       1280,
 		Height:      720,
 		Fps:         30,
+		Format:      &videoFormat,
 	}
 
 	baseFFmpeg := "ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 -i"

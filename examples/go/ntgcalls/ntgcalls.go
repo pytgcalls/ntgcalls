@@ -155,6 +155,8 @@ func handleFrames(handle *C.ntg_instance, chatID C.int64_t, streamMode C.ntg_str
 				Width:                      uint16(rawFrame.frame_data.width),
 				Height:                     uint16(rawFrame.frame_data.height),
 				Rotation:                   uint16(rawFrame.frame_data.rotation),
+				Codec:                      parseCodec(rawFrame.frame_data.codec),
+				Keyframe:                   bool(rawFrame.frame_data.keyframe),
 			},
 		}
 	}

@@ -12,6 +12,7 @@ type AudioDescription struct {
 	ChannelCount uint8
 	KeepOpen     bool
 	Bitrate      *uint32
+	Format       *Format
 }
 
 func (ctx *AudioDescription) ParseToC() (C.ntg_audio_description, func()) {
@@ -25,10 +26,17 @@ func (ctx *AudioDescription) ParseToC() (C.ntg_audio_description, func()) {
 		x.bitrate = (*C.uint32_t)(C.malloc(C.size_t(unsafe.Sizeof(C.uint32_t(0)))))
 		*x.bitrate = C.uint32_t(*ctx.Bitrate)
 	}
+	if ctx.Format != nil {
+		x.format = (*C.ntg_format)(C.malloc(C.size_t(unsafe.Sizeof(C.ntg_format(0)))))
+		*x.format = ctx.Format.ParseToC()
+	}
 	return x, func() {
 		C.free(unsafe.Pointer(x.input))
 		if x.bitrate != nil {
 			C.free(unsafe.Pointer(x.bitrate))
+		}
+		if x.format != nil {
+			C.free(unsafe.Pointer(x.format))
 		}
 	}
 }
