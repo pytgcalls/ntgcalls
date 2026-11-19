@@ -12,7 +12,7 @@ namespace ntgcalls::io {
         data_callback_ = nullptr;
     }
 
-    void BaseReader::on_data(const std::function<void(bytes::unique_binary, wrtc::models::FrameData)>& callback) {
+    void BaseReader::on_data(const std::function<void(bytes::unique_binary, size_t, wrtc::models::FrameData)>& callback) {
         data_callback_ = callback;
     }
 

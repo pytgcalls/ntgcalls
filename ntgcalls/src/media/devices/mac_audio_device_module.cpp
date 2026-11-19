@@ -186,7 +186,7 @@ namespace ntgcalls::media::devices {
         if (buffer->mAudioDataByteSize > 0) {
             auto data = bytes::make_unique_binary(buffer->mAudioDataByteSize);
             std::memcpy(data.get(), buffer->mAudioData, buffer->mAudioDataByteSize);
-            data_callback_(std::move(data), {});
+            data_callback_(std::move(data), buffer->mAudioDataByteSize, {});
         }
         AudioQueueEnqueueBuffer(queue_, buffer, 0, nullptr);
     }
@@ -208,7 +208,7 @@ namespace ntgcalls::media::devices {
         AudioQueueEnqueueBuffer(queue_, buffer, 0, nullptr);
     }
 
-    void MacAudioDeviceModule::on_data(bytes::unique_binary data) {
+    void MacAudioDeviceModule::on_data(bytes::unique_binary data, size_t) {
         if (!running_) {
             return;
         }

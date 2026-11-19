@@ -17,7 +17,7 @@ namespace ntgcalls::media::devices {
         std::unique_ptr<utils::PulseConnection> pulse_connection_;
 
     protected:
-        void on_data(bytes::unique_binary data) override;
+        void on_data(bytes::unique_binary data, size_t size) override;
 
     public:
         PulseDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink* sink);

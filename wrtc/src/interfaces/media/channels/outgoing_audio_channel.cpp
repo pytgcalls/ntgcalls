@@ -10,6 +10,7 @@ namespace wrtc::interfaces::media::channels {
     OutgoingAudioChannel::OutgoingAudioChannel(
         webrtc::Call* call,
         ChannelManager* channel_manager,
+        audio_factory::AudioEncoderFactory* encoder_factory,
         webrtc::RtpTransport* rtp_transport,
         const models::MediaContent& media_content,
         utils::SafeThread& network_thread,
@@ -18,7 +19,7 @@ namespace wrtc::interfaces::media::channels {
         E2EEncryptor* encryptor,
         const std::function<std::pair<uint8_t, bool>()>& get_audio_level_and_speech,
         const models::AudioEncoding& encoding
-    ): ssrc_(media_content.ssrc), network_thread_(network_thread), sink_(sink), encoding_(encoding) {
+    ): ssrc_(media_content.ssrc), network_thread_(network_thread), sink_(sink), encoding_(encoding), encoder_factory_(encoder_factory) {
         webrtc::AudioOptions audio_options;
         audio_options.echo_cancellation = false;
         audio_options.noise_suppression = false;
@@ -45,6 +46,10 @@ namespace wrtc::interfaces::media::channels {
                 if (encoding.channel_count == 2) {
                     codec.SetParam(webrtc::kCodecParamStereo, 1);
                     codec.SetParam(webrtc::kCodecParamSPropStereo, 1);
+                }
+                if (encoding.passthrough) {
+                    queue_id_ = encoder_factory_->register_queue(encoding.passthrough);
+                    codec.SetParam(audio_factory::AudioEncoderFactory::kPassthroughParam, std::to_string(*queue_id_));
                 }
                 if (encoding.bitrate) {
                     codec.SetParam(webrtc::kCodecParamMaxAverageBitrate, static_cast<int>(*encoding.bitrate));
@@ -132,6 +137,9 @@ namespace wrtc::interfaces::media::channels {
             channel_ = nullptr;
         });
         sink_ = nullptr;
+        if (queue_id_) {
+            encoder_factory_->unregister_queue(*queue_id_);
+        }
     }
 
     uint32_t OutgoingAudioChannel::ssrc() const {

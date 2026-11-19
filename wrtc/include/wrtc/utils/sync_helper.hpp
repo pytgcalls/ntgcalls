@@ -18,6 +18,8 @@ namespace wrtc::utils {
         void synchronize_time(std::chrono::steady_clock::time_point time = std::chrono::steady_clock::time_point{});
 
         void wait_next_frame();
+
+        void wait_next_frame(std::chrono::nanoseconds duration);
     };
 
 } // wrtc::utils

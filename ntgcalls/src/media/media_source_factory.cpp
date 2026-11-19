@@ -2,10 +2,14 @@
 // Created by Lauren on 07/10/24.
 //
 
-#include <ntgcalls/io/audio_file_writer.hpp>
-#include <ntgcalls/io/audio_shell_writer.hpp>
 #include <ntgcalls/io/file_reader.hpp>
+#include <ntgcalls/io/file_writer.hpp>
+#include <ntgcalls/io/ogg_reader.hpp>
+#include <ntgcalls/io/ogg_writer.hpp>
+#include <ntgcalls/io/raw_reader.hpp>
+#include <ntgcalls/io/raw_writer.hpp>
 #include <ntgcalls/io/shell_reader.hpp>
+#include <ntgcalls/io/shell_writer.hpp>
 #include <ntgcalls/media/media_source_factory.hpp>
 #include <ntgcalls/media/devices/media_device.hpp>
 #include <rtc_base/logging.h>
@@ -27,11 +31,17 @@ namespace ntgcalls::media {
         switch (desc.media_source) {
         case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file reader for " << desc.input;
-            return std::make_unique<io::FileReader>(desc.input, sink);
+            if (is_encoded(desc)) {
+                return std::make_unique<io::FileReader<io::OggReader>>(desc.input, sink);
+            }
+            return std::make_unique<io::FileReader<io::RawReader>>(desc.input, sink);
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell reader for " << desc.input;
-            return std::make_unique<io::ShellReader>(desc.input, sink);
+            if (is_encoded(desc)) {
+                return std::make_unique<io::ShellReader<io::OggReader>>(desc.input, sink);
+            }
+            return std::make_unique<io::ShellReader<io::RawReader>>(desc.input, sink);
 #else
             BOOST_THROW
 #endif
@@ -51,21 +61,37 @@ namespace ntgcalls::media {
         }
     }
 
-    std::unique_ptr<io::AudioWriter> MediaSourceFactory::from_audio_output(const BaseMediaDescription& desc, BaseSink* sink) {
+    bool MediaSourceFactory::is_encoded(const BaseMediaDescription& desc) {
+        if (const auto* audio = dynamic_cast<const AudioDescription*>(&desc)) {
+            if (const auto format = audio->format; format && *format != BaseMediaDescription::Format::Ogg && *format != BaseMediaDescription::Format::PCM) {
+                RTC_LOG(LS_ERROR) << "Invalid audio format";
+                throw InvalidParams("Audio supports only the Ogg and PCM formats");
+            }
+        }
+        return desc.is_encoded();
+    }
+
+    std::unique_ptr<io::BaseWriter> MediaSourceFactory::from_audio_output(const BaseMediaDescription& desc, BaseSink* sink) {
         // SUPPORTED OUTPUT AUDIO MODES
         switch (desc.media_source) {
         case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file writer for " << desc.input;
-            return std::make_unique<io::AudioFileWriter>(desc.input, sink);
+            if (is_encoded(desc)) {
+                return std::make_unique<io::FileWriter<io::OggWriter>>(desc.input, sink);
+            }
+            return std::make_unique<io::FileWriter<io::RawWriter>>(desc.input, sink);
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell writer for " << desc.input;
-            return std::make_unique<io::AudioShellWriter>(desc.input, sink);
+            if (is_encoded(desc)) {
+                return std::make_unique<io::ShellWriter<io::OggWriter>>(desc.input, sink);
+            }
+            return std::make_unique<io::ShellWriter<io::RawWriter>>(desc.input, sink);
 #else
             BOOST_THROW
 #endif
         case BaseMediaDescription::MediaSource::Device:
-            return devices::MediaDevice::create_device<io::AudioWriter>(desc, sink, false);
+            return devices::MediaDevice::create_device<io::BaseWriter>(desc, sink, false);
         default:
             RTC_LOG(LS_ERROR) << "Invalid input mode";
             throw InvalidParams("Invalid input mode");

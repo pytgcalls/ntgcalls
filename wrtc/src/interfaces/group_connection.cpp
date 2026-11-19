@@ -3,11 +3,11 @@
 //
 
 #include <random>
+#include <absl/strings/match.h>
+#include <media/base/media_constants.h>
 #include <modules/rtp_rtcp/source/rtp_header_extensions.h>
 #include <p2p/base/dtls_transport.h>
 #include <p2p/client/basic_port_allocator.h>
-#include <absl/strings/match.h>
-#include <media/base/media_constants.h>
 #include <rtc_base/time_utils.h>
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
@@ -424,6 +424,7 @@ namespace wrtc::interfaces {
             audio_channel_ = std::make_unique<media::channels::OutgoingAudioChannel>(
                 call_.get(),
                 channel_manager_.get(),
+                factory_->audio_encoder_factory(),
                 dtls_srtp_transport_.get(),
                 audio_content,
                 network_thread(),
@@ -518,13 +519,12 @@ namespace wrtc::interfaces {
             if (strong->mtproto_stream_) {
                 return strong->mtproto_stream_->remove_incoming_video(endpoint);
             }
-            decltype(strong->incoming_video_channels_)::node_type removed_channel;
             {
                 const std::lock_guard lock(strong->mutex_);
                 if (!strong->pending_content_.contains(endpoint)) {
                     return false;
                 }
-                removed_channel = strong->incoming_video_channels_.extract(endpoint);
+                auto const removed_channel = strong->incoming_video_channels_.extract(endpoint);
                 strong->pending_content_.erase(endpoint);
             }
             return true;

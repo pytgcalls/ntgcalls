@@ -13,6 +13,7 @@ namespace wrtc::interfaces::media::channels {
     IncomingAudioChannel::IncomingAudioChannel(
         webrtc::Call* call,
         ChannelManager* channel_manager,
+        audio_factory::AudioDecoderFactory* decoder_factory,
         webrtc::RtpTransport* rtp_transport,
         const models::MediaContent& media_content,
         utils::SafeThread& network_thread,
@@ -20,7 +21,7 @@ namespace wrtc::interfaces::media::channels {
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
         E2EEncryptor* encryptor,
         const std::function<void(uint32_t, uint8_t, bool)>& set_audio_level_and_speech
-    ): ssrc_(media_content.ssrc), network_thread_(network_thread) {
+    ): ssrc_(media_content.ssrc), network_thread_(network_thread), decoder_factory_(decoder_factory) {
         update_activity();
 
         const auto stream_id = std::to_string(ssrc_);
@@ -47,12 +48,20 @@ namespace wrtc::interfaces::media::channels {
             });
             throw RTCException("Failed to attach the incoming audio channel to the RTP transport");
         }
+        std::shared_ptr<utils::encoded::EncodedQueue> encoded_queue;
+        if (const auto remote_audio = remote_audio_sink.lock(); remote_audio && remote_audio->encoded()) {
+            encoded_queue = std::make_shared<utils::encoded::EncodedQueue>();
+            queue_id_ = decoder_factory_->register_queue(encoded_queue);
+        }
         std::vector<webrtc::Codec> codecs;
         for (const auto& [id, name, clockrate, channels, feedback_types, parameters] : media_content.payload_types) {
             webrtc::Codec codec = webrtc::CreateAudioCodec(id, name, clockrate, channels);
             codec.SetParam(webrtc::kCodecParamUseInbandFec, 1);
             codec.SetParam(webrtc::kCodecParamPTime, 60);
             codec.SetParam(webrtc::kCodecParamStereo, 1);
+            if (queue_id_) {
+                codec.SetParam(audio_factory::AudioDecoderFactory::kPassthroughParam, std::to_string(*queue_id_));
+            }
             for (const auto& [type, subtype] : feedback_types) {
                 codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
             }
@@ -98,6 +107,7 @@ namespace wrtc::interfaces::media::channels {
         }
         network_thread.BlockingCall([&] {
             auto raw_sink = std::make_unique<RawAudioSink>();
+            raw_sink->set_encoded_queue(encoded_queue);
             raw_sink->set_remote_audio_sink(ssrc_, [remote_audio_sink](std::unique_ptr<models::AudioFrame> frame) {
                 if (const auto remote_audio = remote_audio_sink.lock()) {
                     remote_audio->send_data(std::move(frame));
@@ -131,6 +141,9 @@ namespace wrtc::interfaces::media::channels {
             channel_->voice_media_receive_channel()->SetRawAudioSink(ssrc_, nullptr);
             channel_ = nullptr;
         });
+        if (queue_id_) {
+            decoder_factory_->unregister_queue(*queue_id_);
+        }
     }
 
     void IncomingAudioChannel::update_activity() {

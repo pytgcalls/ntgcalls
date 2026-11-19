@@ -78,6 +78,7 @@ namespace ntgcalls::media {
                     frame->rotation(),
                     new_width,
                     new_height,
+                    wrtc::models::Codec::I420,
                 }
             );
         });

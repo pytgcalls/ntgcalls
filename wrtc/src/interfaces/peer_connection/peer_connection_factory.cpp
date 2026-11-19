@@ -9,8 +9,6 @@
 #include <api/audio/builtin_audio_processing_builder.h>
 #include <api/create_peerconnection_factory.h>
 #include <api/rtc_event_log/rtc_event_log_factory.h>
-#include <api/audio_codecs/builtin_audio_encoder_factory.h>
-#include <api/audio_codecs/builtin_audio_decoder_factory.h>
 #include <pc/media_factory.h>
 #include <wrtc/interfaces/media/audio_device_module.hpp>
 #include <wrtc/utils/java_context.hpp>
@@ -50,8 +48,10 @@ namespace wrtc::interfaces::peer_connection {
                 audio_device_module_ = webrtc::make_ref_counted<media::AudioDeviceModule>();
             return audio_device_module_;
         });
-        dependencies.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
-        dependencies.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
+        audio_encoder_factory_ = webrtc::make_ref_counted<audio_factory::AudioEncoderFactory>();
+        dependencies.audio_encoder_factory = audio_encoder_factory_;
+        audio_decoder_factory_ = webrtc::make_ref_counted<audio_factory::AudioDecoderFactory>();
+        dependencies.audio_decoder_factory = audio_decoder_factory_;
 #ifdef IS_ANDROID
         dependencies.video_encoder_factory = android::create_video_encoder_factory(static_cast<JNIEnv*>(jni_env_));
         dependencies.video_decoder_factory = android::create_video_decoder_factory(static_cast<JNIEnv*>(jni_env_));
@@ -130,6 +130,14 @@ namespace wrtc::interfaces::peer_connection {
 
     std::vector<webrtc::SdpVideoFormat> PeerConnectionFactory::get_supported_video_formats() const {
         return supported_video_formats_;
+    }
+
+    audio_factory::AudioEncoderFactory* PeerConnectionFactory::audio_encoder_factory() const {
+        return audio_encoder_factory_.get();
+    }
+
+    audio_factory::AudioDecoderFactory* PeerConnectionFactory::audio_decoder_factory() const {
+        return audio_decoder_factory_.get();
     }
 
     PeerConnectionFactory* PeerConnectionFactory::get_or_create_default() {

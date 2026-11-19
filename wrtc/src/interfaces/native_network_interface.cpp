@@ -12,6 +12,7 @@
 #include <rtc_base/rtc_certificate_generator.h>
 #include <rtc_base/time_utils.h>
 #include <wrtc/exceptions.hpp>
+#include <wrtc/interfaces/media/tracks/encoded_track_interface.hpp>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/interfaces/wrapped_dtls_srtp_transport.hpp>
 #include <wrtc/models/outgoing_video_format.hpp>
@@ -184,6 +185,7 @@ namespace wrtc::interfaces {
                 audio_channel = std::make_unique<media::channels::IncomingAudioChannel>(
                     call_.get(),
                     channel_manager_.get(),
+                    factory_->audio_decoder_factory(),
                     dtls_srtp_transport_.get(),
                     media_content,
                     network_thread(),
@@ -623,7 +625,7 @@ namespace wrtc::interfaces {
                 strong->outgoing_audio_tracks_.emplace_back(audio_track);
                 audio_track->AddSink(&strong->audio_sink_);
             });
-            return std::make_unique<media::tracks::MediaTrackInterface>(
+            return std::make_unique<media::tracks::EncodedTrackInterface<models::AudioEncoding>>(
                 [weak](const bool enable) {
                     const auto strong = weak.lock();
                     if (!strong) {

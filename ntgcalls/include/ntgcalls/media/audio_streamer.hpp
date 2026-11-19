@@ -7,10 +7,17 @@
 #include <ntgcalls/media/audio_sink.hpp>
 #include <ntgcalls/media/base_streamer.hpp>
 #include <wrtc/interfaces/media/rtc_audio_source.hpp>
+#include <wrtc/utils/encoded/encoded_queue.hpp>
 
 namespace ntgcalls::media {
     class AudioStreamer final: public AudioSink, public BaseStreamer {
         std::unique_ptr<wrtc::interfaces::media::RTCAudioSource> audio_;
+        std::shared_ptr<wrtc::utils::encoded::EncodedQueue> encoded_;
+        bytes::binary silence_;
+
+        void send_pcm(uint8_t* sample, uint32_t sample_rate, const wrtc::models::FrameData& additional_data) const;
+
+        void send_encoded(const uint8_t* packet, size_t size, const wrtc::models::FrameData& additional_data);
 
     public:
         AudioStreamer();
@@ -20,5 +27,7 @@ namespace ntgcalls::media {
         webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> create_track() override;
 
         void send_data(uint8_t* sample, size_t size, wrtc::models::FrameData additional_data) override;
+
+        [[nodiscard]] std::shared_ptr<wrtc::utils::encoded::EncodedQueue> encoded_queue() const;
     };
 } // ntgcalls::media

@@ -240,6 +240,7 @@ namespace wrtc::interfaces {
                     audio_channel_ = std::make_unique<media::channels::OutgoingAudioChannel>(
                         call_.get(),
                         channel_manager_.get(),
+                        factory_->audio_encoder_factory(),
                         dtls_srtp_transport_.get(),
                         *audio_content,
                         network_thread(),

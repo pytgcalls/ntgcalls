@@ -15,6 +15,7 @@ namespace wrtc::interfaces::media {
 
     class RemoteAudioSink final: public RemoteMediaInterface, public std::enable_shared_from_this<RemoteAudioSink> {
         std::atomic<uint32_t> num_sources_;
+        std::atomic_bool encoded_ = false;
         std::vector<std::unique_ptr<models::AudioFrame>> audio_frames_;
         std::function<void(const std::vector<std::unique_ptr<models::AudioFrame>>&)> frames_callback_;
 
@@ -26,6 +27,10 @@ namespace wrtc::interfaces::media {
         void send_data(std::unique_ptr<models::AudioFrame> frame);
 
         void update_audio_source_count(int count);
+
+        void set_encoded(bool encoded);
+
+        [[nodiscard]] bool encoded() const;
     };
 
 } // wrtc::interfaces::media

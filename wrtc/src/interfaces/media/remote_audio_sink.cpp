@@ -29,6 +29,14 @@ namespace wrtc::interfaces::media {
         }
     }
 
+    void RemoteAudioSink::set_encoded(const bool encoded) {
+        encoded_ = encoded;
+    }
+
+    bool RemoteAudioSink::encoded() const {
+        return encoded_;
+    }
+
     void RemoteAudioSink::update_audio_source_count(const int count) {
         num_sources_ = count;
     }

@@ -4,19 +4,10 @@
 
 #pragma once
 
-#include <fstream>
-#include <string>
-#include <ntgcalls/io/threaded_reader.hpp>
+#include <ntgcalls/io/file_stream.hpp>
+#include <ntgcalls/io/stream_io.hpp>
 
 namespace ntgcalls::io {
-    class FileReader final: public ThreadedReader {
-        std::ifstream source_;
-
-    public:
-        explicit FileReader(const std::string& path, media::BaseSink* sink);
-
-        ~FileReader() override;
-
-        void open() override;
-    };
+    template<typename FormatReader>
+    using FileReader = StreamIO<FormatReader, FileStream>;
 } // ntgcalls::io

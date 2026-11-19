@@ -143,11 +143,13 @@ namespace ntgcalls::media::devices {
 
         (void) data_callback_(
             std::move(yuv),
+            y_scaled_size + uv_scaled_size * 2,
             {
                 0,
                 frame.rotation(),
                 static_cast<uint16_t>(desc_.width),
                 static_cast<uint16_t>(desc_.height),
+                wrtc::models::Codec::I420,
             }
         );
     }

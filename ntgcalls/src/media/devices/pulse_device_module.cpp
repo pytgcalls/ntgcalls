@@ -67,12 +67,12 @@ namespace ntgcalls::media::devices {
         pulse_connection_->start(sink_->frame_size());
         if (is_capture_) {
             pulse_connection_->on_data([this](bytes::unique_binary data) {
-                data_callback_(std::move(data), {});
+                data_callback_(std::move(data), sink_->frame_size(), {});
             });
         }
     }
 
-    void PulseDeviceModule::on_data(const bytes::unique_binary data) {
+    void PulseDeviceModule::on_data(const bytes::unique_binary data, size_t) {
         if (!running_) return;
         pulse_connection_->write_data(data, sink_->frame_size());
     }

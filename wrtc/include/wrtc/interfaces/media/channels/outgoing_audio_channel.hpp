@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <wrtc/audio_factory/audio_encoder_factory.hpp>
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
 #include <pc/rtp_sender.h>
@@ -19,6 +20,8 @@ namespace wrtc::interfaces::media::channels {
         utils::SafeThread& network_thread_;
         webrtc::LocalAudioSinkAdapter* sink_;
         models::AudioEncoding encoding_;
+        audio_factory::AudioEncoderFactory* encoder_factory_;
+        std::optional<uint64_t> queue_id_;
 
         static constexpr uint32_t kMaxPayloadSize = 1000;
 
@@ -28,6 +31,7 @@ namespace wrtc::interfaces::media::channels {
         OutgoingAudioChannel(
             webrtc::Call* call,
             ChannelManager* channel_manager,
+            audio_factory::AudioEncoderFactory* encoder_factory,
             webrtc::RtpTransport* rtp_transport,
             const models::MediaContent& media_content,
             utils::SafeThread& network_thread,

@@ -13,6 +13,8 @@
 #include <ntgcalls/media/media_description.hpp>
 #include <ntgcalls/media/media_state.hpp>
 #include <wrtc/interfaces/network_interface.hpp>
+#include <wrtc/interfaces/media/tracks/encoded_track_interface.hpp>
+#include <wrtc/models/audio_encoding.hpp>
 #include <wrtc/models/frame.hpp>
 
 namespace ntgcalls::media {
@@ -85,7 +87,7 @@ namespace ntgcalls::media {
 
         void on_frames(const std::function<void(Mode, Device, const std::vector<wrtc::models::Frame>&)>& callback);
 
-        void send_external_frame(Device device, const bytes::binary& data, wrtc::models::FrameData frame_data);
+        void send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData& frame_data);
 
     private:
         using StreamId = std::pair<Mode, Device>;
@@ -132,6 +134,10 @@ namespace ntgcalls::media {
             Type stream_type,
             bool is_external
         );
+
+        wrtc::models::AudioEncoding audio_encoding(const StreamId& id, const AudioDescription& description);
+
+        void update_encoding(const StreamId& id);
 
         void setup_capture_callbacks(
             const StreamId& id,

@@ -12,7 +12,7 @@ namespace ntgcalls::io {
 
     class BaseReader: public virtual BaseIO {
     protected:
-        wrtc::utils::synchronized_callback<void(bytes::unique_binary, wrtc::models::FrameData)> data_callback_;
+        wrtc::utils::synchronized_callback<void(bytes::unique_binary, size_t, wrtc::models::FrameData)> data_callback_;
         bool status_ = true;
 
     public:
@@ -22,7 +22,7 @@ namespace ntgcalls::io {
 
         virtual void open() = 0;
 
-        void on_data(const std::function<void(bytes::unique_binary, wrtc::models::FrameData)>& callback);
+        void on_data(const std::function<void(bytes::unique_binary, size_t, wrtc::models::FrameData)>& callback);
 
         virtual bool set_enabled(bool enable);
 
