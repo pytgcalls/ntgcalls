@@ -14,7 +14,7 @@ namespace wrtc::audio_factory {
         static constexpr int kFrameSamples = kSampleRate / 100;
         static constexpr size_t kMaxFrames = 12;
         static constexpr int kMaxPacketSamples = 5760;
-        static constexpr int kBitrateWindow = 50;
+        static constexpr int64_t kBitrateWindowMs = 10000;
 
         std::shared_ptr<utils::encoded::EncodedQueue> queue_;
         std::unique_ptr<AudioEncoder> encoder_;
@@ -28,7 +28,6 @@ namespace wrtc::audio_factory {
         bool transcoding_ = false;
         int64_t window_bits_ = 0;
         int64_t window_ms_ = 0;
-        int window_packets_ = 0;
         OpusDecoder* decoder_ = nullptr;
         std::vector<int16_t> decoded_;
 

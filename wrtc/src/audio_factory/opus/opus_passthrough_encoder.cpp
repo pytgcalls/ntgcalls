@@ -26,14 +26,13 @@ namespace wrtc::audio_factory {
         }
         window_bits_ += static_cast<int64_t>(packet.size()) * 8;
         window_ms_ += static_cast<int64_t>(OpusPacket::frames(packet.data(), packet.size())) * 10;
-        if (++window_packets_ < kBitrateWindow) {
+        if (window_ms_ < kBitrateWindowMs) {
             return true;
         }
         const auto bitrate = window_bits_ * 1000 / window_ms_;
         window_bits_ = 0;
         window_ms_ = 0;
-        window_packets_ = 0;
-        return bitrate <= static_cast<int64_t>(*max_bitrate_) * 11 / 10;
+        return bitrate <= static_cast<int64_t>(*max_bitrate_) * 5 / 4;
     }
 
     int OpusPassthroughEncoder::SampleRateHz() const {
