@@ -71,6 +71,7 @@ if(NOT TARGET WebRTC::webrtc)
         ${WEBRTC_INCLUDE}/third_party/abseil-cpp
         ${WEBRTC_INCLUDE}/third_party/boringssl/src/include
         ${WEBRTC_INCLUDE}/third_party/libyuv/include
+        ${WEBRTC_INCLUDE}/third_party/opus/src/include
         ${WEBRTC_INCLUDE}/third_party/zlib
     )
     if (MACOS)

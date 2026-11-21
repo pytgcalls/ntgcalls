@@ -42,10 +42,21 @@ namespace ntgcalls::media {
             return;
         }
         encoded_->push({{packet, packet + size}, additional_data});
-        silence_.resize(static_cast<size_t>(wrtc::audio_factory::OpusPacket::kFrameSamples) * description_->channel_count * sizeof(int16_t));
+        if (!level_) {
+            level_ = std::make_unique<wrtc::audio_factory::OpusLevel>(description_->channel_count);
+        }
+        level_frame_.resize(static_cast<size_t>(wrtc::audio_factory::OpusPacket::kFrameSamples) * description_->channel_count * sizeof(int16_t));
+        fill_level(level_frame_, description_->channel_count, level_->amplitude(packet, size));
         for (size_t i = 0; i < frames; i++) {
             frames_++;
-            send_pcm(silence_.data(), wrtc::audio_factory::OpusPacket::kSampleRate, additional_data);
+            send_pcm(level_frame_.data(), wrtc::audio_factory::OpusPacket::kSampleRate, additional_data);
+        }
+    }
+
+    void AudioStreamer::fill_level(bytes::binary& frame, const size_t channels, const int16_t amplitude) {
+        const auto samples = reinterpret_cast<int16_t*>(frame.data());
+        for (size_t i = 0; i < frame.size() / sizeof(int16_t); i++) {
+            samples[i] = i / channels % 2 ? static_cast<int16_t>(-amplitude) : amplitude;
         }
     }
 
