@@ -26,7 +26,18 @@ if ((LINUX_x86_64 AND NOT LINUX_MUSL) OR MACOS_ARM64 OR WINDOWS_x86_64 OR ANDROI
         set(CLANG_SUB_REVISION)
 
         while (1)
-            file(DOWNLOAD ${URL_TMP} ${CLANG_API_DIR})
+            foreach (ATTEMPT RANGE 1 5)
+                file(DOWNLOAD ${URL_TMP} ${CLANG_API_DIR} STATUS CLANG_API_STATUS)
+                list(GET CLANG_API_STATUS 0 CLANG_API_CODE)
+                if (CLANG_API_CODE EQUAL 0)
+                    break()
+                endif ()
+                execute_process(COMMAND ${CMAKE_COMMAND} -E sleep ${ATTEMPT})
+            endforeach ()
+            if (NOT CLANG_API_CODE EQUAL 0)
+                file(REMOVE ${CLANG_UPDATE})
+                message(FATAL_ERROR "Failed to list the Clang builds: ${CLANG_API_STATUS}")
+            endif ()
             file(READ ${CLANG_API_DIR} CLANG_API_CONTENT)
             PythonFindAllRegex(
                 REGEX "<Key>${CLANG_OS_PREFIX}/clang-(llvmorg-([0-9]+)-[\\w\-]+?)-([0-9]+)\.(tgz|tar\.xz)</Key><Generation>([0-9]+)</Generation>"
@@ -67,6 +78,10 @@ if ((LINUX_x86_64 AND NOT LINUX_MUSL) OR MACOS_ARM64 OR WINDOWS_x86_64 OR ANDROI
             endif ()
         endwhile ()
         file(REMOVE ${CLANG_API_DIR})
+        if (NOT CLANG_REVISION OR NOT CLANG_SUB_REVISION)
+            file(REMOVE ${CLANG_UPDATE})
+            message(FATAL_ERROR "No Clang ${CLANG_VERSION} build found for ${CLANG_OS_PREFIX}")
+        endif ()
         file(READ ${CLANG_UPDATE} FILE_CONTENT)
         PythonFindAllRegex(
             REGEX "CLANG_REVISION = '.*?'"
