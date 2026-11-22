@@ -108,11 +108,7 @@ namespace wrtc::interfaces::media::channels {
         network_thread.BlockingCall([&] {
             auto raw_sink = std::make_unique<RawAudioSink>();
             raw_sink->set_encoded_queue(encoded_queue);
-            raw_sink->set_remote_audio_sink(ssrc_, [remote_audio_sink](std::unique_ptr<models::AudioFrame> frame) {
-                if (const auto remote_audio = remote_audio_sink.lock()) {
-                    remote_audio->send_data(std::move(frame));
-                }
-            });
+            raw_sink->set_remote_audio_sink(ssrc_, remote_audio_sink);
 
             if (encryptor) {
                 channel_->voice_media_receive_channel()->SetDepacketizerToDecoderFrameTransformer(

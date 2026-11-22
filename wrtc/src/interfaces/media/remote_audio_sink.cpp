@@ -2,10 +2,11 @@
 // Created by Lauren on 07/10/24.
 //
 
+#include <wrtc/audio_factory/opus/opus_jitter_buffer.hpp>
 #include <wrtc/interfaces/media/remote_audio_sink.hpp>
 
 namespace wrtc::interfaces::media {
-    RemoteAudioSink::RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<models::AudioFrame>>&)>& callback): num_sources_(0) {
+    RemoteAudioSink::RemoteAudioSink(const std::function<void(const std::vector<std::unique_ptr<models::AudioFrame>>&)>& callback): num_sources_(0), max_delay_ms_(audio_factory::OpusJitterBuffer::kDefaultMaxDelayMs) {
         frames_callback_ = callback;
     }
 
@@ -35,6 +36,14 @@ namespace wrtc::interfaces::media {
 
     bool RemoteAudioSink::encoded() const {
         return encoded_;
+    }
+
+    void RemoteAudioSink::set_max_delay(const std::optional<uint32_t> max_delay_ms) {
+        max_delay_ms_ = max_delay_ms ? static_cast<int64_t>(*max_delay_ms) : audio_factory::OpusJitterBuffer::kDefaultMaxDelayMs;
+    }
+
+    int64_t RemoteAudioSink::max_delay_ms() const {
+        return max_delay_ms_;
     }
 
     void RemoteAudioSink::update_audio_source_count(const int count) {

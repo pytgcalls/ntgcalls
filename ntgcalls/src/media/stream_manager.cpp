@@ -645,6 +645,7 @@ namespace ntgcalls::media {
         if (stream_type == Audio) {
             if constexpr (std::is_same_v<DescriptionType, AudioDescription>) {
                 dynamic_cast<AudioReceiver*>(streams_[id].get())->set_encoded(desc.is_encoded());
+                dynamic_cast<AudioReceiver*>(streams_[id].get())->set_max_delay(desc.max_delay_ms);
             }
             if (!is_external) {
                 replace_writer(device, MediaSourceFactory::from_output(desc, streams_[id].get()));

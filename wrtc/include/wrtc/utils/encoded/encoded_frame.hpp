@@ -11,5 +11,6 @@ namespace wrtc::utils::encoded {
     struct EncodedFrame {
         bytes::binary payload;
         models::FrameData frame_data;
+        int64_t arrival_ms = 0;
     };
 } // wrtc::utils::encoded

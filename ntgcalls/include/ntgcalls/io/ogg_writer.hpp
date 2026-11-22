@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <deque>
 #include <map>
 #include <memory>
 #include <ntgcalls/io/threaded_writer.hpp>
@@ -16,30 +17,46 @@ namespace ntgcalls::io {
 
     class OggWriter: public ThreadedWriter {
         static constexpr int kPacketSamples = 960;
-        static constexpr int kMaxPacketSamples = 5760;
+        static constexpr int kSamplesPerMs = 48;
+
+        struct Source {
+            OpusDecoder* decoder = nullptr;
+            std::optional<int64_t> position;
+        };
 
         std::mutex mutex_;
         std::unique_ptr<media::containers::OggMuxer> muxer_;
-        uint64_t elapsed_ = 0;
+        std::optional<int64_t> origin_ms_;
+        int64_t newest_ = 0;
         std::optional<int64_t> source_ssrc_;
         bool transcoding_ = false;
-        std::map<int64_t, OpusDecoder*> decoders_;
-        std::map<int64_t, std::vector<int16_t>> decoded_;
+        std::map<int64_t, Source> sources_;
         OpusEncoder* encoder_ = nullptr;
-        std::vector<int16_t> mixed_;
+        std::deque<int32_t> mix_;
+        int64_t mix_position_ = 0;
         bytes::binary silence_packet_;
 
         uint8_t channels() const;
 
+        int64_t mix_delay() const;
+
         void ensure_encoder();
+
+        bool ensure_decoder(Source& source) const;
 
         void write_packet(bytes::binary packet, int samples);
 
         void push_pages(const std::vector<bytes::binary>& pages);
 
-        void forward(const std::vector<wrtc::models::Frame>& frames);
+        void start_transcoding();
 
-        void transcode(const std::vector<wrtc::models::Frame>& frames);
+        void forward(Source& source, const bytes::binary& packet, int64_t position, int samples);
+
+        void transcode(Source& source, const bytes::binary& packet, int64_t position, int samples);
+
+        void mix(int64_t position, const std::vector<int16_t>& pcm);
+
+        void encode_mix(bool all);
 
     public:
         explicit OggWriter(media::BaseSink* sink);

@@ -43,9 +43,10 @@ namespace ntgcalls::media {
         uint8_t channel_count;
         std::optional<uint32_t> bitrate;
         std::optional<Format> format;
+        std::optional<uint32_t> max_delay_ms;
 
-        AudioDescription(const MediaSource media_source, const uint32_t sample_rate, const uint8_t channel_count, const std::string& input, const bool keep_open, const std::optional<uint32_t>& bitrate = std::nullopt, const std::optional<Format>& format = std::nullopt):
-        BaseMediaDescription(input, media_source, keep_open), sample_rate(sample_rate), channel_count(channel_count), bitrate(bitrate), format(format) {}
+        AudioDescription(const MediaSource media_source, const uint32_t sample_rate, const uint8_t channel_count, const std::string& input, const bool keep_open, const std::optional<uint32_t>& bitrate = std::nullopt, const std::optional<Format>& format = std::nullopt, const std::optional<uint32_t>& max_delay_ms = std::nullopt):
+        BaseMediaDescription(input, media_source, keep_open), sample_rate(sample_rate), channel_count(channel_count), bitrate(bitrate), format(format), max_delay_ms(max_delay_ms) {}
 
         [[nodiscard]] bool is_encoded() const override {
             return media_source != MediaSource::Device && format.value_or(Format::Ogg) == Format::Ogg;
@@ -57,6 +58,7 @@ namespace ntgcalls::media {
                lhs.channel_count == rhs.channel_count &&
                lhs.bitrate == rhs.bitrate &&
                lhs.format == rhs.format &&
+               lhs.max_delay_ms == rhs.max_delay_ms &&
                lhs.input == rhs.input &&
                lhs.media_source == rhs.media_source;
     }

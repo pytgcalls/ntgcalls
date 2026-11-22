@@ -135,6 +135,10 @@ namespace ntgcalls::media {
         sink_->set_encoded(encoded);
     }
 
+    void AudioReceiver::set_max_delay(const std::optional<uint32_t> max_delay_ms) const {
+        sink_->set_max_delay(max_delay_ms);
+    }
+
     wrtc::models::Codec AudioReceiver::codec() const {
         return sink_->encoded() ? wrtc::models::Codec::Opus : wrtc::models::Codec::PCM;
     }

@@ -32,6 +32,8 @@ namespace ntgcalls::media {
 
         void set_encoded(bool encoded) const;
 
+        void set_max_delay(std::optional<uint32_t> max_delay_ms) const;
+
         [[nodiscard]] wrtc::models::Codec codec() const;
 
         void on_frames(const std::function<void(const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>&, const std::map<uint32_t, int64_t>&)>& callback);
