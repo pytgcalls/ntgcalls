@@ -332,6 +332,8 @@ namespace ntgcalls::instances {
             }
         } catch (InvalidParams& e) {
             RTC_LOG(LS_ERROR) << "Invalid params: " << e.what();
+        } catch (std::exception& e) {
+            RTC_LOG(LS_ERROR) << "Invalid signaling message: " << e.what();
         }
     }
 
