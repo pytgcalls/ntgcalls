@@ -51,6 +51,7 @@ namespace ntgcalls::media::containers {
         static constexpr uint32_t kReferenceBlockId = 0xFB;
         static constexpr uint64_t kUnknownSize = UINT64_MAX;
         static constexpr uint64_t kMaxSkipChunk = 65536;
+        static constexpr uint64_t kMaxElementSize = 64 * 1024 * 1024;
 
         struct Element {
             uint32_t id = 0;

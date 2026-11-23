@@ -87,6 +87,10 @@ namespace ntgcalls::media::containers {
             skip_ = size;
             return true;
         }
+        if (size > kMaxElementSize) {
+            RTC_LOG(LS_ERROR) << "Matroska element of " << size << " bytes exceeds the limit of " << kMaxElementSize << " bytes";
+            throw FileError("Invalid Matroska stream, an element is too large");
+        }
         if (buffer_.size() < header_size + size) {
             return false;
         }
