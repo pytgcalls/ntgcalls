@@ -13,6 +13,7 @@ type AudioDescription struct {
 	KeepOpen     bool
 	Bitrate      *uint32
 	Format       *Format
+	MaxDelayMs   *uint32
 }
 
 func (ctx *AudioDescription) ParseToC() (C.ntg_audio_description, func()) {
@@ -30,6 +31,10 @@ func (ctx *AudioDescription) ParseToC() (C.ntg_audio_description, func()) {
 		x.format = (*C.ntg_format)(C.malloc(C.size_t(unsafe.Sizeof(C.ntg_format(0)))))
 		*x.format = ctx.Format.ParseToC()
 	}
+	if ctx.MaxDelayMs != nil {
+		x.max_delay_ms = (*C.uint32_t)(C.malloc(C.size_t(unsafe.Sizeof(C.uint32_t(0)))))
+		*x.max_delay_ms = C.uint32_t(*ctx.MaxDelayMs)
+	}
 	return x, func() {
 		C.free(unsafe.Pointer(x.input))
 		if x.bitrate != nil {
@@ -37,6 +42,9 @@ func (ctx *AudioDescription) ParseToC() (C.ntg_audio_description, func()) {
 		}
 		if x.format != nil {
 			C.free(unsafe.Pointer(x.format))
+		}
+		if x.max_delay_ms != nil {
+			C.free(unsafe.Pointer(x.max_delay_ms))
 		}
 	}
 }
