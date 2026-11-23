@@ -15,7 +15,10 @@ namespace wrtc::audio_factory {
         return count > 0 ? static_cast<size_t>(count / kFrameSamples) : 0;
     }
 
-    size_t OpusPacket::channels(const uint8_t* data) {
+    size_t OpusPacket::channels(const uint8_t* data, const size_t size) {
+        if (size == 0) {
+            return 0;
+        }
         return static_cast<size_t>(opus_packet_get_nb_channels(data));
     }
 

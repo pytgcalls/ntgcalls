@@ -18,7 +18,7 @@ namespace wrtc::audio_factory {
     }
 
     bool OpusPassthroughEncoder::compatible(const bytes::binary& packet) {
-        if (OpusPacket::channels(packet.data()) != channels_) {
+        if (OpusPacket::channels(packet.data(), packet.size()) != channels_) {
             return false;
         }
         if (!max_bitrate_) {

@@ -17,7 +17,7 @@ namespace wrtc::audio_factory {
 
         static size_t frames(const uint8_t* data, size_t size);
 
-        static size_t channels(const uint8_t* data);
+        static size_t channels(const uint8_t* data, size_t size);
 
         static size_t channels(const webrtc::SdpAudioFormat& format);
     };

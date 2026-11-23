@@ -132,7 +132,7 @@ namespace wrtc::audio_factory {
 
     std::vector<utils::encoded::EncodedFrame> OpusJitterBuffer::conceal(const int64_t packets, const bytes::binary& next, const int64_t start_ms) {
         std::vector<utils::encoded::EncodedFrame> output;
-        if (!ensure_codecs(static_cast<int>(OpusPacket::channels(next.data())))) {
+        if (!ensure_codecs(static_cast<int>(OpusPacket::channels(next.data(), next.size())))) {
             return output;
         }
         opus_decoder_ctl(decoder_, OPUS_RESET_STATE);
