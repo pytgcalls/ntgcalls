@@ -2,6 +2,7 @@
 // Created by Lauren on 01/10/24.
 //
 
+#include <algorithm>
 #include <random>
 #include <absl/strings/match.h>
 #include <media/base/media_constants.h>
@@ -480,6 +481,10 @@ namespace wrtc::interfaces {
     }
 
     uint32_t GroupConnection::add_incoming_video(const int64_t user_id, const std::string& endpoint, const std::vector<models::SsrcGroup>& ssrc_groups) {
+        if (std::ranges::all_of(ssrc_groups, [](const models::SsrcGroup& group) { return group.ssrcs.empty(); })) {
+            RTC_LOG(LS_WARNING) << "Ignoring incoming video " << endpoint << " without ssrcs";
+            return 0;
+        }
         const std::weak_ptr weak(shared_from_this());
         return network_thread().BlockingCall([weak, user_id, endpoint, ssrc_groups]() -> uint32_t {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
