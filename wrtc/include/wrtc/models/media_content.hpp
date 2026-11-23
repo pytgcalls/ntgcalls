@@ -125,7 +125,7 @@ namespace wrtc::models {
                 return ssrc;
             }
             for (const auto& [semantics, ssrcs] : ssrc_groups) {
-                if (semantics == "SIM") {
+                if (semantics == "SIM" && !ssrcs.empty()) {
                     return ssrcs[0];
                 }
             }
