@@ -53,7 +53,9 @@ namespace ntgcalls::media::containers {
             if (length == 255) {
                 continue;
             }
-            if (partial_.empty()) {
+            if (discarding_) {
+                discarding_ = false;
+            } else if (partial_.empty()) {
                 handle_packet(buffer_.data() + packet_start, offset - packet_start);
             } else {
                 partial_.insert(partial_.end(), buffer_.begin() + static_cast<std::ptrdiff_t>(packet_start), buffer_.begin() + static_cast<std::ptrdiff_t>(offset));
@@ -62,7 +64,14 @@ namespace ntgcalls::media::containers {
             }
             packet_start = offset;
         }
-        partial_.insert(partial_.end(), buffer_.begin() + static_cast<std::ptrdiff_t>(packet_start), buffer_.begin() + static_cast<std::ptrdiff_t>(offset));
+        if (!discarding_) {
+            partial_.insert(partial_.end(), buffer_.begin() + static_cast<std::ptrdiff_t>(packet_start), buffer_.begin() + static_cast<std::ptrdiff_t>(offset));
+            if (partial_.size() > kMaxPacketSize) {
+                RTC_LOG(LS_WARNING) << "Dropping an Ogg packet larger than " << kMaxPacketSize << " bytes";
+                partial_.clear();
+                discarding_ = true;
+            }
+        }
         buffer_.erase(buffer_.begin(), buffer_.begin() + static_cast<std::ptrdiff_t>(size));
         return true;
     }

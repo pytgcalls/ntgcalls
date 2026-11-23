@@ -12,11 +12,13 @@ namespace ntgcalls::media::containers {
 
     class OggDemuxer {
         static constexpr size_t kPageHeaderSize = 27;
+        static constexpr size_t kMaxPacketSize = 65536;
 
         bytes::binary buffer_;
         bytes::binary partial_;
         std::deque<std::pair<bytes::unique_binary, size_t>> packets_;
         uint8_t channels_ = 0;
+        bool discarding_ = false;
 
         bool parse_page();
 
