@@ -61,6 +61,20 @@ NTgCalls is a lightweight open-source library for media streaming in Telegram ca
 - Content sharing: Screen streaming, Microphone and Camera streaming
 - Pre-built wheels for Python, npm packages for Node.js, crates for Rust & AAR SDK library for Android
 
+## Benchmarks
+CPU and memory used while streaming 60 seconds of the same 48 kHz stereo audio into group calls, compared with the official [tgcalls](https://github.com/TelegramMessenger/tgcalls) engine driven through its Python binding. Each value is the median of three runs; CPU is a share of one core.
+
+| Calls | Source | NTgCalls | Official tgcalls | NTgCalls uses |
+|:-----:|:-------|:--------:|:----------------:|:-------------:|
+| 1     | PCM    | 1.1%     | 1.4%             | 21% less CPU  |
+| 5     | PCM    | 3.6%     | 5.4%             | 33% less CPU  |
+| 1     | Opus   | 0.7%     | 2.0%             | 65% less CPU  |
+| 5     | Opus   | 2.5%     | 8.4%             | 70% less CPU  |
+
+- **Opus sources** (WebM, Ogg, most YouTube streams) are sent by NTgCalls without re-encoding, at their original bitrate: 148 kbps in this test, against the 32 kbps sent by the official engine. The official engine only accepts PCM, so its Opus rows add the 0.6% of CPU that FFmpeg spends decoding each stream in real time.
+- **Memory** added by the calls: about 13 MiB for one call and 15 MiB for five with NTgCalls, against 10 MiB and 19 MiB with the official engine.
+- Measured on an AMD Ryzen 7 7700X, Linux, NTgCalls 4.0 with Py-TgCalls 4.0 on Python 3.15. The scripts and the steps to repeat the test are in [benchmarks](benchmarks/README.md).
+
 ## Installing
 Prebuilt packages are published for every supported language, so most users never need to compile anything.
 
@@ -132,7 +146,7 @@ Go consumes the C bindings through an example project in `./examples/go/`:
 
 ## Junior Developers
 * <b><a href="https://github.com/TuriOG">@TuriOG</a> (Junior Python Developer):</b>
-    * Currently working on integrating NTgCalls into <a href="//github.com/pytgcalls/pytgcalls">PyTgCalls</a>, an important step
+    * Currently working on integrating NTgCalls into <a href="//github.com/pytgcalls/pytgcalls">Py-TgCalls</a>, an important step
       in expanding the functionality and usability of the library.
 * <b><a href="https://github.com/doggyhaha">@doggyhaha</a> (Junior DevOps, Tester):</b>
     * Performs testing of NTgCalls on Linux to ensure its reliability and compatibility.
