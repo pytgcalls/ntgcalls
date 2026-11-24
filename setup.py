@@ -412,6 +412,11 @@ class MatrixCommand(Command):
             None,
             'Emit the final-publish matrix instead of the build matrix',
         ),
+        (
+            'wheels',
+            None,
+            'Emit the Python wheels matrix instead of the build matrix',
+        ),
     ]
 
     # noinspection PyAttributeOutsideInit
@@ -419,6 +424,7 @@ class MatrixCommand(Command):
         self.targets = 'all'
         self.platforms = 'all'
         self.final = False
+        self.wheels = False
 
     def finalize_options(self):
         pass
@@ -431,6 +437,18 @@ class MatrixCommand(Command):
             }
         registry = load_platforms()
         include = []
+        if self.wheels:
+            for plat in [
+                p.strip()
+                for p in target_options('python').get('wheels', '').split(',')
+                if p.strip()
+            ]:
+                if plat_filter and plat not in plat_filter:
+                    continue
+                if registry.has_section(plat):
+                    include.append({'platform': plat, **registry[plat]})
+            print(json.dumps({'include': include}))
+            return
         for target in select_targets(self.targets):
             opt = target_options(target)
             publish = opt.get('publish', 'none')
