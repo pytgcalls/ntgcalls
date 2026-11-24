@@ -11,13 +11,15 @@ namespace wrtc::interfaces::media::channels {
     OutgoingVideoChannel::OutgoingVideoChannel(
         webrtc::Call* call,
         ChannelManager* channel_manager,
+        video_factory::PassthroughEncoderFactory* encoder_factory,
         webrtc::RtpTransport* rtp_transport,
         const models::MediaContent& media_content,
         utils::SafeThread& network_thread,
         LocalVideoAdapter* sink,
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
-        E2EEncryptor* encryptor
-    ): ssrc_(media_content.ssrc), network_thread_(network_thread), sink_(sink) {
+        E2EEncryptor* encryptor,
+        const models::VideoEncoding& encoding
+    ): ssrc_(media_content.ssrc), network_thread_(network_thread), sink_(sink), encoding_(encoding), encoder_factory_(encoder_factory) {
         webrtc::VideoOptions video_options;
         video_options.is_screencast = media_content.is_screen_cast();
         bitrate_allocator_factory_ = webrtc::CreateBuiltinVideoBitrateAllocatorFactory();
@@ -41,6 +43,12 @@ namespace wrtc::interfaces::media::channels {
             }
             for (const auto& [type, subtype] : feedback_types) {
                 codec.AddFeedbackParam(webrtc::FeedbackParam(type, subtype));
+            }
+            if (encoding.passthrough) {
+                if (!queue_id_) {
+                    queue_id_ = encoder_factory_->register_queue(encoding.passthrough);
+                }
+                codec.SetParam(video_factory::PassthroughEncoderFactory::kPassthroughParam, std::to_string(*queue_id_));
             }
             unsorted_codecs.push_back(std::move(codec));
         }
@@ -141,6 +149,9 @@ namespace wrtc::interfaces::media::channels {
             bitrate_allocator_factory_ = nullptr;
         });
         sink_ = nullptr;
+        if (queue_id_) {
+            encoder_factory_->unregister_queue(*queue_id_);
+        }
     }
 
     void OutgoingVideoChannel::set_enabled(const bool enable) const {
@@ -152,5 +163,9 @@ namespace wrtc::interfaces::media::channels {
 
     uint32_t OutgoingVideoChannel::ssrc() const {
         return ssrc_;
+    }
+
+    models::VideoEncoding OutgoingVideoChannel::encoding() const {
+        return encoding_;
     }
 } // wrtc::interfaces::media::channels

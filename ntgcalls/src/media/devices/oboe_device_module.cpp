@@ -48,7 +48,7 @@ namespace ntgcalls::media::devices {
         }
     }
 
-    void OboeDeviceModule::on_data(const bytes::unique_binary data) {
+    void OboeDeviceModule::on_data(const bytes::unique_binary data, size_t) {
         const std::lock_guard lock(buffer_mutex_);
         const auto* src = reinterpret_cast<const bytes::byte*>(data.get());
         buffer_.insert(buffer_.end(), src, src + frame_size_);
@@ -71,7 +71,7 @@ namespace ntgcalls::media::devices {
                 }
             }
             for (auto& frame : frames) {
-                data_callback_(std::move(frame), {});
+                data_callback_(std::move(frame), frame_size_, {});
             }
         } else {
             const std::lock_guard lock(buffer_mutex_);

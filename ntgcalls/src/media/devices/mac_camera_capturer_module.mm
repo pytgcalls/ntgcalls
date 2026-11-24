@@ -180,12 +180,18 @@ namespace ntgcalls::media::devices {
         memcpy(yuv.get() + y_scaled_size, u_scaled_plane.get(), uv_scaled_size);
         memcpy(yuv.get() + y_scaled_size + uv_scaled_size, v_scaled_plane.get(), uv_scaled_size);
 
-        (void) data_callback_(std::move(yuv), {
-                                                  0,
-                                                  static_cast<webrtc::VideoRotation>(rotation),
-                                                  static_cast<uint16_t>(desc_.width),
-                                                  static_cast<uint16_t>(desc_.height),
-                                              });
+        (void) data_callback_(
+            std::move(yuv),
+            y_scaled_size + uv_scaled_size * 2,
+            {
+                0,
+                static_cast<webrtc::VideoRotation>(rotation),
+                static_cast<uint16_t>(desc_.width),
+                static_cast<uint16_t>(desc_.height),
+                wrtc::models::Codec::I420,
+                true,
+            }
+        );
     }
 
     void MacCameraCapturerModule::open() {

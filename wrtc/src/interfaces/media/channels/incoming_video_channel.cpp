@@ -12,17 +12,26 @@ namespace wrtc::interfaces::media::channels {
     IncomingVideoChannel::IncomingVideoChannel(
         webrtc::Call* call,
         ChannelManager* channel_manager,
+        video_factory::PassthroughDecoderFactory* decoder_factory,
         webrtc::RtpTransport* rtp_transport,
         std::vector<models::SsrcGroup> ssrc_groups,
         const int64_t user_id,
         webrtc::UniqueRandomIdGenerator* random_id_generator,
-        const std::vector<webrtc::Codec>& codecs,
+        std::vector<webrtc::Codec> codecs,
         utils::SafeThread& network_thread,
         std::weak_ptr<RemoteVideoSink> remote_video_sink,
         const std::map<int32_t, FrameTransformer::PayloadType>& payload_type_mapping,
         E2EEncryptor* encryptor
-    ): network_thread_(network_thread) {
+    ): network_thread_(network_thread), decoder_factory_(decoder_factory), remote_video_sink_(remote_video_sink) {
         sink_ = std::make_unique<RawVideoSink>();
+        std::shared_ptr<utils::encoded::EncodedQueue> encoded_queue;
+        if (const auto remote_video = remote_video_sink.lock(); remote_video && remote_video->encoded()) {
+            encoded_queue = std::make_shared<utils::encoded::EncodedQueue>();
+            queue_id_ = decoder_factory_->register_queue(encoded_queue);
+            for (auto& codec : codecs) {
+                codec.SetParam(video_factory::PassthroughDecoderFactory::kPassthroughParam, std::to_string(*queue_id_));
+            }
+        }
         const uint32_t mid = random_id_generator->GenerateId();
         const auto stream_id = "video" + std::to_string(mid);
         video_bitrate_allocator_factory_ = webrtc::CreateBuiltinVideoBitrateAllocatorFactory();
@@ -114,6 +123,13 @@ namespace wrtc::interfaces::media::channels {
                     sink->send_frame(ssrc, std::move(frame));
                 }
             });
+            if (encoded_queue) {
+                sink_->set_encoded_queue(encoded_queue, [remote_video_sink](const uint32_t ssrc, utils::encoded::EncodedFrame frame) {
+                    if (const auto sink = remote_video_sink.lock()) {
+                        sink->send_encoded_frame(ssrc, std::move(frame));
+                    }
+                });
+            }
 
             if (encryptor) {
                 channel_->video_media_receive_channel()->SetDepacketizerToDecoderFrameTransformer(
@@ -142,6 +158,12 @@ namespace wrtc::interfaces::media::channels {
             channel_ = nullptr;
             sink_ = nullptr;
         });
+        if (queue_id_) {
+            decoder_factory_->unregister_queue(*queue_id_);
+        }
+        if (const auto remote_video_sink = remote_video_sink_.lock()) {
+            remote_video_sink->remove_source(ssrc_);
+        }
     }
 
     uint32_t IncomingVideoChannel::ssrc() const {

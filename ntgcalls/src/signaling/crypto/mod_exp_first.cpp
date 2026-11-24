@@ -14,6 +14,9 @@ namespace ntgcalls::signaling::crypto {
             throw InvalidParams("Invalid random size");
         }
         const openssl::BigNum prime(p);
+        if (g < 2 || g > 7 || prime.failed() || prime.bits_size() != 2048) {
+            throw InvalidParams("Invalid Diffie-Hellman config");
+        }
         random_power = bytes::binary(kRandomPowerSize);
         while (true) {
             bytes::set_random(random_power);

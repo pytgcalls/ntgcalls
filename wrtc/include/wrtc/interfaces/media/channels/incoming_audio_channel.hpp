@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <wrtc/audio_factory/audio_decoder_factory.hpp>
 #include <call/call.h>
 #include <pc/dtls_srtp_transport.h>
 #include <wrtc/interfaces/media/channel_manager.hpp>
@@ -17,11 +18,14 @@ namespace wrtc::interfaces::media::channels {
         std::unique_ptr<webrtc::BaseChannel> channel_;
         utils::SafeThread& network_thread_;
         int64_t activity_timestamp_ = 0;
+        audio_factory::AudioDecoderFactory* decoder_factory_;
+        std::optional<uint64_t> queue_id_;
 
     public:
         IncomingAudioChannel(
             webrtc::Call* call,
             ChannelManager* channel_manager,
+            audio_factory::AudioDecoderFactory* decoder_factory,
             webrtc::RtpTransport* rtp_transport,
             const models::MediaContent& media_content,
             utils::SafeThread& network_thread,

@@ -2,12 +2,13 @@
 // Created by Lauren on 01/10/24.
 //
 
+#include <algorithm>
 #include <random>
+#include <absl/strings/match.h>
+#include <media/base/media_constants.h>
 #include <modules/rtp_rtcp/source/rtp_header_extensions.h>
 #include <p2p/base/dtls_transport.h>
 #include <p2p/client/basic_port_allocator.h>
-#include <absl/strings/match.h>
-#include <media/base/media_constants.h>
 #include <rtc_base/time_utils.h>
 #include <wrtc/exceptions.hpp>
 #include <wrtc/interfaces/group_connection.hpp>
@@ -424,6 +425,7 @@ namespace wrtc::interfaces {
             audio_channel_ = std::make_unique<media::channels::OutgoingAudioChannel>(
                 call_.get(),
                 channel_manager_.get(),
+                factory_->audio_encoder_factory(),
                 dtls_srtp_transport_.get(),
                 audio_content,
                 network_thread(),
@@ -435,7 +437,7 @@ namespace wrtc::interfaces {
             );
         }
 
-        if (video_channel_ && video_channel_->ssrc() != outgoing_video_ssrc_) {
+        if (video_channel_ && (video_channel_->ssrc() != outgoing_video_ssrc_ || video_channel_->encoding() != video_encoding_)) {
             video_channel_ = nullptr;
         }
 
@@ -449,12 +451,14 @@ namespace wrtc::interfaces {
             video_channel_ = std::make_unique<media::channels::OutgoingVideoChannel>(
                 call_.get(),
                 channel_manager_.get(),
+                factory_->video_encoder_factory(),
                 dtls_srtp_transport_.get(),
                 video_content,
                 network_thread(),
                 &video_sink_,
                 payload_type_mapping_,
-                encryptor_
+                encryptor_,
+                video_encoding_
             );
         }
     }
@@ -477,6 +481,10 @@ namespace wrtc::interfaces {
     }
 
     uint32_t GroupConnection::add_incoming_video(const int64_t user_id, const std::string& endpoint, const std::vector<models::SsrcGroup>& ssrc_groups) {
+        if (std::ranges::all_of(ssrc_groups, [](const models::SsrcGroup& group) { return group.ssrcs.empty(); })) {
+            RTC_LOG(LS_WARNING) << "Ignoring incoming video " << endpoint << " without ssrcs";
+            return 0;
+        }
         const std::weak_ptr weak(shared_from_this());
         return network_thread().BlockingCall([weak, user_id, endpoint, ssrc_groups]() -> uint32_t {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
@@ -518,13 +526,12 @@ namespace wrtc::interfaces {
             if (strong->mtproto_stream_) {
                 return strong->mtproto_stream_->remove_incoming_video(endpoint);
             }
-            decltype(strong->incoming_video_channels_)::node_type removed_channel;
             {
                 const std::lock_guard lock(strong->mutex_);
                 if (!strong->pending_content_.contains(endpoint)) {
                     return false;
                 }
-                removed_channel = strong->incoming_video_channels_.extract(endpoint);
+                auto const removed_channel = strong->incoming_video_channels_.extract(endpoint);
                 strong->pending_content_.erase(endpoint);
             }
             return true;

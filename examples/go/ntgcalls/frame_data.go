@@ -6,6 +6,8 @@ import "C"
 type FrameData struct {
 	AbsoluteCaptureTimestampMs int64
 	Width, Height, Rotation    uint16
+	Codec                      Codec
+	Keyframe                   bool
 }
 
 func (ctx *FrameData) ParseToC() C.ntg_frame_data {
@@ -14,5 +16,7 @@ func (ctx *FrameData) ParseToC() C.ntg_frame_data {
 	x.width = C.uint16_t(ctx.Width)
 	x.height = C.uint16_t(ctx.Height)
 	x.rotation = C.ntg_video_rotation(ctx.Rotation)
+	x.codec = ctx.Codec.ParseToC()
+	x.keyframe = C.bool(ctx.Keyframe)
 	return x
 }

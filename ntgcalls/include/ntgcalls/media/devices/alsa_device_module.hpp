@@ -4,16 +4,17 @@
 
 #pragma once
 
+#include <map>
 #ifdef IS_LINUX
 #include <alsa/asoundlib.h>
 #include <ntgcalls/io/audio_mixer.hpp>
-#include <ntgcalls/io/threaded_reader.hpp>
+#include <ntgcalls/io/raw_reader.hpp>
 #include <ntgcalls/media/devices/base_device_module.hpp>
 #include <ntgcalls/media/devices/device_info.hpp>
 
 namespace ntgcalls::media::devices {
 
-    class AlsaDeviceModule final: public BaseDeviceModule, public io::ThreadedReader, public io::AudioMixer {
+    class AlsaDeviceModule final: public BaseDeviceModule, public io::RawReader, public io::AudioMixer {
         snd_pcm_format_t format_ = SND_PCM_FORMAT_S16_LE;
         snd_pcm_t* alsa_handle_{};
         snd_pcm_hw_params_t* hw_params_{};
@@ -22,7 +23,9 @@ namespace ntgcalls::media::devices {
         static std::map<std::string, std::string> get_devices(_snd_pcm_stream stream);
 
     protected:
-        void on_data(bytes::unique_binary data) override;
+        void on_data(bytes::unique_binary data, size_t size) override;
+
+        bytes::unique_binary read(int64_t size) override;
 
     public:
         AlsaDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink* sink);

@@ -18,7 +18,11 @@ namespace wrtc::utils {
     }
 
     void SyncHelper::wait_next_frame() {
-        next_frame_time_ += frame_time_;
+        wait_next_frame(frame_time_);
+    }
+
+    void SyncHelper::wait_next_frame(const std::chrono::nanoseconds duration) {
+        next_frame_time_ += duration;
         std::this_thread::sleep_until(next_frame_time_);
     }
 

@@ -6,6 +6,10 @@
 
 #include <mutex>
 #include <api/peer_connection_interface.h>
+#include <wrtc/audio_factory/audio_decoder_factory.hpp>
+#include <wrtc/audio_factory/audio_encoder_factory.hpp>
+#include <wrtc/video_factory/passthrough/passthrough_decoder_factory.hpp>
+#include <wrtc/video_factory/passthrough/passthrough_encoder_factory.hpp>
 #include <wrtc/interfaces/peer_connection/peer_connection_factory_with_context.hpp>
 #include <wrtc/utils/safe_thread.hpp>
 
@@ -39,6 +43,14 @@ namespace wrtc::interfaces::peer_connection {
 
         [[nodiscard]] std::vector<webrtc::SdpVideoFormat> get_supported_video_formats() const;
 
+        [[nodiscard]] audio_factory::AudioEncoderFactory* audio_encoder_factory() const;
+
+        [[nodiscard]] audio_factory::AudioDecoderFactory* audio_decoder_factory() const;
+
+        [[nodiscard]] video_factory::PassthroughEncoderFactory* video_encoder_factory() const;
+
+        [[nodiscard]] video_factory::PassthroughDecoderFactory* video_decoder_factory() const;
+
     private:
         static std::mutex mutex_;
         static bool initialized_;
@@ -53,6 +65,10 @@ namespace wrtc::interfaces::peer_connection {
 
         webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;
         webrtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module_;
+        webrtc::scoped_refptr<audio_factory::AudioEncoderFactory> audio_encoder_factory_;
+        webrtc::scoped_refptr<audio_factory::AudioDecoderFactory> audio_decoder_factory_;
+        video_factory::PassthroughEncoderFactory* video_encoder_factory_ = nullptr;
+        video_factory::PassthroughDecoderFactory* video_decoder_factory_ = nullptr;
 
         std::vector<webrtc::SdpVideoFormat> supported_video_formats_;
 

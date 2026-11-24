@@ -27,7 +27,7 @@
     } while (0)
 
 namespace ntgcalls::media::devices {
-    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink): BaseIO(sink), BaseDeviceModule(desc, is_capture), ThreadedReader(sink), AudioMixer(sink) {
+    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink): BaseIO(sink), BaseDeviceModule(desc, is_capture), RawReader(sink), AudioMixer(sink) {
         try {
             device_id_ = device_metadata_["id"];
         } catch (...) {
@@ -65,7 +65,7 @@ namespace ntgcalls::media::devices {
         LATE(snd_pcm_close)(alsa_handle_);
     }
 
-    void AlsaDeviceModule::on_data(const bytes::unique_binary data) {
+    void AlsaDeviceModule::on_data(const bytes::unique_binary data, size_t) {
         LATE(snd_pcm_writei)(alsa_handle_, data.get(), sink_->frame_size() / (channels_ * sizeof(int16_t)));
     }
 
@@ -135,14 +135,16 @@ namespace ntgcalls::media::devices {
 
     void AlsaDeviceModule::open() {
         if (is_capture_) {
-            run([this](const int64_t size) {
-                auto device_data = bytes::make_unique_binary(size);
-                if (const auto err = LATE(snd_pcm_readi)(alsa_handle_, device_data.get(), size / (channels_ * sizeof(int16_t))); err < 0) {
-                    throw MediaDeviceError("cannot read from audio interface (" + std::string(LATE(snd_strerror)(static_cast<int>(err))) + ")");
-                }
-                return std::move(device_data);
-            });
+            RawReader::open();
         }
+    }
+
+    bytes::unique_binary AlsaDeviceModule::read(const int64_t size) {
+        auto device_data = bytes::make_unique_binary(size);
+        if (const auto err = LATE(snd_pcm_readi)(alsa_handle_, device_data.get(), size / (channels_ * sizeof(int16_t))); err < 0) {
+            throw MediaDeviceError("cannot read from audio interface (" + std::string(LATE(snd_strerror)(static_cast<int>(err))) + ")");
+        }
+        return std::move(device_data);
     }
 } // ntgcalls::media::devices
 

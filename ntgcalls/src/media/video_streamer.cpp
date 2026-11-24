@@ -7,6 +7,7 @@
 namespace ntgcalls::media {
     VideoStreamer::VideoStreamer() {
         video_ = std::make_unique<wrtc::interfaces::media::RTCVideoSource>();
+        encoded_ = std::make_shared<wrtc::utils::encoded::EncodedQueue>();
     }
 
     VideoStreamer::~VideoStreamer() {
@@ -28,6 +29,11 @@ namespace ntgcalls::media {
         if (additional_data.width == 0 || additional_data.height == 0 || size == 0) {
             return;
         }
+        if (description_->is_encoded()) {
+            encoded_->push({{sample, sample + size}, additional_data});
+            video_->on_placeholder(additional_data);
+            return;
+        }
         video_->on_frame(
             wrtc::models::I420ImageData(
                 additional_data.width,
@@ -37,5 +43,9 @@ namespace ntgcalls::media {
             ),
             additional_data
         );
+    }
+
+    std::shared_ptr<wrtc::utils::encoded::EncodedQueue> VideoStreamer::encoded_queue() const {
+        return encoded_;
     }
 } // ntgcalls::media

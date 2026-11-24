@@ -40,13 +40,18 @@ namespace ntgcalls::media {
             }
             readers_.clear();
             removed_readers_.clear();
-            writers_.clear();
             for (const auto& stream : streams_ | std::views::values) {
                 if (const auto audio_receiver = dynamic_cast<AudioReceiver*>(stream.get())) {
                     audio_receiver->on_frames(nullptr);
                 } else if (const auto video_receiver = dynamic_cast<VideoReceiver*>(stream.get())) {
                     video_receiver->on_frame(nullptr);
+                    video_receiver->on_source_removed(nullptr);
                 }
+            }
+            std::map<Device, std::unique_ptr<io::BaseWriter>> writers_to_close;
+            {
+                const std::unique_lock lock(writers_mutex_);
+                writers_to_close.swap(writers_);
             }
             streams_.clear();
             tracks_.clear();
@@ -190,15 +195,48 @@ namespace ntgcalls::media {
         on_change_status_ = callback;
     }
 
+    wrtc::models::AudioEncoding StreamManager::audio_encoding(const StreamId& id, const AudioDescription& description) {
+        std::shared_ptr<wrtc::utils::encoded::EncodedQueue> passthrough;
+        if (description.is_encoded()) {
+            passthrough = dynamic_cast<AudioStreamer*>(streams_[id].get())->encoded_queue();
+        }
+        return {description.bitrate, description.channel_count, passthrough};
+    }
+
+    wrtc::models::VideoEncoding StreamManager::video_encoding(const StreamId& id, const VideoDescription& description) {
+        std::shared_ptr<wrtc::utils::encoded::EncodedQueue> passthrough;
+        if (description.is_encoded()) {
+            passthrough = dynamic_cast<VideoStreamer*>(streams_[id].get())->encoded_queue();
+        }
+        return {passthrough};
+    }
+
+    void StreamManager::update_encoding(const StreamId& id) {
+        const auto track = tracks_.find(id);
+        if (track == tracks_.end()) {
+            return;
+        }
+        if (const auto sink = dynamic_cast<AudioSink*>(streams_[id].get())) {
+            if (const auto config = sink->get_config()) {
+                if (const auto audio_track = dynamic_cast<wrtc::interfaces::media::tracks::EncodedTrackInterface<wrtc::models::AudioEncoding>*>(track->second.get())) {
+                    audio_track->set_encoding(audio_encoding(id, *config));
+                }
+            }
+        }
+        if (const auto sink = dynamic_cast<VideoSink*>(streams_[id].get())) {
+            if (const auto config = sink->get_config()) {
+                if (const auto video_track = dynamic_cast<wrtc::interfaces::media::tracks::EncodedTrackInterface<wrtc::models::VideoEncoding>*>(track->second.get())) {
+                    video_track->set_encoding(video_encoding(id, *config));
+                }
+            }
+        }
+    }
+
     void StreamManager::add_track(Mode mode, Device device, wrtc::interfaces::NetworkInterface* pc) {
         const StreamId id(mode, device);
         if (mode == Capture) {
             tracks_[id] = pc->add_outgoing_track(dynamic_cast<BaseStreamer*>(streams_[id].get())->create_track());
-            if (const auto sink = dynamic_cast<AudioSink*>(streams_[id].get())) {
-                if (const auto config = sink->get_config()) {
-                    tracks_[id]->set_encoding({config->bitrate, config->channel_count});
-                }
-            }
+            update_encoding(id);
         } else {
             if (id.second == Microphone || id.second == Speaker) {
                 pc->add_incoming_audio_track(dynamic_cast<AudioReceiver*>(streams_[id].get())->remote_sink());
@@ -252,7 +290,7 @@ namespace ntgcalls::media {
         frames_callback_ = callback;
     }
 
-    void StreamManager::send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData frame_data) {
+    void StreamManager::send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData& frame_data) {
         const StreamId id(Capture, device);
         if (!external_readers_.contains(device) || !streams_.contains(id)) {
             throw InvalidParams("External source not initialized");
@@ -450,11 +488,7 @@ namespace ntgcalls::media {
         switch (mode) {
         case Capture:
             handle_capture_config(id, d, reason, stream_type, is_external);
-            if constexpr (std::is_same_v<DescriptionType, AudioDescription>) {
-                if (const auto track = tracks_.find(id); track != tracks_.end()) {
-                    track->second->set_encoding({d.bitrate, d.channel_count});
-                }
-            }
+            update_encoding(id);
             break;
         case Playback:
             handle_playback_config(id, d, reason, stream_type, is_external);
@@ -467,7 +501,7 @@ namespace ntgcalls::media {
             remove_reader(device);
             return;
         }
-        writers_.erase(device);
+        replace_writer(device, nullptr);
         external_writers_.erase(device);
     }
 
@@ -533,7 +567,7 @@ namespace ntgcalls::media {
         const auto& device = id.second;
         const std::weak_ptr weak(shared_from_this());
 
-        readers_[device]->on_data([weak, id, stream_type, is_shared](const bytes::unique_binary& data, wrtc::models::FrameData frame_data) {
+        readers_[device]->on_data([weak, id, stream_type, is_shared](const bytes::unique_binary& data, const size_t size, wrtc::models::FrameData frame_data) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -559,13 +593,12 @@ namespace ntgcalls::media {
             {
                 const std::lock_guard lock(strong->mutex_);
                 if (strong->streams_.contains(id)) {
-                    const auto frame_size = strong->streams_[id]->frame_size();
                     if (const auto stream = dynamic_cast<BaseStreamer*>(strong->streams_[id].get())) {
                         frame_data.absolute_capture_timestamp_ms = webrtc::TimeMillis();
                         if (stream_type == Video && is_shared) {
-                            frames_to_emit.push_back({0, {data.get(), data.get() + frame_size}, frame_data});
+                            frames_to_emit.push_back({0, {data.get(), data.get() + size}, frame_data});
                         }
-                        stream->send_data(data.get(), frame_size, frame_data);
+                        stream->send_data(data.get(), size, frame_data);
                     }
                 }
             }
@@ -610,15 +643,22 @@ namespace ntgcalls::media {
         }
 
         if (stream_type == Audio) {
+            if constexpr (std::is_same_v<DescriptionType, AudioDescription>) {
+                dynamic_cast<AudioReceiver*>(streams_[id].get())->set_encoded(desc.is_encoded());
+                dynamic_cast<AudioReceiver*>(streams_[id].get())->set_max_delay(desc.max_delay_ms);
+            }
             if (!is_external) {
-                writers_.erase(device);
-                writers_[device] = MediaSourceFactory::from_audio_output(desc, streams_[id].get());
+                replace_writer(device, MediaSourceFactory::from_output(desc, streams_[id].get()));
             }
             setup_audio_playback_callbacks(id, is_external);
-        } else if (is_external) {
-            setup_video_playback_callbacks(id);
         } else {
-            throw InvalidParams("Invalid input mode");
+            if constexpr (std::is_same_v<DescriptionType, VideoDescription>) {
+                dynamic_cast<VideoReceiver*>(streams_[id].get())->set_encoded(desc.is_encoded());
+            }
+            if (!is_external) {
+                replace_writer(device, MediaSourceFactory::from_output(desc, streams_[id].get()));
+            }
+            setup_video_playback_callbacks(id, is_external);
         }
 
         if (!is_external) {
@@ -635,53 +675,84 @@ namespace ntgcalls::media {
             if (!strong) {
                 return;
             }
+            std::vector<wrtc::models::Frame> converted_frames;
+            const auto receiver = dynamic_cast<AudioReceiver*>(strong->streams_[id].get());
+            for (const auto& [ssrc, data] : frames) {
+                wrtc::models::FrameData frame_data{};
+                frame_data.codec = receiver->codec();
+                if (const auto it = timestamps.find(ssrc); it != timestamps.end()) {
+                    frame_data.absolute_capture_timestamp_ms = it->second;
+                }
+                converted_frames.push_back({
+                    ssrc,
+                    {data.first.get(), data.first.get() + data.second},
+                    frame_data,
+                });
+            }
             if (is_external) {
-                std::vector<wrtc::models::Frame> external_frames;
-                for (const auto& [ssrc, data] : frames) {
-                    if (strong->external_writers_.contains(id.second)) {
-                        wrtc::models::FrameData frame_data{};
-                        if (const auto it = timestamps.find(ssrc); it != timestamps.end()) {
-                            frame_data.absolute_capture_timestamp_ms = it->second;
-                        }
-                        external_frames.push_back({
-                            ssrc,
-                            {data.first.get(), data.first.get() + data.second},
-                            frame_data,
-                        });
-                    }
+                if (strong->external_writers_.contains(id.second) && !converted_frames.empty()) {
+                    (void) strong->frames_callback_(
+                        id.first,
+                        id.second,
+                        converted_frames
+                    );
                 }
-                (void) strong->frames_callback_(
-                    id.first,
-                    id.second,
-                    external_frames
-                );
             } else {
-                if (strong->writers_.contains(id.second)) {
-                    if (const auto audio_writer = dynamic_cast<io::AudioWriter*>(strong->writers_[id.second].get())) {
-                        audio_writer->send_frames(frames);
-                    }
-                }
+                strong->send_to_writer(id.second, std::move(converted_frames));
             }
         });
     }
 
-    void StreamManager::setup_video_playback_callbacks(const StreamId& id) {
+    void StreamManager::setup_video_playback_callbacks(const StreamId& id, bool is_external) {
         const std::weak_ptr weak(shared_from_this());
-        dynamic_cast<VideoReceiver*>(streams_[id].get())->on_frame([weak, id](const uint32_t ssrc, const bytes::unique_binary& frame, const size_t size, const wrtc::models::FrameData frame_data) {
+        dynamic_cast<VideoReceiver*>(streams_[id].get())->on_frame([weak, id, is_external](const uint32_t ssrc, bytes::binary frame, const wrtc::models::FrameData& frame_data) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
-            if (strong->external_writers_.contains(id.second)) {
-                (void) strong->frames_callback_(
-                    id.first,
-                    id.second,
-                    {{ssrc,
-                      {frame.get(), frame.get() + size},
-                      frame_data}}
-                );
+            std::vector<wrtc::models::Frame> frames;
+            frames.emplace_back(ssrc, std::move(frame), frame_data);
+            if (is_external) {
+                if (strong->external_writers_.contains(id.second)) {
+                    (void) strong->frames_callback_(id.first, id.second, frames);
+                }
+            } else {
+                strong->send_to_writer(id.second, std::move(frames));
             }
         });
+        dynamic_cast<VideoReceiver*>(streams_[id].get())->on_source_removed([weak, id](const uint32_t ssrc) {
+            if (const auto strong = weak.lock()) {
+                strong->remove_writer_source(id.second, ssrc);
+            }
+        });
+    }
+
+    void StreamManager::send_to_writer(const Device device, std::vector<wrtc::models::Frame> frames) {
+        const std::shared_lock lock(writers_mutex_);
+        if (const auto writer = writers_.find(device); writer != writers_.end()) {
+            writer->second->send_frames(std::move(frames));
+        }
+    }
+
+    void StreamManager::remove_writer_source(const Device device, const int64_t ssrc) {
+        const std::shared_lock lock(writers_mutex_);
+        if (const auto writer = writers_.find(device); writer != writers_.end()) {
+            writer->second->remove_source(ssrc);
+        }
+    }
+
+    void StreamManager::replace_writer(const Device device, std::unique_ptr<io::BaseWriter> writer) {
+        std::unique_ptr<io::BaseWriter> previous;
+        {
+            const std::unique_lock lock(writers_mutex_);
+            if (const auto it = writers_.find(device); it != writers_.end()) {
+                previous = std::move(it->second);
+                writers_.erase(it);
+            }
+            if (writer) {
+                writers_[device] = std::move(writer);
+            }
+        }
     }
 
 } // ntgcalls::media

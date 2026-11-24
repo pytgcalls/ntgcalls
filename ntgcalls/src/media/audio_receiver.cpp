@@ -2,8 +2,8 @@
 // Created by Lauren on 07/10/24.
 //
 
-#include <ntgcalls/media/audio_receiver.hpp>
 #include <ntgcalls/exceptions.hpp>
+#include <ntgcalls/media/audio_receiver.hpp>
 #include <rtc_base/logging.h>
 
 namespace ntgcalls::media {
@@ -94,6 +94,16 @@ namespace ntgcalls::media {
             std::map<uint32_t, std::pair<bytes::unique_binary, size_t>> processed_frames;
             std::map<uint32_t, int64_t> timestamps;
             for (const auto& frame : samples) {
+                if (frame->encoded) {
+                    if (frame->size == 0) {
+                        continue;
+                    }
+                    auto packet = bytes::make_unique_binary(frame->size);
+                    std::memcpy(packet.get(), frame->data, frame->size);
+                    processed_frames.emplace(frame->ssrc, std::pair{std::move(packet), frame->size});
+                    timestamps[frame->ssrc] = frame->absolute_capture_timestamp_ms;
+                    continue;
+                }
                 try {
                     bytes::unique_binary data = bytes::make_unique_binary(frame->size);
                     std::memcpy(data.get(), frame->data, frame->size);
@@ -119,6 +129,18 @@ namespace ntgcalls::media {
             (void) frames_callback_(processed_frames, timestamps);
         });
         weak_sink_ = sink_;
+    }
+
+    void AudioReceiver::set_encoded(const bool encoded) const {
+        sink_->set_encoded(encoded);
+    }
+
+    void AudioReceiver::set_max_delay(const std::optional<uint32_t> max_delay_ms) const {
+        sink_->set_max_delay(max_delay_ms);
+    }
+
+    wrtc::models::Codec AudioReceiver::codec() const {
+        return sink_->encoded() ? wrtc::models::Codec::Opus : wrtc::models::Codec::PCM;
     }
 
     std::weak_ptr<wrtc::interfaces::media::RemoteAudioSink> AudioReceiver::remote_sink() {

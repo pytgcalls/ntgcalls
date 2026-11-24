@@ -11,6 +11,7 @@ type VideoDescription struct {
 	Width, Height int16
 	Fps           uint8
 	KeepOpen      bool
+	Format        *Format
 }
 
 func (ctx *VideoDescription) ParseToC() (C.ntg_video_description, func()) {
@@ -21,7 +22,14 @@ func (ctx *VideoDescription) ParseToC() (C.ntg_video_description, func()) {
 	x.height = C.int16_t(ctx.Height)
 	x.fps = C.uint8_t(ctx.Fps)
 	x.keep_open = C.bool(ctx.KeepOpen)
+	if ctx.Format != nil {
+		x.format = (*C.ntg_format)(C.malloc(C.size_t(unsafe.Sizeof(C.ntg_format(0)))))
+		*x.format = ctx.Format.ParseToC()
+	}
 	return x, func() {
 		C.free(unsafe.Pointer(x.input))
+		if x.format != nil {
+			C.free(unsafe.Pointer(x.format))
+		}
 	}
 }

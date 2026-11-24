@@ -44,7 +44,7 @@ namespace ntgcalls::media::devices {
         void handle_output(AudioQueueBufferRef buffer);
 
     protected:
-        void on_data(bytes::unique_binary data) override;
+        void on_data(bytes::unique_binary data, size_t size) override;
 
     public:
         MacAudioDeviceModule(const AudioDescription* desc, bool is_capture, BaseSink* sink);

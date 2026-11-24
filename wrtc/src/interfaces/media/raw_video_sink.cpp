@@ -7,10 +7,15 @@
 namespace wrtc::interfaces::media {
     RawVideoSink::~RawVideoSink() {
         callback_ = nullptr;
+        encoded_callback_ = nullptr;
     }
 
     void RawVideoSink::OnFrame(const webrtc::VideoFrame& frame) {
-        if (callback_) {
+        if (encoded_ && encoded_callback_) {
+            while (auto encoded = encoded_->pop()) {
+                encoded_callback_(ssrc_, std::move(*encoded));
+            }
+        } else if (callback_) {
             callback_(ssrc_, std::make_unique<webrtc::VideoFrame>(frame));
         }
     }
@@ -18,5 +23,10 @@ namespace wrtc::interfaces::media {
     void RawVideoSink::set_remote_video_sink(const uint32_t ssrc, std::function<void(uint32_t, std::unique_ptr<webrtc::VideoFrame>)> callback) {
         ssrc_ = ssrc;
         callback_ = std::move(callback);
+    }
+
+    void RawVideoSink::set_encoded_queue(std::shared_ptr<utils::encoded::EncodedQueue> queue, std::function<void(uint32_t, utils::encoded::EncodedFrame)> callback) {
+        encoded_ = std::move(queue);
+        encoded_callback_ = std::move(callback);
     }
 } // wrtc::interfaces::media

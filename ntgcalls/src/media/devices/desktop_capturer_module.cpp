@@ -111,11 +111,14 @@ namespace ntgcalls::media::devices {
 
             (void) data_callback_(
                 std::move(yuv),
+                out_y_size + out_uv_size * 2,
                 {
                     0,
                     webrtc::kVideoRotation_0,
                     static_cast<uint16_t>(out_w),
                     static_cast<uint16_t>(out_h),
+                    wrtc::models::Codec::I420,
+                    true,
                 }
             );
         } else if (result == webrtc::DesktopCapturer::Result::ERROR_PERMANENT) {

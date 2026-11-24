@@ -122,10 +122,13 @@ namespace wrtc::models {
 
         [[nodiscard]] uint32_t main_ssrc() const {
             if (ssrc_groups.size() <= 1) {
+                if (ssrc == 0 && ssrc_groups.size() == 1 && !ssrc_groups[0].ssrcs.empty()) {
+                    return ssrc_groups[0].ssrcs[0];
+                }
                 return ssrc;
             }
             for (const auto& [semantics, ssrcs] : ssrc_groups) {
-                if (semantics == "SIM") {
+                if (semantics == "SIM" && !ssrcs.empty()) {
                     return ssrcs[0];
                 }
             }

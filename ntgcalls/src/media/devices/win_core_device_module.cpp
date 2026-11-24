@@ -355,7 +355,7 @@ namespace ntgcalls::media::devices {
             } else {
                 auto buffer = bytes::make_unique_binary(format_.Format.nBlockAlign * num_frames_to_read);
                 std::memcpy(buffer.get(), audio_data, format_.Format.nBlockAlign * num_frames_to_read);
-                data_callback_(std::move(buffer), {});
+                data_callback_(std::move(buffer), format_.Format.nBlockAlign * num_frames_to_read, {});
             }
             error = audio_capture_client_->ReleaseBuffer(num_frames_to_read);
             if (FAILED(error.Error())) {
@@ -407,7 +407,7 @@ namespace ntgcalls::media::devices {
         return true;
     }
 
-    void WinCoreDeviceModule::on_data(bytes::unique_binary data) {
+    void WinCoreDeviceModule::on_data(bytes::unique_binary data, size_t) {
         const std::lock_guard queue_lock(queue_mutex_);
         queue_.emplace(std::move(data));
     }
