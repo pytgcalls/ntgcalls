@@ -8,10 +8,10 @@
 #include <rtc_base/ref_counted_object.h>
 
 namespace ntgcalls::utils {
-    webrtc::scoped_refptr<LogSink> LogSink::instance_ = nullptr;
     std::mutex LogSink::mutex_{};
     uint32_t LogSink::references_ = 0;
     wrtc::utils::synchronized_callback<void(LogSink::LogMessage)> LogSink::on_log_message_{};
+    webrtc::scoped_refptr<LogSink> LogSink::instance_ = nullptr;
 
     LogSink::LogSink() {
         thread_ = wrtc::utils::SafeThread::Create();
