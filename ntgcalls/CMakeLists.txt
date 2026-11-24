@@ -5,6 +5,7 @@ set(TARGET_CODE_DIR "${ROOT_DIR}/targets/${BINDING}")
 set(NTG_LIB_NAME ntgcalls)
 
 include("${TARGET_CODE_DIR}/build.cmake")
+split_debug_symbols(${NTG_LIB_NAME} "${ROOT_DIR}/symbols")
 
 if (MACOS)
     file(GLOB_RECURSE MODULE_MM_SRC *.mm)

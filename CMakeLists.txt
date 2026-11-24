@@ -2,7 +2,14 @@ cmake_minimum_required(VERSION 3.27)
 
 include(ExternalProject)
 
+if (DEFINED ENV{CI})
+    set(SPLIT_DEBUG_SYMBOLS_DEFAULT ON)
+else ()
+    set(SPLIT_DEBUG_SYMBOLS_DEFAULT OFF)
+endif ()
+
 option(STATIC_BUILD "Build static libraries" ON)
+option(SPLIT_DEBUG_SYMBOLS "Move the debug symbols of the shared library into separate files" ${SPLIT_DEBUG_SYMBOLS_DEFAULT})
 option(USE_LIBCXX   "Use libc++" ON)
 option(SCHEMA_ONLY  "Only generate the language-agnostic NTL schema, skip bindings and build" OFF)
 
@@ -24,6 +31,14 @@ endif ()
 
 if (MACOS)
     enable_language(OBJCXX)
+endif ()
+
+if (SPLIT_DEBUG_SYMBOLS AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (WINDOWS)
+        add_compile_options(/Z7)
+    elseif (MACOS)
+        add_compile_options(-g)
+    endif ()
 endif ()
 
 find_package(Threads REQUIRED)

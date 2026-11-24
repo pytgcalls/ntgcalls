@@ -186,6 +186,13 @@ jobs:
           path: ./${{ matrix.output2 }}/*
           if-no-files-found: error
 
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v7
+        with:
+          name: ntgcalls.${{ matrix.shared_name }}-${{ matrix.target }}_symbols
+          path: ./symbols/*
+          if-no-files-found: ignore
+
       - name: Resolve version
         id: version
         if: github.event.inputs.publish == 'true' && (matrix.publish == 'artifact' || matrix.publish == 'both')
@@ -362,6 +369,13 @@ jobs:
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v7
+        with:
+          name: ntgcalls.${{ matrix.shared_name }}-python_symbols
+          path: ./symbols/*
+          if-no-files-found: ignore
+
   publish:
     name: Publish Release
     runs-on: ubuntu-latest
@@ -416,6 +430,26 @@ jobs:
               echo "$dir"
               folder_name=$(basename "$dir" .zip)
               (cd $dir && zip -r "../../releases/${folder_name}.zip" *)
+            fi
+          done
+
+      - name: Zip debug symbols
+        run: |
+          for dir in tmp/*_symbols; do
+            if [ -d "$dir" ]; then
+              name=$(basename "$dir" _symbols)
+              name=${name#ntgcalls.}
+              platform=${name%-*}
+              target=${name##*-}
+              mkdir -p "symbols-release/$platform/$target"
+              cp -r "$dir"/. "symbols-release/$platform/$target/"
+            fi
+          done
+          for dir in symbols-release/*; do
+            if [ -d "$dir" ]; then
+              platform=$(basename "$dir")
+              echo "$platform"
+              (cd "$dir" && zip -r -9 "../../releases/ntgcalls.${platform}_symbols.zip" .)
             fi
           done
 

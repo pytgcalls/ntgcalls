@@ -214,3 +214,38 @@ function(bundle_static_library tgt_name bundled_tgt_name bundle_output_dir)
     )
     add_dependencies(${bundled_tgt_name} bundling_target)
 endfunction()
+
+function(split_debug_symbols target_name symbols_dir)
+    get_target_property(target_type ${target_name} TYPE)
+    if (NOT SPLIT_DEBUG_SYMBOLS OR ANDROID OR CMAKE_BUILD_TYPE STREQUAL "Debug" OR NOT target_type MATCHES "^(SHARED|MODULE)_LIBRARY$")
+        return()
+    endif ()
+    file(MAKE_DIRECTORY ${symbols_dir})
+    set(target_file "$<TARGET_FILE:${target_name}>")
+    if (LINUX)
+        set(debug_file "${symbols_dir}/$<TARGET_FILE_NAME:${target_name}>.debug")
+        add_custom_command(TARGET ${target_name} POST_BUILD
+            COMMAND ${CMAKE_OBJCOPY} --only-keep-debug ${target_file} ${debug_file}
+            COMMAND ${CMAKE_OBJCOPY} --strip-debug --add-gnu-debuglink=${debug_file} ${target_file}
+            COMMENT "Splitting the debug symbols of ${target_name}"
+            VERBATIM
+        )
+    elseif (MACOS)
+        find_program(DSYMUTIL_EXECUTABLE NAMES dsymutil llvm-dsymutil HINTS ${CLANG_BIN_DIR} REQUIRED)
+        add_custom_command(TARGET ${target_name} POST_BUILD
+            COMMAND ${DSYMUTIL_EXECUTABLE} ${target_file} -o "${symbols_dir}/$<TARGET_FILE_NAME:${target_name}>.dSYM"
+            COMMAND ${CMAKE_STRIP} -S ${target_file}
+            COMMENT "Splitting the debug symbols of ${target_name}"
+            VERBATIM
+        )
+    elseif (WINDOWS)
+        target_link_options(${target_name} PRIVATE /DEBUG /OPT:REF /OPT:ICF)
+        set(pdb_dir "${symbols_dir}/$<TARGET_FILE_NAME:${target_name}>")
+        add_custom_command(TARGET ${target_name} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${pdb_dir}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_PDB_FILE:${target_name}>" ${pdb_dir}
+            COMMENT "Copying the debug symbols of ${target_name}"
+            VERBATIM
+        )
+    endif ()
+endfunction()
