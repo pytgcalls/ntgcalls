@@ -12,14 +12,19 @@
 // FrameSize: A YUV frame size for a Width * Height resolution image,
 // where Y (luminance) and UV (chrominance) components are combined with a 3:2 pixel ratio.
 
+#include <memory>
+#include <mutex>
 #include <ntgcalls/media/base_sink.hpp>
 #include <ntgcalls/media/media_description.hpp>
 
 namespace ntgcalls::media {
 
     class VideoSink: public BaseSink {
+        std::shared_ptr<const VideoDescription> description_;
+        mutable std::mutex description_mutex_;
+
     protected:
-        std::optional<VideoDescription> description_;
+        std::shared_ptr<const VideoDescription> description() const;
 
     public:
         bool set_config(const std::optional<VideoDescription>& desc);

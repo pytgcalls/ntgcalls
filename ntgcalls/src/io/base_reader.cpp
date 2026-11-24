@@ -2,7 +2,6 @@
 // Created by Lauren on 28/09/24.
 //
 
-#include <utility>
 #include <ntgcalls/io/base_reader.hpp>
 
 namespace ntgcalls::io {
@@ -17,7 +16,7 @@ namespace ntgcalls::io {
     }
 
     bool BaseReader::set_enabled(const bool enable) {
-        return std::exchange(status_, enable) != enable;
+        return status_.exchange(enable) != enable;
     }
 
     bool BaseReader::is_enabled() const {

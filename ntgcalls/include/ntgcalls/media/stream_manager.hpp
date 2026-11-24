@@ -95,7 +95,8 @@ namespace ntgcalls::media {
         using StreamId = std::pair<Mode, Device>;
 
         wrtc::utils::SafeThread& worker_thread_;
-        bool initialized_ = false, video_simulcast_ = true, resume_on_reconnect_ = false, detached_ = false;
+        bool initialized_ = false, resume_on_reconnect_ = false, detached_ = false;
+        std::atomic_bool video_simulcast_ = true;
         std::atomic_bool closed_ = false;
         std::map<StreamId, std::unique_ptr<BaseSink>> streams_;
         std::map<StreamId, std::unique_ptr<wrtc::interfaces::media::tracks::MediaTrackInterface>> tracks_;
@@ -143,6 +144,8 @@ namespace ntgcalls::media {
         wrtc::models::VideoEncoding video_encoding(const StreamId& id, const VideoDescription& description);
 
         void update_encoding(const StreamId& id);
+
+        bool has_external_writer(Device device);
 
         void send_to_writer(Device device, std::vector<wrtc::models::Frame> frames);
 

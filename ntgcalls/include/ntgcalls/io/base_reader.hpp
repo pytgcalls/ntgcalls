@@ -13,7 +13,7 @@ namespace ntgcalls::io {
     class BaseReader: public virtual BaseIO {
     protected:
         wrtc::utils::synchronized_callback<void(bytes::unique_binary, size_t, wrtc::models::FrameData)> data_callback_;
-        bool status_ = true;
+        std::atomic_bool status_ = true;
 
     public:
         explicit BaseReader(media::BaseSink* sink);

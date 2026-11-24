@@ -98,15 +98,23 @@ namespace ntgcalls::media {
     }
 
     void StreamManager::optimize_sources(wrtc::interfaces::NetworkInterface* pc) {
-        if (closed_) {
-            return;
+        const auto connected = pc->get_connection_mode() != wrtc::ConnectionMode::None;
+        bool audio, camera, screen, was_initialized;
+        {
+            const std::lock_guard lock(mutex_);
+            if (closed_) {
+                return;
+            }
+            audio = has_device_internal(Playback, Microphone);
+            camera = has_device_internal(Playback, Camera);
+            screen = has_device_internal(Playback, Screen);
+            was_initialized = initialized_;
+            initialized_ = connected;
         }
-        pc->enable_audio_incoming(writers_.contains(Microphone) || external_writers_.contains(Microphone));
-        pc->enable_video_incoming(writers_.contains(Camera) || external_writers_.contains(Camera), false);
-        pc->enable_video_incoming(writers_.contains(Screen) || external_writers_.contains(Screen), true);
-        const auto was_initialized = initialized_;
-        initialized_ = pc->get_connection_mode() != wrtc::ConnectionMode::None;
-        if (!was_initialized && initialized_) {
+        pc->enable_audio_incoming(audio);
+        pc->enable_video_incoming(camera, false);
+        pc->enable_video_incoming(screen, true);
+        if (!was_initialized && connected) {
             const auto state = get_state();
             const std::lock_guard lock(state_mutex_);
             last_state_ = state;
@@ -239,14 +247,19 @@ namespace ntgcalls::media {
 
     void StreamManager::add_track(Mode mode, Device device, wrtc::interfaces::NetworkInterface* pc) {
         const StreamId id(mode, device);
+        const std::lock_guard lock(mutex_);
+        const auto stream = streams_.find(id);
+        if (closed_ || stream == streams_.end()) {
+            return;
+        }
         if (mode == Capture) {
-            tracks_[id] = pc->add_outgoing_track(dynamic_cast<BaseStreamer*>(streams_[id].get())->create_track());
+            tracks_[id] = pc->add_outgoing_track(dynamic_cast<BaseStreamer*>(stream->second.get())->create_track());
             update_encoding(id);
         } else {
             if (id.second == Microphone || id.second == Speaker) {
-                pc->add_incoming_audio_track(dynamic_cast<AudioReceiver*>(streams_[id].get())->remote_sink());
+                pc->add_incoming_audio_track(dynamic_cast<AudioReceiver*>(stream->second.get())->remote_sink());
             } else {
-                pc->add_incoming_video_track(dynamic_cast<VideoReceiver*>(streams_[id].get())->remote_sink(), id.second == Screen);
+                pc->add_incoming_video_track(dynamic_cast<VideoReceiver*>(stream->second.get())->remote_sink(), id.second == Screen);
             }
         }
     }
@@ -508,6 +521,7 @@ namespace ntgcalls::media {
             return;
         }
         replace_writer(device, nullptr);
+        const std::unique_lock lock(writers_mutex_);
         external_writers_.erase(device);
     }
 
@@ -572,8 +586,9 @@ namespace ntgcalls::media {
     void StreamManager::setup_capture_callbacks(const StreamId& id, Type stream_type, bool is_shared) {
         const auto& device = id.second;
         const std::weak_ptr weak(shared_from_this());
+        auto* reader = readers_[device].get();
 
-        readers_[device]->on_data([weak, id, stream_type, is_shared](const bytes::unique_binary& data, const size_t size, wrtc::models::FrameData frame_data) {
+        reader->on_data([weak, id, stream_type, is_shared, reader](const bytes::unique_binary& data, const size_t size, wrtc::models::FrameData frame_data) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -590,7 +605,7 @@ namespace ntgcalls::media {
                         strong->cancel_sync_readers_.erase(id.second);
                         return;
                     }
-                    if (const auto threaded_reader = dynamic_cast<wrtc::utils::SyncHelper*>(strong->readers_[id.second].get())) {
+                    if (const auto threaded_reader = dynamic_cast<wrtc::utils::SyncHelper*>(reader)) {
                         threaded_reader->synchronize_time();
                     }
                 }
@@ -613,7 +628,7 @@ namespace ntgcalls::media {
             }
         });
 
-        readers_[device]->on_eof([weak, device] {
+        reader->on_eof([weak, device] {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
@@ -645,6 +660,7 @@ namespace ntgcalls::media {
         RTC_LOG(LS_INFO) << "Reconfiguring PLAYBACK for device " << device << " reason=" << static_cast<int>(reason);
 
         if (is_external) {
+            const std::unique_lock lock(writers_mutex_);
             external_writers_.insert(device);
         }
 
@@ -676,13 +692,13 @@ namespace ntgcalls::media {
 
     void StreamManager::setup_audio_playback_callbacks(const StreamId& id, bool is_external) {
         const std::weak_ptr weak(shared_from_this());
-        dynamic_cast<AudioReceiver*>(streams_[id].get())->on_frames([weak, id, is_external](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames, const std::map<uint32_t, int64_t>& timestamps) {
+        auto* receiver = dynamic_cast<AudioReceiver*>(streams_[id].get());
+        receiver->on_frames([weak, id, is_external, receiver](const std::map<uint32_t, std::pair<bytes::unique_binary, size_t>>& frames, const std::map<uint32_t, int64_t>& timestamps) {
             const auto strong = weak.lock();
             if (!strong) {
                 return;
             }
             std::vector<wrtc::models::Frame> converted_frames;
-            const auto receiver = dynamic_cast<AudioReceiver*>(strong->streams_[id].get());
             for (const auto& [ssrc, data] : frames) {
                 wrtc::models::FrameData frame_data{};
                 frame_data.codec = receiver->codec();
@@ -696,7 +712,7 @@ namespace ntgcalls::media {
                 });
             }
             if (is_external) {
-                if (strong->external_writers_.contains(id.second) && !converted_frames.empty()) {
+                if (strong->has_external_writer(id.second) && !converted_frames.empty()) {
                     (void) strong->frames_callback_(
                         id.first,
                         id.second,
@@ -719,7 +735,7 @@ namespace ntgcalls::media {
             std::vector<wrtc::models::Frame> frames;
             frames.emplace_back(ssrc, std::move(frame), frame_data);
             if (is_external) {
-                if (strong->external_writers_.contains(id.second)) {
+                if (strong->has_external_writer(id.second)) {
                     (void) strong->frames_callback_(id.first, id.second, frames);
                 }
             } else {
@@ -731,6 +747,11 @@ namespace ntgcalls::media {
                 strong->remove_writer_source(id.second, ssrc);
             }
         });
+    }
+
+    bool StreamManager::has_external_writer(const Device device) {
+        const std::shared_lock lock(writers_mutex_);
+        return external_writers_.contains(device);
     }
 
     void StreamManager::send_to_writer(const Device device, std::vector<wrtc::models::Frame> frames) {

@@ -19,7 +19,7 @@ namespace ntgcalls::media {
         std::shared_ptr<wrtc::interfaces::media::RemoteAudioSink> sink_;
         std::map<uint32_t, std::unique_ptr<webrtc::PushResampler<int16_t>>> resamplers_;
 
-        bytes::unique_binary resample_frame(uint32_t ssrc, bytes::unique_binary data, size_t size, uint8_t channels, uint16_t sample_rate);
+        bytes::unique_binary resample_frame(const AudioDescription& description, uint32_t ssrc, bytes::unique_binary data, size_t size, uint8_t channels, uint16_t sample_rate);
 
         static bytes::unique_binary stereo_to_mono(const bytes::unique_binary& data, size_t size, size_t* new_size);
 

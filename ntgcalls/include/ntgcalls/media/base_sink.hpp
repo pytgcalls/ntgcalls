@@ -3,13 +3,14 @@
 //
 
 #pragma once
+#include <atomic>
 #include <chrono>
 
 namespace ntgcalls::media {
 
     class BaseSink {
     protected:
-        uint64_t frames_ = 0;
+        std::atomic<uint64_t> frames_ = 0;
 
         void clear();
 

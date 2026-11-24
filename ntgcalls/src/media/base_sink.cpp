@@ -14,7 +14,7 @@ namespace ntgcalls::media {
     }
 
     std::chrono::nanoseconds BaseSink::nano_time() {
-        return frames_ * frame_time();
+        return frames_.load() * frame_time();
     }
 
     void BaseSink::clear() {

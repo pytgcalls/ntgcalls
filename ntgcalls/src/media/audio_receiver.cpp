@@ -14,10 +14,10 @@ namespace ntgcalls::media {
         frames_callback_ = nullptr;
     }
 
-    bytes::unique_binary AudioReceiver::resample_frame(const uint32_t ssrc, bytes::unique_binary data, const size_t size, const uint8_t channels, const uint16_t sample_rate) {
+    bytes::unique_binary AudioReceiver::resample_frame(const AudioDescription& description, const uint32_t ssrc, bytes::unique_binary data, const size_t size, const uint8_t channels, const uint16_t sample_rate) {
         bytes::unique_binary converted_data;
         size_t pre_sample_size;
-        if (channels != description_->channel_count) {
+        if (channels != description.channel_count) {
             switch (channels) {
             case 1:
                 converted_data = mono_to_stereo(data, size, &pre_sample_size);
@@ -33,12 +33,12 @@ namespace ntgcalls::media {
             pre_sample_size = size;
             converted_data = std::move(data);
         }
-        const size_t new_size = frame_size();
+        const size_t new_size = frame_size_of(description);
         auto new_frame = bytes::make_unique_binary(new_size);
-        if (description_->sample_rate == sample_rate) {
+        if (description.sample_rate == sample_rate) {
             std::memcpy(new_frame.get(), converted_data.get(), pre_sample_size);
         } else {
-            const size_t src_samples_per_channel = pre_sample_size / sizeof(int16_t) / description_->channel_count;
+            const size_t src_samples_per_channel = pre_sample_size / sizeof(int16_t) / description.channel_count;
             if (src_samples_per_channel != static_cast<size_t>(sample_rate / 100)) {
                 RTC_LOG(LS_ERROR) << "Unsupported audio frame duration: " << src_samples_per_channel << " samples at " << sample_rate << "Hz";
                 throw InvalidParams("Failed to resample audio frame");
@@ -48,8 +48,8 @@ namespace ntgcalls::media {
                 resampler = std::make_unique<webrtc::PushResampler<int16_t>>();
             }
             resampler->Resample(
-                webrtc::InterleavedView<const int16_t>(reinterpret_cast<const int16_t*>(converted_data.get()), src_samples_per_channel, description_->channel_count),
-                webrtc::InterleavedView<int16_t>(reinterpret_cast<int16_t*>(new_frame.get()), new_size / sizeof(int16_t) / description_->channel_count, description_->channel_count)
+                webrtc::InterleavedView<const int16_t>(reinterpret_cast<const int16_t*>(converted_data.get()), src_samples_per_channel, description.channel_count),
+                webrtc::InterleavedView<int16_t>(reinterpret_cast<int16_t*>(new_frame.get()), new_size / sizeof(int16_t) / description.channel_count, description.channel_count)
             );
         }
         return std::move(new_frame);
@@ -84,7 +84,8 @@ namespace ntgcalls::media {
 
     void AudioReceiver::open() {
         sink_ = std::make_shared<wrtc::interfaces::media::RemoteAudioSink>([this](const std::vector<std::unique_ptr<wrtc::models::AudioFrame>>& samples) {
-            if (!description_) {
+            const auto description = this->description();
+            if (!description) {
                 return;
             }
             if (!weak_sink_.lock()) {
@@ -111,13 +112,14 @@ namespace ntgcalls::media {
                         frame->ssrc,
                         std::pair{
                             resample_frame(
+                                *description,
                                 frame->ssrc,
                                 std::move(data),
                                 frame->size,
                                 frame->channels,
                                 frame->sample_rate
                             ),
-                            frame_size()
+                            static_cast<size_t>(frame_size_of(*description))
                         }
                     );
                     timestamps[frame->ssrc] = frame->absolute_capture_timestamp_ms;

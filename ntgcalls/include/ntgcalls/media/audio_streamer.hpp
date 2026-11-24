@@ -17,11 +17,11 @@ namespace ntgcalls::media {
         std::unique_ptr<wrtc::audio_factory::OpusLevel> level_;
         bytes::binary level_frame_;
 
-        void send_pcm(uint8_t* sample, uint32_t sample_rate, const wrtc::models::FrameData &additional_data) const;
+        void send_pcm(uint8_t* sample, uint32_t sample_rate, uint8_t channel_count, const wrtc::models::FrameData &additional_data) const;
 
         static void fill_level(bytes::binary& frame, size_t channels, int16_t amplitude);
 
-        void send_encoded(const uint8_t* packet, size_t size, const wrtc::models::FrameData &additional_data);
+        void send_encoded(const uint8_t* packet, size_t size, uint8_t channel_count, const wrtc::models::FrameData &additional_data);
 
     public:
         AudioStreamer();

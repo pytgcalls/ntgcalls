@@ -32,7 +32,8 @@ namespace ntgcalls::media {
     void VideoReceiver::open() {
         sink_ = std::make_shared<wrtc::interfaces::media::RemoteVideoSink>(
             [this](const uint32_t ssrc, const std::unique_ptr<webrtc::VideoFrame>& frame) {
-                if (!description_) {
+                const auto description = this->description();
+                if (!description) {
                     return;
                 }
                 if (const auto sink = weak_sink_.lock(); !sink) {
@@ -40,16 +41,16 @@ namespace ntgcalls::media {
                 }
                 const std::lock_guard lock(mutex_);
                 uint16_t new_width, new_height;
-                const bool native = description_->media_source != VideoDescription::MediaSource::External;
-                if (native || description_->width <= 0) {
+                const bool native = description->media_source != VideoDescription::MediaSource::External;
+                if (native || description->width <= 0) {
                     new_width = static_cast<int16_t>(frame->width());
                 } else {
-                    new_width = description_->width;
+                    new_width = description->width;
                 }
-                if (native || description_->height <= 0) {
+                if (native || description->height <= 0) {
                     new_height = static_cast<int16_t>(frame->height());
                 } else {
-                    new_height = description_->height;
+                    new_height = description->height;
                 }
                 const auto chroma_width = (new_width + 1) / 2;
                 const auto chroma_height = (new_height + 1) / 2;
@@ -84,7 +85,7 @@ namespace ntgcalls::media {
                 );
             },
             [this](const uint32_t ssrc, const wrtc::utils::encoded::EncodedFrame& frame) {
-                if (!description_) {
+                if (!description()) {
                     return;
                 }
                 if (const auto sink = weak_sink_.lock(); !sink) {

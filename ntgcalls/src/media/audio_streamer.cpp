@@ -20,36 +20,40 @@ namespace ntgcalls::media {
     }
 
     void AudioStreamer::send_data(uint8_t* sample, const size_t size, const wrtc::models::FrameData additional_data) {
-        if (description_->is_encoded()) {
-            send_encoded(sample, size, additional_data);
+        const auto description = this->description();
+        if (!description) {
+            return;
+        }
+        if (description->is_encoded()) {
+            send_encoded(sample, size, description->channel_count, additional_data);
             return;
         }
         frames_++;
-        send_pcm(sample, description_->sample_rate, additional_data);
+        send_pcm(sample, description->sample_rate, description->channel_count, additional_data);
     }
 
-    void AudioStreamer::send_pcm(uint8_t* sample, const uint32_t sample_rate, const wrtc::models::FrameData &additional_data) const {
+    void AudioStreamer::send_pcm(uint8_t* sample, const uint32_t sample_rate, const uint8_t channel_count, const wrtc::models::FrameData &additional_data) const {
         auto event = wrtc::models::RTCOnDataEvent(sample, sample_rate / 100);
-        event.channel_count = description_->channel_count;
+        event.channel_count = channel_count;
         event.sample_rate = sample_rate;
         event.bits_per_sample = 16;
         audio_->on_data(event, additional_data);
     }
 
-    void AudioStreamer::send_encoded(const uint8_t* packet, const size_t size, const wrtc::models::FrameData &additional_data) {
+    void AudioStreamer::send_encoded(const uint8_t* packet, const size_t size, const uint8_t channel_count, const wrtc::models::FrameData &additional_data) {
         const auto frames = wrtc::audio_factory::OpusPacket::frames(packet, size);
         if (frames == 0) {
             return;
         }
         encoded_->push({{packet, packet + size}, additional_data});
         if (!level_) {
-            level_ = std::make_unique<wrtc::audio_factory::OpusLevel>(description_->channel_count);
+            level_ = std::make_unique<wrtc::audio_factory::OpusLevel>(channel_count);
         }
-        level_frame_.resize(static_cast<size_t>(wrtc::audio_factory::OpusPacket::kFrameSamples) * description_->channel_count * sizeof(int16_t));
-        fill_level(level_frame_, description_->channel_count, level_->amplitude(packet, size));
+        level_frame_.resize(static_cast<size_t>(wrtc::audio_factory::OpusPacket::kFrameSamples) * channel_count * sizeof(int16_t));
+        fill_level(level_frame_, channel_count, level_->amplitude(packet, size));
         for (size_t i = 0; i < frames; i++) {
             frames_++;
-            send_pcm(level_frame_.data(), wrtc::audio_factory::OpusPacket::kSampleRate, additional_data);
+            send_pcm(level_frame_.data(), wrtc::audio_factory::OpusPacket::kSampleRate, channel_count, additional_data);
         }
     }
 
