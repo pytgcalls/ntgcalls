@@ -20,7 +20,10 @@ class TestStatic(unittest.TestCase):
         self.assertTrue(protocol.udp_reflector)
 
     def test_media_devices(self):
-        devices = ntgcalls.NTgCalls.get_media_devices()
+        try:
+            devices = ntgcalls.NTgCalls.get_media_devices()
+        except ntgcalls.MediaDeviceError as e:
+            self.skipTest(f'No audio server available: {e}')
         for kind in ('microphone', 'speaker', 'camera', 'screen'):
             for device in getattr(devices, kind):
                 self.assertIsInstance(device.name, str)
