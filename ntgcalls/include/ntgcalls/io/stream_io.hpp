@@ -25,8 +25,9 @@ namespace ntgcalls::io {
         StreamIO(const std::string& input, media::BaseSink* sink): BaseIO(sink), Format(sink), Stream(input, BaseStream::Mode::Read) {}
 
         ~StreamIO() override {
-            Stream::close();
+            Stream::interrupt();
             Format::close();
+            Stream::close();
         }
     };
 

@@ -56,6 +56,8 @@ namespace ntgcalls::io {
         void write(const bytes::unique_binary& data, size_t size) override;
 
         void close() override;
+
+        void interrupt() override;
     };
 
 } // ntgcalls::io

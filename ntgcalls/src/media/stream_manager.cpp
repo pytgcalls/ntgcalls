@@ -21,6 +21,9 @@ namespace ntgcalls::media {
 
     void StreamManager::close() {
         std::vector<std::unique_ptr<io::BaseReader>> readers_to_close;
+        std::map<Device, std::unique_ptr<io::BaseWriter>> writers_to_close;
+        std::map<StreamId, std::unique_ptr<BaseSink>> streams_to_close;
+        std::map<StreamId, std::unique_ptr<wrtc::interfaces::media::tracks::MediaTrackInterface>> tracks_to_close;
         {
             const std::lock_guard lock(mutex_);
             closed_ = true;
@@ -48,19 +51,21 @@ namespace ntgcalls::media {
                     video_receiver->on_source_removed(nullptr);
                 }
             }
-            std::map<Device, std::unique_ptr<io::BaseWriter>> writers_to_close;
             {
                 const std::unique_lock lock(writers_mutex_);
                 writers_to_close.swap(writers_);
             }
-            streams_.clear();
-            tracks_.clear();
+            streams_to_close.swap(streams_);
+            tracks_to_close.swap(tracks_);
         }
         for (auto& reader : readers_to_close) {
             reader->on_data(nullptr);
             reader->on_eof(nullptr);
             reader.reset();
         }
+        writers_to_close.clear();
+        streams_to_close.clear();
+        tracks_to_close.clear();
     }
 
     void StreamManager::enable_video_simulcast(const bool enable) {
@@ -292,6 +297,7 @@ namespace ntgcalls::media {
 
     void StreamManager::send_external_frame(Device device, const bytes::binary& data, const wrtc::models::FrameData& frame_data) {
         const StreamId id(Capture, device);
+        const std::lock_guard lock(mutex_);
         if (!external_readers_.contains(device) || !streams_.contains(id)) {
             throw InvalidParams("External source not initialized");
         }

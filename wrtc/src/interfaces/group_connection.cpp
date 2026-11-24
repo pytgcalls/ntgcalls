@@ -165,7 +165,7 @@ namespace wrtc::interfaces {
         const std::weak_ptr weak(shared_from_this());
         network_thread().PostTask([weak, candidate] {
             const auto strong = std::static_pointer_cast<const GroupConnection>(weak.lock());
-            if (!strong) {
+            if (!strong || strong->closed_) {
                 return;
             }
             strong->transport_channel_->AddRemoteCandidate(candidate);
@@ -176,7 +176,7 @@ namespace wrtc::interfaces {
         const std::weak_ptr weak(shared_from_this());
         network_thread().PostTask([weak, remote_ice_parameters = std::move(remote_ice_parameters), fingerprint = std::move(fingerprint)] {
             const auto strong = std::static_pointer_cast<GroupConnection>(weak.lock());
-            if (!strong) {
+            if (!strong || strong->closed_) {
                 return;
             }
             strong->remote_parameters_ = remote_ice_parameters;

@@ -21,5 +21,7 @@ namespace ntgcalls::io {
         virtual void write(const bytes::unique_binary& data, size_t size) = 0;
 
         virtual void close() = 0;
+
+        virtual void interrupt() {}
     };
 } // ntgcalls::io

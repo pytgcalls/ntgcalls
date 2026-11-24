@@ -10,6 +10,8 @@ namespace ntgcalls::instances {
     }
 
     void CallInterface::stop() {
+        const std::lock_guard lock(lifecycle_mutex_);
+        stopped_ = true;
         connection_change_callback_ = nullptr;
         remote_source_callback_ = nullptr;
         if (stream_manager_ && owns_stream_manager_) {
@@ -21,6 +23,10 @@ namespace ntgcalls::instances {
     }
 
     wrtc::ConnectionMode CallInterface::get_connection_mode() const {
+        const std::lock_guard lock(lifecycle_mutex_);
+        if (!connection_) {
+            return wrtc::ConnectionMode::None;
+        }
         return connection_->get_connection_mode();
     }
 
@@ -42,8 +48,13 @@ namespace ntgcalls::instances {
 
     void CallInterface::set_stream_sources(const media::StreamManager::Mode mode, const media::MediaDescription& config) const {
         stream_manager_->set_stream_sources(mode, config);
-        if (mode == media::StreamManager::Mode::Playback && connection_) {
-            stream_manager_->optimize_sources(connection_.get());
+        std::shared_ptr<wrtc::interfaces::NetworkInterface> connection;
+        {
+            const std::lock_guard lock(lifecycle_mutex_);
+            connection = connection_;
+        }
+        if (mode == media::StreamManager::Mode::Playback && connection) {
+            stream_manager_->optimize_sources(connection.get());
         }
     }
 

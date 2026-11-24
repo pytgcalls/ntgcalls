@@ -18,6 +18,10 @@ namespace ntgcalls::instances {
     void GroupCall::stop() {
         broadcast_timestamp_callback_ = nullptr;
         segment_part_request_callback_ = nullptr;
+        {
+            const std::lock_guard lock(lifecycle_mutex_);
+            stopped_ = true;
+        }
         stop_presentation();
         CallInterface::stop();
     }
@@ -54,14 +58,19 @@ namespace ntgcalls::instances {
     }
 
     std::string GroupCall::init_presentation() {
-        if (get_connection_mode() != wrtc::ConnectionMode::Rtc) {
+        const std::lock_guard lock(lifecycle_mutex_);
+        if (stopped_) {
+            RTC_LOG(LS_ERROR) << "Connection closed";
+            throw ConnectionNotFound("Connection closed");
+        }
+        if (connection_->get_connection_mode() != wrtc::ConnectionMode::Rtc) {
             RTC_LOG(LS_ERROR) << "Presentation connection requires RTC connection";
             throw RTCConnectionNeeded("Presentation connection requires RTC connection");
         }
         RTC_LOG(LS_INFO) << "Initializing screen sharing";
         const auto presentation = std::make_shared<wrtc::interfaces::GroupConnection>(true, type() == Type::Conference);
         {
-            const std::lock_guard lock(presentation_mutex_);
+            const std::lock_guard presentation_lock(presentation_mutex_);
             if (presentation_connection_) {
                 RTC_LOG(LS_ERROR) << "Screen sharing already initialized";
                 throw ConnectionError("Screen sharing already initialized");
@@ -89,6 +98,11 @@ namespace ntgcalls::instances {
 
     void GroupCall::connect(const std::string& json_data, const bool is_presentation) {
         RTC_LOG(LS_VERBOSE) << "Connecting to group call";
+        const std::lock_guard lock(lifecycle_mutex_);
+        if (stopped_) {
+            RTC_LOG(LS_ERROR) << "Connection closed";
+            throw ConnectionNotFound("Connection closed");
+        }
         const auto conn = is_presentation ? presentation_connection() : connection_;
         if (!conn) {
             RTC_LOG(LS_ERROR) << "Connection not initialized";
@@ -196,6 +210,7 @@ namespace ntgcalls::instances {
     }
 
     void GroupCall::stop_presentation(const bool force) {
+        const std::lock_guard lifecycle_lock(lifecycle_mutex_);
         std::shared_ptr<wrtc::interfaces::GroupConnection> presentation;
         {
             const std::lock_guard lock(presentation_mutex_);

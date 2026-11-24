@@ -111,6 +111,10 @@ namespace ntgcalls::io {
         }
     }
 
+    void ShellStream::interrupt() {
+        terminate();
+    }
+
     void ShellStream::wait_exit() {
         boost::system::error_code ec;
         const auto deadline = std::chrono::steady_clock::now() + kExitTimeout;

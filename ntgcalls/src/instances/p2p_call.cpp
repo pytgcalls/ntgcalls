@@ -125,6 +125,11 @@ namespace ntgcalls::instances {
 
     void P2PCall::connect(const std::vector<p2p::RTCServer>& servers, const std::vector<std::string>& versions, const bool p2p_allowed, const std::optional<std::string>& custom_parameters) {
         RTC_LOG(LS_INFO) << "Connecting to P2P call, p2pAllowed: " << (p2p_allowed ? "true" : "false");
+        const std::lock_guard lock(lifecycle_mutex_);
+        if (stopped_) {
+            RTC_LOG(LS_ERROR) << "Connection closed";
+            throw ConnectionNotFound("Connection closed");
+        }
         if (connection_) {
             RTC_LOG(LS_ERROR) << "Connection already made";
             throw ConnectionError("Connection already made");

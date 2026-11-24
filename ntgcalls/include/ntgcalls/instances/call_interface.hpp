@@ -4,6 +4,7 @@
 
 #pragma once
 #include <memory>
+#include <mutex>
 #include <ntgcalls/media/stream_manager.hpp>
 #include <ntgcalls/models/connection_info.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
@@ -23,6 +24,8 @@ namespace ntgcalls::instances {
         media::StreamManager::Status last_camera_state_ = media::StreamManager::Status::Idling;
         media::StreamManager::Status last_screen_state_ = media::StreamManager::Status::Idling;
         media::StreamManager::Status last_mic_state_ = media::StreamManager::Status::Idling;
+        mutable std::mutex lifecycle_mutex_;
+        bool stopped_ = false;
 
         void set_connection_observer(
             const std::shared_ptr<wrtc::interfaces::NetworkInterface>& conn,

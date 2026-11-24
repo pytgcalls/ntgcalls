@@ -415,7 +415,7 @@ namespace wrtc::interfaces {
         const std::weak_ptr weak(shared_from_this());
         network_thread().PostTask([weak, candidate] {
             const auto strong = std::static_pointer_cast<const NativeConnection>(weak.lock());
-            if (!strong) {
+            if (!strong || strong->closed_) {
                 return;
             }
             strong->transport_channel_->AddRemoteCandidate(candidate);
@@ -459,7 +459,7 @@ namespace wrtc::interfaces {
         const std::weak_ptr weak(shared_from_this());
         network_thread().PostTask([weak, remote_ice_parameters = std::move(remote_ice_parameters), fingerprint = std::move(fingerprint), ssl_setup] {
             const auto strong = std::static_pointer_cast<NativeConnection>(weak.lock());
-            if (!strong) {
+            if (!strong || strong->closed_) {
                 return;
             }
             if (strong->remote_parameters_.ufrag != remote_ice_parameters.ufrag ||
