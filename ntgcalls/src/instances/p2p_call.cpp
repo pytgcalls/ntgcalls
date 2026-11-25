@@ -205,7 +205,13 @@ namespace ntgcalls::instances {
             if (!strong) {
                 return;
             }
-            strong->send_media_state(strong->stream_manager_->get_state());
+            strong->update_thread_.PostTask([weak] {
+                const auto strong_update = std::static_pointer_cast<P2PCall>(weak.lock());
+                if (!strong_update) {
+                    return;
+                }
+                strong_update->send_media_state(strong_update->stream_manager_->get_state());
+            });
             RTC_LOG(LS_VERBOSE) << "Data channel opened";
         });
         connection_->on_data_channel_message([weak](const bytes::binary& data) {
