@@ -150,12 +150,12 @@ namespace ntgcalls::instances {
         }
         protocol_version_ = signaling::Signaling::match_version(versions);
         const std::weak_ptr weak(shared_from_this());
-        connection_ = std::make_shared<wrtc::interfaces::NativeConnection>(
+        set_connection(std::make_shared<wrtc::interfaces::NativeConnection>(
             p2p::RTCServer::to_rtc_servers(servers),
             p2p_allowed,
             type() == Type::Outgoing,
             custom_parameters_json
-        );
+        ));
         signaling_ = signaling::Signaling::create(
             protocol_version_,
             connection_->network_thread(),

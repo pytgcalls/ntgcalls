@@ -17,17 +17,31 @@ namespace ntgcalls::instances {
         if (stream_manager_ && owns_stream_manager_) {
             stream_manager_->close();
         }
-        if (connection_) {
-            connection_->close();
+        if (const auto conn = connection()) {
+            conn->close();
         }
     }
 
+    std::shared_ptr<wrtc::interfaces::NetworkInterface> CallInterface::connection() const {
+        const std::lock_guard lock(connection_mutex_);
+        return connection_;
+    }
+
+    void CallInterface::set_connection(std::shared_ptr<wrtc::interfaces::NetworkInterface> conn) {
+        const std::lock_guard lock(connection_mutex_);
+        connection_ = std::move(conn);
+    }
+
+    bool CallInterface::is_current_connection(const std::shared_ptr<wrtc::interfaces::NetworkInterface>& conn, const ConnectionInfo::Kind kind) const {
+        return kind != ConnectionInfo::Kind::Normal || connection() == conn;
+    }
+
     wrtc::ConnectionMode CallInterface::get_connection_mode() const {
-        const std::lock_guard lock(lifecycle_mutex_);
-        if (!connection_) {
+        const auto conn = connection();
+        if (!conn) {
             return wrtc::ConnectionMode::None;
         }
-        return connection_->get_connection_mode();
+        return conn->get_connection_mode();
     }
 
     bool CallInterface::pause() const {
@@ -48,11 +62,7 @@ namespace ntgcalls::instances {
 
     void CallInterface::set_stream_sources(const media::StreamManager::Mode mode, const media::MediaDescription& config) const {
         stream_manager_->set_stream_sources(mode, config);
-        std::shared_ptr<wrtc::interfaces::NetworkInterface> connection;
-        {
-            const std::lock_guard lock(lifecycle_mutex_);
-            connection = connection_;
-        }
+        const auto connection = this->connection();
         if (mode == media::StreamManager::Mode::Playback && connection) {
             stream_manager_->optimize_sources(connection.get());
         }
@@ -106,18 +116,21 @@ namespace ntgcalls::instances {
             }
             strong->update_thread_.PostTask([weak, kind, conn, state, was_connected] {
                 const auto strong_update = weak.lock();
-                if (!strong_update) {
+                if (!strong_update || !strong_update->is_current_connection(conn, kind)) {
                     return;
                 }
                 switch (state) {
                 case wrtc::ConnectionState::Connecting:
                     if (was_connected) {
                         RTC_LOG(LS_VERBOSE) << "Reconnecting...";
+                        (void) strong_update->connection_change_callback_({ConnectionInfo::State::Connecting, kind});
                     }
                     return;
                 case wrtc::ConnectionState::Connected:
                     RTC_LOG(LS_VERBOSE) << "Connection established";
-                    if (!was_connected && strong_update->stream_manager_) {
+                    if (was_connected) {
+                        (void) strong_update->connection_change_callback_({ConnectionInfo::State::Connected, kind});
+                    } else if (strong_update->stream_manager_) {
                         strong_update->stream_manager_->start();
                         RTC_LOG(LS_VERBOSE) << "Stream started";
                         (void) strong_update->connection_change_callback_({ConnectionInfo::State::Connected, kind});
@@ -145,7 +158,7 @@ namespace ntgcalls::instances {
         update_thread_.PostDelayedTask(
             [weak, kind, conn] {
                 const auto strong = weak.lock();
-                if (!strong) {
+                if (!strong || !strong->is_current_connection(conn, kind)) {
                     return;
                 }
                 if (conn->get_connection_state() == wrtc::ConnectionState::Connecting && !conn->is_already_connected()) {

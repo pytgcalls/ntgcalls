@@ -23,7 +23,7 @@ namespace wrtc::interfaces {
         utils::synchronized_callback<void(models::IceCandidate)> ice_candidate_callback_;
         utils::synchronized_callback<void(ConnectionState, bool)> connection_change_callback_;
         utils::synchronized_callback<void(bytes::binary)> data_channel_message_callback_;
-        ConnectionState current_state_ = ConnectionState::Connecting;
+        std::atomic<ConnectionState> current_state_ = ConnectionState::Connecting;
         std::atomic_bool data_channel_open_ = false;
         std::atomic_bool already_connected_ = false;
         std::atomic_bool closed_ = false;

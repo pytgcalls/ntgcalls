@@ -20,10 +20,16 @@ namespace ntgcalls::instances {
 
         mutable std::mutex presentation_mutex_;
 
+        std::string open_connection();
+
+        bool close_presentation();
+
     protected:
         std::shared_ptr<wrtc::interfaces::GroupConnection> presentation_connection_;
 
         std::shared_ptr<wrtc::interfaces::GroupConnection> presentation_connection() const;
+
+        virtual void on_connection_opened(wrtc::interfaces::GroupConnection* conn);
 
     public:
         explicit GroupCall(wrtc::utils::SafeThread& update_thread): CallInterface(update_thread) {}
@@ -31,6 +37,8 @@ namespace ntgcalls::instances {
         void stop() override;
 
         std::string init();
+
+        std::string rejoin();
 
         virtual std::string init_presentation();
 

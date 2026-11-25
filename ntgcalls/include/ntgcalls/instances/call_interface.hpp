@@ -26,12 +26,19 @@ namespace ntgcalls::instances {
         std::optional<media::StreamManager::Status> last_screen_state_;
         std::optional<media::StreamManager::Status> last_mic_state_;
         mutable std::mutex lifecycle_mutex_;
+        mutable std::mutex connection_mutex_;
         bool stopped_ = false;
 
         void set_connection_observer(
             const std::shared_ptr<wrtc::interfaces::NetworkInterface>& conn,
             ConnectionInfo::Kind kind = ConnectionInfo::Kind::Normal
         );
+
+        std::shared_ptr<wrtc::interfaces::NetworkInterface> connection() const;
+
+        void set_connection(std::shared_ptr<wrtc::interfaces::NetworkInterface> conn);
+
+        bool is_current_connection(const std::shared_ptr<wrtc::interfaces::NetworkInterface>& conn, ConnectionInfo::Kind kind) const;
 
         static media::StreamManager::Status parse_video_state(signaling::messages::MediaStateMessage::VideoState state);
 

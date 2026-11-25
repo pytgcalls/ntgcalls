@@ -103,6 +103,10 @@ namespace ntgcalls {
 
         [[ntg::async]] p2p::ConferenceJoinParams init_conference(int64_t chat_id, int64_t user_id, const std::optional<bytes::binary>& last_block);
 
+        [[ntg::async]] std::string rejoin(int64_t chat_id);
+
+        [[ntg::async]] p2p::ConferenceJoinParams rejoin_conference(int64_t chat_id, const std::optional<bytes::binary>& last_block);
+
         [[ntg::async]] void connect(int64_t chat_id, const std::string& params, bool is_presentation);
 
         [[ntg::async]] uint32_t add_incoming_video(int64_t chat_id, int64_t user_id, const std::string& endpoint, const std::vector<wrtc::models::SsrcGroup>& ssrc_groups);

@@ -203,6 +203,18 @@ namespace ntgcalls {
         return result;
     }
 
+    std::string NTgCalls::rejoin(const int64_t chat_id) {
+        const auto call = safe_connection(chat_id);
+        if (call->type() & instances::CallInterface::Type::Conference) {
+            throw InvalidParams("Conference calls must be rejoined with rejoin_conference");
+        }
+        return safe_call<instances::GroupCall>(call)->rejoin();
+    }
+
+    p2p::ConferenceJoinParams NTgCalls::rejoin_conference(const int64_t chat_id, const std::optional<bytes::binary>& last_block) {
+        return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->rejoin_conference(last_block);
+    }
+
     void NTgCalls::connect(const int64_t chat_id, const std::string& params, const bool is_presentation) {
         safe_call<instances::GroupCall>(safe_connection(chat_id))->connect(params, is_presentation);
     }

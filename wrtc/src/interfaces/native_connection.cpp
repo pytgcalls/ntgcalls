@@ -345,7 +345,9 @@ namespace wrtc::interfaces {
             } else {
                 new_value = ConnectionState::Connecting;
             }
-            strong->current_state_ = new_value;
+            if (strong->current_state_.exchange(new_value) == new_value) {
+                return;
+            }
             (void) strong->connection_change_callback_(new_value, strong->already_connected_);
             if (new_value == ConnectionState::Connected && !strong->already_connected_) {
                 strong->already_connected_ = true;

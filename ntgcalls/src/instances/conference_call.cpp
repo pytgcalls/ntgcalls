@@ -7,39 +7,101 @@
 
 namespace ntgcalls::instances {
     p2p::ConferenceJoinParams ConferenceCall::init_conference(const int64_t user_id, const std::optional<bytes::binary>& last_block) {
-        session_ = std::make_shared<e2e::Session>(update_thread_, user_id);
-        auto payload = init();
-        safe<wrtc::interfaces::GroupConnection>(connection_)->set_e2e_encryptor(session_.get());
+        user_id_ = user_id;
+        create_session(last_block);
+        return join_params(init());
+    }
+
+    p2p::ConferenceJoinParams ConferenceCall::rejoin_conference(const std::optional<bytes::binary>& last_block) {
+        const auto previous = session();
+        create_session(last_block);
+        return join_params(rejoin());
+    }
+
+    p2p::ConferenceJoinParams ConferenceCall::join_params(std::string payload) const {
+        const auto current = session();
+        return {
+            std::move(payload),
+            current->public_key(),
+            current->make_join_block()
+        };
+    }
+
+    std::shared_ptr<e2e::Session> ConferenceCall::session() const {
+        const std::lock_guard lock(session_mutex_);
+        return session_;
+    }
+
+    void ConferenceCall::create_session(const std::optional<bytes::binary>& last_block) {
+        auto created = std::make_shared<e2e::Session>(update_thread_, user_id_);
         if (last_block) {
-            session_->set_last_block(*last_block);
+            created->set_last_block(*last_block);
         }
         const std::weak_ptr weak(shared_from_this());
-        safe<wrtc::interfaces::GroupConnection>(connection_)->on_request_participants([weak](wrtc::models::ParticipantsRequest request) {
+        created->on_outbound_block([weak](const bytes::binary& block) {
+            if (const auto strong = std::static_pointer_cast<ConferenceCall>(weak.lock())) {
+                (void) strong->outbound_block_callback_(block);
+            }
+        });
+        created->on_subchain_request([weak](const e2e::SubchainRequest request) {
+            if (const auto strong = std::static_pointer_cast<ConferenceCall>(weak.lock())) {
+                (void) strong->subchain_request_callback_(request);
+            }
+        });
+        created->on_update_emoji_hash([weak](const std::string& emojis) {
+            if (const auto strong = std::static_pointer_cast<ConferenceCall>(weak.lock())) {
+                (void) strong->update_emojis_callback_(emojis);
+            }
+        });
+        created->on_failure([weak] {
+            if (const auto strong = std::static_pointer_cast<ConferenceCall>(weak.lock())) {
+                (void) strong->e2e_failure_callback_();
+            }
+        });
+        created->on_participants_change([weak](const std::vector<int64_t>& participants) {
+            if (const auto strong = std::static_pointer_cast<ConferenceCall>(weak.lock())) {
+                (void) strong->e2e_participants_callback_(participants);
+            }
+        });
+        std::shared_ptr<e2e::Session> previous;
+        {
+            const std::lock_guard lock(session_mutex_);
+            previous = std::exchange(session_, std::move(created));
+        }
+        if (previous) {
+            previous->on_outbound_block(nullptr);
+            previous->on_subchain_request(nullptr);
+            previous->on_update_emoji_hash(nullptr);
+            previous->on_failure(nullptr);
+            previous->on_participants_change(nullptr);
+        }
+    }
+
+    void ConferenceCall::on_connection_opened(wrtc::interfaces::GroupConnection* conn) {
+        conn->set_e2e_encryptor(session().get());
+        const std::weak_ptr weak(shared_from_this());
+        conn->on_request_participants([weak](wrtc::models::ParticipantsRequest request) {
             const auto strong = std::static_pointer_cast<ConferenceCall>(weak.lock());
             if (!strong) {
                 return;
             }
             (void) strong->request_participants_callback_(std::move(request));
         });
-        return {
-            std::move(payload),
-            session_->public_key(),
-            session_->make_join_block()
-        };
     }
 
     std::string ConferenceCall::init_presentation() {
         auto res = GroupCall::init_presentation();
         if (const auto presentation = presentation_connection()) {
-            presentation->set_e2e_encryptor(session_.get());
+            presentation->set_e2e_encryptor(session().get());
         }
         return res;
     }
 
     void ConferenceCall::connect(const std::string& json_data, const bool is_presentation) {
         GroupCall::connect(json_data, is_presentation);
-        session_->short_poll(0);
-        session_->short_poll(1);
+        const auto current = session();
+        current->short_poll(0);
+        current->short_poll(1);
     }
 
     void ConferenceCall::migrate(P2PCall* p2p_call) {
@@ -54,27 +116,27 @@ namespace ntgcalls::instances {
         const std::vector<bytes::binary>& blocks,
         const bool from_short_poll
     ) const {
-        session_->apply_blocks(subchain, next_offset, blocks, from_short_poll);
+        session()->apply_blocks(subchain, next_offset, blocks, from_short_poll);
     }
 
     void ConferenceCall::finish_subchain_request(const int subchain) const {
-        session_->finish_subchain_request(subchain);
+        session()->finish_subchain_request(subchain);
     }
 
     void ConferenceCall::update_audio_ssrc_mappings(const std::vector<wrtc::models::SsrcMapping>& audio_ssrcs) const {
-        const auto group_connection = safe<wrtc::interfaces::GroupConnection>(connection_);
-        if (!group_connection) {
+        const auto current = connection();
+        if (!current) {
             throw ConnectionError("Conference connection not initialized");
         }
-        group_connection->update_audio_ssrc_mappings(audio_ssrcs);
+        safe<wrtc::interfaces::GroupConnection>(current)->update_audio_ssrc_mappings(audio_ssrcs);
     }
 
-    void ConferenceCall::on_outbound_block(const std::function<void(bytes::binary)>& callback) const {
-        session_->on_outbound_block(callback);
+    void ConferenceCall::on_outbound_block(const std::function<void(bytes::binary)>& callback) {
+        outbound_block_callback_ = callback;
     }
 
-    void ConferenceCall::on_subchain_request(const std::function<void(e2e::SubchainRequest)>& callback) const {
-        session_->on_subchain_request(callback);
+    void ConferenceCall::on_subchain_request(const std::function<void(e2e::SubchainRequest)>& callback) {
+        subchain_request_callback_ = callback;
     }
 
     void ConferenceCall::on_request_participants(const std::function<void(wrtc::models::ParticipantsRequest)>& callback) {
@@ -82,19 +144,19 @@ namespace ntgcalls::instances {
     }
 
     void ConferenceCall::on_update_emojis(const std::function<void(std::string)>& callback) {
-        session_->on_update_emoji_hash(callback);
+        update_emojis_callback_ = callback;
     }
 
-    void ConferenceCall::on_e2e_failure(const std::function<void()>& callback) const {
-        session_->on_failure(callback);
+    void ConferenceCall::on_e2e_failure(const std::function<void()>& callback) {
+        e2e_failure_callback_ = callback;
     }
 
-    void ConferenceCall::on_e2e_participants(const std::function<void(std::vector<int64_t>)>& callback) const {
-        session_->on_participants_change(callback);
+    void ConferenceCall::on_e2e_participants(const std::function<void(std::vector<int64_t>)>& callback) {
+        e2e_participants_callback_ = callback;
     }
 
     bytes::binary ConferenceCall::create_remove_block(const std::vector<int64_t>& user_ids) const {
-        auto block = session_->make_remove_block(user_ids);
+        auto block = session()->make_remove_block(user_ids);
         if (block.empty()) {
             throw CryptoError("Failed to create the remove block");
         }
@@ -102,7 +164,7 @@ namespace ntgcalls::instances {
     }
 
     std::vector<int64_t> ConferenceCall::get_e2e_participants() const {
-        return session_->participants();
+        return session()->participants();
     }
 
     CallInterface::Type ConferenceCall::type() const {
@@ -111,21 +173,19 @@ namespace ntgcalls::instances {
 
     void ConferenceCall::stop() {
         GroupCall::stop();
-        if (session_) {
-            session_->on_outbound_block(nullptr);
-            session_->on_subchain_request(nullptr);
-            session_->on_update_emoji_hash(nullptr);
-            session_->on_failure(nullptr);
-            session_->on_participants_change(nullptr);
-        }
+        outbound_block_callback_ = nullptr;
+        subchain_request_callback_ = nullptr;
+        update_emojis_callback_ = nullptr;
+        e2e_failure_callback_ = nullptr;
+        e2e_participants_callback_ = nullptr;
     }
 
     std::string ConferenceCall::get_fingerprint_emojis() {
-        return session_->get_fingerprint_emojis();
+        return session()->get_fingerprint_emojis();
     }
 
     bytes::binary ConferenceCall::encrypt_message(const bytes::binary& data) const {
-        auto encrypted = session_->encrypt(data, 0);
+        auto encrypted = session()->encrypt(data, 0);
         if (encrypted.empty()) {
             throw CryptoError("Failed to encrypt the message");
         }
@@ -133,7 +193,7 @@ namespace ntgcalls::instances {
     }
 
     bytes::binary ConferenceCall::decrypt_message(const int64_t user_id, const bytes::binary& data) const {
-        auto decrypted = session_->decrypt(user_id, data);
+        auto decrypted = session()->decrypt(user_id, data);
         if (decrypted.empty()) {
             throw CryptoError("Failed to decrypt the message");
         }
