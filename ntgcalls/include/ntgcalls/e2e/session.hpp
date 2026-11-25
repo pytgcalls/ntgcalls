@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <atomic>
 #include <mutex>
 #include <optional>
 #include <unordered_set>
@@ -25,7 +26,7 @@ namespace ntgcalls::e2e {
         static constexpr auto kShortPollChainBlocksPerRequest = 50;
 
         std::mutex mutex_;
-        bool failed_ = false;
+        std::atomic_bool failed_ = false;
         openssl::Key25519 private_key_;
         wrtc::utils::SafeThread& update_thread_;
         std::optional<bytes::binary> last_block_;
@@ -39,6 +40,8 @@ namespace ntgcalls::e2e {
         wrtc::utils::synchronized_callback<void(bytes::binary)> outbound_block_callback_;
         wrtc::utils::synchronized_callback<void(std::string)> update_emojis_callback_;
         wrtc::utils::synchronized_callback<void(SubchainRequest)> subchain_request_callback_;
+        wrtc::utils::synchronized_callback<void()> failure_callback_;
+        wrtc::utils::synchronized_callback<void(std::vector<int64_t>)> participants_callback_;
 
         static bytes::array<32> random_secret();
 
@@ -97,6 +100,8 @@ namespace ntgcalls::e2e {
 
         void refresh_from_call();
 
+        void fail();
+
     public:
         Session(wrtc::utils::SafeThread& update_thread, int64_t user_id);
 
@@ -105,6 +110,10 @@ namespace ntgcalls::e2e {
         void set_last_block(const bytes::binary& block);
 
         bytes::binary make_join_block();
+
+        bytes::binary make_remove_block(const std::vector<int64_t>& user_ids);
+
+        std::vector<int64_t> participants();
 
         void short_poll(int subchain);
 
@@ -124,6 +133,10 @@ namespace ntgcalls::e2e {
         void on_subchain_request(const std::function<void(SubchainRequest)>& callback);
 
         void on_update_emoji_hash(const std::function<void(std::string)>& callback);
+
+        void on_failure(const std::function<void()>& callback);
+
+        void on_participants_change(const std::function<void(std::vector<int64_t>)>& callback);
 
         std::string get_fingerprint_emojis();
 

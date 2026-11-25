@@ -53,6 +53,8 @@ namespace ntgcalls {
         wrtc::utils::synchronized_callback<void(int64_t, media::StreamManager::Type, media::StreamManager::Device)> on_eof_callback_;
         wrtc::utils::synchronized_callback<void(int64_t, media::MediaState)> media_state_callback_;
         wrtc::utils::synchronized_callback<void(int64_t, std::string)> update_emojis_callback_;
+        wrtc::utils::synchronized_callback<void(int64_t)> e2e_failure_callback_;
+        wrtc::utils::synchronized_callback<void(int64_t, std::vector<int64_t>)> e2e_participants_callback_;
         wrtc::utils::synchronized_callback<void(int64_t, ConnectionInfo)> connection_change_callback_;
         wrtc::utils::synchronized_callback<void(int64_t, bytes::binary)> emit_callback_;
         wrtc::utils::synchronized_callback<void(int64_t, RemoteSource)> remote_source_callback_;
@@ -123,6 +125,8 @@ namespace ntgcalls {
 
         [[ntg::async]] std::string get_emojis_fingerprint(int64_t chat_id);
 
+        [[ntg::async]] std::vector<int64_t> get_e2e_participants(int64_t chat_id);
+
         [[ntg::async]] bytes::binary encrypt_message(int64_t chat_id, const bytes::binary& data);
 
         [[ntg::async]] bytes::binary decrypt_message(int64_t chat_id, int64_t user_id, const bytes::binary& data);
@@ -171,6 +175,10 @@ namespace ntgcalls {
 
         void on_update_emojis(const std::function<void(int64_t, std::string)>& callback);
 
+        void on_e2e_failure(const std::function<void(int64_t)>& callback);
+
+        void on_e2e_participants(const std::function<void(int64_t, std::vector<int64_t>)>& callback);
+
         [[ntg::async]] void send_broadcast_timestamp(int64_t chat_id, int64_t timestamp);
 
         [[ntg::async]] void send_broadcast_part(int64_t chat_id, int64_t segment_id, int32_t part_id, wrtc::models::MediaSegment::Part::Status status, bool quality_update, const std::optional<bytes::binary>& data);
@@ -184,6 +192,8 @@ namespace ntgcalls {
         [[ntg::async]] void apply_blocks(int64_t chat_id, int subchain, int next_offset, const std::vector<bytes::binary>& blocks, bool from_short_poll);
 
         [[ntg::async]] void finish_subchain_request(int64_t chat_id, int subchain);
+
+        [[ntg::async]] bytes::binary create_remove_block(int64_t chat_id, const std::vector<int64_t>& user_ids);
 
         [[ntg::async]] std::map<int64_t, media::StreamManager::CallInfo> calls();
     };

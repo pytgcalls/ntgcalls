@@ -2,11 +2,13 @@
 // Created by Lauren on 17/06/26.
 //
 
+#include <algorithm>
 #include <api/units/time_delta.h>
 #include <ntgcalls/e2e/session.hpp>
 #include <ntgcalls/e2e/chain/client_blockchain.hpp>
 #include <ntgcalls/e2e/chain/message_encryption.hpp>
 #include <ntgcalls/utils/emoji_fingerprint.hpp>
+#include <rtc_base/logging.h>
 #include <wrtc/utils/random.hpp>
 
 namespace ntgcalls::e2e {
@@ -150,21 +152,21 @@ namespace ntgcalls::e2e {
     void Session::apply(const int subchain, const bytes::binary& last) {
         if (subchain) {
             if (!blockchain_) {
-                failed_ = true;
+                fail();
                 return;
             }
             update_emojis(receive_inbound_message(bytes::view(last)));
             check_for_outbound_messages();
         } else if (blockchain_) {
             if (!apply_block(bytes::view(last))) {
-                failed_ = true;
+                fail();
                 return;
             }
             refresh_from_call();
             check_for_outbound_messages();
         } else {
             if (!init_blockchain(bytes::view(last))) {
-                failed_ = true;
+                fail();
                 return;
             }
             for (auto i = 0; i != kSubChainsCount; ++i) {
@@ -265,12 +267,12 @@ namespace ntgcalls::e2e {
         const std::lock_guard lock(mutex_);
         const auto local = from_server_to_local(server_block);
         if (!local) {
-            failed_ = true;
+            fail();
             return false;
         }
         auto created = chain::ClientBlockchain::create_from_block(bytes::view(*local));
         if (!created) {
-            failed_ = true;
+            fail();
             return false;
         }
         blockchain_ = std::move(*created);
@@ -282,11 +284,11 @@ namespace ntgcalls::e2e {
         const std::lock_guard lock(mutex_);
         const auto local = from_server_to_local(server_block);
         if (!local) {
-            failed_ = true;
+            fail();
             return false;
         }
         if (!blockchain_->try_apply_block(bytes::view(*local))) {
-            failed_ = true;
+            fail();
             return false;
         }
         session_verification_->on_new_main_block(blockchain_->inner());
@@ -301,12 +303,12 @@ namespace ntgcalls::e2e {
             const auto self = State::find_participant(group_state, private_key_.public_key_bytes());
             !self || self->user_id != session_encryption_->user_id()
         ) {
-            failed_ = true;
+            fail();
             return false;
         }
         auto secret = decrypt_shared_key();
         if (!secret) {
-            failed_ = true;
+            fail();
             return false;
         }
         if (State::group_state_version(group_state) >= 1) {
@@ -372,13 +374,29 @@ namespace ntgcalls::e2e {
         return session_verification_->emoji_hash();
     }
 
+    std::vector<int64_t> Session::participants() {
+        const std::lock_guard lock(mutex_);
+        return {participants_set_.begin(), participants_set_.end()};
+    }
+
     void Session::refresh_from_call() {
         if (!blockchain_) {
             return;
         }
-        std::unordered_set<int64_t> user_ids;
-        for (const auto& participant : current_group_state().participants) {
-            user_ids.insert(participant.user_id);
+        std::optional<std::vector<int64_t>> changed;
+        {
+            const std::lock_guard lock(mutex_);
+            std::unordered_set<int64_t> user_ids;
+            for (const auto& participant : blockchain_->group_state().participants) {
+                user_ids.insert(participant.user_id);
+            }
+            if (user_ids != participants_set_) {
+                participants_set_ = std::move(user_ids);
+                changed.emplace(participants_set_.begin(), participants_set_.end());
+            }
+        }
+        if (changed) {
+            (void) participants_callback_(std::move(*changed));
         }
         update_emojis(emoji_hash());
     }
@@ -388,6 +406,21 @@ namespace ntgcalls::e2e {
             fingerprint_emojis_ = utils::EmojiFingerprint::from_hash(bytes::view(*hash));
             (void) update_emojis_callback_(fingerprint_emojis_);
         }
+    }
+
+    void Session::fail() {
+        if (!failed_.exchange(true)) {
+            RTC_LOG(LS_ERROR) << "E2E session failed";
+            (void) failure_callback_();
+        }
+    }
+
+    void Session::on_failure(const std::function<void()>& callback) {
+        failure_callback_ = callback;
+    }
+
+    void Session::on_participants_change(const std::function<void(std::vector<int64_t>)>& callback) {
+        participants_callback_ = callback;
     }
 
     std::string Session::get_fingerprint_emojis() {
@@ -423,7 +456,35 @@ namespace ntgcalls::e2e {
             block = create_zero_block(private_key_, group_state);
         }
         if (!block) {
-            failed_ = true;
+            fail();
+            return {};
+        }
+        return block.value();
+    }
+
+    bytes::binary Session::make_remove_block(const std::vector<int64_t>& user_ids) {
+        if (failed_) {
+            return {};
+        }
+        const std::lock_guard lock(mutex_);
+        if (!blockchain_) {
+            return {};
+        }
+        auto state = blockchain_->group_state();
+        const auto self_id = session_encryption_->user_id();
+        const auto removed = std::erase_if(state.participants, [&](const chain::GroupParticipant& participant) {
+            return participant.user_id != self_id && std::ranges::find(user_ids, participant.user_id) != user_ids.end();
+        });
+        if (!removed) {
+            return {};
+        }
+        const auto changes = make_changes_for_new_state(state);
+        if (changes.empty()) {
+            return {};
+        }
+        const auto block = blockchain_->build_block(changes, private_key_);
+        if (!block) {
+            fail();
             return {};
         }
         return block.value();
@@ -481,7 +542,7 @@ namespace ntgcalls::e2e {
 
             if (subchain && !blockchain_ && !blocks.empty()) {
                 RTC_LOG(LS_ERROR) << "ConferenceCall: broadcast short-poll block before the call was created";
-                failed_ = true;
+                fail();
                 return;
             }
         } else {

@@ -44,6 +44,14 @@ namespace ntgcalls::instances {
 
         void on_update_emojis(const std::function<void(std::string)>& callback) override;
 
+        void on_e2e_failure(const std::function<void()>& callback) const;
+
+        void on_e2e_participants(const std::function<void(std::vector<int64_t>)>& callback) const;
+
+        bytes::binary create_remove_block(const std::vector<int64_t>& user_ids) const;
+
+        std::vector<int64_t> get_e2e_participants() const;
+
         Type type() const override;
 
         void stop() override;

@@ -85,6 +85,26 @@ namespace ntgcalls::instances {
         session_->on_update_emoji_hash(callback);
     }
 
+    void ConferenceCall::on_e2e_failure(const std::function<void()>& callback) const {
+        session_->on_failure(callback);
+    }
+
+    void ConferenceCall::on_e2e_participants(const std::function<void(std::vector<int64_t>)>& callback) const {
+        session_->on_participants_change(callback);
+    }
+
+    bytes::binary ConferenceCall::create_remove_block(const std::vector<int64_t>& user_ids) const {
+        auto block = session_->make_remove_block(user_ids);
+        if (block.empty()) {
+            throw CryptoError("Failed to create the remove block");
+        }
+        return block;
+    }
+
+    std::vector<int64_t> ConferenceCall::get_e2e_participants() const {
+        return session_->participants();
+    }
+
     CallInterface::Type ConferenceCall::type() const {
         return Type::Conference;
     }
@@ -95,6 +115,8 @@ namespace ntgcalls::instances {
             session_->on_outbound_block(nullptr);
             session_->on_subchain_request(nullptr);
             session_->on_update_emoji_hash(nullptr);
+            session_->on_failure(nullptr);
+            session_->on_participants_change(nullptr);
         }
     }
 

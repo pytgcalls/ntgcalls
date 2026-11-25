@@ -96,6 +96,16 @@ namespace ntgcalls {
                     (void) subchain_request_callback_(chat_id, subchain_request);
                     END_WORKER
                 });
+                safe_call<instances::ConferenceCall>(connections_[chat_id].get())->on_e2e_failure([this, chat_id] {
+                    WORKER("onE2EFailure", update_thread_, this, chat_id)
+                    (void) e2e_failure_callback_(chat_id);
+                    END_WORKER
+                });
+                safe_call<instances::ConferenceCall>(connections_[chat_id].get())->on_e2e_participants([this, chat_id](std::vector<int64_t> participants) {
+                    WORKER("onE2EParticipants", update_thread_, this, chat_id, participants)
+                    (void) e2e_participants_callback_(chat_id, participants);
+                    END_WORKER
+                });
             }
         }
         if (connections_[chat_id]->type() & (instances::CallInterface::Type::P2P | instances::CallInterface::Type::Conference)) {
@@ -217,6 +227,10 @@ namespace ntgcalls {
         return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->finish_subchain_request(subchain);
     }
 
+    bytes::binary NTgCalls::create_remove_block(const int64_t chat_id, const std::vector<int64_t>& user_ids) {
+        return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->create_remove_block(user_ids);
+    }
+
     void NTgCalls::set_stream_sources(const int64_t chat_id, const media::StreamManager::Mode mode, const media::MediaDescription& media) {
         safe_connection(chat_id)->set_stream_sources(mode, media);
     }
@@ -247,6 +261,10 @@ namespace ntgcalls {
 
     std::string NTgCalls::get_emojis_fingerprint(const int64_t chat_id) {
         return safe_call<instances::E2EInterface>(safe_connection(chat_id))->get_fingerprint_emojis();
+    }
+
+    std::vector<int64_t> NTgCalls::get_e2e_participants(const int64_t chat_id) {
+        return safe_call<instances::ConferenceCall>(safe_connection(chat_id))->get_e2e_participants();
     }
 
     bytes::binary NTgCalls::encrypt_message(const int64_t chat_id, const bytes::binary& data) {
@@ -310,6 +328,16 @@ namespace ntgcalls {
     void NTgCalls::on_subchain_request(const std::function<void(int64_t, e2e::SubchainRequest)>& callback) {
         const std::lock_guard lock(mutex_);
         subchain_request_callback_ = callback;
+    }
+
+    void NTgCalls::on_e2e_failure(const std::function<void(int64_t)>& callback) {
+        const std::lock_guard lock(mutex_);
+        e2e_failure_callback_ = callback;
+    }
+
+    void NTgCalls::on_e2e_participants(const std::function<void(int64_t, std::vector<int64_t>)>& callback) {
+        const std::lock_guard lock(mutex_);
+        e2e_participants_callback_ = callback;
     }
 
     void NTgCalls::on_update_emojis(const std::function<void(int64_t, std::string)>& callback) {
