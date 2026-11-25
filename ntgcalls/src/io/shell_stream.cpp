@@ -66,6 +66,13 @@ namespace ntgcalls::io {
                 shell_process_ = bp::posix::vfork_launcher()(executor, cmd.exe(), cmd.args(), bp::process_stdio{std_in_, nullptr, {}}, ProcessGroup());
             }
 #endif
+        } catch (const boost::system::system_error& e) {
+            if (e.code() == boost::system::errc::no_such_file_or_directory) {
+                RTC_LOG(LS_ERROR) << "No executable found for the command: " << command;
+                throw ShellError("No executable found for the command: " + command);
+            }
+            RTC_LOG(LS_ERROR) << "Failed to start the command: " << e.code().message();
+            throw ShellError("Failed to start the command: " + e.code().message());
         } catch (std::runtime_error& e) {
             throw ShellError(e.what());
         }

@@ -145,8 +145,16 @@ namespace ntgcalls::instances {
             std::memcpy(encryption_key->data(), skip_exchange_key_.data(), signaling::crypto::EncryptionKey::kSize);
         }
         wrtc::utils::json custom_parameters_json;
-        if (custom_parameters) {
-            custom_parameters_json = wrtc::utils::json::parse(*custom_parameters);
+        if (custom_parameters && custom_parameters->find_first_not_of(" \t\r\n") != std::string::npos) {
+            try {
+                custom_parameters_json = wrtc::utils::json::parse(*custom_parameters);
+            } catch (const boost::system::system_error& e) {
+                RTC_LOG(LS_ERROR) << "Invalid custom parameters: " << e.code().message();
+                throw InvalidParams("Invalid custom parameters: " + e.code().message());
+            }
+            if (!custom_parameters_json.is_object()) {
+                throw InvalidParams("Custom parameters must be a JSON object");
+            }
         }
         protocol_version_ = signaling::Signaling::match_version(versions);
         const std::weak_ptr weak(shared_from_this());
