@@ -5,6 +5,7 @@
 #pragma once
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <ntgcalls/media/stream_manager.hpp>
 #include <ntgcalls/models/connection_info.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
@@ -21,9 +22,9 @@ namespace ntgcalls::instances {
         wrtc::utils::synchronized_callback<void(ConnectionInfo)> connection_change_callback_;
         wrtc::utils::synchronized_callback<void(RemoteSource)> remote_source_callback_;
         wrtc::utils::SafeThread& update_thread_;
-        media::StreamManager::Status last_camera_state_ = media::StreamManager::Status::Idling;
-        media::StreamManager::Status last_screen_state_ = media::StreamManager::Status::Idling;
-        media::StreamManager::Status last_mic_state_ = media::StreamManager::Status::Idling;
+        std::optional<media::StreamManager::Status> last_camera_state_;
+        std::optional<media::StreamManager::Status> last_screen_state_;
+        std::optional<media::StreamManager::Status> last_mic_state_;
         mutable std::mutex lifecycle_mutex_;
         bool stopped_ = false;
 
