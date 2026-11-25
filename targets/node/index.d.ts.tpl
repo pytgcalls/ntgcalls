@@ -10,7 +10,7 @@
 @typemap bool = boolean
 @typemap double = number
 @typemap string = string
-@typemap bytes = Buffer
+@typemap bytes = Uint8Array
 @typemap Void = void
 @typemap media.* = *
 @typemap models.* = *
@@ -69,7 +69,11 @@ export class @{c.name} {
     @{m.name|camel}(
 @end
 @for p in m.params
+@if p.optional
+        @{p.name|camel}: @{p.type|type} | null@{p.sep}
+@else
         @{p.name|camel}: @{p.type|type}@{p.sep}
+@end
 @end
 @if m.async
 @if m.retmap

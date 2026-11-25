@@ -89,6 +89,30 @@ inline void from_js(const Napi::Value& v, uint64_t& out) {
 }
 
 inline void from_js(const Napi::Value& v, bytes::binary& out) {
-    const auto buf = v.As<Napi::Buffer<uint8_t>>();
-    out = bytes::binary(buf.Data(), buf.Data() + buf.Length());
+    if (v.IsTypedArray()) {
+        const auto view = v.As<Napi::TypedArray>();
+        const auto* data = static_cast<const uint8_t*>(view.ArrayBuffer().Data()) + view.ByteOffset();
+        out = bytes::binary(data, data + view.ByteLength());
+        return;
+    }
+    if (v.IsArrayBuffer()) {
+        auto buffer = v.As<Napi::ArrayBuffer>();
+        const auto* data = static_cast<const uint8_t*>(buffer.Data());
+        out = bytes::binary(data, data + buffer.ByteLength());
+        return;
+    }
+    if (v.IsArray()) {
+        const auto array = v.As<Napi::Array>();
+        out.resize(array.Length());
+        for (uint32_t i = 0; i < array.Length(); i++) {
+            const auto item = array.Get(i);
+            const auto value = item.IsNumber() ? item.As<Napi::Number>().DoubleValue() : -1;
+            if (value < 0 || value > 255 || value != static_cast<double>(static_cast<uint8_t>(value))) {
+                throw Napi::TypeError::New(v.Env(), "Byte arrays may only contain integers between 0 and 255");
+            }
+            out[i] = static_cast<uint8_t>(value);
+        }
+        return;
+    }
+    throw Napi::TypeError::New(v.Env(), "Expected a Buffer, Uint8Array, ArrayBuffer or array of bytes");
 }

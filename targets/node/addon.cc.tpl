@@ -57,6 +57,15 @@ struct JsReader<std::vector<T>> {
     }
 };
 
+template<>
+struct JsReader<bytes::binary> {
+    static bytes::binary read(const Napi::Value& v) {
+        bytes::binary value;
+        from_js(v, value);
+        return value;
+    }
+};
+
 @for s in structs
 Napi::Value to_js(Napi::Env env, const @{s.cpp}& value);
 @end
