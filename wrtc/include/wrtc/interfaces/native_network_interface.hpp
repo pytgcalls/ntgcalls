@@ -79,7 +79,7 @@ namespace wrtc::interfaces {
         std::map<std::string, std::unique_ptr<media::channels::IncomingAudioChannel>> incoming_audio_channels_;
         std::map<std::string, std::unique_ptr<media::channels::IncomingVideoChannel>> incoming_video_channels_;
         std::map<std::string, models::MediaContent> pending_content_;
-        bool connected_ = false, failed_ = false;
+        std::atomic_bool connected_ = false, failed_ = false;
 
         virtual std::pair<webrtc::ServerAddresses, std::vector<webrtc::RelayServerConfig>> get_stun_and_turn_servers() = 0;
 
