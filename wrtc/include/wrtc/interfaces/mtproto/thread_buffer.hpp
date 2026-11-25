@@ -38,6 +38,7 @@ namespace wrtc::interfaces::mtproto {
         std::unique_ptr<utils::SyncHelper> audio_sync_, video_sync_;
         std::chrono::milliseconds audio_consumed_time_ = 0ms, video_consumed_time_ = 0ms;
         std::vector<webrtc::PlatformThread> threads_;
+        static constexpr size_t kThreadCount = 2;
         std::function<void(RequestType)> request_callback_;
         std::function<models::MediaSegment*()> get_segment_callback_;
         std::function<void(webrtc::MediaType, models::MediaSegment*, std::chrono::milliseconds)> frame_callback_;

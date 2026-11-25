@@ -196,17 +196,26 @@ namespace wrtc::interfaces {
     }
 
     void NativeConnection::create_channels() {
-        auto coordinated_state = content_negotiation_context_->coordinated_state();
+        std::unique_ptr<ContentNegotiationContext::CoordinatedState> coordinated_state;
+        std::optional<uint32_t> audio_ssrc;
+        std::optional<uint32_t> video_ssrc;
+        signaling_thread().BlockingCall([&] {
+            if (!content_negotiation_context_) {
+                return;
+            }
+            coordinated_state = content_negotiation_context_->coordinated_state();
+            if (!coordinated_state) {
+                return;
+            }
+            if (audio_channel_id_) {
+                audio_ssrc = content_negotiation_context_->outgoing_channel_ssrc(*audio_channel_id_);
+            }
+            if (video_channel_id_) {
+                video_ssrc = content_negotiation_context_->outgoing_channel_ssrc(*video_channel_id_);
+            }
+        });
         if (!coordinated_state) {
             return;
-        }
-        std::optional<uint32_t> audio_ssrc;
-        if (audio_channel_id_) {
-            audio_ssrc = content_negotiation_context_->outgoing_channel_ssrc(*audio_channel_id_);
-        }
-        std::optional<uint32_t> video_ssrc;
-        if (video_channel_id_) {
-            video_ssrc = content_negotiation_context_->outgoing_channel_ssrc(*video_channel_id_);
         }
         const std::weak_ptr weak(shared_from_this());
         const std::shared_ptr state(std::move(coordinated_state));
@@ -390,7 +399,9 @@ namespace wrtc::interfaces {
 
     void NativeConnection::close() {
         NativeNetworkInterface::close();
-        content_negotiation_context_ = nullptr;
+        signaling_thread().BlockingCall([this] {
+            content_negotiation_context_ = nullptr;
+        });
         relay_port_factory_ = nullptr;
     }
 
@@ -495,22 +506,37 @@ namespace wrtc::interfaces {
     }
 
     std::unique_ptr<ContentNegotiationContext::NegotiationContents> NativeConnection::get_pending_offer() const {
-        return content_negotiation_context_->get_pending_offer();
+        return signaling_thread().BlockingCall([this]() -> std::unique_ptr<ContentNegotiationContext::NegotiationContents> {
+            if (!content_negotiation_context_) {
+                return nullptr;
+            }
+            return content_negotiation_context_->get_pending_offer();
+        });
     }
 
     std::unique_ptr<ContentNegotiationContext::NegotiationContents> NativeConnection::set_pending_answer(std::unique_ptr<ContentNegotiationContext::NegotiationContents> answer) const {
-        return content_negotiation_context_->set_pending_answer(std::move(answer));
+        return signaling_thread().BlockingCall([this, &answer]() -> std::unique_ptr<ContentNegotiationContext::NegotiationContents> {
+            if (!content_negotiation_context_) {
+                return nullptr;
+            }
+            return content_negotiation_context_->set_pending_answer(std::move(answer));
+        });
     }
 
     std::unique_ptr<media::tracks::MediaTrackInterface> NativeConnection::add_outgoing_track(const webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>& track) {
-        if (const auto audio_track = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
-            audio_channel_id_ = content_negotiation_context_->add_outgoing_channel(audio_track);
-        }
-        if (const auto video_track = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
-            if (!video_channel_id_) {
-                video_channel_id_ = content_negotiation_context_->add_outgoing_channel(video_track);
+        signaling_thread().BlockingCall([this, &track] {
+            if (!content_negotiation_context_) {
+                return;
             }
-        }
+            if (const auto audio_track = dynamic_cast<webrtc::AudioTrackInterface*>(track.get())) {
+                audio_channel_id_ = content_negotiation_context_->add_outgoing_channel(audio_track);
+            }
+            if (const auto video_track = dynamic_cast<webrtc::VideoTrackInterface*>(track.get())) {
+                if (!video_channel_id_) {
+                    video_channel_id_ = content_negotiation_context_->add_outgoing_channel(video_track);
+                }
+            }
+        });
         return NativeNetworkInterface::add_outgoing_track(track);
     }
 

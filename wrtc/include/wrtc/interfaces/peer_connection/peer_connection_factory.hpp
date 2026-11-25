@@ -60,6 +60,7 @@ namespace wrtc::interfaces::peer_connection {
         std::unique_ptr<utils::SafeThread> network_thread_;
         std::unique_ptr<utils::SafeThread> signaling_thread_;
         std::unique_ptr<webrtc::ConnectionContext::MediaEngineReference> media_engine_ref_ RTC_GUARDED_BY(network_thread_);
+        std::mutex media_engine_mutex_;
 
         webrtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
 

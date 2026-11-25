@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <atomic>
+#include <mutex>
 #include <wrtc/interfaces/native_network_interface.hpp>
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/mtproto/mtproto_stream.hpp>
@@ -20,9 +22,10 @@ namespace wrtc::interfaces {
         bool is_presentation_ = false, is_conference_ = false;
         bool is_rtc_connected_ = false, is_stream_connected_ = false;
         bool last_effectively_connected_ = false;
-        ConnectionMode connection_mode_ = ConnectionMode::None;
+        std::atomic<ConnectionMode> connection_mode_ = ConnectionMode::None;
         ResponsePayload::Media media_config_;
         std::shared_ptr<mtproto::MTProtoStream> mtproto_stream_;
+        mutable std::mutex stream_mutex_;
         std::map<uint32_t, int64_t> audio_ssrc_to_user_id_;
         std::unordered_set<uint32_t> pending_audio_ssrcs_;
         int64_t last_participants_request_ = 0;
@@ -54,6 +57,10 @@ namespace wrtc::interfaces {
         void restart_data_channel();
 
         void generate_ssrcs();
+
+        std::shared_ptr<mtproto::MTProtoStream> media_stream() const;
+
+        void close_media_stream();
 
         void state_updated(bool is_connected) override;
 

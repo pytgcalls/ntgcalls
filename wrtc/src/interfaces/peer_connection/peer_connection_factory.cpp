@@ -111,6 +111,7 @@ namespace wrtc::interfaces::peer_connection {
     }
 
     webrtc::MediaEngineInterface* PeerConnectionFactory::media_engine() {
+        const std::lock_guard lock(media_engine_mutex_);
         if (!media_engine_ref_) {
             media_engine_ref_ = std::make_unique<webrtc::ConnectionContext::MediaEngineReference>(
                 webrtc::scoped_refptr(connection_context_)

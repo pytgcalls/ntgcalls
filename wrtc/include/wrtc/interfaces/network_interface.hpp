@@ -24,10 +24,10 @@ namespace wrtc::interfaces {
         utils::synchronized_callback<void(ConnectionState, bool)> connection_change_callback_;
         utils::synchronized_callback<void(bytes::binary)> data_channel_message_callback_;
         ConnectionState current_state_ = ConnectionState::Connecting;
-        bool data_channel_open_ = false;
+        std::atomic_bool data_channel_open_ = false;
         bool already_connected_ = false;
         std::atomic_bool closed_ = false;
-        bool audio_incoming_ = false, camera_incoming_ = false, screen_incoming_ = false;
+        std::atomic_bool audio_incoming_ = false, camera_incoming_ = false, screen_incoming_ = false;
 
         static webrtc::IceCandidateInterface* parse_ice_candidate(const models::IceCandidate& raw_candidate);
 
