@@ -28,6 +28,7 @@ public class JavaVideoCapturerModule {
     public JavaVideoCapturerModule(boolean isScreencast, String deviceName, int width, int height, int fps, long nativePointer) {
         this.nativePointer = nativePointer;
         instance = SmartVideoSource.getInstance(isScreencast, deviceName, width, height, fps);
+        instance.attach(this);
         instance.setCapturerObserver(new CapturerObserver() {
             @Override
             public void onCapturerStarted(boolean b) {}
@@ -77,7 +78,7 @@ public class JavaVideoCapturerModule {
     private void release() {
         synchronized (lock) {
             nativePointer = 0;
-            instance.softRelease();
+            instance.softRelease(this);
         }
     }
 

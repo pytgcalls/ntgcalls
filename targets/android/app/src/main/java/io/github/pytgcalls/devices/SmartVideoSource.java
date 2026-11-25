@@ -43,6 +43,7 @@ class SmartVideoSource {
     private final int fps;
     private final int id;
     private CapturerObserver capturerObserver;
+    private volatile Object owner;
 
     SmartVideoSource(String deviceName, int id, int width, int height, int fps) {
         this.width = width;
@@ -159,6 +160,13 @@ class SmartVideoSource {
         this.capturerObserver = capturerObserver;
     }
 
+    public void attach(Object owner) {
+        // Called from the UI thread while the native side holds its callback mutex.
+        // Taking `lock` here would deadlock with onFrameCaptured, which holds `lock`
+        // while calling into native code that needs the same mutex.
+        this.owner = owner;
+    }
+
     private CapturerObserver getInternalObserver() {
         return new CapturerObserver() {
             @Override
@@ -190,7 +198,13 @@ class SmartVideoSource {
         };
     }
 
-    public void softRelease() {
+    public void softRelease(Object owner) {
+        // StreamManager destroys removed readers only after the new reader has
+        // attached. A release from a detached module must not dispose the
+        // capturer that the new module is already using.
+        if (this.owner != owner) {
+            return;
+        }
         synchronized (lock) {
             Log.d(TAG, "Soft releasing video source");
             capturerObserver = null;
@@ -224,7 +238,10 @@ class SmartVideoSource {
             } catch (Exception e) {
                 Log.e(TAG, "release", e);
             }
-            instance[id] = null;
+            owner = null;
+            if (instance[id] == this) {
+                instance[id] = null;
+            }
         }
         Log.d(TAG, "Released video source");
     }
