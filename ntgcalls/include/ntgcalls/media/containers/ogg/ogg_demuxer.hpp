@@ -5,12 +5,11 @@
 #pragma once
 
 #include <deque>
-#include <optional>
-#include <wrtc/utils/binary.hpp>
+#include <ntgcalls/media/containers/demuxer.hpp>
 
 namespace ntgcalls::media::containers {
 
-    class OggDemuxer {
+    class OggDemuxer final: public Demuxer {
         static constexpr size_t kPageHeaderSize = 27;
         static constexpr size_t kMaxPacketSize = 65536;
 
@@ -27,11 +26,11 @@ namespace ntgcalls::media::containers {
         [[nodiscard]] size_t page_size() const;
 
     public:
-        void feed(const uint8_t* data, size_t size);
+        void feed(const uint8_t* data, size_t size) override;
 
-        [[nodiscard]] int64_t missing() const;
+        [[nodiscard]] int64_t missing() const override;
 
-        std::optional<std::pair<bytes::unique_binary, size_t>> next();
+        std::optional<DemuxedFrame> next() override;
 
         [[nodiscard]] uint8_t channels() const;
     };

@@ -2,16 +2,17 @@
 // Created by Lauren on 07/10/24.
 //
 
+#include <ntgcalls/io/container_reader.hpp>
 #include <ntgcalls/io/file_reader.hpp>
-#include <ntgcalls/io/matroska_reader.hpp>
 #include <ntgcalls/io/matroska_writer.hpp>
 #include <ntgcalls/io/file_writer.hpp>
-#include <ntgcalls/io/ogg_reader.hpp>
 #include <ntgcalls/io/ogg_writer.hpp>
 #include <ntgcalls/io/raw_reader.hpp>
 #include <ntgcalls/io/raw_writer.hpp>
 #include <ntgcalls/io/shell_reader.hpp>
 #include <ntgcalls/io/shell_writer.hpp>
+#include <ntgcalls/media/containers/matroska/matroska_demuxer.hpp>
+#include <ntgcalls/media/containers/ogg/ogg_demuxer.hpp>
 #include <ntgcalls/media/media_source_factory.hpp>
 #include <ntgcalls/media/devices/media_device.hpp>
 #include <rtc_base/logging.h>
@@ -34,20 +35,20 @@ namespace ntgcalls::media {
         case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file reader for " << desc.input;
             if (is_encoded(desc) && dynamic_cast<const VideoDescription*>(&desc)) {
-                return std::make_unique<io::FileReader<io::MatroskaReader>>(desc.input, sink);
+                return std::make_unique<io::FileReader<io::ContainerReader<containers::MatroskaDemuxer>>>(desc.input, sink);
             }
             if (is_encoded(desc)) {
-                return std::make_unique<io::FileReader<io::OggReader>>(desc.input, sink);
+                return std::make_unique<io::FileReader<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
             }
             return std::make_unique<io::FileReader<io::RawReader>>(desc.input, sink);
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell reader for " << desc.input;
             if (is_encoded(desc) && dynamic_cast<const VideoDescription*>(&desc)) {
-                return std::make_unique<io::ShellReader<io::MatroskaReader>>(desc.input, sink);
+                return std::make_unique<io::ShellReader<io::ContainerReader<containers::MatroskaDemuxer>>>(desc.input, sink);
             }
             if (is_encoded(desc)) {
-                return std::make_unique<io::ShellReader<io::OggReader>>(desc.input, sink);
+                return std::make_unique<io::ShellReader<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
             }
             return std::make_unique<io::ShellReader<io::RawReader>>(desc.input, sink);
 #else

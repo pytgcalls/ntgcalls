@@ -5,13 +5,12 @@
 #pragma once
 
 #include <deque>
-#include <optional>
+#include <ntgcalls/media/containers/demuxer.hpp>
 #include <wrtc/models/codec.hpp>
-#include <wrtc/utils/binary.hpp>
 
 namespace ntgcalls::media::containers {
 
-    class MatroskaDemuxer {
+    class MatroskaDemuxer final: public Demuxer {
     public:
         struct Track {
             uint64_t number = 0;
@@ -99,11 +98,11 @@ namespace ntgcalls::media::containers {
         static bool has_obu_type(const uint8_t* data, size_t size, uint8_t type);
 
     public:
-        void feed(const uint8_t* data, size_t size);
+        void feed(const uint8_t* data, size_t size) override;
 
-        int64_t missing() const;
+        [[nodiscard]] int64_t missing() const override;
 
-        std::optional<Frame> next();
+        std::optional<DemuxedFrame> next() override;
 
         std::optional<Track> track() const;
     };

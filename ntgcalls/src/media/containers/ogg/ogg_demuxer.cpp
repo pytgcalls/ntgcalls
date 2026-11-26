@@ -6,6 +6,7 @@
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/media/containers/ogg/ogg_demuxer.hpp>
 #include <rtc_base/logging.h>
+#include <wrtc/audio_factory/opus/opus_packet.hpp>
 
 namespace ntgcalls::media::containers {
     void OggDemuxer::feed(const uint8_t* data, const size_t size) {
@@ -95,13 +96,20 @@ namespace ntgcalls::media::containers {
         }
     }
 
-    std::optional<std::pair<bytes::unique_binary, size_t>> OggDemuxer::next() {
+    std::optional<DemuxedFrame> OggDemuxer::next() {
         if (packets_.empty()) {
             return std::nullopt;
         }
-        auto packet = std::move(packets_.front());
+        auto [data, size] = std::move(packets_.front());
         packets_.pop_front();
-        return packet;
+        const auto duration = std::chrono::milliseconds(10) * std::max<size_t>(wrtc::audio_factory::OpusPacket::frames(data.get(), size), 1);
+        return DemuxedFrame{
+            std::move(data),
+            size,
+            std::nullopt,
+            duration,
+            {0, webrtc::kVideoRotation_0, 0, 0, wrtc::models::Codec::Opus, true},
+        };
     }
 
     uint8_t OggDemuxer::channels() const {

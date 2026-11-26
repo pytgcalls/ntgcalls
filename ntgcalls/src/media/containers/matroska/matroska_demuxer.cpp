@@ -387,13 +387,23 @@ namespace ntgcalls::media::containers {
         return false;
     }
 
-    std::optional<MatroskaDemuxer::Frame> MatroskaDemuxer::next() {
-        if (frames_.empty()) {
+    std::optional<DemuxedFrame> MatroskaDemuxer::next() {
+        if (frames_.empty() || !track_) {
             return std::nullopt;
         }
         auto frame = std::move(frames_.front());
         frames_.pop_front();
-        return frame;
+        std::optional<std::chrono::nanoseconds> duration;
+        if (track_->default_duration > 0) {
+            duration = std::chrono::nanoseconds(track_->default_duration);
+        }
+        return DemuxedFrame{
+            std::move(frame.data),
+            frame.size,
+            frame.timestamp,
+            duration,
+            {0, webrtc::kVideoRotation_0, track_->width, track_->height, track_->codec, frame.keyframe},
+        };
     }
 
     std::optional<MatroskaDemuxer::Track> MatroskaDemuxer::track() const {
