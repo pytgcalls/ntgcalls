@@ -7,7 +7,7 @@
 #ifdef IS_WINDOWS
 #include <queue>
 #include <modules/audio_device/win/core_audio_utility_win.h>
-#include <ntgcalls/io/audio_mixer.hpp>
+#include <ntgcalls/io/audio_device_writer.hpp>
 #include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/media/devices/base_device_module.hpp>
 #include <ntgcalls/media/devices/device_info.hpp>
@@ -18,7 +18,7 @@ namespace ntgcalls::media::devices {
     using Microsoft::WRL::ComPtr;
     using namespace webrtc::webrtc_win;
 
-    class WinCoreDeviceModule final: public BaseDeviceModule, public io::BaseReader, public io::AudioMixer, public IAudioSessionEvents {
+    class WinCoreDeviceModule final: public BaseDeviceModule, public io::BaseReader, public io::AudioDeviceWriter, public IAudioSessionEvents {
         ScopedHandle audio_samples_event_, restart_event_, stop_event_;
         WAVEFORMATEXTENSIBLE format_ = {};
         uint32_t endpoint_buffer_size_frames_ = 0;

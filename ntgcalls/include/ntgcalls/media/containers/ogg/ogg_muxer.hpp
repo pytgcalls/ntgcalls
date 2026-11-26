@@ -35,14 +35,14 @@ namespace ntgcalls::media::containers {
 
         static uint32_t crc(const bytes::binary& page);
 
-        static bytes::binary join(const std::vector<bytes::binary>& pages);
+        static MuxedChunk join(const std::vector<bytes::binary>& pages);
 
     public:
         explicit OggMuxer(const TrackInfo& track);
 
-        bytes::binary add(const EncodedPacket& packet) override;
+        MuxedChunk add(EncodedPacket packet) override;
 
-        bytes::binary finish() override;
+        MuxedChunk finish() override;
 
         static constexpr bool supports(const MediaKind kind) {
             return kind == MediaKind::Audio;

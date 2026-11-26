@@ -26,7 +26,7 @@ namespace ntgcalls::media::containers {
         [[nodiscard]] size_t page_size() const;
 
     public:
-        void feed(const uint8_t* data, size_t size) override;
+        void feed(bytes::unique_binary data, size_t size) override;
 
         [[nodiscard]] int64_t missing() const override;
 

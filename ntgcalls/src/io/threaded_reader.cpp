@@ -25,11 +25,10 @@ namespace ntgcalls::io {
         synchronized_ = false;
         active_buffer_ = 0;
         next_read_ = 0;
-        constexpr auto kMaxBufferSize = std::chrono::milliseconds(100);
         for (size_t i = 0; i < buffer_count_; ++i) {
             spawn(
-                [this, i, kMaxBufferSize] {
-                    run_buffer(i, kMaxBufferSize);
+                [this, i] {
+                    run_buffer(i, kBufferDuration);
                 },
                 "ThreadedReader_" + std::to_string(buffer_count_)
             );

@@ -31,7 +31,7 @@ namespace ntgcalls::media::devices {
     BaseIO(sink),
     BaseDeviceModule(desc, is_capture),
     BaseReader(sink),
-    AudioMixer(sink),
+    AudioDeviceWriter(sink),
     error_callback_(std::make_shared<OboeErrorCallback>(this)) {
         frame_size_ = static_cast<size_t>(sink->frame_size());
         if (const auto r = create_stream(); r != oboe::Result::OK) {

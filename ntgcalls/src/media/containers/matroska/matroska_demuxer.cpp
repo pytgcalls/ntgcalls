@@ -8,8 +8,8 @@
 #include <rtc_base/logging.h>
 
 namespace ntgcalls::media::containers {
-    void MatroskaDemuxer::feed(const uint8_t* data, const size_t size) {
-        buffer_.insert(buffer_.end(), data, data + size);
+    void MatroskaDemuxer::feed(const bytes::unique_binary data, const size_t size) {
+        buffer_.insert(buffer_.end(), data.get(), data.get() + size);
         while (true) {
             if (skip_ > 0) {
                 const auto count = std::min<uint64_t>(skip_, buffer_.size());

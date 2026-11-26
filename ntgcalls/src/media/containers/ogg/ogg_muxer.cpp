@@ -13,13 +13,13 @@ namespace ntgcalls::media::containers {
         return codec == wrtc::models::Codec::Opus;
     }
 
-    bytes::binary OggMuxer::add(const EncodedPacket& packet) {
+    MuxedChunk OggMuxer::add(const EncodedPacket packet) {
         std::vector<bytes::binary> pages;
-        if (packet.data.empty()) {
+        if (packet.size == 0) {
             return {};
         }
         write_headers(pages);
-        const auto packet_segments = segments(packet.data.size());
+        const auto packet_segments = segments(packet.size);
         if (packets_.size() >= kMaxPagePackets || segments_ + packet_segments > kMaxPageSegments) {
             pages.push_back(page(packets_, 0));
             packets_.clear();
@@ -27,26 +27,35 @@ namespace ntgcalls::media::containers {
         }
         granule_ += packet.duration.count() * kSampleRate / 1000000;
         segments_ += packet_segments;
-        packets_.emplace_back(packet.data.begin(), packet.data.end());
+        packets_.emplace_back(packet.data.get(), packet.data.get() + packet.size);
         return join(pages);
     }
 
-    bytes::binary OggMuxer::finish() {
+    MuxedChunk OggMuxer::finish() {
         if (!headers_written_) {
             return {};
         }
         const auto last = page(packets_, 0x04);
         packets_.clear();
         segments_ = 0;
-        return last;
+        return join({last});
     }
 
-    bytes::binary OggMuxer::join(const std::vector<bytes::binary>& pages) {
-        bytes::binary output;
+    MuxedChunk OggMuxer::join(const std::vector<bytes::binary>& pages) {
+        size_t size = 0;
         for (const auto& page : pages) {
-            output.insert(output.end(), page.begin(), page.end());
+            size += page.size();
         }
-        return output;
+        if (size == 0) {
+            return {};
+        }
+        auto data = bytes::make_unique_binary(size);
+        size_t offset = 0;
+        for (const auto& page : pages) {
+            std::memcpy(data.get() + offset, page.data(), page.size());
+            offset += page.size();
+        }
+        return {std::move(data), size};
     }
 
     uint64_t OggMuxer::granule() const {

@@ -8,14 +8,14 @@
 #include <map>
 #include <mutex>
 #include <optional>
-#include <ntgcalls/media/recorders/recorder.hpp>
+#include <ntgcalls/media/mixers/mixer.hpp>
 
 struct OpusDecoder;
 struct OpusEncoder;
 
-namespace ntgcalls::media::recorders {
+namespace ntgcalls::media::mixers {
 
-    class AudioRecorder final: public Recorder {
+    class AudioMixer final: public Mixer {
         static constexpr int kPacketSamples = 960;
         static constexpr int kSamplesPerMs = 48;
 
@@ -24,6 +24,7 @@ namespace ntgcalls::media::recorders {
             std::optional<int64_t> position;
         };
 
+        bool opus_;
         std::mutex mutex_;
         std::optional<int64_t> origin_ms_;
         int64_t newest_ = 0;
@@ -55,18 +56,26 @@ namespace ntgcalls::media::recorders {
 
         void encode_mix(bool all);
 
+        void send_pcm(const std::vector<wrtc::models::Frame>& frames) const;
+
+        void write_pcm(bytes::unique_binary data, size_t size) const;
+
     public:
         static constexpr auto kKind = containers::MediaKind::Audio;
 
-        AudioRecorder(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback);
+        AudioMixer(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback);
 
-        ~AudioRecorder() override;
+        ~AudioMixer() override;
 
         void send_frames(std::vector<wrtc::models::Frame> frames) override;
+
+        void tick() override;
 
         [[nodiscard]] std::chrono::nanoseconds tick_interval() const override;
 
         void flush() override;
+
+        static bytes::unique_binary mix_pcm(const std::vector<wrtc::models::Frame>& frames, int64_t frame_size);
     };
 
-} // ntgcalls::media::recorders
+} // ntgcalls::media::mixers

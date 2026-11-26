@@ -98,7 +98,7 @@ namespace ntgcalls::media::containers {
         static bool has_obu_type(const uint8_t* data, size_t size, uint8_t type);
 
     public:
-        void feed(const uint8_t* data, size_t size) override;
+        void feed(bytes::unique_binary data, size_t size) override;
 
         [[nodiscard]] int64_t missing() const override;
 

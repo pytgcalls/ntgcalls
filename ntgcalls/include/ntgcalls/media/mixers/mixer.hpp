@@ -13,12 +13,12 @@
 #include <ntgcalls/media/containers/track_info.hpp>
 #include <wrtc/models/frame.hpp>
 
-namespace ntgcalls::media::recorders {
+namespace ntgcalls::media::mixers {
 
-    class Recorder {
+    class Mixer {
     public:
         using CodecFilter = std::function<bool(wrtc::models::Codec)>;
-        using PacketCallback = std::function<void(const containers::TrackInfo&, const containers::EncodedPacket&)>;
+        using PacketCallback = std::function<void(const containers::TrackInfo&, containers::EncodedPacket)>;
 
     protected:
         BaseSink* sink_;
@@ -26,9 +26,9 @@ namespace ntgcalls::media::recorders {
         PacketCallback packet_callback_;
 
     public:
-        Recorder(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback);
+        Mixer(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback);
 
-        virtual ~Recorder() = default;
+        virtual ~Mixer() = default;
 
         virtual void send_frames(std::vector<wrtc::models::Frame> frames) = 0;
 
@@ -41,4 +41,4 @@ namespace ntgcalls::media::recorders {
         virtual void flush();
     };
 
-} // ntgcalls::media::recorders
+} // ntgcalls::media::mixers

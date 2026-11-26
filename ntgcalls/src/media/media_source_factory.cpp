@@ -5,17 +5,17 @@
 #include <ntgcalls/io/container_reader.hpp>
 #include <ntgcalls/io/container_writer.hpp>
 #include <ntgcalls/io/file_io.hpp>
-#include <ntgcalls/io/raw_reader.hpp>
-#include <ntgcalls/io/raw_writer.hpp>
 #include <ntgcalls/io/shell_io.hpp>
 #include <ntgcalls/media/containers/matroska/matroska_demuxer.hpp>
 #include <ntgcalls/media/containers/matroska/matroska_muxer.hpp>
 #include <ntgcalls/media/containers/ogg/ogg_demuxer.hpp>
 #include <ntgcalls/media/containers/ogg/ogg_muxer.hpp>
+#include <ntgcalls/media/containers/raw/raw_demuxer.hpp>
+#include <ntgcalls/media/containers/raw/raw_muxer.hpp>
 #include <ntgcalls/media/media_source_factory.hpp>
 #include <ntgcalls/media/devices/media_device.hpp>
-#include <ntgcalls/media/recorders/audio_recorder.hpp>
-#include <ntgcalls/media/recorders/video_recorder.hpp>
+#include <ntgcalls/media/mixers/audio_mixer.hpp>
+#include <ntgcalls/media/mixers/video_mixer.hpp>
 #include <rtc_base/logging.h>
 
 #define BOOST_THROW                                                                      \
@@ -41,7 +41,7 @@ namespace ntgcalls::media {
             case BaseMediaDescription::Format::Ogg:
                 return std::make_unique<io::FileIO<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
             default:
-                return std::make_unique<io::FileIO<io::RawReader>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::ContainerReader<containers::RawDemuxer>>>(desc.input, sink);
             }
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
@@ -52,7 +52,7 @@ namespace ntgcalls::media {
             case BaseMediaDescription::Format::Ogg:
                 return std::make_unique<io::ShellIO<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
             default:
-                return std::make_unique<io::ShellIO<io::RawReader>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::ContainerReader<containers::RawDemuxer>>>(desc.input, sink);
             }
 #else
             BOOST_THROW
@@ -101,22 +101,28 @@ namespace ntgcalls::media {
             RTC_LOG(LS_INFO) << "Using file writer for " << desc.input;
             switch (resolve_format(desc)) {
             case BaseMediaDescription::Format::Matroska:
-                return std::make_unique<io::FileIO<io::ContainerWriter<recorders::VideoRecorder, containers::MatroskaMuxer>>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::ContainerWriter<mixers::VideoMixer, containers::MatroskaMuxer>>>(desc.input, sink);
             case BaseMediaDescription::Format::Ogg:
-                return std::make_unique<io::FileIO<io::ContainerWriter<recorders::AudioRecorder, containers::OggMuxer>>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::ContainerWriter<mixers::AudioMixer, containers::OggMuxer>>>(desc.input, sink);
             default:
-                return std::make_unique<io::FileIO<io::RawWriter>>(desc.input, sink);
+                if (video) {
+                    return std::make_unique<io::FileIO<io::ContainerWriter<mixers::VideoMixer, containers::RawMuxer>>>(desc.input, sink);
+                }
+                return std::make_unique<io::FileIO<io::ContainerWriter<mixers::AudioMixer, containers::RawMuxer>>>(desc.input, sink);
             }
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell writer for " << desc.input;
             switch (resolve_format(desc)) {
             case BaseMediaDescription::Format::Matroska:
-                return std::make_unique<io::ShellIO<io::ContainerWriter<recorders::VideoRecorder, containers::MatroskaMuxer>>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::ContainerWriter<mixers::VideoMixer, containers::MatroskaMuxer>>>(desc.input, sink);
             case BaseMediaDescription::Format::Ogg:
-                return std::make_unique<io::ShellIO<io::ContainerWriter<recorders::AudioRecorder, containers::OggMuxer>>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::ContainerWriter<mixers::AudioMixer, containers::OggMuxer>>>(desc.input, sink);
             default:
-                return std::make_unique<io::ShellIO<io::RawWriter>>(desc.input, sink);
+                if (video) {
+                    return std::make_unique<io::ShellIO<io::ContainerWriter<mixers::VideoMixer, containers::RawMuxer>>>(desc.input, sink);
+                }
+                return std::make_unique<io::ShellIO<io::ContainerWriter<mixers::AudioMixer, containers::RawMuxer>>>(desc.input, sink);
             }
 #else
             BOOST_THROW

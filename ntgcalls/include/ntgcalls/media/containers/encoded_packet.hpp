@@ -9,7 +9,8 @@
 
 namespace ntgcalls::media::containers {
     struct EncodedPacket {
-        bytes::const_span data;
+        bytes::unique_binary data;
+        size_t size = 0;
         int64_t timestamp_ms = 0;
         std::chrono::microseconds duration{0};
         bool keyframe = true;

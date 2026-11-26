@@ -9,14 +9,14 @@
 #include <media/base/media_constants.h>
 #include <modules/video_coding/include/video_codec_interface.h>
 #include <modules/video_coding/include/video_error_codes.h>
-#include <ntgcalls/media/recorders/video_recorder.hpp>
+#include <ntgcalls/media/mixers/video_mixer.hpp>
 #include <ntgcalls/media/video_sink.hpp>
 #include <rtc_base/logging.h>
 #include <rtc_base/time_utils.h>
 #include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
 
-namespace ntgcalls::media::recorders {
-    VideoRecorder::VideoRecorder(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback): Recorder(sink, std::move(supports), std::move(packet_callback)) {
+namespace ntgcalls::media::mixers {
+    VideoMixer::VideoMixer(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback): Mixer(sink, std::move(supports), std::move(packet_callback)), raw_(supports_(wrtc::models::Codec::I420)) {
         if (const auto video_sink = dynamic_cast<VideoSink*>(sink)) {
             if (const auto description = video_sink->get_config()) {
                 composer_ = std::make_unique<composer::VideoComposer>(description->width, description->height);
@@ -24,7 +24,7 @@ namespace ntgcalls::media::recorders {
         }
     }
 
-    VideoRecorder::~VideoRecorder() {
+    VideoMixer::~VideoMixer() {
         const std::lock_guard lock(state_mutex_);
         for (const auto& decoder : decoders_ | std::views::values) {
             decoder->Release();
@@ -34,7 +34,11 @@ namespace ntgcalls::media::recorders {
         }
     }
 
-    void VideoRecorder::send_frames(std::vector<wrtc::models::Frame> frames) {
+    void VideoMixer::send_frames(std::vector<wrtc::models::Frame> frames) {
+        if (raw_) {
+            send_raw(frames);
+            return;
+        }
         const std::lock_guard lock(state_mutex_);
         for (const auto& frame : frames) {
             if (!composing_) {
@@ -54,13 +58,13 @@ namespace ntgcalls::media::recorders {
         }
     }
 
-    void VideoRecorder::remove_source(const int64_t ssrc) {
+    void VideoMixer::remove_source(const int64_t ssrc) {
         if (composer_) {
             composer_->remove(ssrc);
         }
     }
 
-    void VideoRecorder::forward(const wrtc::models::Frame& frame) {
+    void VideoMixer::forward(const wrtc::models::Frame& frame) {
         if (!track_) {
             codec_ = frame.frame_data.codec;
             track_ = containers::TrackInfo{*codec_, 0, frame.frame_data.width, frame.frame_data.height};
@@ -68,7 +72,7 @@ namespace ntgcalls::media::recorders {
         write_frame(frame.data.data(), frame.data.size(), frame.frame_data.absolute_capture_timestamp_ms, frame.frame_data.keyframe);
     }
 
-    void VideoRecorder::decode(const wrtc::models::Frame& frame) {
+    void VideoMixer::decode(const wrtc::models::Frame& frame) {
         if (!composer_ || !ensure_decoder(frame.ssrc, frame.frame_data.codec)) {
             return;
         }
@@ -87,7 +91,7 @@ namespace ntgcalls::media::recorders {
         decoders_[frame.ssrc]->Decode(image, 0);
     }
 
-    bool VideoRecorder::ensure_decoder(const int64_t ssrc, const wrtc::models::Codec codec) {
+    bool VideoMixer::ensure_decoder(const int64_t ssrc, const wrtc::models::Codec codec) {
         if (const auto it = decoder_codecs_.find(ssrc); it != decoder_codecs_.end() && it->second == codec) {
             return decoders_[ssrc] != nullptr;
         }
@@ -115,7 +119,7 @@ namespace ntgcalls::media::recorders {
         return true;
     }
 
-    int32_t VideoRecorder::Decoded(webrtc::VideoFrame& decoded_image) {
+    int32_t VideoMixer::Decoded(webrtc::VideoFrame& decoded_image) {
         const auto buffer = decoded_image.video_frame_buffer()->ToI420();
         const auto width = buffer->width();
         const auto height = buffer->height();
@@ -137,7 +141,30 @@ namespace ntgcalls::media::recorders {
         return WEBRTC_VIDEO_CODEC_OK;
     }
 
-    void VideoRecorder::tick() {
+    void VideoMixer::send_raw(std::vector<wrtc::models::Frame>& frames) const {
+        if (!composer_) {
+            return;
+        }
+        for (auto& frame : frames) {
+            composer_->update(frame.ssrc, std::move(frame.data), frame.frame_data.width, frame.frame_data.height, frame.frame_data.rotation);
+        }
+    }
+
+    void VideoMixer::write_raw() const {
+        if (!composer_) {
+            return;
+        }
+        packet_callback_(
+            {wrtc::models::Codec::I420, 0, 0, 0},
+            {composer_->compose(), composer_->frame_size(), 0, std::chrono::duration_cast<std::chrono::microseconds>(sink_->frame_time()), true}
+        );
+    }
+
+    void VideoMixer::tick() {
+        if (raw_) {
+            write_raw();
+            return;
+        }
         const std::lock_guard lock(state_mutex_);
         if (!composing_ || !composer_ || !ensure_encoder()) {
             return;
@@ -168,7 +195,7 @@ namespace ntgcalls::media::recorders {
         encoder_->Encode(frame, &types);
     }
 
-    bool VideoRecorder::ensure_encoder() {
+    bool VideoMixer::ensure_encoder() {
         if (encoder_) {
             return true;
         }
@@ -217,22 +244,22 @@ namespace ntgcalls::media::recorders {
         return true;
     }
 
-    webrtc::EncodedImageCallback::Result VideoRecorder::OnEncodedImage(const webrtc::EncodedImage& encoded_image, const webrtc::CodecSpecificInfo*) {
+    webrtc::EncodedImageCallback::Result VideoMixer::OnEncodedImage(const webrtc::EncodedImage& encoded_image, const webrtc::CodecSpecificInfo*) {
         write_frame(encoded_image.data(), encoded_image.size(), webrtc::TimeMillis(), encoded_image._frameType == webrtc::VideoFrameType::kVideoFrameKey);
         return Result(Result::OK);
     }
 
-    void VideoRecorder::OnFrameDropped(uint32_t, int, bool) {}
+    void VideoMixer::OnFrameDropped(uint32_t, int, bool) {}
 
-    void VideoRecorder::write_frame(const uint8_t* data, const size_t size, const int64_t timestamp_ms, const bool keyframe) const {
-        packet_callback_(*track_, {bytes::const_span(data, size), timestamp_ms, std::chrono::microseconds(0), keyframe});
+    void VideoMixer::write_frame(const uint8_t* data, const size_t size, const int64_t timestamp_ms, const bool keyframe) const {
+        packet_callback_(*track_, {bytes::make_unique_binary(data, size), size, timestamp_ms, std::chrono::microseconds(0), keyframe});
     }
 
-    std::chrono::nanoseconds VideoRecorder::tick_interval() const {
+    std::chrono::nanoseconds VideoMixer::tick_interval() const {
         return sink_->frame_time();
     }
 
-    webrtc::SdpVideoFormat VideoRecorder::sdp_format(const wrtc::models::Codec codec) {
+    webrtc::SdpVideoFormat VideoMixer::sdp_format(const wrtc::models::Codec codec) {
         switch (codec) {
         case wrtc::models::Codec::VP8:
             return webrtc::SdpVideoFormat(webrtc::kVp8CodecName);
@@ -245,7 +272,7 @@ namespace ntgcalls::media::recorders {
         }
     }
 
-    webrtc::VideoCodecType VideoRecorder::codec_type(const wrtc::models::Codec codec) {
+    webrtc::VideoCodecType VideoMixer::codec_type(const wrtc::models::Codec codec) {
         switch (codec) {
         case wrtc::models::Codec::VP8:
             return webrtc::kVideoCodecVP8;
@@ -257,4 +284,4 @@ namespace ntgcalls::media::recorders {
             return webrtc::kVideoCodecH264;
         }
     }
-} // ntgcalls::media::recorders
+} // ntgcalls::media::mixers

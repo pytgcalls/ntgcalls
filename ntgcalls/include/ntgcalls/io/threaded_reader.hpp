@@ -35,6 +35,8 @@ namespace ntgcalls::io {
         virtual bytes::unique_binary read(int64_t size) = 0;
 
     public:
+        static constexpr auto kBufferDuration = std::chrono::milliseconds(100);
+
         explicit ThreadedReader(media::BaseSink* sink, size_t buffer_count = 2);
 
         void open() override;

@@ -5,7 +5,7 @@
 #pragma once
 
 #ifdef IS_LINUX
-#include <ntgcalls/io/audio_mixer.hpp>
+#include <ntgcalls/io/audio_device_writer.hpp>
 #include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/media/devices/base_device_module.hpp>
 #include <ntgcalls/media/devices/device_info.hpp>
@@ -13,7 +13,7 @@
 
 namespace ntgcalls::media::devices {
 
-    class PulseDeviceModule final: public BaseDeviceModule, public io::BaseReader, public io::AudioMixer {
+    class PulseDeviceModule final: public BaseDeviceModule, public io::BaseReader, public io::AudioDeviceWriter {
         std::unique_ptr<utils::PulseConnection> pulse_connection_;
 
     protected:

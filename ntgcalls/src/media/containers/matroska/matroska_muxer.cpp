@@ -11,25 +11,25 @@ namespace ntgcalls::media::containers {
         return codec == wrtc::models::Codec::H264 || codec == wrtc::models::Codec::VP8 || codec == wrtc::models::Codec::VP9;
     }
 
-    bytes::binary MatroskaMuxer::finish() {
+    MuxedChunk MatroskaMuxer::finish() {
         return {};
     }
 
-    bytes::binary MatroskaMuxer::add(const EncodedPacket& packet) {
-        const auto* data = packet.data.data();
-        const auto size = packet.data.size();
+    MuxedChunk MatroskaMuxer::add(const EncodedPacket packet) {
+        const auto* data = packet.data.get();
+        const auto size = packet.size;
         const auto timestamp_ms = packet.timestamp_ms;
         const auto keyframe = packet.keyframe;
         bytes::binary output;
         if (!header_written_) {
             if (!keyframe) {
-                return output;
+                return {};
             }
             bytes::binary codec_private;
             if (codec_ == wrtc::models::Codec::H264) {
                 codec_private = avc_configuration(data, size);
                 if (codec_private.empty()) {
-                    return output;
+                    return {};
                 }
             }
             output = header(codec_private);
@@ -44,7 +44,7 @@ namespace ntgcalls::media::containers {
         }
         const auto encoded = block(payload(data, size), timestamp - *cluster_timestamp_, keyframe);
         output.insert(output.end(), encoded.begin(), encoded.end());
-        return output;
+        return {bytes::make_unique_binary(output.data(), output.size()), output.size()};
     }
 
     bytes::binary MatroskaMuxer::header(const bytes::binary& codec_private) const {

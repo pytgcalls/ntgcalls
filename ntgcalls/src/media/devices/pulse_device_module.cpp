@@ -13,7 +13,7 @@
     LATESYM_GET(webrtc::adm_linux_pulse::PulseAudioSymbolTable, GetPulseSymbolTable(), sym)
 
 namespace ntgcalls::media::devices {
-    PulseDeviceModule::PulseDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink): BaseIO(sink), BaseDeviceModule(desc, is_capture), BaseReader(sink), AudioMixer(sink) {
+    PulseDeviceModule::PulseDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink): BaseIO(sink), BaseDeviceModule(desc, is_capture), BaseReader(sink), AudioDeviceWriter(sink) {
         pulse_connection_ = std::make_unique<utils::PulseConnection>();
         RTC_LOG(LS_VERBOSE) << "PulseAudio version: " << pulse_connection_->get_version();
 

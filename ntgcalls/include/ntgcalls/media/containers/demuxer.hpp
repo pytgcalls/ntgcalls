@@ -12,7 +12,7 @@ namespace ntgcalls::media::containers {
     public:
         virtual ~Demuxer() = default;
 
-        virtual void feed(const uint8_t* data, size_t size) = 0;
+        virtual void feed(bytes::unique_binary data, size_t size) = 0;
 
         [[nodiscard]] virtual int64_t missing() const = 0;
 

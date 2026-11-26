@@ -4,80 +4,112 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstring>
 #include <mutex>
 #include <optional>
+#include <thread>
+#include <vector>
 #include <ntgcalls/io/threaded_writer.hpp>
 #include <ntgcalls/media/containers/muxer.hpp>
-#include <ntgcalls/media/recorders/recorder.hpp>
+#include <ntgcalls/media/mixers/mixer.hpp>
 
 namespace ntgcalls::io {
 
-    template<std::derived_from<media::recorders::Recorder> Recorder, std::derived_from<media::containers::Muxer> Muxer>
+    template<std::derived_from<media::mixers::Mixer> Mixer, std::derived_from<media::containers::Muxer> Muxer>
     class ContainerWriter: public ThreadedWriter {
-        static_assert(Muxer::supports(Recorder::kKind), "The container cannot hold this kind of media");
+        static_assert(Muxer::supports(Mixer::kKind), "The container cannot hold this kind of media");
 
         std::mutex muxer_mutex_;
         std::optional<Muxer> muxer_;
-        Recorder recorder_;
+        std::atomic<std::thread::id> ticking_thread_;
+        std::vector<media::containers::MuxedChunk> idle_chunks_;
+        Mixer mixer_;
 
-        void on_packet(const media::containers::TrackInfo& track, const media::containers::EncodedPacket& packet) {
-            bytes::binary output;
+        void on_packet(const media::containers::TrackInfo& track, media::containers::EncodedPacket packet) {
+            media::containers::MuxedChunk chunk;
             {
                 const std::lock_guard lock(muxer_mutex_);
                 if (!muxer_) {
                     muxer_.emplace(track);
                 }
-                output = muxer_->add(packet);
+                chunk = muxer_->add(std::move(packet));
+                if (chunk.size == 0) {
+                    return;
+                }
+                if (ticking_thread_.load() == std::this_thread::get_id()) {
+                    idle_chunks_.push_back(std::move(chunk));
+                    return;
+                }
             }
-            push_output(output);
+            push(std::move(chunk.data), chunk.size);
         }
 
-        void push_output(const bytes::binary& output) {
-            if (output.empty()) {
-                return;
+        static std::optional<std::pair<bytes::unique_binary, size_t>> join(std::vector<media::containers::MuxedChunk> chunks) {
+            if (chunks.empty()) {
+                return std::nullopt;
             }
-            auto buffer = bytes::make_unique_binary(output.size());
-            std::memcpy(buffer.get(), output.data(), output.size());
-            push(std::move(buffer), output.size());
+            if (chunks.size() == 1) {
+                return std::pair{std::move(chunks.front().data), chunks.front().size};
+            }
+            size_t size = 0;
+            for (const auto& chunk : chunks) {
+                size += chunk.size;
+            }
+            auto data = bytes::make_unique_binary(size);
+            size_t offset = 0;
+            for (const auto& chunk : chunks) {
+                std::memcpy(data.get() + offset, chunk.data.get(), chunk.size);
+                offset += chunk.size;
+            }
+            return std::pair{std::move(data), size};
         }
 
     protected:
         std::optional<std::pair<bytes::unique_binary, size_t>> idle_data() override {
-            recorder_.tick();
-            return std::nullopt;
+            ticking_thread_.store(std::this_thread::get_id());
+            mixer_.tick();
+            ticking_thread_.store(std::thread::id());
+            std::vector<media::containers::MuxedChunk> chunks;
+            {
+                const std::lock_guard lock(muxer_mutex_);
+                chunks.swap(idle_chunks_);
+            }
+            return join(std::move(chunks));
         }
 
         std::chrono::nanoseconds idle_interval() const override {
-            return recorder_.tick_interval();
+            return mixer_.tick_interval();
         }
 
     public:
         explicit ContainerWriter(media::BaseSink* sink):
         BaseIO(sink),
         ThreadedWriter(sink),
-        recorder_(sink, static_cast<bool (*)(wrtc::models::Codec)>(&Muxer::supports), [this](const media::containers::TrackInfo& track, const media::containers::EncodedPacket& packet) {
-            on_packet(track, packet);
+        mixer_(sink, static_cast<bool (*)(wrtc::models::Codec)>(&Muxer::supports), [this](const media::containers::TrackInfo& track, media::containers::EncodedPacket packet) {
+            on_packet(track, std::move(packet));
         }) {}
 
         void send_frames(std::vector<wrtc::models::Frame> frames) override {
-            recorder_.send_frames(std::move(frames));
+            mixer_.send_frames(std::move(frames));
         }
 
         void remove_source(const int64_t ssrc) override {
-            recorder_.remove_source(ssrc);
+            mixer_.remove_source(ssrc);
         }
 
         void flush() override {
-            recorder_.flush();
-            bytes::binary output;
+            mixer_.flush();
+            media::containers::MuxedChunk chunk;
             {
                 const std::lock_guard lock(muxer_mutex_);
                 if (muxer_) {
-                    output = muxer_->finish();
+                    chunk = muxer_->finish();
                 }
             }
-            push_output(output);
+            if (chunk.size > 0) {
+                push(std::move(chunk.data), chunk.size);
+            }
         }
     };
 

@@ -9,8 +9,8 @@
 #include <wrtc/audio_factory/opus/opus_packet.hpp>
 
 namespace ntgcalls::media::containers {
-    void OggDemuxer::feed(const uint8_t* data, const size_t size) {
-        buffer_.insert(buffer_.end(), data, data + size);
+    void OggDemuxer::feed(const bytes::unique_binary data, const size_t size) {
+        buffer_.insert(buffer_.end(), data.get(), data.get() + size);
         while (parse_page()) {}
     }
 

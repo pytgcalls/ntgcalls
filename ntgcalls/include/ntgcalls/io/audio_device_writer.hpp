@@ -9,16 +9,15 @@
 
 namespace ntgcalls::io {
 
-    class AudioMixer: public BaseWriter {
+    class AudioDeviceWriter: public BaseWriter {
     protected:
         virtual void on_data(bytes::unique_binary data, size_t size) = 0;
 
     public:
-        explicit AudioMixer(media::BaseSink* sink);
+        explicit AudioDeviceWriter(media::BaseSink* sink);
 
         void send_frames(std::vector<wrtc::models::Frame> frames) override;
 
-        static bytes::unique_binary mix(const std::vector<wrtc::models::Frame>& frames, int64_t frame_size);
     };
 
 } // ntgcalls::io

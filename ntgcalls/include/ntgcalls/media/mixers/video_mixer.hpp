@@ -13,14 +13,15 @@
 #include <api/video_codecs/video_decoder.h>
 #include <api/video_codecs/video_encoder.h>
 #include <ntgcalls/media/composer/video_composer.hpp>
-#include <ntgcalls/media/recorders/recorder.hpp>
+#include <ntgcalls/media/mixers/mixer.hpp>
 
-namespace ntgcalls::media::recorders {
+namespace ntgcalls::media::mixers {
 
-    class VideoRecorder final: public Recorder, public webrtc::DecodedImageCallback, public webrtc::EncodedImageCallback {
+    class VideoMixer final: public Mixer, public webrtc::DecodedImageCallback, public webrtc::EncodedImageCallback {
         static constexpr uint32_t kComposedBitrate = 2500000;
         static constexpr auto kKeyframeInterval = std::chrono::seconds(2);
 
+        bool raw_;
         std::mutex state_mutex_;
         std::optional<containers::TrackInfo> track_;
         std::optional<wrtc::models::Codec> codec_;
@@ -38,6 +39,10 @@ namespace ntgcalls::media::recorders {
 
         void forward(const wrtc::models::Frame& frame);
 
+        void send_raw(std::vector<wrtc::models::Frame>& frames) const;
+
+        void write_raw() const;
+
         void decode(const wrtc::models::Frame& frame);
 
         bool ensure_decoder(int64_t ssrc, wrtc::models::Codec codec);
@@ -53,9 +58,9 @@ namespace ntgcalls::media::recorders {
     public:
         static constexpr auto kKind = containers::MediaKind::Video;
 
-        VideoRecorder(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback);
+        VideoMixer(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback);
 
-        ~VideoRecorder() override;
+        ~VideoMixer() override;
 
         void send_frames(std::vector<wrtc::models::Frame> frames) override;
 
@@ -72,4 +77,4 @@ namespace ntgcalls::media::recorders {
         void OnFrameDropped(uint32_t rtp_timestamp, int spatial_id, bool is_end_of_temporal_unit) override;
     };
 
-} // ntgcalls::media::recorders
+} // ntgcalls::media::mixers

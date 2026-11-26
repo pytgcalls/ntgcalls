@@ -5,6 +5,7 @@
 #pragma once
 
 #include <ntgcalls/media/containers/encoded_packet.hpp>
+#include <ntgcalls/media/containers/muxed_chunk.hpp>
 
 namespace ntgcalls::media::containers {
 
@@ -12,9 +13,9 @@ namespace ntgcalls::media::containers {
     public:
         virtual ~Muxer() = default;
 
-        virtual bytes::binary add(const EncodedPacket& packet) = 0;
+        virtual MuxedChunk add(EncodedPacket packet) = 0;
 
-        virtual bytes::binary finish() = 0;
+        virtual MuxedChunk finish() = 0;
     };
 
 } // ntgcalls::media::containers

@@ -5,7 +5,7 @@
 #pragma once
 
 #ifdef IS_ANDROID
-#include <ntgcalls/io/audio_mixer.hpp>
+#include <ntgcalls/io/audio_device_writer.hpp>
 #include <ntgcalls/io/base_reader.hpp>
 #include <ntgcalls/media/devices/base_device_module.hpp>
 #include <oboe/Oboe.h>
@@ -26,7 +26,7 @@ namespace ntgcalls::media::devices {
         void onErrorAfterClose(oboe::AudioStream* audio_stream, oboe::Result error) override;
     };
 
-    class OboeDeviceModule final: public BaseDeviceModule, public io::BaseReader, public io::AudioMixer, oboe::AudioStreamDataCallback {
+    class OboeDeviceModule final: public BaseDeviceModule, public io::BaseReader, public io::AudioDeviceWriter, oboe::AudioStreamDataCallback {
         friend class OboeErrorCallback;
 
         std::shared_ptr<OboeErrorCallback> error_callback_;

@@ -7,14 +7,15 @@
 #include <map>
 #ifdef IS_LINUX
 #include <alsa/asoundlib.h>
-#include <ntgcalls/io/audio_mixer.hpp>
-#include <ntgcalls/io/raw_reader.hpp>
+#include <ntgcalls/io/audio_device_writer.hpp>
+#include <ntgcalls/io/container_reader.hpp>
+#include <ntgcalls/media/containers/raw/raw_demuxer.hpp>
 #include <ntgcalls/media/devices/base_device_module.hpp>
 #include <ntgcalls/media/devices/device_info.hpp>
 
 namespace ntgcalls::media::devices {
 
-    class AlsaDeviceModule final: public BaseDeviceModule, public io::RawReader, public io::AudioMixer {
+    class AlsaDeviceModule final: public BaseDeviceModule, public io::ContainerReader<containers::RawDemuxer>, public io::AudioDeviceWriter {
         snd_pcm_format_t format_ = SND_PCM_FORMAT_S16_LE;
         snd_pcm_t* alsa_handle_{};
         snd_pcm_hw_params_t* hw_params_{};

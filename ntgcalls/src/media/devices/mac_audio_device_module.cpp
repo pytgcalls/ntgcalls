@@ -9,7 +9,7 @@
 
 namespace ntgcalls::media::devices {
     MacAudioDeviceModule::MacAudioDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink):
-    BaseIO(sink), BaseDeviceModule(desc, is_capture), BaseReader(sink), AudioMixer(sink) {
+    BaseIO(sink), BaseDeviceModule(desc, is_capture), BaseReader(sink), AudioDeviceWriter(sink) {
         try {
             device_uid_ = device_metadata_["uid"];
         } catch (...) {

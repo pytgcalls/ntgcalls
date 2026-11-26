@@ -27,7 +27,7 @@
     } while (0)
 
 namespace ntgcalls::media::devices {
-    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink): BaseIO(sink), BaseDeviceModule(desc, is_capture), RawReader(sink), AudioMixer(sink) {
+    AlsaDeviceModule::AlsaDeviceModule(const AudioDescription* desc, const bool is_capture, BaseSink* sink): BaseIO(sink), BaseDeviceModule(desc, is_capture), ContainerReader(sink), AudioDeviceWriter(sink) {
         try {
             device_id_ = device_metadata_["id"];
         } catch (...) {
@@ -135,7 +135,7 @@ namespace ntgcalls::media::devices {
 
     void AlsaDeviceModule::open() {
         if (is_capture_) {
-            RawReader::open();
+            ContainerReader::open();
         }
     }
 

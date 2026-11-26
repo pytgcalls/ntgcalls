@@ -5,6 +5,7 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <cstring>
 #include <span>
 #include <string>
 #include <vector>
@@ -45,6 +46,12 @@ namespace bytes {
 
     inline unique_binary make_unique_binary(const size_t size) {
         return std::make_unique<uint8_t[]>(size);
+    }
+
+    inline unique_binary make_unique_binary(const void* data, const size_t size) {
+        auto buffer = std::make_unique<uint8_t[]>(size);
+        std::memcpy(buffer.get(), data, size);
+        return buffer;
     }
 
     template<typename Container>

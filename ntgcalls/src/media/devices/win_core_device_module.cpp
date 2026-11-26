@@ -15,7 +15,7 @@ namespace ntgcalls::media::devices {
     BaseIO(sink),
     BaseDeviceModule(desc, is_capture),
     BaseReader(sink),
-    AudioMixer(sink),
+    AudioDeviceWriter(sink),
     com_initializer_(webrtc::ScopedCOMInitializer::kMTA),
     mmcss_registration_(L"Pro Audio") {
         RTC_DCHECK(com_initializer_.Succeeded());

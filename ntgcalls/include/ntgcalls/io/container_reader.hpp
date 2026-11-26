@@ -14,6 +14,15 @@ namespace ntgcalls::io {
     template<std::derived_from<media::containers::Demuxer> Demuxer>
     class ContainerReader: public ThreadedReader {
         Demuxer demuxer_;
+
+        static Demuxer create_demuxer(media::BaseSink* sink) {
+            if constexpr (std::constructible_from<Demuxer, media::BaseSink*>) {
+                return Demuxer(sink);
+            } else {
+                return Demuxer();
+            }
+        }
+
         std::optional<media::containers::DemuxedFrame> pending_;
         std::chrono::nanoseconds last_duration_{0};
         bool eof_ = false;
@@ -28,8 +37,8 @@ namespace ntgcalls::io {
                 }
                 try {
                     const auto size = demuxer_.missing();
-                    const auto data = read(size);
-                    demuxer_.feed(data.get(), size);
+                    auto data = read(size);
+                    demuxer_.feed(std::move(data), size);
                 } catch (const EOFError&) {
                     eof_ = true;
                 }
@@ -71,7 +80,7 @@ namespace ntgcalls::io {
         }
 
     public:
-        explicit ContainerReader(media::BaseSink* sink): BaseIO(sink), ThreadedReader(sink) {}
+        explicit ContainerReader(media::BaseSink* sink): BaseIO(sink), ThreadedReader(sink), demuxer_(create_demuxer(sink)) {}
     };
 
 } // ntgcalls::io
