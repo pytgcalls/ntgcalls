@@ -28,7 +28,7 @@ namespace ntgcalls::media {
             send_encoded(sample, size, description->channel_count, additional_data);
             return;
         }
-        frames_++;
+        ++frames_;
         send_pcm(sample, description->sample_rate, description->channel_count, additional_data);
     }
 
@@ -52,7 +52,7 @@ namespace ntgcalls::media {
         level_frame_.resize(static_cast<size_t>(wrtc::audio_factory::OpusPacket::kFrameSamples) * channel_count * sizeof(int16_t));
         fill_level(level_frame_, channel_count, level_->amplitude(packet, size));
         for (size_t i = 0; i < frames; i++) {
-            frames_++;
+            ++frames_;
             send_pcm(level_frame_.data(), wrtc::audio_factory::OpusPacket::kSampleRate, channel_count, additional_data);
         }
     }

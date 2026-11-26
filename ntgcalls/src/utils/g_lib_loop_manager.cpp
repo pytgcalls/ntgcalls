@@ -31,7 +31,7 @@ namespace ntgcalls::utils {
     }
 
     void GLibLoopManager::add_instance() {
-        references_++;
+        ++references_;
         if (references_ == 1) {
 #ifdef IS_LINUX
             is_runnable_ = !is_event_loop_running() && allow_eventloop_;
@@ -51,7 +51,7 @@ namespace ntgcalls::utils {
     }
 
     void GLibLoopManager::remove_instance() {
-        references_--;
+        --references_;
         if (references_ == 0) {
 #ifdef IS_LINUX
             if (!is_runnable_) {

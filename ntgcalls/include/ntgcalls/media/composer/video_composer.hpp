@@ -50,7 +50,7 @@ namespace ntgcalls::media::composer {
 
         void draw(uint8_t* output, const Tile& tile, const Rect& area) const;
 
-        Rect cell(size_t index, size_t count) const;
+        [[nodiscard]] Rect cell(size_t index, size_t count) const;
 
         static Rect current(const Tile& tile, Clock::time_point now);
 

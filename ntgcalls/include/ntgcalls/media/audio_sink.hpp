@@ -29,7 +29,7 @@ namespace ntgcalls::media {
     public:
         bool set_config(const std::optional<AudioDescription>& desc);
 
-        std::optional<AudioDescription> get_config();
+        std::optional<AudioDescription> get_config() const;
 
         std::chrono::nanoseconds frame_time() override;
 

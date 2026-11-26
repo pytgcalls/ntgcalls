@@ -63,7 +63,7 @@ namespace ntgcalls::media::devices {
                     {"automatic_restart", true}
                 };
                 devices.emplace_back(device.device_name, metadata.dump());
-                index++;
+                ++index;
             }
         };
         const webrtc::ScopedCOMInitializer com_initializer(webrtc::ScopedCOMInitializer::kMTA);

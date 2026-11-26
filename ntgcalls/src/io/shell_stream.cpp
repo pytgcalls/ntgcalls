@@ -35,7 +35,7 @@ namespace ntgcalls::io {
         ResumeThread(launcher.process_information.hThread);
     }
 #else
-    bp::error_code ShellStream::ProcessGroup::on_exec_setup(bp::posix::default_launcher&, const bp::filesystem::path&, const char* const*) const {
+    bp::error_code ShellStream::ProcessGroup::on_exec_setup(bp::posix::default_launcher&, const bp::filesystem::path&, const char* const*) {
         if (setpgid(0, 0) == -1) {
             return bp::detail::get_last_error();
         }
@@ -79,7 +79,7 @@ namespace ntgcalls::io {
     }
 
     ShellStream::~ShellStream() {
-        close();
+        release();
 #ifdef IS_WINDOWS
         if (job_) {
             CloseHandle(job_);
@@ -107,6 +107,10 @@ namespace ntgcalls::io {
     }
 
     void ShellStream::close() {
+        release();
+    }
+
+    void ShellStream::release() {
         boost::system::error_code ec;
         if (std_in_.is_open()) {
             std_in_.close(ec);

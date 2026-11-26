@@ -38,7 +38,7 @@ namespace ntgcalls::io {
     void ThreadedReader::run_buffer(const size_t index, const std::chrono::nanoseconds max_buffer_size) {
         {
             const std::lock_guard lock(mtx_);
-            active_buffer_count_++;
+            ++active_buffer_count_;
         }
         std::vector<Chunk> frames;
         while (running_) {
@@ -85,7 +85,7 @@ namespace ntgcalls::io {
             }
         }
         const std::lock_guard lock(mtx_);
-        active_buffer_count_--;
+        --active_buffer_count_;
         if (active_buffer_count_ == 0) {
             (void) eof_callback_();
         }

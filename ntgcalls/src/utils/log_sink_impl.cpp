@@ -127,7 +127,7 @@ namespace ntgcalls::utils {
 
     void LogSink::get_or_create() {
         const std::lock_guard lock(mutex_);
-        references_++;
+        ++references_;
         if (references_ == 1) {
             instance_ = webrtc::scoped_refptr<LogSink>(new webrtc::RefCountedObject<LogSink>());
         }
@@ -135,7 +135,7 @@ namespace ntgcalls::utils {
 
     void LogSink::un_ref() {
         const std::lock_guard lock(mutex_);
-        references_--;
+        --references_;
         if (!references_) {
             instance_ = nullptr;
         }

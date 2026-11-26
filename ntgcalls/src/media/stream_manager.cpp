@@ -52,7 +52,7 @@ namespace ntgcalls::media {
                 }
             }
             {
-                const std::unique_lock lock(writers_mutex_);
+                const std::unique_lock writers_lock(writers_mutex_);
                 writers_to_close.swap(writers_);
             }
             streams_to_close.swap(streams_);
@@ -179,7 +179,7 @@ namespace ntgcalls::media {
                 continue;
             }
             average_time += stream->time();
-            count++;
+            ++count;
         }
         if (count == 0) {
             return 0;
@@ -780,6 +780,7 @@ namespace ntgcalls::media {
                 writers_[device] = std::move(writer);
             }
         }
+        previous.reset();
     }
 
 } // ntgcalls::media

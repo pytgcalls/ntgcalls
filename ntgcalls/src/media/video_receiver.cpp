@@ -92,7 +92,7 @@ namespace ntgcalls::media {
                     return;
                 }
                 const std::lock_guard lock(mutex_);
-                (void) frame_callback_(ssrc, std::move(frame.payload), frame.frame_data);
+                (void) frame_callback_(ssrc, frame.payload, frame.frame_data);
             },
             [this](const uint32_t ssrc) {
                 (void) removed_callback_(ssrc);

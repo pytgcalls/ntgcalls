@@ -127,7 +127,7 @@ namespace ntgcalls::media {
                     RTC_LOG(LS_ERROR) << "Failed to adapt audio frame: " << e.what();
                 }
             }
-            frames_++;
+            ++frames_;
             (void) frames_callback_(processed_frames, timestamps);
         });
         weak_sink_ = sink_;

@@ -58,7 +58,7 @@ namespace wrtc::interfaces::mtproto {
     }
 
     void ThreadBuffer::check_segments_sync() {
-        check_sync_count_++;
+        ++check_sync_count_;
         if (check_sync_count_ == kThreadCount) {
             check_sync_count_ = 0;
             request_callback_(RequestType::RequestSegments);

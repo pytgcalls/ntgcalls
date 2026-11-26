@@ -71,7 +71,7 @@ namespace ntgcalls::media::containers {
 
         bool parse_element();
 
-        std::optional<Element> peek_element() const;
+        [[nodiscard]] std::optional<Element> peek_element() const;
 
         void parse_info(const uint8_t* data, size_t size);
 
@@ -104,7 +104,7 @@ namespace ntgcalls::media::containers {
 
         std::optional<DemuxedFrame> next() override;
 
-        std::optional<Track> track() const;
+        [[nodiscard]] std::optional<Track> track() const;
     };
 
 } // ntgcalls::media::containers

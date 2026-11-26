@@ -86,7 +86,7 @@ namespace wrtc::interfaces::mtproto {
                     for (size_t i2 = 0; i2 < video_channels.size(); i2++) {
                         if (video_channels[i2]) {
                             endpoint_mapping_.insert(std::make_pair(endpoint_list[endpoint_index], static_cast<int32_t>(i2)));
-                            endpoint_index++;
+                            ++endpoint_index;
                         }
                     }
                 }

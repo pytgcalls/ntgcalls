@@ -245,7 +245,7 @@ namespace wrtc::interfaces {
         int audio_channels_count = 0;
         for (const auto& content : pending_content_ | std::views::values) {
             if (content.type == models::MediaContent::Type::Audio) {
-                audio_channels_count++;
+                ++audio_channels_count;
             }
         }
         if (audio_channels_count >= 10) {

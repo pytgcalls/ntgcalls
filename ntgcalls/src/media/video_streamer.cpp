@@ -23,7 +23,7 @@ namespace ntgcalls::media {
         if (!description) {
             return;
         }
-        frames_++;
+        ++frames_;
         if (additional_data.width == 0) {
             additional_data.width = description->width;
         }

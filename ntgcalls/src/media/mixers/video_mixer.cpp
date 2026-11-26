@@ -239,7 +239,7 @@ namespace ntgcalls::media::mixers {
         encoder_->SetRates(webrtc::VideoEncoder::RateControlParameters(allocation, settings.maxFramerate));
         if (!track_) {
             codec_ = codec;
-            track_ = containers::TrackInfo{codec, 0, static_cast<uint16_t>(settings.width), static_cast<uint16_t>(settings.height)};
+            track_ = containers::TrackInfo{codec, 0, settings.width, settings.height};
         }
         return true;
     }

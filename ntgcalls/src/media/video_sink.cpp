@@ -41,7 +41,7 @@ namespace ntgcalls::media {
         return changed || force_change;
     }
 
-    std::optional<VideoDescription> VideoSink::get_config() {
+    std::optional<VideoDescription> VideoSink::get_config() const {
         if (const auto description = this->description()) {
             return *description;
         }

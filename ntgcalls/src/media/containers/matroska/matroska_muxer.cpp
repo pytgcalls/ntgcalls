@@ -88,7 +88,7 @@ namespace ntgcalls::media::containers {
         return output;
     }
 
-    bytes::binary MatroskaMuxer::cluster(const int64_t timestamp) const {
+    bytes::binary MatroskaMuxer::cluster(const int64_t timestamp) {
         bytes::binary output;
         append_id(output, 0x1F43B675);
         output.insert(output.end(), {0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF});
@@ -97,7 +97,7 @@ namespace ntgcalls::media::containers {
         return output;
     }
 
-    bytes::binary MatroskaMuxer::block(const bytes::binary& payload, const int64_t relative, const bool keyframe) const {
+    bytes::binary MatroskaMuxer::block(const bytes::binary& payload, const int64_t relative, const bool keyframe) {
         bytes::binary content = {0x81, static_cast<uint8_t>(relative >> 8 & 0xFF), static_cast<uint8_t>(relative & 0xFF), static_cast<uint8_t>(keyframe ? 0x80 : 0x00)};
         content.insert(content.end(), payload.begin(), payload.end());
         return element(0xA3, content);
@@ -127,7 +127,7 @@ namespace ntgcalls::media::containers {
                 if (start) {
                     auto end = i;
                     while (end > *start && data[end - 1] == 0) {
-                        end--;
+                        --end;
                     }
                     units.emplace_back(data + *start, end - *start);
                 }
@@ -135,7 +135,7 @@ namespace ntgcalls::media::containers {
                 i += 3;
                 continue;
             }
-            i++;
+            ++i;
         }
         if (start && *start < size) {
             units.emplace_back(data + *start, size - *start);
@@ -193,7 +193,7 @@ namespace ntgcalls::media::containers {
         bytes::binary payload;
         int bytes_count = 1;
         while (bytes_count < 8 && value >> (bytes_count * 8)) {
-            bytes_count++;
+            ++bytes_count;
         }
         for (int i = bytes_count - 1; i >= 0; i--) {
             payload.push_back(static_cast<uint8_t>(value >> (i * 8) & 0xFF));
@@ -219,7 +219,7 @@ namespace ntgcalls::media::containers {
     void MatroskaMuxer::append_size(bytes::binary& output, const uint64_t size) {
         int length = 1;
         while (length < 8 && size >= (1ULL << (7 * length)) - 1) {
-            length++;
+            ++length;
         }
         const uint64_t value = size | 1ULL << (7 * length);
         for (int i = length - 1; i >= 0; i--) {

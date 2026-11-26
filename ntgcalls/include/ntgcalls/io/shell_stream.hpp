@@ -31,7 +31,7 @@ namespace ntgcalls::io {
 #else
         class ProcessGroup {
         public:
-            bp::error_code on_exec_setup(bp::posix::default_launcher&, const bp::filesystem::path&, const char* const*) const;
+            static bp::error_code on_exec_setup(bp::posix::default_launcher&, const bp::filesystem::path&, const char* const*);
         };
 #endif
         asio::io_context ctx_;
@@ -45,6 +45,8 @@ namespace ntgcalls::io {
         void wait_exit();
 
         void terminate();
+
+        void release();
 
     public:
         ShellStream(const std::string& command, Mode mode);

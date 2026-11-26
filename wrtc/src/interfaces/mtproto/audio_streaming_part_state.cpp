@@ -82,7 +82,7 @@ namespace wrtc::interfaces::mtproto {
         if (remaining_milliseconds_ < 0) {
             remaining_milliseconds_ = 0;
         }
-        frame_index_++;
+        ++frame_index_;
 
         return result_channels;
     }

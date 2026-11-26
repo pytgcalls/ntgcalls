@@ -48,7 +48,7 @@ namespace wrtc::interfaces::mtproto {
             if (adjusted_timestamp <= 0) {
                 const int task_id = strong->next_pending_request_time_delay_task_id_;
                 strong->pending_request_time_delay_task_id_ = task_id;
-                strong->next_pending_request_time_delay_task_id_++;
+                ++strong->next_pending_request_time_delay_task_id_;
 
                 strong->media_thread_.PostDelayedTask(
                     [weak, task_id] {
@@ -248,7 +248,7 @@ namespace wrtc::interfaces::mtproto {
                         }
 
                         const int channel_count = prev_buffer->channels;
-                        prev_buffer->channels++;
+                        ++prev_buffer->channels;
 
                         std::vector<int16_t> output;
                         output.reserve(sample_count * channel_count);
@@ -506,9 +506,9 @@ namespace wrtc::interfaces::mtproto {
                 }
                 pending_segment->parts.clear();
                 should_request_more_segments = true;
-                i--;
+                --i;
             }
-            i++;
+            ++i;
         }
 
         if (min_delayed_request_timeout < INT32_MAX) {

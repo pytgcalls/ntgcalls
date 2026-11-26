@@ -40,7 +40,7 @@ namespace ntgcalls::media::mixers {
         return max_delay * kSamplesPerMs;
     }
 
-    void AudioMixer::send_frames(std::vector<wrtc::models::Frame> frames) {
+    void AudioMixer::send_frames(const std::vector<wrtc::models::Frame> frames) {
         if (!opus_) {
             send_pcm(frames);
             return;

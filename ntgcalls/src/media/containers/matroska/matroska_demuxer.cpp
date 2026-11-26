@@ -44,7 +44,7 @@ namespace ntgcalls::media::containers {
         }
         size_t length = 1;
         for (uint8_t mask = 0x80; length <= 8 && !(buffer_[id->second] & mask); mask >>= 1) {
-            length++;
+            ++length;
         }
         return static_cast<int64_t>(std::max<size_t>(id->second + length - buffer_.size(), 1));
     }
@@ -202,7 +202,7 @@ namespace ntgcalls::media::containers {
             size_t offset = 5;
             for (int group = 0; group < 2 && offset < codec_private.size(); group++) {
                 const size_t count = group == 0 ? codec_private[offset] & 0x1F : codec_private[offset];
-                offset++;
+                ++offset;
                 for (size_t i = 0; i < count && offset + 2 <= codec_private.size(); i++) {
                     constexpr uint8_t kStartCode[] = {0, 0, 0, 1};
                     const size_t length = codec_private[offset] << 8 | codec_private[offset + 1];
@@ -310,7 +310,7 @@ namespace ntgcalls::media::containers {
         uint8_t mask = 0x80;
         while (length <= 8 && !(data[0] & mask)) {
             mask >>= 1;
-            length++;
+            ++length;
         }
         if (length > 8) {
             RTC_LOG(LS_ERROR) << "Invalid Matroska variable size integer";
@@ -391,18 +391,18 @@ namespace ntgcalls::media::containers {
         if (frames_.empty() || !track_) {
             return std::nullopt;
         }
-        auto frame = std::move(frames_.front());
+        auto [data, size, timestamp, keyframe] = std::move(frames_.front());
         frames_.pop_front();
         std::optional<std::chrono::nanoseconds> duration;
         if (track_->default_duration > 0) {
             duration = std::chrono::nanoseconds(track_->default_duration);
         }
         return DemuxedFrame{
-            std::move(frame.data),
-            frame.size,
-            frame.timestamp,
+            std::move(data),
+            size,
+            timestamp,
             duration,
-            {0, webrtc::kVideoRotation_0, track_->width, track_->height, track_->codec, frame.keyframe},
+            {0, webrtc::kVideoRotation_0, track_->width, track_->height, track_->codec, keyframe},
         };
     }
 

@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstring>
 #include <ranges>
 #include <libyuv/rotate.h>
 #include <libyuv/scale.h>

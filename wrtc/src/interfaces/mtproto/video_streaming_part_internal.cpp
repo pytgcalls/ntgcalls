@@ -162,7 +162,7 @@ namespace wrtc::interfaces::mtproto {
                 if (const int send_status = shared_state->send_frame(next_frame.get()); send_status == 0) {
                     if (const int receive_status = shared_state->receive_frame(frame_.get()); receive_status == 0) {
                         if (auto converted_frame = convert_current_frame()) {
-                            frame_index_++;
+                            ++frame_index_;
                             return converted_frame;
                         }
                     } else if (receive_status != AVERROR(EAGAIN)) {
@@ -181,7 +181,7 @@ namespace wrtc::interfaces::mtproto {
                     while (true) {
                         if (const int receive_status = shared_state->receive_frame(frame_.get()); receive_status == 0) {
                             if (auto converted_frame = convert_current_frame()) {
-                                frame_index_++;
+                                ++frame_index_;
                                 final_frames_.push_back(converted_frame.value());
                             }
                         } else {

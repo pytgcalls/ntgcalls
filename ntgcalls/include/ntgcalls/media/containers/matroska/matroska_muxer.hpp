@@ -23,11 +23,11 @@ namespace ntgcalls::media::containers {
         std::optional<int64_t> first_timestamp_;
         std::optional<int64_t> cluster_timestamp_;
 
-        bytes::binary header(const bytes::binary& codec_private) const;
+        [[nodiscard]] bytes::binary header(const bytes::binary& codec_private) const;
 
-        bytes::binary cluster(int64_t timestamp) const;
+        static bytes::binary cluster(int64_t timestamp) ;
 
-        bytes::binary block(const bytes::binary& payload, int64_t relative, bool keyframe) const;
+        static bytes::binary block(const bytes::binary& payload, int64_t relative, bool keyframe) ;
 
         bytes::binary payload(const uint8_t* data, size_t size) const;
 

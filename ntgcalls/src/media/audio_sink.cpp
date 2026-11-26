@@ -36,7 +36,7 @@ namespace ntgcalls::media {
         return changed || force_change;
     }
 
-    std::optional<AudioDescription> AudioSink::get_config() {
+    std::optional<AudioDescription> AudioSink::get_config() const {
         if (const auto description = this->description()) {
             return *description;
         }
