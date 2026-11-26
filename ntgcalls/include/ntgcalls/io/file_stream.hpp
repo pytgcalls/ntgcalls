@@ -22,6 +22,10 @@ namespace ntgcalls::io {
 
         bytes::unique_binary read(int64_t size) override;
 
+        size_t read_some(uint8_t* data, size_t size) override;
+
+        std::optional<int64_t> seek(int64_t offset, int whence) override;
+
         void write(const bytes::unique_binary& data, size_t size) override;
 
         void close() override;

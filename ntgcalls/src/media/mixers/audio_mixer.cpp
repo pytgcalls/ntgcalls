@@ -3,7 +3,6 @@
 //
 
 #include <algorithm>
-#include <array>
 #include <ranges>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
@@ -14,7 +13,11 @@
 #include <wrtc/audio_factory/opus/opus_packet.hpp>
 
 namespace ntgcalls::media::mixers {
-    AudioMixer::AudioMixer(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback): Mixer(sink, std::move(supports), std::move(packet_callback)), opus_(supports_(wrtc::models::Codec::Opus)) {}
+    AudioMixer::AudioMixer(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback): Mixer(sink, std::move(supports), std::move(packet_callback)), opus_(supports_(wrtc::models::Codec::Opus)) {
+        const auto audio_sink = dynamic_cast<AudioSink*>(sink_);
+        const auto description = audio_sink ? audio_sink->get_config() : std::nullopt;
+        encoded_input_ = description && description->is_encoded();
+    }
 
     AudioMixer::~AudioMixer() {
         for (const auto& source : sources_ | std::views::values) {
@@ -22,15 +25,18 @@ namespace ntgcalls::media::mixers {
                 opus_decoder_destroy(source.decoder);
             }
         }
-        if (encoder_) {
-            opus_encoder_destroy(encoder_);
-        }
     }
 
     uint8_t AudioMixer::channels() const {
         const auto audio_sink = dynamic_cast<AudioSink*>(sink_);
         const auto description = audio_sink ? audio_sink->get_config() : std::nullopt;
         return description ? description->channel_count : 2;
+    }
+
+    uint32_t AudioMixer::sample_rate() const {
+        const auto audio_sink = dynamic_cast<AudioSink*>(sink_);
+        const auto description = audio_sink ? audio_sink->get_config() : std::nullopt;
+        return description ? description->sample_rate : wrtc::audio_factory::OpusPacket::kSampleRate;
     }
 
     int64_t AudioMixer::mix_delay() const {
@@ -41,7 +47,7 @@ namespace ntgcalls::media::mixers {
     }
 
     void AudioMixer::send_frames(const std::vector<wrtc::models::Frame> frames) {
-        if (!opus_) {
+        if (!opus_ && !encoded_input_) {
             send_pcm(frames);
             return;
         }
@@ -58,7 +64,8 @@ namespace ntgcalls::media::mixers {
             const int64_t position = (timestamp - *origin_ms_) * kSamplesPerMs;
             if (!source_ssrc_) {
                 source_ssrc_ = frame.ssrc;
-            } else if (!transcoding_ && *source_ssrc_ != frame.ssrc) {
+            }
+            if (!transcoding_ && (!opus_ || *source_ssrc_ != frame.ssrc)) {
                 start_transcoding();
             }
             newest_ = std::max(newest_, position + samples);
@@ -76,7 +83,9 @@ namespace ntgcalls::media::mixers {
     void AudioMixer::start_transcoding() {
         RTC_LOG(LS_INFO) << "More than one participant, re-encoding the Opus recording";
         transcoding_ = true;
-        ensure_encoder();
+        if (opus_) {
+            ensure_encoder();
+        }
         mix_position_ = sources_[*source_ssrc_].position.value_or(0);
         mix_.clear();
     }
@@ -93,7 +102,7 @@ namespace ntgcalls::media::mixers {
             ensure_encoder();
             const int64_t packets = (gap + kPacketSamples / 2) / kPacketSamples;
             for (int64_t i = 0; i < packets; i++) {
-                write_packet(silence_packet_, kPacketSamples);
+                write_packet(encoder_->silence(), kPacketSamples);
             }
             *source.position += packets * kPacketSamples;
         }
@@ -150,32 +159,48 @@ namespace ntgcalls::media::mixers {
                 pcm[i] = static_cast<int16_t>(std::clamp(mix_[i], -32768, 32767));
             }
             mix_.erase(mix_.begin(), mix_.begin() + static_cast<std::ptrdiff_t>(available));
-            std::array<uint8_t, 4000> packet{};
-            const int size = opus_encode(encoder_, pcm.data(), kPacketSamples, packet.data(), static_cast<opus_int32>(packet.size()));
-            write_packet(size > 0 ? bytes::binary{packet.data(), packet.data() + size} : silence_packet_, kPacketSamples);
+            if (opus_) {
+                write_packet(encoder_->encode(pcm.data()), kPacketSamples);
+            } else {
+                write_mixed_pcm(pcm, false);
+            }
             mix_position_ += kPacketSamples;
         }
+    }
+
+    void AudioMixer::write_mixed_pcm(const std::vector<int16_t>& pcm, const bool all) {
+        const auto rate = sample_rate();
+        std::vector<int16_t> output;
+        if (rate == static_cast<uint32_t>(wrtc::audio_factory::OpusPacket::kSampleRate)) {
+            output = pcm;
+        } else {
+            if (!resampler_) {
+                AVChannelLayout layout;
+                av_channel_layout_default(&layout, channels());
+                resampler_ = std::make_unique<codecs::PcmResampler>(layout, AV_SAMPLE_FMT_S16, wrtc::audio_factory::OpusPacket::kSampleRate, channels(), static_cast<int>(rate));
+                av_channel_layout_uninit(&layout);
+            }
+            const auto* input = reinterpret_cast<const uint8_t*>(pcm.data());
+            resampler_->convert(&input, static_cast<int>(pcm.size() / channels()), output);
+            if (all) {
+                resampler_->flush(output);
+            }
+        }
+        if (output.empty()) {
+            return;
+        }
+        const auto size = output.size() * sizeof(int16_t);
+        const auto samples = static_cast<int64_t>(output.size() / channels());
+        write_pcm(bytes::make_unique_binary(output.data(), size), size, rate, std::chrono::microseconds(samples * 1000000 / rate));
     }
 
     void AudioMixer::ensure_encoder() {
         if (encoder_) {
             return;
         }
-        const auto count = channels();
-        int error = 0;
-        encoder_ = opus_encoder_create(wrtc::audio_factory::OpusPacket::kSampleRate, count, OPUS_APPLICATION_AUDIO, &error);
-        if (error != OPUS_OK) {
-            encoder_ = nullptr;
-            throw FileError("Unable to create the Opus encoder");
-        }
         const auto audio_sink = dynamic_cast<AudioSink*>(sink_);
-        if (const auto description = audio_sink ? audio_sink->get_config() : std::nullopt; description && description->bitrate) {
-            opus_encoder_ctl(encoder_, OPUS_SET_BITRATE(static_cast<opus_int32>(*description->bitrate)));
-        }
-        const std::vector<int16_t> silence(static_cast<size_t>(kPacketSamples) * count, 0);
-        std::array<uint8_t, 4000> packet{};
-        const int size = opus_encode(encoder_, silence.data(), kPacketSamples, packet.data(), static_cast<opus_int32>(packet.size()));
-        silence_packet_.assign(packet.data(), packet.data() + std::max(size, 0));
+        const auto description = audio_sink ? audio_sink->get_config() : std::nullopt;
+        encoder_ = std::make_unique<codecs::OpusPacketEncoder>(channels(), description ? description->bitrate : std::nullopt);
     }
 
     bool AudioMixer::ensure_decoder(Source& source) const {
@@ -193,30 +218,30 @@ namespace ntgcalls::media::mixers {
 
     void AudioMixer::write_packet(const bytes::binary& packet, const int samples) const {
         packet_callback_(
-            {wrtc::models::Codec::Opus, channels(), 0, 0},
+            {wrtc::models::Codec::Opus, channels(), 0, 0, wrtc::audio_factory::OpusPacket::kSampleRate},
             {bytes::make_unique_binary(packet.data(), packet.size()), packet.size(), 0, std::chrono::microseconds(static_cast<int64_t>(samples) * 1000 / kSamplesPerMs), true}
         );
     }
 
     void AudioMixer::send_pcm(const std::vector<wrtc::models::Frame>& frames) const {
         const auto frame_size = sink_->frame_size();
-        write_pcm(mix_pcm(frames, frame_size), static_cast<size_t>(frame_size));
+        write_pcm(mix_pcm(frames, frame_size), static_cast<size_t>(frame_size), sample_rate(), std::chrono::duration_cast<std::chrono::microseconds>(sink_->frame_time()));
     }
 
     void AudioMixer::tick() {
-        if (opus_) {
+        if (opus_ || encoded_input_) {
             return;
         }
         const auto size = static_cast<size_t>(sink_->frame_size());
         auto silence = bytes::make_unique_binary(size);
         std::memset(silence.get(), 0, size);
-        write_pcm(std::move(silence), size);
+        write_pcm(std::move(silence), size, sample_rate(), std::chrono::duration_cast<std::chrono::microseconds>(sink_->frame_time()));
     }
 
-    void AudioMixer::write_pcm(bytes::unique_binary data, const size_t size) const {
+    void AudioMixer::write_pcm(bytes::unique_binary data, const size_t size, const uint32_t rate, const std::chrono::microseconds duration) const {
         packet_callback_(
-            {wrtc::models::Codec::PCM, channels(), 0, 0},
-            {std::move(data), size, 0, std::chrono::duration_cast<std::chrono::microseconds>(sink_->frame_time()), true}
+            {wrtc::models::Codec::PCM, channels(), 0, 0, rate},
+            {std::move(data), size, 0, duration, true}
         );
     }
 
@@ -228,6 +253,9 @@ namespace ntgcalls::media::mixers {
         const std::lock_guard lock(mutex_);
         if (transcoding_) {
             encode_mix(true);
+        }
+        if (resampler_) {
+            write_mixed_pcm({}, true);
         }
     }
 

@@ -98,6 +98,15 @@ namespace ntgcalls::io {
         return std::move(data);
     }
 
+    size_t ShellStream::read_some(uint8_t* data, const size_t size) {
+        boost::system::error_code ec;
+        const auto count = std_out_.read_some(asio::buffer(data, size), ec);
+        if (ec && count == 0) {
+            return 0;
+        }
+        return count;
+    }
+
     void ShellStream::write(const bytes::unique_binary& data, const size_t size) {
         boost::system::error_code ec;
         asio::write(std_in_, asio::buffer(data.get(), size), ec);

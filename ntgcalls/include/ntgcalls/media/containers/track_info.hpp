@@ -13,5 +13,6 @@ namespace ntgcalls::media::containers {
         uint8_t channels = 0;
         uint16_t width = 0;
         uint16_t height = 0;
+        uint32_t sample_rate = 48000;
     };
 } // ntgcalls::media::containers

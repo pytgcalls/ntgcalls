@@ -84,7 +84,7 @@ class TestGroupCall(unittest.IsolatedAsyncioTestCase):
         await self.calls.create_call(CHAT_ID)
         with self.assertRaises(ntgcalls.InvalidParams):
             await self.calls.set_stream_sources(CHAT_ID, ntgcalls.StreamMode.CAPTURE, ntgcalls.MediaDescription(
-                microphone=ntgcalls.AudioDescription(ntgcalls.MediaSource.FILE, 48000, 2, 'input.mkv', False, format=ntgcalls.Format.MATROSKA),
+                microphone=ntgcalls.AudioDescription(ntgcalls.MediaSource.FILE, 48000, 2, 'input.raw', False, format=ntgcalls.Format.I420),
             ))
         with self.assertRaises(ntgcalls.InvalidParams):
             await self.calls.set_stream_sources(CHAT_ID, ntgcalls.StreamMode.CAPTURE, ntgcalls.MediaDescription(

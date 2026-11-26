@@ -23,7 +23,12 @@ namespace ntgcalls::media {
             PCM,
             Ogg,
             I420,
-            Matroska
+            Matroska,
+            Auto,
+            Webm,
+            MP4,
+            WAV,
+            FLAC
         };
 
         std::string input;
@@ -51,7 +56,7 @@ namespace ntgcalls::media {
         BaseMediaDescription(input, media_source, keep_open), sample_rate(sample_rate), channel_count(channel_count), bitrate(bitrate), format(format), max_delay_ms(max_delay_ms) {}
 
         [[nodiscard]] Format effective_format() const override {
-            return format.value_or(Format::Ogg);
+            return format.value_or(Format::Auto);
         }
 
         [[nodiscard]] bool is_encoded() const override {
@@ -79,7 +84,7 @@ namespace ntgcalls::media {
         BaseMediaDescription(input, media_source, keep_open), width(width), height(height), fps(fps), format(format) {}
 
         [[nodiscard]] Format effective_format() const override {
-            return format.value_or(Format::Matroska);
+            return format.value_or(Format::Auto);
         }
 
         [[nodiscard]] bool is_encoded() const override {

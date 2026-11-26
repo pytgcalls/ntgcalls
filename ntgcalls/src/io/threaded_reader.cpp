@@ -3,6 +3,8 @@
 //
 
 #include <algorithm>
+#include <cstring>
+#include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/threaded_reader.hpp>
 
 namespace ntgcalls::io {
@@ -96,5 +98,19 @@ namespace ntgcalls::io {
         const auto res = BaseReader::set_enabled(enable);
         cv_.notify_all();
         return res;
+    }
+
+    size_t ThreadedReader::read_some(uint8_t* data, const size_t size) {
+        try {
+            const auto chunk = read(static_cast<int64_t>(size));
+            std::memcpy(data, chunk.get(), size);
+            return size;
+        } catch (const EOFError&) {
+            return 0;
+        }
+    }
+
+    std::optional<int64_t> ThreadedReader::seek(int64_t, int) {
+        return std::nullopt;
     }
 } // ntgcalls::io

@@ -2,6 +2,7 @@
 // Created by Lauren on 04/08/23.
 //
 
+#include <cstdio>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/io/file_stream.hpp>
 #include <rtc_base/logging.h>
@@ -37,6 +38,52 @@ namespace ntgcalls::io {
             throw FileError("Error while reading the file");
         }
         return std::move(data);
+    }
+
+    size_t FileStream::read_some(uint8_t* data, const size_t size) {
+        const std::lock_guard lock(mutex_);
+        if (!file_.is_open()) {
+            return 0;
+        }
+        file_.clear();
+        file_.seekg(read_bytes_, std::ios::beg);
+        file_.read(reinterpret_cast<char*>(data), static_cast<std::streamsize>(size));
+        const auto count = file_.gcount();
+        read_bytes_ += count;
+        if (file_.bad()) {
+            RTC_LOG(LS_ERROR) << "Error while reading the file";
+            throw FileError("Error while reading the file");
+        }
+        return static_cast<size_t>(count);
+    }
+
+    std::optional<int64_t> FileStream::seek(const int64_t offset, const int whence) {
+        const std::lock_guard lock(mutex_);
+        if (!file_.is_open()) {
+            return std::nullopt;
+        }
+        file_.clear();
+        file_.seekg(0, std::ios::end);
+        const int64_t size = file_.tellg();
+        int64_t position;
+        switch (whence) {
+        case SEEK_SET:
+            position = offset;
+            break;
+        case SEEK_CUR:
+            position = read_bytes_ + offset;
+            break;
+        case SEEK_END:
+            position = size + offset;
+            break;
+        default:
+            return size;
+        }
+        if (position < 0 || position > size) {
+            return std::nullopt;
+        }
+        read_bytes_ = position;
+        return position;
     }
 
     void FileStream::write(const bytes::unique_binary& data, const size_t size) {

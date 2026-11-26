@@ -195,6 +195,15 @@ namespace ntgcalls::media::mixers {
         encoder_->Encode(frame, &types);
     }
 
+    wrtc::models::Codec VideoMixer::encoding_codec() const {
+        for (const auto codec : {wrtc::models::Codec::VP8, wrtc::models::Codec::H264, wrtc::models::Codec::VP9, wrtc::models::Codec::AV1}) {
+            if (supports_(codec)) {
+                return codec;
+            }
+        }
+        return wrtc::models::Codec::VP8;
+    }
+
     bool VideoMixer::ensure_encoder() {
         if (encoder_) {
             return true;
@@ -203,7 +212,7 @@ namespace ntgcalls::media::mixers {
         if (!description) {
             return false;
         }
-        const auto codec = codec_.value_or(wrtc::models::Codec::VP8);
+        const auto codec = codec_.value_or(encoding_codec());
         const auto factory = wrtc::interfaces::peer_connection::PeerConnectionFactory::get_or_create_default()->video_encoder_factory();
         encoder_ = factory->Create(wrtc::interfaces::peer_connection::PeerConnectionFactory::environment(), sdp_format(codec));
         if (!encoder_) {

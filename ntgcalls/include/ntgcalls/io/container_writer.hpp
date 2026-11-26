@@ -13,6 +13,7 @@
 #include <ntgcalls/io/threaded_writer.hpp>
 #include <ntgcalls/media/containers/muxer.hpp>
 #include <ntgcalls/media/mixers/mixer.hpp>
+#include <rtc_base/logging.h>
 
 namespace ntgcalls::io {
 
@@ -22,6 +23,7 @@ namespace ntgcalls::io {
 
         std::mutex muxer_mutex_;
         std::optional<Muxer> muxer_;
+        bool failed_ = false;
         std::atomic<std::thread::id> ticking_thread_;
         std::vector<media::containers::MuxedChunk> idle_chunks_;
         Mixer mixer_;
@@ -30,10 +32,18 @@ namespace ntgcalls::io {
             media::containers::MuxedChunk chunk;
             {
                 const std::lock_guard lock(muxer_mutex_);
-                if (!muxer_) {
-                    muxer_.emplace(track);
+                if (failed_) {
+                    return;
                 }
-                chunk = muxer_->add(std::move(packet));
+                try {
+                    if (!muxer_) {
+                        muxer_.emplace(track);
+                    }
+                    chunk = muxer_->add(std::move(packet));
+                } catch (const std::exception& e) {
+                    stop_writing(e);
+                    return;
+                }
                 if (chunk.size == 0) {
                     return;
                 }
@@ -43,6 +53,12 @@ namespace ntgcalls::io {
                 }
             }
             push(std::move(chunk.data), chunk.size);
+        }
+
+        void stop_writing(const std::exception& e) {
+            RTC_LOG(LS_ERROR) << "Stopping the recording: " << e.what();
+            failed_ = true;
+            muxer_.reset();
         }
 
         static std::optional<std::pair<bytes::unique_binary, size_t>> join(std::vector<media::containers::MuxedChunk> chunks) {
@@ -91,7 +107,12 @@ namespace ntgcalls::io {
         }) {}
 
         void send_frames(std::vector<wrtc::models::Frame> frames) override {
-            mixer_.send_frames(std::move(frames));
+            try {
+                mixer_.send_frames(std::move(frames));
+            } catch (const std::exception& e) {
+                const std::lock_guard lock(muxer_mutex_);
+                stop_writing(e);
+            }
         }
 
         void remove_source(const int64_t ssrc) override {
@@ -99,12 +120,21 @@ namespace ntgcalls::io {
         }
 
         void flush() override {
-            mixer_.flush();
+            try {
+                mixer_.flush();
+            } catch (const std::exception& e) {
+                const std::lock_guard lock(muxer_mutex_);
+                stop_writing(e);
+            }
             media::containers::MuxedChunk chunk;
             {
                 const std::lock_guard lock(muxer_mutex_);
-                if (muxer_) {
-                    chunk = muxer_->finish();
+                try {
+                    if (muxer_) {
+                        chunk = muxer_->finish();
+                    }
+                } catch (const std::exception& e) {
+                    stop_writing(e);
                 }
             }
             if (chunk.size > 0) {

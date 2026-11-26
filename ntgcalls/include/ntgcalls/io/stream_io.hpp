@@ -7,6 +7,7 @@
 #include <concepts>
 #include <string>
 #include <ntgcalls/io/base_stream.hpp>
+#include <ntgcalls/io/file_stream.hpp>
 #include <ntgcalls/io/threaded_reader.hpp>
 #include <ntgcalls/io/threaded_writer.hpp>
 
@@ -21,8 +22,20 @@ namespace ntgcalls::io {
             return Stream::read(size);
         }
 
+        size_t read_some(uint8_t* data, const size_t size) override {
+            return Stream::read_some(data, size);
+        }
+
+        std::optional<int64_t> seek(const int64_t offset, const int whence) override {
+            return Stream::seek(offset, whence);
+        }
+
     public:
-        StreamIO(const std::string& input, media::BaseSink* sink): BaseIO(sink), Format(sink), Stream(input, BaseStream::Mode::Read) {}
+        StreamIO(const std::string& input, media::BaseSink* sink): BaseIO(sink), Format(sink), Stream(input, BaseStream::Mode::Read) {
+            if constexpr (std::same_as<Stream, FileStream>) {
+                Format::prepare();
+            }
+        }
 
         ~StreamIO() override {
             Stream::interrupt();

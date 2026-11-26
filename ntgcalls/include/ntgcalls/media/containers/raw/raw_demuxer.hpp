@@ -20,11 +20,7 @@ namespace ntgcalls::media::containers {
     public:
         explicit RawDemuxer(BaseSink* sink);
 
-        void feed(bytes::unique_binary data, size_t size) override;
-
-        [[nodiscard]] int64_t missing() const override;
-
-        std::optional<DemuxedFrame> next() override;
+        std::optional<DemuxedFrame> next(ByteSource& source) override;
     };
 
 } // ntgcalls::media::containers

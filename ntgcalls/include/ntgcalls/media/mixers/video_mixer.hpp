@@ -47,6 +47,8 @@ namespace ntgcalls::media::mixers {
 
         bool ensure_decoder(int64_t ssrc, wrtc::models::Codec codec);
 
+        [[nodiscard]] wrtc::models::Codec encoding_codec() const;
+
         bool ensure_encoder();
 
         void write_frame(const uint8_t* data, size_t size, int64_t timestamp_ms, bool keyframe) const;
