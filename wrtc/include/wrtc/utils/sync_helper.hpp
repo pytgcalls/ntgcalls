@@ -5,11 +5,13 @@
 #pragma once
 
 #include <chrono>
+#include <mutex>
 
 namespace wrtc::utils {
 
     class SyncHelper {
         std::chrono::nanoseconds frame_time_;
+        std::mutex mutex_;
         std::chrono::steady_clock::time_point next_frame_time_;
 
     public:

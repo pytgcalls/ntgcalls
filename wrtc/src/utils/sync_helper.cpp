@@ -10,6 +10,7 @@ namespace wrtc::utils {
     SyncHelper::SyncHelper(const std::chrono::nanoseconds frame_time): frame_time_(frame_time) {}
 
     void SyncHelper::synchronize_time(const std::chrono::steady_clock::time_point time) {
+        const std::lock_guard lock(mutex_);
         if (time <= std::chrono::steady_clock::time_point{}) {
             next_frame_time_ = std::chrono::steady_clock::now();
         } else {
@@ -22,8 +23,13 @@ namespace wrtc::utils {
     }
 
     void SyncHelper::wait_next_frame(const std::chrono::nanoseconds duration) {
-        next_frame_time_ += duration;
-        std::this_thread::sleep_until(next_frame_time_);
+        std::chrono::steady_clock::time_point deadline;
+        {
+            const std::lock_guard lock(mutex_);
+            next_frame_time_ += duration;
+            deadline = next_frame_time_;
+        }
+        std::this_thread::sleep_until(deadline);
     }
 
 } // wrtc::utils
