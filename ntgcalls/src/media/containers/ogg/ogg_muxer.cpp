@@ -7,35 +7,46 @@
 #include <ntgcalls/media/containers/ogg/ogg_muxer.hpp>
 
 namespace ntgcalls::media::containers {
-    OggMuxer::OggMuxer(const uint8_t channels): channels_(channels), serial_(std::random_device{}()) {}
+    OggMuxer::OggMuxer(const TrackInfo& track): channels_(track.channels), serial_(std::random_device{}()) {}
 
-    std::vector<bytes::binary> OggMuxer::add(bytes::binary packet, const int samples) {
+    bool OggMuxer::supports(const wrtc::models::Codec codec) {
+        return codec == wrtc::models::Codec::Opus;
+    }
+
+    bytes::binary OggMuxer::add(const EncodedPacket& packet) {
         std::vector<bytes::binary> pages;
-        if (packet.empty()) {
-            return pages;
+        if (packet.data.empty()) {
+            return {};
         }
         write_headers(pages);
-        const auto packet_segments = segments(packet.size());
+        const auto packet_segments = segments(packet.data.size());
         if (packets_.size() >= kMaxPagePackets || segments_ + packet_segments > kMaxPageSegments) {
             pages.push_back(page(packets_, 0));
             packets_.clear();
             segments_ = 0;
         }
-        granule_ += samples;
+        granule_ += packet.duration.count() * kSampleRate / 1000000;
         segments_ += packet_segments;
-        packets_.push_back(std::move(packet));
-        return pages;
+        packets_.emplace_back(packet.data.begin(), packet.data.end());
+        return join(pages);
     }
 
-    std::vector<bytes::binary> OggMuxer::finish() {
-        std::vector<bytes::binary> pages;
+    bytes::binary OggMuxer::finish() {
         if (!headers_written_) {
-            return pages;
+            return {};
         }
-        pages.push_back(page(packets_, 0x04));
+        const auto last = page(packets_, 0x04);
         packets_.clear();
         segments_ = 0;
-        return pages;
+        return last;
+    }
+
+    bytes::binary OggMuxer::join(const std::vector<bytes::binary>& pages) {
+        bytes::binary output;
+        for (const auto& page : pages) {
+            output.insert(output.end(), page.begin(), page.end());
+        }
+        return output;
     }
 
     uint64_t OggMuxer::granule() const {

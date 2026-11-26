@@ -7,12 +7,13 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <wrtc/models/codec.hpp>
-#include <wrtc/utils/binary.hpp>
+#include <ntgcalls/media/containers/media_kind.hpp>
+#include <ntgcalls/media/containers/muxer.hpp>
+#include <ntgcalls/media/containers/track_info.hpp>
 
 namespace ntgcalls::media::containers {
 
-    class MatroskaMuxer {
+    class MatroskaMuxer final: public Muxer {
         static constexpr int64_t kMaxClusterDuration = 30000;
 
         wrtc::models::Codec codec_;
@@ -47,9 +48,15 @@ namespace ntgcalls::media::containers {
         static void append_size(bytes::binary& output, uint64_t size);
 
     public:
-        MatroskaMuxer(wrtc::models::Codec codec, uint16_t width, uint16_t height);
+        explicit MatroskaMuxer(const TrackInfo& track);
 
-        bytes::binary add(const uint8_t* data, size_t size, int64_t timestamp_ms, bool keyframe);
+        bytes::binary add(const EncodedPacket& packet) override;
+
+        bytes::binary finish() override;
+
+        static constexpr bool supports(const MediaKind kind) {
+            return kind == MediaKind::Video;
+        }
 
         static bool supports(wrtc::models::Codec codec);
     };

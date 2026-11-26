@@ -1,21 +1,21 @@
 //
-// Created by Lauren on 20/11/26.
+// Created by Lauren on 26/11/26.
 //
 
 #pragma once
 
 #include <deque>
 #include <map>
-#include <memory>
-#include <ntgcalls/io/threaded_writer.hpp>
-#include <ntgcalls/media/containers/ogg/ogg_muxer.hpp>
+#include <mutex>
+#include <optional>
+#include <ntgcalls/media/recorders/recorder.hpp>
 
 struct OpusDecoder;
 struct OpusEncoder;
 
-namespace ntgcalls::io {
+namespace ntgcalls::media::recorders {
 
-    class OggWriter: public ThreadedWriter {
+    class AudioRecorder final: public Recorder {
         static constexpr int kPacketSamples = 960;
         static constexpr int kSamplesPerMs = 48;
 
@@ -25,7 +25,6 @@ namespace ntgcalls::io {
         };
 
         std::mutex mutex_;
-        std::unique_ptr<media::containers::OggMuxer> muxer_;
         std::optional<int64_t> origin_ms_;
         int64_t newest_ = 0;
         std::optional<int64_t> source_ssrc_;
@@ -44,9 +43,7 @@ namespace ntgcalls::io {
 
         bool ensure_decoder(Source& source) const;
 
-        void write_packet(bytes::binary packet, int samples);
-
-        void push_pages(const std::vector<bytes::binary>& pages);
+        void write_packet(const bytes::binary& packet, int samples) const;
 
         void start_transcoding();
 
@@ -59,13 +56,17 @@ namespace ntgcalls::io {
         void encode_mix(bool all);
 
     public:
-        explicit OggWriter(media::BaseSink* sink);
+        static constexpr auto kKind = containers::MediaKind::Audio;
 
-        ~OggWriter() override;
+        AudioRecorder(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback);
+
+        ~AudioRecorder() override;
 
         void send_frames(std::vector<wrtc::models::Frame> frames) override;
+
+        [[nodiscard]] std::chrono::nanoseconds tick_interval() const override;
 
         void flush() override;
     };
 
-} // ntgcalls::io
+} // ntgcalls::media::recorders

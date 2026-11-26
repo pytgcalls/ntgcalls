@@ -3,18 +3,21 @@
 //
 
 #include <ntgcalls/io/container_reader.hpp>
+#include <ntgcalls/io/container_writer.hpp>
 #include <ntgcalls/io/file_reader.hpp>
-#include <ntgcalls/io/matroska_writer.hpp>
 #include <ntgcalls/io/file_writer.hpp>
-#include <ntgcalls/io/ogg_writer.hpp>
 #include <ntgcalls/io/raw_reader.hpp>
 #include <ntgcalls/io/raw_writer.hpp>
 #include <ntgcalls/io/shell_reader.hpp>
 #include <ntgcalls/io/shell_writer.hpp>
 #include <ntgcalls/media/containers/matroska/matroska_demuxer.hpp>
+#include <ntgcalls/media/containers/matroska/matroska_muxer.hpp>
 #include <ntgcalls/media/containers/ogg/ogg_demuxer.hpp>
+#include <ntgcalls/media/containers/ogg/ogg_muxer.hpp>
 #include <ntgcalls/media/media_source_factory.hpp>
 #include <ntgcalls/media/devices/media_device.hpp>
+#include <ntgcalls/media/recorders/audio_recorder.hpp>
+#include <ntgcalls/media/recorders/video_recorder.hpp>
 #include <rtc_base/logging.h>
 
 #define BOOST_THROW                                                                      \
@@ -34,23 +37,25 @@ namespace ntgcalls::media {
         switch (desc.media_source) {
         case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file reader for " << desc.input;
-            if (is_encoded(desc) && dynamic_cast<const VideoDescription*>(&desc)) {
+            switch (resolve_format(desc)) {
+            case BaseMediaDescription::Format::Matroska:
                 return std::make_unique<io::FileReader<io::ContainerReader<containers::MatroskaDemuxer>>>(desc.input, sink);
-            }
-            if (is_encoded(desc)) {
+            case BaseMediaDescription::Format::Ogg:
                 return std::make_unique<io::FileReader<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
+            default:
+                return std::make_unique<io::FileReader<io::RawReader>>(desc.input, sink);
             }
-            return std::make_unique<io::FileReader<io::RawReader>>(desc.input, sink);
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell reader for " << desc.input;
-            if (is_encoded(desc) && dynamic_cast<const VideoDescription*>(&desc)) {
+            switch (resolve_format(desc)) {
+            case BaseMediaDescription::Format::Matroska:
                 return std::make_unique<io::ShellReader<io::ContainerReader<containers::MatroskaDemuxer>>>(desc.input, sink);
-            }
-            if (is_encoded(desc)) {
+            case BaseMediaDescription::Format::Ogg:
                 return std::make_unique<io::ShellReader<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
+            default:
+                return std::make_unique<io::ShellReader<io::RawReader>>(desc.input, sink);
             }
-            return std::make_unique<io::ShellReader<io::RawReader>>(desc.input, sink);
 #else
             BOOST_THROW
 #endif
@@ -70,7 +75,7 @@ namespace ntgcalls::media {
         }
     }
 
-    bool MediaSourceFactory::is_encoded(const BaseMediaDescription& desc) {
+    BaseMediaDescription::Format MediaSourceFactory::resolve_format(const BaseMediaDescription& desc) {
         if (const auto* audio = dynamic_cast<const AudioDescription*>(&desc)) {
             if (const auto format = audio->format; format && *format != BaseMediaDescription::Format::Ogg && *format != BaseMediaDescription::Format::PCM) {
                 RTC_LOG(LS_ERROR) << "Invalid audio format";
@@ -83,7 +88,7 @@ namespace ntgcalls::media {
                 throw InvalidParams("Video supports only the Matroska and I420 formats");
             }
         }
-        return desc.is_encoded();
+        return desc.effective_format();
     }
 
     std::unique_ptr<io::BaseWriter> MediaSourceFactory::from_output(const BaseMediaDescription& desc, BaseSink* sink) {
@@ -96,23 +101,25 @@ namespace ntgcalls::media {
         switch (desc.media_source) {
         case BaseMediaDescription::MediaSource::File:
             RTC_LOG(LS_INFO) << "Using file writer for " << desc.input;
-            if (is_encoded(desc) && video) {
-                return std::make_unique<io::FileWriter<io::MatroskaWriter>>(desc.input, sink);
+            switch (resolve_format(desc)) {
+            case BaseMediaDescription::Format::Matroska:
+                return std::make_unique<io::FileWriter<io::ContainerWriter<recorders::VideoRecorder, containers::MatroskaMuxer>>>(desc.input, sink);
+            case BaseMediaDescription::Format::Ogg:
+                return std::make_unique<io::FileWriter<io::ContainerWriter<recorders::AudioRecorder, containers::OggMuxer>>>(desc.input, sink);
+            default:
+                return std::make_unique<io::FileWriter<io::RawWriter>>(desc.input, sink);
             }
-            if (is_encoded(desc)) {
-                return std::make_unique<io::FileWriter<io::OggWriter>>(desc.input, sink);
-            }
-            return std::make_unique<io::FileWriter<io::RawWriter>>(desc.input, sink);
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell writer for " << desc.input;
-            if (is_encoded(desc) && video) {
-                return std::make_unique<io::ShellWriter<io::MatroskaWriter>>(desc.input, sink);
+            switch (resolve_format(desc)) {
+            case BaseMediaDescription::Format::Matroska:
+                return std::make_unique<io::ShellWriter<io::ContainerWriter<recorders::VideoRecorder, containers::MatroskaMuxer>>>(desc.input, sink);
+            case BaseMediaDescription::Format::Ogg:
+                return std::make_unique<io::ShellWriter<io::ContainerWriter<recorders::AudioRecorder, containers::OggMuxer>>>(desc.input, sink);
+            default:
+                return std::make_unique<io::ShellWriter<io::RawWriter>>(desc.input, sink);
             }
-            if (is_encoded(desc)) {
-                return std::make_unique<io::ShellWriter<io::OggWriter>>(desc.input, sink);
-            }
-            return std::make_unique<io::ShellWriter<io::RawWriter>>(desc.input, sink);
 #else
             BOOST_THROW
 #endif

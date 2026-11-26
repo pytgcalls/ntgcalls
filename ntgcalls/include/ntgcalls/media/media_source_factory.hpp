@@ -10,7 +10,7 @@
 namespace ntgcalls::media {
 
     class MediaSourceFactory {
-        static bool is_encoded(const BaseMediaDescription& desc);
+        static BaseMediaDescription::Format resolve_format(const BaseMediaDescription& desc);
 
     public:
         static std::unique_ptr<io::BaseReader> from_input(const BaseMediaDescription& desc, BaseSink* sink);

@@ -34,6 +34,8 @@ namespace ntgcalls::media {
 
         virtual ~BaseMediaDescription() = default;
 
+        [[nodiscard]] virtual Format effective_format() const = 0;
+
         [[nodiscard]] virtual bool is_encoded() const = 0;
     };
 
@@ -48,8 +50,12 @@ namespace ntgcalls::media {
         AudioDescription(const MediaSource media_source, const uint32_t sample_rate, const uint8_t channel_count, const std::string& input, const bool keep_open, const std::optional<uint32_t>& bitrate = std::nullopt, const std::optional<Format>& format = std::nullopt, const std::optional<uint32_t>& max_delay_ms = std::nullopt):
         BaseMediaDescription(input, media_source, keep_open), sample_rate(sample_rate), channel_count(channel_count), bitrate(bitrate), format(format), max_delay_ms(max_delay_ms) {}
 
+        [[nodiscard]] Format effective_format() const override {
+            return format.value_or(Format::Ogg);
+        }
+
         [[nodiscard]] bool is_encoded() const override {
-            return media_source != MediaSource::Device && format.value_or(Format::Ogg) == Format::Ogg;
+            return media_source != MediaSource::Device && effective_format() != Format::PCM;
         }
     };
 
@@ -72,8 +78,12 @@ namespace ntgcalls::media {
         VideoDescription(const MediaSource media_source, const int16_t width, const int16_t height, const uint8_t fps, const std::string& input, const bool keep_open, const std::optional<Format>& format = std::nullopt):
         BaseMediaDescription(input, media_source, keep_open), width(width), height(height), fps(fps), format(format) {}
 
+        [[nodiscard]] Format effective_format() const override {
+            return format.value_or(Format::Matroska);
+        }
+
         [[nodiscard]] bool is_encoded() const override {
-            return media_source != MediaSource::Device && media_source != MediaSource::Desktop && format.value_or(Format::Matroska) == Format::Matroska;
+            return media_source != MediaSource::Device && media_source != MediaSource::Desktop && effective_format() != Format::I420;
         }
     };
 

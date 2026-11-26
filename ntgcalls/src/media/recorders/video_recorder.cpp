@@ -2,7 +2,6 @@
 // Created by Lauren on 20/11/26.
 //
 
-#include <cstring>
 #include <ranges>
 #include <api/video/encoded_image.h>
 #include <api/video/i420_buffer.h>
@@ -10,22 +9,22 @@
 #include <media/base/media_constants.h>
 #include <modules/video_coding/include/video_codec_interface.h>
 #include <modules/video_coding/include/video_error_codes.h>
-#include <ntgcalls/io/matroska_writer.hpp>
+#include <ntgcalls/media/recorders/video_recorder.hpp>
 #include <ntgcalls/media/video_sink.hpp>
 #include <rtc_base/logging.h>
 #include <rtc_base/time_utils.h>
 #include <wrtc/interfaces/peer_connection/peer_connection_factory.hpp>
 
-namespace ntgcalls::io {
-    MatroskaWriter::MatroskaWriter(media::BaseSink* sink): BaseIO(sink), ThreadedWriter(sink) {
-        if (const auto video_sink = dynamic_cast<media::VideoSink*>(sink)) {
+namespace ntgcalls::media::recorders {
+    VideoRecorder::VideoRecorder(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback): Recorder(sink, std::move(supports), std::move(packet_callback)) {
+        if (const auto video_sink = dynamic_cast<VideoSink*>(sink)) {
             if (const auto description = video_sink->get_config()) {
-                composer_ = std::make_unique<media::composer::VideoComposer>(description->width, description->height);
+                composer_ = std::make_unique<composer::VideoComposer>(description->width, description->height);
             }
         }
     }
 
-    MatroskaWriter::~MatroskaWriter() {
+    VideoRecorder::~VideoRecorder() {
         const std::lock_guard lock(state_mutex_);
         for (const auto& decoder : decoders_ | std::views::values) {
             decoder->Release();
@@ -35,14 +34,14 @@ namespace ntgcalls::io {
         }
     }
 
-    void MatroskaWriter::send_frames(std::vector<wrtc::models::Frame> frames) {
+    void VideoRecorder::send_frames(std::vector<wrtc::models::Frame> frames) {
         const std::lock_guard lock(state_mutex_);
         for (const auto& frame : frames) {
             if (!composing_) {
                 if (!source_ssrc_) {
                     source_ssrc_ = frame.ssrc;
                 }
-                if (*source_ssrc_ != frame.ssrc || !media::containers::MatroskaMuxer::supports(frame.frame_data.codec)) {
+                if (*source_ssrc_ != frame.ssrc || !supports_(frame.frame_data.codec)) {
                     RTC_LOG(LS_INFO) << "Composing the video recording, which re-encodes it";
                     composing_ = true;
                 }
@@ -55,21 +54,21 @@ namespace ntgcalls::io {
         }
     }
 
-    void MatroskaWriter::remove_source(const int64_t ssrc) {
+    void VideoRecorder::remove_source(const int64_t ssrc) {
         if (composer_) {
             composer_->remove(ssrc);
         }
     }
 
-    void MatroskaWriter::forward(const wrtc::models::Frame& frame) {
-        if (!muxer_) {
+    void VideoRecorder::forward(const wrtc::models::Frame& frame) {
+        if (!track_) {
             codec_ = frame.frame_data.codec;
-            muxer_ = std::make_unique<media::containers::MatroskaMuxer>(*codec_, frame.frame_data.width, frame.frame_data.height);
+            track_ = containers::TrackInfo{*codec_, 0, frame.frame_data.width, frame.frame_data.height};
         }
         write_frame(frame.data.data(), frame.data.size(), frame.frame_data.absolute_capture_timestamp_ms, frame.frame_data.keyframe);
     }
 
-    void MatroskaWriter::decode(const wrtc::models::Frame& frame) {
+    void VideoRecorder::decode(const wrtc::models::Frame& frame) {
         if (!composer_ || !ensure_decoder(frame.ssrc, frame.frame_data.codec)) {
             return;
         }
@@ -88,7 +87,7 @@ namespace ntgcalls::io {
         decoders_[frame.ssrc]->Decode(image, 0);
     }
 
-    bool MatroskaWriter::ensure_decoder(const int64_t ssrc, const wrtc::models::Codec codec) {
+    bool VideoRecorder::ensure_decoder(const int64_t ssrc, const wrtc::models::Codec codec) {
         if (const auto it = decoder_codecs_.find(ssrc); it != decoder_codecs_.end() && it->second == codec) {
             return decoders_[ssrc] != nullptr;
         }
@@ -116,7 +115,7 @@ namespace ntgcalls::io {
         return true;
     }
 
-    int32_t MatroskaWriter::Decoded(webrtc::VideoFrame& decoded_image) {
+    int32_t VideoRecorder::Decoded(webrtc::VideoFrame& decoded_image) {
         const auto buffer = decoded_image.video_frame_buffer()->ToI420();
         const auto width = buffer->width();
         const auto height = buffer->height();
@@ -138,12 +137,12 @@ namespace ntgcalls::io {
         return WEBRTC_VIDEO_CODEC_OK;
     }
 
-    std::optional<std::pair<bytes::unique_binary, size_t>> MatroskaWriter::idle_data() {
+    void VideoRecorder::tick() {
         const std::lock_guard lock(state_mutex_);
         if (!composing_ || !composer_ || !ensure_encoder()) {
-            return std::nullopt;
+            return;
         }
-        const auto description = dynamic_cast<media::VideoSink*>(sink_)->get_config();
+        const auto description = dynamic_cast<VideoSink*>(sink_)->get_config();
         const int width = description->width & ~1;
         const int height = description->height & ~1;
         const auto composed = composer_->compose();
@@ -167,14 +166,13 @@ namespace ntgcalls::io {
         }
         const std::vector types{keyframe ? webrtc::VideoFrameType::kVideoFrameKey : webrtc::VideoFrameType::kVideoFrameDelta};
         encoder_->Encode(frame, &types);
-        return std::nullopt;
     }
 
-    bool MatroskaWriter::ensure_encoder() {
+    bool VideoRecorder::ensure_encoder() {
         if (encoder_) {
             return true;
         }
-        const auto description = dynamic_cast<media::VideoSink*>(sink_)->get_config();
+        const auto description = dynamic_cast<VideoSink*>(sink_)->get_config();
         if (!description) {
             return false;
         }
@@ -212,35 +210,29 @@ namespace ntgcalls::io {
         webrtc::VideoBitrateAllocation allocation;
         allocation.SetBitrate(0, 0, kComposedBitrate);
         encoder_->SetRates(webrtc::VideoEncoder::RateControlParameters(allocation, settings.maxFramerate));
-        if (!muxer_) {
+        if (!track_) {
             codec_ = codec;
-            muxer_ = std::make_unique<media::containers::MatroskaMuxer>(codec, settings.width, settings.height);
+            track_ = containers::TrackInfo{codec, 0, static_cast<uint16_t>(settings.width), static_cast<uint16_t>(settings.height)};
         }
         return true;
     }
 
-    webrtc::EncodedImageCallback::Result MatroskaWriter::OnEncodedImage(const webrtc::EncodedImage& encoded_image, const webrtc::CodecSpecificInfo*) {
+    webrtc::EncodedImageCallback::Result VideoRecorder::OnEncodedImage(const webrtc::EncodedImage& encoded_image, const webrtc::CodecSpecificInfo*) {
         write_frame(encoded_image.data(), encoded_image.size(), webrtc::TimeMillis(), encoded_image._frameType == webrtc::VideoFrameType::kVideoFrameKey);
         return Result(Result::OK);
     }
 
-    void MatroskaWriter::OnFrameDropped(uint32_t, int, bool) {}
+    void VideoRecorder::OnFrameDropped(uint32_t, int, bool) {}
 
-    void MatroskaWriter::write_frame(const uint8_t* data, const size_t size, const int64_t timestamp_ms, const bool keyframe) {
-        auto output = muxer_->add(data, size, timestamp_ms, keyframe);
-        if (output.empty()) {
-            return;
-        }
-        auto buffer = bytes::make_unique_binary(output.size());
-        std::memcpy(buffer.get(), output.data(), output.size());
-        push(std::move(buffer), output.size());
+    void VideoRecorder::write_frame(const uint8_t* data, const size_t size, const int64_t timestamp_ms, const bool keyframe) const {
+        packet_callback_(*track_, {bytes::const_span(data, size), timestamp_ms, std::chrono::microseconds(0), keyframe});
     }
 
-    std::chrono::nanoseconds MatroskaWriter::idle_interval() const {
+    std::chrono::nanoseconds VideoRecorder::tick_interval() const {
         return sink_->frame_time();
     }
 
-    webrtc::SdpVideoFormat MatroskaWriter::sdp_format(const wrtc::models::Codec codec) {
+    webrtc::SdpVideoFormat VideoRecorder::sdp_format(const wrtc::models::Codec codec) {
         switch (codec) {
         case wrtc::models::Codec::VP8:
             return webrtc::SdpVideoFormat(webrtc::kVp8CodecName);
@@ -253,7 +245,7 @@ namespace ntgcalls::io {
         }
     }
 
-    webrtc::VideoCodecType MatroskaWriter::codec_type(const wrtc::models::Codec codec) {
+    webrtc::VideoCodecType VideoRecorder::codec_type(const wrtc::models::Codec codec) {
         switch (codec) {
         case wrtc::models::Codec::VP8:
             return webrtc::kVideoCodecVP8;
@@ -265,4 +257,4 @@ namespace ntgcalls::io {
             return webrtc::kVideoCodecH264;
         }
     }
-} // ntgcalls::io
+} // ntgcalls::media::recorders

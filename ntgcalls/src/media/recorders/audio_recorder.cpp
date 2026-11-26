@@ -6,17 +6,17 @@
 #include <array>
 #include <ranges>
 #include <ntgcalls/exceptions.hpp>
-#include <ntgcalls/io/ogg_writer.hpp>
 #include <ntgcalls/media/audio_sink.hpp>
+#include <ntgcalls/media/recorders/audio_recorder.hpp>
 #include <rtc_base/logging.h>
 #include <third_party/opus/src/include/opus.h>
 #include <wrtc/audio_factory/opus/opus_jitter_buffer.hpp>
 #include <wrtc/audio_factory/opus/opus_packet.hpp>
 
-namespace ntgcalls::io {
-    OggWriter::OggWriter(media::BaseSink* sink): BaseIO(sink), ThreadedWriter(sink) {}
+namespace ntgcalls::media::recorders {
+    AudioRecorder::AudioRecorder(BaseSink* sink, CodecFilter supports, PacketCallback packet_callback): Recorder(sink, std::move(supports), std::move(packet_callback)) {}
 
-    OggWriter::~OggWriter() {
+    AudioRecorder::~AudioRecorder() {
         for (const auto& source : sources_ | std::views::values) {
             if (source.decoder) {
                 opus_decoder_destroy(source.decoder);
@@ -27,24 +27,21 @@ namespace ntgcalls::io {
         }
     }
 
-    uint8_t OggWriter::channels() const {
-        const auto audio_sink = dynamic_cast<media::AudioSink*>(sink_);
+    uint8_t AudioRecorder::channels() const {
+        const auto audio_sink = dynamic_cast<AudioSink*>(sink_);
         const auto description = audio_sink ? audio_sink->get_config() : std::nullopt;
         return description ? description->channel_count : 2;
     }
 
-    int64_t OggWriter::mix_delay() const {
-        const auto audio_sink = dynamic_cast<media::AudioSink*>(sink_);
+    int64_t AudioRecorder::mix_delay() const {
+        const auto audio_sink = dynamic_cast<AudioSink*>(sink_);
         const auto description = audio_sink ? audio_sink->get_config() : std::nullopt;
         const auto max_delay = description && description->max_delay_ms ? static_cast<int64_t>(*description->max_delay_ms) : wrtc::audio_factory::OpusJitterBuffer::kDefaultMaxDelayMs;
         return max_delay * kSamplesPerMs;
     }
 
-    void OggWriter::send_frames(std::vector<wrtc::models::Frame> frames) {
+    void AudioRecorder::send_frames(std::vector<wrtc::models::Frame> frames) {
         const std::lock_guard lock(mutex_);
-        if (!muxer_) {
-            muxer_ = std::make_unique<media::containers::OggMuxer>(channels());
-        }
         for (const auto& frame : frames) {
             const int samples = wrtc::audio_factory::OpusPacket::samples(frame.data.data(), frame.data.size());
             if (samples <= 0) {
@@ -72,7 +69,7 @@ namespace ntgcalls::io {
         }
     }
 
-    void OggWriter::start_transcoding() {
+    void AudioRecorder::start_transcoding() {
         RTC_LOG(LS_INFO) << "More than one participant, re-encoding the Opus recording";
         transcoding_ = true;
         ensure_encoder();
@@ -80,7 +77,7 @@ namespace ntgcalls::io {
         mix_.clear();
     }
 
-    void OggWriter::forward(Source& source, const bytes::binary& packet, const int64_t position, const int samples) {
+    void AudioRecorder::forward(Source& source, const bytes::binary& packet, const int64_t position, const int samples) {
         if (!source.position) {
             source.position = position;
         }
@@ -100,7 +97,7 @@ namespace ntgcalls::io {
         *source.position += samples;
     }
 
-    void OggWriter::transcode(Source& source, const bytes::binary& packet, const int64_t position, const int samples) {
+    void AudioRecorder::transcode(Source& source, const bytes::binary& packet, const int64_t position, const int samples) {
         if (!ensure_decoder(source)) {
             return;
         }
@@ -123,7 +120,7 @@ namespace ntgcalls::io {
         *source.position += samples;
     }
 
-    void OggWriter::mix(const int64_t position, const std::vector<int16_t>& pcm) {
+    void AudioRecorder::mix(const int64_t position, const std::vector<int16_t>& pcm) {
         const auto count = static_cast<int64_t>(channels());
         const int64_t frames = static_cast<int64_t>(pcm.size()) / count;
         const int64_t offset = position - mix_position_;
@@ -140,7 +137,7 @@ namespace ntgcalls::io {
         }
     }
 
-    void OggWriter::encode_mix(const bool all) {
+    void AudioRecorder::encode_mix(const bool all) {
         const size_t block = static_cast<size_t>(kPacketSamples) * channels();
         while (!mix_.empty() && (all || mix_position_ + kPacketSamples <= newest_ - mix_delay())) {
             std::vector<int16_t> pcm(block, 0);
@@ -156,7 +153,7 @@ namespace ntgcalls::io {
         }
     }
 
-    void OggWriter::ensure_encoder() {
+    void AudioRecorder::ensure_encoder() {
         if (encoder_) {
             return;
         }
@@ -167,7 +164,7 @@ namespace ntgcalls::io {
             encoder_ = nullptr;
             throw FileError("Unable to create the Opus encoder");
         }
-        const auto audio_sink = dynamic_cast<media::AudioSink*>(sink_);
+        const auto audio_sink = dynamic_cast<AudioSink*>(sink_);
         if (const auto description = audio_sink ? audio_sink->get_config() : std::nullopt; description && description->bitrate) {
             opus_encoder_ctl(encoder_, OPUS_SET_BITRATE(static_cast<opus_int32>(*description->bitrate)));
         }
@@ -177,7 +174,7 @@ namespace ntgcalls::io {
         silence_packet_.assign(packet.data(), packet.data() + std::max(size, 0));
     }
 
-    bool OggWriter::ensure_decoder(Source& source) const {
+    bool AudioRecorder::ensure_decoder(Source& source) const {
         if (source.decoder) {
             return true;
         }
@@ -190,25 +187,21 @@ namespace ntgcalls::io {
         return true;
     }
 
-    void OggWriter::write_packet(bytes::binary packet, const int samples) {
-        push_pages(muxer_->add(std::move(packet), samples));
+    void AudioRecorder::write_packet(const bytes::binary& packet, const int samples) const {
+        packet_callback_(
+            {wrtc::models::Codec::Opus, channels(), 0, 0},
+            {bytes::const_span(packet.data(), packet.size()), 0, std::chrono::microseconds(static_cast<int64_t>(samples) * 1000 / kSamplesPerMs), true}
+        );
     }
 
-    void OggWriter::push_pages(const std::vector<bytes::binary>& pages) {
-        for (auto& page : pages) {
-            auto data = bytes::make_unique_binary(page.size());
-            std::memcpy(data.get(), page.data(), page.size());
-            push(std::move(data), page.size());
-        }
+    std::chrono::nanoseconds AudioRecorder::tick_interval() const {
+        return sink_->frame_time() + std::chrono::milliseconds(20);
     }
 
-    void OggWriter::flush() {
+    void AudioRecorder::flush() {
         const std::lock_guard lock(mutex_);
-        if (muxer_) {
-            if (transcoding_) {
-                encode_mix(true);
-            }
-            push_pages(muxer_->finish());
+        if (transcoding_) {
+            encode_mix(true);
         }
     }
-} // ntgcalls::io
+} // ntgcalls::media::recorders

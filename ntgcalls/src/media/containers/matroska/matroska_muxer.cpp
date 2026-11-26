@@ -5,13 +5,21 @@
 #include <ntgcalls/media/containers/matroska/matroska_muxer.hpp>
 
 namespace ntgcalls::media::containers {
-    MatroskaMuxer::MatroskaMuxer(const wrtc::models::Codec codec, const uint16_t width, const uint16_t height): codec_(codec), width_(width), height_(height) {}
+    MatroskaMuxer::MatroskaMuxer(const TrackInfo& track): codec_(track.codec), width_(track.width), height_(track.height) {}
 
     bool MatroskaMuxer::supports(const wrtc::models::Codec codec) {
         return codec == wrtc::models::Codec::H264 || codec == wrtc::models::Codec::VP8 || codec == wrtc::models::Codec::VP9;
     }
 
-    bytes::binary MatroskaMuxer::add(const uint8_t* data, const size_t size, const int64_t timestamp_ms, const bool keyframe) {
+    bytes::binary MatroskaMuxer::finish() {
+        return {};
+    }
+
+    bytes::binary MatroskaMuxer::add(const EncodedPacket& packet) {
+        const auto* data = packet.data.data();
+        const auto size = packet.data.size();
+        const auto timestamp_ms = packet.timestamp_ms;
+        const auto keyframe = packet.keyframe;
         bytes::binary output;
         if (!header_written_) {
             if (!keyframe) {
