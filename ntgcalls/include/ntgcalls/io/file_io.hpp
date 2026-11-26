@@ -1,5 +1,5 @@
 //
-// Created by Lauren on 04/08/23.
+// Created by Lauren on 26/11/26.
 //
 
 #pragma once
@@ -8,6 +8,6 @@
 #include <ntgcalls/io/stream_io.hpp>
 
 namespace ntgcalls::io {
-    template<typename FormatReader>
-    using FileReader = StreamIO<FormatReader, FileStream>;
+    template<typename Format>
+    using FileIO = StreamIO<Format, FileStream>;
 } // ntgcalls::io

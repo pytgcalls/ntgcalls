@@ -4,12 +4,10 @@
 
 #include <ntgcalls/io/container_reader.hpp>
 #include <ntgcalls/io/container_writer.hpp>
-#include <ntgcalls/io/file_reader.hpp>
-#include <ntgcalls/io/file_writer.hpp>
+#include <ntgcalls/io/file_io.hpp>
 #include <ntgcalls/io/raw_reader.hpp>
 #include <ntgcalls/io/raw_writer.hpp>
-#include <ntgcalls/io/shell_reader.hpp>
-#include <ntgcalls/io/shell_writer.hpp>
+#include <ntgcalls/io/shell_io.hpp>
 #include <ntgcalls/media/containers/matroska/matroska_demuxer.hpp>
 #include <ntgcalls/media/containers/matroska/matroska_muxer.hpp>
 #include <ntgcalls/media/containers/ogg/ogg_demuxer.hpp>
@@ -39,22 +37,22 @@ namespace ntgcalls::media {
             RTC_LOG(LS_INFO) << "Using file reader for " << desc.input;
             switch (resolve_format(desc)) {
             case BaseMediaDescription::Format::Matroska:
-                return std::make_unique<io::FileReader<io::ContainerReader<containers::MatroskaDemuxer>>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::ContainerReader<containers::MatroskaDemuxer>>>(desc.input, sink);
             case BaseMediaDescription::Format::Ogg:
-                return std::make_unique<io::FileReader<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
             default:
-                return std::make_unique<io::FileReader<io::RawReader>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::RawReader>>(desc.input, sink);
             }
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell reader for " << desc.input;
             switch (resolve_format(desc)) {
             case BaseMediaDescription::Format::Matroska:
-                return std::make_unique<io::ShellReader<io::ContainerReader<containers::MatroskaDemuxer>>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::ContainerReader<containers::MatroskaDemuxer>>>(desc.input, sink);
             case BaseMediaDescription::Format::Ogg:
-                return std::make_unique<io::ShellReader<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::ContainerReader<containers::OggDemuxer>>>(desc.input, sink);
             default:
-                return std::make_unique<io::ShellReader<io::RawReader>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::RawReader>>(desc.input, sink);
             }
 #else
             BOOST_THROW
@@ -103,22 +101,22 @@ namespace ntgcalls::media {
             RTC_LOG(LS_INFO) << "Using file writer for " << desc.input;
             switch (resolve_format(desc)) {
             case BaseMediaDescription::Format::Matroska:
-                return std::make_unique<io::FileWriter<io::ContainerWriter<recorders::VideoRecorder, containers::MatroskaMuxer>>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::ContainerWriter<recorders::VideoRecorder, containers::MatroskaMuxer>>>(desc.input, sink);
             case BaseMediaDescription::Format::Ogg:
-                return std::make_unique<io::FileWriter<io::ContainerWriter<recorders::AudioRecorder, containers::OggMuxer>>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::ContainerWriter<recorders::AudioRecorder, containers::OggMuxer>>>(desc.input, sink);
             default:
-                return std::make_unique<io::FileWriter<io::RawWriter>>(desc.input, sink);
+                return std::make_unique<io::FileIO<io::RawWriter>>(desc.input, sink);
             }
         case BaseMediaDescription::MediaSource::Shell:
 #ifdef BOOST_ENABLED
             RTC_LOG(LS_INFO) << "Using shell writer for " << desc.input;
             switch (resolve_format(desc)) {
             case BaseMediaDescription::Format::Matroska:
-                return std::make_unique<io::ShellWriter<io::ContainerWriter<recorders::VideoRecorder, containers::MatroskaMuxer>>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::ContainerWriter<recorders::VideoRecorder, containers::MatroskaMuxer>>>(desc.input, sink);
             case BaseMediaDescription::Format::Ogg:
-                return std::make_unique<io::ShellWriter<io::ContainerWriter<recorders::AudioRecorder, containers::OggMuxer>>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::ContainerWriter<recorders::AudioRecorder, containers::OggMuxer>>>(desc.input, sink);
             default:
-                return std::make_unique<io::ShellWriter<io::RawWriter>>(desc.input, sink);
+                return std::make_unique<io::ShellIO<io::RawWriter>>(desc.input, sink);
             }
 #else
             BOOST_THROW

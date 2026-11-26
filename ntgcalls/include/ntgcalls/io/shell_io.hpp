@@ -1,5 +1,5 @@
 //
-// Created by Lauren on 08/10/24.
+// Created by Lauren on 26/11/26.
 //
 
 #pragma once
@@ -9,7 +9,7 @@
 #include <ntgcalls/io/stream_io.hpp>
 
 namespace ntgcalls::io {
-    template<typename FormatWriter>
-    using ShellWriter = StreamIO<FormatWriter, ShellStream>;
+    template<typename Format>
+    using ShellIO = StreamIO<Format, ShellStream>;
 } // ntgcalls::io
 #endif
