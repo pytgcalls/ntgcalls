@@ -43,7 +43,7 @@ class SmartVideoSource {
     private final int fps;
     private final int id;
     private CapturerObserver capturerObserver;
-    private volatile Object owner;
+    private Object owner;
 
     SmartVideoSource(String deviceName, int id, int width, int height, int fps) {
         this.width = width;
@@ -157,8 +157,16 @@ class SmartVideoSource {
     }
 
     public void setCapturerObserver(Object owner, CapturerObserver capturerObserver) {
-        this.owner = owner;
-        this.capturerObserver = capturerObserver;
+        synchronized (lock) {
+            this.owner = owner;
+            this.capturerObserver = capturerObserver;
+        }
+    }
+
+    private CapturerObserver activeObserver() {
+        synchronized (lock) {
+            return videoCapturerSurfaceTextureHelper == null ? null : capturerObserver;
+        }
     }
 
     private CapturerObserver getInternalObserver() {
@@ -168,35 +176,27 @@ class SmartVideoSource {
 
             @Override
             public void onCapturerStopped() {
-                synchronized (lock) {
-                    if (videoCapturerSurfaceTextureHelper == null) {
-                        return;
-                    }
-                    if (capturerObserver != null) {
-                        capturerObserver.onCapturerStopped();
-                    }
+                CapturerObserver observer = activeObserver();
+                if (observer != null) {
+                    observer.onCapturerStopped();
                 }
             }
 
             @Override
             public void onFrameCaptured(VideoFrame videoFrame) {
-                synchronized (lock) {
-                    if (videoCapturerSurfaceTextureHelper == null) {
-                        return;
-                    }
-                    if (capturerObserver != null) {
-                        capturerObserver.onFrameCaptured(videoFrame);
-                    }
+                CapturerObserver observer = activeObserver();
+                if (observer != null) {
+                    observer.onFrameCaptured(videoFrame);
                 }
             }
         };
     }
 
     public void softRelease(Object owner) {
-        if (this.owner != owner) {
-            return;
-        }
         synchronized (lock) {
+            if (this.owner != owner) {
+                return;
+            }
             Log.d(TAG, "Soft releasing video source");
             capturerObserver = null;
             releaseRunnable = this::release;
