@@ -18,7 +18,7 @@ add_custom_target(clean_objects
     COMMENT "Removing all object (.o) files"
 )
 
-project(ntgcalls VERSION 4.0.0.2 LANGUAGES C CXX)
+project(ntgcalls VERSION 4.0.0.3 LANGUAGES C CXX)
 include(cmake/VersionUtil.cmake)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
