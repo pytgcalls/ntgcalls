@@ -218,3 +218,54 @@ func parseDeviceInfoVector(devices *C.ntg_device_info, size C.size_t) []DeviceIn
 	}
 	return rawDevices
 }
+
+func parseInt64Vector(data *C.int64_t, size C.size_t) []int64 {
+	result := make([]int64, int(size))
+	for i, value := range unsafe.Slice(data, int(size)) {
+		result[i] = int64(value)
+	}
+	return result
+}
+
+func parseInt64VectorC(data []int64) (*C.int64_t, C.size_t) {
+	if len(data) == 0 {
+		return nil, 0
+	}
+	return (*C.int64_t)(unsafe.Pointer(&data[0])), C.size_t(len(data))
+}
+
+func parseConferenceJoinParams(params C.ntg_conference_join_params) ConferenceJoinParams {
+	return ConferenceJoinParams{
+		Payload:   C.GoString(params.payload),
+		PublicKey: C.GoBytes(unsafe.Pointer(params.public_key), C.int(params.public_key_len)),
+		Block:     C.GoBytes(unsafe.Pointer(params.block), C.int(params.block_len)),
+	}
+}
+
+func parseMediaInfo(info C.ntg_media_info) MediaInfo {
+	result := MediaInfo{
+		Container:  C.GoString(info.container),
+		DurationMs: int64(info.duration_ms),
+	}
+	if info.audio != nil {
+		result.Audio = &AudioInfo{
+			Codec:       C.GoString(info.audio.codec),
+			SampleRate:  uint32(info.audio.sample_rate),
+			Channels:    uint8(info.audio.channels),
+			Supported:   bool(info.audio.supported),
+			Passthrough: bool(info.audio.passthrough),
+		}
+	}
+	if info.video != nil {
+		result.Video = &VideoInfo{
+			Codec:       C.GoString(info.video.codec),
+			Width:       uint16(info.video.width),
+			Height:      uint16(info.video.height),
+			FrameRate:   float64(info.video.frame_rate),
+			BFrames:     bool(info.video.b_frames),
+			Supported:   bool(info.video.supported),
+			Passthrough: bool(info.video.passthrough),
+		}
+	}
+	return result
+}

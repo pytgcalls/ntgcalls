@@ -31,6 +31,8 @@ type EmojisCallback func(chatId int64, emojis string)
 type RequestParticipantsCallback func(chatId int64, request ParticipantsRequest)
 type OutboundBlockCallback func(chatId int64, block []byte)
 type SubchainRequestCallback func(chatId int64, subchainRequest SubchainRequest)
+type E2EFailureCallback func(chatId int64)
+type E2EParticipantsCallback func(chatId int64, participants []int64)
 
 const (
 	MicrophoneStream StreamDevice = iota
@@ -57,6 +59,11 @@ const (
 	FormatOgg
 	FormatI420
 	FormatMatroska
+	FormatAuto
+	FormatWebm
+	FormatMP4
+	FormatWAV
+	FormatFLAC
 )
 
 const (
@@ -143,6 +150,16 @@ func (ctx Format) ParseToC() C.ntg_format {
 		return C.NTG_FORMAT_I420
 	case FormatMatroska:
 		return C.NTG_FORMAT_MATROSKA
+	case FormatAuto:
+		return C.NTG_FORMAT_AUTO
+	case FormatWebm:
+		return C.NTG_FORMAT_WEBM
+	case FormatMP4:
+		return C.NTG_FORMAT_MP4
+	case FormatWAV:
+		return C.NTG_FORMAT_WAV
+	case FormatFLAC:
+		return C.NTG_FORMAT_FLAC
 	default:
 		return C.NTG_FORMAT_PCM
 	}

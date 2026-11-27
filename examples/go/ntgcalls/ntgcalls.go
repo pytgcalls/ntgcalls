@@ -14,6 +14,8 @@ package ntgcalls
 //extern void handleRequestParticipants(ntg_instance* handle, int64_t chatID, ntg_participants_request request, void* userData);
 //extern void handleOutboundBlock(ntg_instance* handle, int64_t chatID, uint8_t* block, size_t size, void* userData);
 //extern void handleSubchainRequest(ntg_instance* handle, int64_t chatID, ntg_subchain_request request, void* userData);
+//extern void handleE2EFailure(ntg_instance* handle, int64_t chatID, void* userData);
+//extern void handleE2EParticipants(ntg_instance* handle, int64_t chatID, int64_t* participants, size_t size, void* userData);
 //extern void handleLogs(ntg_log_message message, void* userData);
 import "C"
 import (
@@ -44,6 +46,8 @@ func NTgCalls() *Client {
 	C.ntg_on_request_participants_callback(instance.handle, (C.ntg_request_participants_callback_cb)(unsafe.Pointer(C.handleRequestParticipants)), nil)
 	C.ntg_on_outbound_block_callback(instance.handle, (C.ntg_outbound_block_callback_cb)(unsafe.Pointer(C.handleOutboundBlock)), nil)
 	C.ntg_on_subchain_request_callback(instance.handle, (C.ntg_subchain_request_callback_cb)(unsafe.Pointer(C.handleSubchainRequest)), nil)
+	C.ntg_on_e2e_failure_callback(instance.handle, (C.ntg_e2e_failure_callback_cb)(unsafe.Pointer(C.handleE2EFailure)), nil)
+	C.ntg_on_e2e_participants_callback(instance.handle, (C.ntg_e2e_participants_callback_cb)(unsafe.Pointer(C.handleE2EParticipants)), nil)
 	return instance
 }
 
@@ -281,6 +285,29 @@ func handleSubchainRequest(handle *C.ntg_instance, chatID C.int64_t, request C.n
 	}
 }
 
+//export handleE2EFailure
+func handleE2EFailure(handle *C.ntg_instance, chatID C.int64_t, _ unsafe.Pointer) {
+	self := lookupClient(handle)
+	if self == nil {
+		return
+	}
+	for _, callback := range self.copyE2EFailureCallbacks() {
+		go callback(int64(chatID))
+	}
+}
+
+//export handleE2EParticipants
+func handleE2EParticipants(handle *C.ntg_instance, chatID C.int64_t, participants *C.int64_t, size C.size_t, _ unsafe.Pointer) {
+	self := lookupClient(handle)
+	if self == nil {
+		return
+	}
+	goParticipants := parseInt64Vector(participants, size)
+	for _, callback := range self.copyE2EParticipantsCallbacks() {
+		go callback(int64(chatID), goParticipants)
+	}
+}
+
 func (ctx *Client) GetState(chatId int64) (MediaState, error) {
 	var buffer C.ntg_media_state
 	if err := parseResult(C.ntg_get_state(ctx.handle, C.int64_t(chatId), &buffer)); err != nil {
@@ -383,11 +410,48 @@ func (ctx *Client) InitConference(chatId int64, userId int64, lastBlock []byte) 
 		return ConferenceJoinParams{}, err
 	}
 	defer C.ntg_conference_join_params_free(&buffer)
-	return ConferenceJoinParams{
-		Payload:   C.GoString(buffer.payload),
-		PublicKey: C.GoBytes(unsafe.Pointer(buffer.public_key), C.int(buffer.public_key_len)),
-		Block:     C.GoBytes(unsafe.Pointer(buffer.block), C.int(buffer.block_len)),
-	}, nil
+	return parseConferenceJoinParams(buffer), nil
+}
+
+func (ctx *Client) Rejoin(chatId int64) (string, error) {
+	var buffer *C.char
+	if err := parseResult(C.ntg_rejoin(ctx.handle, C.int64_t(chatId), &buffer)); err != nil {
+		return "", err
+	}
+	defer C.ntg_string_free(buffer)
+	return C.GoString(buffer), nil
+}
+
+func (ctx *Client) RejoinConference(chatId int64, lastBlock []byte) (ConferenceJoinParams, error) {
+	lastBlockC, lastBlockSize := parseBytes(lastBlock)
+	defer freeBytes(lastBlockC)
+	var buffer C.ntg_conference_join_params
+	if err := parseResult(C.ntg_rejoin_conference(ctx.handle, C.int64_t(chatId), lastBlockC, lastBlockSize, &buffer)); err != nil {
+		return ConferenceJoinParams{}, err
+	}
+	defer C.ntg_conference_join_params_free(&buffer)
+	return parseConferenceJoinParams(buffer), nil
+}
+
+func (ctx *Client) GetE2EParticipants(chatId int64) ([]int64, error) {
+	var buffer *C.int64_t
+	var size C.size_t
+	if err := parseResult(C.ntg_get_e2e_participants(ctx.handle, C.int64_t(chatId), &buffer, &size)); err != nil {
+		return nil, err
+	}
+	defer C.ntg_bytes_free(unsafe.Pointer(buffer))
+	return parseInt64Vector(buffer, size), nil
+}
+
+func (ctx *Client) CreateRemoveBlock(chatId int64, userIds []int64) ([]byte, error) {
+	userIdsC, userIdsSize := parseInt64VectorC(userIds)
+	var buffer *C.uint8_t
+	var size C.size_t
+	if err := parseResult(C.ntg_create_remove_block(ctx.handle, C.int64_t(chatId), userIdsC, userIdsSize, &buffer, &size)); err != nil {
+		return nil, err
+	}
+	defer C.ntg_bytes_free(unsafe.Pointer(buffer))
+	return C.GoBytes(unsafe.Pointer(buffer), C.int(size)), nil
 }
 
 func (ctx *Client) StopPresentation(chatId int64) error {
@@ -605,6 +669,18 @@ func GetMediaDevices() (MediaDevices, error) {
 		Camera:     parseDeviceInfoVector(buffer.camera, buffer.camera_len),
 		Screen:     parseDeviceInfoVector(buffer.screen, buffer.screen_len),
 	}, nil
+}
+
+//goland:noinspection GoUnusedExportedFunction
+func GetMediaInfo(path string, streamMode StreamMode) (MediaInfo, error) {
+	pathC := C.CString(path)
+	defer C.free(unsafe.Pointer(pathC))
+	var buffer C.ntg_media_info
+	if err := parseResult(C.ntg_get_media_info(pathC, streamMode.ParseToC(), &buffer)); err != nil {
+		return MediaInfo{}, err
+	}
+	defer C.ntg_media_info_free(&buffer)
+	return parseMediaInfo(buffer), nil
 }
 
 func (ctx *Client) CpuUsage() (float64, error) {

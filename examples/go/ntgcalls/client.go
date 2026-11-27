@@ -19,6 +19,8 @@ type Client struct {
 	requestParticipantsCallbacks []RequestParticipantsCallback
 	outboundBlockCallbacks       []OutboundBlockCallback
 	subchainRequestCallbacks     []SubchainRequestCallback
+	e2eFailureCallbacks          []E2EFailureCallback
+	e2eParticipantsCallbacks     []E2EParticipantsCallback
 }
 
 var (

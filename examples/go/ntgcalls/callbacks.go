@@ -72,6 +72,18 @@ func (ctx *Client) OnSubchainRequest(callback SubchainRequestCallback) {
 	ctx.subchainRequestCallbacks = append(ctx.subchainRequestCallbacks, callback)
 }
 
+func (ctx *Client) OnE2EFailure(callback E2EFailureCallback) {
+	ctx.mutex.Lock()
+	defer ctx.mutex.Unlock()
+	ctx.e2eFailureCallbacks = append(ctx.e2eFailureCallbacks, callback)
+}
+
+func (ctx *Client) OnE2EParticipants(callback E2EParticipantsCallback) {
+	ctx.mutex.Lock()
+	defer ctx.mutex.Unlock()
+	ctx.e2eParticipantsCallbacks = append(ctx.e2eParticipantsCallbacks, callback)
+}
+
 func (ctx *Client) copyStreamEndCallbacks() []StreamEndCallback {
 	ctx.mutex.RLock()
 	defer ctx.mutex.RUnlock()
@@ -142,4 +154,16 @@ func (ctx *Client) copySubchainRequestCallbacks() []SubchainRequestCallback {
 	ctx.mutex.RLock()
 	defer ctx.mutex.RUnlock()
 	return append([]SubchainRequestCallback(nil), ctx.subchainRequestCallbacks...)
+}
+
+func (ctx *Client) copyE2EFailureCallbacks() []E2EFailureCallback {
+	ctx.mutex.RLock()
+	defer ctx.mutex.RUnlock()
+	return append([]E2EFailureCallback(nil), ctx.e2eFailureCallbacks...)
+}
+
+func (ctx *Client) copyE2EParticipantsCallbacks() []E2EParticipantsCallback {
+	ctx.mutex.RLock()
+	defer ctx.mutex.RUnlock()
+	return append([]E2EParticipantsCallback(nil), ctx.e2eParticipantsCallbacks...)
 }
