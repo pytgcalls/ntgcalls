@@ -82,7 +82,7 @@ namespace ntgcalls::media::containers {
         }
         if (video) {
             const auto pts = std::max(packet.timestamp_ms - first_timestamp_, next_pts_);
-            next_pts_ = pts;
+            next_pts_ = pts + 1;
             write(packet.data.get(), packet.size, pts, 0, packet.keyframe);
         } else if (encoder_) {
             const auto* samples = reinterpret_cast<const int16_t*>(packet.data.get());
