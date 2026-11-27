@@ -48,12 +48,15 @@ namespace wrtc::video_factory {
         bool bitrate_low_ = false;
         bool reordered_ = false;
         bool rate_limited_ = false;
+        std::string profile_issue_;
         bool forwarded_ = false;
         int64_t last_frame_us_ = 0;
 
         [[nodiscard]] bool compatible(const utils::encoded::EncodedFrame& frame) const;
 
         void detect_reordering(const utils::encoded::EncodedFrame& frame);
+
+        void detect_profile(const utils::encoded::EncodedFrame& frame);
 
         [[nodiscard]] bool mismatched(const utils::encoded::EncodedFrame& frame) const;
 

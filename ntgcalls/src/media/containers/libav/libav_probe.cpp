@@ -8,6 +8,7 @@
 #include <ntgcalls/media/containers/libav/libav_format.hpp>
 #include <ntgcalls/media/containers/libav/libav_probe.hpp>
 #include <rtc_base/logging.h>
+#include <wrtc/video_factory/passthrough/h264_profile.hpp>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -89,7 +90,7 @@ namespace ntgcalls::media::containers {
             stream->avg_frame_rate.den ? av_q2d(stream->avg_frame_rate) : 0,
             parameters->video_delay > 0,
             LibAvDemuxer::video_codec(parameters->codec_id).has_value(),
-            LibAvDemuxer::video_codec(parameters->codec_id).has_value() && parameters->video_delay == 0,
+            LibAvDemuxer::video_codec(parameters->codec_id).has_value() && parameters->video_delay == 0 && (parameters->codec_id != AV_CODEC_ID_H264 || wrtc::video_factory::H264Profile::forwardable(parameters->profile & 0xFF, parameters->field_order == AV_FIELD_PROGRESSIVE || parameters->field_order == AV_FIELD_UNKNOWN)),
         };
     }
 } // ntgcalls::media::containers

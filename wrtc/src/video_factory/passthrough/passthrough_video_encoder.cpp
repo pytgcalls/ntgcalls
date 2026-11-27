@@ -8,9 +8,11 @@
 #include <modules/video_coding/include/video_codec_interface.h>
 #include <modules/video_coding/include/video_error_codes.h>
 #include <common_video/h264/h264_common.h>
+#include <common_video/h264/sps_parser.h>
 #include <rtc_base/bitstream_reader.h>
 #include <rtc_base/logging.h>
 #include <utility>
+#include <wrtc/video_factory/passthrough/h264_profile.hpp>
 #include <wrtc/video_factory/passthrough/passthrough_video_encoder.hpp>
 
 namespace wrtc::video_factory {
@@ -71,6 +73,7 @@ namespace wrtc::video_factory {
         for (size_t i = 0; i < frames.size(); i++) {
             auto& encoded = frames[i];
             detect_reordering(encoded);
+            detect_profile(encoded);
             rate_limited_ |= encoded.rate_limited || !encoded.shown;
             const auto rtp_timestamp = frame.rtp_timestamp() - static_cast<uint32_t>(frames.size() - 1 - i);
             const bool keyframe = encoded.frame_data.keyframe;
@@ -130,7 +133,7 @@ namespace wrtc::video_factory {
     }
 
     bool PassthroughVideoEncoder::compatible(const utils::encoded::EncodedFrame& frame) const {
-        return !bitrate_low_ && !reordered_ && !rate_limited_ && frame.frame_data.codec == codec_ && frame.frame_data.width == codec_settings_.width && frame.frame_data.height == codec_settings_.height;
+        return !bitrate_low_ && !reordered_ && !rate_limited_ && profile_issue_.empty() && frame.frame_data.codec == codec_ && frame.frame_data.width == codec_settings_.width && frame.frame_data.height == codec_settings_.height;
     }
 
     void PassthroughVideoEncoder::forward(const utils::encoded::EncodedFrame& frame, const webrtc::VideoFrame& input, const uint32_t rtp_timestamp) const {
@@ -216,13 +219,34 @@ namespace wrtc::video_factory {
         }
     }
 
+    void PassthroughVideoEncoder::detect_profile(const utils::encoded::EncodedFrame& frame) {
+        if (!profile_issue_.empty() || frame.frame_data.codec != models::Codec::H264 || !frame.frame_data.keyframe) {
+            return;
+        }
+        for (const auto& index : webrtc::H264::FindNaluIndices(frame.payload)) {
+            if (index.payload_size < 2 || webrtc::H264::ParseNaluType(frame.payload[index.payload_start_offset]) != webrtc::H264::NaluType::kSps) {
+                continue;
+            }
+            const uint8_t profile_idc = frame.payload[index.payload_start_offset + 1];
+            const auto sps = webrtc::SpsParser::ParseSps(std::span(frame.payload.data() + index.payload_start_offset + 1, index.payload_size - 1));
+            const bool progressive = !sps || sps->frame_mbs_only_flag;
+            if (!H264Profile::forwardable(profile_idc, progressive)) {
+                profile_issue_ = progressive ? "the source uses the H264 " + H264Profile::name(profile_idc) + " profile" : "the source is interlaced";
+            }
+            return;
+        }
+    }
+
     bool PassthroughVideoEncoder::mismatched(const utils::encoded::EncodedFrame& frame) const {
-        return reordered_ || rate_limited_ || frame.frame_data.codec != codec_ || frame.frame_data.width != codec_settings_.width || frame.frame_data.height != codec_settings_.height;
+        return reordered_ || rate_limited_ || !profile_issue_.empty() || frame.frame_data.codec != codec_ || frame.frame_data.width != codec_settings_.width || frame.frame_data.height != codec_settings_.height;
     }
 
     std::string PassthroughVideoEncoder::incompatibility(const utils::encoded::EncodedFrame& frame, const bool key_requested) const {
         if (reordered_) {
             return "the source uses B-frames";
+        }
+        if (!profile_issue_.empty()) {
+            return profile_issue_;
         }
         if (rate_limited_) {
             return "the source frame rate is above the requested one";
