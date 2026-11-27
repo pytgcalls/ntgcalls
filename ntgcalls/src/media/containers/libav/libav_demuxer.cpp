@@ -123,6 +123,7 @@ namespace ntgcalls::media::containers {
         if (stream_->avg_frame_rate.num > 0 && stream_->avg_frame_rate.den > 0) {
             video_sink_->set_source_frame_rate(av_q2d(stream_->avg_frame_rate));
         }
+        video_sink_->set_source_reordered(parameters->video_delay > 0);
         RTC_LOG(LS_INFO) << "Sending the " << avcodec_get_name(parameters->codec_id) << " video without re-encoding it when it matches the call";
         if (codec_ == wrtc::models::Codec::H264 && parameters->extradata_size >= 7 && parameters->extradata[0] == 1) {
             parse_avcc(parameters->extradata, static_cast<size_t>(parameters->extradata_size));

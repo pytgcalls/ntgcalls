@@ -14,5 +14,6 @@ namespace wrtc::utils::encoded {
         int64_t arrival_ms = 0;
         bool shown = true;
         bool rate_limited = false;
+        bool reordered = false;
     };
 } // wrtc::utils::encoded

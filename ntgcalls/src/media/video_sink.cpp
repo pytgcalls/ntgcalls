@@ -32,6 +32,7 @@ namespace ntgcalls::media {
         if (changed || force_change) {
             description_ = desc ? std::make_shared<const VideoDescription>(*desc) : nullptr;
             source_frame_rate_ = 0;
+            source_reordered_ = false;
             clear();
             if (!desc) {
                 RTC_LOG(LS_INFO) << "VideoSink configuration cleared";
@@ -62,5 +63,13 @@ namespace ntgcalls::media {
 
     double VideoSink::source_frame_rate() const {
         return source_frame_rate_;
+    }
+
+    void VideoSink::set_source_reordered(const bool reordered) {
+        source_reordered_ = reordered;
+    }
+
+    bool VideoSink::source_reordered() const {
+        return source_reordered_;
     }
 } // ntgcalls::media

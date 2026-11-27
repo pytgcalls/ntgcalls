@@ -214,7 +214,7 @@ namespace wrtc::video_factory {
     }
 
     void PassthroughVideoEncoder::detect_reordering(const utils::encoded::EncodedFrame& frame) {
-        if (!reordered_ && frame.frame_data.codec == models::Codec::H264 && has_b_slices(frame.payload)) {
+        if (!reordered_ && frame.frame_data.codec == models::Codec::H264 && (frame.reordered || has_b_slices(frame.payload))) {
             reordered_ = true;
         }
     }

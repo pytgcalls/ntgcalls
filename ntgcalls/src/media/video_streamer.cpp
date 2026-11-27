@@ -38,7 +38,7 @@ namespace ntgcalls::media {
         if (description->is_encoded()) {
             const bool shown = within_frame_rate(description->fps);
             const bool rate_limited = description->fps > 0 && source_frame_rate() > description->fps + 0.5;
-            encoded_->push({{sample, sample + size}, additional_data, 0, shown, rate_limited});
+            encoded_->push({{sample, sample + size}, additional_data, 0, shown, rate_limited, source_reordered()});
             if (shown) {
                 video_->on_placeholder(fit(additional_data, description->width, description->height));
             }

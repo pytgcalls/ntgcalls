@@ -24,11 +24,14 @@ namespace ntgcalls::media {
         std::shared_ptr<const VideoDescription> description_;
         mutable std::mutex description_mutex_;
         std::atomic<double> source_frame_rate_ = 0;
+        std::atomic<bool> source_reordered_ = false;
 
     protected:
         std::shared_ptr<const VideoDescription> description() const;
 
         [[nodiscard]] double source_frame_rate() const;
+
+        [[nodiscard]] bool source_reordered() const;
 
     public:
         bool set_config(const std::optional<VideoDescription>& desc);
@@ -36,6 +39,8 @@ namespace ntgcalls::media {
         std::optional<VideoDescription> get_config() const;
 
         void set_source_frame_rate(double fps);
+
+        void set_source_reordered(bool reordered);
 
         std::chrono::nanoseconds frame_time() override;
 
