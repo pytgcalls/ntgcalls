@@ -120,6 +120,7 @@ namespace ntgcalls::media::containers {
         }
         codec_ = *codec;
         rotation_ = stream_rotation(stream_);
+        RTC_LOG(LS_INFO) << "Sending the " << avcodec_get_name(parameters->codec_id) << " video without re-encoding it when it matches the call";
         if (codec_ == wrtc::models::Codec::H264 && parameters->extradata_size >= 7 && parameters->extradata[0] == 1) {
             parse_avcc(parameters->extradata, static_cast<size_t>(parameters->extradata_size));
         } else if (codec_ == wrtc::models::Codec::AV1 && parameters->extradata_size > 4) {
@@ -130,6 +131,7 @@ namespace ntgcalls::media::containers {
     void LibAvDemuxer::open_audio() {
         const auto* parameters = stream_->codecpar;
         if (parameters->codec_id == AV_CODEC_ID_OPUS) {
+            RTC_LOG(LS_INFO) << "Sending the Opus audio without re-encoding it";
             return;
         }
         const auto* codec = avcodec_find_decoder(parameters->codec_id);
@@ -146,6 +148,7 @@ namespace ntgcalls::media::containers {
         }
         resampler_ = std::make_unique<codecs::PcmResampler>(decoder_->ch_layout, decoder_->sample_fmt, decoder_->sample_rate, channels_, wrtc::audio_factory::OpusPacket::kSampleRate);
         encoder_ = std::make_unique<codecs::OpusPacketEncoder>(channels_, bitrate_);
+        RTC_LOG(LS_INFO) << "Decoding the " << avcodec_get_name(parameters->codec_id) << " audio and encoding it to Opus";
     }
 
     bool LibAvDemuxer::read_stream_packet() {

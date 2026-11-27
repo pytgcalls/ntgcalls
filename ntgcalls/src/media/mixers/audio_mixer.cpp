@@ -81,7 +81,11 @@ namespace ntgcalls::media::mixers {
     }
 
     void AudioMixer::start_transcoding(const int64_t ssrc) {
-        RTC_LOG(LS_INFO) << "More than one participant, re-encoding the Opus recording";
+        if (opus_) {
+            RTC_LOG(LS_INFO) << "More than one participant, re-encoding the Opus recording";
+        } else {
+            RTC_LOG(LS_INFO) << "Decoding the received Opus audio for the recording";
+        }
         transcoding_ = true;
         if (opus_) {
             ensure_encoder();

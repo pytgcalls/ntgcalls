@@ -157,6 +157,7 @@ namespace ntgcalls::media::containers {
             throw FFmpegError(std::string("Unable to write the container header (") + reason + ")");
         }
         header_written_ = true;
+        RTC_LOG(LS_INFO) << (encoder_ ? "Encoding the recording to " : "Writing the recording as ") << avcodec_get_name(stream_->codecpar->codec_id) << " in " << context_->oformat->name;
     }
 
     template<BaseMediaDescription::Format Format>

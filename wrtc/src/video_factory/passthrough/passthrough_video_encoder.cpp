@@ -83,6 +83,10 @@ namespace wrtc::video_factory {
             }
             if (mode_ == Mode::Forward) {
                 if (compatible(encoded) && (!key_requested || keyframe)) {
+                    if (!forwarded_) {
+                        RTC_LOG(LS_INFO) << "Forwarding the encoded " << codec_name(codec_) << " video without re-encoding it";
+                        forwarded_ = true;
+                    }
                     forward(encoded, frame, rtp_timestamp);
                     key_requested = false;
                     if (pending_.size() < kMaxPendingFrames) {
@@ -94,7 +98,11 @@ namespace wrtc::video_factory {
                 if (!ensure_decoder(pending_.back().frame_data.codec) || !ensure_encoder()) {
                     continue;
                 }
-                RTC_LOG(LS_INFO) << "Encoding the video until the next usable source keyframe";
+                if (mismatched(pending_.back())) {
+                    RTC_LOG(LS_INFO) << "Re-encoding the video, " << incompatibility(pending_.back(), key_requested);
+                } else {
+                    RTC_LOG(LS_INFO) << "Encoding the video until the next usable source keyframe, " << incompatibility(pending_.back(), key_requested);
+                }
                 for (const auto& pending : pending_) {
                     decode(pending);
                 }
@@ -192,11 +200,29 @@ namespace wrtc::video_factory {
     }
 
     void PassthroughVideoEncoder::detect_reordering(const utils::encoded::EncodedFrame& frame) {
-        if (reordered_ || frame.frame_data.codec != models::Codec::H264 || !has_b_slices(frame.payload)) {
-            return;
+        if (!reordered_ && frame.frame_data.codec == models::Codec::H264 && has_b_slices(frame.payload)) {
+            reordered_ = true;
         }
-        RTC_LOG(LS_INFO) << "The video uses B-frames, which can't be forwarded, re-encoding it";
-        reordered_ = true;
+    }
+
+    bool PassthroughVideoEncoder::mismatched(const utils::encoded::EncodedFrame& frame) const {
+        return reordered_ || frame.frame_data.codec != codec_ || frame.frame_data.width != codec_settings_.width || frame.frame_data.height != codec_settings_.height;
+    }
+
+    std::string PassthroughVideoEncoder::incompatibility(const utils::encoded::EncodedFrame& frame, const bool key_requested) const {
+        if (reordered_) {
+            return "the source uses B-frames";
+        }
+        if (frame.frame_data.codec != codec_) {
+            return "the source is " + codec_name(frame.frame_data.codec) + " while the call uses " + codec_name(codec_);
+        }
+        if (frame.frame_data.width != codec_settings_.width || frame.frame_data.height != codec_settings_.height) {
+            return "the source is " + std::to_string(frame.frame_data.width) + "x" + std::to_string(frame.frame_data.height) + " while the call sends " + std::to_string(codec_settings_.width) + "x" + std::to_string(codec_settings_.height);
+        }
+        if (bitrate_low_) {
+            return "the bandwidth is below the source bitrate";
+        }
+        return key_requested ? "a viewer requested a keyframe" : "the source frame can't be forwarded";
     }
 
     bool PassthroughVideoEncoder::has_b_slices(const bytes::binary& payload) {

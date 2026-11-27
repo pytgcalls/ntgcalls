@@ -47,11 +47,16 @@ namespace wrtc::video_factory {
         int64_t bitrate_change_us_ = -1;
         bool bitrate_low_ = false;
         bool reordered_ = false;
+        bool forwarded_ = false;
         int64_t last_frame_us_ = 0;
 
         [[nodiscard]] bool compatible(const utils::encoded::EncodedFrame& frame) const;
 
         void detect_reordering(const utils::encoded::EncodedFrame& frame);
+
+        [[nodiscard]] bool mismatched(const utils::encoded::EncodedFrame& frame) const;
+
+        [[nodiscard]] std::string incompatibility(const utils::encoded::EncodedFrame& frame, bool key_requested) const;
 
         static bool has_b_slices(const bytes::binary& payload);
 
