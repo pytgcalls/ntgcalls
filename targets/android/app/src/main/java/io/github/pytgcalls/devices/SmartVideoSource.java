@@ -43,6 +43,7 @@ class SmartVideoSource {
     private final int fps;
     private final int id;
     private CapturerObserver capturerObserver;
+    private volatile Object owner;
 
     SmartVideoSource(String deviceName, int id, int width, int height, int fps) {
         this.width = width;
@@ -155,7 +156,8 @@ class SmartVideoSource {
         return eglBase.getEglBaseContext();
     }
 
-    public void setCapturerObserver(CapturerObserver capturerObserver) {
+    public void setCapturerObserver(Object owner, CapturerObserver capturerObserver) {
+        this.owner = owner;
         this.capturerObserver = capturerObserver;
     }
 
@@ -190,7 +192,10 @@ class SmartVideoSource {
         };
     }
 
-    public void softRelease() {
+    public void softRelease(Object owner) {
+        if (this.owner != owner) {
+            return;
+        }
         synchronized (lock) {
             Log.d(TAG, "Soft releasing video source");
             capturerObserver = null;
@@ -224,7 +229,10 @@ class SmartVideoSource {
             } catch (Exception e) {
                 Log.e(TAG, "release", e);
             }
-            instance[id] = null;
+            owner = null;
+            if (instance[id] == this) {
+                instance[id] = null;
+            }
         }
         Log.d(TAG, "Released video source");
     }
