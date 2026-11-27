@@ -118,9 +118,6 @@ namespace ntgcalls::media::containers {
             RTC_LOG(LS_ERROR) << "Unsupported video codec: " << avcodec_get_name(parameters->codec_id);
             throw FFmpegError(std::string("Unsupported video codec: ") + avcodec_get_name(parameters->codec_id) + ", use MediaSource.SHELL with ffmpeg");
         }
-        if (parameters->video_delay > 0) {
-            reject_b_frames();
-        }
         codec_ = *codec;
         rotation_ = stream_rotation(stream_);
         if (codec_ == wrtc::models::Codec::H264 && parameters->extradata_size >= 7 && parameters->extradata[0] == 1) {
@@ -180,13 +177,7 @@ namespace ntgcalls::media::containers {
 
     DemuxedFrame LibAvDemuxer::video_frame() {
         const bool keyframe = (packet_->flags & AV_PKT_FLAG_KEY) != 0;
-        const auto timestamp = timestamp_ns(packet_->pts != AV_NOPTS_VALUE ? packet_->pts : packet_->dts);
-        if (timestamp && last_timestamp_ && *timestamp < *last_timestamp_) {
-            reject_b_frames();
-        }
-        if (timestamp) {
-            last_timestamp_ = timestamp;
-        }
+        const auto timestamp = timestamp_ns(packet_->dts != AV_NOPTS_VALUE ? packet_->dts : packet_->pts);
         auto payload = convert_payload(packet_->data, static_cast<size_t>(packet_->size), keyframe);
         const auto* parameters = stream_->codecpar;
         return {
@@ -256,11 +247,6 @@ namespace ntgcalls::media::containers {
             pending_.push_back(std::move(frame));
         }
         pcm_.erase(pcm_.begin(), pcm_.begin() + static_cast<std::ptrdiff_t>(offset));
-    }
-
-    void LibAvDemuxer::reject_b_frames() {
-        RTC_LOG(LS_ERROR) << "The video uses B-frames, which can't be sent without re-encoding";
-        throw FileError("The video uses B-frames, which can't be sent without re-encoding");
     }
 
     void LibAvDemuxer::fail(const int error, const std::string& message) const {

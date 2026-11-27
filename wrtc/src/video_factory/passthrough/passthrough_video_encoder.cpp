@@ -7,6 +7,8 @@
 #include <modules/video_coding/codecs/interface/common_constants.h>
 #include <modules/video_coding/include/video_codec_interface.h>
 #include <modules/video_coding/include/video_error_codes.h>
+#include <common_video/h264/h264_common.h>
+#include <rtc_base/bitstream_reader.h>
 #include <rtc_base/logging.h>
 #include <utility>
 #include <wrtc/video_factory/passthrough/passthrough_video_encoder.hpp>
@@ -68,6 +70,7 @@ namespace wrtc::video_factory {
         }
         for (size_t i = 0; i < frames.size(); i++) {
             auto& encoded = frames[i];
+            detect_reordering(encoded);
             const auto rtp_timestamp = frame.rtp_timestamp() - static_cast<uint32_t>(frames.size() - 1 - i);
             const bool keyframe = encoded.frame_data.keyframe;
             track_bitrate(encoded.payload.size(), frame.timestamp_us());
@@ -112,7 +115,7 @@ namespace wrtc::video_factory {
     }
 
     bool PassthroughVideoEncoder::compatible(const utils::encoded::EncodedFrame& frame) const {
-        return !bitrate_low_ && frame.frame_data.codec == codec_ && frame.frame_data.width == codec_settings_.width && frame.frame_data.height == codec_settings_.height;
+        return !bitrate_low_ && !reordered_ && frame.frame_data.codec == codec_ && frame.frame_data.width == codec_settings_.width && frame.frame_data.height == codec_settings_.height;
     }
 
     void PassthroughVideoEncoder::forward(const utils::encoded::EncodedFrame& frame, const webrtc::VideoFrame& input, const uint32_t rtp_timestamp) const {
@@ -186,6 +189,29 @@ namespace wrtc::video_factory {
         }
         encoder_initialized_ = true;
         return true;
+    }
+
+    void PassthroughVideoEncoder::detect_reordering(const utils::encoded::EncodedFrame& frame) {
+        if (reordered_ || frame.frame_data.codec != models::Codec::H264 || !has_b_slices(frame.payload)) {
+            return;
+        }
+        RTC_LOG(LS_INFO) << "The video uses B-frames, which can't be forwarded, re-encoding it";
+        reordered_ = true;
+    }
+
+    bool PassthroughVideoEncoder::has_b_slices(const bytes::binary& payload) {
+        for (const auto& index : webrtc::H264::FindNaluIndices(payload)) {
+            if (index.payload_size < 2 || webrtc::H264::ParseNaluType(payload[index.payload_start_offset]) != webrtc::H264::NaluType::kSlice) {
+                continue;
+            }
+            const auto rbsp = webrtc::H264::ParseRbsp(payload.data() + index.payload_start_offset + 1, index.payload_size - 1);
+            webrtc::BitstreamReader reader(rbsp);
+            reader.ReadExponentialGolomb();
+            if (const auto slice_type = reader.ReadExponentialGolomb(); reader.Ok() && slice_type % 5 == 1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void PassthroughVideoEncoder::decode(const utils::encoded::EncodedFrame& frame) {

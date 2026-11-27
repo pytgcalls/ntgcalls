@@ -46,9 +46,14 @@ namespace wrtc::video_factory {
         double source_bps_ = 0;
         int64_t bitrate_change_us_ = -1;
         bool bitrate_low_ = false;
+        bool reordered_ = false;
         int64_t last_frame_us_ = 0;
 
         [[nodiscard]] bool compatible(const utils::encoded::EncodedFrame& frame) const;
+
+        void detect_reordering(const utils::encoded::EncodedFrame& frame);
+
+        static bool has_b_slices(const bytes::binary& payload);
 
         void forward(const utils::encoded::EncodedFrame& frame, const webrtc::VideoFrame& input, uint32_t rtp_timestamp) const;
 

@@ -47,7 +47,6 @@ namespace ntgcalls::media::containers {
         uint8_t nal_length_size_ = 4;
         bool length_prefixed_ = false;
         bytes::binary parameter_sets_;
-        std::optional<int64_t> last_timestamp_;
 
         static int read_packet(void* opaque, uint8_t* buffer, int size);
 
@@ -76,8 +75,6 @@ namespace ntgcalls::media::containers {
         [[nodiscard]] DemuxedFrame audio_frame() const;
 
         [[noreturn]] void fail(int error, const std::string& message) const;
-
-        [[noreturn]] static void reject_b_frames();
 
         [[nodiscard]] std::optional<int64_t> timestamp_ns(int64_t value) const;
 
