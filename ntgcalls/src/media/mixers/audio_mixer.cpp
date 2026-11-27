@@ -20,9 +20,9 @@ namespace ntgcalls::media::mixers {
     }
 
     AudioMixer::~AudioMixer() {
-        for (const auto& source : sources_ | std::views::values) {
-            if (source.decoder) {
-                opus_decoder_destroy(source.decoder);
+        for (const auto&[decoder, position] : sources_ | std::views::values) {
+            if (decoder) {
+                opus_decoder_destroy(decoder);
             }
         }
     }
@@ -66,7 +66,7 @@ namespace ntgcalls::media::mixers {
                 source_ssrc_ = frame.ssrc;
             }
             if (!transcoding_ && (!opus_ || *source_ssrc_ != frame.ssrc)) {
-                start_transcoding();
+                start_transcoding(*source_ssrc_);
             }
             newest_ = std::max(newest_, position + samples);
             if (transcoding_) {
@@ -80,13 +80,13 @@ namespace ntgcalls::media::mixers {
         }
     }
 
-    void AudioMixer::start_transcoding() {
+    void AudioMixer::start_transcoding(const int64_t ssrc) {
         RTC_LOG(LS_INFO) << "More than one participant, re-encoding the Opus recording";
         transcoding_ = true;
         if (opus_) {
             ensure_encoder();
         }
-        mix_position_ = sources_[*source_ssrc_].position.value_or(0);
+        mix_position_ = sources_[ssrc].position.value_or(0);
         mix_.clear();
     }
 

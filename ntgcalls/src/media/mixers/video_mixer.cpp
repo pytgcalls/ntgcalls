@@ -170,6 +170,9 @@ namespace ntgcalls::media::mixers {
             return;
         }
         const auto description = dynamic_cast<VideoSink*>(sink_)->get_config();
+        if (!description) {
+            return;
+        }
         const int width = description->width & ~1;
         const int height = description->height & ~1;
         const auto composed = composer_->compose();
@@ -261,6 +264,9 @@ namespace ntgcalls::media::mixers {
     void VideoMixer::OnFrameDropped(uint32_t, int, bool) {}
 
     void VideoMixer::write_frame(const uint8_t* data, const size_t size, const int64_t timestamp_ms, const bool keyframe) const {
+        if (!track_) {
+            return;
+        }
         packet_callback_(*track_, {bytes::make_unique_binary(data, size), size, timestamp_ms, std::chrono::microseconds(0), keyframe});
     }
 

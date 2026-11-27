@@ -683,10 +683,8 @@ namespace ntgcalls::media {
             setup_video_playback_callbacks(id, is_external);
         }
 
-        if (!is_external) {
-            if (initialized_) {
-                writers_[device]->open();
-            }
+        if (!is_external && initialized_) {
+            writers_[device]->open();
         }
     }
 

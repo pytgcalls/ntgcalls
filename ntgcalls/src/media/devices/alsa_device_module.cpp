@@ -13,17 +13,17 @@
 #undef snd_ctl_card_info_alloca
 #define snd_ctl_card_info_alloca(ptr)                           \
     do {                                                        \
-        *ptr = (snd_ctl_card_info_t*) __builtin_alloca(         \
-            LATE(snd_ctl_card_info_sizeof)()                    \
-        );                                                      \
-        std::memset(*ptr, 0, LATE(snd_ctl_card_info_sizeof)()); \
+        *(ptr) = (snd_ctl_card_info_t*) __builtin_alloca(         \
+            LATE(snd_ctl_card_info_sizeof)()                      \
+        );                                                        \
+        std::memset(*(ptr), 0, LATE(snd_ctl_card_info_sizeof)()); \
     } while (0)
 
 #undef snd_pcm_info_alloca
 #define snd_pcm_info_alloca(pInfo)                                                \
     do {                                                                          \
-        *pInfo = (snd_pcm_info_t*) __builtin_alloca(LATE(snd_pcm_info_sizeof)()); \
-        std::memset(*pInfo, 0, LATE(snd_pcm_info_sizeof)());                      \
+        *(pInfo) = (snd_pcm_info_t*) __builtin_alloca(LATE(snd_pcm_info_sizeof)()); \
+        std::memset(*(pInfo), 0, LATE(snd_pcm_info_sizeof)());                      \
     } while (0)
 
 namespace ntgcalls::media::devices {

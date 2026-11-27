@@ -77,7 +77,7 @@ namespace ntgcalls::media::devices {
             if (out_h < 2) out_h = 2;
 
             const auto video_sink = dynamic_cast<VideoSink*>(sink_);
-            if (auto config = video_sink->get_config(); config->width != out_w || config->height != out_h) {
+            if (auto config = video_sink->get_config(); config && (config->width != out_w || config->height != out_h)) {
                 config->width = static_cast<int16_t>(out_w);
                 config->height = static_cast<int16_t>(out_h);
                 video_sink->set_config(config);

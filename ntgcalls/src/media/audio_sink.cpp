@@ -31,7 +31,9 @@ namespace ntgcalls::media {
         if (changed || force_change) {
             description_ = desc ? std::make_shared<const AudioDescription>(*desc) : nullptr;
             clear();
-            RTC_LOG(LS_INFO) << "AudioSink configured with " << desc->sample_rate << "Hz, " << 16 << "bps, " << desc->channel_count << " channels";
+            if (desc) {
+                RTC_LOG(LS_INFO) << "AudioSink configured with " << desc->sample_rate << "Hz, " << 16 << "bps, " << desc->channel_count << " channels";
+            }
         }
         return changed || force_change;
     }

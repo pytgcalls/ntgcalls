@@ -51,7 +51,7 @@ namespace ntgcalls::media::mixers {
 
         void write_packet(const bytes::binary& packet, int samples) const;
 
-        void start_transcoding();
+        void start_transcoding(int64_t ssrc);
 
         void forward(Source& source, const bytes::binary& packet, int64_t position, int samples);
 
