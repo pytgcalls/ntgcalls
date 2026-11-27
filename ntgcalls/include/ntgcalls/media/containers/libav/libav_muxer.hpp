@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <vector>
+#include <ntgcalls/media/containers/libav/libav_format.hpp>
 #include <ntgcalls/media/containers/media_kind.hpp>
 #include <ntgcalls/media/containers/muxer.hpp>
 #include <ntgcalls/media/containers/track_info.hpp>
@@ -59,14 +60,7 @@ namespace ntgcalls::media::containers {
         static AVCodecID codec_id(wrtc::models::Codec codec);
 
         static constexpr AVCodecID pcm_encoder() {
-            switch (Format) {
-            case BaseMediaDescription::Format::MP4:
-                return AV_CODEC_ID_AAC;
-            case BaseMediaDescription::Format::FLAC:
-                return AV_CODEC_ID_FLAC;
-            default:
-                return AV_CODEC_ID_NONE;
-            }
+            return LibAvFormat::pcm_encoder(Format);
         }
 
         static bytes::binary extradata(const TrackInfo& track, const EncodedPacket& packet);
@@ -87,14 +81,7 @@ namespace ntgcalls::media::containers {
         MuxedChunk finish() override;
 
         static constexpr bool supports(const MediaKind kind) {
-            switch (Format) {
-            case BaseMediaDescription::Format::Matroska:
-            case BaseMediaDescription::Format::Webm:
-            case BaseMediaDescription::Format::MP4:
-                return true;
-            default:
-                return kind == MediaKind::Audio;
-            }
+            return LibAvFormat::holds(Format, kind);
         }
 
         static constexpr bool supports(const wrtc::models::Codec codec) {

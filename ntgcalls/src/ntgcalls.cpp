@@ -2,6 +2,7 @@
 // Created by Lauren on 22/08/23.
 //
 
+#include <ntgcalls/media/containers/libav/libav_probe.hpp>
 #include <ntgcalls/ntgcalls.hpp>
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/media/devices/media_device.hpp>
@@ -488,6 +489,13 @@ namespace ntgcalls {
 
     std::string NTgCalls::ping() {
         return "pong";
+    }
+
+    media::MediaInfo NTgCalls::get_media_info(const std::string& path, const media::StreamManager::Mode mode) {
+        if (mode == media::StreamManager::Mode::Capture) {
+            return media::containers::LibAvProbe::input(path);
+        }
+        return media::containers::LibAvProbe::output(path);
     }
 
     media::devices::MediaDevices NTgCalls::get_media_devices() {

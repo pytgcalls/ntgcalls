@@ -6,6 +6,7 @@
 #include <ntgcalls/e2e/subchain_request.hpp>
 #include <ntgcalls/instances/call_interface.hpp>
 #include <ntgcalls/media/devices/media_devices.hpp>
+#include <ntgcalls/media/probe/media_info.hpp>
 #include <ntgcalls/models/remote_source_state.hpp>
 #include <ntgcalls/p2p/auth_params.hpp>
 #include <ntgcalls/p2p/conference_join_params.hpp>
@@ -148,6 +149,8 @@ namespace ntgcalls {
         static std::string ping();
 
         static media::devices::MediaDevices get_media_devices();
+
+        static media::MediaInfo get_media_info(const std::string& path, media::StreamManager::Mode mode);
 
         static p2p::Protocol get_protocol();
 

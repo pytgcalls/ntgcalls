@@ -84,11 +84,11 @@ namespace ntgcalls::media::containers {
 
         bytes::binary convert_payload(const uint8_t* data, size_t size, bool keyframe) const;
 
-        static std::optional<wrtc::models::Codec> video_codec(AVCodecID id);
-
         static webrtc::VideoRotation stream_rotation(const AVStream* stream);
 
     public:
+        static std::optional<wrtc::models::Codec> video_codec(AVCodecID id);
+
         explicit LibAvDemuxer(BaseSink* sink);
 
         ~LibAvDemuxer() override;

@@ -10,7 +10,8 @@ Most additions need two things: enabling the piece in FFmpeg, and adding a line 
 |---|---|
 | `media/containers/libav/libav_demuxer` | Reads any container. Opus is passed through, other audio is decoded and re-encoded to Opus, video is passed through |
 | `media/containers/libav/libav_muxer` | Writes the container chosen by its `Format` template argument |
-| `media/containers/libav/libav_format` | Maps each `Format` to its libav name and file extensions |
+| `media/containers/libav/libav_format` | Maps each `Format` to its libav name, file extensions, what it can hold and its PCM encoder |
+| `media/containers/libav/libav_probe` | Answers `get_media_info()`: what a file contains, or what a recording to it would get |
 | `media/containers/bitstream` | H.264 and AV1 helpers (parameter sets, sequence header) |
 | `media/codecs/` | Shared audio pieces: the Opus encoder and the resampler |
 | `media/mixers/` | Decide whether a recording gets Opus, PCM or video packets, based on what the muxer supports |
@@ -28,11 +29,11 @@ Enable the decoder in FFmpeg. Nothing else is needed: anything that isn't Opus i
 
 ## Writing a new audio codec
 
-Containers that don't store Opus receive PCM from the mixer and encode it with the codec returned by `pcm_encoder()` in `libav_muxer.hpp`:
+Containers that don't store Opus receive PCM from the mixer and encode it with the codec returned by `pcm_encoder()` in `libav_format.hpp`:
 
 ```cpp
-static constexpr AVCodecID pcm_encoder() {
-    switch (Format) {
+static constexpr AVCodecID pcm_encoder(const BaseMediaDescription::Format format) {
+    switch (format) {
     case BaseMediaDescription::Format::MP4:
         return AV_CODEC_ID_AAC;
     case BaseMediaDescription::Format::FLAC:
@@ -40,7 +41,7 @@ static constexpr AVCodecID pcm_encoder() {
     ...
 ```
 
-Add the container to that switch, make `supports(Codec)` return `true` for `Codec::PCM` on it, and enable the encoder in FFmpeg. The encoder picks its own sample format.
+Add the container to that switch, make `supports(Codec)` in `libav_muxer.hpp` return `true` for `Codec::PCM` on it, and enable the encoder in FFmpeg. The encoder picks its own sample format.
 
 ## Adding a video codec
 
@@ -57,7 +58,7 @@ Using `MOV` as an example:
 
 1. add `MOV` to the `Format` enum in `media_description.hpp`. The bindings generator exposes it to every language;
 2. add its libav names to `input_name()` and `output_name()`, and its extensions to `from_path()`, in `libav_format.cpp`;
-3. say what it can hold in `supports(MediaKind)` and `supports(Codec)` in `libav_muxer.hpp`;
+3. say what it can hold in `holds()` in `libav_format.hpp` and in `supports(Codec)` in `libav_muxer.hpp`;
 4. add `template class LibAvMuxer<BaseMediaDescription::Format::MOV>;` at the end of `libav_muxer.cpp`;
 5. add a `case` to `create_mixer_writer()` in `media_source_factory.cpp`;
 6. enable its demuxer and muxer in FFmpeg.

@@ -8,6 +8,7 @@ aliases = targets/aliases.tlgen
 # exposed-type headers (globs); internal io/signaling/utils/instances/tl skipped
 types = ntgcalls/include/ntgcalls/media/*.hpp
 types = ntgcalls/include/ntgcalls/media/devices/*.hpp
+types = ntgcalls/include/ntgcalls/media/probe/*.hpp
 types = ntgcalls/include/ntgcalls/p2p/*.hpp
 types = ntgcalls/include/ntgcalls/e2e/*.hpp
 types = ntgcalls/include/ntgcalls/models/*.hpp

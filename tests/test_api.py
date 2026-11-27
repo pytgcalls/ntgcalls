@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 import unittest
+import wave
 
 import ntgcalls
 
@@ -28,6 +29,38 @@ class TestStatic(unittest.TestCase):
             for device in getattr(devices, kind):
                 self.assertIsInstance(device.name, str)
                 self.assertIsInstance(device.metadata, str)
+
+    def test_probe_wav(self):
+        path = os.path.join(tempfile.mkdtemp(), 'tone.wav')
+        with wave.open(path, 'wb') as file:
+            file.setnchannels(2)
+            file.setsampwidth(2)
+            file.setframerate(48000)
+            file.writeframes(bytes(48000 * 4))
+        info = ntgcalls.NTgCalls.get_media_info(path, ntgcalls.StreamMode.CAPTURE)
+        self.assertEqual(info.container, 'wav')
+        self.assertEqual((info.audio.codec, info.audio.sample_rate, info.audio.channels), ('pcm_s16le', 48000, 2))
+        self.assertTrue(info.audio.supported)
+        self.assertFalse(info.audio.passthrough)
+        self.assertIsNone(info.video)
+        self.assertEqual(info.duration_ms, 1000)
+
+    def test_probe_missing_file(self):
+        with self.assertRaises(ntgcalls.FileError):
+            ntgcalls.NTgCalls.get_media_info(os.path.join(tempfile.gettempdir(), 'ntgcalls-missing.mp3'), ntgcalls.StreamMode.CAPTURE)
+
+    def test_output_info(self):
+        info = ntgcalls.NTgCalls.get_media_info('record.ogg', ntgcalls.StreamMode.PLAYBACK)
+        self.assertEqual((info.container, info.audio.codec), ('ogg', 'opus'))
+        self.assertTrue(info.audio.passthrough)
+        self.assertIsNone(info.video)
+        info = ntgcalls.NTgCalls.get_media_info('record.m4a', ntgcalls.StreamMode.PLAYBACK)
+        self.assertEqual(info.audio.codec, 'aac')
+        self.assertFalse(info.audio.passthrough)
+        self.assertTrue(info.video.supported)
+        info = ntgcalls.NTgCalls.get_media_info('record.mp3', ntgcalls.StreamMode.PLAYBACK)
+        self.assertIsNone(info.audio)
+        self.assertIsNone(info.video)
 
     def test_description_defaults(self):
         audio = ntgcalls.AudioDescription(ntgcalls.MediaSource.FILE, 48000, 2, 'input.ogg', False)
