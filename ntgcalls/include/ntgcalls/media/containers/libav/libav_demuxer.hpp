@@ -13,6 +13,7 @@
 #include <ntgcalls/media/codecs/pcm_resampler.hpp>
 #include <ntgcalls/media/containers/demuxer.hpp>
 #include <ntgcalls/media/media_description.hpp>
+#include <ntgcalls/media/video_sink.hpp>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -25,6 +26,7 @@ namespace ntgcalls::media::containers {
         static constexpr int kBufferSize = 64 * 1024;
 
         bool video_;
+        VideoSink* video_sink_;
         BaseMediaDescription::Format format_;
         uint8_t channels_ = 2;
         std::optional<uint32_t> bitrate_;

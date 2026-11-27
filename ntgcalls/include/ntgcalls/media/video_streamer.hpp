@@ -13,6 +13,11 @@ namespace ntgcalls::media {
     class VideoStreamer final: public VideoSink, public BaseStreamer {
         std::unique_ptr<wrtc::interfaces::media::RTCVideoSource> video_;
         std::shared_ptr<wrtc::utils::encoded::EncodedQueue> encoded_;
+        int64_t next_shown_us_ = -1;
+
+        bool within_frame_rate(uint8_t fps);
+
+        static wrtc::models::FrameData fit(wrtc::models::FrameData frame, int16_t width, int16_t height);
 
     public:
         VideoStreamer();

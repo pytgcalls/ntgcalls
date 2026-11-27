@@ -12,5 +12,7 @@ namespace wrtc::utils::encoded {
         bytes::binary payload;
         models::FrameData frame_data;
         int64_t arrival_ms = 0;
+        bool shown = true;
+        bool rate_limited = false;
     };
 } // wrtc::utils::encoded

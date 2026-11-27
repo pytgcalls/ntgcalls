@@ -47,6 +47,7 @@ namespace wrtc::video_factory {
         int64_t bitrate_change_us_ = -1;
         bool bitrate_low_ = false;
         bool reordered_ = false;
+        bool rate_limited_ = false;
         bool forwarded_ = false;
         int64_t last_frame_us_ = 0;
 

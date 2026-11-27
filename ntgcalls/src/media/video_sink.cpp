@@ -31,6 +31,7 @@ namespace ntgcalls::media {
         const bool force_change = desc && !desc->keep_open;
         if (changed || force_change) {
             description_ = desc ? std::make_shared<const VideoDescription>(*desc) : nullptr;
+            source_frame_rate_ = 0;
             clear();
             if (!desc) {
                 RTC_LOG(LS_INFO) << "VideoSink configuration cleared";
@@ -53,5 +54,13 @@ namespace ntgcalls::media {
     std::shared_ptr<const VideoDescription> VideoSink::description() const {
         const std::lock_guard lock(description_mutex_);
         return description_;
+    }
+
+    void VideoSink::set_source_frame_rate(const double fps) {
+        source_frame_rate_ = fps;
+    }
+
+    double VideoSink::source_frame_rate() const {
+        return source_frame_rate_;
     }
 } // ntgcalls::media

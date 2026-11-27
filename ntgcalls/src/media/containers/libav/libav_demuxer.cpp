@@ -16,9 +16,9 @@ extern "C" {
 }
 
 namespace ntgcalls::media::containers {
-    LibAvDemuxer::LibAvDemuxer(BaseSink* sink): video_(dynamic_cast<VideoSink*>(sink) != nullptr), format_(BaseMediaDescription::Format::Auto) {
+    LibAvDemuxer::LibAvDemuxer(BaseSink* sink): video_(dynamic_cast<VideoSink*>(sink) != nullptr), video_sink_(dynamic_cast<VideoSink*>(sink)), format_(BaseMediaDescription::Format::Auto) {
         if (video_) {
-            if (const auto description = dynamic_cast<VideoSink*>(sink)->get_config()) {
+            if (const auto description = video_sink_->get_config()) {
                 format_ = description->effective_format();
             }
         } else if (const auto audio_sink = dynamic_cast<AudioSink*>(sink)) {
@@ -120,6 +120,9 @@ namespace ntgcalls::media::containers {
         }
         codec_ = *codec;
         rotation_ = stream_rotation(stream_);
+        if (stream_->avg_frame_rate.num > 0 && stream_->avg_frame_rate.den > 0) {
+            video_sink_->set_source_frame_rate(av_q2d(stream_->avg_frame_rate));
+        }
         RTC_LOG(LS_INFO) << "Sending the " << avcodec_get_name(parameters->codec_id) << " video without re-encoding it when it matches the call";
         if (codec_ == wrtc::models::Codec::H264 && parameters->extradata_size >= 7 && parameters->extradata[0] == 1) {
             parse_avcc(parameters->extradata, static_cast<size_t>(parameters->extradata_size));

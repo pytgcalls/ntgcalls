@@ -71,6 +71,7 @@ namespace wrtc::video_factory {
         for (size_t i = 0; i < frames.size(); i++) {
             auto& encoded = frames[i];
             detect_reordering(encoded);
+            rate_limited_ |= encoded.rate_limited || !encoded.shown;
             const auto rtp_timestamp = frame.rtp_timestamp() - static_cast<uint32_t>(frames.size() - 1 - i);
             const bool keyframe = encoded.frame_data.keyframe;
             track_bitrate(encoded.payload.size(), frame.timestamp_us());
@@ -103,19 +104,25 @@ namespace wrtc::video_factory {
                 } else {
                     RTC_LOG(LS_INFO) << "Encoding the video until the next usable source keyframe, " << incompatibility(pending_.back(), key_requested);
                 }
+                const bool shown = pending_.back().shown;
                 for (const auto& pending : pending_) {
                     decode(pending);
                 }
                 pending_.clear();
                 mode_ = Mode::Encode;
-                encode(frame, rtp_timestamp, true);
-                key_requested = false;
+                if (shown) {
+                    encode(frame, rtp_timestamp, true);
+                }
+                key_requested = !shown;
                 continue;
             }
             if (!ensure_decoder(encoded.frame_data.codec)) {
                 continue;
             }
             decode(encoded);
+            if (!encoded.shown) {
+                continue;
+            }
             encode(frame, rtp_timestamp, key_requested);
             key_requested = false;
         }
@@ -123,7 +130,7 @@ namespace wrtc::video_factory {
     }
 
     bool PassthroughVideoEncoder::compatible(const utils::encoded::EncodedFrame& frame) const {
-        return !bitrate_low_ && !reordered_ && frame.frame_data.codec == codec_ && frame.frame_data.width == codec_settings_.width && frame.frame_data.height == codec_settings_.height;
+        return !bitrate_low_ && !reordered_ && !rate_limited_ && frame.frame_data.codec == codec_ && frame.frame_data.width == codec_settings_.width && frame.frame_data.height == codec_settings_.height;
     }
 
     void PassthroughVideoEncoder::forward(const utils::encoded::EncodedFrame& frame, const webrtc::VideoFrame& input, const uint32_t rtp_timestamp) const {
@@ -145,8 +152,12 @@ namespace wrtc::video_factory {
         if (!decoded_) {
             return false;
         }
+        auto buffer = decoded_->video_frame_buffer();
+        if (buffer->width() != codec_settings_.width || buffer->height() != codec_settings_.height) {
+            buffer = buffer->Scale(codec_settings_.width, codec_settings_.height);
+        }
         const auto frame = webrtc::VideoFrame::Builder()
-                               .set_video_frame_buffer(decoded_->video_frame_buffer())
+                               .set_video_frame_buffer(buffer)
                                .set_rtp_timestamp(rtp_timestamp)
                                .set_timestamp_us(input.timestamp_us())
                                .set_rotation(input.rotation())
@@ -206,12 +217,15 @@ namespace wrtc::video_factory {
     }
 
     bool PassthroughVideoEncoder::mismatched(const utils::encoded::EncodedFrame& frame) const {
-        return reordered_ || frame.frame_data.codec != codec_ || frame.frame_data.width != codec_settings_.width || frame.frame_data.height != codec_settings_.height;
+        return reordered_ || rate_limited_ || frame.frame_data.codec != codec_ || frame.frame_data.width != codec_settings_.width || frame.frame_data.height != codec_settings_.height;
     }
 
     std::string PassthroughVideoEncoder::incompatibility(const utils::encoded::EncodedFrame& frame, const bool key_requested) const {
         if (reordered_) {
             return "the source uses B-frames";
+        }
+        if (rate_limited_) {
+            return "the source frame rate is above the requested one";
         }
         if (frame.frame_data.codec != codec_) {
             return "the source is " + codec_name(frame.frame_data.codec) + " while the call uses " + codec_name(codec_);
